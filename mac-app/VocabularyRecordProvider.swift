@@ -10,34 +10,58 @@ enum VocabularyRecordProvider {
         let records: [VocabularyExportRecord]
         if documentKind == .pdf {
             records = pdfRecords
-                .filter { !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
                 .map {
-                    VocabularyExportRecord(
+                    let location = AppText.localized("第 \($0.pageIndex + 1) 页", "p. \($0.pageIndex + 1)")
+                    let context = pdfContext($0)
+                    return VocabularyExportRecord(
                         ids: [$0.id],
                         word: $0.word,
                         answer: $0.answer,
                         dictionaryTags: $0.dictionaryTags,
                         dictionaryFrequency: $0.dictionaryFrequency,
-                        location: AppText.localized("第 \($0.pageIndex + 1) 页", "p. \($0.pageIndex + 1)"),
-                        context: pdfContext($0),
+                        location: location,
+                        context: context,
                         createdAt: $0.createdAt,
-                        srs: $0.srs ?? VocabularySRSState.initial(createdAt: $0.createdAt)
+                        srs: $0.srs ?? VocabularySRSState.initial(createdAt: $0.createdAt),
+                        occurrences: [
+                            VocabularyOccurrence(
+                                id: $0.id,
+                                pageIndex: $0.pageIndex,
+                                bounds: $0.bounds,
+                                location: location,
+                                context: context,
+                                createdAt: $0.createdAt
+                            )
+                        ]
                     )
                 }
         } else {
             records = webRecords
-                .filter { !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
                 .map {
-                    VocabularyExportRecord(
+                    let location = AppText.localized(
+                        "进度 \(Int(($0.scrollProgress * 100).rounded()))%",
+                        "\(Int(($0.scrollProgress * 100).rounded()))%"
+                    )
+                    return VocabularyExportRecord(
                         ids: [$0.id],
                         word: $0.word,
                         answer: $0.answer,
                         dictionaryTags: $0.dictionaryTags,
                         dictionaryFrequency: $0.dictionaryFrequency,
-                        location: AppText.localized("进度 \(Int(($0.scrollProgress * 100).rounded()))%", "\(Int(($0.scrollProgress * 100).rounded()))%"),
+                        location: location,
                         context: $0.context,
                         createdAt: $0.createdAt,
-                        srs: $0.srs ?? VocabularySRSState.initial(createdAt: $0.createdAt)
+                        srs: $0.srs ?? VocabularySRSState.initial(createdAt: $0.createdAt),
+                        occurrences: [
+                            VocabularyOccurrence(
+                                id: $0.id,
+                                pageIndex: nil,
+                                bounds: nil,
+                                location: location,
+                                context: $0.context,
+                                createdAt: $0.createdAt
+                            )
+                        ]
                     )
                 }
         }
@@ -48,9 +72,7 @@ enum VocabularyRecordProvider {
         var order: [String] = []
         var grouped: [String: [VocabularyExportRecord]] = [:]
         for record in records.sorted(by: { $0.createdAt < $1.createdAt }) {
-            let key = record.word
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-                .lowercased()
+            let key = VocabularyTextPolicy.canonicalVocabularyKey(record.word)
             guard !key.isEmpty else { continue }
             if grouped[key] == nil {
                 order.append(key)
@@ -88,6 +110,9 @@ enum VocabularyRecordProvider {
             let dictionaryFrequency = group
                 .compactMap(\.dictionaryFrequency)
                 .min()
+            let occurrences = group
+                .flatMap(\.occurrences)
+                .sorted(by: occurrenceSort)
             return VocabularyExportRecord(
                 ids: group.flatMap(\.ids),
                 word: displayWord(first.word),
@@ -97,12 +122,29 @@ enum VocabularyRecordProvider {
                 location: locationText,
                 context: context,
                 createdAt: first.createdAt,
-                srs: group.map(\.srs).min { $0.dueDate < $1.dueDate } ?? first.srs
+                srs: group.map(\.srs).min { $0.dueDate < $1.dueDate } ?? first.srs,
+                occurrences: occurrences
             )
         }
     }
 
     static func displayWord(_ word: String) -> String {
-        word.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        VocabularyTextPolicy.normalizedVocabularyText(word)
+    }
+
+    private static func occurrenceSort(_ lhs: VocabularyOccurrence, _ rhs: VocabularyOccurrence) -> Bool {
+        switch (lhs.pageIndex, rhs.pageIndex) {
+        case let (left?, right?) where left != right:
+            return left < right
+        case let (left?, right?) where left == right:
+            let leftBounds = lhs.bounds?.cgRect ?? .zero
+            let rightBounds = rhs.bounds?.cgRect ?? .zero
+            if leftBounds.maxY != rightBounds.maxY {
+                return leftBounds.maxY > rightBounds.maxY
+            }
+            return leftBounds.minX < rightBounds.minX
+        default:
+            return lhs.createdAt < rhs.createdAt
+        }
     }
 }

@@ -2,10 +2,9 @@ import Cocoa
 
 extension ReaderWindowController {
     func vocabularyCard(record: VocabularyExportRecord, isDark: Bool) -> NSView {
+        _ = isDark
         let theme = ReaderTheme.selected
         let word = record.word
-        let answer = record.answer
-        let location = record.location
         let card = NSView()
         card.wantsLayer = true
         card.layer?.cornerRadius = 10
@@ -19,9 +18,6 @@ extension ReaderWindowController {
         bullet.textColor = vocabularyAccentColor(for: theme)
         bullet.alignment = .center
         bullet.translatesAutoresizingMaskIntoConstraints = false
-
-        let titleLeadingGuide = NSLayoutGuide()
-        card.addLayoutGuide(titleLeadingGuide)
 
         let wordLabel = NSTextField(labelWithString: word)
         wordLabel.font = AppFont.semibold(ofSize: 19)
@@ -43,72 +39,198 @@ extension ReaderWindowController {
             return button
         }
 
-        let locationLabel = NSTextField(labelWithString: location)
+        let copyButton = vocabularyActionButton(
+            title: AppText.localized("复制", "Copy"),
+            target: self,
+            action: #selector(copyVocabularyWordFromList(_:)),
+            fontSize: 13
+        )
+        copyButton.identifier = NSUserInterfaceItemIdentifier(word)
+        copyButton.controlSize = .small
+        copyButton.widthAnchor.constraint(equalToConstant: 68).isActive = true
+
+        let locationLabel = NSTextField(labelWithString: record.location)
         locationLabel.font = AppFont.semibold(ofSize: 14)
         locationLabel.textColor = vocabularySecondaryTextColor(for: theme)
         locationLabel.alignment = .right
+        locationLabel.lineBreakMode = .byTruncatingTail
+        locationLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         locationLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let srsLabel = NSTextField(labelWithString: vocabularySRSStatusText(record.srs))
-        srsLabel.font = AppFont.semibold(ofSize: 14)
-        srsLabel.textColor = vocabularySecondaryTextColor(for: theme)
-        srsLabel.lineBreakMode = .byTruncatingTail
-        srsLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        srsLabel.translatesAutoresizingMaskIntoConstraints = false
+        let hasAnswer = VocabularyExporter.hasTrimmedText(record.answer)
+        let statusLabel = NSTextField(labelWithString: hasAnswer
+            ? vocabularySRSStatusText(record.srs)
+            : AppText.localized("已保存在本地", "Saved locally"))
+        statusLabel.font = AppFont.semibold(ofSize: 14)
+        statusLabel.textColor = vocabularySecondaryTextColor(for: theme)
+        statusLabel.lineBreakMode = .byTruncatingTail
+        statusLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        statusLabel.translatesAutoresizingMaskIntoConstraints = false
 
         let masteredButton = vocabularyActionButton(title: AppText.localized("删除", "Delete"), target: self, action: #selector(markVocabularyRecordMastered(_:)), fontSize: 14)
         masteredButton.controlSize = .small
         masteredButton.identifier = NSUserInterfaceItemIdentifier(record.ids.joined(separator: "|"))
 
-        let answerColor = vocabularyBodyTextColor(for: theme)
-        let answerBody = vocabularyAnswerBody(answer, word: word)
-        let answerLabel = NSTextField(labelWithAttributedString: MarkdownRenderer.render(String(answerBody.prefix(900)), fontSize: 15, textColor: answerColor))
-        answerLabel.maximumNumberOfLines = 0
-        answerLabel.lineBreakMode = .byWordWrapping
-        answerLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        for view in [bullet, wordLabel, locationLabel, srsLabel, answerLabel] {
-            card.addSubview(view)
-        }
+        let header = NSStackView()
+        header.orientation = .horizontal
+        header.alignment = .centerY
+        header.spacing = 8
+        header.translatesAutoresizingMaskIntoConstraints = false
+        header.addArrangedSubview(wordLabel)
         if let speakerButton {
-            card.addSubview(speakerButton)
+            header.addArrangedSubview(speakerButton)
+            speakerButton.widthAnchor.constraint(equalToConstant: 24).isActive = true
+            speakerButton.heightAnchor.constraint(equalToConstant: 24).isActive = true
         }
-        card.addSubview(masteredButton)
+        header.addArrangedSubview(copyButton)
+        header.addArrangedSubview(locationLabel)
+
+        let statusRow = NSStackView()
+        statusRow.orientation = .horizontal
+        statusRow.alignment = .centerY
+        statusRow.spacing = 12
+        statusRow.translatesAutoresizingMaskIntoConstraints = false
+        statusRow.addArrangedSubview(statusLabel)
+        statusRow.addArrangedSubview(masteredButton)
+        masteredButton.widthAnchor.constraint(equalToConstant: 72).isActive = true
+        masteredButton.heightAnchor.constraint(equalToConstant: 26).isActive = true
+
+        let contentStack = NSStackView()
+        contentStack.orientation = .vertical
+        contentStack.alignment = .leading
+        contentStack.spacing = 10
+        contentStack.translatesAutoresizingMaskIntoConstraints = false
+        contentStack.addArrangedSubview(header)
+        contentStack.addArrangedSubview(statusRow)
+
+        if hasAnswer {
+            let answerBody = vocabularyAnswerBody(record.answer, word: word)
+            let answerLabel = NSTextField(
+                labelWithAttributedString: MarkdownRenderer.render(
+                    String(answerBody.prefix(900)),
+                    fontSize: 15,
+                    textColor: vocabularyBodyTextColor(for: theme)
+                )
+            )
+            answerLabel.maximumNumberOfLines = 0
+            answerLabel.lineBreakMode = .byWordWrapping
+            answerLabel.isSelectable = true
+            answerLabel.translatesAutoresizingMaskIntoConstraints = false
+            contentStack.addArrangedSubview(answerLabel)
+            answerLabel.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
+        }
+
+        if !record.occurrences.isEmpty {
+            let groupKey = VocabularyTextPolicy.canonicalVocabularyKey(word)
+            let isExpanded = vocabularyState.expandedOccurrenceKeys.contains(groupKey)
+            let disclosure = vocabularyActionButton(
+                title: AppText.localized(
+                    "出现位置（\(record.occurrences.count)）\(isExpanded ? " ▲" : " ▼")",
+                    "Occurrences (\(record.occurrences.count)) \(isExpanded ? "▲" : "▼")"
+                ),
+                target: self,
+                action: #selector(toggleVocabularyOccurrences(_:)),
+                fontSize: 13
+            )
+            disclosure.identifier = NSUserInterfaceItemIdentifier(groupKey)
+            disclosure.heightAnchor.constraint(equalToConstant: 28).isActive = true
+            contentStack.addArrangedSubview(disclosure)
+
+            if isExpanded {
+                let occurrenceStack = NSStackView()
+                occurrenceStack.orientation = .vertical
+                occurrenceStack.alignment = .width
+                occurrenceStack.spacing = 6
+                occurrenceStack.translatesAutoresizingMaskIntoConstraints = false
+                record.occurrences
+                    .map { vocabularyOccurrenceRow($0, theme: theme) }
+                    .forEach(occurrenceStack.addArrangedSubview)
+                contentStack.addArrangedSubview(occurrenceStack)
+                occurrenceStack.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
+            }
+        }
+
+        card.addSubview(bullet)
+        card.addSubview(contentStack)
 
         NSLayoutConstraint.activate([
-            titleLeadingGuide.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 74),
-            titleLeadingGuide.widthAnchor.constraint(equalToConstant: 0),
             bullet.centerYAnchor.constraint(equalTo: wordLabel.centerYAnchor),
             bullet.centerXAnchor.constraint(equalTo: card.leadingAnchor, constant: 46),
             bullet.widthAnchor.constraint(equalToConstant: 18),
-            wordLabel.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
-            wordLabel.leadingAnchor.constraint(equalTo: titleLeadingGuide.leadingAnchor),
-            locationLabel.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -18),
-            locationLabel.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
-            srsLabel.leadingAnchor.constraint(equalTo: wordLabel.leadingAnchor),
-            srsLabel.topAnchor.constraint(equalTo: wordLabel.bottomAnchor, constant: 6),
-            srsLabel.trailingAnchor.constraint(lessThanOrEqualTo: masteredButton.leadingAnchor, constant: -12),
-            masteredButton.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -18),
-            masteredButton.topAnchor.constraint(equalTo: locationLabel.bottomAnchor, constant: 6),
-            masteredButton.widthAnchor.constraint(equalToConstant: 72),
-            masteredButton.heightAnchor.constraint(equalToConstant: 26),
-            answerLabel.topAnchor.constraint(equalTo: srsLabel.bottomAnchor, constant: 12),
-            answerLabel.leadingAnchor.constraint(equalTo: wordLabel.leadingAnchor),
-            answerLabel.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -18),
-            answerLabel.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
+            contentStack.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
+            contentStack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 74),
+            contentStack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -18),
+            contentStack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16),
+            header.widthAnchor.constraint(equalTo: contentStack.widthAnchor),
+            statusRow.widthAnchor.constraint(equalTo: contentStack.widthAnchor)
         ])
-        if let speakerButton {
-            NSLayoutConstraint.activate([
-                speakerButton.leadingAnchor.constraint(equalTo: wordLabel.trailingAnchor, constant: 6),
-                speakerButton.centerYAnchor.constraint(equalTo: wordLabel.centerYAnchor),
-                speakerButton.widthAnchor.constraint(equalToConstant: 24),
-                speakerButton.heightAnchor.constraint(equalToConstant: 24),
-                speakerButton.trailingAnchor.constraint(lessThanOrEqualTo: locationLabel.leadingAnchor, constant: -12)
-            ])
-        } else {
-            wordLabel.trailingAnchor.constraint(lessThanOrEqualTo: locationLabel.leadingAnchor, constant: -12).isActive = true
-        }
         return card
+    }
+
+    private func vocabularyOccurrenceRow(_ occurrence: VocabularyOccurrence, theme: ReaderTheme) -> NSView {
+        let row = NSView()
+        row.wantsLayer = true
+        row.layer?.cornerRadius = 7
+        row.layer?.backgroundColor = vocabularyPanelBackgroundColor(for: theme).withAlphaComponent(0.55).cgColor
+        row.translatesAutoresizingMaskIntoConstraints = false
+
+        let pageButton = vocabularyActionButton(
+            title: occurrence.location,
+            target: self,
+            action: #selector(openVocabularyOccurrence(_:)),
+            fontSize: 12
+        )
+        pageButton.identifier = NSUserInterfaceItemIdentifier(occurrence.id)
+        pageButton.controlSize = .small
+
+        let context = VocabularyExporter.hasTrimmedText(occurrence.context)
+            ? occurrence.context
+            : AppText.localized("没有可用的上下文", "No context available")
+        let contextLabel = NSTextField(wrappingLabelWithString: context)
+        contextLabel.font = NSFont.systemFont(ofSize: 12)
+        contextLabel.textColor = vocabularyBodyTextColor(for: theme)
+        contextLabel.maximumNumberOfLines = 3
+        contextLabel.lineBreakMode = .byWordWrapping
+        contextLabel.isSelectable = true
+        contextLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        row.addSubview(pageButton)
+        row.addSubview(contextLabel)
+        NSLayoutConstraint.activate([
+            pageButton.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 8),
+            pageButton.topAnchor.constraint(equalTo: row.topAnchor, constant: 7),
+            pageButton.widthAnchor.constraint(equalToConstant: 82),
+            pageButton.heightAnchor.constraint(equalToConstant: 26),
+            contextLabel.leadingAnchor.constraint(equalTo: pageButton.trailingAnchor, constant: 10),
+            contextLabel.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -8),
+            contextLabel.topAnchor.constraint(equalTo: row.topAnchor, constant: 8),
+            contextLabel.bottomAnchor.constraint(equalTo: row.bottomAnchor, constant: -8),
+            row.heightAnchor.constraint(greaterThanOrEqualToConstant: 42)
+        ])
+        return row
+    }
+
+    @objc func copyVocabularyWordFromList(_ sender: NSButton) {
+        guard let word = sender.identifier?.rawValue, !word.isEmpty else { return }
+        copyTextToClipboard(word)
+    }
+
+    @objc func toggleVocabularyOccurrences(_ sender: NSButton) {
+        guard let key = sender.identifier?.rawValue, !key.isEmpty else { return }
+        if vocabularyState.expandedOccurrenceKeys.contains(key) {
+            vocabularyState.expandedOccurrenceKeys.remove(key)
+        } else {
+            vocabularyState.expandedOccurrenceKeys.insert(key)
+        }
+        scheduleVocabularyPanelReload()
+    }
+
+    @objc func openVocabularyOccurrence(_ sender: NSButton) {
+        guard let id = sender.identifier?.rawValue, !id.isEmpty else { return }
+        closeVocabularyPanel()
+        DispatchQueue.main.async { [weak self] in
+            self?.jumpToStoredLinkedWord(linkID: id)
+        }
     }
 
     func vocabularySRSStatusText(_ srs: VocabularySRSState) -> String {
@@ -137,6 +259,6 @@ extension ReaderWindowController {
     func isMeaningfulVocabularyContext(_ context: String) -> Bool {
         let contextText = VocabularyExporter.trimmed(context)
         guard contextText.count >= 3 else { return false }
-        return contextText.range(of: #"[A-Za-z0-9\u{4e00}-\u{9fff}]"#, options: .regularExpression) != nil
+        return contextText.range(of: #"[\p{L}\p{N}]"#, options: .regularExpression) != nil
     }
 }

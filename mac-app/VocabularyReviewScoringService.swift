@@ -121,7 +121,8 @@ enum VocabularyReviewScoringService {
                 location: old.location,
                 context: old.context,
                 createdAt: old.createdAt,
-                srs: stateForRecord(old)
+                srs: stateForRecord(old),
+                occurrences: old.occurrences
             )
         }
     }

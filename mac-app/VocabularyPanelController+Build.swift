@@ -74,19 +74,32 @@ extension VocabularyPanelController {
 
         let icon = makeHeaderIcon(owner: owner, theme: theme)
         let title = makeTitleLabel(primaryText: primaryText)
-        let filterControl = makeFilterControl(owner: owner)
-        let summaryLabel = makeSummaryLabel(owner: owner, records: records, secondaryText: secondaryText)
+        let initialFilter = owner.vocabularyReviewSession.filter
+        let isListMode = owner.vocabularyReviewSession.listModeEnabled
+        let filterControl = makeFilterControl(
+            owner: owner,
+            selectedIndex: isListMode ? segmentIndex(for: initialFilter) : 0
+        )
+        let summaryLabel = makeSummaryLabel(
+            owner: owner,
+            records: records,
+            filter: initialFilter,
+            secondaryText: secondaryText
+        )
         let statsContainer = makeStatsContainer(owner: owner, records: records, theme: theme)
         let (scrollView, stack) = makeVocabularyList(panelBackground: panelBackground)
         let reviewContainer = makeReviewContainer(panelBackground: panelBackground)
-        owner.populateVocabularyStack(stack, records: records, filter: .due, isDark: theme == .dark)
-        owner.populateVocabularyReviewContainer(reviewContainer, records: records, filter: .due, isDark: theme == .dark, autoPlayNewCard: false)
-        scrollView.isHidden = true
+        owner.populateVocabularyStack(stack, records: records, filter: initialFilter, isDark: theme == .dark)
+        owner.populateVocabularyReviewContainer(reviewContainer, records: records, filter: initialFilter, isDark: theme == .dark, autoPlayNewCard: false)
+        scrollView.isHidden = !isListMode
+        reviewContainer.isHidden = isListMode
 
         let reviewPriorityPopup = owner.vocabularyReviewPriorityPopup()
         reviewPriorityPopup.identifier = NSUserInterfaceItemIdentifier("vocabularyReviewPriorityPopup")
+        reviewPriorityPopup.isHidden = isListMode
         let reviewGoalPopup = owner.vocabularyDailyGoalPopup()
         reviewGoalPopup.identifier = NSUserInterfaceItemIdentifier("vocabularyReviewGoalPopup")
+        reviewGoalPopup.isHidden = isListMode
 
         let closeButton = owner.vocabularyActionButton(title: AppText.close, target: owner, action: #selector(ReaderWindowController.closeVocabularyBook(_:)))
         closeButton.identifier = NSUserInterfaceItemIdentifier("closeVocabularyBook")
@@ -97,7 +110,7 @@ extension VocabularyPanelController {
             action: #selector(ReaderWindowController.exportVocabularyMarkdown(_:))
         )
         exportMarkdownButton.identifier = NSUserInterfaceItemIdentifier("vocabularyExportMarkdownButton")
-        exportMarkdownButton.isHidden = true
+        exportMarkdownButton.isHidden = !isListMode
 
         let exportCSVButton = owner.vocabularyActionButton(
             title: AppText.localized("导出 Anki CSV", "Export Anki CSV"),
@@ -105,7 +118,7 @@ extension VocabularyPanelController {
             action: #selector(ReaderWindowController.exportVocabularyCSV(_:))
         )
         exportCSVButton.identifier = NSUserInterfaceItemIdentifier("vocabularyExportCSVButton")
-        exportCSVButton.isHidden = true
+        exportCSVButton.isHidden = !isListMode
 
         return VocabularyPanelViews(
             icon: icon,
@@ -142,7 +155,7 @@ extension VocabularyPanelController {
         return title
     }
 
-    private func makeFilterControl(owner: ReaderWindowController) -> SettingsTabsView {
+    private func makeFilterControl(owner: ReaderWindowController, selectedIndex: Int) -> SettingsTabsView {
         let filterControl = SettingsTabsView(
             labels: [
                 AppText.localized("背单词", "Review"),
@@ -150,7 +163,7 @@ extension VocabularyPanelController {
                 AppText.localized("新词", "New"),
                 AppText.localized("全部", "All")
             ],
-            selectedIndex: 0
+            selectedIndex: selectedIndex
         )
         filterControl.onSelectionChanged = { [weak owner] index in
             owner?.changeVocabularyTab(index: index)
@@ -162,14 +175,23 @@ extension VocabularyPanelController {
     private func makeSummaryLabel(
         owner: ReaderWindowController,
         records: [VocabularyExportRecord],
+        filter: VocabularyFilter,
         secondaryText: NSColor
     ) -> NSTextField {
-        let summaryLabel = NSTextField(labelWithString: owner.vocabularySummaryText(records: records, filter: .due))
+        let summaryLabel = NSTextField(labelWithString: owner.vocabularySummaryText(records: records, filter: filter))
         summaryLabel.font = AppFont.semibold(ofSize: 13)
         summaryLabel.textColor = secondaryText
         summaryLabel.translatesAutoresizingMaskIntoConstraints = false
         summaryLabel.identifier = NSUserInterfaceItemIdentifier("vocabularySummaryLabel")
         return summaryLabel
+    }
+
+    private func segmentIndex(for filter: VocabularyFilter) -> Int {
+        switch filter {
+        case .due: return 1
+        case .new: return 2
+        case .all: return 3
+        }
     }
 
     private func makeStatsContainer(

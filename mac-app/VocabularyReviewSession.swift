@@ -26,6 +26,7 @@ final class VocabularyReviewSession {
 
     func resetForListMode(filter: VocabularyFilter) {
         self.filter = filter
+        listModeEnabled = true
         reviewIndex = 0
         listPageIndex = 0
         resetCard(clearCardKey: true)

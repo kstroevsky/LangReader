@@ -5,14 +5,17 @@ enum VocabularyReviewQueueBuilder {
         records: [VocabularyExportRecord],
         priority: VocabularyReviewPriority
     ) -> [VocabularyExportRecord] {
-        let dueRecords = records
+        let reviewableRecords = records.filter {
+            !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+        let dueRecords = reviewableRecords
             .filter { $0.srs.isDue }
             .sorted { prioritySort($0, $1, priority: priority) }
         if !dueRecords.isEmpty {
             return dueRecords
         }
 
-        let fallbackRecords = records.filter { !$0.srs.isMastered }
+        let fallbackRecords = reviewableRecords.filter { !$0.srs.isMastered }
         switch priority {
         case .oldWordsFirst:
             return fallbackRecords.sorted { $0.srs.dueDate < $1.srs.dueDate }
