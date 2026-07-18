@@ -2,6 +2,7 @@ import Cocoa
 
 struct StoredPDFWordRecord: Codable {
     let id: String
+    var vocabularyID: String? = nil
     let word: String
     let pageIndex: Int
     let bounds: StoredPDFWordRect
@@ -61,6 +62,15 @@ struct PDFWordRecordStore {
     }
 
     @discardableResult
+    func upsert(_ records: [StoredPDFWordRecord]) -> Bool {
+        let didSave = WordRecordSQLiteStore.shared.upsertPDFRecords(documentID: documentID, records: records)
+        if didSave {
+            defaults.set(true, forKey: migrationKey)
+        }
+        return didSave
+    }
+
+    @discardableResult
     func delete(ids: [String]) -> Bool {
         let didDelete = WordRecordSQLiteStore.shared.deletePDFRecords(documentID: documentID, ids: ids)
         if didDelete {
@@ -93,9 +103,14 @@ struct PDFWordRecordStore {
     }
 
     func linkedWordBubbles(from records: [StoredPDFWordRecord]) -> [AIChatPanel.LinkedWordBubble] {
-        records
+        var seenWords = Set<String>()
+        return records
             .filter { !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
             .sorted { $0.createdAt < $1.createdAt }
+            .filter {
+                let key = $0.vocabularyID ?? VocabularyTextPolicy.canonicalVocabularyKey($0.word)
+                return seenWords.insert(key).inserted
+            }
             .map {
                 AIChatPanel.LinkedWordBubble(
                     id: $0.id,

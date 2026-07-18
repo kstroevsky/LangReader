@@ -30,6 +30,7 @@ extension ReaderWindowController {
             let context = vocabularyContextForCurrentSelection(selectedText: word, precomputedContext: context)
             let record = StoredPDFWordRecord(
                 id: UUID().uuidString,
+                vocabularyID: reusable.vocabularyID,
                 word: word,
                 pageIndex: pageIndex,
                 bounds: StoredPDFWordRect(bounds),
@@ -50,9 +51,11 @@ extension ReaderWindowController {
         }
 
         let id = UUID().uuidString
+        let vocabularyID = existingPDFVocabularyID(for: word) ?? UUID().uuidString
         let context = vocabularyContextForCurrentSelection(selectedText: word, precomputedContext: context)
         pendingPDFWordRecords[id] = PendingPDFWordRecord(
             id: id,
+            vocabularyID: vocabularyID,
             word: word,
             pageIndex: pageIndex,
             bounds: StoredPDFWordRect(bounds),

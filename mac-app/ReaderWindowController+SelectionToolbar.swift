@@ -8,6 +8,7 @@ extension ReaderWindowController {
         case difficultSentence
         case addWord
         case summarize
+        case saveWord
         case speak
         case note
         case copy
@@ -73,12 +74,15 @@ extension ReaderWindowController {
             aiPanel.analyzeDifficultSentenceCurrentContent()
         case .addWord:
             let wordText = selectedVocabularyTextForToolbar(fallback: text)
-            guard vocabularySpeakerWord(wordText) != nil else {
+            guard VocabularyTextPolicy.isVocabularySelection(wordText) else {
                 NSSound.beep()
                 return
             }
             prepareAIForSelectionAction(text: wordText)
             aiPanel.startQuestion()
+        case .saveWord:
+            saveCurrentPDFVocabularySelection()
+            return
         case .summarize:
             prepareAIForSelectionAction(text: text)
             aiPanel.summarizeCurrentContent()
@@ -98,7 +102,7 @@ extension ReaderWindowController {
 
     func configureSelectionToolbarActions(for text: String) {
         let wordText = selectedVocabularyTextForToolbar(fallback: text)
-        let isVocabulary = vocabularySpeakerWord(wordText) != nil
+        let isVocabulary = VocabularyTextPolicy.isVocabularySelection(wordText)
         let capabilityState = ReaderCapabilityState.make(
             isOnline: NetworkConnectivityMonitor.shared.isOnline,
             hasModelAPIKey: AISettingsStore.hasAPIKeyForSelectedModel,
@@ -107,7 +111,8 @@ extension ReaderWindowController {
         let configuration = SelectionToolbarConfiguration.make(
             isVocabularySelection: isVocabulary,
             queryCapability: capabilityState.queryCapability,
-            shouldShowSpeakAction: shouldShowSelectionSpeakAction(for: text)
+            shouldShowSpeakAction: shouldShowSelectionSpeakAction(for: text),
+            isPDFSelection: currentDocumentKind == .pdf
         )
         selectionActionToolbar.applyConfiguration(configuration)
     }

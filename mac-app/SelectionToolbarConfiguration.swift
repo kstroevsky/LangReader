@@ -16,11 +16,13 @@ enum SelectionToolbarDisplayMode: Equatable {
 struct SelectionToolbarConfiguration: Equatable {
     let contextAction: SelectionToolbarContextAction
     let displayMode: SelectionToolbarDisplayMode
+    let showsVocabularySaveAction: Bool
 
     static func make(
         isVocabularySelection: Bool,
         queryCapability: ReaderQueryCapability,
-        shouldShowSpeakAction: Bool
+        shouldShowSpeakAction: Bool,
+        isPDFSelection: Bool = false
     ) -> SelectionToolbarConfiguration {
         let contextAction: SelectionToolbarContextAction = isVocabularySelection ? .addWord : .summarize
         let displayMode: SelectionToolbarDisplayMode
@@ -32,6 +34,10 @@ struct SelectionToolbarConfiguration: Equatable {
         case .needsModelConfiguration:
             displayMode = isVocabularySelection ? .needsModelKeyWord : .needsModelKeyCopyOnly
         }
-        return SelectionToolbarConfiguration(contextAction: contextAction, displayMode: displayMode)
+        return SelectionToolbarConfiguration(
+            contextAction: contextAction,
+            displayMode: displayMode,
+            showsVocabularySaveAction: isPDFSelection && isVocabularySelection
+        )
     }
 }

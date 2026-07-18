@@ -1,11 +1,12 @@
 import Foundation
 
 enum VocabularyTextPolicy {
-    private static let wordTokenPattern = #"[A-Za-z](?:[A-Za-z]|['’–—-](?=[A-Za-z]))*"#
+    private static let wordTokenPattern = #"\p{L}[\p{L}\p{M}]*(?:['’–—-](?=\p{L})\p{L}[\p{L}\p{M}]*)*"#
     private static let singleWordPattern = #"^"# + wordTokenPattern + #"$"#
     private static let vocabularySelectionPattern = #"^"# + wordTokenPattern + #"(\s+"# + wordTokenPattern + #"){0,4}$"#
-    private static let wordBoundaryBefore = #"(?<![A-Za-z'’–—-])"#
-    private static let wordBoundaryAfter = #"(?![A-Za-z'’–—-])"#
+    private static let wordBoundaryBefore = #"(?<![\p{L}\p{M}'’–—-])"#
+    private static let wordBoundaryAfter = #"(?![\p{L}\p{M}'’–—-])"#
+    private static let comparisonLocale = Locale(identifier: "de_DE")
 
     static let maxSingleWordLength = 40
     static let maxVocabularySelectionLength = 80
@@ -16,6 +17,21 @@ enum VocabularyTextPolicy {
 
     static func normalizedVocabularyText(_ text: String) -> String {
         collapsedWhitespace(joinLineBrokenHyphens(text))
+    }
+
+    static func canonicalVocabularyKey(_ text: String) -> String {
+        normalizedVocabularyText(text)
+            .precomposedStringWithCanonicalMapping
+            .lowercased(with: comparisonLocale)
+    }
+
+    static func normalizedOccurrenceText(_ text: String, matching query: String) -> String {
+        let normalizedQuery = normalizedVocabularyText(query)
+        let hasGenuineHyphen = normalizedQuery.range(of: #"[‐‑‒–—-]"#, options: .regularExpression) != nil
+        let value = hasGenuineHyphen
+            ? joinLineBrokenHyphens(text)
+            : removeLineBrokenHyphens(text)
+        return collapsedWhitespace(value)
     }
 
     static func normalizedPDFVocabularyText(
@@ -149,7 +165,10 @@ enum VocabularyTextPolicy {
 
     private static func shouldPreferDehyphenatedLineBreak(original: String, dehyphenated: String) -> Bool {
         guard isSingleEnglishWord(dehyphenated),
-              let match = original.range(of: #"(?i)[A-Za-z]+[‐‑‒–—-]\s+[A-Za-z]+"#, options: .regularExpression) else {
+              let match = original.range(
+                of: #"(?i)\p{L}[\p{L}\p{M}]*[‐‑‒–—-]\s+\p{L}[\p{L}\p{M}]*"#,
+                options: .regularExpression
+              ) else {
             return false
         }
         let prefix = String(original[match])

@@ -8,6 +8,7 @@ import WebKit
 final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFViewDelegate, NSTextFieldDelegate, WKScriptMessageHandler, WKNavigationDelegate {
     struct PendingPDFWordRecord {
         let id: String
+        let vocabularyID: String
         let word: String
         let pageIndex: Int
         let bounds: StoredPDFWordRect

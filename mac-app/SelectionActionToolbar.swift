@@ -15,6 +15,7 @@ final class SelectionActionToolbar: NSView {
     var onDifficultSentence: (() -> Void)?
     var onAddWord: (() -> Void)?
     var onSummarize: (() -> Void)?
+    var onSaveWord: (() -> Void)?
     var onSpeak: (() -> Void)?
     var onNote: (() -> Void)?
     var onCopy: (() -> Void)?
@@ -42,6 +43,12 @@ final class SelectionActionToolbar: NSView {
     private let contextButton = SelectionActionButton(
         title: AppText.localized("总结", "Summarize"),
         symbolName: "list.bullet.rectangle",
+        target: nil,
+        action: nil
+    )
+    private let saveButton = SelectionActionButton(
+        title: AppText.localized("保存", "Save"),
+        symbolName: "bookmark",
         target: nil,
         action: nil
     )
@@ -77,6 +84,7 @@ final class SelectionActionToolbar: NSView {
             difficultSentenceButton,
             translateButton,
             contextButton,
+            saveButton,
             speakButton,
             noteButton,
             copyButton,
@@ -104,6 +112,7 @@ final class SelectionActionToolbar: NSView {
         configureButton(difficultSentenceButton, action: #selector(difficultSentenceTapped))
         configureButton(translateButton, action: #selector(translateTapped))
         configureButton(contextButton, action: #selector(contextTapped))
+        configureButton(saveButton, action: #selector(saveTapped))
         configureButton(speakButton, action: #selector(speakTapped))
         configureButton(noteButton, action: #selector(noteTapped))
         configureButton(copyButton, action: #selector(copyTapped))
@@ -156,11 +165,15 @@ final class SelectionActionToolbar: NSView {
         explainButton.title = AppText.localized("解释", "Explain")
         difficultSentenceButton.title = AppText.localized("难句", "Syntax")
         contextButton.title = contextAction == .addWord
-            ? AppText.localized("单词", "Word")
+            ? AppText.localized("释义", "Define")
             : AppText.localized("总结", "Summarize")
         contextButton.symbolName = contextAction == .addWord
             ? "text.badge.plus"
             : "list.bullet.rectangle"
+        saveButton.title = AppText.localized("保存", "Save")
+        saveButton.symbolName = "bookmark"
+        saveButton.isEnabled = true
+        saveButton.toolTip = AppText.localized("保存单词及其在当前 PDF 中的全部位置", "Save the word and every occurrence in this PDF")
         speakButton.title = AppText.localized("朗读", "Speak")
         noteButton.title = AppText.localized("笔记", "Note")
         copyButton.title = AppText.localized("复制", "Copy")
@@ -176,6 +189,36 @@ final class SelectionActionToolbar: NSView {
     func applyConfiguration(_ configuration: SelectionToolbarConfiguration) {
         setContextAction(configuration.contextAction)
         setDisplayMode(configuration.displayMode)
+        setVocabularySaveActionVisible(configuration.showsVocabularySaveAction)
+    }
+
+    func showSaveInProgress() {
+        saveButton.title = AppText.localized("查找中", "Finding")
+        saveButton.symbolName = "hourglass"
+        saveButton.isEnabled = false
+        saveButton.toolTip = AppText.localized("正在查找当前 PDF 中的全部位置", "Finding every occurrence in this PDF")
+        saveButton.applyTheme(ReaderTheme.selected)
+    }
+
+    func showSaveResult(found: Int, inserted: Int) {
+        saveButton.title = inserted > 0
+            ? AppText.localized("已保存", "Saved")
+            : AppText.localized("已存在", "Saved")
+        saveButton.symbolName = "checkmark"
+        saveButton.isEnabled = false
+        saveButton.toolTip = AppText.localized(
+            "找到 \(found) 处，新保存 \(inserted) 处",
+            "\(found) occurrences, \(inserted) newly saved"
+        )
+        saveButton.applyTheme(ReaderTheme.selected)
+    }
+
+    func showSaveFailure() {
+        saveButton.title = AppText.localized("保存失败", "Failed")
+        saveButton.symbolName = "exclamationmark.triangle"
+        saveButton.isEnabled = true
+        saveButton.toolTip = AppText.localized("无法保存单词，请重试", "The vocabulary could not be saved")
+        saveButton.applyTheme(ReaderTheme.selected)
     }
 
     func setDisplayMode(_ mode: DisplayMode) {
@@ -225,6 +268,11 @@ final class SelectionActionToolbar: NSView {
         translateButton.isHidden = hidden
     }
 
+    private func setVocabularySaveActionVisible(_ visible: Bool) {
+        saveButton.isHidden = !visible
+        needsLayout = true
+    }
+
     private func configureStack() {
         stack.orientation = .horizontal
         stack.alignment = .centerY
@@ -249,6 +297,8 @@ final class SelectionActionToolbar: NSView {
             case .summarize:
                 onSummarize?()
             }
+        case saveButton:
+            onSaveWord?()
         case speakButton:
             onSpeak?()
         case noteButton:
@@ -288,6 +338,10 @@ final class SelectionActionToolbar: NSView {
 
     @objc private func speakTapped() {
         onSpeak?()
+    }
+
+    @objc private func saveTapped() {
+        onSaveWord?()
     }
 
     @objc private func noteTapped() {
