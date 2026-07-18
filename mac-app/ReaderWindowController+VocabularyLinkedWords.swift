@@ -13,9 +13,19 @@ extension ReaderWindowController {
         }
 
         if let index = storedWordRecords.firstIndex(where: { $0.id == linkID }) {
-            storedWordRecords[index].question = question
-            storedWordRecords[index].answer = trimmedAnswer
-            saveStoredWordRecord(storedWordRecords[index])
+            let target = storedWordRecords[index]
+            let key = VocabularyTextPolicy.canonicalVocabularyKey(target.word)
+            var updated: [StoredPDFWordRecord] = []
+            for recordIndex in storedWordRecords.indices where
+                storedWordRecords[recordIndex].vocabularyID == target.vocabularyID
+                    || VocabularyTextPolicy.canonicalVocabularyKey(storedWordRecords[recordIndex].word) == key {
+                storedWordRecords[recordIndex].question = question
+                storedWordRecords[recordIndex].answer = trimmedAnswer
+                updated.append(storedWordRecords[recordIndex])
+            }
+            if pdfWordRecordStore?.upsert(updated) != true {
+                saveStoredWordRecords()
+            }
             return
         }
         if let index = storedWebWordRecords.firstIndex(where: { $0.id == linkID }) {
@@ -28,6 +38,7 @@ extension ReaderWindowController {
         if let pending = pendingPDFWordRecords.removeValue(forKey: linkID) {
             let record = StoredPDFWordRecord(
                 id: pending.id,
+                vocabularyID: pending.vocabularyID,
                 word: pending.word,
                 pageIndex: pending.pageIndex,
                 bounds: pending.bounds,

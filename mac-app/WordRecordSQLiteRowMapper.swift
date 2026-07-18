@@ -102,6 +102,62 @@ struct PDFWordRecordSQLiteMapper {
     }
 }
 
+struct PDFVocabularySQLiteMapper {
+    enum Column: Int32 {
+        case occurrenceID = 0
+        case vocabularyID = 1
+        case word = 2
+        case pageIndex = 3
+        case boundsJSON = 4
+        case context = 5
+        case question = 6
+        case answer = 7
+        case dictionaryTags = 8
+        case dictionaryFrequency = 9
+        case createdAt = 10
+        case srsJSON = 11
+    }
+
+    static let selectSQL = """
+    SELECT occurrence.id, word.id, word.word, occurrence.page_index, occurrence.bounds_json,
+           occurrence.context, word.question, word.answer, word.dictionary_tags,
+           word.dictionary_frequency, occurrence.created_at, word.srs_json
+    FROM pdf_vocabulary_occurrences AS occurrence
+    JOIN pdf_vocabulary_words AS word
+      ON word.document_id = occurrence.document_id AND word.id = occurrence.vocabulary_id
+    WHERE occurrence.document_id = ?
+    ORDER BY word.created_at ASC, occurrence.page_index ASC, occurrence.created_at ASC, occurrence.id ASC
+    """
+
+    let codec: WordRecordSQLiteJSONCodec
+
+    func decode(from statement: OpaquePointer?) -> StoredPDFWordRecord? {
+        guard let id = stringColumn(statement, Column.occurrenceID.rawValue),
+              let vocabularyID = stringColumn(statement, Column.vocabularyID.rawValue),
+              let word = stringColumn(statement, Column.word.rawValue),
+              let boundsJSON = stringColumn(statement, Column.boundsJSON.rawValue),
+              let bounds = codec.decode(StoredPDFWordRect.self, from: boundsJSON),
+              let question = stringColumn(statement, Column.question.rawValue),
+              let answer = stringColumn(statement, Column.answer.rawValue) else {
+            return nil
+        }
+        return StoredPDFWordRecord(
+            id: id,
+            vocabularyID: vocabularyID,
+            word: word,
+            pageIndex: Int(sqlite3_column_int(statement, Column.pageIndex.rawValue)),
+            bounds: bounds,
+            context: optionalStringColumn(statement, Column.context.rawValue),
+            question: question,
+            answer: answer,
+            dictionaryTags: optionalStringColumn(statement, Column.dictionaryTags.rawValue),
+            dictionaryFrequency: optionalIntColumn(statement, Column.dictionaryFrequency.rawValue),
+            createdAt: Date(timeIntervalSince1970: sqlite3_column_double(statement, Column.createdAt.rawValue)),
+            srs: codec.decode(VocabularySRSState.self, from: optionalStringColumn(statement, Column.srsJSON.rawValue))
+        )
+    }
+}
+
 struct WebWordRecordSQLiteMapper {
     enum Column: Int32 {
         case id = 0
