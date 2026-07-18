@@ -14,7 +14,7 @@ extension AppDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = AppText.localized("关于 Leaf Reader", "About Leaf Reader")
+        window.title = AppText.localized("关于 Leaf Vocabulary", "About Leaf Vocabulary")
         window.isReleasedWhenClosed = false
         window.center()
 
@@ -48,7 +48,7 @@ extension AppDelegate {
         iconView.imageScaling = .scaleProportionallyUpOrDown
         content.addSubview(iconView)
 
-        let nameLabel = NSTextField(labelWithString: "Leaf Reader")
+        let nameLabel = NSTextField(labelWithString: AppIdentity.displayName)
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
         nameLabel.alignment = .center
         nameLabel.font = .systemFont(ofSize: 28, weight: .semibold)

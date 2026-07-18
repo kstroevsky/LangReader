@@ -3,7 +3,7 @@ set -euo pipefail
 
 WORK_DIR="${WORK_DIR:-${TMPDIR:-/tmp}/leafreader-fluidaudio-runtime}"
 REPO_URL="${REPO_URL:-https://github.com/FluidInference/FluidAudio.git}"
-INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/share/leafreader/kokoro-coreml}"
+INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/share/leafvocabulary/kokoro-coreml}"
 OUTPUT_NAME="${OUTPUT_NAME:-fluidaudiocli}"
 
 rm -rf "$WORK_DIR"

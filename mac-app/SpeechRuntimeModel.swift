@@ -140,7 +140,7 @@ extension SpeechRuntimeResourceManager {
 
         private static var userInstallRoot: URL {
             FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent(".local/share/leafreader", isDirectory: true)
+                .appendingPathComponent(".local/share/leafvocabulary", isDirectory: true)
         }
 
         private static var bundledRuntimeRoot: URL? {
@@ -215,7 +215,7 @@ extension SpeechRuntimeResourceManager {
 
         static var piperVoiceCacheRoot: URL {
             FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent(".cache/leafreader/piper-voices", isDirectory: true)
+                .appendingPathComponent(".cache/leafvocabulary/piper-voices", isDirectory: true)
         }
 
         private static func releaseAssetURL(fileName: String) -> URL {

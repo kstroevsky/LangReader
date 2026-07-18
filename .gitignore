@@ -22,3 +22,6 @@ mac-app/AppIconSourceRaw.png
 # Local Sparkle signing keys
 sparkle-ed25519-private-key
 .sparkle-private-key
+
+.codex
+.codegraph

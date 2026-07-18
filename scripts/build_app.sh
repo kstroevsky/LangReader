@@ -2,18 +2,19 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-APP_PATH="$ROOT_DIR/Leaf Reader.app"
+APP_NAME="Leaf Vocabulary"
+APP_PATH="$ROOT_DIR/$APP_NAME.app"
 SPARKLE_HOME="${SPARKLE_HOME:-/opt/homebrew/Caskroom/sparkle/2.9.2}"
 APP_SIGN_IDENTITY="${APP_SIGN_IDENTITY:--}"
 MACOS_DEPLOYMENT_TARGET="${MACOS_DEPLOYMENT_TARGET:-12.0}"
 ARCHS="${ARCHS:-arm64}"
 BUILD_CONFIGURATION="${BUILD_CONFIGURATION:-debug}"
 REQUIRE_BUNDLED_SPEECH_RUNTIMES="${REQUIRE_BUNDLED_SPEECH_RUNTIMES:-0}"
-KOKORO_RUNTIME="${KOKORO_RUNTIME:-$HOME/.local/share/leafreader/kokoro-coreml/fluidaudiocli}"
+KOKORO_RUNTIME="${KOKORO_RUNTIME:-$HOME/.local/share/leafvocabulary/kokoro-coreml/fluidaudiocli}"
 KOKORO_RUNTIME_ARCHIVE="${KOKORO_RUNTIME_ARCHIVE:-$ROOT_DIR/docs/tts/kokoro-coreml-macos-arm64.tar.gz}"
 KOKORO_MODEL_CACHE_ROOT="${KOKORO_MODEL_CACHE_ROOT:-$HOME/.cache/fluidaudio/Models}"
-SUPERTONIC_RUNTIME="${SUPERTONIC_RUNTIME:-$HOME/.local/share/leafreader/supertonic-coreml/supertonic-mini}"
-PIPER_RUNTIME_DIR="${PIPER_RUNTIME_DIR:-$HOME/.local/share/leafreader/piper-tts-runtime}"
+SUPERTONIC_RUNTIME="${SUPERTONIC_RUNTIME:-$HOME/.local/share/leafvocabulary/supertonic-coreml/supertonic-mini}"
+PIPER_RUNTIME_DIR="${PIPER_RUNTIME_DIR:-$HOME/.local/share/leafvocabulary/piper-tts-runtime}"
 export COPYFILE_DISABLE=1
 
 while [[ $# -gt 0 ]]; do
@@ -76,7 +77,10 @@ for ARCH in "${BUILD_ARCHS[@]}"; do
 done
 case "$BUILD_CONFIGURATION" in
   debug)
-    SWIFT_BUILD_FLAGS=(-Onone -g)
+    # Line-table debug info remains fully useful for breakpoints and stack traces,
+    # while avoiding a Command Line Tools linker failure when Swift tries to attach
+    # the full .swiftmodule AST to this large, directly-compiled executable.
+    SWIFT_BUILD_FLAGS=(-Onone -gline-tables-only)
     ;;
   release)
     SWIFT_BUILD_FLAGS=(-O)
@@ -305,10 +309,10 @@ find "$APP_PATH" -name '._*' -type f -delete
 xattr -cr "$APP_PATH"
 xattr -crs "$APP_PATH"
 
-BINARY_PATH="$APP_PATH/Contents/MacOS/Leaf Reader"
+BINARY_PATH="$APP_PATH/Contents/MacOS/$APP_NAME"
 TEMP_BINARIES=()
 for ARCH in "${BUILD_ARCHS[@]}"; do
-  ARCH_BINARY="$APP_PATH/Contents/MacOS/Leaf Reader-$ARCH"
+  ARCH_BINARY="$APP_PATH/Contents/MacOS/$APP_NAME-$ARCH"
   swiftc "$ROOT_DIR"/mac-app/*.swift \
     "${SWIFT_BUILD_FLAGS[@]}" \
     -target "$ARCH-apple-macos$MACOS_DEPLOYMENT_TARGET" \

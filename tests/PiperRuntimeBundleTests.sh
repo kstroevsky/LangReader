@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-APP_PATH="${1:-$ROOT_DIR/Leaf Reader.app}"
+APP_PATH="${1:-$ROOT_DIR/Leaf Vocabulary.app}"
 SPEECH_RUNTIMES="$APP_PATH/Contents/Resources/SpeechRuntimes"
 PIPER_RUNTIME_DIR="$SPEECH_RUNTIMES/piper-tts-runtime"
 PIPER_BIN="$PIPER_RUNTIME_DIR/piper/piper"

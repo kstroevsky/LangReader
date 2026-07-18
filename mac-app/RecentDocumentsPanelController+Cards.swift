@@ -211,7 +211,7 @@ extension RecentDocumentsPanelController {
             return nil
         }
         return directory
-            .appendingPathComponent("LeafReader", isDirectory: true)
+            .appendingPathComponent(AppIdentity.applicationSupportDirectoryName, isDirectory: true)
             .appendingPathComponent("ShelfCovers", isDirectory: true)
             .appendingPathComponent("\(cacheKey).png")
     }

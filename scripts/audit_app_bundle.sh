@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-APP_PATH="${1:-$ROOT_DIR/Leaf Reader.app}"
+APP_PATH="${1:-$ROOT_DIR/Leaf Vocabulary.app}"
 
 if [[ ! -d "$APP_PATH" ]]; then
   echo "App bundle not found: $APP_PATH" >&2
@@ -11,9 +11,9 @@ fi
 
 resource_path="$APP_PATH/Contents/Resources"
 runtime_root="$resource_path/SpeechRuntimes"
-executable="$APP_PATH/Contents/MacOS/Leaf Reader"
+executable="$APP_PATH/Contents/MacOS/Leaf Vocabulary"
 
-echo "Leaf Reader bundle audit"
+echo "Leaf Vocabulary bundle audit"
 echo "App: $APP_PATH"
 if [[ -x "$executable" ]]; then
   echo "Architectures: $(lipo -archs "$executable" 2>/dev/null || echo unknown)"

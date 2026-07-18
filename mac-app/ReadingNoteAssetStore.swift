@@ -3,7 +3,7 @@ import Foundation
 enum ReadingNoteAssetStore {
     static func defaultDirectoryURL() -> URL? {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
-            .appendingPathComponent("LeafReader", isDirectory: true)
+            .appendingPathComponent(AppIdentity.applicationSupportDirectoryName, isDirectory: true)
             .appendingPathComponent("ReadingNoteAssets", isDirectory: true)
     }
 

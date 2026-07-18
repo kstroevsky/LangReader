@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Leaf Reader</string>
+	<string>Leaf Vocabulary</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -24,18 +24,18 @@
 		</dict>
 	</array>
 	<key>CFBundleExecutable</key>
-	<string>Leaf Reader</string>
+	<string>Leaf Vocabulary</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.linlu.leafreader</string>
+	<string>dev.wordslist.leafvocabulary</string>
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>en</string>
 		<string>zh_CN</string>
 	</array>
 	<key>CFBundleName</key>
-	<string>Leaf Reader</string>
+	<string>Leaf Vocabulary</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -54,10 +54,6 @@
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>SUEnableAutomaticChecks</key>
-	<true/>
-	<key>SUFeedURL</key>
-	<string>https://dowellhz.github.io/LeafReader/appcast.xml</string>
-	<key>SUPublicEDKey</key>
-	<string>WxXNtAF6ZaqVPUux2Zqcmswgu4LPdhoA1Lb0fEfzckI=</string>
+	<false/>
 </dict>
 </plist>

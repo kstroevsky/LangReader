@@ -27,7 +27,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
         loadPendingOpenFilesIfNeeded()
         LaunchPerformanceTracker.shared.finish()
-        startUpdaterAfterInitialWindowDisplay()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -68,26 +67,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func startUpdaterAfterInitialWindowDisplay() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
-            self?.startUpdaterIfNeeded()
-        }
+        // Leaf Vocabulary is an isolated fork and must never consult Leaf
+        // Reader's upstream appcast.
     }
 
     @discardableResult
     func startUpdaterIfNeeded() -> SPUStandardUpdaterController? {
-        if let updaterController {
-            return updaterController
-        }
-
-        let controller = SPUStandardUpdaterController(
-            startingUpdater: true,
-            updaterDelegate: self,
-            userDriverDelegate: nil
-        )
-        updaterController = controller
-        refreshMainMenu()
-        LaunchPerformanceTracker.shared.mark("sparkle")
-        return controller
+        nil
     }
 
 }

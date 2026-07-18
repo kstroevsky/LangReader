@@ -166,7 +166,7 @@ extension ReaderWindowController {
     private func resetEmptyDocumentChrome() {
         aiPanel.loadLinkedWordBubbles([])
         aiPanel.clearSelectedText()
-        titleLabel.stringValue = "Leaf Reader"
+        titleLabel.stringValue = AppIdentity.displayName
         coverImageView.image = nil
         coverImageView.isHidden = true
         pageLayoutButton.isHidden = true
