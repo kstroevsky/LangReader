@@ -67,7 +67,7 @@ enum ECDICTLogicTests {
             isDictionaryInstalled: { true }
         )
         let missing = missingProvider.answer(for: AnswerProviderRequest(text: "Word", context: "", linkID: nil))
-        try expect(missing?.answer.contains("word") == true, "dictionary provider should explain installed dictionary misses")
+        try expectEqual(missing, nil, "dictionary misses should fall through to the German dictionary or configured model")
 
         let suffix = VocabularyTagFormatter.suffix(for: "cet4 gre")
         try expectEqual(suffix, "\n\n`CET4` `GRE`", "dictionary tag suffix should render markdown tags")
