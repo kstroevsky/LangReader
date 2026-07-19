@@ -2,15 +2,15 @@ import AVFoundation
 import Foundation
 
 enum SpeechUtteranceFactory {
-    static func utterance(for text: String) -> AVSpeechUtterance {
+    static func utterance(for text: String, languageCode: String? = nil) -> AVSpeechUtterance {
         let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = voice(for: text)
+        utterance.voice = voice(for: text, languageCode: languageCode)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.9
         return utterance
     }
 
-    private static func voice(for text: String) -> AVSpeechSynthesisVoice? {
-        for language in preferredLanguages(for: text) {
+    private static func voice(for text: String, languageCode: String?) -> AVSpeechSynthesisVoice? {
+        for language in preferredLanguages(for: text, languageCode: languageCode) {
             if let voice = AVSpeechSynthesisVoice(language: language) {
                 return voice
             }
@@ -21,21 +21,14 @@ enum SpeechUtteranceFactory {
         return AVSpeechSynthesisVoice(language: "en-US")
     }
 
-    private static func preferredLanguages(for text: String) -> [String] {
-        if containsChinese(text) {
+    private static func preferredLanguages(for text: String, languageCode: String?) -> [String] {
+        let resolvedLanguage = languageCode ?? SpeechTextPolicy.systemSpeechLanguageCode(for: text)
+        if resolvedLanguage.hasPrefix("zh") {
             return ["zh-CN", "zh-Hans", "zh-TW", "zh-Hant", "zh-HK"]
         }
-        return ["en-US"]
-    }
-
-    private static func containsChinese(_ text: String) -> Bool {
-        text.unicodeScalars.contains { scalar in
-            switch scalar.value {
-            case 0x3400...0x4DBF, 0x4E00...0x9FFF, 0xF900...0xFAFF, 0x20000...0x2A6DF:
-                return true
-            default:
-                return false
-            }
+        if resolvedLanguage.hasPrefix("de") {
+            return ["de-DE", "de-AT", "de-CH", "de"]
         }
+        return ["en-US"]
     }
 }

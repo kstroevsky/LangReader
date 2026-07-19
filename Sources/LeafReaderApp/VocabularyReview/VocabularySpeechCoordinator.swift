@@ -3,6 +3,7 @@ import Cocoa
 
 protocol VocabularySpeechCoordinatorOwner: AnyObject {
     var shouldResumeReadAloudAfterVocabularySpeech: Bool { get }
+    var vocabularySpeechLanguageCode: String? { get }
 
     func prepareForVocabularySpeechStart()
     func pauseReadAloudForVocabularySpeech()
@@ -45,7 +46,12 @@ final class VocabularySpeechCoordinator: NSObject, AVSpeechSynthesizerDelegate {
 
         selectionSpeechCompletion = nil
         for text in playableTexts {
-            synthesizer.speak(SpeechUtteranceFactory.utterance(for: text))
+            synthesizer.speak(
+                SpeechUtteranceFactory.utterance(
+                    for: text,
+                    languageCode: preferredLanguageCode(for: text)
+                )
+            )
         }
     }
 
@@ -69,11 +75,14 @@ final class VocabularySpeechCoordinator: NSObject, AVSpeechSynthesizerDelegate {
         _ text: String,
         options: SpeechPlaybackCoordinator.SynthesisOptions
     ) {
+        let languageCode = preferredLanguageCode(for: text)
         // Short selections stay on AVSpeechSynthesizer so they can interrupt read-aloud cheaply.
-        // Longer vocabulary/context speech uses the cached local TTS path when available.
-        if VocabularyTextPolicy.shouldUseSystemTTSForShortSelection(text) {
+        // Longer German vocabulary/context speech also uses macOS because the bundled
+        // local engines currently provide English and Chinese voices only.
+        if VocabularyTextPolicy.shouldUseSystemTTSForShortSelection(text)
+            || languageCode?.hasPrefix("de") == true {
             selectionSpeechCompletion = nil
-            synthesizer.speak(SpeechUtteranceFactory.utterance(for: text))
+            synthesizer.speak(SpeechUtteranceFactory.utterance(for: text, languageCode: languageCode))
             return
         }
 
@@ -89,7 +98,7 @@ final class VocabularySpeechCoordinator: NSObject, AVSpeechSynthesizerDelegate {
                     return
                 }
                 DispatchQueue.main.async {
-                    self.speakWithAppleTTS(text) { [weak self] in
+                    self.speakWithAppleTTS(text, languageCode: languageCode) { [weak self] in
                         self?.owner?.resumeReadAloudAfterVocabularySpeech(shouldResume: shouldResumeReadAloud)
                     }
                 }
@@ -103,19 +112,31 @@ final class VocabularySpeechCoordinator: NSObject, AVSpeechSynthesizerDelegate {
 
         SpeechPlaybackCoordinator.shared.speakCachedVocabularyText(text, options: options) { [weak self] didUseLocalTTS in
             guard let self else { return }
-            guard !didUseLocalTTS else {
-                self.clearSelectionForSpeechStartIfNeeded()
-                return
-            }
-            self.synthesizer.speak(SpeechUtteranceFactory.utterance(for: text))
+                guard !didUseLocalTTS else {
+                    self.clearSelectionForSpeechStartIfNeeded()
+                    return
+                }
+            self.synthesizer.speak(SpeechUtteranceFactory.utterance(for: text, languageCode: languageCode))
         } finished: {
         }
     }
 
-    private func speakWithAppleTTS(_ text: String, finished: @escaping () -> Void) {
+    private func speakWithAppleTTS(
+        _ text: String,
+        languageCode: String?,
+        finished: @escaping () -> Void
+    ) {
         selectionSpeechCompletion = finished
         synthesizer.stopSpeaking(at: AVSpeechBoundary.immediate)
-        synthesizer.speak(SpeechUtteranceFactory.utterance(for: text))
+        synthesizer.speak(SpeechUtteranceFactory.utterance(for: text, languageCode: languageCode))
+    }
+
+    private func preferredLanguageCode(for text: String) -> String? {
+        let selectedTextLanguage = SpeechTextPolicy.systemSpeechLanguageCode(for: text)
+        if selectedTextLanguage != "en-US" {
+            return selectedTextLanguage
+        }
+        return owner?.vocabularySpeechLanguageCode ?? selectedTextLanguage
     }
 
     private func clearSelectionForSpeechStartIfNeeded() {

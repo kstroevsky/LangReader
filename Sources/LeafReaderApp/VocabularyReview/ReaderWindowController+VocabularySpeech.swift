@@ -1,6 +1,27 @@
 import Cocoa
 
 extension ReaderWindowController {
+    var vocabularySpeechLanguageCode: String? {
+        let selectedText = selectedReaderTextForToolbar()
+        if !selectedText.isEmpty {
+            let selectedLanguage = SpeechTextPolicy.systemSpeechLanguageCode(for: selectedText)
+            if selectedLanguage != "en-US" {
+                return selectedLanguage
+            }
+        }
+
+        let documentText: String
+        if currentDocumentKind == .pdf {
+            documentText = pdfView.currentPage?.string ?? ""
+        } else {
+            documentText = currentWebSelectedText.isEmpty ? currentWebPlainText : currentWebSelectedText
+        }
+        guard !documentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+        return SpeechTextPolicy.systemSpeechLanguageCode(for: documentText)
+    }
+
     func vocabularySpeakerWord(_ text: String) -> String? {
         VocabularyTextPolicy.speakableWord(text)
     }

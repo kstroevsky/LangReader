@@ -535,6 +535,21 @@ private func testSpeechTextPolicyEnglishCandidate() throws {
     )
     try expect(SpeechTextPolicy.isLocalTTSCandidate("这是一段中文。"), "Chinese text should be accepted for local read aloud")
     try expect(!SpeechTextPolicy.isEnglishCandidate("12345"), "text without letters should be rejected")
+    try expectEqual(
+        SpeechTextPolicy.systemSpeechLanguageCode(for: "übersende"),
+        "de-DE",
+        "German umlauts should select the German system voice"
+    )
+    try expectEqual(
+        SpeechTextPolicy.systemSpeechLanguageCode(for: "Bewerbungsunterlagen"),
+        "de-DE",
+        "German compounds should select the German system voice"
+    )
+    try expectEqual(
+        SpeechTextPolicy.systemSpeechLanguageCode(for: "A short English sentence."),
+        "en-US",
+        "English text should retain the English system voice"
+    )
 }
 
 private func testSpeechTextPolicySegments() throws {

@@ -1,4 +1,5 @@
 import Foundation
+import NaturalLanguage
 
 extension SpeechTextPolicy {
     static func isEnglishCandidate(_ text: String) -> Bool {
@@ -35,6 +36,41 @@ extension SpeechTextPolicy {
         guard counts.cjk >= 40 else { return false }
         guard counts.latin > 0 else { return true }
         return counts.cjk * 2 >= counts.latin
+    }
+
+    /// Returns the language used by macOS's built-in voice for short vocabulary
+    /// playback. Local runtimes currently cover English and Chinese; German is
+    /// deliberately routed to the system voice, which has native German voices.
+    static func systemSpeechLanguageCode(for text: String) -> String {
+        if prefersChineseTTS(text) {
+            return "zh-CN"
+        }
+        if prefersGermanTTS(text) {
+            return "de-DE"
+        }
+        return "en-US"
+    }
+
+    static func prefersGermanTTS(_ text: String) -> Bool {
+        let value = normalizedCommonInput(text)
+        guard !value.isEmpty,
+              !prefersChineseTTS(value),
+              value.range(of: #"\p{L}"#, options: .regularExpression) != nil else {
+            return false
+        }
+
+        // These are unambiguous German orthographic signals, including the
+        // common vocabulary forms the reader was previously pronouncing in English.
+        if value.range(of: #"[äöüÄÖÜßẞ]"#, options: .regularExpression) != nil {
+            return true
+        }
+
+        let recognizer = NLLanguageRecognizer()
+        recognizer.processString(value)
+        let hypotheses = recognizer.languageHypotheses(withMaximum: 3)
+        let germanConfidence = hypotheses[.german] ?? 0
+        let englishConfidence = hypotheses[.english] ?? 0
+        return germanConfidence >= 0.5 && germanConfidence > englishConfidence
     }
 
     static func isLocalTTSCandidate(_ text: String) -> Bool {
