@@ -702,6 +702,8 @@ private let tests: [(String, () throws -> Void)] = [
     ("Vocabulary audio cache key", SpeechRuntimeBackendTests.testVocabularyAudioCacheKeySeparatesSpeechSettings),
     ("Speech synthesis error messages", SpeechRuntimeLogicTests.testSpeechSynthesisErrorMessagesAreActionable),
     ("Speech runtime inference failure store", SpeechRuntimeLogicTests.testSpeechRuntimeInferenceFailureStore),
+    ("Speech synthesis runtime mapping", SpeechSynthesisRuntimeTests.testRuntimeMapping),
+    ("Speech synthesis runtime selection", SpeechSynthesisRuntimeTests.testSelectionPolicy),
     ("Speech runtime release asset URLs", SpeechRuntimeDownloadTests.testSpeechRuntimeDownloadURLsUseReleaseAssets),
     ("Speech runtime local runtime descriptors", SpeechRuntimeDownloadTests.testSpeechRuntimeLocalRuntimeDescriptors),
     ("Speech runtime local runtime download plans", SpeechRuntimeDownloadTests.testSpeechRuntimeLocalRuntimeDownloadPlans),

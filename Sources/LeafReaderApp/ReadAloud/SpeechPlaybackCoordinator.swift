@@ -9,10 +9,8 @@ final class SpeechPlaybackCoordinator: NSObject, AVAudioPlayerDelegate {
     static let maxRecentPlaybackWAVSegments = 2
 
     let queue = DispatchQueue(label: "LeafReader.SpeechPlayback", qos: .userInitiated)
-    let kokoroBackend = KokoroTTSBackend()
-    let piperBackend = PiperTTSBackend()
-    let supertonicBackend = SupertonicCoreMLTTSBackend()
-    var activeBackend: PreferredBackend?
+    let runtimeAdapters = SpeechRuntimeAdapters()
+    var activeRuntime: SpeechSynthesisRuntime?
     var currentPlayer: AVAudioPlayer?
     var currentSegment: PlaybackSegment?
     var pendingSegments: [PlaybackSegment] = []

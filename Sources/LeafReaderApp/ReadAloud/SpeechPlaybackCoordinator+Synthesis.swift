@@ -15,24 +15,15 @@ extension SpeechPlaybackCoordinator {
     }
 
     func shutdownRuntime(_ runtime: SpeechRuntimeResourceManager.Runtime) {
-        let targetBackend = PreferredBackend(runtime: runtime)
+        let targetRuntime = SpeechSynthesisRuntime(runtime: runtime)
         queue.async {
-            guard self.activeBackend != targetBackend else {
+            guard self.activeRuntime != targetRuntime else {
                 DispatchQueue.main.async {
                     self.shutdown()
                 }
                 return
             }
-            switch targetBackend {
-            case .kokoroCoreML:
-                self.kokoroBackend.stop()
-            case .piper:
-                self.piperBackend.stop()
-            case .supertonic:
-                self.supertonicBackend.stop()
-            case .none:
-                break
-            }
+            targetRuntime.stop(using: self.runtimeAdapters)
         }
     }
 
@@ -40,9 +31,9 @@ extension SpeechPlaybackCoordinator {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         queue.async {
-            self.kokoroBackend.stopIfLanguageDiffers(from: trimmed)
-            guard Self.preferredBackend(for: trimmed) == .kokoroCoreML else { return }
-            self.kokoroBackend.prewarmIfNeeded(text: trimmed)
+            self.runtimeAdapters.kokoro.stopIfLanguageDiffers(from: trimmed)
+            guard SpeechSynthesisRuntime.selected(for: trimmed) == .kokoroCoreML else { return }
+            self.runtimeAdapters.kokoro.prewarmIfNeeded(text: trimmed)
         }
     }
 
@@ -108,37 +99,18 @@ extension SpeechPlaybackCoordinator {
         options: SynthesisOptions = .default,
         recordFailure: Bool = true
     ) -> Result<Void, SpeechSynthesisError> {
-        let backend = Self.preferredBackend(for: text, languageHint: languageHint)
-        prepareForBackend(backend)
-        let result: Result<Void, SpeechSynthesisError>
-        let runtime = backend.runtime
-        switch backend {
-        case .kokoroCoreML:
-            result = kokoroBackend.synthesizeResult(
-                text: text,
-                outputURL: outputURL,
-                voiceID: voiceID,
-                languageHint: languageHint,
-                speed: options.speedMultiplier
-            )
-        case .piper:
-            result = piperBackend.synthesizeResult(
-                text: text,
-                outputURL: outputURL,
-                voiceID: voiceID,
-                lengthScale: options.piperLengthScale
-            )
-        case .supertonic:
-            result = supertonicBackend.synthesizeResult(
-                text: text,
-                outputURL: outputURL,
-                voiceID: voiceID,
-                languageHint: languageHint,
-                speed: options.speedMultiplier
-            )
-        case .none:
-            result = .failure(.unsupportedLanguage(AppText.localized("当前朗读引擎", "Selected speech runtime")))
-        }
+        let synthesisRuntime = SpeechSynthesisRuntime.selected(for: text, languageHint: languageHint)
+        prepareForRuntime(synthesisRuntime)
+        let runtime = synthesisRuntime.runtime
+        let request = SpeechSynthesisRequest(
+            text: text,
+            outputURL: outputURL,
+            voiceID: voiceID,
+            languageHint: languageHint,
+            speedMultiplier: options.speedMultiplier,
+            piperLengthScale: options.piperLengthScale
+        )
+        let result = synthesisRuntime.synthesize(request, using: runtimeAdapters)
         switch result {
         case .success:
             if let runtime {
@@ -166,8 +138,8 @@ extension SpeechPlaybackCoordinator {
         languageHint: AISettingsStore.SpeechLanguageHint?,
         context: String = "readAloud"
     ) {
-        let backend = Self.preferredBackend(for: text, languageHint: languageHint)
-        let runtime = backend.runtime
+        let synthesisRuntime = SpeechSynthesisRuntime.selected(for: text, languageHint: languageHint)
+        let runtime = synthesisRuntime.runtime
         let effectiveVoiceID = runtime.map {
             voiceID ?? AISettingsStore.selectedSpeechVoiceID(runtimeID: $0.id)
         }
@@ -193,39 +165,15 @@ extension SpeechPlaybackCoordinator {
         }
     }
 
-    static func preferredBackend(
-        for text: String,
-        languageHint: AISettingsStore.SpeechLanguageHint?
-    ) -> PreferredBackend {
-        if languageHint == .chinese, SpeechRuntimeResourceManager.isRunnable(.kokoro) {
-            return .kokoroCoreML
-        }
-        return preferredBackend(for: text)
-    }
-
-    func prepareForBackend(_ backend: PreferredBackend) {
-        guard activeBackend != backend else { return }
-        switch backend {
-        case .kokoroCoreML:
-            piperBackend.stop()
-            supertonicBackend.stop()
-        case .piper:
-            kokoroBackend.stop()
-            supertonicBackend.stop()
-        case .supertonic:
-            kokoroBackend.stop()
-            piperBackend.stop()
-        case .none:
-            stopRuntimeProcesses()
-        }
-        activeBackend = backend
+    func prepareForRuntime(_ runtime: SpeechSynthesisRuntime) {
+        guard activeRuntime != runtime else { return }
+        runtime.stopOtherRuntimes(using: runtimeAdapters)
+        activeRuntime = runtime
     }
 
     func forceTerminateRuntimeProcesses() {
-        kokoroBackend.stop()
-        piperBackend.stop()
-        supertonicBackend.stop()
-        activeBackend = nil
+        runtimeAdapters.stopAll()
+        activeRuntime = nil
     }
 
     private func logSynthesisFailure(
@@ -245,10 +193,4 @@ extension SpeechPlaybackCoordinator {
         )
     }
 
-    private func stopRuntimeProcesses() {
-        kokoroBackend.stop()
-        piperBackend.stop()
-        supertonicBackend.stop()
-        activeBackend = nil
-    }
 }

@@ -115,8 +115,8 @@ extension SpeechPlaybackCoordinator {
         }
 
         let segment = SpeechTextPolicy.segments(for: value).joined(separator: " ")
-        let backend = Self.preferredBackend(for: segment)
-        guard let runtime = backend.runtime else {
+        let synthesisRuntime = SpeechSynthesisRuntime.selected(for: segment)
+        guard let runtime = synthesisRuntime.runtime else {
             completion(false)
             return
         }
@@ -209,9 +209,9 @@ extension SpeechPlaybackCoordinator {
         guard terminateKokoroWorker else { return }
         queue.async { [weak self] in
             guard let self else { return }
-            self.kokoroBackend.stop()
-            if self.activeBackend == .kokoroCoreML {
-                self.activeBackend = nil
+            self.runtimeAdapters.kokoro.stop()
+            if self.activeRuntime == .kokoroCoreML {
+                self.activeRuntime = nil
             }
         }
     }

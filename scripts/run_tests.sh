@@ -42,7 +42,6 @@ excluded_logic_app_source() {
     DocumentQuestionPromptRequest.swift|\
     DocumentPresentationState.swift|\
     EmbeddingClient.swift|\
-    KokoroTTSBackend.swift|\
     LeafAlertStyle.swift|\
     LLMAnswerProvider.swift|\
     ModalOverlayManager.swift|\
@@ -156,6 +155,7 @@ LOGIC_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/AIConversation/AISettingsTestSupport.swift"
   "$TEST_SOURCE_ROOT/AIConversation/AISettingsLogicTests.swift"
   "$TEST_SOURCE_ROOT/ReadAloud/SpeechRuntimeLogicTests.swift"
+  "$TEST_SOURCE_ROOT/ReadAloud/SpeechSynthesisRuntimeTests.swift"
   "$TEST_SOURCE_ROOT/ReadAloud/SpeechRuntimeBackendTests.swift"
   "$TEST_SOURCE_ROOT/ReadAloud/SpeechRuntimeDownloadTests.swift"
   "$TEST_SOURCE_ROOT/ReadAloud/SpeechRuntimeManifestTests.swift"
