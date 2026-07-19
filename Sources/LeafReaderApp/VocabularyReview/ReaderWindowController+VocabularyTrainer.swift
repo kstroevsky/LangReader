@@ -37,7 +37,11 @@ extension ReaderWindowController {
             pdfRecords: storedWordRecords,
             webRecords: storedWebWordRecords,
             pdfContext: { [weak self] in
-                VocabularyContextProvider.pdfContext(for: $0, document: self?.pdfView.document)
+                let context = VocabularyContextProvider.pdfContext(
+                    for: $0,
+                    document: self?.pdfView.document
+                )
+                return self?.normalizedPDFVocabularyContext(context) ?? context
             }
         )
     }

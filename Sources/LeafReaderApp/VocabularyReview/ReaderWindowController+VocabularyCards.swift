@@ -143,7 +143,7 @@ extension ReaderWindowController {
                 occurrenceStack.spacing = 6
                 occurrenceStack.translatesAutoresizingMaskIntoConstraints = false
                 record.occurrences
-                    .map { vocabularyOccurrenceRow($0, theme: theme) }
+                    .map { vocabularyOccurrenceRow($0, word: word, theme: theme) }
                     .forEach(occurrenceStack.addArrangedSubview)
                 contentStack.addArrangedSubview(occurrenceStack)
                 occurrenceStack.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
@@ -167,7 +167,7 @@ extension ReaderWindowController {
         return card
     }
 
-    private func vocabularyOccurrenceRow(_ occurrence: VocabularyOccurrence, theme: ReaderTheme) -> NSView {
+    private func vocabularyOccurrenceRow(_ occurrence: VocabularyOccurrence, word: String, theme: ReaderTheme) -> NSView {
         let row = NSView()
         row.wantsLayer = true
         row.layer?.cornerRadius = 7
@@ -187,10 +187,15 @@ extension ReaderWindowController {
             ? occurrence.context
             : AppText.localized("没有可用的上下文", "No context available")
         let contextLabel = NSTextField(wrappingLabelWithString: context)
-        contextLabel.font = NSFont.systemFont(ofSize: 12)
-        contextLabel.textColor = vocabularyBodyTextColor(for: theme)
+        contextLabel.attributedStringValue = vocabularyExampleAttributedString(
+            context,
+            word: word,
+            fontSize: 12,
+            textColor: vocabularyBodyTextColor(for: theme)
+        )
         contextLabel.maximumNumberOfLines = 3
         contextLabel.lineBreakMode = .byWordWrapping
+        contextLabel.allowsEditingTextAttributes = true
         contextLabel.isSelectable = true
         contextLabel.translatesAutoresizingMaskIntoConstraints = false
 

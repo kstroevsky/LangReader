@@ -157,6 +157,7 @@ extension ReaderWindowController {
         storedWordRecords.append(contentsOf: newRecords)
         newRecords.forEach(addStoredWordAnnotation)
         refreshVocabularyPanelAfterLocalSave()
+        backfillDictionaryAnswerAsync(vocabularyID: selectedRecord.vocabularyID, word: word)
         selectionActionToolbar.showSaveResult(found: foundKeys.count, inserted: newRecords.count)
     }
 
@@ -185,7 +186,9 @@ extension ReaderWindowController {
             selectedText: selectedText,
             sourceText: contextSource,
             radius: 24
-        ).map(ReaderAIContextBuilder.trimLeadingContextQuotes) ?? ""
+        ).map {
+            normalizedPDFVocabularyContext(ReaderAIContextBuilder.trimLeadingContextQuotes($0))
+        } ?? ""
         let createdAt = Date()
         return StoredPDFWordRecord(
             id: UUID().uuidString,
@@ -203,7 +206,7 @@ extension ReaderWindowController {
         )
     }
 
-    private func refreshVocabularyPanelAfterLocalSave() {
+    func refreshVocabularyPanelAfterLocalSave() {
         vocabularyLibraryWindowController.scheduleReload()
         guard vocabularyPanelController.panel != nil else { return }
         currentVocabularyExportRecords = makeCurrentVocabularyExportRecords()

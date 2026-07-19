@@ -61,6 +61,33 @@ enum VocabularyTextPolicy {
         return hyphenated
     }
 
+    static func normalizedPDFContextText(
+        _ text: String,
+        isKnownHyphenatedWord: (String) -> Bool = { _ in false },
+        isKnownWord: (String) -> Bool = { _ in false }
+    ) -> String {
+        let value = normalized(text)
+        guard !value.isEmpty,
+              let regex = try? NSRegularExpression(
+                pattern: #"\p{L}[\p{L}\p{M}]*[‐‑-]\s+\p{L}[\p{L}\p{M}]*"#
+              ) else {
+            return value
+        }
+
+        let result = NSMutableString(string: value)
+        let matches = regex.matches(in: value, range: NSRange(location: 0, length: result.length))
+        for match in matches.reversed() {
+            let rawWord = result.substring(with: match.range)
+            let replacement = normalizedPDFVocabularyText(
+                rawWord,
+                isKnownHyphenatedWord: isKnownHyphenatedWord,
+                isKnownWord: isKnownWord
+            )
+            result.replaceCharacters(in: match.range, with: replacement)
+        }
+        return collapsedWhitespace(result as String)
+    }
+
     static func isSingleEnglishWord(_ text: String) -> Bool {
         let value = normalizedVocabularyText(text)
         guard value.count <= maxSingleWordLength else { return false }

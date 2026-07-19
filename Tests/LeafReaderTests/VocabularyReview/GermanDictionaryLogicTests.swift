@@ -39,5 +39,6 @@ enum GermanDictionaryLogicTests {
         )
         try expect(entry.markdown.contains("Grundform"), "German dictionary answer should explain lemma resolution")
         try expect(entry.markdown.contains("Deutsch Wiktionary"), "German dictionary answer should include source attribution")
+        try expectEqual(entry.metadata.tags, "Substantiv", "German dictionary answers should preserve part-of-speech metadata")
     }
 }

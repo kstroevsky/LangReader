@@ -21,15 +21,26 @@ extension ReaderWindowController {
             let key = record.vocabularyID ?? VocabularyTextPolicy.canonicalVocabularyKey(record.word)
             repairedWords[key] = candidate
         }
-        guard !repairedWords.isEmpty else { return records }
 
+        var didRepair = false
         let repairedRecords = records.map { record -> StoredPDFWordRecord in
-            let key = record.vocabularyID ?? VocabularyTextPolicy.canonicalVocabularyKey(record.word)
-            guard let repairedWord = repairedWords[key] else { return record }
             var repairedRecord = record
-            repairedRecord.word = repairedWord
+            let key = record.vocabularyID ?? VocabularyTextPolicy.canonicalVocabularyKey(record.word)
+            if let repairedWord = repairedWords[key], repairedWord != repairedRecord.word {
+                repairedRecord.word = repairedWord
+                didRepair = true
+            }
+            if let context = repairedRecord.context {
+                let repairedContext = normalizedPDFVocabularyContext(context)
+                if repairedContext != context {
+                    repairedRecord.context = repairedContext
+                    didRepair = true
+                }
+            }
             return repairedRecord
         }
+        guard didRepair else { return records }
+
         store.save(repairedRecords)
         return repairedRecords
     }

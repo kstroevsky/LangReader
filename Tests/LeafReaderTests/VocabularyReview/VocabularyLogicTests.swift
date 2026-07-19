@@ -147,6 +147,23 @@ enum VocabularyLogicTests {
             ) == nil,
             "an inline genuine hyphen should not be marked as a legacy layout break"
         )
+        try expectEqual(
+            VocabularyTextPolicy.normalizedPDFContextText(
+                "Eine feh- lerhafte E- Mail wäre problematisch.",
+                isKnownHyphenatedWord: { $0 == "E-Mail" },
+                isKnownWord: { $0 == "fehlerhafte" }
+            ),
+            "Eine fehlerhafte E-Mail wäre problematisch.",
+            "occurrence contexts should remove layout hyphens while retaining genuine hyphens"
+        )
+        try expectEqual(
+            VocabularyTextPolicy.normalizedPDFContextText(
+                "Hinweis— bitte erneut prüfen.",
+                isKnownWord: { _ in false }
+            ),
+            "Hinweis— bitte erneut prüfen.",
+            "occurrence context cleanup should not rewrite punctuation dashes"
+        )
         try expectEqual(VocabularyTextPolicy.normalizedPDFVocabularyText("Nine-\ntenths"), "Nine-tenths", "PDF line-broken true hyphenated words should keep the hyphen")
         try expectEqual(
             VocabularyTextPolicy.normalizedPDFVocabularyText(

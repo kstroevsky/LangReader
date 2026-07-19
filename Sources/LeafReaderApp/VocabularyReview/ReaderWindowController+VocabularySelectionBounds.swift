@@ -159,6 +159,19 @@ extension ReaderWindowController {
         )
     }
 
+    func normalizedPDFVocabularyContext(_ text: String) -> String {
+        VocabularyTextPolicy.normalizedPDFContextText(
+            text,
+            isKnownHyphenatedWord: hasLocalSpellingEntry,
+            isKnownWord: { candidate in
+                let metadata = VocabularyDictionaryMetadataService.metadata(for: candidate)
+                return metadata.frequency != nil
+                    || metadata.tags != nil
+                    || hasLocalSpellingEntry(candidate)
+            }
+        )
+    }
+
     func hasLocalSpellingEntry(_ word: String) -> Bool {
         let candidate = VocabularyTextPolicy.normalizedVocabularyText(word)
         guard VocabularyTextPolicy.isSingleEnglishWord(candidate) else { return false }

@@ -6,6 +6,10 @@ struct GermanDictionaryEntry: Equatable {
     let partOfSpeech: String?
     let meanings: [String]
 
+    var metadata: VocabularyDictionaryMetadata {
+        VocabularyDictionaryMetadata(tags: partOfSpeech, frequency: nil)
+    }
+
     var sourceURL: URL? {
         var components = URLComponents(string: "https://de.wiktionary.org/wiki/")
         components?.path = "/wiki/" + lemma.replacingOccurrences(of: " ", with: "_")

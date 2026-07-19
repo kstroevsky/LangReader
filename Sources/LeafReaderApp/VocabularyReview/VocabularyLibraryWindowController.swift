@@ -484,7 +484,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         detailStack.addArrangedSubview(occurrencesTitle)
 
         for occurrence in occurrences {
-            let view = occurrenceView(occurrence, theme: theme)
+            let view = occurrenceView(occurrence, word: record.word, theme: theme)
             detailStack.addArrangedSubview(view)
             view.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
         }
@@ -502,7 +502,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         label.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
     }
 
-    private func occurrenceView(_ occurrence: VocabularyLibraryOccurrence, theme: ReaderTheme) -> NSView {
+    private func occurrenceView(_ occurrence: VocabularyLibraryOccurrence, word: String, theme: ReaderTheme) -> NSView {
         let card = NSView()
         card.wantsLayer = true
         card.layer?.cornerRadius = 10
@@ -540,9 +540,22 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         let context = NSTextField(wrappingLabelWithString: contextText.isEmpty
             ? AppText.localized("没有可用的上下文", "No context available")
             : contextText)
-        context.font = NSFont.systemFont(ofSize: 14)
-        context.textColor = theme.vocabularyBodyTextColor
+        if !contextText.isEmpty {
+            context.attributedStringValue = owner?.vocabularyExampleAttributedString(
+                contextText,
+                word: word,
+                fontSize: 14,
+                textColor: theme.vocabularyBodyTextColor
+            ) ?? NSAttributedString(
+                string: contextText,
+                attributes: [
+                    .font: NSFont.systemFont(ofSize: 14),
+                    .foregroundColor: theme.vocabularyBodyTextColor
+                ]
+            )
+        }
         context.maximumNumberOfLines = 0
+        context.allowsEditingTextAttributes = true
         context.isSelectable = true
         context.translatesAutoresizingMaskIntoConstraints = false
 
