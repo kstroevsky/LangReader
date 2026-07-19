@@ -450,6 +450,16 @@ enum VocabularyLogicTests {
         try expectEqual(offlineWord.contextAction, .addWord, "offline word selections should keep the word action")
         try expectEqual(offlineWord.displayMode, .offlineWord, "offline word selections should show only word/speak/copy actions")
         try expect(offlineWord.showsVocabularySaveAction, "PDF vocabulary selections should expose the local save action without a model")
+        try expect(!offlineWord.isVocabularySelectionSaved, "a newly selected PDF vocabulary word should show Save")
+
+        let savedWord = SelectionToolbarConfiguration.make(
+            isVocabularySelection: true,
+            queryCapability: .offlineDictionary,
+            shouldShowSpeakAction: false,
+            isPDFSelection: true,
+            isVocabularySelectionSaved: true
+        )
+        try expect(savedWord.isVocabularySelectionSaved, "a saved PDF vocabulary word should switch the toolbar to Remove")
 
         let needsKeyText = SelectionToolbarConfiguration.make(
             isVocabularySelection: false,

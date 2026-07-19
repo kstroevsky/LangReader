@@ -22,8 +22,16 @@ extension ReaderWindowController {
         }
         let fallback = selectedReaderTextForToolbar()
         let word = vocabularyTextForCurrentPDFSelection(selection: selection, fallback: fallback)
-        guard VocabularyTextPolicy.isVocabularySelection(word),
-              let selectedRecord = storedPDFVocabularyRecord(selection: selection, word: word) else {
+        guard VocabularyTextPolicy.isVocabularySelection(word) else {
+            NSSound.beep()
+            return
+        }
+
+        if removeCurrentPDFVocabularySelectionIfSaved(word) {
+            return
+        }
+
+        guard let selectedRecord = storedPDFVocabularyRecord(selection: selection, word: word) else {
             NSSound.beep()
             return
         }
@@ -206,5 +214,25 @@ extension ReaderWindowController {
         return storedWordRecords.first {
             VocabularyTextPolicy.canonicalVocabularyKey($0.word) == key
         }?.vocabularyID
+    }
+
+    func isPDFVocabularySelectionSaved(_ word: String) -> Bool {
+        let key = VocabularyTextPolicy.canonicalVocabularyKey(word)
+        return !key.isEmpty && storedWordRecords.contains {
+            VocabularyTextPolicy.canonicalVocabularyKey($0.word) == key
+        }
+    }
+
+    private func removeCurrentPDFVocabularySelectionIfSaved(_ word: String) -> Bool {
+        let key = VocabularyTextPolicy.canonicalVocabularyKey(word)
+        let ids = storedWordRecords.compactMap { record in
+            VocabularyTextPolicy.canonicalVocabularyKey(record.word) == key ? record.id : nil
+        }
+        guard !ids.isEmpty else { return false }
+
+        removeVocabularyRecords(ids: ids)
+        refreshVocabularyPanelAfterLocalSave()
+        selectionActionToolbar.showRemoveResult(removed: ids.count)
+        return true
     }
 }
