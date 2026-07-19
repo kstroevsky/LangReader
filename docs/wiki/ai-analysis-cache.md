@@ -33,10 +33,10 @@ Question
 
 ## Related Files
 
-- `mac-app/ReaderWindowController+Embedding.swift`
-- `mac-app/ReaderWindowController+EmbeddingBackfill.swift`
-- `mac-app/ReaderWindowController+EmbeddingStatus.swift`
-- `mac-app/PDFDocumentAgentIndex.swift`
-- `mac-app/PDFEmbeddingStore.swift`
-- `mac-app/EmbeddingClient.swift`
-- `mac-app/EmbeddingActionPolicy.swift`
+- `Sources/LeafReaderApp/AIConversation/ReaderWindowController+Embedding.swift`
+- `Sources/LeafReaderApp/AIConversation/ReaderWindowController+EmbeddingBackfill.swift`
+- `Sources/LeafReaderApp/AIConversation/ReaderWindowController+EmbeddingStatus.swift`
+- `Sources/LeafReaderApp/AIConversation/PDFDocumentAgentIndex.swift`
+- `Sources/LeafReaderApp/AIConversation/PDFEmbeddingStore.swift`
+- `Sources/LeafReaderApp/Platform/Networking/EmbeddingClient.swift`
+- `Sources/LeafReaderApp/AIConversation/EmbeddingActionPolicy.swift`

@@ -87,6 +87,12 @@ check_version_status() {
   fi
 }
 
+check_retired_paths() {
+  if rg -n 'mac-app/|\./tests/run\.sh' "$WIKI_DIR" --glob '*.md' >&2; then
+    fail "wiki still references the retired flat source tree or test command"
+  fi
+}
+
 check_scripts() {
   bash -n "$ROOT_DIR/scripts/generate_code_wiki.sh"
   bash -n "$ROOT_DIR/scripts/generate_wiki_home.sh"
@@ -99,6 +105,7 @@ check_local_links
 check_sync_registration
 check_generated_files
 check_version_status
+check_retired_paths
 
 if [[ "$FAILURES" -ne 0 ]]; then
   echo "Wiki checks failed: $FAILURES issue(s)." >&2

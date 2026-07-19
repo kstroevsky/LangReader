@@ -81,9 +81,9 @@ pkgutil --check-signature release/pkg/LeafReader-<version>.pkg
 
 相关文件：
 
-- `mac-app/PDFReaderView.swift`
-- `mac-app/PDFPagingPolicy.swift`
-- `mac-app/ReaderWindowController+Navigation.swift`
+- `Sources/LeafReaderApp/DocumentReading/PDFReaderView.swift`
+- `Sources/LeafReaderApp/DocumentReading/PDFPagingPolicy.swift`
+- `Sources/LeafReaderApp/DocumentReading/ReaderWindowController+Navigation.swift`
 
 检查：
 
@@ -95,10 +95,10 @@ pkgutil --check-signature release/pkg/LeafReader-<version>.pkg
 
 相关文件：
 
-- `mac-app/ReaderWindowController+EmbeddingStatus.swift`
-- `mac-app/ReaderWindowController+EmbeddingActions.swift`
-- `mac-app/ReaderWindowController+Theme.swift`
-- `mac-app/PDFEmbeddingStore.swift`
+- `Sources/LeafReaderApp/AIConversation/ReaderWindowController+EmbeddingStatus.swift`
+- `Sources/LeafReaderApp/AIConversation/ReaderWindowController+EmbeddingActions.swift`
+- `Sources/LeafReaderApp/ReaderShell/ReaderWindowController+Theme.swift`
+- `Sources/LeafReaderApp/AIConversation/PDFEmbeddingStore.swift`
 
 检查：
 
@@ -123,20 +123,20 @@ pkgutil --check-signature release/pkg/LeafReader-<version>.pkg
 
 相关文件：
 
-- `mac-app/AIClient.swift`
-- `mac-app/AISettingsPanelController.swift`
-- `mac-app/ReaderWindowController+VocabularyActions.swift`
-- `mac-app/ReaderWindowController+VocabularyLookup.swift`
+- `Sources/LeafReaderApp/Platform/Networking/AIClient.swift`
+- `Sources/LeafReaderApp/Settings/AISettingsPanelController.swift`
+- `Sources/LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyCore.swift`
+- `Sources/LeafReaderApp/VocabularyReview/DictionaryLookupService.swift`
 
 ## 书籍或词汇记录看起来过期
 
 相关文件：
 
-- `mac-app/DocumentIdentity.swift`
-- `mac-app/WordRecordSQLiteStore.swift`
-- `mac-app/PDFEmbeddingStore.swift`
-- `mac-app/ReaderWindowController+VocabularyStorage.swift`
-- `mac-app/ReadingNoteStore.swift`
+- `Sources/LeafReaderApp/DocumentReading/DocumentIdentity.swift`
+- `Sources/LeafReaderApp/VocabularyReview/WordRecordSQLiteStore.swift`
+- `Sources/LeafReaderApp/AIConversation/PDFEmbeddingStore.swift`
+- `Sources/LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyStorage.swift`
+- `Sources/LeafReaderApp/ReadingNotes/ReadingNoteStore.swift`
 
 检查：
 

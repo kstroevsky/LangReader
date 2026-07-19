@@ -83,7 +83,7 @@ ReaderWindowController+ReadAloud
 ## 检查
 
 ```sh
-./tests/run.sh
+./scripts/run_tests.sh
 ./scripts/build_app.sh
 ./scripts/audit_app_bundle.sh
 ./scripts/check.sh --no-build
