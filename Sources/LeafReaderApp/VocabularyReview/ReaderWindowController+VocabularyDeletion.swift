@@ -65,6 +65,7 @@ extension ReaderWindowController {
 
         aiPanel.removeLinkedWordBubbles(ids: idsToRemove)
         saveCurrentAIConversationBeforeDocumentChange()
+        vocabularyLibraryWindowController.scheduleReload()
     }
 
     private func expandedVocabularyRecordIDs(for ids: Set<String>) -> Set<String> {

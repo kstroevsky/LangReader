@@ -222,6 +222,17 @@ run_swift_test /tmp/leafreader-vocabulary-record-provider-tests \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularyRecordProvider.swift" \
   -framework Cocoa
 
+run_swift_test /tmp/leafreader-vocabulary-library-record-provider-tests \
+  "$TEST_SOURCE_ROOT/VocabularyReview/VocabularyLibraryRecordProviderTests.swift" \
+  "$APP_SOURCE_ROOT/App/AppText.swift" \
+  "$APP_SOURCE_ROOT/DocumentReading/ReaderDocumentKind.swift" \
+  "$APP_SOURCE_ROOT/VocabularyReview/StoredPDFWordRect.swift" \
+  "$APP_SOURCE_ROOT/VocabularyReview/VocabularySRS.swift" \
+  "$APP_SOURCE_ROOT/VocabularyReview/VocabularyTextPolicy.swift" \
+  "$APP_SOURCE_ROOT/VocabularyReview/VocabularyExportRecord.swift" \
+  "$APP_SOURCE_ROOT/VocabularyReview/VocabularyLibraryModels.swift" \
+  -framework Cocoa
+
 run_swift_test /tmp/leafreader-logic-tests \
   "${LOGIC_APP_SOURCES[@]}" \
   "${LOGIC_TEST_SOURCES[@]}" \

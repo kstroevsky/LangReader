@@ -54,21 +54,6 @@ private final class DebouncedTask {
     }
 }
 
-private enum ScrollPageDirection: Equatable {
-    case previous
-    case next
-}
-
-private func pageDirectionAtEdge(deltaY: Double, isAtTop: Bool, isAtBottom: Bool) -> ScrollPageDirection? {
-    if isAtTop, deltaY > 0 {
-        return .previous
-    }
-    if isAtBottom, deltaY < 0 {
-        return .next
-    }
-    return nil
-}
-
 private func shouldApplyCapturedPageScroll(capturedPageIndex: Int, documentPageCount: Int) -> Bool {
     capturedPageIndex >= 0 && capturedPageIndex < documentPageCount
 }
@@ -93,30 +78,22 @@ private func testEmbeddingWarmupIdlePolicy() throws {
     try expectEqual(EmbeddingWarmupPolicy.warmupDelay, 18.0, "warmup delay should remain explicit")
 }
 
-private func testPageScrollDirection() throws {
-    try expectEqual(pageDirectionAtEdge(deltaY: 12, isAtTop: true, isAtBottom: false), .previous, "scrolling upward at page top should go previous")
-    try expectEqual(pageDirectionAtEdge(deltaY: -12, isAtTop: false, isAtBottom: true), .next, "scrolling downward at page bottom should go next")
-    try expect(pageDirectionAtEdge(deltaY: 12, isAtTop: false, isAtBottom: true) == nil, "scrolling upward at bottom should not go previous")
-    try expect(pageDirectionAtEdge(deltaY: -12, isAtTop: true, isAtBottom: false) == nil, "scrolling downward at top should not go next")
-}
-
-private func testPDFPagingPolicy() throws {
-    try expectEqual(PDFPagingPolicy.wheelEdgeScrollThreshold, 40, "wheel edge threshold should remain explicit")
-    try expectEqual(PDFPagingPolicy.wheelPageTurnCooldown, 0.45, "wheel cooldown should prevent double page turns")
-    try expectEqual(PDFPagingPolicy.trackpadEdgeSlop, 12, "trackpad edge slop should remain explicit")
-    try expectEqual(PDFPagingPolicy.trackpadScrollerTopLimit, 0.001, "trackpad top scroller limit should avoid early turns")
-    try expectEqual(PDFPagingPolicy.trackpadScrollerBottomLimit, 0.999, "trackpad bottom scroller limit should avoid early turns")
-    try expectEqual(PDFPagingPolicy.trackpadPageTurnCooldown, 0.8, "trackpad cooldown should prevent double page turns")
+private func testPDFPageLayoutPolicy() throws {
     try expectEqual(
-        PDFPagingPolicy.trackpadPageTurnThreshold(clipHeight: 800, documentHeight: 801),
-        PDFPagingPolicy.trackpadShortPageTurnThreshold,
-        "short pages should require a stronger trackpad gesture"
+        PDFPageLayoutPolicy.displayMode(isTwoPage: false),
+        .singlePageContinuous,
+        "single-page layout should scroll continuously"
     )
     try expectEqual(
-        PDFPagingPolicy.trackpadPageTurnThreshold(clipHeight: 800, documentHeight: 1200),
-        PDFPagingPolicy.trackpadLongPageTurnThreshold,
-        "long pages should allow a lighter edge gesture"
+        PDFPageLayoutPolicy.displayMode(isTwoPage: true),
+        .twoUpContinuous,
+        "two-page layout should scroll continuously"
     )
+    try expect(PDFPageLayoutPolicy.isContinuous(.singlePageContinuous), "single-page continuous mode should be recognized")
+    try expect(PDFPageLayoutPolicy.isContinuous(.twoUpContinuous), "two-up continuous mode should be recognized")
+    try expect(!PDFPageLayoutPolicy.isContinuous(.singlePage), "paged single-page mode should not be recognized as continuous")
+    try expect(PDFPageLayoutPolicy.isTwoPage(.twoUpContinuous), "continuous two-up mode should retain two-page semantics")
+    try expect(!PDFPageLayoutPolicy.isTwoPage(.singlePageContinuous), "continuous single-page mode should retain single-page semantics")
 }
 
 private func testReaderSessionPolicy() throws {
@@ -770,8 +747,7 @@ private let tests: [(String, () throws -> Void)] = [
     ("EPUB internal links and sanitizing", EPUBLogicTests.testEPUBInternalLinkTargetsAndSanitizing),
     ("Word record incremental store", VocabularyLogicTests.testWordRecordIncrementalStore),
     ("Word record legacy migration", VocabularyLogicTests.testWordRecordLegacyMigrationDoesNotReviveClearedData),
-    ("Page scroll direction", testPageScrollDirection),
-    ("PDF paging policy", testPDFPagingPolicy),
+    ("PDF page layout policy", testPDFPageLayoutPolicy),
     ("Reader session policy", testReaderSessionPolicy),
     ("Reader session PDF anchor", testReaderSessionStorePDFAnchor),
     ("Reader session farthest progress", testReaderSessionStoreFarthestProgress),

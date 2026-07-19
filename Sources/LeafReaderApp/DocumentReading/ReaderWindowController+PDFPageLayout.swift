@@ -17,7 +17,7 @@ extension ReaderWindowController {
         let currentDestination = currentPage.map { PDFDestination(page: $0, at: pdfView.convert(pdfView.bounds.origin, to: $0)) }
         let currentScaleFactor = pdfView.scaleFactor
         let isTwoPage = isPDFTwoPageModeEnabled()
-        let targetMode: PDFDisplayMode = isTwoPage ? .twoUp : .singlePage
+        let targetMode = PDFPageLayoutPolicy.displayMode(isTwoPage: isTwoPage)
         let needsDisplayModeChange = pdfView.displayMode != targetMode
         let needsBookModeChange = pdfView.displaysAsBook
         guard needsDisplayModeChange || needsBookModeChange else {

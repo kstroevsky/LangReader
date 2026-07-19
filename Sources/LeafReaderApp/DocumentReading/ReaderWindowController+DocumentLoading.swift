@@ -52,6 +52,7 @@ extension ReaderWindowController {
         RecentDocumentsStore.record(url: url, kind: .pdf)
         saveSession()
         scheduleDocumentEmbeddingWarmup(priorityPageIndex: currentEmbeddingPriorityIndex())
+        completePendingVocabularyLibraryNavigationIfNeeded()
         SpeechPlaybackCoordinator.shared.stopKokoroWorkerIfLanguageDiffers(from: currentReadAloudProbeText() ?? "")
         if let generation {
             finishDocumentLoadingAfterAIBubbles(generation: generation)
@@ -134,9 +135,6 @@ extension ReaderWindowController {
         lastPersonalVocabularyPDFPageIndex = nil
         lastPersonalVocabularyWebProgressBucket = nil
         cancelScheduledEmbeddingWarmup()
-        accumulatedPDFTrackpadScroll = 0
-        didTurnPageForCurrentPDFTrackpadGesture = false
-        lastPDFTrackpadEdgeDirection = nil
         highlightedSelectionKeys.removeAll()
         clearAISourceUnderlineTracking()
         clearSearchState()

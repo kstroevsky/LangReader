@@ -26,6 +26,8 @@ enum ReaderUILayout {
     static let settingsButtonSize: CGFloat = 32
     static let shelfButtonLeading: CGFloat = 18
     static let shelfButtonWidth: CGFloat = 88
+    static let vocabularyLibraryButtonLeading: CGFloat = 10
+    static let vocabularyLibraryButtonWidth: CGFloat = 88
     static let notesButtonLeading: CGFloat = 10
     static let notesButtonWidth: CGFloat = 86
     static let vocabularyButtonLeading: CGFloat = 10
@@ -161,7 +163,12 @@ extension ReaderWindowController {
             recentButton.widthAnchor.constraint(equalToConstant: ReaderUILayout.shelfButtonWidth),
             recentButton.heightAnchor.constraint(equalToConstant: ReaderUILayout.bottomButtonHeight),
 
-            vocabularyButton.leadingAnchor.constraint(equalTo: recentButton.trailingAnchor, constant: ReaderUILayout.vocabularyButtonLeading),
+            vocabularyLibraryButton.leadingAnchor.constraint(equalTo: recentButton.trailingAnchor, constant: ReaderUILayout.vocabularyLibraryButtonLeading),
+            vocabularyLibraryButton.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
+            vocabularyLibraryButton.widthAnchor.constraint(equalToConstant: ReaderUILayout.vocabularyLibraryButtonWidth),
+            vocabularyLibraryButton.heightAnchor.constraint(equalToConstant: ReaderUILayout.bottomButtonHeight),
+
+            vocabularyButton.leadingAnchor.constraint(equalTo: vocabularyLibraryButton.trailingAnchor, constant: ReaderUILayout.vocabularyButtonLeading),
             vocabularyButton.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
             vocabularyButton.widthAnchor.constraint(equalToConstant: ReaderUILayout.vocabularyButtonWidth),
             vocabularyButton.heightAnchor.constraint(equalToConstant: ReaderUILayout.bottomButtonHeight),

@@ -145,9 +145,6 @@ extension ReaderWindowController {
         storedWebWordRecords.removeAll()
         highlightedSelectionKeys.removeAll()
         currentVocabularyExportRecords.removeAll()
-        accumulatedPDFTrackpadScroll = 0
-        didTurnPageForCurrentPDFTrackpadGesture = false
-        lastPDFTrackpadEdgeDirection = nil
     }
 
     private func resetEmptyDocumentChrome() {
@@ -194,6 +191,7 @@ extension ReaderWindowController {
         }
         PDFWordRecordStore(fileMD5: documentID).save([])
         WebWordRecordStore(fileMD5: documentID).save([])
+        vocabularyLibraryWindowController.scheduleReload()
     }
 
     func clearAIDataForShelfItem(path: String) {

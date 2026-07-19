@@ -45,6 +45,13 @@ extension ReaderWindowController {
             action: #selector(showRecentDocuments),
             showsLeadingSymbol: true
         )
+        vocabularyLibraryButton = capsuleButton(
+            title: AppText.localized("生词", "Words"),
+            symbol: "text.word.spacing",
+            action: #selector(showVocabularyLibrary),
+            showsLeadingSymbol: true
+        )
+        vocabularyLibraryButton.toolTip = AppText.localized("打开所有文档中的生词", "Open saved words from all documents")
         notesButton = capsuleButton(
             title: AppText.localized("笔记", "Notes"),
             symbol: "note.text",
@@ -52,11 +59,12 @@ extension ReaderWindowController {
             showsLeadingSymbol: true
         )
         vocabularyButton = capsuleButton(
-            title: AppText.localized("背单词", "Vocab"),
+            title: AppText.localized("背单词", "Review"),
             symbol: "text.book.closed",
             action: #selector(showVocabularyBook),
             showsLeadingSymbol: true
         )
+        vocabularyButton.toolTip = AppText.localized("复习当前文档中的单词", "Review words from the current document")
         farthestPositionButton = capsuleButton(title: AppText.localized("上次位置", "Last"), symbol: "arrow.turn.down.right", action: #selector(goToFarthestReadingPosition))
         farthestPositionButton.toolTip = AppText.localized("跳到本书阅读过的最远位置", "Jump to the farthest read position in this book")
         tocButton = capsuleButton(title: AppText.localized("目录", "TOC"), symbol: "list.bullet", action: #selector(showTableOfContents))
@@ -87,7 +95,7 @@ extension ReaderWindowController {
             navigationStack.addArrangedSubview(button)
         }
 
-        for view in [settingsButton, recentButton!, notesButton!, vocabularyButton!, navigationStack, embeddingStatusLabel, embeddingPauseButton!, embeddingCancelButton!] {
+        for view in [settingsButton, recentButton!, vocabularyLibraryButton!, notesButton!, vocabularyButton!, navigationStack, embeddingStatusLabel, embeddingPauseButton!, embeddingCancelButton!] {
             view.translatesAutoresizingMaskIntoConstraints = false
             bottomBar.addSubview(view)
         }

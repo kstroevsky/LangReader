@@ -16,6 +16,7 @@ extension ReaderWindowController {
 
     func scheduleVocabularyPanelReload() {
         vocabularyPanelController.scheduleReload()
+        vocabularyLibraryWindowController.scheduleReload()
     }
 
     func refreshVocabularyStats(in root: NSView, records: [VocabularyExportRecord]) {

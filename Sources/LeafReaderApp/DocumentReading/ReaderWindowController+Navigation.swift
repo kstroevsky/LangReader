@@ -147,13 +147,9 @@ extension ReaderWindowController {
     }
 
 
-    func turnPageFromScroll(_ direction: EdgePagingPDFView.ScrollPageDirection) {
-        guard currentDocumentKind == .pdf else { return }
-        clearAISelectionForNavigation()
-        turnPDFPage(
-            direction: direction,
-            targetPlacement: direction == .previous ? .bottom : .top
-        )
+    private enum PDFPageDirection {
+        case previous
+        case next
     }
 
     private enum PDFPagePlacement {
@@ -161,7 +157,7 @@ extension ReaderWindowController {
         case bottom
     }
 
-    private func turnPDFPage(direction: EdgePagingPDFView.ScrollPageDirection, targetPlacement: PDFPagePlacement) {
+    private func turnPDFPage(direction: PDFPageDirection, targetPlacement: PDFPagePlacement) {
         guard let document = pdfView.document, document.pageCount > 0 else { return }
         let currentIndex = currentPDFViewportAnchor()?.pageIndex ?? currentPageIndex() ?? 0
         let targetIndex: Int

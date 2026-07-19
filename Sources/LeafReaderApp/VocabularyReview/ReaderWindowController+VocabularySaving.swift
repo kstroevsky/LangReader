@@ -204,6 +204,7 @@ extension ReaderWindowController {
     }
 
     private func refreshVocabularyPanelAfterLocalSave() {
+        vocabularyLibraryWindowController.scheduleReload()
         guard vocabularyPanelController.panel != nil else { return }
         currentVocabularyExportRecords = makeCurrentVocabularyExportRecords()
         scheduleVocabularyPanelReload()
