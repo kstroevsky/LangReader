@@ -683,6 +683,8 @@ private let tests: [(String, () throws -> Void)] = [
     ("Vocabulary answer formatter", VocabularyLogicTests.testVocabularyAnswerFormatter),
     ("Recent document sorting/import", ReaderShelfLogicTests.testRecentDocumentSortingAndImport),
     ("Dropped document actions", ReaderShelfLogicTests.testDroppedDocumentActions),
+    ("Document import decision", DocumentImportDecisionLogicTests.testSingleSupportedDropOpensDirectly),
+    ("Document import batch decision", DocumentImportDecisionLogicTests.testMultipleDropsPresentTheShelf),
     ("Document session load tickets", DocumentSessionLogicTests.testLoadTicketsRejectSupersededAndUnloadedWork),
     ("Document session transition reset", DocumentSessionLogicTests.testAdoptingDocumentResetsDocumentBoundState),
     ("Embedding defaults", AISettingsLogicTests.testEmbeddingDefaults),

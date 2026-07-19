@@ -40,7 +40,7 @@ extension ReaderWindowController {
             return
         }
         guard message.name == "selectionChanged" else { return }
-        selectionCoordinator.handleWebSelectionChanged(body: message.body)
+        handleWebSelectionChanged(body: message.body)
     }
 
     func webSelectionRect(from value: Any?) -> NSRect? {

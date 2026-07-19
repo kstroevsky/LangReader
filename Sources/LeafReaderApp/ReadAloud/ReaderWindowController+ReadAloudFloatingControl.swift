@@ -206,23 +206,23 @@ extension ReaderWindowController {
     }
 
     @objc func toggleReadAloudFromFloatingControl() {
-        readAloudCoordinator.toggleFromToolbar()
+        toggleReadAloudFromToolbar()
     }
 
     @objc func stopReadAloudFromFloatingControl() {
-        readAloudCoordinator.stopImmediately()
+        stopReadAloudImmediately()
     }
 
     @objc func replayReadAloudFromFloatingControl() {
-        readAloudCoordinator.replayCurrentSegment()
+        replayCurrentReadAloudSegment()
     }
 
     @objc func advanceReadAloudFromFloatingControl() {
-        readAloudCoordinator.advanceSegment()
+        advanceReadAloudSegment()
     }
 
     @objc func previousReadAloudFromFloatingControl() {
-        readAloudCoordinator.replayPreviousSegment()
+        replayPreviousReadAloudSegment()
     }
 
     @objc func advanceReadAloudToNextPageFromFloatingControl() {
@@ -239,7 +239,7 @@ extension ReaderWindowController {
     }
 
     @objc func toggleReadAloudAdvanceModeFromFloatingControl() {
-        readAloudCoordinator.toggleAdvanceMode()
+        toggleReadAloudAdvanceMode()
     }
 
     @objc func changeReadAloudSpeedFromFloatingControl(_ sender: NSSlider) {
@@ -248,7 +248,4 @@ extension ReaderWindowController {
         readAloudFloatingControlView?.updateSpeedSlider(speedID: speedID)
     }
 
-    func pauseReadAloudForManualAdvance() {
-        readAloudCoordinator.pauseForManualAdvance()
-    }
 }

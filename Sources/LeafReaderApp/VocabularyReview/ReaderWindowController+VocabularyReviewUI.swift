@@ -2,13 +2,38 @@ import Cocoa
 
 extension ReaderWindowController {
     func populateVocabularyReviewContainer(_ container: NSView, records: [VocabularyExportRecord], filter: VocabularyFilter, isDark: Bool, autoPlayNewCard: Bool = true) {
-        VocabularyReviewCoordinator(owner: self).populate(
-            container: container,
-            records: records,
-            filter: filter,
-            isDark: isDark,
-            autoPlayNewCard: autoPlayNewCard
+        container.subviews.forEach { $0.removeFromSuperview() }
+        guard let selection = VocabularyReviewCardSelector.selection(records: records, session: vocabularyReviewSession) else {
+            let empty = emptyVocabularyState(filter: filter, isDark: isDark)
+            container.addSubview(empty)
+            NSLayoutConstraint.activate([
+                empty.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+                empty.centerYAnchor.constraint(equalTo: container.centerYAnchor)
+            ])
+            return
+        }
+
+        let displayRecord = vocabularyRecordWithDictionaryMetadata(selection.record)
+        prepareVocabularyReviewTiming(for: displayRecord, autoPlay: autoPlayNewCard)
+        updateVocabularySummaryWithProgress(position: selection.position, total: selection.total)
+
+        let session = vocabularyReviewSession
+        let card = VocabularyReviewCardBuilder(owner: self).build(
+            record: displayRecord,
+            position: selection.position,
+            total: selection.total,
+            contextShown: session.contextShown,
+            answerShown: session.answerShown,
+            didScore: session.didScoreCurrentCard,
+            canUndoScore: !session.undoSRSByID.isEmpty
         )
+        container.addSubview(card)
+        NSLayoutConstraint.activate([
+            card.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            card.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            card.topAnchor.constraint(equalTo: container.topAnchor),
+            card.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+        ])
     }
 
     func vocabularyReviewPriorityPopup() -> NSPopUpButton {

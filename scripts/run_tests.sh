@@ -50,14 +50,10 @@ excluded_logic_app_source() {
     PDFEmbeddingStore.swift|\
     PDFWordRecordStore.swift|\
     Reader*State.swift|\
-    ReaderDocumentImportCoordinator.swift|\
     ReaderDropContentView.swift|\
     ReaderFileDrop.swift|\
     ReaderTheme*|\
     ReaderTOCHelper.swift|\
-    ReaderAIPanelCoordinator.swift|\
-    ReaderReadAloudCoordinator.swift|\
-    ReaderSelectionCoordinator.swift|\
     ReaderWindowController*|\
     ReaderWindowSupportViews.swift|\
     ReadingNotePanelController*|\
@@ -77,7 +73,6 @@ excluded_logic_app_source() {
     VocabularyFrequencyBackfillService.swift|\
     VocabularyRecordProvider.swift|\
     VocabularyReviewCardFooterBuilder.swift|\
-    VocabularyReviewCoordinator.swift|\
     VocabularyReviewScoringService.swift|\
     VocabularySpeechCoordinator.swift|\
     WebReadAloudBatchParser.swift|\
@@ -154,6 +149,7 @@ REGRESSION_TEST_SOURCES=(
 LOGIC_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/AIConversation/AIConversationContextStoreTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/EPUBLogicTests.swift"
+  "$TEST_SOURCE_ROOT/DocumentReading/DocumentImportDecisionLogicTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/DocumentSessionLogicTests.swift"
   "$TEST_SOURCE_ROOT/ReadingNotes/ReadingNoteLogicTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderShelfLogicTests.swift"

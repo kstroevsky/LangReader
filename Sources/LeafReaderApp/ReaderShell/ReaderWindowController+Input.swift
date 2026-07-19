@@ -354,7 +354,7 @@ extension ReaderWindowController {
         })();
         """) { [weak self] result, _ in
             let text = self?.trimmedReaderSelection(result as? String) ?? ""
-            self?.selectionCoordinator.setWebSelectionFromVisibleText(text)
+            self?.setWebSelectionFromVisibleText(text)
         }
     }
 

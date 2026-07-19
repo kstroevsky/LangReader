@@ -43,7 +43,7 @@ extension ReaderWindowController {
             },
             onImport: { [weak self] urls in
                 guard let self else { return }
-                ReaderDocumentImportCoordinator.importDroppedDocumentsToShelf(urls, controller: self)
+                self.importDocumentsToShelf(urls)
             },
             onClose: { [weak self] in
                 self?.recentDocumentsPanelController = nil

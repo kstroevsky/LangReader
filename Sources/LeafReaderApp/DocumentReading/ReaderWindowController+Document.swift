@@ -71,7 +71,43 @@ extension ReaderWindowController {
     }
 
     func handleDroppedDocumentURLs(_ urls: [URL]) {
-        ReaderDocumentImportCoordinator.handleDroppedDocumentURLs(urls, controller: self)
+        switch DocumentImportDecision.make(urls: urls) {
+        case .ignore:
+            return
+        case let .open(url):
+            openDroppedDocument(url)
+        case let .showShelf(urls):
+            importDocumentsToShelf(urls)
+        }
+    }
+
+    func openDroppedDocument(_ url: URL) {
+        aiSettingsPanelController?.closeWithoutSaving()
+        aiSettingsPanelController = nil
+        if vocabularyPanelController.panel != nil {
+            closeVocabularyPanel()
+        }
+        if let recentDocumentsPanelController {
+            recentDocumentsPanelController.closeThenOpen(path: url.path)
+            return
+        }
+        loadDocument(url)
+    }
+
+    func importDocumentsToShelf(_ urls: [URL]) {
+        let supported = RecentDocumentsStore.supportedUniqueURLs(urls)
+        guard !supported.isEmpty else { return }
+
+        let importedPaths = RecentDocumentsStore.record(urls: supported)
+        let focusPath = importedPaths.first
+        if let recentDocumentsPanelController {
+            recentDocumentsPanelController.close()
+            DispatchQueue.main.async { [weak self] in
+                self?.showRecentDocumentsPanel(focusPath: focusPath, priorityPaths: importedPaths)
+            }
+        } else {
+            showRecentDocumentsPanel(focusPath: focusPath)
+        }
     }
 
     func openDocument(_ url: URL) {
