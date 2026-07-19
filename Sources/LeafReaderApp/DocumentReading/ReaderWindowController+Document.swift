@@ -19,8 +19,7 @@ extension ReaderWindowController {
         guard let kind = ReaderDocumentKind.kind(for: url) else { return }
         stopReadAloudImmediately()
         SpeechPlaybackCoordinator.shared.shutdownRuntime(.kokoro)
-        documentLoadGeneration += 1
-        let generation = documentLoadGeneration
+        let generation = documentSession.beginLoading()
         showDocumentLoading(for: url)
         sessionSaveTask.cancel()
         flushCurrentBookWordRecordSaves()
@@ -29,7 +28,7 @@ extension ReaderWindowController {
         switch kind {
         case .pdf:
             DispatchQueue.main.async { [weak self] in
-                guard let self, self.documentLoadGeneration == generation else { return }
+                guard let self, self.documentSession.acceptsLoad(generation: generation) else { return }
                 self.loadPDF(url, generation: generation)
             }
         case .epub, .docx:
@@ -44,13 +43,13 @@ extension ReaderWindowController {
     }
 
     func hideDocumentLoading(generation: Int) {
-        guard documentLoadGeneration == generation else { return }
+        guard documentSession.acceptsLoad(generation: generation) else { return }
         loadingIndicator.stopAnimation(nil)
         loadingOverlay.isHidden = true
     }
 
     func showDocumentLoadingFailure(_ error: Error, generation: Int) {
-        guard documentLoadGeneration == generation else { return }
+        guard documentSession.acceptsLoad(generation: generation) else { return }
         hideDocumentLoading(generation: generation)
         let alert = NSAlert(error: error)
         alert.applyLeafStyle()
@@ -59,11 +58,11 @@ extension ReaderWindowController {
 
     func finishDocumentLoadingAfterAIBubbles(generation: Int) {
         DispatchQueue.main.async { [weak self] in
-            guard let self, self.documentLoadGeneration == generation else { return }
+            guard let self, self.documentSession.acceptsLoad(generation: generation) else { return }
             self.aiPanel.flushTranscriptLayout()
             self.aiPanel.layoutSubtreeIfNeeded()
             DispatchQueue.main.async { [weak self] in
-                guard let self, self.documentLoadGeneration == generation else { return }
+                guard let self, self.documentSession.acceptsLoad(generation: generation) else { return }
                 self.aiPanel.flushTranscriptLayout()
                 self.aiPanel.layoutSubtreeIfNeeded()
                 self.hideDocumentLoading(generation: generation)

@@ -116,7 +116,8 @@ extension ReaderWindowController {
         saveSession()
         resetEmbeddingStateForDocumentChange()
 
-        pdfTOCGeneration += 1
+        documentSession.unload()
+        documentPresentationState.resetForDocumentChange()
         invalidateDocumentAgentIndex()
         clearDocumentContentViewsForUnload()
         resetCurrentDocumentRuntimeState()
@@ -133,22 +134,10 @@ extension ReaderWindowController {
     }
 
     private func resetCurrentDocumentRuntimeState() {
-        currentFileURL = nil
-        currentFileMD5 = nil
-        currentDocumentKind = .pdf
-        sessionStore = ReaderSessionStore(fileMD5: nil)
         pdfWordRecordStore = nil
         webWordRecordStore = nil
         aiConversationStore = nil
         loadedAIConversation = nil
-        currentWebPlainText = ""
-        webPlainTextGeneration += 1
-        clearPDFSelectionState()
-        currentWebSelectedText = ""
-        currentWebSelectionContext = ""
-        currentWebSelectionOccurrenceIndex = nil
-        currentTOCItems = []
-        pdfTOCDestinations = [:]
         clearSearchState()
         pendingPDFWordRecords.removeAll()
         pendingWebWordRecords.removeAll()
@@ -159,8 +148,6 @@ extension ReaderWindowController {
         accumulatedPDFTrackpadScroll = 0
         didTurnPageForCurrentPDFTrackpadGesture = false
         lastPDFTrackpadEdgeDirection = nil
-        lastPageIndex = nil
-        webScrollProgress = 0
     }
 
     private func resetEmptyDocumentChrome() {

@@ -2,133 +2,131 @@ import Cocoa
 
 extension ReaderWindowController {
     var currentFileURL: URL? {
-        get { documentState.currentFileURL }
-        set { documentState.currentFileURL = newValue }
+        get { documentSession.currentFileURL }
+        set { documentSession.currentFileURL = newValue }
     }
 
     var lastSavedSessionBookmarkURL: URL? {
-        get { documentState.lastSavedSessionBookmarkURL }
-        set { documentState.lastSavedSessionBookmarkURL = newValue }
+        get { documentSession.lastSavedSessionBookmarkURL }
+        set { documentSession.lastSavedSessionBookmarkURL = newValue }
     }
 
     var currentFileMD5: String? {
-        get { documentState.currentFileMD5 }
-        set { documentState.currentFileMD5 = newValue }
+        get { documentSession.currentFileMD5 }
+        set { documentSession.currentFileMD5 = newValue }
     }
 
     var sessionStore: ReaderSessionStore {
-        get { documentState.sessionStore }
-        set { documentState.sessionStore = newValue }
+        get { documentSession.sessionStore }
+        set { documentSession.sessionStore = newValue }
     }
 
     var currentDocumentKind: ReaderDocumentKind {
-        get { documentState.currentDocumentKind }
-        set { documentState.currentDocumentKind = newValue }
+        get { documentSession.currentDocumentKind }
+        set { documentSession.currentDocumentKind = newValue }
     }
 
     var documentLoadGeneration: Int {
-        get { documentState.documentLoadGeneration }
-        set { documentState.documentLoadGeneration = newValue }
+        get { documentSession.documentLoadGeneration }
     }
 
     var currentPDFSelectedText: String {
-        get { documentState.currentPDFSelectedText }
-        set { documentState.currentPDFSelectedText = newValue }
+        get { documentSession.currentPDFSelectedText }
+        set { documentSession.currentPDFSelectedText = newValue }
     }
 
     var currentWebPlainText: String {
-        get { documentState.currentWebPlainText }
-        set { documentState.currentWebPlainText = newValue }
+        get { documentSession.currentWebPlainText }
+        set { documentSession.currentWebPlainText = newValue }
     }
 
     var webPlainTextGeneration: Int {
-        get { documentState.webPlainTextGeneration }
-        set { documentState.webPlainTextGeneration = newValue }
+        get { documentSession.webPlainTextGeneration }
     }
 
     var currentWebSelectedText: String {
-        get { documentState.currentWebSelectedText }
-        set { documentState.currentWebSelectedText = newValue }
+        get { documentSession.currentWebSelectedText }
+        set { documentSession.currentWebSelectedText = newValue }
     }
 
     var currentWebSelectionContext: String {
-        get { documentState.currentWebSelectionContext }
-        set { documentState.currentWebSelectionContext = newValue }
+        get { documentSession.currentWebSelectionContext }
+        set { documentSession.currentWebSelectionContext = newValue }
     }
 
     var currentWebSelectionOccurrenceIndex: Int? {
-        get { documentState.currentWebSelectionOccurrenceIndex }
-        set { documentState.currentWebSelectionOccurrenceIndex = newValue }
+        get { documentSession.currentWebSelectionOccurrenceIndex }
+        set { documentSession.currentWebSelectionOccurrenceIndex = newValue }
     }
 
     var currentWebSelectionRect: NSRect? {
-        get { documentState.currentWebSelectionRect }
-        set { documentState.currentWebSelectionRect = newValue }
+        get { documentSession.currentWebSelectionRect }
+        set { documentSession.currentWebSelectionRect = newValue }
     }
 
     var pendingWebProgressRestore: (generation: Int, progress: Double, zoomPercent: Int?)? {
-        get { documentState.pendingWebProgressRestore }
-        set { documentState.pendingWebProgressRestore = newValue }
+        get { documentSession.pendingWebProgressRestore }
+        set { documentSession.pendingWebProgressRestore = newValue }
     }
 
     var currentDocumentDiagnostics: [String] {
-        get { documentState.currentDocumentDiagnostics }
-        set { documentState.currentDocumentDiagnostics = newValue }
+        get { documentPresentationState.currentDocumentDiagnostics }
+        set { documentPresentationState.currentDocumentDiagnostics = newValue }
     }
 
     var currentTOCItems: [ReaderTOCItem] {
-        get { documentState.currentTOCItems }
-        set { documentState.currentTOCItems = newValue }
+        get { documentPresentationState.currentTOCItems }
+        set { documentPresentationState.currentTOCItems = newValue }
     }
 
     var pdfTOCDestinations: [String: ReaderTOCHelper.PDFTOCDestination] {
-        get { documentState.pdfTOCDestinations }
-        set { documentState.pdfTOCDestinations = newValue }
+        get { documentPresentationState.pdfTOCDestinations }
+        set { documentPresentationState.pdfTOCDestinations = newValue }
     }
 
     var pdfTOCGeneration: Int {
-        get { documentState.pdfTOCGeneration }
-        set { documentState.pdfTOCGeneration = newValue }
+        get { documentPresentationState.pdfTOCGeneration }
+        set { documentPresentationState.pdfTOCGeneration = newValue }
     }
 
     var webZoomPercent: Int {
-        get { documentState.webZoomPercent }
-        set { documentState.webZoomPercent = newValue }
+        get { documentSession.webZoomPercent }
+        set { documentSession.webZoomPercent = newValue }
     }
 
     var webScrollProgress: Double {
-        get { documentState.webScrollProgress }
-        set { documentState.webScrollProgress = newValue }
+        get { documentSession.webScrollProgress }
+        set { documentSession.webScrollProgress = newValue }
     }
 
     var originalPDFCropBoxes: [Int: CGRect] {
-        get { documentState.originalPDFCropBoxes }
-        set { documentState.originalPDFCropBoxes = newValue }
+        get { documentPresentationState.originalPDFCropBoxes }
+        set { documentPresentationState.originalPDFCropBoxes = newValue }
     }
 
     var lastWebProgressSave: Date {
-        get { documentState.lastWebProgressSave }
-        set { documentState.lastWebProgressSave = newValue }
+        get { documentSession.lastWebProgressSave }
+        set { documentSession.lastWebProgressSave = newValue }
     }
 
     var lastPageIndex: Int? {
-        get { documentState.lastPageIndex }
-        set { documentState.lastPageIndex = newValue }
+        get { documentSession.lastPageIndex }
+        set { documentSession.lastPageIndex = newValue }
     }
 
     var lastPersonalVocabularyPDFPageIndex: Int? {
-        get { documentState.lastPersonalVocabularyPDFPageIndex }
-        set { documentState.lastPersonalVocabularyPDFPageIndex = newValue }
+        get { documentSession.lastPersonalVocabularyPDFPageIndex }
+        set { documentSession.lastPersonalVocabularyPDFPageIndex = newValue }
     }
 
     var lastPersonalVocabularyWebProgressBucket: Int? {
-        get { documentState.lastPersonalVocabularyWebProgressBucket }
-        set { documentState.lastPersonalVocabularyWebProgressBucket = newValue }
+        get { documentSession.lastPersonalVocabularyWebProgressBucket }
+        set { documentSession.lastPersonalVocabularyWebProgressBucket = newValue }
     }
 
     var isRestoringSession: Bool {
-        get { documentState.isRestoringSession }
-        set { documentState.isRestoringSession = newValue }
+        get { documentSession.isRestoringSession }
+        set { documentSession.isRestoringSession = newValue }
     }
 
     func clearPDFSelectionState() {

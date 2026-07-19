@@ -15,23 +15,14 @@ extension ReaderWindowController {
             return
         }
         closeReadingNotePanelsForDocumentTransition()
-        currentDocumentKind = .pdf
+        activateDocumentSession(url: url, kind: .pdf)
         pdfView.isHidden = false
         webView.isHidden = true
         pdfView.document = document
-        prepareRuntimeStateForLoadedDocument(url: url)
         captureOriginalPDFCropBoxes()
         applyPDFMarginCropIfNeeded()
         pdfWordRecordStore = currentFileMD5.map { PDFWordRecordStore(fileMD5: $0) }
         webWordRecordStore = nil
-        currentWebPlainText = ""
-        webPlainTextGeneration += 1
-        clearPDFSelectionState()
-        currentWebSelectedText = ""
-        currentWebSelectionRect = nil
-        currentDocumentDiagnostics = []
-        currentTOCItems = []
-        pdfTOCDestinations = [:]
         schedulePDFTOCBuild(for: url, displayBox: pdfView.displayBox)
         storedWordRecords = loadStoredWordRecords()
         storedWebWordRecords.removeAll()
@@ -72,7 +63,7 @@ extension ReaderWindowController {
             do {
                 let document = try WebDocumentLoader.load(url: url)
                 DispatchQueue.main.async {
-                    guard let self, self.documentLoadGeneration == generation else { return }
+                    guard let self, self.documentSession.acceptsLoad(generation: generation) else { return }
                     self.applyLoadedWebDocument(document, url: url, kind: kind, generation: generation)
                 }
             } catch {
@@ -85,28 +76,17 @@ extension ReaderWindowController {
 
     func applyLoadedWebDocument(_ document: WebReadableDocument, url: URL, kind: ReaderDocumentKind, generation: Int) {
         closeReadingNotePanelsForDocumentTransition()
-        currentDocumentKind = kind
+        activateDocumentSession(url: url, kind: kind)
         pdfView.isHidden = true
         pdfDimOverlay.isHidden = true
         webView.isHidden = false
         pdfView.document = nil
-        prepareRuntimeStateForLoadedDocument(url: url)
         pdfWordRecordStore = nil
         webWordRecordStore = currentFileMD5.map { WebWordRecordStore(fileMD5: $0) }
         currentWebPlainText = document.plainText
-        webPlainTextGeneration += 1
         let webPlainTextGeneration = webPlainTextGeneration
-        clearPDFSelectionState()
-        currentWebSelectedText = ""
-        currentWebSelectionContext = ""
-        currentWebSelectionOccurrenceIndex = nil
-        currentWebSelectionRect = nil
-        pendingWebProgressRestore = nil
         currentDocumentDiagnostics = document.diagnostics
         currentTOCItems = document.tocItems
-        pdfTOCDestinations = [:]
-        webZoomPercent = 100
-        webScrollProgress = 0
         storedWordRecords.removeAll()
         storedWebWordRecords = loadStoredWebWordRecords()
         loadReadingNotesForCurrentDocument()
@@ -141,10 +121,9 @@ extension ReaderWindowController {
         finishDocumentLoadingAfterAIBubbles(generation: generation)
     }
 
-    func prepareRuntimeStateForLoadedDocument(url: URL) {
-        currentFileURL = url
-        currentFileMD5 = fileMD5(for: url)
-        sessionStore = ReaderSessionStore(fileMD5: currentFileMD5)
+    func activateDocumentSession(url: URL, kind: ReaderDocumentKind) {
+        documentSession.adopt(url: url, kind: kind, documentID: fileMD5(for: url))
+        documentPresentationState.resetForDocumentChange()
         aiConversationStore = currentFileMD5.map { AIConversationStore(fileMD5: $0) }
         loadedAIConversation = nil
         invalidateDocumentAgentIndex()
@@ -161,7 +140,6 @@ extension ReaderWindowController {
         highlightedSelectionKeys.removeAll()
         clearAISourceUnderlineTracking()
         clearSearchState()
-        originalPDFCropBoxes.removeAll()
     }
 
     func applyDocumentDiagnostics(_ diagnostics: [String], fileName: String) {

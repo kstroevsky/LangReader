@@ -40,6 +40,7 @@ excluded_logic_app_source() {
     DiagnosticsReport.swift|\
     DocumentLoading*|\
     DocumentQuestionPromptRequest.swift|\
+    DocumentPresentationState.swift|\
     EmbeddingClient.swift|\
     KokoroTTSBackend.swift|\
     LeafAlertStyle.swift|\
@@ -153,6 +154,7 @@ REGRESSION_TEST_SOURCES=(
 LOGIC_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/AIConversation/AIConversationContextStoreTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/EPUBLogicTests.swift"
+  "$TEST_SOURCE_ROOT/DocumentReading/DocumentSessionLogicTests.swift"
   "$TEST_SOURCE_ROOT/ReadingNotes/ReadingNoteLogicTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderShelfLogicTests.swift"
   "$TEST_SOURCE_ROOT/AIConversation/AISettingsTestSupport.swift"

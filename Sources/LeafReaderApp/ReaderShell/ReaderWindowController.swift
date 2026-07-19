@@ -94,7 +94,8 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     weak var toolbarView: NSView?
     weak var bottomBarView: NSView?
     weak var zoomGroupView: NSView?
-    var documentState = ReaderDocumentState()
+    var documentSession = DocumentSession()
+    var documentPresentationState = DocumentPresentationState()
     var accumulatedPDFTrackpadScroll: CGFloat = 0
     var lastPDFTrackpadPageTurn = Date.distantPast
     var didTurnPageForCurrentPDFTrackpadGesture = false
