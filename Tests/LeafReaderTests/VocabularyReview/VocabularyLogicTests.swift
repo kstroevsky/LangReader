@@ -104,9 +104,55 @@ enum VocabularyLogicTests {
         try expect(!VocabularyTextPolicy.isSingleEnglishWord("Nine-"), "trailing hyphen should not be saved as a complete word")
         try expectEqual(VocabularyTextPolicy.speakableWord("Nine-\ntenths"), "Nine-tenths", "PDF line-broken hyphenated words should be saved as one word")
         try expectEqual(VocabularyTextPolicy.normalizedPDFVocabularyText("con-\ntemptuous"), "contemptuous", "PDF line-broken plain words should drop the layout hyphen")
+        try expectEqual(VocabularyTextPolicy.normalizedPDFVocabularyText("si-\ncherzustellen"), "sicherzustellen", "short-prefix German line wraps should restore the whole word")
+        try expectEqual(
+            VocabularyTextPolicy.normalizedPDFVocabularyText(
+                "Ausbildungs-\nkonzept",
+                isKnownHyphenatedWord: { _ in false },
+                isKnownWord: { $0 == "Ausbildungskonzept" }
+            ),
+            "Ausbildungskonzept",
+            "PDF layout hyphens should be removed when the hyphenated spelling is not a real word"
+        )
+        try expectEqual(
+            VocabularyTextPolicy.normalizedPDFVocabularyText(
+                "E-\nMail",
+                isKnownHyphenatedWord: { $0 == "E-Mail" }
+            ),
+            "E-Mail",
+            "genuine hyphenated words should retain their hyphen across a PDF line break"
+        )
+        try expectEqual(
+            VocabularyTextPolicy.normalizedPDFVocabularyText(
+                "Schadenser-satzforderung",
+                lineBrokenHyphenRange: NSRange(location: 10, length: 1),
+                isKnownHyphenatedWord: { _ in false },
+                isKnownWord: { $0 == "Schadensersatzforderung" }
+            ),
+            "Schadensersatzforderung",
+            "a visually wrapped word should drop its layout hyphen even when PDFKit omits the newline"
+        )
+        try expectEqual(
+            VocabularyTextPolicy.dehyphenatedPDFLayoutCandidate(
+                word: "Schadenser-satzforderung",
+                context: "Von einer Schadenser- satzforderung sehen wir vorerst ab."
+            ),
+            "Schadensersatzforderung",
+            "stored context should identify a legacy layout hyphen for repair"
+        )
+        try expect(
+            VocabularyTextPolicy.dehyphenatedPDFLayoutCandidate(
+                word: "E-Mail",
+                context: "Bitte senden Sie eine E-Mail."
+            ) == nil,
+            "an inline genuine hyphen should not be marked as a legacy layout break"
+        )
         try expectEqual(VocabularyTextPolicy.normalizedPDFVocabularyText("Nine-\ntenths"), "Nine-tenths", "PDF line-broken true hyphenated words should keep the hyphen")
         try expectEqual(
-            VocabularyTextPolicy.normalizedPDFVocabularyText("fam-\niliar") { $0 == "familiar" },
+            VocabularyTextPolicy.normalizedPDFVocabularyText(
+                "fam-\niliar",
+                isKnownWord: { $0 == "familiar" }
+            ),
             "familiar",
             "dictionary-backed PDF normalization should prefer known dehyphenated words"
         )
@@ -119,6 +165,18 @@ enum VocabularyLogicTests {
             dehyphenatedRegex.matches(in: splitWordSample, range: NSRange(location: 0, length: (splitWordSample as NSString).length)).count,
             1,
             "dehyphenated PDF search should match layout-split words"
+        )
+        let splitSuffixSample = "Damit die Nutzung sichergestellt ist, muss sie si-\ncherzustellen sein."
+        let splitSuffixRegex = try NSRegularExpression(
+            pattern: #"(?i)"# + VocabularyTextPolicy.lineBrokenHyphenWordPattern(suffix: "cherzustellen")
+        )
+        try expectEqual(
+            splitSuffixRegex.matches(
+                in: splitSuffixSample,
+                range: NSRange(location: 0, length: (splitSuffixSample as NSString).length)
+            ).count,
+            1,
+            "a selection from the second line of a PDF-wrapped word should find its complete word"
         )
         try expect(!VocabularyTextPolicy.isSingleEnglishWord("two words"), "phrases should not count as a single word")
         try expectEqual(VocabularyTextPolicy.speakableWord(" high-pitched "), "high-pitched", "speakable words should be trimmed")

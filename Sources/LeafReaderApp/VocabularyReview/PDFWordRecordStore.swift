@@ -3,7 +3,7 @@ import Cocoa
 struct StoredPDFWordRecord: Codable {
     let id: String
     var vocabularyID: String? = nil
-    let word: String
+    var word: String
     let pageIndex: Int
     let bounds: StoredPDFWordRect
     var context: String?

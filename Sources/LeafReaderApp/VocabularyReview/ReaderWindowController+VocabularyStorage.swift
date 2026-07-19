@@ -11,7 +11,27 @@ struct VocabularyRecordMutationResult {
 
 extension ReaderWindowController {
     func loadStoredWordRecords() -> [StoredPDFWordRecord] {
-        pdfWordRecordStore?.load() ?? []
+        guard let store = pdfWordRecordStore else { return [] }
+        let records = store.load()
+        var repairedWords: [String: String] = [:]
+        for record in records {
+            guard let candidate = VocabularyTextPolicy.dehyphenatedPDFLayoutCandidate(word: record.word, context: record.context),
+                  hasLocalSpellingEntry(candidate),
+                  !hasLocalSpellingEntry(record.word) else { continue }
+            let key = record.vocabularyID ?? VocabularyTextPolicy.canonicalVocabularyKey(record.word)
+            repairedWords[key] = candidate
+        }
+        guard !repairedWords.isEmpty else { return records }
+
+        let repairedRecords = records.map { record -> StoredPDFWordRecord in
+            let key = record.vocabularyID ?? VocabularyTextPolicy.canonicalVocabularyKey(record.word)
+            guard let repairedWord = repairedWords[key] else { return record }
+            var repairedRecord = record
+            repairedRecord.word = repairedWord
+            return repairedRecord
+        }
+        store.save(repairedRecords)
+        return repairedRecords
     }
 
     func saveStoredWordRecords() {

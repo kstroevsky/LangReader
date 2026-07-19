@@ -36,17 +36,27 @@ enum VocabularyTextPolicy {
 
     static func normalizedPDFVocabularyText(
         _ text: String,
+        lineBrokenHyphenRange: NSRange? = nil,
+        isKnownHyphenatedWord: (String) -> Bool = { _ in false },
         isKnownWord: (String) -> Bool = { _ in false }
     ) -> String {
-        guard containsLineBrokenHyphen(text) else {
+        let lineBrokenText = textByMarkingLineBrokenHyphen(text, range: lineBrokenHyphenRange)
+        guard containsLineBrokenHyphen(lineBrokenText) else {
             return normalizedVocabularyText(text)
         }
-        let candidates = lineBrokenHyphenNormalizationCandidates(for: text)
+        let candidates = lineBrokenHyphenNormalizationCandidates(for: lineBrokenText)
         let dehyphenated = candidates.dehyphenated
         let hyphenated = candidates.hyphenated
-        if isSingleEnglishWord(dehyphenated),
-           (isKnownWord(dehyphenated) || shouldPreferDehyphenatedLineBreak(original: text, dehyphenated: dehyphenated)) {
-            return dehyphenated
+        if isSingleEnglishWord(dehyphenated) {
+            if isKnownWord(dehyphenated) {
+                return dehyphenated
+            }
+            if isKnownHyphenatedWord(hyphenated) {
+                return hyphenated
+            }
+            if shouldPreferDehyphenatedLineBreak(original: lineBrokenText, dehyphenated: dehyphenated) {
+                return dehyphenated
+            }
         }
         return hyphenated
     }
@@ -94,7 +104,15 @@ enum VocabularyTextPolicy {
     }
 
     static func lineBrokenHyphenWordPattern(prefix: String) -> String {
-        boundedPrefixPattern(for: prefix) + #"[‐‑‒–—-]\s*"# + wordTokenPattern
+        boundedPrefixPattern(for: prefix) + #"(?<layoutHyphen>[‐‑‒–—-])\s*"# + wordTokenPattern
+    }
+
+    static func lineBrokenHyphenWordPattern(suffix: String) -> String {
+        wordBoundaryBefore
+            + wordTokenPattern
+            + #"(?<layoutHyphen>[‐‑‒–—-])\s*"#
+            + NSRegularExpression.escapedPattern(for: normalized(suffix))
+            + wordBoundaryAfter
     }
 
     static func pdfSearchQueries(for query: String) -> [String] {
@@ -134,10 +152,43 @@ enum VocabularyTextPolicy {
         return wordBoundaryBefore + escaped + wordBoundaryAfter
     }
 
+    static func dehyphenatedPDFLayoutCandidate(word rawWord: String, context: String?) -> String? {
+        let word = normalizedVocabularyText(rawWord)
+        guard let context, !word.isEmpty, !context.isEmpty else { return nil }
+
+        let nsWord = word as NSString
+        guard let regex = try? NSRegularExpression(pattern: #"[‐‑‒–—-]"#) else { return nil }
+
+        for match in regex.matches(in: word, range: NSRange(location: 0, length: nsWord.length)).reversed() {
+            let spacedWord = nsWord.replacingCharacters(in: NSRange(location: NSMaxRange(match.range), length: 0), with: " ")
+            guard context.range(of: spacedWord, options: [.caseInsensitive]) != nil else { continue }
+
+            let candidate = nsWord.replacingCharacters(in: match.range, with: "")
+            guard isSingleEnglishWord(candidate) else { continue }
+            return candidate
+        }
+        return nil
+    }
+
     private static func collapsedWhitespace(_ value: String) -> String {
         value
             .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static func textByMarkingLineBrokenHyphen(_ text: String, range: NSRange?) -> String {
+        guard let range,
+              range.location >= 0,
+              NSMaxRange(range) <= (text as NSString).length,
+              let swiftRange = Range(range, in: text),
+              String(text[swiftRange]).range(of: #"[‐‑‒–—-]"#, options: .regularExpression) != nil else {
+            return text
+        }
+        let nsText = text as NSString
+        return nsText.replacingCharacters(
+            in: NSRange(location: NSMaxRange(range), length: 0),
+            with: "\n"
+        )
     }
 
     private static func containsLineBrokenHyphen(_ value: String) -> Bool {
