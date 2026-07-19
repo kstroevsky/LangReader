@@ -251,7 +251,7 @@ extension AISettingsPanelController {
         let languageHint = currentSpeechLanguageHint?()
         let text = runtime == .kokoro && languageHint == .chinese
             ? "欢迎使用叶子阅读，我是\(voiceTitle)，下面由我来给你阅读这本书。"
-            : "Welcome to Leaf Reader. I'm \(voiceTitle), and I'll be reading this book for you. Enjoy!"
+            : "Welcome to Leaf Vocabulary. I'm \(voiceTitle), and I'll be reading this book for you. Enjoy!"
         let speedID = AISettingsStore.selectedSpeechSpeedID
         speechVoicePreviewWorkItem?.cancel()
         if runtime == .kokoro {

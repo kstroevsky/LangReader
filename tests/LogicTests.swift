@@ -675,6 +675,7 @@ private func testKokoroWorkerResponseReaderBuffersPartialLines() throws {
 
 private let tests: [(String, () throws -> Void)] = [
     ("Vocabulary SRS", VocabularyLogicTests.testVocabularySRS),
+    ("Vocabulary answerless list mode", VocabularyLogicTests.testVocabularyAnswerlessListMode),
     ("Vocabulary review card selector", VocabularyLogicTests.testVocabularyReviewCardSelector),
     ("Vocabulary daily goal policy", VocabularyLogicTests.testVocabularyDailyGoalPolicy),
     ("Vocabulary learning stats", VocabularyLogicTests.testVocabularyLearningStats),
@@ -734,6 +735,7 @@ private let tests: [(String, () throws -> Void)] = [
     ("ECDICT CSV lookup", ECDICTLogicTests.testCSVLookup),
     ("ECDICT lookup key normalization", ECDICTLogicTests.testLookupKeyNormalization),
     ("Answer providers", ECDICTLogicTests.testAnswerProviders),
+    ("German dictionary inflected forms", GermanDictionaryLogicTests.testInflectedFormAndDefinitionParsing),
     ("Embedding key isolation", AISettingsLogicTests.testEmbeddingKeyIsolation),
     ("Embedding legacy key migration", AISettingsLogicTests.testEmbeddingLegacyKeyMigration),
     ("Embedding warmup idle policy", testEmbeddingWarmupIdlePolicy),
@@ -815,6 +817,13 @@ private let tests: [(String, () throws -> Void)] = [
 @main
 private struct LogicTestRunner {
     static func main() {
+        // Several legacy assertions intentionally verify the Chinese copy. Make
+        // their language deterministic instead of inheriting the developer
+        // machine's current Leaf Vocabulary preference.
+        let originalLanguage = AppText.selectedLanguage
+        AppText.selectedLanguage = .chinese
+        defer { AppText.selectedLanguage = originalLanguage }
+
         var failures: [String] = []
         for (name, test) in tests {
             do {

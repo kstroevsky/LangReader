@@ -55,7 +55,7 @@ extension WebDocumentLoader {
         let root = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
             ?? FileManager.default.temporaryDirectory
         let cacheRoot = root
-            .appendingPathComponent("LeafReader", isDirectory: true)
+            .appendingPathComponent(AppIdentity.applicationSupportDirectoryName, isDirectory: true)
             .appendingPathComponent("EPUBCache", isDirectory: true)
         try FileManager.default.createDirectory(at: cacheRoot, withIntermediateDirectories: true)
         return cacheRoot

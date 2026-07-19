@@ -61,18 +61,8 @@ struct LocalDictionaryAnswerProvider: AnswerProvider {
                 dictionaryMetadata: answer.metadata
             )
         }
-        guard isDictionaryInstalled() else { return nil }
-        let word = ECDICTDictionary.lookupKey(request.text)
-        let visibleWord = word.isEmpty
-            ? request.text.trimmingCharacters(in: .whitespacesAndNewlines)
-            : word
-        return AnswerProviderResult(
-            answer: AppText.localized(
-                "本地 ECDICT 词典未收录：\(visibleWord)",
-                "The local ECDICT dictionary has no entry for: \(visibleWord)"
-            ),
-            source: .localDictionary
-        )
+        _ = isDictionaryInstalled()
+        return nil
     }
 }
 

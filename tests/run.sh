@@ -115,7 +115,9 @@ collect_logic_app_sources() {
 
 SQLITE_WORD_TEST_SOURCES=(
   tests/SQLiteWordRecordStoreTests.swift
+  mac-app/AppIdentity.swift
   mac-app/VocabularySRS.swift
+  mac-app/VocabularyTextPolicy.swift
   mac-app/StoredPDFWordRect.swift
   mac-app/PDFWordRecordStore.swift
   mac-app/WebWordRecordStore.swift
@@ -126,6 +128,7 @@ SQLITE_WORD_TEST_SOURCES=(
 
 PERSONAL_VOCABULARY_TEST_SOURCES=(
   tests/PersonalVocabularyProfileStoreTests.swift
+  mac-app/AppIdentity.swift
   mac-app/PersonalVocabularyProfile.swift
   mac-app/PersonalVocabularyProfileStore.swift
 )
@@ -156,6 +159,7 @@ LOGIC_TEST_SOURCES=(
   tests/SpeechRuntimeManifestTests.swift
   tests/SpeechRuntimeAvailabilityTests.swift
   tests/ECDICTLogicTests.swift
+  tests/GermanDictionaryLogicTests.swift
   tests/VocabularyLogicTests.swift
   tests/LogicTests.swift
 )
@@ -179,6 +183,7 @@ run_swift_test /tmp/leafreader-personal-vocabulary-tests \
 
 run_swift_test /tmp/leafreader-pdf-embedding-store-tests \
   tests/PDFEmbeddingStoreTests.swift \
+  mac-app/AppIdentity.swift \
   mac-app/PDFEmbeddingStore.swift \
   mac-app/PDFDocumentAgentIndex.swift \
   mac-app/ReaderAIContextBuilder.swift \
@@ -204,6 +209,17 @@ run_swift_test /tmp/leafreader-theme-palette-tests \
   tests/ReaderThemePaletteTests.swift \
   -framework Cocoa
 
+run_swift_test /tmp/leafreader-vocabulary-record-provider-tests \
+  tests/VocabularyRecordProviderTests.swift \
+  mac-app/AppText.swift \
+  mac-app/ReaderDocumentKind.swift \
+  mac-app/StoredPDFWordRect.swift \
+  mac-app/VocabularySRS.swift \
+  mac-app/VocabularyTextPolicy.swift \
+  mac-app/VocabularyExportRecord.swift \
+  mac-app/VocabularyRecordProvider.swift \
+  -framework Cocoa
+
 run_swift_test /tmp/leafreader-logic-tests \
   "${LOGIC_APP_SOURCES[@]}" \
   "${LOGIC_TEST_SOURCES[@]}" \
@@ -212,6 +228,25 @@ run_swift_test /tmp/leafreader-logic-tests \
   -framework Network \
   -lsqlite3
 
+if [[ -n "${LEAFREADER_TEST_PDF_WITH_ANSWERS:-}" && -n "${LEAFREADER_TEST_PDF_WITHOUT_ANSWERS:-}" ]]; then
+  swiftc \
+    tests/PDFVocabularyDocumentTests.swift \
+    mac-app/VocabularyTextPolicy.swift \
+    mac-app/VocabularyOccurrenceMatcher.swift \
+    -framework PDFKit \
+    -o /tmp/leafreader-pdf-vocabulary-document-tests
+  /tmp/leafreader-pdf-vocabulary-document-tests \
+    "$LEAFREADER_TEST_PDF_WITH_ANSWERS" \
+    "$LEAFREADER_TEST_PDF_WITHOUT_ANSWERS"
+fi
+
 if [[ -n "${LEAFREADER_TEST_APP_BUNDLE:-}" ]]; then
   tests/PiperRuntimeBundleTests.sh "$LEAFREADER_TEST_APP_BUNDLE"
+fi
+
+if [[ "${LEAFVOCABULARY_TEST_GERMAN_DICTIONARY:-0}" == "1" ]]; then
+  run_swift_test /tmp/leafvocabulary-german-dictionary-live-tests \
+    tests/GermanDictionaryLiveLookupTests.swift \
+    mac-app/VocabularyTextPolicy.swift \
+    mac-app/GermanWiktionaryDictionary.swift
 fi

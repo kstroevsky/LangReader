@@ -99,7 +99,7 @@ final class SupertonicCoreMLTTSBackend {
 
     private static func cliExecutableURL() -> URL? {
         let userInstallRoot = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".local/share/leafreader", isDirectory: true)
+            .appendingPathComponent(".local/share/leafvocabulary", isDirectory: true)
         let bundledPath = Runtime.supertonic.bundledExecutableURL.flatMap { ($0 as NSURL).path }
         let userPath = userInstallRoot
             .appendingPathComponent("supertonic-coreml", isDirectory: true)

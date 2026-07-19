@@ -53,6 +53,61 @@ extension AIChatPanel {
         return true
     }
 
+    func handleGermanDictionaryQuestion(_ text: String) -> Bool {
+        guard isSingleEnglishWord(text), NetworkConnectivityMonitor.shared.isOnline else {
+            return false
+        }
+        speakSelectedWordIfNeeded(text)
+        let wordStart = startWordQuestionIfNeeded(text: text)
+        let linkID = wordStart?.linkID
+        if let linkID, hasLinkedBubble(id: linkID) {
+            clearSelectedText()
+            scrollToLinkedBubble(id: linkID)
+            return true
+        }
+        let selectedContext = contextForWordQuestion(text: text, start: wordStart)
+        let displayedQuestion = vocabularyBubbleTitle(for: text)
+        appendBubble(role: AppText.userRole, text: displayedQuestion, collapsible: true, linkID: linkID)
+        recordTranscript(role: AppText.userRole, text: displayedQuestion, linkID: linkID)
+        clearSelectedText()
+        setBusy(true, text: AppText.localized("正在查德语词典...", "Looking up German dictionary..."))
+
+        GermanWiktionaryDictionary.shared.lookup(text) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.setBusy(false, text: "")
+                switch result {
+                case .success(let entry):
+                    let answer = entry.markdown
+                    let body = self.appendBubble(
+                        role: AppText.aiRole,
+                        text: answer,
+                        collapsible: false,
+                        renderMarkdown: true,
+                        linkID: linkID
+                    )
+                    self.recordTranscript(role: AppText.aiRole, text: answer, linkID: linkID)
+                    self.appendMessage(ChatMessage(role: "user", content: self.wordPrompt(for: text, context: selectedContext), linkID: linkID))
+                    self.appendMessage(ChatMessage(role: "assistant", content: answer, linkID: linkID))
+                    if let linkID {
+                        self.onLinkedAnswerCompleted?(linkID, displayedQuestion, answer)
+                    }
+                    self.scrollToDictionaryAnswer(body)
+                case .failure:
+                    let message = AppText.localized(
+                        "Deutsch Wiktionary 中没有找到“\(text)”的词条。",
+                        "No German Wiktionary entry was found for “\(text)”."
+                    )
+                    self.appendBubble(role: AppText.errorRole, text: message, collapsible: false)
+                    if let linkID {
+                        self.onLinkedAnswerFailed?(linkID)
+                    }
+                }
+            }
+        }
+        return true
+    }
+
     func scrollToDictionaryAnswer(_ body: NSTextField) {
         guard let box = body.superview else { return }
         DispatchQueue.main.async { [weak self, weak box] in

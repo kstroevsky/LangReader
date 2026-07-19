@@ -303,7 +303,7 @@ final class PDFEmbeddingStore {
 
     private static func cacheDirectory() -> URL? {
         FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?
-            .appendingPathComponent("LeafReader", isDirectory: true)
+            .appendingPathComponent(AppIdentity.applicationSupportDirectoryName, isDirectory: true)
     }
 
     static func cacheSizeBytes(forDatabaseURL url: URL) -> Int64 {

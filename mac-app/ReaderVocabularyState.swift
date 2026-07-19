@@ -8,4 +8,6 @@ struct ReaderVocabularyState {
     var pendingWebWordRecords: [String: ReaderWindowController.PendingWebWordRecord] = [:]
     var webWordRecordStore: WebWordRecordStore?
     var currentExportRecords: [VocabularyExportRecord] = []
+    var occurrenceSearchID: UUID?
+    var expandedOccurrenceKeys: Set<String> = []
 }

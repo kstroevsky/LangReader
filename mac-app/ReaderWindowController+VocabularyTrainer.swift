@@ -18,11 +18,17 @@ extension ReaderWindowController {
         }
 
         currentVocabularyExportRecords = records
-        vocabularyReviewSession.filter = .due
         loadVocabularyReviewPreferences()
-        vocabularyReviewSession.resetForReviewMode()
+        if records.contains(where: { !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
+            vocabularyReviewSession.filter = .due
+            vocabularyReviewSession.resetForReviewMode()
+        } else {
+            vocabularyReviewSession.resetForListMode(filter: .all)
+        }
         vocabularyPanelController.show(records: records)
-        backfillFrequencyForCurrentTrainerIfNeeded(autoPlayAfterCompletion: false)
+        if !vocabularyReviewSession.listModeEnabled {
+            backfillFrequencyForCurrentTrainerIfNeeded(autoPlayAfterCompletion: false)
+        }
     }
 
     func makeCurrentVocabularyExportRecords() -> [VocabularyExportRecord] {

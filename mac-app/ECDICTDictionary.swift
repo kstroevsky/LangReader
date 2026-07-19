@@ -377,11 +377,11 @@ final class ECDICTDictionary {
             roots.append(resourceURL)
         }
         if let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
-            roots.append(appSupport.appendingPathComponent("LeafReader/ECDICT", isDirectory: true))
+            roots.append(appSupport.appendingPathComponent("LeafVocabulary/ECDICT", isDirectory: true))
         }
         roots.append(
             FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent(".local/share/leafreader/ecdict", isDirectory: true)
+                .appendingPathComponent(".local/share/leafvocabulary/ecdict", isDirectory: true)
         )
         return roots
     }

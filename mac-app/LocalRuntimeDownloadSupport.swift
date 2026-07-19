@@ -113,7 +113,7 @@ enum LocalRuntimeDownloadSupport {
 
     static func partialDownloadURL(for plan: LocalRuntimeDownloadPlan) -> URL {
         FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".local/share/leafreader/downloads", isDirectory: true)
+            .appendingPathComponent(".local/share/leafvocabulary/downloads", isDirectory: true)
             .appendingPathComponent(plan.archiveURL.lastPathComponent + ".part")
     }
 

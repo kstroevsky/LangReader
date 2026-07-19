@@ -80,15 +80,29 @@ extension ReaderWindowController {
 
     func vocabularyExporterRecords(_ records: [VocabularyExportRecord]) -> [VocabularyExporter.Record] {
         let source = documentTitleForAI()
-        return records.map { record in
-            VocabularyExporter.Record(
-                word: record.word,
-                answer: record.answer,
-                location: record.location,
-                context: record.context,
-                source: source,
-                createdAt: record.createdAt
-            )
+        return records.flatMap { record in
+            let occurrences = record.occurrences.isEmpty
+                ? [
+                    VocabularyOccurrence(
+                        id: record.ids.first ?? "",
+                        pageIndex: nil,
+                        bounds: nil,
+                        location: record.location,
+                        context: record.context,
+                        createdAt: record.createdAt
+                    )
+                ]
+                : record.occurrences
+            return occurrences.map { occurrence in
+                VocabularyExporter.Record(
+                    word: record.word,
+                    answer: record.answer,
+                    location: occurrence.location,
+                    context: occurrence.context,
+                    source: source,
+                    createdAt: occurrence.createdAt
+                )
+            }
         }
     }
 

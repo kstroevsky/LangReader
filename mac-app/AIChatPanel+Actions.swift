@@ -12,6 +12,9 @@ extension AIChatPanel {
             if handleLocalDictionaryQuestion(text) {
                 return
             }
+            if handleGermanDictionaryQuestion(text) {
+                return
+            }
             onSettingsRequired?()
             return
         }

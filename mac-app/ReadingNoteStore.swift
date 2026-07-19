@@ -206,7 +206,7 @@ final class ReadingNoteStore {
 
     private static func defaultDatabaseURL() -> URL? {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
-            .appendingPathComponent("LeafReader", isDirectory: true)
+            .appendingPathComponent(AppIdentity.applicationSupportDirectoryName, isDirectory: true)
             .appendingPathComponent("reading-notes.sqlite")
     }
 }

@@ -18,17 +18,11 @@ extension AppDelegate {
     }
 
     private func appMenuItem() -> NSMenuItem {
-        let appName = "Leaf Reader"
+        let appName = AppIdentity.displayName
         let menu = NSMenu(title: appName)
         menu.addItem(menuItem(
             AppText.localized("关于 \(appName)", "About \(appName)"),
             action: #selector(showAboutLeafReader(_:)),
-            key: "",
-            target: self
-        ))
-        menu.addItem(menuItem(
-            AppText.localized("检查更新...", "Check for Updates..."),
-            action: #selector(checkForUpdates(_:)),
             key: "",
             target: self
         ))
@@ -232,7 +226,7 @@ extension AppDelegate {
     private func helpMenuItem() -> NSMenuItem {
         let menu = NSMenu(title: AppText.localized("帮助", "Help"))
         menu.addItem(menuItem(
-            AppText.localized("Leaf Reader 帮助", "Leaf Reader Help"),
+            AppText.localized("Leaf Vocabulary 帮助", "Leaf Vocabulary Help"),
             action: #selector(showLeafReaderHelp(_:)),
             key: "?",
             target: self,

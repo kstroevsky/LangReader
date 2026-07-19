@@ -19,7 +19,7 @@ struct VocabularyExporter {
     }
 
     static func exportableRecords(_ records: [Record]) -> [Record] {
-        records.filter { hasTrimmedText($0.answer) }
+        records.filter { hasTrimmedText($0.word) }
     }
 
     static func markdown(
@@ -33,34 +33,48 @@ struct VocabularyExporter {
             "# \(documentTitle) \(labels.titleSuffix)",
             "",
             "- \(labels.exportedAt)：\(DateFormatter.localizedString(from: exportedAt, dateStyle: .medium, timeStyle: .short))",
-            "- \(labels.wordCount)：\(records.count)",
+            "- \(labels.wordCount)：\(Set(records.map { VocabularyTextPolicy.canonicalVocabularyKey($0.word) }).count)",
             ""
         ]
+        var order: [String] = []
+        var grouped: [String: [Record]] = [:]
         for record in records {
-            lines.append("## \(record.word)")
-            lines.append("")
-            lines.append("- \(labels.location)：\(record.location)")
-            if hasTrimmedText(record.context) {
-                lines.append("- \(labels.context)：\(record.context)")
+            let key = VocabularyTextPolicy.canonicalVocabularyKey(record.word)
+            if grouped[key] == nil {
+                order.append(key)
             }
+            grouped[key, default: []].append(record)
+        }
+        for key in order {
+            guard let group = grouped[key], let first = group.first else { continue }
+            lines.append("## \(first.word)")
             lines.append("")
-            lines.append(answerBody(record))
+            for record in group {
+                lines.append("- \(labels.location)：\(record.location)")
+                if hasTrimmedText(record.context) {
+                    lines.append("  - \(labels.context)：\(record.context)")
+                }
+            }
+            if let answered = group.first(where: { hasTrimmedText($0.answer) }) {
+                lines.append("")
+                lines.append(answerBody(answered))
+            }
             lines.append("")
         }
         return lines.joined(separator: "\n")
     }
 
     static func csv(records: [Record], answerBody: (Record) -> String) -> String {
-        var rows = ["Front,Back,Page,Context,Source,Created At"]
+        var rows = ["Word,Page,Context,Source,Created At,Answer"]
         let formatter = ISO8601DateFormatter()
         for record in records {
             rows.append([
                 record.word,
-                answerBody(record),
                 record.location,
                 record.context,
                 record.source,
-                formatter.string(from: record.createdAt)
+                formatter.string(from: record.createdAt),
+                answerBody(record)
             ].map(csvEscaped).joined(separator: ","))
         }
         return rows.joined(separator: "\n")

@@ -73,7 +73,7 @@ enum AppText {
         isChinese ? zh : en
     }
 
-    static var askAI: String { localized("✨ 学英语", "✨ Learn English") }
+    static var askAI: String { localized("✨ 语言助手", "✨ Language Assistant") }
     static var explainPrefix: String { localized("解释", "Explain") }
     static var userRole: String { localized("我", "Me") }
     static var aiRole: String { "AI" }

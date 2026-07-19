@@ -117,6 +117,9 @@ final class ReaderAIPanelCoordinator {
         owner.selectionActionToolbar.onAddWord = { [weak owner] in
             owner?.runSelectionToolbarAction(.addWord)
         }
+        owner.selectionActionToolbar.onSaveWord = { [weak owner] in
+            owner?.runSelectionToolbarAction(.saveWord)
+        }
         owner.selectionActionToolbar.onSummarize = { [weak owner] in
             owner?.runSelectionToolbarAction(.summarize)
         }

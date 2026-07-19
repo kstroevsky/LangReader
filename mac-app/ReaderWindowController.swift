@@ -8,6 +8,7 @@ import WebKit
 final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFViewDelegate, NSTextFieldDelegate, WKScriptMessageHandler, WKNavigationDelegate {
     struct PendingPDFWordRecord {
         let id: String
+        let vocabularyID: String
         let word: String
         let pageIndex: Int
         let bounds: StoredPDFWordRect
@@ -65,7 +66,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     )
     let aiHandleButton = SideHandleButton(title: "", target: nil, action: nil)
     let resizeHandle = ResizeHandleView()
-    let titleLabel = WindowDragTextField(labelWithString: "Leaf Reader")
+    let titleLabel = WindowDragTextField(labelWithString: AppIdentity.displayName)
     let coverImageView = WindowDragImageView()
     let pageLabel = ClickEditableTextField(string: AppText.noPDF)
     let zoomField = ClickEditableTextField(string: "100%")
@@ -141,11 +142,11 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
             backing: .buffered,
             defer: false
         )
-        window.title = "Leaf Reader"
+        window.title = AppIdentity.displayName
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
         window.backgroundColor = ReaderTheme.selected.chromeBackgroundColor
-        window.setFrameAutosaveName("LeafReaderClean")
+        window.setFrameAutosaveName("LeafVocabularyMainWindow")
         window.center()
         let dropContentView = ReaderDropContentView(frame: window.contentView?.bounds ?? .zero)
         dropContentView.autoresizingMask = [.width, .height]

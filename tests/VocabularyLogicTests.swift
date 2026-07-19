@@ -63,6 +63,15 @@ enum VocabularyLogicTests {
         try expectEqual(remembered.activeRecallStreak, 1, "remembered review increments recall streak")
     }
 
+    static func testVocabularyAnswerlessListMode() throws {
+        let session = VocabularyReviewSession()
+        session.resetForListMode(filter: .all)
+        try expect(session.listModeEnabled, "answerless vocabulary should open directly in list mode")
+        try expectEqual(session.filter, .all, "answerless vocabulary should show every saved word")
+        session.resetForReviewMode()
+        try expect(!session.listModeEnabled, "review mode should remain available for answered words")
+    }
+
     static func testWordRecordIncrementalStore() throws {
         var store = InMemoryWordRecordStore()
         store.upsert(StoredWordRecord(id: "a", answer: "old", srsReviewCount: 0))
@@ -89,6 +98,9 @@ enum VocabularyLogicTests {
     static func testVocabularyTextPolicy() throws {
         try expect(VocabularyTextPolicy.isSingleEnglishWord("high-pitched"), "hyphenated words should count as one vocabulary word")
         try expect(VocabularyTextPolicy.isSingleEnglishWord("reader’s"), "curly apostrophes should be accepted in vocabulary words")
+        try expect(VocabularyTextPolicy.isSingleEnglishWord("übersende"), "German umlauts should be accepted in vocabulary words")
+        try expect(VocabularyTextPolicy.isSingleEnglishWord("Straße"), "German sharp s should be accepted in vocabulary words")
+        try expect(VocabularyTextPolicy.isVocabularySelection("persönliches Gespräch"), "short German phrases should be vocabulary selections")
         try expect(!VocabularyTextPolicy.isSingleEnglishWord("Nine-"), "trailing hyphen should not be saved as a complete word")
         try expectEqual(VocabularyTextPolicy.speakableWord("Nine-\ntenths"), "Nine-tenths", "PDF line-broken hyphenated words should be saved as one word")
         try expectEqual(VocabularyTextPolicy.normalizedPDFVocabularyText("con-\ntemptuous"), "contemptuous", "PDF line-broken plain words should drop the layout hyphen")
@@ -141,6 +153,35 @@ enum VocabularyLogicTests {
         let emphasisPattern = VocabularyTextPolicy.emphasisPattern(for: "high-pitched")
         let emphasisRegex = try NSRegularExpression(pattern: emphasisPattern, options: [.caseInsensitive])
         try expectEqual(emphasisRegex.matches(in: sample, range: sampleRange).count, 1, "emphasis should use the same word boundary rule")
+
+        try expectEqual(
+            VocabularyTextPolicy.canonicalVocabularyKey("ÜBERSENDE"),
+            VocabularyTextPolicy.canonicalVocabularyKey("übersende"),
+            "vocabulary comparison should ignore German case"
+        )
+        try expect(
+            VocabularyTextPolicy.canonicalVocabularyKey("ubersende") != VocabularyTextPolicy.canonicalVocabularyKey("übersende"),
+            "vocabulary comparison should preserve diacritics"
+        )
+
+        let germanSample = "Übersende übersende ubersende übersenden. STRASSE Straße STRAẞE."
+        let germanMatches = VocabularyOccurrenceMatcher.matches(query: "übersende", in: germanSample)
+        try expectEqual(germanMatches.map(\.matchedText), ["Übersende", "übersende"], "occurrence matching should be case-insensitive but diacritic- and boundary-sensitive")
+        let sharpSMatches = VocabularyOccurrenceMatcher.matches(query: "Straße", in: germanSample)
+        try expectEqual(sharpSMatches.map(\.matchedText), ["Straße", "STRAẞE"], "occurrence matching should distinguish sharp s from ss while accepting capital sharp s")
+
+        let layoutSplit = "Das Ausbildungs-\nkonzept ist gut; ein Ausbildungskonzept bleibt."
+        try expectEqual(
+            VocabularyOccurrenceMatcher.matches(query: "Ausbildungskonzept", in: layoutSplit).count,
+            2,
+            "occurrence matching should treat PDF line-wrap hyphens as layout artifacts"
+        )
+        let genuineHyphen = "Die E-Mail und die E-\nMail sind gleich, Email aber nicht."
+        try expectEqual(
+            VocabularyOccurrenceMatcher.matches(query: "E-Mail", in: genuineHyphen).count,
+            2,
+            "occurrence matching should preserve genuine hyphens across PDF line wraps"
+        )
     }
 
     static func testPersonalVocabularyTokenizerAndPolicy() throws {
@@ -235,10 +276,11 @@ enum VocabularyLogicTests {
         let createdAt = Date(timeIntervalSince1970: 1_700_000_000)
         let records = [
             VocabularyExporter.Record(word: "alpha", answer: " first answer ", location: "p. 1", context: "context", source: "Book", createdAt: createdAt),
+            VocabularyExporter.Record(word: "Alpha", answer: " first answer ", location: "p. 3", context: "second context", source: "Book", createdAt: createdAt),
             VocabularyExporter.Record(word: "empty", answer: "   ", location: "p. 2", context: "", source: "Book", createdAt: createdAt)
         ]
         let exportable = VocabularyExporter.exportableRecords(records)
-        try expectEqual(exportable.map(\.word), ["alpha"], "empty answers should not be exported")
+        try expectEqual(exportable.map(\.word), ["alpha", "Alpha", "empty"], "answerless vocabulary should remain exportable")
         try expectEqual(VocabularyExporter.csvEscaped("a,\"b\""), "\"a,\"\"b\"\"\"", "CSV values should quote and escape quotes")
         try expectEqual(VocabularyExporter.safeFileName("A/B?C:D"), "A-B-C-D", "unsafe filename characters should be replaced")
 
@@ -258,12 +300,15 @@ enum VocabularyLogicTests {
         }
         try expect(markdown.contains("# Book Vocabulary"), "markdown should include title")
         try expect(markdown.contains("- Context：context"), "markdown should include non-empty context")
+        try expect(markdown.contains("- Location：p. 3"), "markdown should list every occurrence")
+        try expectEqual(markdown.components(separatedBy: "## alpha").count - 1, 1, "markdown should group case-insensitive occurrences under one heading")
 
         let csv = VocabularyExporter.csv(records: exportable) { record in
             record.answer
         }
-        try expect(csv.contains("Front,Back,Page,Context,Source,Created At"), "CSV should include header")
-        try expect(csv.contains("\"alpha\",\" first answer \",\"p. 1\",\"context\",\"Book\""), "CSV should include escaped record")
+        try expect(csv.contains("Word,Page,Context,Source,Created At,Answer"), "CSV should include occurrence-oriented header")
+        try expect(csv.contains("\"alpha\",\"p. 1\",\"context\",\"Book\""), "CSV should include escaped occurrence records")
+        try expect(csv.contains("\"empty\",\"p. 2\",\"\",\"Book\""), "CSV should include answerless occurrences")
     }
 
     static func testVocabularyAnswerFormatter() throws {
@@ -399,10 +444,12 @@ enum VocabularyLogicTests {
         let offlineWord = SelectionToolbarConfiguration.make(
             isVocabularySelection: true,
             queryCapability: .offlineDictionary,
-            shouldShowSpeakAction: false
+            shouldShowSpeakAction: false,
+            isPDFSelection: true
         )
         try expectEqual(offlineWord.contextAction, .addWord, "offline word selections should keep the word action")
         try expectEqual(offlineWord.displayMode, .offlineWord, "offline word selections should show only word/speak/copy actions")
+        try expect(offlineWord.showsVocabularySaveAction, "PDF vocabulary selections should expose the local save action without a model")
 
         let needsKeyText = SelectionToolbarConfiguration.make(
             isVocabularySelection: false,
@@ -411,6 +458,7 @@ enum VocabularyLogicTests {
         )
         try expectEqual(needsKeyText.contextAction, .summarize, "non-word selections should keep summarize as their context action")
         try expectEqual(needsKeyText.displayMode, .needsModelKeyCopyOnly, "unconfigured model text selections should show copy plus settings")
+        try expect(!needsKeyText.showsVocabularySaveAction, "non-vocabulary selections should not expose a save action")
 
         let full = SelectionToolbarConfiguration.make(
             isVocabularySelection: true,

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-DEFAULT_DEST="$HOME/Library/Application Support/LeafReader/ECDICT"
+DEFAULT_DEST="$HOME/Library/Application Support/LeafVocabulary/ECDICT"
 DEST_DIR="${1:-$DEFAULT_DEST}"
 SOURCE_URL="${ECDICT_URL:-https://raw.githubusercontent.com/skywind3000/ECDICT/master/ecdict.csv}"
 CSV_PATH="$DEST_DIR/ecdict.csv"
@@ -20,4 +20,3 @@ fi
 echo "Converting ECDICT CSV to SQLite: $DB_PATH"
 python3 "$ROOT_DIR/scripts/import_ecdict_csv.py" "$CSV_PATH" "$DB_PATH"
 echo "Installed ECDICT dictionary: $DB_PATH"
-

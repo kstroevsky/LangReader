@@ -7,8 +7,8 @@ WORK_DIR="${TMPDIR:-/tmp}/leafreader-speech-runtime-packages"
 MANIFEST_PATH="$OUT_DIR/speech-models-manifest.json"
 
 KOKORO_MODEL_CACHE_ROOT="${KOKORO_MODEL_CACHE_ROOT:-$HOME/.cache/fluidaudio/Models}"
-PIPER_VOICE_CACHE_ROOT="${PIPER_VOICE_CACHE_ROOT:-$HOME/.cache/leafreader/piper-voices}"
-SUPERTONIC_RUNTIME="${SUPERTONIC_RUNTIME:-$HOME/.local/share/leafreader/supertonic-coreml/supertonic-mini}"
+PIPER_VOICE_CACHE_ROOT="${PIPER_VOICE_CACHE_ROOT:-$HOME/.cache/leafvocabulary/piper-voices}"
+SUPERTONIC_RUNTIME="${SUPERTONIC_RUNTIME:-$HOME/.local/share/leafvocabulary/supertonic-coreml/supertonic-mini}"
 SUPERTONIC_MODEL_DIR="${SUPERTONIC_MODEL_DIR:-$HOME/.cache/fluidaudio/Models/supertonic-3}"
 
 mkdir -p "$OUT_DIR"

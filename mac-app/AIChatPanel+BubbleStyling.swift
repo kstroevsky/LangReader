@@ -17,7 +17,7 @@ extension AIChatPanel {
     }
 
     func vocabularyBubbleTitle(for word: String) -> String {
-        "\(AppText.localized("单词", "Word"))：\(word.trimmingCharacters(in: .whitespacesAndNewlines))"
+        "\(AppText.localized("释义", "Definition"))：\(word.trimmingCharacters(in: .whitespacesAndNewlines))"
     }
 
     func isVocabularyBubbleTitle(_ text: String) -> Bool {
@@ -25,6 +25,9 @@ extension AIChatPanel {
         return normalized.hasPrefix("单词：")
             || normalized.hasPrefix("单词:")
             || normalized.lowercased().hasPrefix("word:")
+            || normalized.hasPrefix("释义：")
+            || normalized.hasPrefix("释义:")
+            || normalized.lowercased().hasPrefix("definition:")
             || isSingleEnglishWord(normalized)
     }
 
