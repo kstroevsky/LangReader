@@ -96,6 +96,8 @@ extension ReaderWindowController {
             return occurrences.map { occurrence in
                 VocabularyExporter.Record(
                     word: record.word,
+                    lemma: record.lemma,
+                    surfaceForm: occurrence.surfaceForm ?? record.word,
                     answer: record.answer,
                     location: occurrence.location,
                     context: occurrence.context,

@@ -11,7 +11,7 @@ extension ReaderWindowController {
                 id: record.id,
                 pageIndex: record.pageIndex,
                 storedBounds: record.bounds.cgRect,
-                word: record.word,
+                word: record.occurrenceSurfaceForm,
                 refineBounds: true
             )
         }
@@ -23,7 +23,7 @@ extension ReaderWindowController {
             id: record.id,
             pageIndex: record.pageIndex,
             storedBounds: record.bounds.cgRect,
-            word: record.word,
+            word: record.occurrenceSurfaceForm,
             refineBounds: true
         )
     }
@@ -80,7 +80,7 @@ extension ReaderWindowController {
     }
 
     func displayBounds(for record: StoredPDFWordRecord, page: PDFPage) -> CGRect {
-        displayBounds(bounds: record.bounds.cgRect, word: record.word, page: page)
+        displayBounds(bounds: record.bounds.cgRect, word: record.occurrenceSurfaceForm, page: page)
     }
 
     func refreshStoredWordAnnotationAppearance() {

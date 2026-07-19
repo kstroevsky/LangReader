@@ -16,6 +16,8 @@ enum VocabularyRecordProvider {
                     return VocabularyExportRecord(
                         ids: [$0.id],
                         word: $0.word,
+                        lemma: $0.lemma,
+                        forms: [$0.occurrenceSurfaceForm],
                         answer: $0.answer,
                         dictionaryTags: $0.dictionaryTags,
                         dictionaryFrequency: $0.dictionaryFrequency,
@@ -29,6 +31,7 @@ enum VocabularyRecordProvider {
                                 pageIndex: $0.pageIndex,
                                 bounds: $0.bounds,
                                 location: location,
+                                surfaceForm: $0.occurrenceSurfaceForm,
                                 context: context,
                                 createdAt: $0.createdAt
                             )
@@ -72,7 +75,7 @@ enum VocabularyRecordProvider {
         var order: [String] = []
         var grouped: [String: [VocabularyExportRecord]] = [:]
         for record in records.sorted(by: { $0.createdAt < $1.createdAt }) {
-            let key = VocabularyTextPolicy.canonicalVocabularyKey(record.word)
+            let key = VocabularyTextPolicy.canonicalVocabularyKey(record.lemma ?? record.word)
             guard !key.isEmpty else { continue }
             if grouped[key] == nil {
                 order.append(key)
@@ -101,6 +104,13 @@ enum VocabularyRecordProvider {
             let context = group
                 .map(\.context)
                 .first { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } ?? ""
+            var seenForms = Set<String>()
+            let forms = group
+                .flatMap(\.forms)
+                .filter { form in
+                    let key = VocabularyTextPolicy.canonicalVocabularyKey(form)
+                    return !key.isEmpty && seenForms.insert(key).inserted
+                }
             let answer = group
                 .map(\.answer)
                 .first { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } ?? first.answer
@@ -116,6 +126,8 @@ enum VocabularyRecordProvider {
             return VocabularyExportRecord(
                 ids: group.flatMap(\.ids),
                 word: displayWord(first.word),
+                lemma: first.lemma,
+                forms: forms,
                 answer: answer,
                 dictionaryTags: dictionaryTags,
                 dictionaryFrequency: dictionaryFrequency,

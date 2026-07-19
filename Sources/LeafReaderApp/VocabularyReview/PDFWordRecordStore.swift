@@ -4,6 +4,8 @@ struct StoredPDFWordRecord: Codable {
     let id: String
     var vocabularyID: String? = nil
     var word: String
+    var lemma: String? = nil
+    var surfaceForm: String? = nil
     let pageIndex: Int
     let bounds: StoredPDFWordRect
     var context: String?
@@ -13,6 +15,18 @@ struct StoredPDFWordRecord: Codable {
     var dictionaryFrequency: Int? = nil
     let createdAt: Date
     var srs: VocabularySRSState?
+
+    var vocabularyGroupingText: String {
+        guard let lemma = lemma?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !lemma.isEmpty else { return word }
+        return lemma
+    }
+
+    var occurrenceSurfaceForm: String {
+        guard let surfaceForm = surfaceForm?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !surfaceForm.isEmpty else { return word }
+        return surfaceForm
+    }
 }
 
 struct PDFWordRecordStore {

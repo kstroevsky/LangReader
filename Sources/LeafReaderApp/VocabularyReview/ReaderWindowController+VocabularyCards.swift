@@ -123,10 +123,13 @@ extension ReaderWindowController {
         if !record.occurrences.isEmpty {
             let groupKey = VocabularyTextPolicy.canonicalVocabularyKey(word)
             let isExpanded = vocabularyState.expandedOccurrenceKeys.contains(groupKey)
+            let formPrefix = record.forms.count > 1
+                ? AppText.localized("词形（\(record.forms.count)） · ", "Forms (\(record.forms.count)) · ")
+                : ""
             let disclosure = vocabularyActionButton(
                 title: AppText.localized(
-                    "出现位置（\(record.occurrences.count)）\(isExpanded ? " ▲" : " ▼")",
-                    "Occurrences (\(record.occurrences.count)) \(isExpanded ? "▲" : "▼")"
+                    "\(formPrefix)出现位置（\(record.occurrences.count)）\(isExpanded ? " ▲" : " ▼")",
+                    "\(formPrefix)Occurrences (\(record.occurrences.count)) \(isExpanded ? "▲" : "▼")"
                 ),
                 target: self,
                 action: #selector(toggleVocabularyOccurrences(_:)),
@@ -189,7 +192,7 @@ extension ReaderWindowController {
         let contextLabel = NSTextField(wrappingLabelWithString: context)
         contextLabel.attributedStringValue = vocabularyExampleAttributedString(
             context,
-            word: word,
+            word: occurrence.surfaceForm ?? word,
             fontSize: 12,
             textColor: vocabularyBodyTextColor(for: theme)
         )

@@ -335,7 +335,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
             }
             guard matchesSource else { return false }
             guard !query.isEmpty else { return true }
-            let haystack = ([record.word, record.answer, record.dictionaryTags ?? ""] + record.occurrences.flatMap {
+            let haystack = ([record.word, record.answer, record.dictionaryTags ?? ""] + record.forms + record.occurrences.flatMap {
                 [$0.context, $0.documentTitle, $0.location]
             }).joined(separator: "\n")
                 .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
@@ -453,6 +453,9 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         let metadataParts = [
             record.dictionaryTags,
             record.dictionaryFrequency.map { AppText.localized("词频 #\($0)", "Frequency #\($0)") },
+            record.forms.count > 1
+                ? AppText.localized("\(record.forms.count) 个词形", "\(record.forms.count) forms")
+                : nil,
             AppText.localized("\(occurrences.count) 个出处", "\(occurrences.count) occurrences")
         ].compactMap { $0 }.filter { !$0.isEmpty }
         let metadata = NSTextField(labelWithString: metadataParts.joined(separator: "  ·  "))
@@ -484,7 +487,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         detailStack.addArrangedSubview(occurrencesTitle)
 
         for occurrence in occurrences {
-            let view = occurrenceView(occurrence, word: record.word, theme: theme)
+            let view = occurrenceView(occurrence, word: occurrence.surfaceForm ?? record.word, theme: theme)
             detailStack.addArrangedSubview(view)
             view.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
         }

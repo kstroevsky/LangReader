@@ -5,13 +5,34 @@ struct VocabularyOccurrence: Equatable {
     let pageIndex: Int?
     let bounds: StoredPDFWordRect?
     let location: String
+    let surfaceForm: String?
     let context: String
     let createdAt: Date
+
+    init(
+        id: String,
+        pageIndex: Int?,
+        bounds: StoredPDFWordRect?,
+        location: String,
+        surfaceForm: String? = nil,
+        context: String,
+        createdAt: Date
+    ) {
+        self.id = id
+        self.pageIndex = pageIndex
+        self.bounds = bounds
+        self.location = location
+        self.surfaceForm = surfaceForm
+        self.context = context
+        self.createdAt = createdAt
+    }
 }
 
 struct VocabularyExportRecord {
     let ids: [String]
     let word: String
+    let lemma: String?
+    let forms: [String]
     let answer: String
     let dictionaryTags: String?
     let dictionaryFrequency: Int?
@@ -24,6 +45,8 @@ struct VocabularyExportRecord {
     init(
         ids: [String],
         word: String,
+        lemma: String? = nil,
+        forms: [String] = [],
         answer: String,
         dictionaryTags: String?,
         dictionaryFrequency: Int?,
@@ -35,6 +58,8 @@ struct VocabularyExportRecord {
     ) {
         self.ids = ids
         self.word = word
+        self.lemma = lemma
+        self.forms = forms
         self.answer = answer
         self.dictionaryTags = dictionaryTags
         self.dictionaryFrequency = dictionaryFrequency
@@ -49,6 +74,8 @@ struct VocabularyExportRecord {
         VocabularyExportRecord(
             ids: ids,
             word: word,
+            lemma: lemma,
+            forms: forms,
             answer: answer,
             dictionaryTags: tags ?? dictionaryTags,
             dictionaryFrequency: frequency ?? dictionaryFrequency,

@@ -13,6 +13,7 @@ struct VocabularyLibraryOccurrence {
     let documentTitle: String
     let documentKind: ReaderDocumentKind
     let location: String
+    let surfaceForm: String?
     let context: String
     let createdAt: Date
 }
@@ -20,6 +21,8 @@ struct VocabularyLibraryOccurrence {
 struct VocabularyLibraryRecord {
     let id: String
     let word: String
+    let lemma: String?
+    let forms: [String]
     let answer: String
     let dictionaryTags: String?
     let dictionaryFrequency: Int?
@@ -41,7 +44,7 @@ enum VocabularyLibraryRecordProvider {
 
         for source in sources {
             for record in source.records {
-                let key = VocabularyTextPolicy.canonicalVocabularyKey(record.word)
+                let key = VocabularyTextPolicy.canonicalVocabularyKey(record.lemma ?? record.word)
                 guard !key.isEmpty else { continue }
                 grouped[key, default: []].append((source, record))
             }
@@ -58,6 +61,16 @@ enum VocabularyLibraryRecordProvider {
                 .compactMap { $0.record.dictionaryTags?.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .first { !$0.isEmpty }
             let frequency = entries.compactMap { $0.record.dictionaryFrequency }.min()
+            var seenForms = Set<String>()
+            let forms = entries
+                .flatMap { entry in
+                    let occurrenceForms = entry.record.occurrences.compactMap(\.surfaceForm)
+                    return entry.record.forms + occurrenceForms
+                }
+                .filter { form in
+                    let formKey = VocabularyTextPolicy.canonicalVocabularyKey(form)
+                    return !formKey.isEmpty && seenForms.insert(formKey).inserted
+                }
             let occurrences = entries.flatMap { entry in
                 libraryOccurrences(source: entry.source, record: entry.record)
             }.sorted(by: occurrenceSort)
@@ -65,6 +78,8 @@ enum VocabularyLibraryRecordProvider {
             return VocabularyLibraryRecord(
                 id: key,
                 word: VocabularyTextPolicy.normalizedVocabularyText(first.record.word),
+                lemma: first.record.lemma,
+                forms: forms,
                 answer: answerEntry?.record.answer ?? "",
                 dictionaryTags: tags,
                 dictionaryFrequency: frequency,
@@ -97,6 +112,7 @@ enum VocabularyLibraryRecordProvider {
                 documentTitle: source.documentTitle,
                 documentKind: source.documentKind,
                 location: $0.location,
+                surfaceForm: $0.surfaceForm ?? record.word,
                 context: $0.context,
                 createdAt: $0.createdAt
             )

@@ -4,6 +4,8 @@ import Foundation
 struct StoredPDFWordRecord {
     let id: String
     let word: String
+    var lemma: String? = nil
+    var surfaceForm: String? = nil
     let pageIndex: Int
     let bounds: StoredPDFWordRect
     var context: String?
@@ -13,6 +15,10 @@ struct StoredPDFWordRecord {
     var dictionaryFrequency: Int?
     let createdAt: Date
     var srs: VocabularySRSState?
+
+    var occurrenceSurfaceForm: String {
+        surfaceForm ?? word
+    }
 }
 
 struct StoredWebWordRecord {
@@ -39,6 +45,8 @@ private func assert(_ condition: @autoclosure () -> Bool, _ message: String) {
 private func pdfRecord(
     id: String,
     word: String,
+    lemma: String? = nil,
+    surfaceForm: String? = nil,
     pageIndex: Int,
     bounds: CGRect,
     context: String,
@@ -48,6 +56,8 @@ private func pdfRecord(
     StoredPDFWordRecord(
         id: id,
         word: word,
+        lemma: lemma,
+        surfaceForm: surfaceForm,
         pageIndex: pageIndex,
         bounds: StoredPDFWordRect(bounds),
         context: context,
@@ -66,6 +76,8 @@ struct VocabularyRecordProviderTestRunner {
         let later = pdfRecord(
             id: "later",
             word: "Übersende",
+            lemma: "übersenden",
+            surfaceForm: "Übersende",
             pageIndex: 2,
             bounds: CGRect(x: 180, y: 500, width: 70, height: 14),
             context: "Später: Übersende die Unterlagen.",
@@ -74,6 +86,8 @@ struct VocabularyRecordProviderTestRunner {
         let earlier = pdfRecord(
             id: "earlier",
             word: "übersende",
+            lemma: "übersenden",
+            surfaceForm: "übersende",
             pageIndex: 0,
             bounds: CGRect(x: 40, y: 700, width: 70, height: 14),
             context: "Zuerst übersende ich die Unterlagen.",
@@ -87,10 +101,21 @@ struct VocabularyRecordProviderTestRunner {
             context: "A deliberately different spelling.",
             createdAt: 3
         )
+        let inflected = pdfRecord(
+            id: "inflected",
+            word: "übersendet",
+            lemma: "übersenden",
+            surfaceForm: "übersendet",
+            pageIndex: 3,
+            bounds: CGRect(x: 70, y: 550, width: 70, height: 14),
+            context: "Sie übersendet die Unterlagen.",
+            createdAt: 4
+        )
+
 
         let records = VocabularyRecordProvider.records(
             documentKind: .pdf,
-            pdfRecords: [later, earlier, noDiacritic],
+            pdfRecords: [later, earlier, noDiacritic, inflected],
             webRecords: [],
             pdfContext: { $0.context ?? "" }
         )
@@ -106,8 +131,10 @@ struct VocabularyRecordProviderTestRunner {
 
         assert(grouped.word == "Übersende", "the first selected capitalization should be preserved")
         assert(grouped.answer.isEmpty, "answerless saved words should remain in the vocabulary model")
-        assert(grouped.occurrences.map(\.id) == ["earlier", "later"], "occurrences should sort by page before creation time")
-        assert(grouped.occurrences.map(\.pageIndex) == [0, 2], "navigation models should retain every page index")
+        assert(grouped.forms == ["Übersende", "übersendet"], "the group should expose unique inflected surface forms")
+        assert(grouped.occurrences.map(\.id) == ["earlier", "later", "inflected"], "occurrences should sort by page before creation time")
+        assert(grouped.occurrences.map(\.pageIndex) == [0, 2, 3], "navigation models should retain every page index")
+        assert(grouped.occurrences.map(\.surfaceForm) == ["übersende", "Übersende", "übersendet"], "navigation models should retain every exact surface form")
         assert(grouped.occurrences[0].bounds?.cgRect == earlier.bounds.cgRect, "navigation models should retain exact PDF bounds")
         assert(grouped.occurrences[0].context == earlier.context, "navigation models should retain selectable context text")
 

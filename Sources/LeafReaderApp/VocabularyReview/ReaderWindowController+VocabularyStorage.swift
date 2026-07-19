@@ -26,8 +26,21 @@ extension ReaderWindowController {
         let repairedRecords = records.map { record -> StoredPDFWordRecord in
             var repairedRecord = record
             let key = record.vocabularyID ?? VocabularyTextPolicy.canonicalVocabularyKey(record.word)
+            let surfaceForm = VocabularyExporter.nonEmptyText(record.surfaceForm) ?? record.word
+            if repairedRecord.surfaceForm != surfaceForm {
+                repairedRecord.surfaceForm = surfaceForm
+                didRepair = true
+            }
+            let lemma = VocabularyExporter.nonEmptyText(record.lemma)
+                ?? GermanLemmaResolver.lemma(for: surfaceForm)
+            if repairedRecord.lemma != lemma {
+                repairedRecord.lemma = lemma
+                didRepair = true
+            }
             if let repairedWord = repairedWords[key], repairedWord != repairedRecord.word {
                 repairedRecord.word = repairedWord
+                repairedRecord.surfaceForm = repairedWord
+                repairedRecord.lemma = GermanLemmaResolver.lemma(for: repairedWord)
                 didRepair = true
             }
             if let context = repairedRecord.context {
@@ -37,11 +50,24 @@ extension ReaderWindowController {
                     didRepair = true
                 }
             }
+            if let refreshedContext = VocabularyContextProvider.replacementPDFContextIfNeeded(
+                for: repairedRecord,
+                document: pdfView.document
+            ) {
+                let normalizedContext = normalizedPDFVocabularyContext(refreshedContext)
+                if normalizedContext != repairedRecord.context {
+                    repairedRecord.context = normalizedContext
+                    didRepair = true
+                }
+            }
             return repairedRecord
         }
-        guard didRepair else { return records }
+        guard didRepair else { return repairedRecords }
 
         store.save(repairedRecords)
+        DispatchQueue.main.async { [weak self] in
+            self?.backfillStoredGermanLemmaOccurrences()
+        }
         return repairedRecords
     }
 

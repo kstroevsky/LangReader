@@ -139,21 +139,25 @@ struct SQLiteWordRecordStoreTestRunner {
         let uniqueDocumentID = "sqlite-unique-word-doc"
         let uniqueFirst = StoredPDFWordRecord(
             id: "occurrence-one",
-            word: "Übersende",
+            word: "Fehlerhafte",
+            lemma: "fehlerhaft",
+            surfaceForm: "Fehlerhafte",
             pageIndex: 0,
             bounds: StoredPDFWordRect(CGRect(x: 12, y: 700, width: 60, height: 14)),
-            context: "Übersende die Unterlagen.",
-            question: "Definition: Übersende",
-            answer: "Form von übersenden.",
+            context: "Eine fehlerhafte Lieferung.",
+            question: "Definition: fehlerhaft",
+            answer: "incorrect",
             createdAt: Date(timeIntervalSince1970: 7),
             srs: srs
         )
         let uniqueSecond = StoredPDFWordRecord(
             id: "occurrence-two",
-            word: "übersende",
+            word: "fehlerhaften",
+            lemma: "fehlerhaft",
+            surfaceForm: "fehlerhaften",
             pageIndex: 5,
             bounds: StoredPDFWordRect(CGRect(x: 40, y: 500, width: 60, height: 14)),
-            context: "Ich übersende alles morgen.",
+            context: "Wegen eines fehlerhaften Eintrags.",
             question: "",
             answer: "",
             createdAt: Date(timeIntervalSince1970: 8),
@@ -165,8 +169,11 @@ struct SQLiteWordRecordStoreTestRunner {
         )
         let uniqueLoaded = store.loadPDFRecords(documentID: uniqueDocumentID)
         assert(uniqueLoaded.count == 2, "one vocabulary word should retain both PDF occurrences")
-        assert(Set(uniqueLoaded.compactMap(\.vocabularyID)).count == 1, "case-insensitive forms should share one canonical vocabulary row")
-        assert(uniqueLoaded.allSatisfy { $0.answer == "Form von übersenden." }, "one definition should be shared by every occurrence")
+        assert(Set(uniqueLoaded.compactMap(\.vocabularyID)).count == 1, "inflected forms should share one lemma vocabulary row")
+        assert(Set(uniqueLoaded.map(\.word)) == ["Fehlerhafte"], "the first selected surface form should remain the shared display word")
+        assert(Set(uniqueLoaded.map(\.occurrenceSurfaceForm)) == ["Fehlerhafte", "fehlerhaften"], "each occurrence should preserve its exact surface form")
+        assert(uniqueLoaded.allSatisfy { $0.lemma == "fehlerhaft" }, "the German lemma should round-trip through SQLite")
+        assert(uniqueLoaded.allSatisfy { $0.answer == "incorrect" }, "one definition should be shared by every inflected occurrence")
         assert(store.deletePDFRecords(documentID: uniqueDocumentID, ids: uniqueLoaded.map(\.id)), "deleting all occurrences should succeed")
         assert(store.loadPDFRecords(documentID: uniqueDocumentID).isEmpty, "deleting all occurrences should remove the orphaned word")
         }

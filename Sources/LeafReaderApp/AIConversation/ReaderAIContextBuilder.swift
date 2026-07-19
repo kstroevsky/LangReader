@@ -6,6 +6,14 @@ struct ReaderAIContextBuilder {
             ?? characterWindowContext(containing: selectedText, in: sourceText, radius: radius)
     }
 
+    static func selectedTextContext(occurrenceRange: NSRange, sourceText: String, radius: Int) -> String? {
+        guard occurrenceRange.location != NSNotFound,
+              occurrenceRange.length > 0,
+              let range = Range(occurrenceRange, in: sourceText) else { return nil }
+        return sentenceContext(around: range, in: sourceText)
+            ?? characterWindowContext(around: range, in: sourceText, radius: radius)
+    }
+
     static func visibleWebTextScript(preserveLineBreaks: Bool) -> String {
         let selector = preserveLineBreaks
             ? "h1,h2,h3,h4,h5,h6,p,li,blockquote,pre,td,th"
@@ -107,6 +115,78 @@ struct ReaderAIContextBuilder {
         let sentence = normalizeWhitespace(trimLeadingContextQuotes(String(normalizedText[sentenceStart..<sentenceEnd])))
         guard sentence.count > normalizedSelection.count else { return nil }
         return sentence
+    }
+
+    private static func sentenceContext(around range: Range<String.Index>, in text: String) -> String? {
+        let sentenceStart = text[..<range.lowerBound].lastIndex { char in
+            ".!?。！？".contains(char)
+        }.map { text.index(after: $0) } ?? text.startIndex
+        let sentenceEnd = text[range.upperBound...].firstIndex { char in
+            ".!?。！？".contains(char)
+        }.map { text.index(after: $0) } ?? text.endIndex
+        let rawSentence = String(text[sentenceStart..<sentenceEnd])
+        let sentence = normalizeWhitespace(
+            trimLeadingContextQuotes(trimLeadingPDFContextHeadingLines(rawSentence))
+        )
+        let selectedText = normalizeWhitespace(String(text[range]))
+        guard sentence.count > selectedText.count else { return nil }
+        return sentence
+    }
+
+    private static func trimLeadingPDFContextHeadingLines(_ text: String) -> String {
+        var lines = text.components(separatedBy: .newlines)
+        while lines.first.map({ trimmed($0).isEmpty }) == true {
+            lines.removeFirst()
+        }
+        while lines.count > 1 {
+            let first = trimmed(lines[0])
+            let next = trimmed(lines[1])
+            guard looksLikePDFContextHeading(first, followedBy: next) else { break }
+            lines.removeFirst()
+            while lines.first.map({ trimmed($0).isEmpty }) == true {
+                lines.removeFirst()
+            }
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    private static func looksLikePDFContextHeading(_ line: String, followedBy nextLine: String) -> Bool {
+        guard !line.isEmpty,
+              line.count <= 100,
+              line.range(of: #"[.!?。！？]$"#, options: .regularExpression) == nil,
+              let nextFirst = nextLine.first,
+              nextFirst.isUppercase || nextFirst.isNumber else {
+            return false
+        }
+        if line.contains("/") {
+            return true
+        }
+        if let first = line.first,
+           !first.isLetter,
+           !first.isNumber,
+           !#""“”‘’'`„«"#.contains(first) {
+            return true
+        }
+        let letters = line.filter(\.isLetter)
+        return letters.count >= 2 && line == line.uppercased()
+    }
+
+    private static func characterWindowContext(
+        around range: Range<String.Index>,
+        in text: String,
+        radius: Int
+    ) -> String? {
+        let prefixStart = text.index(
+            range.lowerBound,
+            offsetBy: -radius,
+            limitedBy: text.startIndex
+        ) ?? text.startIndex
+        let suffixEnd = text.index(
+            range.upperBound,
+            offsetBy: radius,
+            limitedBy: text.endIndex
+        ) ?? text.endIndex
+        return normalizeWhitespace(trimLeadingContextQuotes(String(text[prefixStart..<suffixEnd])))
     }
 
     private static func characterWindowContext(containing selectedText: String, in text: String, radius: Int) -> String? {

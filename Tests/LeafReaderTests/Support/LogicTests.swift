@@ -215,6 +215,27 @@ private func testReaderAIContextTextCleanup() throws {
     try expect(ReaderAIContextBuilder.pdfTextAppearsToStartMidParagraph("and then the sentence continues"), "lowercase connector should look mid-paragraph")
     try expect(ReaderAIContextBuilder.pdfTextAppearsToEndMidParagraph("This sentence keeps going without punctuation"), "long unpunctuated line should look mid-paragraph")
     try expect(!ReaderAIContextBuilder.pdfTextAppearsToEndMidParagraph("This sentence is complete."), "terminal punctuation should end paragraph")
+
+    let repeatedWordPage = """
+    4 Erklärung: einer fehlerhaften Bedienung des Geräts.
+    🖨 Drucker / Schmidt & Zeller
+    Nach Rücksprache wurde festgestellt, dass die Fehler auf eine fehlerhafte
+    Bedienung zurückzuführen sind.
+    Wir möchten Sie daher informieren.
+    """
+    let exactRange = (repeatedWordPage as NSString).range(
+        of: "fehlerhafte",
+        options: [.backwards]
+    )
+    try expectEqual(
+        ReaderAIContextBuilder.selectedTextContext(
+            occurrenceRange: exactRange,
+            sourceText: repeatedWordPage,
+            radius: 24
+        ),
+        "Nach Rücksprache wurde festgestellt, dass die Fehler auf eine fehlerhafte Bedienung zurückzuführen sind.",
+        "range-aware context should use the exact PDF occurrence instead of an earlier inflected substring"
+    )
 }
 
 private func testReaderAIContextPolicy() throws {
@@ -754,6 +775,7 @@ private let tests: [(String, () throws -> Void)] = [
     ("Reader session web progress bounds", testReaderSessionStoreWebProgressBounds),
     ("Reader progress formatter", testReaderProgressFormatter),
     ("Vocabulary text policy", VocabularyLogicTests.testVocabularyTextPolicy),
+    ("German lemma grouping", VocabularyLogicTests.testGermanLemmaGrouping),
     ("Vocabulary exporter", VocabularyLogicTests.testVocabularyExporter),
     ("Reading note store round trip", ReadingNoteLogicTests.testReadingNoteStoreRoundTrip),
     ("Reading note store unavailable database", ReadingNoteLogicTests.testReadingNoteStoreUnavailableDatabase),

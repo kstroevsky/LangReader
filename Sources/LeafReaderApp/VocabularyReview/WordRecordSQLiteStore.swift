@@ -72,6 +72,10 @@ final class WordRecordSQLiteStore {
                 rollbackTransaction()
                 return false
             }
+            guard deleteOrphanedPDFVocabularyWords(documentID: documentID) else {
+                rollbackTransaction()
+                return false
+            }
             commitTransaction()
             return true
         }
@@ -82,6 +86,10 @@ final class WordRecordSQLiteStore {
         locked {
             guard beginTransaction() else { return false }
             guard insertNormalizedPDFRecord(documentID: documentID, record: record) else {
+                rollbackTransaction()
+                return false
+            }
+            guard deleteOrphanedPDFVocabularyWords(documentID: documentID) else {
                 rollbackTransaction()
                 return false
             }
@@ -100,6 +108,10 @@ final class WordRecordSQLiteStore {
                     rollbackTransaction()
                     return false
                 }
+            }
+            guard deleteOrphanedPDFVocabularyWords(documentID: documentID) else {
+                rollbackTransaction()
+                return false
             }
             commitTransaction()
             return true
@@ -193,6 +205,7 @@ final class WordRecordSQLiteStore {
             id TEXT NOT NULL,
             canonical_key TEXT NOT NULL,
             word TEXT NOT NULL,
+            lemma TEXT,
             question TEXT NOT NULL,
             answer TEXT NOT NULL,
             dictionary_tags TEXT,
@@ -211,6 +224,7 @@ final class WordRecordSQLiteStore {
             page_index INTEGER NOT NULL,
             bounds_json TEXT NOT NULL,
             context TEXT,
+            surface_form TEXT,
             created_at REAL NOT NULL,
             PRIMARY KEY(document_id, id),
             UNIQUE(document_id, vocabulary_id, location_key),
@@ -252,6 +266,8 @@ final class WordRecordSQLiteStore {
         ensureColumn(table: "web_word_records", name: "dictionary_tags", definition: "TEXT")
         ensureColumn(table: "pdf_word_records", name: "dictionary_frequency", definition: "INTEGER")
         ensureColumn(table: "web_word_records", name: "dictionary_frequency", definition: "INTEGER")
+        ensureColumn(table: "pdf_vocabulary_words", name: "lemma", definition: "TEXT")
+        ensureColumn(table: "pdf_vocabulary_occurrences", name: "surface_form", definition: "TEXT")
     }
 
     private func ensureColumn(table: String, name: String, definition: String) {
@@ -340,19 +356,27 @@ final class WordRecordSQLiteStore {
     }
 
     private func insertNormalizedPDFRecord(documentID: String, record: StoredPDFWordRecord) -> Bool {
-        let canonicalKey = VocabularyTextPolicy.canonicalVocabularyKey(record.word)
+        let canonicalKey = VocabularyTextPolicy.canonicalVocabularyKey(record.vocabularyGroupingText)
         guard !canonicalKey.isEmpty else { return false }
-        let vocabularyID = existingPDFVocabularyID(documentID: documentID, canonicalKey: canonicalKey)
-            ?? record.vocabularyID
-            ?? UUID().uuidString
+        let vocabularyID: String
+        if let existing = existingPDFVocabularyID(documentID: documentID, canonicalKey: canonicalKey) {
+            vocabularyID = existing
+        } else if let preferred = record.vocabularyID {
+            let existingKey = pdfVocabularyCanonicalKey(documentID: documentID, vocabularyID: preferred)
+            vocabularyID = existingKey == nil || existingKey == canonicalKey
+                ? preferred
+                : UUID().uuidString
+        } else {
+            vocabularyID = UUID().uuidString
+        }
         let srsJSON = codec.encode(record.srs)
 
         guard executeStatement(
             sql: """
             INSERT OR IGNORE INTO pdf_vocabulary_words(
-                document_id, id, canonical_key, word, question, answer,
+                document_id, id, canonical_key, word, lemma, question, answer,
                 dictionary_tags, dictionary_frequency, created_at, srs_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             prepareOperation: "prepare insert PDF vocabulary word",
             stepOperation: "insert PDF vocabulary word",
@@ -361,12 +385,13 @@ final class WordRecordSQLiteStore {
             bindSQLiteText(vocabularyID, index: 2, statement: statement)
             bindSQLiteText(canonicalKey, index: 3, statement: statement)
             bindSQLiteText(record.word, index: 4, statement: statement)
-            bindSQLiteText(record.question, index: 5, statement: statement)
-            bindSQLiteText(record.answer, index: 6, statement: statement)
-            bindSQLiteOptionalText(record.dictionaryTags, index: 7, statement: statement)
-            bindSQLiteOptionalInt(record.dictionaryFrequency, index: 8, statement: statement)
-            sqlite3_bind_double(statement, 9, record.createdAt.timeIntervalSince1970)
-            bindSQLiteOptionalText(srsJSON, index: 10, statement: statement)
+            bindSQLiteOptionalText(record.lemma, index: 5, statement: statement)
+            bindSQLiteText(record.question, index: 6, statement: statement)
+            bindSQLiteText(record.answer, index: 7, statement: statement)
+            bindSQLiteOptionalText(record.dictionaryTags, index: 8, statement: statement)
+            bindSQLiteOptionalInt(record.dictionaryFrequency, index: 9, statement: statement)
+            sqlite3_bind_double(statement, 10, record.createdAt.timeIntervalSince1970)
+            bindSQLiteOptionalText(srsJSON, index: 11, statement: statement)
             }
         ) else {
             return false
@@ -377,12 +402,13 @@ final class WordRecordSQLiteStore {
         let updateSQL = hasDefinition
             ? """
               UPDATE pdf_vocabulary_words
-              SET question = ?, answer = ?, dictionary_tags = ?, dictionary_frequency = ?, srs_json = COALESCE(?, srs_json)
+              SET lemma = COALESCE(?, lemma), question = ?, answer = ?, dictionary_tags = ?, dictionary_frequency = ?, srs_json = COALESCE(?, srs_json)
               WHERE document_id = ? AND id = ?
               """
             : """
               UPDATE pdf_vocabulary_words
-              SET dictionary_tags = COALESCE(?, dictionary_tags),
+              SET lemma = COALESCE(?, lemma),
+                  dictionary_tags = COALESCE(?, dictionary_tags),
                   dictionary_frequency = COALESCE(?, dictionary_frequency),
                   srs_json = COALESCE(?, srs_json)
               WHERE document_id = ? AND id = ?
@@ -393,19 +419,21 @@ final class WordRecordSQLiteStore {
             stepOperation: "update PDF vocabulary word",
             bind: { statement in
             if hasDefinition {
-                bindSQLiteText(record.question, index: 1, statement: statement)
-                bindSQLiteText(record.answer, index: 2, statement: statement)
-                bindSQLiteOptionalText(record.dictionaryTags, index: 3, statement: statement)
-                bindSQLiteOptionalInt(record.dictionaryFrequency, index: 4, statement: statement)
-                bindSQLiteOptionalText(srsJSON, index: 5, statement: statement)
-                bindSQLiteText(documentID, index: 6, statement: statement)
-                bindSQLiteText(vocabularyID, index: 7, statement: statement)
+                bindSQLiteOptionalText(record.lemma, index: 1, statement: statement)
+                bindSQLiteText(record.question, index: 2, statement: statement)
+                bindSQLiteText(record.answer, index: 3, statement: statement)
+                bindSQLiteOptionalText(record.dictionaryTags, index: 4, statement: statement)
+                bindSQLiteOptionalInt(record.dictionaryFrequency, index: 5, statement: statement)
+                bindSQLiteOptionalText(srsJSON, index: 6, statement: statement)
+                bindSQLiteText(documentID, index: 7, statement: statement)
+                bindSQLiteText(vocabularyID, index: 8, statement: statement)
             } else {
-                bindSQLiteOptionalText(record.dictionaryTags, index: 1, statement: statement)
-                bindSQLiteOptionalInt(record.dictionaryFrequency, index: 2, statement: statement)
-                bindSQLiteOptionalText(srsJSON, index: 3, statement: statement)
-                bindSQLiteText(documentID, index: 4, statement: statement)
-                bindSQLiteText(vocabularyID, index: 5, statement: statement)
+                bindSQLiteOptionalText(record.lemma, index: 1, statement: statement)
+                bindSQLiteOptionalText(record.dictionaryTags, index: 2, statement: statement)
+                bindSQLiteOptionalInt(record.dictionaryFrequency, index: 3, statement: statement)
+                bindSQLiteOptionalText(srsJSON, index: 4, statement: statement)
+                bindSQLiteText(documentID, index: 5, statement: statement)
+                bindSQLiteText(vocabularyID, index: 6, statement: statement)
             }
             }
         ) else {
@@ -414,9 +442,9 @@ final class WordRecordSQLiteStore {
 
         return executeStatement(
             sql: """
-            INSERT OR IGNORE INTO pdf_vocabulary_occurrences(
-                document_id, id, vocabulary_id, location_key, page_index, bounds_json, context, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO pdf_vocabulary_occurrences(
+                document_id, id, vocabulary_id, location_key, page_index, bounds_json, context, surface_form, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             prepareOperation: "prepare insert PDF vocabulary occurrence",
             stepOperation: "insert PDF vocabulary occurrence",
@@ -428,7 +456,8 @@ final class WordRecordSQLiteStore {
             sqlite3_bind_int(statement, 5, Int32(record.pageIndex))
             bindSQLiteText(codec.encode(record.bounds) ?? "{}", index: 6, statement: statement)
             bindSQLiteOptionalText(record.context, index: 7, statement: statement)
-            sqlite3_bind_double(statement, 8, record.createdAt.timeIntervalSince1970)
+            bindSQLiteText(record.occurrenceSurfaceForm, index: 8, statement: statement)
+            sqlite3_bind_double(statement, 9, record.createdAt.timeIntervalSince1970)
             }
         )
     }
@@ -437,6 +466,27 @@ final class WordRecordSQLiteStore {
         queryString(
             sql: "SELECT id FROM pdf_vocabulary_words WHERE document_id = ? AND canonical_key = ? LIMIT 1",
             bindings: [documentID, canonicalKey]
+        )
+    }
+
+    private func pdfVocabularyCanonicalKey(documentID: String, vocabularyID: String) -> String? {
+        queryString(
+            sql: "SELECT canonical_key FROM pdf_vocabulary_words WHERE document_id = ? AND id = ? LIMIT 1",
+            bindings: [documentID, vocabularyID]
+        )
+    }
+
+    private func deleteOrphanedPDFVocabularyWords(documentID: String) -> Bool {
+        execute(
+            sql: """
+            DELETE FROM pdf_vocabulary_words
+            WHERE document_id = ?
+              AND id NOT IN (
+                SELECT vocabulary_id FROM pdf_vocabulary_occurrences WHERE document_id = ?
+              )
+            """,
+            bindings: [documentID, documentID],
+            operation: "delete orphaned PDF vocabulary words"
         )
     }
 

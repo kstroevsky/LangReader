@@ -259,6 +259,35 @@ enum VocabularyLogicTests {
         )
     }
 
+    static func testGermanLemmaGrouping() throws {
+        try expectEqual(GermanLemmaResolver.lemma(for: "fehlerhafte"), "fehlerhaft", "German adjective inflection should resolve to its lemma")
+        try expectEqual(GermanLemmaResolver.lemma(for: "fehlerhaften"), "fehlerhaft", "related German adjective forms should share one lemma")
+        try expectEqual(
+            GermanLemmaResolver.groupingKey(word: "Fehlerhaften"),
+            GermanLemmaResolver.groupingKey(word: "fehlerhafte"),
+            "German inflected forms should share a case-insensitive grouping key"
+        )
+
+        let text = "Eine fehlerhafte Rechnung entstand wegen eines fehlerhaften Eintrags. Ein fehlerhaf-\nten Eintrag. Ein Fehler blieb."
+        let matches = GermanLemmaOccurrenceMatcher.matches(
+            lemma: "fehlerhaft",
+            selectedForm: "fehlerhafte",
+            in: text
+        )
+        try expectEqual(
+            matches.map(\.matchedText),
+            ["fehlerhafte", "fehlerhaften", "fehlerhaf-\nten"],
+            "lemma scanning should find different inflected forms without matching unrelated nouns"
+        )
+        let batchMatches = GermanLemmaOccurrenceMatcher.matches(
+            lemmasByKey: ["fehlerhaft": "fehlerhaft"],
+            in: text
+        )
+        try expectEqual(batchMatches["fehlerhaft"]?.map(\.matchedText), matches.map(\.matchedText), "batch rescans should preserve all exact and line-wrapped inflected occurrences")
+        try expect(batchMatches["fehler"] == nil, "batch rescans should not create an unrelated noun group")
+
+    }
+
     static func testPersonalVocabularyTokenizerAndPolicy() throws {
         let counts = PersonalVocabularyTokenizer.lemmaCounts(in: """
         The Reader’s dogs, and high-pitched dogs, Nine-tenths.
@@ -352,10 +381,20 @@ enum VocabularyLogicTests {
         let records = [
             VocabularyExporter.Record(word: "alpha", answer: " first answer ", location: "p. 1", context: "context", source: "Book", createdAt: createdAt),
             VocabularyExporter.Record(word: "Alpha", answer: " first answer ", location: "p. 3", context: "second context", source: "Book", createdAt: createdAt),
-            VocabularyExporter.Record(word: "empty", answer: "   ", location: "p. 2", context: "", source: "Book", createdAt: createdAt)
+            VocabularyExporter.Record(word: "empty", answer: "   ", location: "p. 2", context: "", source: "Book", createdAt: createdAt),
+            VocabularyExporter.Record(
+                word: "Fehlerhafte",
+                lemma: "fehlerhaft",
+                surfaceForm: "fehlerhaften",
+                answer: "incorrect",
+                location: "p. 4",
+                context: "wegen eines fehlerhaften Eintrags",
+                source: "Buch",
+                createdAt: createdAt
+            )
         ]
         let exportable = VocabularyExporter.exportableRecords(records)
-        try expectEqual(exportable.map(\.word), ["alpha", "Alpha", "empty"], "answerless vocabulary should remain exportable")
+        try expectEqual(exportable.map(\.word), ["alpha", "Alpha", "empty", "Fehlerhafte"], "answerless and Unicode vocabulary should remain exportable")
         try expectEqual(VocabularyExporter.csvEscaped("a,\"b\""), "\"a,\"\"b\"\"\"", "CSV values should quote and escape quotes")
         try expectEqual(VocabularyExporter.safeFileName("A/B?C:D"), "A-B-C-D", "unsafe filename characters should be replaced")
 
@@ -377,6 +416,8 @@ enum VocabularyLogicTests {
         try expect(markdown.contains("- Context：context"), "markdown should include non-empty context")
         try expect(markdown.contains("- Location：p. 3"), "markdown should list every occurrence")
         try expectEqual(markdown.components(separatedBy: "## alpha").count - 1, 1, "markdown should group case-insensitive occurrences under one heading")
+        try expect(markdown.contains("## Fehlerhafte"), "markdown should preserve the first selected German form as its heading")
+        try expect(markdown.contains("**fehlerhaften**"), "markdown should retain the exact inflected form for an occurrence")
 
         let csv = VocabularyExporter.csv(records: exportable) { record in
             record.answer
@@ -384,6 +425,7 @@ enum VocabularyLogicTests {
         try expect(csv.contains("Word,Page,Context,Source,Created At,Answer"), "CSV should include occurrence-oriented header")
         try expect(csv.contains("\"alpha\",\"p. 1\",\"context\",\"Book\""), "CSV should include escaped occurrence records")
         try expect(csv.contains("\"empty\",\"p. 2\",\"\",\"Book\""), "CSV should include answerless occurrences")
+        try expect(csv.contains("\"fehlerhaften\",\"p. 4\""), "CSV should export the exact Unicode surface form for each occurrence")
     }
 
     static func testVocabularyAnswerFormatter() throws {

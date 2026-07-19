@@ -3,11 +3,33 @@ import Foundation
 struct VocabularyExporter {
     struct Record {
         let word: String
+        let lemma: String?
+        let surfaceForm: String?
         let answer: String
         let location: String
         let context: String
         let source: String
         let createdAt: Date
+
+        init(
+            word: String,
+            lemma: String? = nil,
+            surfaceForm: String? = nil,
+            answer: String,
+            location: String,
+            context: String,
+            source: String,
+            createdAt: Date
+        ) {
+            self.word = word
+            self.lemma = lemma
+            self.surfaceForm = surfaceForm
+            self.answer = answer
+            self.location = location
+            self.context = context
+            self.source = source
+            self.createdAt = createdAt
+        }
     }
 
     struct MarkdownLabels {
@@ -33,13 +55,13 @@ struct VocabularyExporter {
             "# \(documentTitle) \(labels.titleSuffix)",
             "",
             "- \(labels.exportedAt)：\(DateFormatter.localizedString(from: exportedAt, dateStyle: .medium, timeStyle: .short))",
-            "- \(labels.wordCount)：\(Set(records.map { VocabularyTextPolicy.canonicalVocabularyKey($0.word) }).count)",
+            "- \(labels.wordCount)：\(Set(records.map { VocabularyTextPolicy.canonicalVocabularyKey($0.lemma ?? $0.word) }).count)",
             ""
         ]
         var order: [String] = []
         var grouped: [String: [Record]] = [:]
         for record in records {
-            let key = VocabularyTextPolicy.canonicalVocabularyKey(record.word)
+            let key = VocabularyTextPolicy.canonicalVocabularyKey(record.lemma ?? record.word)
             if grouped[key] == nil {
                 order.append(key)
             }
@@ -50,7 +72,13 @@ struct VocabularyExporter {
             lines.append("## \(first.word)")
             lines.append("")
             for record in group {
-                lines.append("- \(labels.location)：\(record.location)")
+                let form = nonEmptyText(record.surfaceForm)
+                let formSuffix = form.map {
+                    VocabularyTextPolicy.canonicalVocabularyKey($0) == VocabularyTextPolicy.canonicalVocabularyKey(first.word)
+                        ? ""
+                        : " · **\($0)**"
+                } ?? ""
+                lines.append("- \(labels.location)：\(record.location)\(formSuffix)")
                 if hasTrimmedText(record.context) {
                     lines.append("  - \(labels.context)：\(record.context)")
                 }
@@ -69,7 +97,7 @@ struct VocabularyExporter {
         let formatter = ISO8601DateFormatter()
         for record in records {
             rows.append([
-                record.word,
+                nonEmptyText(record.surfaceForm) ?? record.word,
                 record.location,
                 record.context,
                 record.source,

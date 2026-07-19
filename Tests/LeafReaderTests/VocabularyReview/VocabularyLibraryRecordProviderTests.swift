@@ -11,6 +11,8 @@ private func assert(_ condition: @autoclosure () -> Bool, _ message: String) {
 private func record(
     id: String,
     word: String,
+    lemma: String? = nil,
+    surfaceForm: String? = nil,
     answer: String,
     location: String,
     context: String,
@@ -20,6 +22,8 @@ private func record(
     return VocabularyExportRecord(
         ids: [id],
         word: word,
+        lemma: lemma,
+        forms: [surfaceForm ?? word],
         answer: answer,
         dictionaryTags: nil,
         dictionaryFrequency: nil,
@@ -33,6 +37,7 @@ private func record(
                 pageIndex: nil,
                 bounds: nil,
                 location: location,
+                surfaceForm: surfaceForm ?? word,
                 context: context,
                 createdAt: date
             )
@@ -53,6 +58,8 @@ struct VocabularyLibraryRecordProviderTestRunner {
                 records: [record(
                     id: "pdf-1",
                     word: "Überlegen",
+                    lemma: "überlegen",
+                    surfaceForm: "Überlegen",
                     answer: "to consider",
                     location: "p. 4",
                     context: "Wir müssen uns das noch überlegen.",
@@ -65,7 +72,9 @@ struct VocabularyLibraryRecordProviderTestRunner {
                 documentKind: .epub,
                 records: [record(
                     id: "web-1",
-                    word: "überlegen",
+                    word: "überlegte",
+                    lemma: "überlegen",
+                    surfaceForm: "überlegte",
                     answer: "to think over carefully",
                     location: "42%",
                     context: "Sie wollte den Vorschlag überlegen.",
@@ -81,6 +90,8 @@ struct VocabularyLibraryRecordProviderTestRunner {
         assert(word.sourceCount == 2, "source count should reflect unique files")
         assert(word.answer == "to think over carefully", "the newest non-empty definition should win")
         assert(word.occurrences.map(\.recordID) == ["pdf-1", "web-1"], "occurrences should retain navigable record IDs")
+        assert(word.forms == ["Überlegen", "überlegte"], "library grouping should retain unique inflected forms")
+        assert(word.occurrences.map(\.surfaceForm) == ["Überlegen", "überlegte"], "library occurrences should retain exact forms")
         assert(word.occurrences.map(\.documentURL) == [firstURL, secondURL], "occurrences should retain source file URLs")
         assert(word.occurrences.map(\.context) == [
             "Wir müssen uns das noch überlegen.",
