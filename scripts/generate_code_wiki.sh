@@ -2,6 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+SOURCE_ROOT="$ROOT_DIR/Sources/LeafReaderApp"
+TEST_ROOT="$ROOT_DIR/Tests/LeafReaderTests"
 OUT_DIR="${WIKI_OUT_DIR:-$ROOT_DIR/docs/wiki}"
 OUT_FILE="$OUT_DIR/code-map.md"
 TYPE_INDEX_FILE="$OUT_DIR/type-index.md"
@@ -9,25 +11,25 @@ TYPE_INDEX_FILE="$OUT_DIR/type-index.md"
 mkdir -p "$OUT_DIR"
 
 count_files() {
-  find "$ROOT_DIR/mac-app" "$ROOT_DIR/tests" "$ROOT_DIR/scripts" -type f \( -name '*.swift' -o -name '*.js' -o -name '*.sh' \) | wc -l | tr -d ' '
+  find "$SOURCE_ROOT" "$TEST_ROOT" "$ROOT_DIR/scripts" -type f \( -name '*.swift' -o -name '*.js' -o -name '*.sh' \) | wc -l | tr -d ' '
 }
 
 total_lines() {
-  find "$ROOT_DIR/mac-app" "$ROOT_DIR/tests" "$ROOT_DIR/scripts" -type f \( -name '*.swift' -o -name '*.js' -o -name '*.sh' \) -print0 \
+  find "$SOURCE_ROOT" "$TEST_ROOT" "$ROOT_DIR/scripts" -type f \( -name '*.swift' -o -name '*.js' -o -name '*.sh' \) -print0 \
     | xargs -0 wc -l \
     | tail -n 1 \
     | awk '{print $1}'
 }
 
 swift_lines() {
-  find "$ROOT_DIR/mac-app" -name '*.swift' -print0 \
+  find "$SOURCE_ROOT" -name '*.swift' -print0 \
     | xargs -0 wc -l \
     | tail -n 1 \
     | awk '{print $1}'
 }
 
 write_largest_files() {
-  find "$ROOT_DIR/mac-app" "$ROOT_DIR/tests" "$ROOT_DIR/scripts" -type f \( -name '*.swift' -o -name '*.js' -o -name '*.sh' \) -print0 \
+  find "$SOURCE_ROOT" "$TEST_ROOT" "$ROOT_DIR/scripts" -type f \( -name '*.swift' -o -name '*.js' -o -name '*.sh' \) -print0 \
     | xargs -0 wc -l \
     | sort -nr \
     | head -n 20 \
@@ -44,7 +46,7 @@ write_matching_files() {
   local pattern="$2"
   echo "## $title"
   echo
-  find "$ROOT_DIR/mac-app" -maxdepth 1 -name "$pattern" -print \
+  find "$SOURCE_ROOT" -type f -name "$pattern" -print \
     | sed "s#$ROOT_DIR/##" \
     | sort \
     | awk '{ printf "- `%s`\n", $0 }'
@@ -52,7 +54,7 @@ write_matching_files() {
 }
 
 write_swift_types() {
-  rg -n "^(final class|class|struct|enum|protocol|extension) " "$ROOT_DIR/mac-app" \
+  rg -n "^(final class|class|struct|enum|protocol|extension) " "$SOURCE_ROOT" \
     | sed "s#$ROOT_DIR/##" \
     | sort \
     | awk -F: '{ printf "| `%s` | %s | `%s` |\n", $1, $2, $3 }'

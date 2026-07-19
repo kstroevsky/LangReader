@@ -34,8 +34,8 @@ check_version_references() {
   local failures=0
   local short_version
   local bundle_version
-  short_version="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$ROOT_DIR/mac-app/Info.plist")"
-  bundle_version="$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$ROOT_DIR/mac-app/Info.plist")"
+  short_version="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$ROOT_DIR/Sources/LeafReaderApp/App/Info.plist")"
+  bundle_version="$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$ROOT_DIR/Sources/LeafReaderApp/App/Info.plist")"
 
   if [[ "$short_version" != "$VERSION" ]]; then
     echo "Version check failed: Info.plist CFBundleShortVersionString is $short_version, expected $VERSION" >&2
@@ -72,8 +72,8 @@ if [[ "$MODE" == "check" ]]; then
   exit 0
 fi
 
-/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$ROOT_DIR/mac-app/Info.plist"
-/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$ROOT_DIR/mac-app/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$ROOT_DIR/Sources/LeafReaderApp/App/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$ROOT_DIR/Sources/LeafReaderApp/App/Info.plist"
 
 perl -0pi -e 's#\[Leaf Reader [0-9.]+ pkg installer\]\(https://github\.com/dowellhz/LeafReader/releases/download/v[0-9.]+/LeafReader-[0-9.]+\.pkg\)#[Leaf Reader '"$VERSION"' pkg installer]('"$DOWNLOAD_URL"')#g' "$ROOT_DIR/README.md"
 perl -0pi -e 's#Current version: `[^`]+`#Current version: `'"$VERSION"'`#g' "$ROOT_DIR/README.md"

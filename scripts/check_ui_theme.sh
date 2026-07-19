@@ -17,7 +17,7 @@ use strict;
 use warnings;
 
 my $warnings_as_errors = $ENV{WARNINGS_AS_ERRORS} eq '1';
-my @files = split /\0/, `git ls-files -z mac-app`;
+my @files = split /\0/, `git ls-files -z Sources/LeafReaderApp`;
 @files = grep { /\.swift$/ } @files;
 
 my %globally_tinted_identifier;

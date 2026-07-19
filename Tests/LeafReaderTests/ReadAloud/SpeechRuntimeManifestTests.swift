@@ -80,7 +80,7 @@ enum SpeechRuntimeManifestTests {
 
     static func testBundledSpeechModelManifestParses() throws {
         let manifestURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-            .appendingPathComponent("mac-app/Resources/speech-models-manifest.json")
+            .appendingPathComponent("Sources/LeafReaderApp/Resources/speech-models-manifest.json")
         let manifest = try SpeechRuntimeResourceManager.decodeModelManifest(Data(contentsOf: manifestURL))
         try expectEqual(
             manifest.asset(named: "kokoro-coreml-macos-arm64.tar.gz")?.size,

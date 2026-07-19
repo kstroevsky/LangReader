@@ -218,7 +218,7 @@ enum AIPromptStore {
             urls.append(bundledURL)
         }
         let currentDirectoryURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-        urls.append(currentDirectoryURL.appendingPathComponent("mac-app/\(configFileName).\(configFileExtension)"))
+        urls.append(currentDirectoryURL.appendingPathComponent("Sources/LeafReaderApp/Resources/\(configFileName).\(configFileExtension)"))
         urls.append(currentDirectoryURL.appendingPathComponent("\(configFileName).\(configFileExtension)"))
         return urls
     }

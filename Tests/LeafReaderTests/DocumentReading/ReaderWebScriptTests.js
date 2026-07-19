@@ -1,5 +1,5 @@
 const assert = require('assert');
-const web = require('../mac-app/Resources/reader-web.js');
+const web = require('../../../Sources/LeafReaderApp/Resources/reader-web.js');
 
 global.NodeFilter = { SHOW_TEXT: 4 };
 global.document = {

@@ -135,7 +135,7 @@ copy_page "troubleshooting.md" "Troubleshooting.md"
 copy_page "code-map.md" "Code-Map.md"
 copy_page "type-index.md" "Type-Index.md"
 
-CURRENT_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$ROOT_DIR/mac-app/Info.plist")"
+CURRENT_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$ROOT_DIR/Sources/LeafReaderApp/App/Info.plist")"
 
 cat > "$WIKI_WORKTREE/Home.md" <<EOF
 # Leaf Reader Wiki

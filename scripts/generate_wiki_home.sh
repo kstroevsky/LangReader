@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 OUT_DIR="${WIKI_OUT_DIR:-$ROOT_DIR/docs/wiki}"
 OUT_FILE="$OUT_DIR/index.md"
-CURRENT_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$ROOT_DIR/mac-app/Info.plist")"
+CURRENT_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$ROOT_DIR/Sources/LeafReaderApp/App/Info.plist")"
 
 mkdir -p "$OUT_DIR"
 

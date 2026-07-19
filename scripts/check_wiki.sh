@@ -81,7 +81,7 @@ check_generated_files() {
 
 check_version_status() {
   local version
-  version="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$ROOT_DIR/mac-app/Info.plist")"
+  version="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$ROOT_DIR/Sources/LeafReaderApp/App/Info.plist")"
   if ! grep -q "当前版本：\`$version\`" "$WIKI_DIR/index.md"; then
     fail "docs/wiki/index.md current version does not match Info.plist ($version)"
   fi

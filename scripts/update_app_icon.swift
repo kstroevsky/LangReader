@@ -12,14 +12,14 @@ struct IconUpdater {
             throw NSError(domain: "IconUpdater", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot read source image: \(sourceURL.path)"])
         }
 
-        let appIconSource = root.appendingPathComponent("mac-app/AppIconSource.png")
+        let appIconSource = root.appendingPathComponent("Sources/LeafReaderApp/App/Assets/AppIconSource.png")
         let source1024 = try render(image: sourceImage, size: 1024, roundedMask: maskRounded)
         try writePNG(source1024, to: appIconSource)
         try writePNG(source1024, to: root.appendingPathComponent("assets/leaf-reader-icon.png"))
         try writePNG(source1024, to: root.appendingPathComponent("docs/assets/leaf-reader-icon.png"))
         try writePNG(try render(image: source1024, size: 48, roundedMask: false), to: root.appendingPathComponent("docs/manual/assets/images/favicon.png"))
 
-        let iconset = root.appendingPathComponent("mac-app/AppIcon.iconset")
+        let iconset = root.appendingPathComponent("Sources/LeafReaderApp/App/Assets/AppIcon.iconset")
         let outputs: [(String, Int)] = [
             ("icon_16x16.png", 16),
             ("icon_16x16@2x.png", 32),
@@ -46,7 +46,7 @@ struct IconUpdater {
                 ("ic09", iconset.appendingPathComponent("icon_512x512.png")),
                 ("ic10", iconset.appendingPathComponent("icon_512x512@2x.png"))
             ],
-            to: root.appendingPathComponent("mac-app/AppIcon.icns")
+            to: root.appendingPathComponent("Sources/LeafReaderApp/App/Assets/AppIcon.icns")
         )
     }
 
