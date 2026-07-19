@@ -382,10 +382,20 @@ for RUNTIME_EXECUTABLE in "${RUNTIME_EXECUTABLES[@]}"; do
   fi
 done
 
+# The development fallback may provide a Sparkle framework whose original
+# distribution signature is stale. Seal its nested helper app and XPC services
+# before signing the enclosing app bundle.
+SPARKLE_FRAMEWORK="$APP_PATH/Contents/Frameworks/Sparkle.framework"
 if [[ "$APP_SIGN_IDENTITY" == "-" ]]; then
-  codesign --force --deep --sign - "$APP_PATH"
+  codesign --force --deep --sign - "$SPARKLE_FRAMEWORK"
 else
-  codesign --force --deep --options runtime --timestamp --sign "$APP_SIGN_IDENTITY" "$APP_PATH"
+  codesign --force --deep --options runtime --timestamp --sign "$APP_SIGN_IDENTITY" "$SPARKLE_FRAMEWORK"
+fi
+
+if [[ "$APP_SIGN_IDENTITY" == "-" ]]; then
+  codesign --force --sign - "$APP_PATH"
+else
+  codesign --force --options runtime --timestamp --sign "$APP_SIGN_IDENTITY" "$APP_PATH"
 fi
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
