@@ -30,7 +30,7 @@ echo "==> Checking UI theme coverage"
 ./scripts/check_ui_theme.sh
 
 echo "==> Running tests"
-./tests/run.sh
+./scripts/run_tests.sh
 
 if [[ "$RUN_BUILD" -eq 1 ]]; then
   echo "==> Building docs site"
@@ -42,7 +42,7 @@ if [[ "$RUN_BUILD" -eq 1 ]]; then
   REQUIRE_BUNDLED_SPEECH_RUNTIMES=1 ./scripts/build_app.sh
 
   echo "==> Checking app bundle"
-  ./tests/PiperRuntimeBundleTests.sh "Leaf Vocabulary.app"
+  ./Tests/LeafReaderTests/ReadAloud/PiperRuntimeBundleTests.sh "Leaf Vocabulary.app"
 else
   echo "==> Skipping app build"
 fi

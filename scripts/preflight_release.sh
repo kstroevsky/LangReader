@@ -5,9 +5,9 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="${1:-}"
 APP_PATH="$ROOT_DIR/Leaf Reader.app"
 APPCAST_PATH="$ROOT_DIR/docs/appcast.xml"
-ECDICT_DB="$ROOT_DIR/mac-app/Resources/ECDICT/ecdict.db"
+ECDICT_DB="$ROOT_DIR/Sources/LeafReaderApp/Resources/ECDICT/ecdict.db"
 BUILT_ECDICT_DB="$APP_PATH/Contents/Resources/ECDICT/ecdict.db"
-INFO_PLIST="$ROOT_DIR/mac-app/Info.plist"
+INFO_PLIST="$ROOT_DIR/Sources/LeafReaderApp/App/Info.plist"
 
 cd "$ROOT_DIR"
 

@@ -2,6 +2,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+APP_SOURCE_ROOT="$ROOT_DIR/Sources/LeafReaderApp"
+APP_RESOURCE_ROOT="$APP_SOURCE_ROOT/Resources"
+APP_METADATA_ROOT="$APP_SOURCE_ROOT/App"
 APP_NAME="Leaf Vocabulary"
 APP_PATH="$ROOT_DIR/$APP_NAME.app"
 SPARKLE_HOME="${SPARKLE_HOME:-/opt/homebrew/Caskroom/sparkle/2.9.2}"
@@ -233,11 +236,11 @@ mkdir -p \
 rm -rf "$APP_PATH/Contents/Frameworks/Sparkle.framework"
 rm -rf "$APP_PATH/Contents/Resources"
 mkdir -p "$APP_PATH/Contents/Resources"
-cp "$ROOT_DIR/mac-app/Info.plist" "$APP_PATH/Contents/Info.plist"
-cp "$ROOT_DIR/mac-app/AIPrompts.json" "$APP_PATH/Contents/Resources/AIPrompts.json"
-cp "$ROOT_DIR/mac-app/AppIcon.icns" "$APP_PATH/Contents/Resources/AppIcon.icns"
-if [[ -d "$ROOT_DIR/mac-app/Resources" ]]; then
-  cp -R "$ROOT_DIR/mac-app/Resources/." "$APP_PATH/Contents/Resources/"
+cp "$APP_METADATA_ROOT/Info.plist" "$APP_PATH/Contents/Info.plist"
+cp "$APP_RESOURCE_ROOT/AIPrompts.json" "$APP_PATH/Contents/Resources/AIPrompts.json"
+cp "$APP_METADATA_ROOT/Assets/AppIcon.icns" "$APP_PATH/Contents/Resources/AppIcon.icns"
+if [[ -d "$APP_RESOURCE_ROOT" ]]; then
+  cp -R "$APP_RESOURCE_ROOT/." "$APP_PATH/Contents/Resources/"
 fi
 KOKORO_ENGLISH_VOICES=(af_bella af_heart am_adam bf_emma bm_george)
 KOKORO_CHINESE_VOICES=(zf_001 zf_002 zf_003 zf_004 zf_005 zm_009 zm_010 zm_011 zm_012 zm_013 af_maple af_sol bf_vale)
@@ -310,10 +313,22 @@ xattr -cr "$APP_PATH"
 xattr -crs "$APP_PATH"
 
 BINARY_PATH="$APP_PATH/Contents/MacOS/$APP_NAME"
+APP_SWIFT_SOURCES=()
+while IFS= read -r source; do
+  APP_SWIFT_SOURCES+=("$source")
+done < <(find "$APP_SOURCE_ROOT" -type f -name '*.swift' -print | LC_ALL=C sort)
+if [[ "${#APP_SWIFT_SOURCES[@]}" -eq 0 ]]; then
+  echo "No Swift app sources found under $APP_SOURCE_ROOT" >&2
+  exit 1
+fi
+if [[ ! -f "$APP_SOURCE_ROOT/App/main.swift" ]]; then
+  echo "App entry point not found at $APP_SOURCE_ROOT/App/main.swift" >&2
+  exit 1
+fi
 TEMP_BINARIES=()
 for ARCH in "${BUILD_ARCHS[@]}"; do
   ARCH_BINARY="$APP_PATH/Contents/MacOS/$APP_NAME-$ARCH"
-  swiftc "$ROOT_DIR"/mac-app/*.swift \
+  swiftc "${APP_SWIFT_SOURCES[@]}" \
     "${SWIFT_BUILD_FLAGS[@]}" \
     -target "$ARCH-apple-macos$MACOS_DEPLOYMENT_TARGET" \
     -F "$SPARKLE_HOME" \
@@ -367,10 +382,20 @@ for RUNTIME_EXECUTABLE in "${RUNTIME_EXECUTABLES[@]}"; do
   fi
 done
 
+# The development fallback may provide a Sparkle framework whose original
+# distribution signature is stale. Seal its nested helper app and XPC services
+# before signing the enclosing app bundle.
+SPARKLE_FRAMEWORK="$APP_PATH/Contents/Frameworks/Sparkle.framework"
 if [[ "$APP_SIGN_IDENTITY" == "-" ]]; then
-  codesign --force --deep --sign - "$APP_PATH"
+  codesign --force --deep --sign - "$SPARKLE_FRAMEWORK"
 else
-  codesign --force --deep --options runtime --timestamp --sign "$APP_SIGN_IDENTITY" "$APP_PATH"
+  codesign --force --deep --options runtime --timestamp --sign "$APP_SIGN_IDENTITY" "$SPARKLE_FRAMEWORK"
+fi
+
+if [[ "$APP_SIGN_IDENTITY" == "-" ]]; then
+  codesign --force --sign - "$APP_PATH"
+else
+  codesign --force --options runtime --timestamp --sign "$APP_SIGN_IDENTITY" "$APP_PATH"
 fi
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 

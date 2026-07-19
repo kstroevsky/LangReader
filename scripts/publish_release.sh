@@ -103,7 +103,7 @@ if ! grep -q "## What's New in $VERSION" README.md; then
   exit 1
 fi
 
-RUNTIME_ASSETS_RELEASE_TAG="$(sed -n 's/.*static let runtimeAssetsReleaseTag = "\([^"]*\)".*/\1/p' mac-app/SpeechRuntimeModel.swift | head -1)"
+RUNTIME_ASSETS_RELEASE_TAG="$(sed -n 's/.*static let runtimeAssetsReleaseTag = "\([^"]*\)".*/\1/p' Sources/LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimeModel.swift | head -1)"
 if [[ -z "$RUNTIME_ASSETS_RELEASE_TAG" ]]; then
   echo "Unable to read SpeechRuntimeModel.runtimeAssetsReleaseTag" >&2
   exit 1
@@ -140,7 +140,7 @@ fi
 
 SHA256="$(shasum -a 256 "$PKG_PATH" | awk '{print $1}')"
 
-git add README.md docs/appcast.xml docs/index.html mac-app/Info.plist
+git add README.md docs/appcast.xml docs/index.html Sources/LeafReaderApp/App/Info.plist
 git commit -m "Release $VERSION"
 git tag "$TAG"
 git push origin main

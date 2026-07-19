@@ -458,7 +458,7 @@ Use `./scripts/audit_app_bundle.sh` to inspect the generated app, speech runtime
 Run lightweight logic regression tests:
 
 ```sh
-./tests/run.sh
+./scripts/run_tests.sh
 ```
 
 Run the full local pre-commit check:
@@ -480,8 +480,8 @@ The packaging script also writes `docs/tts/speech-models-manifest.json` with eac
 ### Project Layout
 
 - `Leaf Reader.app` - generated macOS application bundle, ignored by git.
-- `mac-app/*.swift` - native Swift source code.
-- `tests/` - lightweight Swift logic regression tests.
+- `Sources/LeafReaderApp/` - native Swift source code organized by product feature.
+- `Tests/LeafReaderTests/` - lightweight Swift logic regression tests organized by matching feature.
 - `docs/` - GitHub Pages site, manual, and Sparkle update feed.
 - `assets/` - README icon and screenshots.
 - `release/` - local release artifacts when generated.
@@ -530,7 +530,7 @@ The publish script runs tests, builds/signs/notarizes the pkg, smoke-tests the p
 ## Notes
 
 - Bundle identifier: `com.linlu.leafreader`.
-- Automatic updates use Sparkle and the public EdDSA key embedded in `mac-app/Info.plist`.
+- Automatic updates use Sparkle and the public EdDSA key embedded in `Sources/LeafReaderApp/App/Info.plist`.
 - PDF rendering uses PDFKit.
 - EPUB and DOCX rendering uses WebKit. DOCX support is optimized for readable text extraction rather than exact Word layout fidelity.
 - Search selections are kept separate from AI passage selection so search navigation does not accidentally populate the assistant.

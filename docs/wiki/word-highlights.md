@@ -57,16 +57,16 @@ Leaf Reader 会保存单词、解释、来源上下文和页面高亮，并在 P
 - `VocabularyLearningStats.swift`：当前书籍学习统计。
 - `VocabularySRS.swift`：SRS 复习规则。
 - `VocabularyExporter.swift`：Anki CSV 等导出。
-- `mac-app/Resources/reader-web.js`：WebKit 选择、文本范围查找、单词高亮恢复和 AI 来源下划线恢复。
+- `Resources/reader-web.js`：WebKit 选择、文本范围查找、单词高亮恢复和 AI 来源下划线恢复。
 
 ## 相关文件
 
-- `mac-app/ReaderWindowController+Vocabulary.swift`
-- `mac-app/ReaderWindowController+VocabularyHighlights.swift`
-- `mac-app/ReaderWindowController+VocabularyReviewUI.swift`
-- `mac-app/ReaderWindowController+VocabularyReviewSRS.swift`
-- `mac-app/WordRecordSQLiteStore.swift`
-- `mac-app/VocabularyLearningStats.swift`
-- `mac-app/SQLiteSchemaMigrator.swift`
-- `mac-app/VocabularySRS.swift`
-- `mac-app/VocabularyExporter.swift`
+- `Sources/LeafReaderApp/VocabularyReview/ReaderWindowController+Vocabulary.swift`
+- `Sources/LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyHighlights.swift`
+- `Sources/LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyReviewUI.swift`
+- `Sources/LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyReviewSRS.swift`
+- `Sources/LeafReaderApp/VocabularyReview/WordRecordSQLiteStore.swift`
+- `Sources/LeafReaderApp/VocabularyReview/VocabularyLearningStats.swift`
+- `Sources/LeafReaderApp/Platform/Persistence/SQLiteSchemaMigrator.swift`
+- `Sources/LeafReaderApp/VocabularyReview/VocabularySRS.swift`
+- `Sources/LeafReaderApp/VocabularyReview/VocabularyExporter.swift`

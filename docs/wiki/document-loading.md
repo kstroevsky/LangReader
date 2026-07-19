@@ -10,7 +10,7 @@ Open file
      -> PDF: load with PDFKit
      -> EPUB: unpack EPUB cache -> build reader HTML -> render in WebKit
      -> DOCX: unpack temp DOCX -> build reader HTML -> render in WebKit
-  -> ReaderWindowController
+  -> DocumentSession -> ReaderWindowController
 ```
 
 ## Files
@@ -31,10 +31,11 @@ Open file
 
 ## Related Files
 
-- `mac-app/DocumentLoading.swift`
-- `mac-app/DocumentLoading+Archive.swift`
-- `mac-app/DocumentLoading+EPUB.swift`
-- `mac-app/DocumentLoading+DOCX.swift`
-- `mac-app/DocumentLoading+HTML.swift`
-- `mac-app/ReaderDocumentKind.swift`
-- `mac-app/Resources/reader-web.js`
+- `Sources/LeafReaderApp/DocumentReading/DocumentSession.swift`
+- `Sources/LeafReaderApp/DocumentReading/DocumentLoading.swift`
+- `Sources/LeafReaderApp/DocumentReading/DocumentLoading+Archive.swift`
+- `Sources/LeafReaderApp/DocumentReading/DocumentLoading+EPUB.swift`
+- `Sources/LeafReaderApp/DocumentReading/DocumentLoading+DOCX.swift`
+- `Sources/LeafReaderApp/DocumentReading/DocumentLoading+HTML.swift`
+- `Sources/LeafReaderApp/DocumentReading/ReaderDocumentKind.swift`
+- `Sources/LeafReaderApp/Resources/reader-web.js`

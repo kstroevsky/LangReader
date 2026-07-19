@@ -1,91 +1,58 @@
 # Feature Map
 
-Use this page when the task starts from a product feature instead of a file name.
+Use this page when the task starts from a product behavior. Every path is rooted at `Sources/LeafReaderApp/`.
 
-## Reader Shell And Chrome
+## App And Reader Shell
 
-- `mac-app/ReaderWindowController.swift`: central reader state and shared controls.
-- `mac-app/ReaderWindowController+UI.swift`: top toolbar, bottom bar, layout constraints.
-- `mac-app/ReaderWindowController+Theme.swift`: light/dark reader chrome styling.
-- `mac-app/ReaderChromeViews.swift`: custom chrome controls and clipped containers.
-- `mac-app/ReaderWindow.swift`: window drag/drop behavior.
+- `App/`: lifecycle, menu commands, diagnostics, versioning, and Sparkle updates.
+- `ReaderShell/`: reader window, chrome, keyboard and selection state, shelf, recent documents, and session restoration.
+- `SharedUI/`: reusable reader chrome, theme, export, selection, search, and Markdown views.
 
-## PDF Reading And Page Turns
+## Document Reading
 
-- `mac-app/PDFReaderView.swift`: PDFKit view subclass and edge paging events.
-- `mac-app/PDFPagingPolicy.swift`: page turn thresholds and duplicate-turn guard.
-- `mac-app/ReaderWindowController+Navigation.swift`: page navigation commands.
+- `DocumentReading/DocumentSession.swift`: active Document lifecycle, load generation, restoration, and teardown.
+- `DocumentReading/DocumentPresentationState.swift`: table of contents, crop, and other transient presentation state.
+- `DocumentReading/DocumentImportDecision.swift`: import policy for files and dropped content.
+- `DocumentReading/DocumentLoading*.swift`: EPUB/DOCX/archive decoding and HTML generation.
+- `DocumentReading/PDFReaderView.swift` and `PDFPagingPolicy.swift`: PDFKit interaction and edge paging.
+- `DocumentReading/ReaderWindowController+Document*.swift`: document commands and lifecycle entry points.
+- `Resources/reader-web*.js`: WebKit reader selection, search, and highlight behavior.
 
-## EPUB And DOCX Reading
+## AI Conversation And Analysis
 
-- `mac-app/DocumentLoading.swift`: shared document model and loader entry point.
-- `mac-app/DocumentLoading+EPUB.swift`: EPUB package, cover, TOC, and resources.
-- `mac-app/DocumentLoading+DOCX.swift`: DOCX paragraph, table, and media rendering.
-- `mac-app/DocumentLoading+HTML.swift`: generated HTML wrapper and rewriting.
-- `mac-app/Resources/reader-web.js`: WebKit reader behavior, selection, and highlights.
+- `AIConversation/AIChatPanel*.swift`: chat UI, bubbles, request lifecycle, actions, and export.
+- `AIConversation/AIPromptStore.swift` with `Resources/AIPrompts.json`: built-in prompt templates.
+- `AIConversation/ReaderWindowController+AI*.swift`: Reader Shell integration, retrieval, sources, and state.
+- `AIConversation/ReaderWindowController+Embedding*.swift`: indexing lifecycle, progress, cache controls, and retrieval.
+- `AIConversation/PDFDocumentAgentIndex.swift` and `PDFEmbeddingStore.swift`: document chunking and embedding cache.
+- `Platform/Networking/AIClient.swift` and `EmbeddingClient.swift`: provider HTTP and streaming boundaries.
 
-## AI Chat
+## Vocabulary Review
 
-- `mac-app/AIChatPanel.swift`: AI panel state.
-- `mac-app/AIChatPanel+Actions.swift`: summary, translation, explanation, follow-up actions.
-- `mac-app/AIChatPanel+Requests.swift`: streaming request lifecycle and retry/cancel.
-- `mac-app/AIClient.swift`: provider HTTP and streaming client.
-- `mac-app/AIResponseTextFormatter.swift`: visible answer cleanup and translation formatting.
-- `mac-app/AIPromptStore.swift` and `mac-app/AIPrompts.json`: built-in prompt templates.
-
-## Whole-Book AI Analysis Cache
-
-- `mac-app/ReaderWindowController+Embedding*.swift`: indexing lifecycle, progress, controls, and retrieval.
-- `mac-app/PDFDocumentAgentIndex.swift`: PDF chunking and evidence retrieval.
-- `mac-app/PDFEmbeddingStore.swift`: SQLite embedding cache.
-- `mac-app/EmbeddingClient.swift`: embedding API calls.
-- `mac-app/AISettingsPanelController+ModelEmbedding.swift`: embedding model settings.
-
-## Vocabulary And Review
-
-- `mac-app/ReaderWindowController+Vocabulary*.swift`: vocabulary capture, review UI, navigation, export, persistence.
-- `mac-app/VocabularySRS.swift`: spaced repetition scoring.
-- `mac-app/VocabularyLearningStats.swift`: current-book learning stats and stat card presentation items.
-- `mac-app/WordRecordSQLiteStore.swift`: persistent vocabulary record database.
-- `mac-app/PDFWordRecordStore.swift` and `mac-app/WebWordRecordStore.swift`: document-specific word records.
-- `mac-app/VocabularyExporter.swift`: Markdown and Anki CSV export.
+- `VocabularyReview/ReaderWindowController+Vocabulary*.swift`: capture, highlighting, navigation, persistence, and review UI.
+- `VocabularyReview/VocabularySRS.swift`, `VocabularyReviewSession.swift`, and `VocabularyReviewQueueBuilder.swift`: review scoring and queue policy.
+- `VocabularyReview/WordRecordSQLiteStore.swift`, `PDFWordRecordStore.swift`, and `WebWordRecordStore.swift`: vocabulary persistence.
+- `VocabularyReview/VocabularyExporter.swift`: Markdown and Anki CSV export.
 
 ## Reading Notes
 
-- `mac-app/ReaderWindowController+ReadingNotes.swift`: note creation, saving, navigation, export, deletion, and favorite toggling.
-- `mac-app/ReadingNoteStore.swift`: persistent note database and schema migration.
-- `mac-app/ReadingNotesPanelController.swift`: reading note list panel, search, and row callbacks.
-- `mac-app/ReadingNoteRowView.swift`: note list row UI with open, favorite, and delete actions.
-- `mac-app/ReadingNotePanelController*.swift`: note editor, Markdown editing, images, AI actions, and note menu actions.
-- `mac-app/ReadingNoteListPresenter.swift`: list sorting, search filtering, and row view models.
+- `ReadingNotes/ReaderWindowController+ReadingNotes.swift`: Reader Shell integration.
+- `ReadingNotes/ReadingNoteStore.swift`: note persistence and schema migration.
+- `ReadingNotes/ReadingNotesPanelController.swift`: note list, search, and callbacks.
+- `ReadingNotes/ReadingNotePanelController*.swift`: editor, Markdown, images, AI actions, and menu commands.
 
-## Persistence Helpers
+## Read Aloud
 
-- `mac-app/SQLiteSchemaMigrator.swift`: shared SQLite column migration helper used by reading notes and vocabulary records.
+- `ReadAloud/SpeechPlaybackCoordinator*.swift`: segmentation, synthesis queue, playback, and progress notifications.
+- `ReadAloud/SpeechSynthesisRuntime.swift`: selected engine policy and synthesis dispatch.
+- `ReadAloud/ReaderWindowController+ReadAloud*.swift`: PDF/Web entry points, controls, and visual progress.
+- `Platform/SpeechRuntime/`: local engine installation, availability, downloads, catalog, and concrete TTS backends.
+- `Settings/AISettingsPanelController+Speech.swift`: speech settings and runtime management UI.
 
-## TTS And Read Aloud
+## Platform And Release
 
-- `mac-app/SpeechPlaybackCoordinator.swift`: runtime selection, text segmentation, audio generation, playback, and progress notifications.
-- `mac-app/SpeechRuntimeResourceManager.swift`: speech runtime install state, download URLs, model sizes, compatibility, and cleanup.
-- `mac-app/RuntimeDownload.swift`: runtime download progress, resume data, cancellation, and HTTP error handling.
-- `mac-app/AISettingsPanelController+Speech.swift`: settings actions for model selection, download, pause/resume, delete, and compatibility warnings.
-- `mac-app/AISettingsPanelController+Build.swift`: read-aloud settings controls and runtime status rows.
-- `mac-app/ReaderWindowController+ReadAloud.swift`: PDF and EPUB/DOCX read-aloud entry points.
-- `mac-app/ReaderWindowController+ReadAloudProgress.swift`: read-aloud segment underline/highlight updates.
-- `docs/wiki/tts.md`: detailed TTS code map and runtime rules.
-
-## Bookshelf And Session Restore
-
-- `mac-app/RecentDocumentsPanelController*.swift`: bookshelf UI and actions.
-- `mac-app/RecentDocumentsStore.swift`: recent document persistence.
-- `mac-app/ReaderWindowController+DocumentShelf.swift`: shelf presentation and document actions.
-- `mac-app/ReaderSessionStore.swift` and `mac-app/ReaderWindowController+Session.swift`: reading position/session persistence.
-
-## Release, Updates, And Website
-
-- `mac-app/AppDelegate+Updates.swift`: Sparkle update UI and manual update checks.
-- `mac-app/UpdateFailureClassifier.swift`: user-facing update failure classification.
-- `docs/appcast.xml`: Sparkle feed.
-- `docs/index.html`: public download page.
+- `Platform/Persistence/`: local encrypted data and shared SQLite migrations.
+- `Platform/Networking/`: provider and embedding clients plus connectivity/error formatting.
+- `docs/appcast.xml`: Sparkle feed; `docs/index.html`: download page.
 - `scripts/release_pkg.sh` and `scripts/publish_release.sh`: package and publish workflow.
-- `scripts/update_wiki.sh`: Wiki generation and sync workflow.
+- `scripts/generate_code_wiki.sh`: regenerate the generated wiki indexes.

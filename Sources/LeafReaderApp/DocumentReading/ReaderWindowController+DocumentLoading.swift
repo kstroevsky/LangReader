@@ -1,0 +1,186 @@
+import Cocoa
+import PDFKit
+
+extension ReaderWindowController {
+    func loadPDF(_ url: URL, generation: Int? = nil) {
+        guard let document = PDFDocument(url: url) else {
+            if let generation {
+                showDocumentLoadingFailure(
+                    NSError(domain: "LeafReader", code: -1, userInfo: [
+                        NSLocalizedDescriptionKey: AppText.localized("无法打开 PDF。", "Unable to open PDF.")
+                    ]),
+                    generation: generation
+                )
+            }
+            return
+        }
+        closeReadingNotePanelsForDocumentTransition()
+        activateDocumentSession(url: url, kind: .pdf)
+        pdfView.isHidden = false
+        webView.isHidden = true
+        pdfView.document = document
+        captureOriginalPDFCropBoxes()
+        applyPDFMarginCropIfNeeded()
+        pdfWordRecordStore = currentFileMD5.map { PDFWordRecordStore(fileMD5: $0) }
+        webWordRecordStore = nil
+        schedulePDFTOCBuild(for: url, displayBox: pdfView.displayBox)
+        storedWordRecords = loadStoredWordRecords()
+        storedWebWordRecords.removeAll()
+        loadReadingNotesForCurrentDocument()
+        restoreStoredWordAnnotations()
+        restoreReadingNoteAnnotations()
+        aiPanel.loadLinkedWordBubbles(pdfWordRecordStore?.linkedWordBubbles(from: storedWordRecords) ?? [])
+        loadSavedAIConversationIfNeeded()
+        titleLabel.stringValue = url.deletingPathExtension().lastPathComponent
+        applyDocumentDiagnostics([], fileName: url.lastPathComponent)
+        updateCoverThumbnail(from: document)
+        pageLayoutButton.isHidden = false
+        cropButton.isHidden = false
+        updatePDFMarginCropButton()
+        applyPDFPageLayout(animated: false)
+
+        if !didRegisterSelectionObserver {
+            didRegisterSelectionObserver = true
+            NotificationCenter.default.addObserver(self, selector: #selector(selectionChanged), name: .PDFViewSelectionChanged, object: pdfView)
+        }
+
+        restoreBookProgressOrGoHome()
+        lastPageIndex = currentPageIndex()
+        applyReaderTheme()
+        updatePageLabel()
+        updateZoomLabel()
+        RecentDocumentsStore.record(url: url, kind: .pdf)
+        saveSession()
+        scheduleDocumentEmbeddingWarmup(priorityPageIndex: currentEmbeddingPriorityIndex())
+        SpeechPlaybackCoordinator.shared.stopKokoroWorkerIfLanguageDiffers(from: currentReadAloudProbeText() ?? "")
+        if let generation {
+            finishDocumentLoadingAfterAIBubbles(generation: generation)
+        }
+    }
+
+    func loadWebDocument(_ url: URL, kind: ReaderDocumentKind, generation: Int) {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            do {
+                let document = try WebDocumentLoader.load(url: url)
+                DispatchQueue.main.async {
+                    guard let self, self.documentSession.acceptsLoad(generation: generation) else { return }
+                    self.applyLoadedWebDocument(document, url: url, kind: kind, generation: generation)
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self?.showDocumentLoadingFailure(error, generation: generation)
+                }
+            }
+        }
+    }
+
+    func applyLoadedWebDocument(_ document: WebReadableDocument, url: URL, kind: ReaderDocumentKind, generation: Int) {
+        closeReadingNotePanelsForDocumentTransition()
+        activateDocumentSession(url: url, kind: kind)
+        pdfView.isHidden = true
+        pdfDimOverlay.isHidden = true
+        webView.isHidden = false
+        pdfView.document = nil
+        pdfWordRecordStore = nil
+        webWordRecordStore = currentFileMD5.map { WebWordRecordStore(fileMD5: $0) }
+        currentWebPlainText = document.plainText
+        let webPlainTextGeneration = webPlainTextGeneration
+        currentDocumentDiagnostics = document.diagnostics
+        currentTOCItems = document.tocItems
+        storedWordRecords.removeAll()
+        storedWebWordRecords = loadStoredWebWordRecords()
+        loadReadingNotesForCurrentDocument()
+        aiPanel.loadLinkedWordBubbles(webWordRecordStore?.linkedWordBubbles(from: storedWebWordRecords) ?? [])
+        loadSavedAIConversationIfNeeded()
+        aiPanel.setSelectedText("")
+        titleLabel.stringValue = url.deletingPathExtension().lastPathComponent
+        applyDocumentDiagnostics(document.diagnostics, fileName: url.lastPathComponent)
+        if let coverImageURL = document.coverImageURL, let image = NSImage(contentsOf: coverImageURL) {
+            coverImageView.image = image
+        } else {
+            coverImageView.image = NSImage(systemSymbolName: kind == .epub ? "book.closed" : "doc.text", accessibilityDescription: nil)
+        }
+        coverImageView.isHidden = false
+        pageLayoutButton.isHidden = true
+        cropButton.isHidden = true
+        updateWebProgressLabel(0)
+        zoomField.stringValue = "100%"
+        if let htmlFileURL = document.htmlFileURL {
+            webView.loadFileURL(htmlFileURL, allowingReadAccessTo: document.baseURL)
+        } else {
+            webView.loadHTMLString(document.html, baseURL: document.baseURL)
+        }
+        applyReaderTheme()
+        SpeechPlaybackCoordinator.shared.stopKokoroWorkerIfLanguageDiffers(from: currentReadAloudProbeText() ?? "")
+        applyWebZoomToPage()
+        restoreWebProgressAfterLoad()
+        RecentDocumentsStore.record(url: url, kind: kind)
+        saveSession()
+        scheduleWebPlainTextLoad(document.plainTextLoader, generation: webPlainTextGeneration)
+        scheduleDocumentEmbeddingWarmup(priorityPageIndex: currentEmbeddingPriorityIndex())
+        finishDocumentLoadingAfterAIBubbles(generation: generation)
+    }
+
+    func activateDocumentSession(url: URL, kind: ReaderDocumentKind) {
+        documentSession.adopt(url: url, kind: kind, documentID: fileMD5(for: url))
+        documentPresentationState.resetForDocumentChange()
+        aiConversationStore = currentFileMD5.map { AIConversationStore(fileMD5: $0) }
+        loadedAIConversation = nil
+        invalidateDocumentAgentIndex()
+        pendingPDFWordRecords.removeAll()
+        pendingWebWordRecords.removeAll()
+        storedReadingNotes.removeAll()
+        readingNotePanelControllers.removeAll()
+        lastPersonalVocabularyPDFPageIndex = nil
+        lastPersonalVocabularyWebProgressBucket = nil
+        cancelScheduledEmbeddingWarmup()
+        accumulatedPDFTrackpadScroll = 0
+        didTurnPageForCurrentPDFTrackpadGesture = false
+        lastPDFTrackpadEdgeDirection = nil
+        highlightedSelectionKeys.removeAll()
+        clearAISourceUnderlineTracking()
+        clearSearchState()
+    }
+
+    func applyDocumentDiagnostics(_ diagnostics: [String], fileName: String) {
+        guard !diagnostics.isEmpty else {
+            titleLabel.toolTip = nil
+            return
+        }
+        let summary = diagnostics.prefix(8).joined(separator: "\n")
+        titleLabel.toolTip = AppText.localized(
+            "部分 EPUB 内容未能读取：\n\(summary)",
+            "Some EPUB content could not be read:\n\(summary)"
+        )
+        NSLog("LeafReader EPUB diagnostics for %@: %@", fileName, diagnostics.joined(separator: " | "))
+    }
+
+    func scheduleWebPlainTextLoad(_ loader: (() -> String)?, generation: Int) {
+        guard let loader else { return }
+        let documentID = currentFileMD5
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            let plainText = loader()
+            DispatchQueue.main.async {
+                guard let self,
+                      self.webPlainTextGeneration == generation,
+                      self.currentFileMD5 == documentID else {
+                    return
+                }
+                self.currentWebPlainText = plainText
+                self.invalidateDocumentAgentIndex()
+                self.scheduleDocumentEmbeddingWarmup(priorityPageIndex: self.currentEmbeddingPriorityIndex())
+            }
+        }
+    }
+
+    func updateCoverThumbnail(from document: PDFDocument) {
+        guard let firstPage = document.page(at: 0) else {
+            coverImageView.image = nil
+            coverImageView.isHidden = true
+            return
+        }
+
+        coverImageView.image = firstPage.thumbnail(of: CGSize(width: 56, height: 76), for: .cropBox)
+        coverImageView.isHidden = false
+    }
+}

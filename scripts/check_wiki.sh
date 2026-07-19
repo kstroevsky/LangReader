@@ -81,9 +81,15 @@ check_generated_files() {
 
 check_version_status() {
   local version
-  version="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$ROOT_DIR/mac-app/Info.plist")"
+  version="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$ROOT_DIR/Sources/LeafReaderApp/App/Info.plist")"
   if ! grep -q "当前版本：\`$version\`" "$WIKI_DIR/index.md"; then
     fail "docs/wiki/index.md current version does not match Info.plist ($version)"
+  fi
+}
+
+check_retired_paths() {
+  if rg -n 'mac-app/|\./tests/run\.sh' "$WIKI_DIR" --glob '*.md' >&2; then
+    fail "wiki still references the retired flat source tree or test command"
   fi
 }
 
@@ -99,6 +105,7 @@ check_local_links
 check_sync_registration
 check_generated_files
 check_version_status
+check_retired_paths
 
 if [[ "$FAILURES" -ne 0 ]]; then
   echo "Wiki checks failed: $FAILURES issue(s)." >&2

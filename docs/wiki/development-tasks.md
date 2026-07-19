@@ -1,61 +1,22 @@
 # Development Tasks
 
-Use this page when the task is phrased as "I want to change X" and you need the likely files and checks.
+Use this page when a task starts with a product behavior. Paths below are rooted at `Sources/LeafReaderApp/`; feature-local tests are under `Tests/LeafReaderTests/`.
 
 ## Change PDF Page Turning
 
-Start with:
+Start with `DocumentReading/PDFReaderView.swift`, `DocumentReading/PDFPagingPolicy.swift`, and `DocumentReading/ReaderWindowController+Navigation.swift`.
 
-- `mac-app/PDFReaderView.swift`
-- `mac-app/PDFPagingPolicy.swift`
-- `mac-app/ReaderWindowController+Navigation.swift`
-
-Run:
-
-```sh
-./scripts/check.sh --no-build
-```
-
-Watch for:
-
-- Duplicate page turns after one scroll gesture.
-- Losing native PDFKit scroll or rubber-band behavior.
-- Thresholds that work for short pages but fail on long technical books.
+Run `./scripts/check.sh --no-build`. Preserve PDFKit scrolling and check duplicate page turns after a single edge gesture.
 
 ## Change AI Translation Or Explanations
 
-Start with:
+Start with `AIConversation/AIChatPanel+Actions.swift`, `AIConversation/AIChatPanel+Requests.swift`, `AIConversation/AIResponseTextFormatter.swift`, and `AIConversation/AIPromptStore.swift`. Prompt templates are in `Resources/AIPrompts.json`; HTTP behavior belongs in `Platform/Networking/AIClient.swift`.
 
-- `mac-app/AIChatPanel+Actions.swift`
-- `mac-app/AIChatPanel+Requests.swift`
-- `mac-app/AIResponseTextFormatter.swift`
-- `mac-app/AIPromptStore.swift`
-- `mac-app/AIPrompts.json`
-
-Run:
-
-```sh
-./scripts/check.sh --no-build
-```
-
-Watch for:
-
-- Streaming text being rendered before hidden reasoning text is stripped.
-- Long selected text producing oversized bubble titles.
-- Translation chunks losing paragraph spacing or indentation.
+Run `./scripts/check.sh --no-build`. Check streaming cleanup, selected-text titles, and paragraph preservation.
 
 ## Change UI Controls Or Theme Styling
 
-Start with the local surface that owns the controls, then check the shared theme helpers:
-
-- `mac-app/ReaderTheme.swift`
-- `mac-app/ReaderTheme+Palette.swift`
-- `mac-app/ReaderWindowController+Theme.swift`
-- `mac-app/AIChatPanel+BubbleStyling.swift`
-- `mac-app/ReadingNotePanelController+Theme.swift`
-- `mac-app/ReadingNotesPanelController.swift`
-- `mac-app/AISettingsPanelController+Theme.swift`
-- `mac-app/ExportPanelSupport.swift`
+Start in the feature that owns the surface, then inspect `SharedUI/ReaderTheme.swift` and `SharedUI/ReaderTheme+Palette.swift`. Common feature entry points are `ReaderShell/ReaderWindowController+Theme.swift`, `AIConversation/AIChatPanel+BubbleStyling.swift`, `ReadingNotes/ReadingNotePanelController+Theme.swift`, and `Settings/AISettingsPanelController+Theme.swift`.
 
 Run:
 
@@ -65,142 +26,42 @@ Run:
 ./scripts/build_app.sh
 ```
 
-`build_app.sh` defaults to `--debug --arm64` for faster daily iteration. Use `./scripts/build_app.sh --release --universal` only when checking release-style architecture output.
-
-UI rule:
-
-- Every new visible control must define or inherit colors for all reader modes: original, eyeCare, and dark.
-- Icon-only buttons must set `contentTintColor` from the active theme, not a fixed system color.
-- Controls created after startup must use the current theme at creation time and must also be updated by the surface's theme refresh path.
-- If a control is inside a dynamic row, bubble, note, or popup accessory view, theme refresh must walk existing subviews and update it.
-- Save panels and other macOS accessory views should hide irrelevant system fields, such as tags, when they are not part of the app workflow.
-- `./scripts/check_ui_theme.sh` fails high-confidence icon tint misses by default; fixed `NSColor(...)` usage is reported as warning unless `--warnings-as-errors` is passed.
-
-Watch for:
-
-- Adding a button that looks correct on first render but does not change after switching to eyeCare or dark mode.
-- Updating text colors but missing SF Symbol tint, border color, hover/background color, or disabled state.
-- Styling only the app-level toolbar while leaving AI bubbles, reading notes, settings, or export panels on their previous colors.
-- Introducing a new themed control without adding it to the relevant `setTheme`, `applyTheme`, or `restyle...` traversal.
+Every visible control must have a current-theme creation path and an existing-view refresh path for original, eye-care, and dark themes.
 
 ## Change Whole-Book AI Analysis
 
-Start with:
+Start with `AIConversation/ReaderWindowController+Embedding*.swift`, `AIConversation/PDFDocumentAgentIndex.swift`, `AIConversation/PDFEmbeddingStore.swift`, `AIConversation/EmbeddingActionPolicy.swift`, and `Platform/Networking/EmbeddingClient.swift`. Settings integration is in `Settings/AISettingsPanelController+ModelEmbedding.swift`.
 
-- `mac-app/ReaderWindowController+Embedding*.swift`
-- `mac-app/PDFDocumentAgentIndex.swift`
-- `mac-app/PDFEmbeddingStore.swift`
-- `mac-app/EmbeddingClient.swift`
-- `mac-app/AISettingsPanelController+ModelEmbedding.swift`
-
-Run:
-
-```sh
-./scripts/check.sh --no-build
-```
-
-Watch for:
-
-- Re-indexing too eagerly when cached chunks are still valid.
-- UI status becoming stale after pause, cancel, failure, or theme change.
-- Retrieval returning incomplete evidence without warning the user.
+Run `./scripts/check.sh --no-build`. Preserve valid cached chunks and keep status accurate after pause, cancellation, failure, and theme changes.
 
 ## Change Vocabulary Review
 
-Start with:
+Start with `VocabularyReview/ReaderWindowController+VocabularyReviewUI.swift`, `VocabularyReview/ReaderWindowController+VocabularyReviewSRS.swift`, `VocabularyReview/ReaderWindowController+VocabularyReviewQueue.swift`, `VocabularyReview/VocabularySRS.swift`, and `VocabularyReview/WordRecordSQLiteStore.swift`.
 
-- `mac-app/ReaderWindowController+VocabularyReviewUI.swift`
-- `mac-app/ReaderWindowController+VocabularyReviewSRS.swift`
-- `mac-app/ReaderWindowController+VocabularyReviewQueue.swift`
-- `mac-app/VocabularySRS.swift`
-- `mac-app/WordRecordSQLiteStore.swift`
-
-Run:
-
-```sh
-./scripts/check.sh --no-build
-```
-
-Watch for:
-
-- Accidentally deleting user vocabulary data.
-- Review queue order changing without updating SRS tests.
-- PDF and EPUB/DOCX records diverging.
+Run `./scripts/check.sh --no-build`. Do not delete user vocabulary data unintentionally; keep PDF and Web records aligned.
 
 ## Change Read Aloud Or TTS Models
 
-Start with:
-
-- `mac-app/SpeechPlaybackCoordinator.swift`
-- `mac-app/SpeechRuntimeResourceManager.swift`
-- `mac-app/AISettingsPanelController+Speech.swift`
-- `mac-app/AISettingsPanelController+Build.swift`
-- `mac-app/ReaderWindowController+ReadAloud.swift`
-- `mac-app/ReaderWindowController+ReadAloudProgress.swift`
-
-Current model/runtime notes:
-
-- Piper is the macOS 12+ local read-aloud runtime.
-- Kokoro can be downloaded on older systems, but requires macOS 14+ to run.
-- See `docs/wiki/tts.md` for the full TTS code map, runtime rules, and release packaging notes.
+Start with `ReadAloud/SpeechPlaybackCoordinator.swift`, `ReadAloud/SpeechSynthesisRuntime.swift`, `ReadAloud/ReaderWindowController+ReadAloud*.swift`, and `Platform/SpeechRuntime/`. Speech settings are in `Settings/AISettingsPanelController+Speech.swift` and `Settings/AISettingsPanelController+BuildSpeech.swift`.
 
 Run:
 
 ```sh
-./tests/run.sh
+./scripts/run_tests.sh
 ./scripts/build_app.sh --release --universal
 ./scripts/audit_app_bundle.sh
 ```
 
-Watch for:
+Ensure a downloaded model is runnable before presenting it as selectable, retain at most one local TTS model in memory, and verify PDF and Web temporary highlights.
 
-- Letting users select a model that is downloaded but has no runnable backend.
-- Reintroducing Python/MLX dependencies into the app bundle.
-- Keeping more than one local TTS model loaded in memory.
-- Breaking EPUB/PDF temporary read-aloud highlighting.
+## Change Bookshelf Or Session Restore
 
-## Change Bookshelf Or Recent Documents
+Start with `ReaderShell/RecentDocumentsPanelController*.swift`, `ReaderShell/RecentDocumentsStore.swift`, `ReaderShell/ReaderWindowController+DocumentShelf.swift`, and `ReaderShell/ReaderWindowController+Session.swift`. The active document lifecycle is owned by `DocumentReading/DocumentSession.swift`.
 
-Start with:
-
-- `mac-app/RecentDocumentsPanelController.swift`
-- `mac-app/RecentDocumentsPanelController+Actions.swift`
-- `mac-app/RecentDocumentsPanelController+Cards.swift`
-- `mac-app/RecentDocumentsStore.swift`
-- `mac-app/ReaderWindowController+DocumentShelf.swift`
-
-Run:
-
-```sh
-./scripts/check.sh --no-build
-```
-
-Watch for:
-
-- Moved files losing stable identity.
-- Sorting or import behavior changing without test coverage.
-- Shelf actions clearing the wrong document data.
+Run `./scripts/check.sh --no-build`. Verify stable document identity, sort/import behavior, and that shelf actions unload only the intended Document Session.
 
 ## Publish A New Version
 
-Start with:
+Start with `docs/wiki/release-checklist.md`, `docs/wiki/release-runbook.md`, `scripts/release_pkg.sh`, `scripts/publish_release.sh`, `docs/appcast.xml`, and `docs/index.html`.
 
-- `docs/wiki/release-checklist.md`
-- `docs/wiki/release-runbook.md`
-- `scripts/release_pkg.sh`
-- `scripts/publish_release.sh`
-- `docs/appcast.xml`
-- `docs/index.html`
-
-Run:
-
-```sh
-./scripts/check.sh
-./scripts/update_wiki.sh --push
-```
-
-Watch for:
-
-- Version references disagreeing between `Info.plist`, `README.md`, website, and appcast.
-- Package signing or notarization failures.
-- Sparkle update check failing after publishing.
+Run `./scripts/check.sh`, then `./scripts/update_wiki.sh --push` when remote credentials are available. Confirm version references, signing, notarization, and Sparkle metadata agree.

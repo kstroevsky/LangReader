@@ -7,7 +7,7 @@ Leaf Reader releases are built locally, signed, packaged, and published to GitHu
 Run tests:
 
 ```sh
-./tests/run.sh
+./scripts/run_tests.sh
 ```
 
 Build the app:

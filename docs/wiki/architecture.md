@@ -1,44 +1,53 @@
 # Architecture
 
-Leaf Reader is a native macOS reader built with Swift, PDFKit, WebKit, and Sparkle.
+Leaf Reader is a native macOS reader built with Swift, AppKit, PDFKit, WebKit, and Sparkle. The source tree is organized by product feature so a change begins in the feature directory rather than a flat list of controller extensions.
 
-## Main Flow
+## Source Tree
 
 ```text
-AppDelegate
-  -> ReaderWindowController
-     -> DocumentLoading
-     -> PDFKit PDF View
-     -> WebKit EPUB/DOCX View
-     -> AIChatPanel
-        -> AIClient
-     -> SQLite and local stores
+Sources/LeafReaderApp/
+  App/                 application lifecycle, menus, diagnostics, updates
+  ReaderShell/         reader window, chrome, shelf, selection, sessions
+  DocumentReading/     document sessions, import, PDF, EPUB, DOCX, WebKit
+  AIConversation/      chat, prompts, retrieval, embedding cache
+  VocabularyReview/    dictionary lookup, records, review, export
+  ReadingNotes/        notes, editor, panel, persistence
+  ReadAloud/           playback coordination, text batching, reader controls
+  Settings/            AI, embedding, speech, and appearance settings
+  Platform/            networking, persistence, and speech runtime adapters
+  SharedUI/            reusable AppKit and Markdown presentation code
+  Support/             small cross-cutting utilities
+  Resources/           bundled scripts, prompts, dictionaries, and manifests
 ```
 
-## Key Areas
+## Runtime Flow
 
-- `AppDelegate*.swift`: app lifecycle, menu, help, update UI.
-- `ReaderWindowController*.swift`: reader shell, document opening, navigation, search, AI integration, vocabulary, sessions.
-- `DocumentLoading*.swift`: EPUB/DOCX archive handling, HTML generation, shared document helpers.
-- `ProcessRunner.swift`: bounded external process execution for archive helpers and other command-line runtimes.
-- `AIChatPanel*.swift`: AI chat UI, request lifecycle, bubble layout, selection handling.
-- `AISettingsPanelController*.swift`: settings window, model configuration, AI analysis cache controls, and TTS runtime download controls.
-- `SpeechPlaybackCoordinator.swift`, `SpeechRuntimeResourceManager.swift`, and `RuntimeDownload.swift`: local TTS playback, runtime selection, compatibility, and model downloads.
-- `RecentDocuments*.swift` and `RecentBookCardView.swift`: bookshelf panel and recent document UI.
-- `WordRecordSQLiteStore.swift` and related stores: persistent word and conversation data.
+```text
+App
+  -> Reader Shell
+     -> Document Session
+        -> PDFKit or WebKit presentation
+     -> AI Conversation / Vocabulary Review / Reading Notes / Read Aloud
+        -> Platform services and persistent stores
+```
 
-## Design Rule
+`DocumentSession` owns the active document identity, load generation, restoration data, and teardown. `DocumentPresentationState` owns transient presentation details such as the table of contents and crop state. The Reader Shell owns the window and routes user input to the feature that owns the behavior.
 
-Large controllers are split by behavior into extensions or focused helper views. New work should prefer adding to an existing focused module instead of growing a general controller file.
+`SpeechSynthesisRuntime` is the single policy and dispatch seam between Read Aloud and concrete local speech engines. Networking and SQLite helpers live under `Platform` so feature code does not need to know their implementation details.
 
-## Related Files
+## Navigation Rules
 
-- `mac-app/AppDelegate.swift`
-- `mac-app/ReaderWindowController.swift`
-- `mac-app/ReaderWindowController+UI.swift`
-- `mac-app/DocumentLoading.swift`
-- `mac-app/ProcessRunner.swift`
-- `mac-app/AIChatPanel.swift`
-- `mac-app/SpeechPlaybackCoordinator.swift`
-- `mac-app/SpeechRuntimeResourceManager.swift`
-- `mac-app/WordRecordSQLiteStore.swift`
+- Start in the feature directory named by the user-visible behavior.
+- Use `ReaderWindowController` extensions as feature entry points, not as forwarding coordinators.
+- Keep lifecycle state in its owning model (`DocumentSession`, review session, or note/editor state) rather than in the window shell.
+- Place reusable UI in `SharedUI`; place service adapters in `Platform`.
+- Keep tests alongside the feature under `Tests/LeafReaderTests/` and run them with `scripts/run_tests.sh`.
+
+## High-Leverage Files
+
+- `Sources/LeafReaderApp/ReaderShell/ReaderWindowController.swift`
+- `Sources/LeafReaderApp/DocumentReading/DocumentSession.swift`
+- `Sources/LeafReaderApp/AIConversation/AIChatPanel.swift`
+- `Sources/LeafReaderApp/ReadAloud/SpeechSynthesisRuntime.swift`
+- `Sources/LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimeResourceManager.swift`
+- `Sources/LeafReaderApp/VocabularyReview/WordRecordSQLiteStore.swift`

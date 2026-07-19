@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DEFAULT_SOURCE="$HOME/Library/Application Support/LeafVocabulary/ECDICT/ecdict.db"
-DEFAULT_DEST="$ROOT_DIR/mac-app/Resources/ECDICT/ecdict.db"
+DEFAULT_DEST="$ROOT_DIR/Sources/LeafReaderApp/Resources/ECDICT/ecdict.db"
 SOURCE_DB="${1:-$DEFAULT_SOURCE}"
 DEST_DB="${2:-$DEFAULT_DEST}"
 DEST_DIR="$(dirname "$DEST_DB")"

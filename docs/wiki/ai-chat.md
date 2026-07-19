@@ -45,7 +45,7 @@ AI 面板负责选中文本解释、总结、翻译、继续追问，以及结�
 - `AIChatPanel+Export.swift`：对话复制和导出。
 - `AIConversationMarkdownExporter.swift`：对话 Markdown 导出格式。
 - `AIClient.swift`：HTTP 请求和流式响应客户端。
-- `AIPromptStore.swift` 和 `mac-app/AIPrompts.json`：内置提示词模板。
+- `AIPromptStore.swift` 和 `Resources/AIPrompts.json`：内置提示词模板。
 
 ## 性能与维护
 
@@ -56,10 +56,10 @@ AI 面板负责选中文本解释、总结、翻译、继续追问，以及结�
 
 ## 相关文件
 
-- `mac-app/AIChatPanel.swift`
-- `mac-app/AIChatPanel+Actions.swift`
-- `mac-app/AIChatPanel+Requests.swift`
-- `mac-app/AIChatPanel+Bubbles.swift`
-- `mac-app/AIClient.swift`
-- `mac-app/AIResponseTextFormatter.swift`
-- `mac-app/AIPromptStore.swift`
+- `Sources/LeafReaderApp/AIConversation/AIChatPanel.swift`
+- `Sources/LeafReaderApp/AIConversation/AIChatPanel+Actions.swift`
+- `Sources/LeafReaderApp/AIConversation/AIChatPanel+Requests.swift`
+- `Sources/LeafReaderApp/AIConversation/AIChatPanel+Bubbles.swift`
+- `Sources/LeafReaderApp/Platform/Networking/AIClient.swift`
+- `Sources/LeafReaderApp/AIConversation/AIResponseTextFormatter.swift`
+- `Sources/LeafReaderApp/AIConversation/AIPromptStore.swift`
