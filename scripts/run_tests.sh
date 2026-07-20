@@ -165,7 +165,9 @@ LOGIC_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/ReadAloud/SpeechRuntimeAvailabilityTests.swift"
   "$TEST_SOURCE_ROOT/VocabularyReview/ECDICTLogicTests.swift"
   "$TEST_SOURCE_ROOT/VocabularyReview/GermanDictionaryLogicTests.swift"
+  "$TEST_SOURCE_ROOT/VocabularyReview/GermanLemmaFixtureTests.swift"
   "$TEST_SOURCE_ROOT/VocabularyReview/GermanFormLabelerTests.swift"
+  "$TEST_SOURCE_ROOT/VocabularyReview/GermanFlexionParserTests.swift"
   "$TEST_SOURCE_ROOT/VocabularyReview/VocabularyLogicTests.swift"
   "$TEST_SOURCE_ROOT/Support/LogicTests.swift"
 )

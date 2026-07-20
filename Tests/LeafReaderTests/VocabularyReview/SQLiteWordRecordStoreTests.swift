@@ -193,9 +193,313 @@ struct SQLiteWordRecordStoreTestRunner {
             assert(migrated.allSatisfy { $0.answer == "legacy definition" }, "legacy definitions should be shared after migration")
         }
 
+        // MARK: - German flexion cache
+
+        do {
+            let flexionDBURL = dbDirectory.appendingPathComponent("flexion.sqlite3")
+            let store = WordRecordSQLiteStore(databaseURL: flexionDBURL)
+            let flexion = GermanFlexionStore(store: store)
+
+            assert(!flexion.hasEntry(forLemma: "Haus"), "an unfetched lemma should not be cached")
+
+            let saved = flexion.save(
+                StoredGermanFlexion(
+                    lemma: "Haus",
+                    genus: "n",
+                    auxiliary: nil,
+                    forms: [
+                        StoredGermanFlexionForm(parameter: "Nominativ Singular", surface: "Haus", isVariant: false),
+                        StoredGermanFlexionForm(parameter: "Nominativ Plural", surface: "Häuser", isVariant: false),
+                        StoredGermanFlexionForm(parameter: "Dativ Singular", surface: "Hause", isVariant: true)
+                    ],
+                    fetchedAt: Date(timeIntervalSince1970: 1_700_000_000)
+                )
+            )
+            assert(saved, "a flexion table should persist")
+            assert(flexion.hasEntry(forLemma: "Haus"), "a saved lemma should be reported as cached")
+            assert(flexion.hasEntry(forLemma: "haus"), "cache lookups should be case-insensitive")
+
+            let matches = flexion.matches(surfaceForm: "Häuser")
+            assert(matches.count == 1, "the plural should resolve to exactly one cached form")
+            assert(matches.first?.lemma == "Haus", "the reverse lookup should recover the lemma")
+            assert(matches.first?.parameter == "Nominativ Plural", "the parameter should round-trip")
+
+            // The gap this whole tier exists to close: 'Häuser' never reduces
+            // to 'Haus' offline, so grouping depends on this reverse lookup.
+            assert(flexion.lemma(forSurfaceForm: "Häuser") == "Haus", "Häuser should resolve to Haus")
+            assert(flexion.lemma(forSurfaceForm: "häuser") == "Haus", "reverse lookup should ignore case")
+            assert(flexion.lemma(forSurfaceForm: "Hunde") == nil, "an unknown form should resolve to no lemma")
+
+            // A variant spelling should report its lemma, not itself.
+            assert(flexion.lemma(forSurfaceForm: "Hause") == "Haus", "a variant form should resolve to its lemma")
+
+            // Re-saving replaces rather than duplicating.
+            _ = flexion.save(
+                StoredGermanFlexion(
+                    lemma: "Haus",
+                    genus: "n",
+                    auxiliary: nil,
+                    forms: [
+                        StoredGermanFlexionForm(parameter: "Nominativ Plural", surface: "Häuser", isVariant: false)
+                    ],
+                    fetchedAt: Date(timeIntervalSince1970: 1_700_000_100)
+                )
+            )
+            assert(
+                flexion.matches(surfaceForm: "Hause").isEmpty,
+                "re-saving a lemma should drop forms that are no longer present"
+            )
+            assert(
+                flexion.matches(surfaceForm: "Häuser").count == 1,
+                "re-saving should not duplicate retained forms"
+            )
+
+            // A lemma with no table is still recorded, so it is not refetched.
+            _ = flexion.save(
+                StoredGermanFlexion(
+                    lemma: "Xyzzyx",
+                    genus: nil,
+                    auxiliary: nil,
+                    forms: [],
+                    fetchedAt: Date(timeIntervalSince1970: 1_700_000_200)
+                )
+            )
+            assert(
+                flexion.hasEntry(forLemma: "Xyzzyx"),
+                "a lemma with no flexion table should still be marked as fetched"
+            )
+
+            // Persistence must survive reopening the database.
+            let reopened = GermanFlexionStore(store: WordRecordSQLiteStore(databaseURL: flexionDBURL))
+            assert(
+                reopened.lemma(forSurfaceForm: "Häuser") == "Haus",
+                "cached flexion data should survive a reopen, so it works offline later"
+            )
+        }
+
+        // MARK: - Regrouping inflected records onto their lemma
+
+        // Case 1: no record exists under the lemma, so the row is re-keyed.
+        do {
+            let url = dbDirectory.appendingPathComponent("regroup-rekey.sqlite3")
+            let store = WordRecordSQLiteStore(databaseURL: url)
+            var inflected = pdfRecord(id: "a", word: "Häuser", answer: "houses", createdAt: 10)
+            inflected.lemma = "Häuser"
+            _ = store.savePDFRecords(documentID: "doc", records: [inflected])
+
+            let moved = store.regroupVocabulary(fromKey: "häuser", intoKey: "haus", lemma: "Haus")
+            assert(moved == 1, "an inflected record should be re-keyed onto its lemma")
+
+            let loaded = store.loadPDFRecords(documentID: "doc")
+            assert(loaded.count == 1, "re-keying must not duplicate the record")
+            assert(loaded.first?.lemma == "Haus", "the lemma column should be updated")
+            assert(loaded.first?.word == "Häuser", "the saved spelling should be preserved")
+            assert(loaded.first?.answer == "houses", "the answer must survive re-keying")
+
+            // Idempotent: running again finds nothing to move.
+            assert(
+                store.regroupVocabulary(fromKey: "häuser", intoKey: "haus", lemma: "Haus") == 0,
+                "regrouping should be idempotent"
+            )
+        }
+
+        // Case 2: a record already exists under the lemma, forcing a merge
+        // rather than a re-key, because canonical_key is UNIQUE per document.
+        do {
+            let url = dbDirectory.appendingPathComponent("regroup-merge.sqlite3")
+            let store = WordRecordSQLiteStore(databaseURL: url)
+            var base = pdfRecord(id: "base", word: "Haus", answer: "", createdAt: 100)
+            base.lemma = "Haus"
+            // A different page, so the two occurrences cannot collide on
+            // location and the merge is testing the word rows, not dedup.
+            let inflected = StoredPDFWordRecord(
+                id: "infl",
+                word: "Häuser",
+                lemma: "Häuser",
+                pageIndex: 7,
+                bounds: StoredPDFWordRect(CGRect(x: 5, y: 6, width: 7, height: 8)),
+                context: "andere Stelle",
+                question: "q",
+                answer: "a house",
+                createdAt: Date(timeIntervalSince1970: 50),
+                srs: nil
+            )
+            _ = store.savePDFRecords(documentID: "doc", records: [base, inflected])
+            assert(
+                store.loadPDFRecords(documentID: "doc").count == 2,
+                "the two spellings should start as separate records"
+            )
+
+            let moved = store.regroupVocabulary(fromKey: "häuser", intoKey: "haus", lemma: "Haus")
+            assert(moved == 1, "the inflected record should merge into the lemma record")
+
+            let loaded = store.loadPDFRecords(documentID: "doc")
+            assert(loaded.count == 2, "both occurrences should survive the merge")
+            assert(
+                Set(loaded.compactMap(\.vocabularyID)).count == 1,
+                "the two records should collapse onto one vocabulary row"
+            )
+            assert(
+                loaded.allSatisfy { $0.answer == "a house" },
+                "an empty answer should adopt the merged record's answer rather than lose it"
+            )
+            // created_at on the vocabulary row is not surfaced by loadPDFRecords,
+            // which reports each occurrence's own timestamp, so read it directly.
+            assert(
+                vocabularyCreatedAt(at: url, documentID: "doc", canonicalKey: "haus") == 50,
+                "the surviving vocabulary row should keep the earlier creation date"
+            )
+        }
+
+        // Case 3: the occurrences of both records survive the merge.
+        do {
+            let url = dbDirectory.appendingPathComponent("regroup-occurrences.sqlite3")
+            let store = WordRecordSQLiteStore(databaseURL: url)
+            var base = pdfRecord(id: "base", word: "Haus", answer: "house", createdAt: 100)
+            base.lemma = "Haus"
+            // Distinct pages, so no occurrence is a duplicate of another.
+            let other = StoredPDFWordRecord(
+                id: "infl",
+                word: "Häuser",
+                lemma: "Häuser",
+                pageIndex: 8,
+                bounds: StoredPDFWordRect(CGRect(x: 1, y: 2, width: 3, height: 4)),
+                context: "eine Stelle",
+                question: "q",
+                answer: "houses",
+                createdAt: Date(timeIntervalSince1970: 50),
+                srs: nil
+            )
+            let otherElsewhere = StoredPDFWordRecord(
+                id: "infl2",
+                word: "Häuser",
+                lemma: "Häuser",
+                pageIndex: 9,
+                bounds: StoredPDFWordRect(CGRect(x: 5, y: 6, width: 7, height: 8)),
+                context: "andere Stelle",
+                question: "q",
+                answer: "houses",
+                createdAt: Date(timeIntervalSince1970: 60),
+                srs: nil
+            )
+            _ = store.savePDFRecords(documentID: "doc", records: [base, other, otherElsewhere])
+
+            let before = store.loadPDFRecords(documentID: "doc").count
+            _ = store.regroupVocabulary(fromKey: "häuser", intoKey: "haus", lemma: "Haus")
+            let after = store.loadPDFRecords(documentID: "doc")
+            assert(before == 3, "three occurrences should exist before the merge")
+            assert(after.count == 3, "occurrences at distinct locations must all survive the merge")
+            assert(
+                Set(after.compactMap(\.vocabularyID)).count == 1,
+                "all occurrences should end up under one vocabulary row"
+            )
+            assert(
+                Set(after.map(\.pageIndex)) == [4, 8, 9],
+                "each original page should still be reachable after the merge"
+            )
+        }
+
+        // Case 3b: two occurrences at the identical location are the same
+        // physical word, so the merge collapses them instead of duplicating.
+        do {
+            let url = dbDirectory.appendingPathComponent("regroup-duplicate-location.sqlite3")
+            let store = WordRecordSQLiteStore(databaseURL: url)
+            var base = pdfRecord(id: "base", word: "Haus", answer: "house", createdAt: 100)
+            base.lemma = "Haus"
+            var sameSpot = pdfRecord(id: "infl", word: "Häuser", answer: "houses", createdAt: 50)
+            sameSpot.lemma = "Häuser"
+            _ = store.savePDFRecords(documentID: "doc", records: [base, sameSpot])
+            assert(store.loadPDFRecords(documentID: "doc").count == 2, "both start out present")
+
+            _ = store.regroupVocabulary(fromKey: "häuser", intoKey: "haus", lemma: "Haus")
+            let after = store.loadPDFRecords(documentID: "doc")
+            assert(
+                after.count == 1,
+                "occurrences sharing one location should collapse rather than duplicate"
+            )
+        }
+
+        // Case 4: guards.
+        do {
+            let url = dbDirectory.appendingPathComponent("regroup-guards.sqlite3")
+            let store = WordRecordSQLiteStore(databaseURL: url)
+            var record = pdfRecord(id: "a", word: "Haus", answer: "house", createdAt: 10)
+            record.lemma = "Haus"
+            _ = store.savePDFRecords(documentID: "doc", records: [record])
+
+            assert(
+                store.regroupVocabulary(fromKey: "haus", intoKey: "haus", lemma: "Haus") == 0,
+                "regrouping a key onto itself should be a no-op"
+            )
+            assert(
+                store.regroupVocabulary(fromKey: "", intoKey: "haus", lemma: "Haus") == 0,
+                "an empty source key should be rejected"
+            )
+            assert(
+                store.regroupVocabulary(fromKey: "unbekannt", intoKey: "haus", lemma: "Haus") == 0,
+                "an unknown source key should move nothing"
+            )
+            assert(
+                store.loadPDFRecords(documentID: "doc").count == 1,
+                "guarded calls must leave the data untouched"
+            )
+        }
+
+        // Case 5: a spelling claimed by two lemmas is left alone.
+        do {
+            let url = dbDirectory.appendingPathComponent("regroup-ambiguous.sqlite3")
+            let store = WordRecordSQLiteStore(databaseURL: url)
+            let flexion = GermanFlexionStore(store: store)
+            var record = pdfRecord(id: "a", word: "Steuer", answer: "", createdAt: 10)
+            record.lemma = "Steuer"
+            _ = store.savePDFRecords(documentID: "doc", records: [record])
+
+            // Two different lemmas both listing 'Steuer' as a form.
+            _ = flexion.save(StoredGermanFlexion(
+                lemma: "Steuermann", genus: "m", auxiliary: nil,
+                forms: [StoredGermanFlexionForm(parameter: "Nominativ Singular", surface: "Steuer", isVariant: false)],
+                fetchedAt: Date(timeIntervalSince1970: 1)
+            ))
+            let second = StoredGermanFlexion(
+                lemma: "Steuerung", genus: "f", auxiliary: nil,
+                forms: [StoredGermanFlexionForm(parameter: "Nominativ Singular", surface: "Steuer", isVariant: false)],
+                fetchedAt: Date(timeIntervalSince1970: 2)
+            )
+            _ = flexion.save(second)
+
+            assert(
+                flexion.lemma(forSurfaceForm: "Steuer") == nil,
+                "a spelling claimed by two lemmas should resolve to neither"
+            )
+            assert(
+                flexion.regroupSavedVocabulary(for: second) == 0,
+                "an ambiguous spelling must not be merged into either lemma"
+            )
+            assert(
+                store.loadPDFRecords(documentID: "doc").first?.word == "Steuer",
+                "the ambiguous record should be left exactly as it was"
+            )
+        }
+
         try? FileManager.default.removeItem(at: dbDirectory)
         print("SQLiteWordRecordStoreTests passed")
     }
+}
+
+/// Reads `pdf_vocabulary_words.created_at` directly, since `loadPDFRecords`
+/// surfaces each occurrence's timestamp rather than the vocabulary row's.
+private func vocabularyCreatedAt(at url: URL, documentID: String, canonicalKey: String) -> Double? {
+    var db: OpaquePointer?
+    guard sqlite3_open(url.path, &db) == SQLITE_OK else { return nil }
+    defer { sqlite3_close(db) }
+    var statement: OpaquePointer?
+    let sql = "SELECT created_at FROM pdf_vocabulary_words WHERE document_id = ? AND canonical_key = ?"
+    guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return nil }
+    defer { sqlite3_finalize(statement) }
+    sqlite3_bind_text(statement, 1, (documentID as NSString).utf8String, -1, nil)
+    sqlite3_bind_text(statement, 2, (canonicalKey as NSString).utf8String, -1, nil)
+    guard sqlite3_step(statement) == SQLITE_ROW else { return nil }
+    return sqlite3_column_double(statement, 0)
 }
 
 private func createLegacyPDFDatabase(at url: URL) {
