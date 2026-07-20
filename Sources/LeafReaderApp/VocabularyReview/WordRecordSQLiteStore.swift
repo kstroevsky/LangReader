@@ -198,6 +198,10 @@ final class WordRecordSQLiteStore {
                 rollbackTransaction()
                 return false
             }
+            // The persistent label cache stores only the flexion-independent
+            // offline label; flexion refinement is composed fresh on read (see
+            // GermanFormLabeler.persistentCachedLabel), so a new paradigm needs no
+            // label-cache invalidation here.
             let insertedLemma = executeStatement(
                 sql: """
                 INSERT INTO german_flexion_lemmas (lemma_key, lemma, genus, auxiliary, fetched_at)
@@ -288,6 +292,80 @@ final class WordRecordSQLiteStore {
                         isVariant: sqlite3_column_int(statement, 3) != 0
                     )
                 }
+            )
+        }
+    }
+
+    // MARK: - German form-label cache
+
+    /// One cached grammatical label. `label` is nil when the labeler ran and
+    /// found none — distinct from a lookup miss, which returns nil for the whole
+    /// `CachedFormLabel?`, so a form proven to have no label is not recomputed.
+    struct CachedFormLabel: Equatable {
+        let label: String?
+    }
+
+    /// The cached label for a `(surface, lemma)` pair computed by the given
+    /// labeler version, or nil when the pair has never been labeled (or was
+    /// labeled by a different version and must be recomputed).
+    func germanFormLabel(surfaceKey: String, lemmaKey: String, version: Int) -> CachedFormLabel? {
+        guard !surfaceKey.isEmpty, !lemmaKey.isEmpty else { return nil }
+        return locked {
+            loadRecords(
+                sql: """
+                SELECT label FROM german_form_labels
+                WHERE surface_key = ? AND lemma_key = ? AND labeler_version = ?
+                LIMIT 1
+                """,
+                prepareOperation: "prepare german form label lookup",
+                bind: { statement in
+                    bindSQLiteText(surfaceKey, index: 1, statement: statement)
+                    bindSQLiteText(lemmaKey, index: 2, statement: statement)
+                    sqlite3_bind_int(statement, 3, Int32(version))
+                },
+                decode: { statement -> CachedFormLabel in
+                    let raw = stringColumn(statement, 0) ?? ""
+                    return CachedFormLabel(label: raw.isEmpty ? nil : raw)
+                }
+            ).first
+        }
+    }
+
+    /// Persists the labeler's verdict for a `(surface, lemma)` pair. An empty
+    /// string records "no label" so a proven-unlabelable form is not recomputed.
+    @discardableResult
+    func saveGermanFormLabel(surfaceKey: String, lemmaKey: String, label: String?, version: Int) -> Bool {
+        guard !surfaceKey.isEmpty, !lemmaKey.isEmpty else { return false }
+        return locked {
+            executeStatement(
+                sql: """
+                INSERT OR REPLACE INTO german_form_labels
+                    (surface_key, lemma_key, label, labeler_version, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                prepareOperation: "prepare insert german form label",
+                stepOperation: "insert german form label"
+            ) { statement in
+                bindSQLiteText(surfaceKey, index: 1, statement: statement)
+                bindSQLiteText(lemmaKey, index: 2, statement: statement)
+                bindSQLiteText(label ?? "", index: 3, statement: statement)
+                sqlite3_bind_int(statement, 4, Int32(version))
+                sqlite3_bind_double(statement, 5, Date().timeIntervalSince1970)
+            }
+        }
+    }
+
+    /// Drops cached labels for a lemma so they are recomputed. Called when the
+    /// flexion table for that lemma changes, since a paradigm refines
+    /// `finiteVerb` into Präsens/Präteritum and a bare plural into a cased form.
+    @discardableResult
+    func deleteGermanFormLabels(lemmaKey: String) -> Bool {
+        guard !lemmaKey.isEmpty else { return false }
+        return locked {
+            execute(
+                sql: "DELETE FROM german_form_labels WHERE lemma_key = ?",
+                bindings: [lemmaKey],
+                operation: "delete german form labels for lemma"
             )
         }
     }
@@ -516,6 +594,16 @@ final class WordRecordSQLiteStore {
         );
         CREATE INDEX IF NOT EXISTS idx_german_flexion_surface
             ON german_flexion_forms(surface_key);
+        CREATE TABLE IF NOT EXISTS german_form_labels (
+            surface_key TEXT NOT NULL,
+            lemma_key TEXT NOT NULL,
+            label TEXT NOT NULL,
+            labeler_version INTEGER NOT NULL,
+            created_at REAL NOT NULL,
+            PRIMARY KEY(surface_key, lemma_key)
+        );
+        CREATE INDEX IF NOT EXISTS idx_german_form_labels_lemma
+            ON german_form_labels(lemma_key);
         """
         executeRaw(sql, operation: "create word record tables")
         migrateColumns()

@@ -48,7 +48,13 @@ struct GermanFlexionStore {
 
     @discardableResult
     func save(_ entry: StoredGermanFlexion) -> Bool {
-        store.saveGermanFlexion(entry)
+        let didSave = store.saveGermanFlexion(entry)
+        if didSave {
+            // saveGermanFlexion also cleared this lemma's cached labels; signal
+            // the library build cache so it does not serve pre-refinement records.
+            GermanLabelCacheGeneration.bump()
+        }
+        return didSave
     }
 
     func hasEntry(forLemma lemma: String) -> Bool {

@@ -61,6 +61,11 @@ enum GermanFormLabel: String, Equatable {
 /// misses instead. A `nil` label means "unknown", which the UI shows as an
 /// unlabeled form rather than an incorrect one.
 enum GermanFormLabeler {
+    /// Bumped whenever the offline heuristics in this file change. A label
+    /// persisted by an older ruleset carries an older version and is treated as
+    /// absent, so a labeler improvement takes effect without a manual cache wipe.
+    static let labelingVersion = 1
+
     private static let auxiliaryLemmas: Set<String> = ["haben", "sein", "werden"]
     private static let umlauts = CharacterSet(charactersIn: "äöüÄÖÜ")
     /// Token classes that end the clause an auxiliary can govern.

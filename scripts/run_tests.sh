@@ -73,6 +73,7 @@ excluded_logic_app_source() {
     VocabularyDictionaryMetadataService.swift|\
     VocabularyFrequencyBackfillService.swift|\
     VocabularyRecordProvider.swift|\
+    VocabularyLibraryBuildCache.swift|\
     VocabularyReviewCardFooterBuilder.swift|\
     VocabularyReviewScoringService.swift|\
     VocabularySpeechCoordinator.swift|\
@@ -126,6 +127,7 @@ SQLITE_WORD_TEST_SOURCES=(
   "$APP_SOURCE_ROOT/VocabularyReview/WordRecordSQLiteRowMapper.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/WordRecordSQLiteStore.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/GermanFlexionStore.swift"
+  "$APP_SOURCE_ROOT/VocabularyReview/GermanLabelCacheGeneration.swift"
 )
 
 PERSONAL_VOCABULARY_TEST_SOURCES=(

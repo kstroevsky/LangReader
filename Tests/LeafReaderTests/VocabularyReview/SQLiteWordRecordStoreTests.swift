@@ -277,6 +277,80 @@ struct SQLiteWordRecordStoreTestRunner {
             )
         }
 
+        // MARK: - German form-label cache
+
+        do {
+            let labelDBURL = dbDirectory.appendingPathComponent("form-labels.sqlite3")
+            let store = WordRecordSQLiteStore(databaseURL: labelDBURL)
+
+            assert(
+                store.germanFormLabel(surfaceKey: "gekommen", lemmaKey: "kommen", version: 1) == nil,
+                "an unlabeled pair should be a cache miss"
+            )
+
+            assert(
+                store.saveGermanFormLabel(surfaceKey: "gekommen", lemmaKey: "kommen", label: "partizipII", version: 1),
+                "saving a label should succeed"
+            )
+            assert(
+                store.germanFormLabel(surfaceKey: "gekommen", lemmaKey: "kommen", version: 1)?.label == "partizipII",
+                "a cached label should round-trip"
+            )
+
+            // "No label" is stored distinctly from a miss, so an ambiguous form
+            // proven to have no label is not recomputed on every open.
+            assert(
+                store.saveGermanFormLabel(surfaceKey: "autos", lemmaKey: "auto", label: nil, version: 1),
+                "saving a nil label should succeed"
+            )
+            let nilHit = store.germanFormLabel(surfaceKey: "autos", lemmaKey: "auto", version: 1)
+            assert(nilHit != nil, "a proven-unlabelable pair should be a cache hit, not a miss")
+            assert(nilHit?.label == nil, "the cache hit should carry no label")
+
+            // A label written by a different labeler version is treated as absent.
+            assert(
+                store.germanFormLabel(surfaceKey: "gekommen", lemmaKey: "kommen", version: 2) == nil,
+                "a superseded labeler version should invalidate cached labels"
+            )
+
+            // Explicit lemma invalidation drops that lemma's labels only.
+            assert(store.deleteGermanFormLabels(lemmaKey: "kommen"), "deleting a lemma's labels should succeed")
+            assert(
+                store.germanFormLabel(surfaceKey: "gekommen", lemmaKey: "kommen", version: 1) == nil,
+                "deleting a lemma's labels should remove them"
+            )
+            assert(
+                store.germanFormLabel(surfaceKey: "autos", lemmaKey: "auto", version: 1) != nil,
+                "deleting one lemma's labels must not touch another lemma"
+            )
+
+            // A cached label is the flexion-independent offline verdict, so
+            // saving a flexion table leaves it untouched — the refinement is
+            // composed fresh on read rather than baked into the cache, which is
+            // why no invalidation (and no racy delete) is needed here.
+            _ = store.saveGermanFormLabel(surfaceKey: "gab", lemmaKey: "geben", label: "finiteVerb", version: 1)
+            _ = GermanFlexionStore(store: store).save(
+                StoredGermanFlexion(
+                    lemma: "geben",
+                    genus: nil,
+                    auxiliary: "haben",
+                    forms: [StoredGermanFlexionForm(parameter: "Präteritum ich", surface: "gab", isVariant: false)],
+                    fetchedAt: Date(timeIntervalSince1970: 1_700_000_300)
+                )
+            )
+            assert(
+                store.germanFormLabel(surfaceKey: "gab", lemmaKey: "geben", version: 1)?.label == "finiteVerb",
+                "saving a flexion table must not disturb the cached offline label"
+            )
+
+            // Persistence across reopen.
+            let reopened = WordRecordSQLiteStore(databaseURL: labelDBURL)
+            assert(
+                reopened.germanFormLabel(surfaceKey: "autos", lemmaKey: "auto", version: 1)?.label == nil,
+                "a cached nil label should survive a reopen"
+            )
+        }
+
         // MARK: - Regrouping inflected records onto their lemma
 
         // Case 1: no record exists under the lemma, so the row is re-keyed.

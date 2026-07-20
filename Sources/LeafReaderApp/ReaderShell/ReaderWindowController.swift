@@ -116,6 +116,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var readingNotesPanelController: ReadingNotesPanelController?
     var vocabularyPanelController: VocabularyPanelController!
     var vocabularyLibraryWindowController: VocabularyLibraryWindowController!
+    let vocabularyLibraryBuildCache = VocabularyLibraryBuildCache()
     lazy var selectionToolbarCoordinator = SelectionToolbarCoordinator(owner: self)
     let vocabularyReviewSession = VocabularyReviewSession()
     var aiHandleLeadingConstraint: NSLayoutConstraint!

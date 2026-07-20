@@ -24,18 +24,40 @@ extension ReaderWindowController {
     /// no longer a special, slow case.
     func reloadVocabularyLibraryInBackground() {
         let currentPath = currentFileURL?.standardizedFileURL.path
+        let currentDocumentID = currentFileURL.flatMap { fileMD5(for: $0) }
         let currentKind = currentDocumentKind
         let currentPDFRecords = storedWordRecords
         let currentWebRecords = storedWebWordRecords
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
-            let currentRecords = VocabularyRecordProvider.records(
-                documentKind: currentKind,
-                pdfRecords: currentPDFRecords,
-                webRecords: currentWebRecords,
-                pdfContext: { $0.context ?? "" },
-                formLabel: GermanFormLabeler.cachedFormLabelResolver
-            )
+            let currentRecords: [VocabularyExportRecord]
+            if let currentDocumentID {
+                let fingerprint = VocabularyLibraryBuildCache.fingerprint(
+                    pdf: currentPDFRecords,
+                    web: currentWebRecords,
+                    labelGeneration: GermanLabelCacheGeneration.current
+                )
+                currentRecords = self.vocabularyLibraryBuildCache.records(
+                    documentID: currentDocumentID,
+                    fingerprint: fingerprint
+                ) {
+                    VocabularyRecordProvider.records(
+                        documentKind: currentKind,
+                        pdfRecords: currentPDFRecords,
+                        webRecords: currentWebRecords,
+                        pdfContext: { $0.context ?? "" },
+                        formLabel: GermanFormLabeler.persistentCachedFormLabelResolver
+                    )
+                }
+            } else {
+                currentRecords = VocabularyRecordProvider.records(
+                    documentKind: currentKind,
+                    pdfRecords: currentPDFRecords,
+                    webRecords: currentWebRecords,
+                    pdfContext: { $0.context ?? "" },
+                    formLabel: GermanFormLabeler.persistentCachedFormLabelResolver
+                )
+            }
             let records = self.makeVocabularyLibraryRecords(
                 currentPath: currentPath,
                 currentRecords: currentRecords
@@ -69,13 +91,25 @@ extension ReaderWindowController {
             if let currentPath, url.path == currentPath {
                 records = currentRecords
             } else {
-                records = VocabularyRecordProvider.records(
-                    documentKind: kind,
-                    pdfRecords: PDFWordRecordStore(fileMD5: documentID).load(),
-                    webRecords: WebWordRecordStore(fileMD5: documentID).load(),
-                    pdfContext: { $0.context ?? "" },
-                    formLabel: GermanFormLabeler.cachedFormLabelResolver
+                let pdfRecords = PDFWordRecordStore(fileMD5: documentID).load()
+                let webRecords = WebWordRecordStore(fileMD5: documentID).load()
+                let fingerprint = VocabularyLibraryBuildCache.fingerprint(
+                    pdf: pdfRecords,
+                    web: webRecords,
+                    labelGeneration: GermanLabelCacheGeneration.current
                 )
+                records = vocabularyLibraryBuildCache.records(
+                    documentID: documentID,
+                    fingerprint: fingerprint
+                ) {
+                    VocabularyRecordProvider.records(
+                        documentKind: kind,
+                        pdfRecords: pdfRecords,
+                        webRecords: webRecords,
+                        pdfContext: { $0.context ?? "" },
+                        formLabel: GermanFormLabeler.persistentCachedFormLabelResolver
+                    )
+                }
             }
             guard !records.isEmpty else { return nil }
             return VocabularyLibrarySource(
