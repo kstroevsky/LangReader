@@ -16,7 +16,13 @@ enum VocabularyTextPolicy {
     }
 
     static func normalizedVocabularyText(_ text: String) -> String {
-        collapsedWhitespace(joinLineBrokenHyphens(text))
+        // Fast path for single tokens, which is what the occurrence scanner
+        // feeds this millions of times over a document. Both passes below key
+        // off whitespace — `joinLineBrokenHyphens` needs `\s+` after a hyphen,
+        // `collapsedWhitespace` collapses runs of it, and both then trim — so
+        // with no whitespace present the result is the input unchanged.
+        if !text.contains(where: \.isWhitespace) { return text }
+        return collapsedWhitespace(joinLineBrokenHyphens(text))
     }
 
     static func canonicalVocabularyKey(_ text: String) -> String {

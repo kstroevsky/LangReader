@@ -169,10 +169,24 @@ extension ReaderWindowController {
         selectionActionToolbar.showSaveInProgress()
         recordPersonalVocabularyQuery(word)
 
+        let saveStartedAt = Date()
         collectPDFVocabularyPageSnapshots(document: document, searchID: searchID) { [weak self, weak document] snapshots in
+            let snapshotsReadyAt = Date()
             DispatchQueue.global(qos: .userInitiated).async { [weak self, weak document] in
-                let matches = snapshots.flatMap { snapshot in
-                    GermanLemmaOccurrenceMatcher.matches(lemma: lemma, selectedForm: word, in: snapshot.text).map {
+                let perPage = GermanLemmaOccurrenceMatcher.matches(
+                    lemma: lemma,
+                    selectedForm: word,
+                    inTexts: snapshots.map(\.text)
+                )
+                let scanFinishedAt = Date()
+                NSLog(
+                    "LeafVocabulary save timing: snapshots=%.0fms scan=%.0fms pages=%d",
+                    snapshotsReadyAt.timeIntervalSince(saveStartedAt) * 1000,
+                    scanFinishedAt.timeIntervalSince(snapshotsReadyAt) * 1000,
+                    snapshots.count
+                )
+                let matches = zip(snapshots, perPage).flatMap { snapshot, occurrences in
+                    occurrences.map {
                         PDFVocabularyPageMatch(
                             pageIndex: snapshot.pageIndex,
                             text: snapshot.text,
@@ -186,6 +200,15 @@ extension ReaderWindowController {
                           self.vocabularyState.occurrenceSearchID == searchID,
                           self.pdfView.document === document else {
                         return
+                    }
+                    let persistStartedAt = Date()
+                    defer {
+                        NSLog(
+                            "LeafVocabulary save timing: persist=%.0fms total=%.0fms matches=%d",
+                            Date().timeIntervalSince(persistStartedAt) * 1000,
+                            Date().timeIntervalSince(saveStartedAt) * 1000,
+                            matches.count
+                        )
                     }
                     self.finishSavingAllPDFVocabularyOccurrences(
                         word: word,

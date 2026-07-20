@@ -1,4 +1,5 @@
 import Foundation
+import NaturalLanguage
 
 private struct StoredWordRecord: Equatable {
     let id: String
@@ -257,6 +258,78 @@ enum VocabularyLogicTests {
             2,
             "occurrence matching should preserve genuine hyphens across PDF line wraps"
         )
+    }
+
+    /// The multi-page scan runs in parallel, reuses taggers across pages and
+    /// memoizes the fallback lemma lookup. None of that may change what it
+    /// finds, so the batch result must equal scanning each page on its own —
+    /// same occurrences, same ranges, same matched text, same order.
+    static func testGermanLemmaBatchMatchesSequential() throws {
+        let pages = [
+            "Er ist gestern nach Hause gegangen und hat nichts gesagt.",
+            "Die Häuser in der Stadt sind alt. Wir gehen dorthin.",
+            "",
+            "Sie ging langsam nach Hause. Das Gehen fiel ihr schwer.",
+            "Ein ganz anderer Satz ohne das gesuchte Wort.",
+            "Am Ende ging es doch, und alle sind zufrieden gegan-\ngen."
+        ]
+
+        for (lemma, selected) in [("gehen", "gegangen"), ("Haus", "Häuser"), ("gehen", "ging")] {
+            let sequential = pages.map {
+                GermanLemmaOccurrenceMatcher.matches(lemma: lemma, selectedForm: selected, in: $0)
+            }
+            let batch = GermanLemmaOccurrenceMatcher.matches(
+                lemma: lemma,
+                selectedForm: selected,
+                inTexts: pages
+            )
+            try expectEqual(
+                batch.count,
+                pages.count,
+                "the batch scan should return one result per page for '\(selected)'"
+            )
+            try expectEqual(
+                batch,
+                sequential,
+                "parallel scanning must find exactly what sequential scanning finds for '\(selected)'"
+            )
+        }
+
+        // Boundary cases around the parallel path.
+        try expectEqual(
+            GermanLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", inTexts: []),
+            [],
+            "an empty page list yields no results"
+        )
+        let single = GermanLemmaOccurrenceMatcher.matches(
+            lemma: "gehen",
+            selectedForm: "gegangen",
+            inTexts: [pages[0]]
+        )
+        try expectEqual(
+            single,
+            [GermanLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", in: pages[0])],
+            "the single-page path should agree with the per-page scanner"
+        )
+        try expectEqual(
+            GermanLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", inTexts: ["", "", ""]),
+            [[], [], []],
+            "empty pages should produce empty results rather than being skipped"
+        )
+    }
+
+    /// The reusable-tagger overload must return exactly what the allocating one
+    /// does, including when the same tagger is reused across many words.
+    static func testGermanLemmaResolverTaggerReuse() throws {
+        let words = ["gegangen", "ging", "Häuser", "Bücher", "sprach", "gegangen", "ging"]
+        let tagger = NLTagger(tagSchemes: [.lemma])
+        for word in words {
+            try expectEqual(
+                GermanLemmaResolver.lemma(for: word, tagger: tagger),
+                GermanLemmaResolver.lemma(for: word),
+                "reusing a tagger must not change the lemma resolved for '\(word)'"
+            )
+        }
     }
 
     static func testGermanLemmaGrouping() throws {

@@ -688,6 +688,8 @@ private func testKokoroWorkerResponseReaderBuffersPartialLines() throws {
 
 private let tests: [(String, () throws -> Void)] = [
     ("Vocabulary SRS", VocabularyLogicTests.testVocabularySRS),
+    ("German lemma batch equals sequential", VocabularyLogicTests.testGermanLemmaBatchMatchesSequential),
+    ("German lemma tagger reuse", VocabularyLogicTests.testGermanLemmaResolverTaggerReuse),
     ("Vocabulary answerless list mode", VocabularyLogicTests.testVocabularyAnswerlessListMode),
     ("Vocabulary review card selector", VocabularyLogicTests.testVocabularyReviewCardSelector),
     ("Vocabulary daily goal policy", VocabularyLogicTests.testVocabularyDailyGoalPolicy),

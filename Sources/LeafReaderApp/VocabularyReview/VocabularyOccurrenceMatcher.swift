@@ -6,21 +6,44 @@ struct VocabularyTextOccurrence: Equatable {
 }
 
 enum VocabularyOccurrenceMatcher {
-    static func matches(query: String, in text: String) -> [VocabularyTextOccurrence] {
-        let normalizedQuery = VocabularyTextPolicy.normalizedVocabularyText(query)
-        guard VocabularyTextPolicy.isVocabularySelection(normalizedQuery), !text.isEmpty else {
-            return []
-        }
+    /// A query with its patterns already compiled.
+    ///
+    /// Scanning a document runs the same query against every page, so the
+    /// regexes are built once here instead of being recompiled per page.
+    struct CompiledQuery {
+        let normalizedQuery: String
+        let queryKey: String
+        let regexes: [NSRegularExpression]
+    }
 
-        let queryKey = VocabularyTextPolicy.canonicalVocabularyKey(normalizedQuery)
-        let patterns = occurrencePatterns(for: normalizedQuery)
+    static func compile(query: String) -> CompiledQuery? {
+        let normalizedQuery = VocabularyTextPolicy.normalizedVocabularyText(query)
+        guard VocabularyTextPolicy.isVocabularySelection(normalizedQuery) else { return nil }
+        return CompiledQuery(
+            normalizedQuery: normalizedQuery,
+            queryKey: VocabularyTextPolicy.canonicalVocabularyKey(normalizedQuery),
+            regexes: occurrencePatterns(for: normalizedQuery).compactMap {
+                try? NSRegularExpression(pattern: $0)
+            }
+        )
+    }
+
+    static func matches(query: String, in text: String) -> [VocabularyTextOccurrence] {
+        guard let compiled = compile(query: query) else { return [] }
+        return matches(compiled: compiled, in: text)
+    }
+
+    static func matches(compiled: CompiledQuery, in text: String) -> [VocabularyTextOccurrence] {
+        guard !text.isEmpty else { return [] }
+
+        let normalizedQuery = compiled.normalizedQuery
+        let queryKey = compiled.queryKey
         let nsText = text as NSString
         let fullRange = NSRange(location: 0, length: nsText.length)
         var seenRanges = Set<String>()
         var occurrences: [VocabularyTextOccurrence] = []
 
-        for pattern in patterns {
-            guard let regex = try? NSRegularExpression(pattern: pattern) else { continue }
+        for regex in compiled.regexes {
             for match in regex.matches(in: text, range: fullRange) {
                 let rangeKey = "\(match.range.location):\(match.range.length)"
                 guard !seenRanges.contains(rangeKey) else { continue }
