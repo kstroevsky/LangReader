@@ -28,11 +28,61 @@ struct VocabularyOccurrence: Equatable {
     }
 }
 
+/// An observed surface form of a vocabulary entry, with its grammatical label
+/// when one could be determined.
+///
+/// `label` is nil whenever the form could not be identified with confidence —
+/// non-German text, or a form that is genuinely ambiguous such as `Autos`,
+/// which is both a plural and a genitive singular. Callers render unlabeled
+/// forms plainly rather than guessing.
+struct VocabularyForm: Equatable {
+    let surface: String
+    let label: GermanFormLabel?
+    let occurrenceCount: Int
+
+    init(surface: String, label: GermanFormLabel? = nil, occurrenceCount: Int = 1) {
+        self.surface = surface
+        self.label = label
+        self.occurrenceCount = occurrenceCount
+    }
+
+    var displayText: String {
+        guard let label else { return surface }
+        return "\(surface) (\(label.displayName))"
+    }
+}
+
+enum VocabularyFormMerger {
+    /// Collapses repeated surface forms, summing their occurrence counts and
+    /// keeping the first label that resolved. First-seen order is preserved so
+    /// the display stays stable between refreshes.
+    static func merged(_ forms: [VocabularyForm]) -> [VocabularyForm] {
+        var order: [String] = []
+        var byKey: [String: VocabularyForm] = [:]
+
+        for form in forms {
+            let key = VocabularyTextPolicy.canonicalVocabularyKey(form.surface)
+            guard !key.isEmpty else { continue }
+            guard let existing = byKey[key] else {
+                order.append(key)
+                byKey[key] = form
+                continue
+            }
+            byKey[key] = VocabularyForm(
+                surface: existing.surface,
+                label: existing.label ?? form.label,
+                occurrenceCount: existing.occurrenceCount + form.occurrenceCount
+            )
+        }
+        return order.compactMap { byKey[$0] }
+    }
+}
+
 struct VocabularyExportRecord {
     let ids: [String]
     let word: String
     let lemma: String?
-    let forms: [String]
+    let forms: [VocabularyForm]
     let answer: String
     let dictionaryTags: String?
     let dictionaryFrequency: Int?
@@ -46,7 +96,7 @@ struct VocabularyExportRecord {
         ids: [String],
         word: String,
         lemma: String? = nil,
-        forms: [String] = [],
+        forms: [VocabularyForm] = [],
         answer: String,
         dictionaryTags: String?,
         dictionaryFrequency: Int?,

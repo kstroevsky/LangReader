@@ -22,7 +22,7 @@ struct VocabularyLibraryRecord {
     let id: String
     let word: String
     let lemma: String?
-    let forms: [String]
+    let forms: [VocabularyForm]
     let answer: String
     let dictionaryTags: String?
     let dictionaryFrequency: Int?
@@ -61,16 +61,17 @@ enum VocabularyLibraryRecordProvider {
                 .compactMap { $0.record.dictionaryTags?.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .first { !$0.isEmpty }
             let frequency = entries.compactMap { $0.record.dictionaryFrequency }.min()
-            var seenForms = Set<String>()
-            let forms = entries
-                .flatMap { entry in
-                    let occurrenceForms = entry.record.occurrences.compactMap(\.surfaceForm)
-                    return entry.record.forms + occurrenceForms
-                }
-                .filter { form in
-                    let formKey = VocabularyTextPolicy.canonicalVocabularyKey(form)
-                    return !formKey.isEmpty && seenForms.insert(formKey).inserted
-                }
+            // Surface forms recovered from occurrences carry no label of their
+            // own; they are merged after the labeled forms so an existing label
+            // always wins over a bare surface form for the same spelling.
+            let forms = VocabularyFormMerger.merged(
+                entries.flatMap(\.record.forms)
+                    + entries.flatMap { entry in
+                        entry.record.occurrences
+                            .compactMap(\.surfaceForm)
+                            .map { VocabularyForm(surface: $0, occurrenceCount: 0) }
+                    }
+            )
             let occurrences = entries.flatMap { entry in
                 libraryOccurrences(source: entry.source, record: entry.record)
             }.sorted(by: occurrenceSort)

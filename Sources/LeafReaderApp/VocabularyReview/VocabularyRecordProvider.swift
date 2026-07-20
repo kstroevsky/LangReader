@@ -1,11 +1,23 @@
 import Foundation
 
 enum VocabularyRecordProvider {
+    /// Resolves the grammatical label for one observed surface form.
+    ///
+    /// Injected so this provider stays independent of the dictionary cache:
+    /// the app supplies the cache-backed resolver, while tests and any caller
+    /// without the SQLite stack get the offline rules by default.
+    typealias FormLabelResolver = (_ surfaceForm: String, _ lemma: String, _ context: String) -> GermanFormLabel?
+
+    static let offlineFormLabelResolver: FormLabelResolver = { surfaceForm, lemma, context in
+        GermanFormLabeler.label(surfaceForm: surfaceForm, lemma: lemma, context: context)
+    }
+
     static func records(
         documentKind: ReaderDocumentKind,
         pdfRecords: [StoredPDFWordRecord],
         webRecords: [StoredWebWordRecord],
-        pdfContext: (StoredPDFWordRecord) -> String
+        pdfContext: (StoredPDFWordRecord) -> String,
+        formLabel: FormLabelResolver = offlineFormLabelResolver
     ) -> [VocabularyExportRecord] {
         let records: [VocabularyExportRecord]
         if documentKind == .pdf {
@@ -17,7 +29,16 @@ enum VocabularyRecordProvider {
                         ids: [$0.id],
                         word: $0.word,
                         lemma: $0.lemma,
-                        forms: [$0.occurrenceSurfaceForm],
+                        forms: [
+                            VocabularyForm(
+                                surface: $0.occurrenceSurfaceForm,
+                                label: formLabel(
+                                    $0.occurrenceSurfaceForm,
+                                    $0.lemma ?? $0.word,
+                                    context
+                                )
+                            )
+                        ],
                         answer: $0.answer,
                         dictionaryTags: $0.dictionaryTags,
                         dictionaryFrequency: $0.dictionaryFrequency,
@@ -104,13 +125,7 @@ enum VocabularyRecordProvider {
             let context = group
                 .map(\.context)
                 .first { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } ?? ""
-            var seenForms = Set<String>()
-            let forms = group
-                .flatMap(\.forms)
-                .filter { form in
-                    let key = VocabularyTextPolicy.canonicalVocabularyKey(form)
-                    return !key.isEmpty && seenForms.insert(key).inserted
-                }
+            let forms = VocabularyFormMerger.merged(group.flatMap(\.forms))
             let answer = group
                 .map(\.answer)
                 .first { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } ?? first.answer

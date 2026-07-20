@@ -335,7 +335,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
             }
             guard matchesSource else { return false }
             guard !query.isEmpty else { return true }
-            let haystack = ([record.word, record.answer, record.dictionaryTags ?? ""] + record.forms + record.occurrences.flatMap {
+            let haystack = ([record.word, record.answer, record.dictionaryTags ?? ""] + record.forms.map(\.surface) + record.occurrences.flatMap {
                 [$0.context, $0.documentTitle, $0.location]
             }).joined(separator: "\n")
                 .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
@@ -462,6 +462,24 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         metadata.font = AppFont.semibold(ofSize: 12)
         metadata.textColor = theme.vocabularySecondaryTextColor
         detailStack.addArrangedSubview(metadata)
+
+        let hasInformativeLabel = record.forms.contains { $0.label?.isInformative == true }
+        if record.forms.count > 1 || hasInformativeLabel {
+            let formsText = record.forms.map(\.displayText).joined(separator: "  ·  ")
+            let formsLabel = NSTextField(labelWithString: AppText.localized(
+                "词形：\(formsText)",
+                "Forms: \(formsText)"
+            ))
+            formsLabel.font = NSFont.systemFont(ofSize: 12)
+            formsLabel.textColor = theme.vocabularySecondaryTextColor
+            formsLabel.maximumNumberOfLines = 0
+            formsLabel.lineBreakMode = .byWordWrapping
+            detailStack.addArrangedSubview(formsLabel)
+            formsLabel.widthAnchor.constraint(
+                equalTo: detailStack.widthAnchor,
+                constant: -12
+            ).isActive = true
+        }
 
         if !record.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             let answer = NSTextField(labelWithAttributedString: MarkdownRenderer.render(
