@@ -123,21 +123,16 @@ extension ReaderWindowController {
         if !record.occurrences.isEmpty {
             let groupKey = VocabularyTextPolicy.canonicalVocabularyKey(word)
             let isExpanded = vocabularyState.expandedOccurrenceKeys.contains(groupKey)
-            let labeledForms = record.forms.compactMap { form -> String? in
-                guard let label = form.label, label.isInformative else { return nil }
-                return "\(form.surface) \(label.displayName)"
-            }
-            let formPrefix: String
-            if !labeledForms.isEmpty {
-                formPrefix = labeledForms.joined(separator: " · ") + " · "
-            } else if record.forms.count > 1 {
-                formPrefix = AppText.localized(
+            // Only a count here. Listing every labeled form inline made this
+            // button's title — and therefore the whole panel, which sizes to
+            // its widest row — grow with the number of inflections. The forms
+            // themselves are shown in the library detail, where they can wrap.
+            let formPrefix = record.forms.count > 1
+                ? AppText.localized(
                     "词形（\(record.forms.count)） · ",
                     "Forms (\(record.forms.count)) · "
                 )
-            } else {
-                formPrefix = ""
-            }
+                : ""
             let disclosure = vocabularyActionButton(
                 title: AppText.localized(
                     "\(formPrefix)出现位置（\(record.occurrences.count)）\(isExpanded ? " ▲" : " ▼")",

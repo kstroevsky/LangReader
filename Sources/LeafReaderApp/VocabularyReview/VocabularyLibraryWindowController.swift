@@ -83,6 +83,11 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
     private(set) var window: NSWindow?
     private var records: [VocabularyLibraryRecord] = []
     private var filteredRecords: [VocabularyLibraryRecord] = []
+    /// Canonical key of the surface form the occurrence list is filtered to,
+    /// or nil for all forms. Reset whenever a different word is selected.
+    private var occurrenceFormFilter: String?
+    /// Segment index -> form key, with index 0 reserved for "all".
+    private var occurrenceFormKeys: [String] = []
 
     init(owner: ReaderWindowController) {
         self.owner = owner
@@ -144,7 +149,22 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         rootView.frame = NSRect(x: 0, y: 0, width: 1080, height: 720)
         rootView.autoresizingMask = [.width, .height]
         panel.contentView = rootView
-        panel.minSize = NSSize(width: 960, height: 620)
+        // Fit the display rather than assuming a fixed size: a hard 1080x720
+        // with a 960 minimum leaves the window unusable — and unshrinkable —
+        // on smaller screens.
+        let visible = (panel.screen ?? NSScreen.main)?.visibleFrame
+            ?? NSRect(x: 0, y: 0, width: 1080, height: 720)
+        panel.minSize = NSSize(
+            width: min(820, visible.width),
+            height: min(560, visible.height)
+        )
+        panel.maxSize = NSSize(width: visible.width, height: visible.height)
+        panel.setContentSize(
+            NSSize(
+                width: min(1080, visible.width - 40),
+                height: min(720, visible.height - 40)
+            )
+        )
         panel.center()
 
         let icon = NSImageView()
@@ -388,6 +408,9 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
     }
 
     func tableViewSelectionDidChange(_ notification: Notification) {
+        // A form filter belongs to one word; carrying it to the next selection
+        // would silently hide occurrences of a word that has no such form.
+        occurrenceFormFilter = nil
         refreshDetail()
     }
 
@@ -461,7 +484,10 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         let metadata = NSTextField(labelWithString: metadataParts.joined(separator: "  ·  "))
         metadata.font = AppFont.semibold(ofSize: 12)
         metadata.textColor = theme.vocabularySecondaryTextColor
+        metadata.lineBreakMode = .byTruncatingTail
+        metadata.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         detailStack.addArrangedSubview(metadata)
+        metadata.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
 
         let hasInformativeLabel = record.forms.contains { $0.label?.isInformative == true }
         if record.forms.count > 1 || hasInformativeLabel {
@@ -471,6 +497,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
                 "Forms: \(formsText)"
             ))
             formsLabel.font = NSFont.systemFont(ofSize: 12)
+            formsLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
             formsLabel.textColor = theme.vocabularySecondaryTextColor
             formsLabel.maximumNumberOfLines = 0
             formsLabel.lineBreakMode = .byWordWrapping
@@ -491,6 +518,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
             answer.lineBreakMode = .byWordWrapping
             answer.isSelectable = true
             detailStack.addArrangedSubview(answer)
+            answer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
             answer.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
         }
 
@@ -499,12 +527,36 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         detailStack.addArrangedSubview(separator)
         separator.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
 
+        let formGroups = occurrenceFormGroups(record: record, occurrences: occurrences)
+        // A filter kept from a previous render may name a form this word does
+        // not have; fall back to showing everything rather than nothing.
+        if let filter = occurrenceFormFilter, !formGroups.contains(where: { $0.key == filter }) {
+            occurrenceFormFilter = nil
+        }
+        let visibleOccurrences: [VocabularyLibraryOccurrence]
+        if let filter = occurrenceFormFilter {
+            visibleOccurrences = occurrences.filter {
+                VocabularyTextPolicy.canonicalVocabularyKey($0.surfaceForm ?? record.word) == filter
+            }
+        } else {
+            visibleOccurrences = occurrences
+        }
+
+        if formGroups.count > 1 {
+            let tabs = formFilterTabs(groups: formGroups, total: occurrences.count)
+            detailStack.addArrangedSubview(tabs)
+            tabs.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
+        }
+
         let occurrencesTitle = NSTextField(labelWithString: AppText.localized("出处与上下文", "Occurrences & context"))
         occurrencesTitle.font = AppFont.semibold(ofSize: 17)
         occurrencesTitle.textColor = theme.vocabularyPrimaryTextColor
+        occurrencesTitle.lineBreakMode = .byTruncatingTail
+        occurrencesTitle.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         detailStack.addArrangedSubview(occurrencesTitle)
+        occurrencesTitle.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
 
-        for occurrence in occurrences {
+        for occurrence in visibleOccurrences {
             let view = occurrenceView(occurrence, word: occurrence.surfaceForm ?? record.word, theme: theme)
             detailStack.addArrangedSubview(view)
             view.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
@@ -521,6 +573,131 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         label.maximumNumberOfLines = 0
         detailStack.addArrangedSubview(label)
         label.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
+    }
+
+    private struct OccurrenceFormGroup {
+        let key: String
+        let surface: String
+        let label: GermanFormLabel?
+        let count: Int
+    }
+
+    /// Groups occurrences by the exact spelling that was highlighted.
+    ///
+    /// Counts come from the occurrences themselves rather than the record's
+    /// form list, so every tab's number matches the rows it reveals.
+    private func occurrenceFormGroups(
+        record: VocabularyLibraryRecord,
+        occurrences: [VocabularyLibraryOccurrence]
+    ) -> [OccurrenceFormGroup] {
+        var labelsByKey: [String: GermanFormLabel] = [:]
+        for form in record.forms {
+            let key = VocabularyTextPolicy.canonicalVocabularyKey(form.surface)
+            if let label = form.label, labelsByKey[key] == nil {
+                labelsByKey[key] = label
+            }
+        }
+
+        var order: [String] = []
+        var surfaces: [String: String] = [:]
+        var counts: [String: Int] = [:]
+        for occurrence in occurrences {
+            let surface = occurrence.surfaceForm ?? record.word
+            let key = VocabularyTextPolicy.canonicalVocabularyKey(surface)
+            guard !key.isEmpty else { continue }
+            if counts[key] == nil {
+                order.append(key)
+                surfaces[key] = surface
+            }
+            counts[key, default: 0] += 1
+        }
+        return order.map { key in
+            OccurrenceFormGroup(
+                key: key,
+                surface: surfaces[key] ?? key,
+                label: labelsByKey[key],
+                count: counts[key] ?? 0
+            )
+        }
+    }
+
+    /// Tabs that filter the occurrence list down to a single inflected form.
+    ///
+    /// Wrapped in a horizontal scroller: a word with many forms would otherwise
+    /// make the control wider than the pane, which is what pushed this window
+    /// past the edge of the screen before.
+    private func formFilterTabs(groups: [OccurrenceFormGroup], total: Int) -> NSView {
+        let theme = ReaderTheme.selected
+        var titles = [AppText.localized("全部（\(total)）", "All (\(total))")]
+        occurrenceFormKeys = [""]
+        for group in groups {
+            titles.append("\(group.surface) (\(group.count))")
+            occurrenceFormKeys.append(group.key)
+        }
+
+        let segmented = NSSegmentedControl(
+            labels: titles,
+            trackingMode: .selectOne,
+            target: self,
+            action: #selector(occurrenceFormFilterChanged(_:))
+        )
+        segmented.segmentDistribution = .fit
+        segmented.selectedSegment = occurrenceFormFilter
+            .flatMap { occurrenceFormKeys.firstIndex(of: $0) } ?? 0
+        segmented.translatesAutoresizingMaskIntoConstraints = false
+        for (index, group) in groups.enumerated() {
+            segmented.setToolTip(
+                group.label?.displayName ?? group.surface,
+                forSegment: index + 1
+            )
+        }
+
+        let scroll = NSScrollView()
+        scroll.drawsBackground = false
+        scroll.hasHorizontalScroller = true
+        scroll.hasVerticalScroller = false
+        scroll.autohidesScrollers = true
+        scroll.horizontalScrollElasticity = .allowed
+        scroll.verticalScrollElasticity = .none
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+
+        let documentView = NSView()
+        documentView.translatesAutoresizingMaskIntoConstraints = false
+        documentView.addSubview(segmented)
+        scroll.documentView = documentView
+
+        let container = NSView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(scroll)
+        _ = theme
+
+        NSLayoutConstraint.activate([
+            segmented.leadingAnchor.constraint(equalTo: documentView.leadingAnchor),
+            segmented.trailingAnchor.constraint(equalTo: documentView.trailingAnchor),
+            segmented.topAnchor.constraint(equalTo: documentView.topAnchor),
+            segmented.bottomAnchor.constraint(equalTo: documentView.bottomAnchor),
+            documentView.heightAnchor.constraint(equalTo: scroll.contentView.heightAnchor),
+            scroll.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            scroll.topAnchor.constraint(equalTo: container.topAnchor),
+            scroll.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            container.heightAnchor.constraint(equalToConstant: 30)
+        ])
+        // The width constraint against detailStack is applied by the caller,
+        // after this view is added to the stack — activating it here would
+        // reference a view with no common ancestor and throw.
+        return container
+    }
+
+    @objc private func occurrenceFormFilterChanged(_ sender: NSSegmentedControl) {
+        let index = sender.selectedSegment
+        guard index > 0, index < occurrenceFormKeys.count else {
+            occurrenceFormFilter = nil
+            refreshDetail()
+            return
+        }
+        occurrenceFormFilter = occurrenceFormKeys[index]
+        refreshDetail()
     }
 
     private func occurrenceView(_ occurrence: VocabularyLibraryOccurrence, word: String, theme: ReaderTheme) -> NSView {
@@ -578,6 +755,14 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         context.maximumNumberOfLines = 0
         context.allowsEditingTextAttributes = true
         context.isSelectable = true
+        // Wrap instead of demanding width. Without this an unbroken run of
+        // context text raises the card's required width, which propagates out
+        // to the stack and forces the whole window wider than the screen.
+        context.lineBreakMode = .byWordWrapping
+        context.cell?.wraps = true
+        context.cell?.isScrollable = false
+        context.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        context.setContentHuggingPriority(.defaultLow, for: .horizontal)
         context.translatesAutoresizingMaskIntoConstraints = false
 
         card.addSubview(sourceButton)
