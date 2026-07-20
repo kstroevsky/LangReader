@@ -48,13 +48,23 @@ extension ReaderWindowController {
     }
 
     func selectStoredLinkedWord(linkID: String) {
-        guard storedWordRecords.contains(where: { $0.id == linkID })
-                || storedWebWordRecords.contains(where: { $0.id == linkID }) else {
-            return
+        let focused: (word: String, answer: String)?
+        if let record = storedWordRecords.first(where: { $0.id == linkID }) {
+            focused = (record.word, record.answer)
+        } else if let record = storedWebWordRecords.first(where: { $0.id == linkID }) {
+            focused = (record.word, record.answer)
+        } else {
+            focused = nil
         }
+        guard let focused else { return }
         setAIPanelCollapsed(false, animated: true)
-        ensureLinkedWordBubbleLoaded(linkID: linkID)
-        aiPanel.scrollToLinkedBubble(id: linkID)
+        // Clicking a saved word shows the same focused card as defining it, not a
+        // scroll into a list of every word (which no longer exists).
+        aiPanel.showFocusedWord(
+            word: focused.word,
+            answer: focused.answer.trimmingCharacters(in: .whitespacesAndNewlines),
+            linkID: linkID
+        )
     }
 
     @discardableResult

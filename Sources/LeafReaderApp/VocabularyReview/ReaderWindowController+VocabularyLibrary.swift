@@ -9,6 +9,15 @@ extension ReaderWindowController {
         reloadVocabularyLibraryInBackground()
     }
 
+    /// Opens the Words window pre-selected on `word` — the destination of the
+    /// Assistant's Occurrences button. The word is matched against lemma and
+    /// observed forms inside the window, so the surface spelling is enough.
+    func openWordsWindow(focusingWord word: String) {
+        let key = VocabularyTextPolicy.canonicalVocabularyKey(word)
+        vocabularyLibraryWindowController.present(focusWordKey: key)
+        reloadVocabularyLibraryInBackground()
+    }
+
     /// Rebuilds the library records off the main thread and hands them to the
     /// window when done.
     ///
@@ -161,6 +170,39 @@ extension ReaderWindowController {
                 }
             }
         }
+    }
+
+    /// Grammatical summary of a word for the Assistant's focused-word header.
+    ///
+    /// Built from stored context (no live PDFKit extraction) so it stays cheap
+    /// enough to run on the main thread when a word is defined or clicked; the
+    /// persistent label cache makes the labeling effectively free once warm.
+    func wordFocusInfo(for word: String) -> AIChatPanel.WordFocusInfo? {
+        let key = VocabularyTextPolicy.canonicalVocabularyKey(word)
+        guard !key.isEmpty else { return nil }
+        let records = VocabularyRecordProvider.records(
+            documentKind: currentDocumentKind,
+            pdfRecords: storedWordRecords,
+            webRecords: storedWebWordRecords,
+            pdfContext: { $0.context ?? "" },
+            formLabel: GermanFormLabeler.persistentCachedFormLabelResolver
+        )
+        guard let record = records.first(where: { candidate in
+            VocabularyTextPolicy.canonicalVocabularyKey(candidate.lemma ?? candidate.word) == key
+                || VocabularyTextPolicy.canonicalVocabularyKey(candidate.word) == key
+                || candidate.forms.contains { VocabularyTextPolicy.canonicalVocabularyKey($0.surface) == key }
+        }) else {
+            return nil
+        }
+        let hasInformativeForm = record.forms.contains { $0.label?.isInformative == true }
+        let formsText = (record.forms.count > 1 || hasInformativeForm)
+            ? record.forms.map(\.displayText).joined(separator: " · ")
+            : nil
+        return AIChatPanel.WordFocusInfo(
+            partOfSpeech: record.dictionaryTags,
+            formsText: formsText,
+            occurrenceCount: record.occurrences.count
+        )
     }
 
     func openVocabularyLibraryOccurrence(_ occurrence: VocabularyLibraryOccurrence) {

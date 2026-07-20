@@ -101,6 +101,11 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
     /// True once records have been delivered at least once, so a re-open shows
     /// the last-known list instantly instead of the loading placeholder.
     private var hasLoadedOnce = false
+    /// A surface-form key to select once records arrive, set when the window is
+    /// opened focused on a specific word (from the Assistant's Occurrences
+    /// button). Resolved against the records because a word is filed under its
+    /// lemma, which the caller may not know.
+    private var pendingFocusWordKey: String?
 
     init(owner: ReaderWindowController) {
         self.owner = owner
@@ -115,7 +120,16 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
     /// is never blocked by the library scan. The first open displays a loading
     /// placeholder; re-opens keep the last-known list visible until the
     /// background refresh delivers fresh records via `apply(records:)`.
-    func present() {
+    func present(focusWordKey: String? = nil) {
+        if let focusWordKey, !focusWordKey.isEmpty {
+            pendingFocusWordKey = focusWordKey
+            // A lingering search or source filter could hide the focused word.
+            searchField.stringValue = ""
+            if sourcePopup.numberOfItems > 0 { sourcePopup.selectItem(at: 0) }
+            // The window may already be showing records; focus them now rather
+            // than waiting for the background refresh to round-trip.
+            if hasLoadedOnce { focusPendingWordIfPossible() }
+        }
         if window == nil {
             buildWindow()
         }
@@ -143,7 +157,30 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
     func apply(records: [VocabularyLibraryRecord]) {
         guard window != nil else { return }
         hasLoadedOnce = true
-        update(records: records)
+        let focusID = pendingFocusWordKey.flatMap { Self.recordID(in: records, forWordKey: $0) }
+        pendingFocusWordKey = nil
+        update(records: records, focusID: focusID)
+    }
+
+    private func focusPendingWordIfPossible() {
+        guard let key = pendingFocusWordKey,
+              let id = Self.recordID(in: records, forWordKey: key) else { return }
+        pendingFocusWordKey = nil
+        applyFilters(preferredSelectionID: id)
+    }
+
+    /// The record a focus word belongs to. A word is filed under its lemma, so
+    /// try the lemma key first, then the display word, then any observed form —
+    /// the caller passes the surface spelling and need not know the lemma.
+    static func recordID(in records: [VocabularyLibraryRecord], forWordKey key: String) -> String? {
+        guard !key.isEmpty else { return nil }
+        if let exact = records.first(where: { $0.id == key }) { return exact.id }
+        if let byWord = records.first(where: {
+            VocabularyTextPolicy.canonicalVocabularyKey($0.word) == key
+        }) { return byWord.id }
+        return records.first(where: { record in
+            record.forms.contains { VocabularyTextPolicy.canonicalVocabularyKey($0.surface) == key }
+        })?.id
     }
 
     private func showLoadingDetail() {
@@ -353,8 +390,8 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         owner?.styleVocabularyActionButtons(in: rootView)
     }
 
-    private func update(records: [VocabularyLibraryRecord]) {
-        let selectedID = selectedRecord?.id
+    private func update(records: [VocabularyLibraryRecord], focusID: String? = nil) {
+        let selectedID = focusID ?? selectedRecord?.id
         let selectedSource = sourcePopup.selectedItem?.representedObject as? String
         self.records = records
         rebuildSourcePopup(selectedPath: selectedSource)

@@ -73,6 +73,12 @@ extension ReaderWindowController {
         aiPanel.onLinkedBubbleDeleted = { [weak self] linkID in
             self?.removeVocabularyRecords(ids: [linkID])
         }
+        aiPanel.onOccurrencesRequested = { [weak self] word in
+            self?.openWordsWindow(focusingWord: word)
+        }
+        aiPanel.onWordFocusInfoRequested = { [weak self] word in
+            self?.wordFocusInfo(for: word)
+        }
     }
 
     private func configureAIPanelConversationCallbacks() {
