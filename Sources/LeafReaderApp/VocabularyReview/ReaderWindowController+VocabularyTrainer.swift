@@ -42,7 +42,8 @@ extension ReaderWindowController {
                     document: self?.pdfView.document
                 )
                 return self?.normalizedPDFVocabularyContext(context) ?? context
-            }
+            },
+            formLabel: GermanFormLabeler.cachedFormLabelResolver
         )
     }
 

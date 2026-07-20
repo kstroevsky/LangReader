@@ -5,6 +5,10 @@ struct GermanDictionaryEntry: Equatable {
     let lemma: String
     let partOfSpeech: String?
     let meanings: [String]
+    /// Parsed flexion table, when the page had one. Carried as plain data so
+    /// this type stays free of any storage dependency; persisting it is the
+    /// caller's job.
+    var flexion: GermanWiktionaryParser.FlexionTable?
 
     var metadata: VocabularyDictionaryMetadata {
         VocabularyDictionaryMetadata(tags: partOfSpeech, frequency: nil)
@@ -38,6 +42,7 @@ enum GermanWiktionaryParser {
         let lemma: String?
         let partOfSpeech: String?
         let meanings: [String]
+        var flexion: FlexionTable?
     }
 
     static func parse(wikitext: String) -> ParsedPage? {
@@ -54,7 +59,138 @@ enum GermanWiktionaryParser {
             in: german
         )
         let meanings = meaningLines(in: german)
-        return ParsedPage(lemma: lemma, partOfSpeech: partOfSpeech, meanings: meanings)
+        return ParsedPage(
+            lemma: lemma,
+            partOfSpeech: partOfSpeech,
+            meanings: meanings,
+            flexion: parseFlexion(wikitext: wikitext)
+        )
+    }
+
+    // MARK: - Flexion tables
+
+    struct FlexionForm: Equatable {
+        /// The Wiktionary parameter name, e.g. `Nominativ Plural`, `Partizip II`.
+        let label: String
+        let surface: String
+        /// Wiktionary marks alternative forms with a trailing `*`
+        /// (`Dativ Singular*=Hause`).
+        let isVariant: Bool
+    }
+
+    struct FlexionTable: Equatable {
+        /// `m`, `f` or `n`. More discriminating than a part-of-speech tag for
+        /// the noun/noun homographs German is full of — `die Steuer` (tax)
+        /// versus `das Steuer` (helm).
+        let genus: String?
+        let auxiliary: String?
+        let forms: [FlexionForm]
+
+        func forms(labeled label: String) -> [String] {
+            forms.filter { $0.label == label }.map(\.surface)
+        }
+    }
+
+    /// Parameter names that carry an actual inflected form.
+    ///
+    /// This is an allowlist rather than a blocklist on purpose: the Übersicht
+    /// template interleaves image parameters with grammatical ones
+    /// (`|Bild 1=Leamouth riverside building 1.jpg|mini|1|…`), so anything not
+    /// named here — including captions and filenames — is discarded.
+    private static let flexionFormKeys: Set<String> = [
+        "Nominativ Singular", "Nominativ Plural",
+        "Genitiv Singular", "Genitiv Plural",
+        "Dativ Singular", "Dativ Plural",
+        "Akkusativ Singular", "Akkusativ Plural",
+        "Partizip II", "Partizip I",
+        "Imperativ Singular", "Imperativ Plural"
+    ]
+
+    /// Verb parameters are person-suffixed (`Präsens_ich`, `Präteritum_ich`).
+    private static let flexionFormKeyPrefixes = [
+        "Präsens_", "Präteritum_", "Konjunktiv II_", "Konjunktiv I_"
+    ]
+
+    /// Parses the `{{Deutsch … Übersicht}}` table from a lemma page.
+    ///
+    /// Only this table is parseable. `Flexion:` subpages store principal parts
+    /// and generate their paradigms through MediaWiki templates
+    /// (`{{Deutsch Verb unregelmäßig|3=ging|5=gegangen}}`), so they yield no
+    /// literal forms to read. That makes this table a labeled subset of the
+    /// paradigm rather than the whole of it.
+    static func parseFlexion(wikitext: String) -> FlexionTable? {
+        let scope = germanSection(in: wikitext) ?? wikitext
+        guard let block = uebersichtBlock(in: scope) else { return nil }
+
+        var genus: String?
+        var auxiliary: String?
+        var forms: [FlexionForm] = []
+
+        // Each parameter occupies its own line. Splitting the block on "|"
+        // instead would corrupt image parameters, whose values contain pipes.
+        for rawLine in block.split(whereSeparator: { $0.isNewline }) {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            guard line.hasPrefix("|"), let separator = line.firstIndex(of: "=") else { continue }
+
+            let rawKey = String(line[line.index(after: line.startIndex)..<separator])
+                .trimmingCharacters(in: .whitespaces)
+            let value = cleanMarkup(String(line[line.index(after: separator)...]))
+            guard !value.isEmpty else { continue }
+
+            let isVariant = rawKey.hasSuffix("*")
+            let key = isVariant ? String(rawKey.dropLast()) : rawKey
+
+            switch key {
+            case "Genus":
+                genus = value
+            case "Hilfsverb":
+                auxiliary = value
+            default:
+                guard flexionFormKeys.contains(key)
+                    || flexionFormKeyPrefixes.contains(where: { key.hasPrefix($0) }) else {
+                    continue
+                }
+                forms.append(FlexionForm(label: key, surface: value, isVariant: isVariant))
+            }
+        }
+
+        guard !forms.isEmpty || genus != nil else { return nil }
+        return FlexionTable(genus: genus, auxiliary: auxiliary, forms: forms)
+    }
+
+    /// Extracts the body of the first `{{Deutsch … Übersicht}}` template,
+    /// tracking brace depth so nested templates in values do not end it early.
+    private static func uebersichtBlock(in text: String) -> String? {
+        guard let header = text.range(
+            of: #"\{\{Deutsch [^\n}]*Übersicht"#,
+            options: .regularExpression
+        ) else {
+            return nil
+        }
+        var depth = 2
+        var index = header.upperBound
+        var body = ""
+        while index < text.endIndex {
+            let character = text[index]
+            if character == "{", text.index(after: index) < text.endIndex,
+               text[text.index(after: index)] == "{" {
+                depth += 2
+                body.append("{{")
+                index = text.index(index, offsetBy: 2)
+                continue
+            }
+            if character == "}", text.index(after: index) < text.endIndex,
+               text[text.index(after: index)] == "}" {
+                depth -= 2
+                if depth <= 0 { return body }
+                body.append("}}")
+                index = text.index(index, offsetBy: 2)
+                continue
+            }
+            body.append(character)
+            index = text.index(after: index)
+        }
+        return body.isEmpty ? nil : body
     }
 
     private static func germanSection(in text: String) -> String? {
@@ -189,8 +325,10 @@ final class GermanWiktionaryDictionary {
             requestedWord: requestedWord,
             lemma: page.lemma ?? fallbackLemma,
             partOfSpeech: page.partOfSpeech,
-            meanings: page.meanings
+            meanings: page.meanings,
+            flexion: page.flexion
         )
+
         lock.lock()
         cache[VocabularyTextPolicy.canonicalVocabularyKey(requestedWord)] = entry
         lock.unlock()

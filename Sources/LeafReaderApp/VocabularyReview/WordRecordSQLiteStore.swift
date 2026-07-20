@@ -179,6 +179,250 @@ final class WordRecordSQLiteStore {
         }
     }
 
+    // MARK: - German flexion cache
+
+    /// Replaces the cached flexion table for one lemma.
+    ///
+    /// An entry with no forms is still written: it records that the lemma was
+    /// looked up and has no table, so the same page is not refetched on every
+    /// subsequent encounter.
+    @discardableResult
+    func saveGermanFlexion(_ entry: StoredGermanFlexion) -> Bool {
+        locked {
+            guard beginTransaction() else { return false }
+            guard execute(
+                sql: "DELETE FROM german_flexion_lemmas WHERE lemma_key = ?",
+                bindings: [entry.lemmaKey],
+                operation: "delete german flexion lemma"
+            ) else {
+                rollbackTransaction()
+                return false
+            }
+            let insertedLemma = executeStatement(
+                sql: """
+                INSERT INTO german_flexion_lemmas (lemma_key, lemma, genus, auxiliary, fetched_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                prepareOperation: "prepare insert german flexion lemma",
+                stepOperation: "insert german flexion lemma"
+            ) { statement in
+                bindSQLiteText(entry.lemmaKey, index: 1, statement: statement)
+                bindSQLiteText(entry.lemma, index: 2, statement: statement)
+                bindSQLiteOptionalText(entry.genus, index: 3, statement: statement)
+                bindSQLiteOptionalText(entry.auxiliary, index: 4, statement: statement)
+                sqlite3_bind_double(statement, 5, entry.fetchedAt.timeIntervalSince1970)
+            }
+            guard insertedLemma else {
+                rollbackTransaction()
+                return false
+            }
+
+            for form in entry.forms {
+                let surfaceKey = VocabularyTextPolicy.canonicalVocabularyKey(form.surface)
+                guard !surfaceKey.isEmpty else { continue }
+                let inserted = executeStatement(
+                    sql: """
+                    INSERT OR REPLACE INTO german_flexion_forms
+                        (lemma_key, parameter, surface, surface_key, is_variant)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    prepareOperation: "prepare insert german flexion form",
+                    stepOperation: "insert german flexion form"
+                ) { statement in
+                    bindSQLiteText(entry.lemmaKey, index: 1, statement: statement)
+                    bindSQLiteText(form.parameter, index: 2, statement: statement)
+                    bindSQLiteText(form.surface, index: 3, statement: statement)
+                    bindSQLiteText(surfaceKey, index: 4, statement: statement)
+                    sqlite3_bind_int(statement, 5, form.isVariant ? 1 : 0)
+                }
+                guard inserted else {
+                    rollbackTransaction()
+                    return false
+                }
+            }
+            commitTransaction()
+            return true
+        }
+    }
+
+    /// Whether this lemma has already been fetched, including when the fetch
+    /// found no table. Used to avoid repeat network lookups.
+    func hasGermanFlexion(lemmaKey: String) -> Bool {
+        locked {
+            !loadRecords(
+                sql: "SELECT lemma_key FROM german_flexion_lemmas WHERE lemma_key = ? LIMIT 1",
+                prepareOperation: "prepare german flexion existence check",
+                bind: { bindSQLiteText(lemmaKey, index: 1, statement: $0) },
+                decode: { stringColumn($0, 0) }
+            ).isEmpty
+        }
+    }
+
+    /// Every cached parameter naming this surface form, across all lemmas.
+    ///
+    /// The reverse direction is what repairs grouping: `Häuser` resolves to
+    /// `Haus` here even though the offline lemmatizer leaves it unchanged.
+    func germanFlexionMatches(surfaceForm: String) -> [StoredGermanFlexionMatch] {
+        let surfaceKey = VocabularyTextPolicy.canonicalVocabularyKey(surfaceForm)
+        guard !surfaceKey.isEmpty else { return [] }
+        return locked {
+            loadRecords(
+                sql: """
+                SELECT l.lemma, f.parameter, f.surface, f.is_variant
+                FROM german_flexion_forms f
+                JOIN german_flexion_lemmas l ON l.lemma_key = f.lemma_key
+                WHERE f.surface_key = ?
+                """,
+                prepareOperation: "prepare german flexion reverse lookup",
+                bind: { bindSQLiteText(surfaceKey, index: 1, statement: $0) },
+                decode: { statement in
+                    guard let lemma = stringColumn(statement, 0),
+                          let parameter = stringColumn(statement, 1),
+                          let surface = stringColumn(statement, 2) else {
+                        return nil
+                    }
+                    return StoredGermanFlexionMatch(
+                        lemma: lemma,
+                        parameter: parameter,
+                        surface: surface,
+                        isVariant: sqlite3_column_int(statement, 3) != 0
+                    )
+                }
+            )
+        }
+    }
+
+    /// Re-files vocabulary saved under an inflected spelling onto its lemma.
+    ///
+    /// `canonical_key` carries `UNIQUE(document_id, canonical_key)`, so a word
+    /// saved as `Häuser` before its paradigm was known cannot simply be
+    /// re-keyed when a record for `Haus` already exists — the two have to be
+    /// merged. Both paths run inside one transaction and are idempotent:
+    /// re-running finds no source rows and does nothing.
+    ///
+    /// Only `pdf_vocabulary_words` is affected. Web records are keyed by their
+    /// literal text and have no lemma column to reconcile.
+    @discardableResult
+    func regroupVocabulary(fromKey: String, intoKey: String, lemma: String) -> Int {
+        guard !fromKey.isEmpty, !intoKey.isEmpty, fromKey != intoKey else { return 0 }
+
+        struct SourceRow {
+            let documentID: String
+            let id: String
+            let answer: String
+            let createdAt: Double
+        }
+
+        return locked {
+            let sources = loadRecords(
+                sql: """
+                SELECT document_id, id, answer, created_at
+                FROM pdf_vocabulary_words WHERE canonical_key = ?
+                """,
+                prepareOperation: "prepare vocabulary regroup lookup",
+                bind: { bindSQLiteText(fromKey, index: 1, statement: $0) },
+                decode: { statement -> SourceRow? in
+                    guard let documentID = stringColumn(statement, 0),
+                          let id = stringColumn(statement, 1) else { return nil }
+                    return SourceRow(
+                        documentID: documentID,
+                        id: id,
+                        answer: stringColumn(statement, 2) ?? "",
+                        createdAt: sqlite3_column_double(statement, 3)
+                    )
+                }
+            )
+            guard !sources.isEmpty, beginTransaction() else { return 0 }
+
+            var regrouped = 0
+            for source in sources {
+                let existing = loadRecords(
+                    sql: """
+                    SELECT id FROM pdf_vocabulary_words
+                    WHERE document_id = ? AND canonical_key = ?
+                    """,
+                    prepareOperation: "prepare vocabulary regroup target lookup",
+                    bind: { statement in
+                        bindSQLiteText(source.documentID, index: 1, statement: statement)
+                        bindSQLiteText(intoKey, index: 2, statement: statement)
+                    },
+                    decode: { stringColumn($0, 0) }
+                )
+
+                guard let targetID = existing.first else {
+                    // No record under the lemma yet: re-key in place.
+                    guard execute(
+                        sql: """
+                        UPDATE pdf_vocabulary_words SET canonical_key = ?, lemma = ?
+                        WHERE document_id = ? AND id = ?
+                        """,
+                        bindings: [intoKey, lemma, source.documentID, source.id],
+                        operation: "rekey vocabulary to lemma"
+                    ) else {
+                        rollbackTransaction()
+                        return 0
+                    }
+                    regrouped += 1
+                    continue
+                }
+
+                // A record already exists under the lemma: move the occurrences
+                // across. OR IGNORE drops any occurrence whose location is
+                // already recorded on the target — a genuine duplicate, not a
+                // loss — and the cascade below removes the skipped rows.
+                guard execute(
+                    sql: """
+                    UPDATE OR IGNORE pdf_vocabulary_occurrences SET vocabulary_id = ?
+                    WHERE document_id = ? AND vocabulary_id = ?
+                    """,
+                    bindings: [targetID, source.documentID, source.id],
+                    operation: "move occurrences to lemma record"
+                ) else {
+                    rollbackTransaction()
+                    return 0
+                }
+
+                // Keep the surviving record's answer if it has one, otherwise
+                // adopt the source's, and keep the earlier creation date so the
+                // entry does not appear newer than it is.
+                let merged = executeStatement(
+                    sql: """
+                    UPDATE pdf_vocabulary_words
+                    SET answer = CASE WHEN answer IS NULL OR answer = '' THEN ? ELSE answer END,
+                        created_at = min(created_at, ?),
+                        lemma = ?
+                    WHERE document_id = ? AND id = ?
+                    """,
+                    prepareOperation: "prepare merge vocabulary into lemma",
+                    stepOperation: "merge vocabulary into lemma"
+                ) { statement in
+                    bindSQLiteText(source.answer, index: 1, statement: statement)
+                    sqlite3_bind_double(statement, 2, source.createdAt)
+                    bindSQLiteText(lemma, index: 3, statement: statement)
+                    bindSQLiteText(source.documentID, index: 4, statement: statement)
+                    bindSQLiteText(targetID, index: 5, statement: statement)
+                }
+                guard merged else {
+                    rollbackTransaction()
+                    return 0
+                }
+
+                guard execute(
+                    sql: "DELETE FROM pdf_vocabulary_words WHERE document_id = ? AND id = ?",
+                    bindings: [source.documentID, source.id],
+                    operation: "delete merged vocabulary row"
+                ) else {
+                    rollbackTransaction()
+                    return 0
+                }
+                regrouped += 1
+            }
+
+            commitTransaction()
+            return regrouped
+        }
+    }
+
     private func createTables() {
         let sql = """
         PRAGMA foreign_keys = ON;
@@ -254,6 +498,24 @@ final class WordRecordSQLiteStore {
         );
         CREATE INDEX IF NOT EXISTS idx_web_word_records_document ON web_word_records(document_id);
         CREATE INDEX IF NOT EXISTS idx_web_word_records_word ON web_word_records(document_id, word);
+        CREATE TABLE IF NOT EXISTS german_flexion_lemmas (
+            lemma_key TEXT PRIMARY KEY,
+            lemma TEXT NOT NULL,
+            genus TEXT,
+            auxiliary TEXT,
+            fetched_at REAL NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS german_flexion_forms (
+            lemma_key TEXT NOT NULL,
+            parameter TEXT NOT NULL,
+            surface TEXT NOT NULL,
+            surface_key TEXT NOT NULL,
+            is_variant INTEGER NOT NULL,
+            PRIMARY KEY(lemma_key, parameter, surface_key),
+            FOREIGN KEY(lemma_key) REFERENCES german_flexion_lemmas(lemma_key) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_german_flexion_surface
+            ON german_flexion_forms(surface_key);
         """
         executeRaw(sql, operation: "create word record tables")
         migrateColumns()

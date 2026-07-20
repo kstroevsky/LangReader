@@ -47,6 +47,8 @@ excluded_logic_app_source() {
     ModalOverlayManager.swift|\
     PDFDocumentAgentIndex.swift|\
     PDFEmbeddingStore.swift|\
+    GermanFlexionStore.swift|\
+    GermanCachedFormLabeling.swift|\
     PDFWordRecordStore.swift|\
     Reader*State.swift|\
     ReaderDropContentView.swift|\
@@ -123,6 +125,7 @@ SQLITE_WORD_TEST_SOURCES=(
   "$APP_SOURCE_ROOT/Platform/Persistence/SQLiteSchemaMigrator.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/WordRecordSQLiteRowMapper.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/WordRecordSQLiteStore.swift"
+  "$APP_SOURCE_ROOT/VocabularyReview/GermanFlexionStore.swift"
 )
 
 PERSONAL_VOCABULARY_TEST_SOURCES=(
@@ -267,5 +270,9 @@ if [[ "${LEAFVOCABULARY_TEST_GERMAN_DICTIONARY:-0}" == "1" ]]; then
   run_swift_test /tmp/leafvocabulary-german-dictionary-live-tests \
     "$TEST_SOURCE_ROOT/VocabularyReview/GermanDictionaryLiveLookupTests.swift" \
     "$APP_SOURCE_ROOT/VocabularyReview/VocabularyTextPolicy.swift" \
-    "$APP_SOURCE_ROOT/VocabularyReview/GermanWiktionaryDictionary.swift"
+    "$APP_SOURCE_ROOT/VocabularyReview/GermanWiktionaryDictionary.swift" \
+    "$APP_SOURCE_ROOT/VocabularyReview/DictionaryLookupService.swift" \
+    "$APP_SOURCE_ROOT/VocabularyReview/ECDICTDictionary.swift" \
+    "$APP_SOURCE_ROOT/App/AppText.swift" \
+    -lsqlite3
 fi

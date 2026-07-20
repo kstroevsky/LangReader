@@ -21,7 +21,8 @@ extension ReaderWindowController {
                     documentKind: kind,
                     pdfRecords: PDFWordRecordStore(fileMD5: documentID).load(),
                     webRecords: WebWordRecordStore(fileMD5: documentID).load(),
-                    pdfContext: { $0.context ?? "" }
+                    pdfContext: { $0.context ?? "" },
+                    formLabel: GermanFormLabeler.cachedFormLabelResolver
                 )
             }
             guard !records.isEmpty else { return nil }

@@ -78,6 +78,28 @@ extension AIChatPanel {
                 self.setBusy(false, text: "")
                 switch result {
                 case .success(let entry):
+                    // Persist the flexion table as a side effect of the lookup
+                    // the reader already asked for, so later encounters with
+                    // any of that word's forms resolve offline.
+                    let flexion = StoredGermanFlexion(
+                        lemma: entry.lemma,
+                        genus: entry.flexion?.genus,
+                        auxiliary: entry.flexion?.auxiliary,
+                        forms: (entry.flexion?.forms ?? []).map {
+                            StoredGermanFlexionForm(
+                                parameter: $0.label,
+                                surface: $0.surface,
+                                isVariant: $0.isVariant
+                            )
+                        },
+                        fetchedAt: Date()
+                    )
+                    GermanFlexionStore.shared.save(flexion)
+                    // Learning the paradigm is the moment it becomes possible to
+                    // tell that a word saved as an inflected form belongs to
+                    // this lemma, so re-file it now rather than leaving the
+                    // entry stranded under its own spelling.
+                    GermanFlexionStore.shared.regroupSavedVocabulary(for: flexion)
                     let answer = entry.markdown
                     let body = self.appendBubble(
                         role: AppText.aiRole,
