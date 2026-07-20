@@ -19,6 +19,26 @@ enum VocabularyRecordProvider {
         pdfContext: (StoredPDFWordRecord) -> String,
         formLabel: FormLabelResolver = offlineFormLabelResolver
     ) -> [VocabularyExportRecord] {
+        // Labeling a form runs NaturalLanguage tagging and, for cached words, a
+        // SQLite lookup — a few milliseconds each. A document with 100+ saved
+        // instances of the same word would pay that per instance, yet every
+        // record of a given surface form collapses to a single labeled
+        // `VocabularyForm` in `aggregate`/`VocabularyFormMerger`, which keeps the
+        // first non-nil label. Memoizing the first non-nil label per
+        // (surface, lemma) is therefore output-identical while cutting the work
+        // to one call per distinct form. Nil is not cached, so a later occurrence
+        // whose context finally resolves a label still gets its chance — matching
+        // the merger's "first non-nil wins" exactly.
+        var labelMemo: [String: GermanFormLabel] = [:]
+        func memoizedLabel(surface: String, lemma: String, context: String) -> GermanFormLabel? {
+            let key = VocabularyTextPolicy.canonicalVocabularyKey(surface)
+                + "\u{1}" + VocabularyTextPolicy.canonicalVocabularyKey(lemma)
+            if let hit = labelMemo[key] { return hit }
+            let resolved = formLabel(surface, lemma, context)
+            if let resolved { labelMemo[key] = resolved }
+            return resolved
+        }
+
         let records: [VocabularyExportRecord]
         if documentKind == .pdf {
             records = pdfRecords
@@ -32,10 +52,10 @@ enum VocabularyRecordProvider {
                         forms: [
                             VocabularyForm(
                                 surface: $0.occurrenceSurfaceForm,
-                                label: formLabel(
-                                    $0.occurrenceSurfaceForm,
-                                    $0.lemma ?? $0.word,
-                                    context
+                                label: memoizedLabel(
+                                    surface: $0.occurrenceSurfaceForm,
+                                    lemma: $0.lemma ?? $0.word,
+                                    context: context
                                 )
                             )
                         ],

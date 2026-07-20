@@ -8,6 +8,16 @@ final class VocabularyLibrarySourceButton: NSButton {
     }
 }
 
+/// A vertical stack that anchors its content to the top of its scroll view.
+///
+/// An unflipped `NSScrollView` document view whose content is shorter than the
+/// visible area sinks to the bottom-left. Flipping the coordinate space — as
+/// `NSTableView` does — makes the content grow downward from the top edge, which
+/// is what the detail pane wants when a word has only a few occurrences.
+private final class TopAnchoredStackView: NSStackView {
+    override var isFlipped: Bool { true }
+}
+
 private final class VocabularyLibraryWordCell: NSTableCellView {
     private let wordLabel = NSTextField(labelWithString: "")
     private let metadataLabel = NSTextField(labelWithString: "")
@@ -79,7 +89,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
     private let sourcePopup = NSPopUpButton()
     private let sortPopup = NSPopUpButton()
     private let tableView = NSTableView()
-    private let detailStack = NSStackView()
+    private let detailStack = TopAnchoredStackView()
     private(set) var window: NSWindow?
     private var records: [VocabularyLibraryRecord] = []
     private var filteredRecords: [VocabularyLibraryRecord] = []
@@ -88,6 +98,9 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
     private var occurrenceFormFilter: String?
     /// Segment index -> form key, with index 0 reserved for "all".
     private var occurrenceFormKeys: [String] = []
+    /// True once records have been delivered at least once, so a re-open shows
+    /// the last-known list instantly instead of the loading placeholder.
+    private var hasLoadedOnce = false
 
     init(owner: ReaderWindowController) {
         self.owner = owner
@@ -98,11 +111,18 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         reloadTask.cancel()
     }
 
-    func show(records: [VocabularyLibraryRecord]) {
+    /// Shows the window immediately, before records are computed, so the click
+    /// is never blocked by the library scan. The first open displays a loading
+    /// placeholder; re-opens keep the last-known list visible until the
+    /// background refresh delivers fresh records via `apply(records:)`.
+    func present() {
         if window == nil {
             buildWindow()
         }
-        update(records: records)
+        if !hasLoadedOnce {
+            summaryLabel.stringValue = AppText.localized("正在载入…", "Loading…")
+            showLoadingDetail()
+        }
         if let window, (window.contentView?.bounds.height ?? 0) < 500 {
             window.setContentSize(NSSize(width: max(window.contentView?.bounds.width ?? 0, 960), height: 680))
             window.contentView?.frame = NSRect(origin: .zero, size: window.contentLayoutRect.size)
@@ -118,6 +138,28 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         }
     }
 
+    /// Populates the window with freshly computed records. Safe to call while
+    /// the window is closed — it simply no-ops until one has been built.
+    func apply(records: [VocabularyLibraryRecord]) {
+        guard window != nil else { return }
+        hasLoadedOnce = true
+        update(records: records)
+    }
+
+    private func showLoadingDetail() {
+        for view in detailStack.arrangedSubviews {
+            detailStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
+        let label = NSTextField(labelWithString: AppText.localized("正在载入生词…", "Loading words…"))
+        label.font = AppFont.semibold(ofSize: 16)
+        label.textColor = ReaderTheme.selected.vocabularySecondaryTextColor
+        label.alignment = .center
+        label.maximumNumberOfLines = 0
+        detailStack.addArrangedSubview(label)
+        label.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
+    }
+
     func close() {
         window?.close()
     }
@@ -125,7 +167,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
     func scheduleReload() {
         reloadTask.schedule { [weak self] in
             guard let self, self.window?.isVisible == true, let owner = self.owner else { return }
-            self.update(records: owner.makeVocabularyLibraryRecords())
+            owner.reloadVocabularyLibraryInBackground()
         }
     }
 
@@ -423,13 +465,52 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
     }
 
     @objc private func refreshTapped(_ sender: Any?) {
-        guard let owner else { return }
-        update(records: owner.makeVocabularyLibraryRecords())
+        owner?.reloadVocabularyLibraryInBackground()
     }
 
     @objc private func copyWord(_ sender: NSButton) {
         guard let word = selectedRecord?.word else { return }
         owner?.copyTextToClipboard(word)
+    }
+
+    @objc private func removeWord(_ sender: Any?) {
+        guard let record = selectedRecord, let owner else { return }
+
+        let occurrenceCount = record.occurrences.count
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = AppText.localized(
+            "删除“\(record.word)”？",
+            "Remove “\(record.word)”?"
+        )
+        alert.informativeText = record.sourceCount > 1
+            ? AppText.localized(
+                "将从 \(record.sourceCount) 个文件中删除该单词及其 \(occurrenceCount) 处出处。此操作无法撤销。",
+                "This removes the word and all \(occurrenceCount) occurrences from \(record.sourceCount) documents. This cannot be undone."
+            )
+            : AppText.localized(
+                "将删除该单词及其 \(occurrenceCount) 处出处。此操作无法撤销。",
+                "This removes the word and all \(occurrenceCount) occurrences. This cannot be undone."
+            )
+        alert.addButton(withTitle: AppText.localized("删除", "Remove"))
+        alert.addButton(withTitle: AppText.localized("取消", "Cancel"))
+        alert.buttons.first?.hasDestructiveAction = true
+
+        let confirm: (NSApplication.ModalResponse) -> Void = { [weak self] response in
+            guard response == .alertFirstButtonReturn, let self else { return }
+            owner.deleteVocabularyLibraryRecord(record)
+            // Optimistic removal keeps the list responsive; the background
+            // reload reconciles against the store immediately after.
+            self.records.removeAll { $0.id == record.id }
+            self.applyFilters()
+            owner.reloadVocabularyLibraryInBackground()
+        }
+
+        if let window {
+            alert.beginSheetModal(for: window, completionHandler: confirm)
+        } else {
+            confirm(alert.runModal())
+        }
     }
 
     @objc private func openSource(_ sender: VocabularyLibrarySourceButton) {
@@ -468,8 +549,18 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         ) ?? NSButton(title: AppText.localized("复制", "Copy"), target: self, action: #selector(copyWord(_:)))
         copyButton.widthAnchor.constraint(equalToConstant: 74).isActive = true
         copyButton.heightAnchor.constraint(equalToConstant: 30).isActive = true
+        let removeButton = owner?.vocabularyActionButton(
+            title: AppText.localized("删除", "Remove"),
+            target: self,
+            action: #selector(removeWord(_:)),
+            fontSize: 13
+        ) ?? NSButton(title: AppText.localized("删除", "Remove"), target: self, action: #selector(removeWord(_:)))
+        (removeButton as? ThemedSettingsActionButton)?.labelColor = .systemRed
+        removeButton.widthAnchor.constraint(equalToConstant: 82).isActive = true
+        removeButton.heightAnchor.constraint(equalToConstant: 30).isActive = true
         wordRow.addArrangedSubview(wordLabel)
         wordRow.addArrangedSubview(copyButton)
+        wordRow.addArrangedSubview(removeButton)
         detailStack.addArrangedSubview(wordRow)
         wordRow.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
 
