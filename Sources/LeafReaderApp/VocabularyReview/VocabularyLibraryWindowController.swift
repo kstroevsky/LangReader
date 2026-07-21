@@ -379,7 +379,12 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
     private func applyTheme() {
         let theme = ReaderTheme.selected
         let background = theme.vocabularyPanelBackgroundColor
-        window?.appearance = theme == .dark ? NSAppearance(named: .darkAqua) : nil
+        // Force the appearance to match the app's theme rather than inheriting
+        // the system's. Without this, a light theme on a machine set to Dark mode
+        // leaves nil (= inherit dark), so system controls like the form-filter
+        // NSSegmentedControl draw light text on the window's forced-light
+        // background — invisible labels.
+        window?.appearance = NSAppearance(named: theme == .dark ? .darkAqua : .aqua)
         window?.backgroundColor = background
         rootView.wantsLayer = true
         rootView.layer?.backgroundColor = background.cgColor
