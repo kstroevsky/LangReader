@@ -15,8 +15,9 @@ extension ReaderWindowController {
         configureZoomControls(zoomGroup: zoomGroup, zoomOut: zoomOut, zoomIn: zoomIn, leftDivider: leftDivider, rightDivider: rightDivider)
         configurePageAndSearchControls()
         configureTopRightControls()
+        configureRelatedFormsToggle()
 
-        for view in [titleLabel, readAloudButton!, readAloudStopButton!, coverImageView, zoomGroup, pageLabel, searchUnderlineButton!, searchButton!, pageLayoutButton!, cropButton!, fullScreenButton!] {
+        for view in [titleLabel, readAloudButton!, readAloudStopButton!, coverImageView, zoomGroup, pageLabel, searchUnderlineButton!, searchButton!, relatedFormsToggle!, pageLayoutButton!, cropButton!, fullScreenButton!] {
             view.translatesAutoresizingMaskIntoConstraints = false
             toolbar.addSubview(view)
         }
@@ -193,6 +194,45 @@ extension ReaderWindowController {
         cropButton.toolTip = AppText.localized("裁掉 PDF 页面外侧空白", "Crop outer PDF margins")
         updatePDFPageLayoutButton()
         updatePDFMarginCropButton()
+    }
+
+    func configureRelatedFormsToggle() {
+        let container = NSView()
+        let icon = NSImageView()
+        icon.image = NSImage(systemSymbolName: "highlighter", accessibilityDescription: nil)?
+            .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 13, weight: .regular))
+        icon.contentTintColor = ReaderTheme.selected.secondaryTextColor
+        icon.imageScaling = .scaleProportionallyDown
+
+        let toggle = NSSwitch()
+        toggle.controlSize = .mini
+        toggle.state = showsRelatedWordForms ? .on : .off
+        toggle.target = self
+        toggle.action = #selector(toggleRelatedWordForms(_:))
+
+        let tip = AppText.localized("显示相关词形的蓝色标注", "Show blue markings for related word forms")
+        toggle.toolTip = tip
+        icon.toolTip = tip
+        container.toolTip = tip
+
+        for view in [icon, toggle] {
+            view.translatesAutoresizingMaskIntoConstraints = false
+            container.addSubview(view)
+        }
+        NSLayoutConstraint.activate([
+            icon.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            icon.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            icon.widthAnchor.constraint(equalToConstant: 16),
+            icon.heightAnchor.constraint(equalToConstant: 16),
+            toggle.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 5),
+            toggle.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            toggle.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            toggle.topAnchor.constraint(greaterThanOrEqualTo: container.topAnchor),
+            toggle.bottomAnchor.constraint(lessThanOrEqualTo: container.bottomAnchor)
+        ])
+
+        relatedFormsToggle = container
+        relatedFormsSwitch = toggle
     }
 
     func readerBarView() -> NSView {

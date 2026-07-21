@@ -87,6 +87,8 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var readAloudStopButton: NSButton!
     var pageLayoutButton: NSButton!
     var cropButton: NSButton!
+    var relatedFormsToggle: NSView!
+    var relatedFormsSwitch: NSSwitch!
     var searchButton: NSButton!
     var searchUnderlineButton: SearchUnderlineButton!
     let embeddingStatusLabel = NSTextField(labelWithString: "")

@@ -57,6 +57,7 @@ enum ReaderUILayout {
     static let searchButtonLeading: CGFloat = 2
     static let iconButtonSize: CGFloat = 28
 
+    static let relatedFormsToggleTrailing: CGFloat = -12
     static let pageLayoutTrailing: CGFloat = -8
     static let pageLayoutButtonWidth: CGFloat = 84
     static let cropButtonTrailing: CGFloat = -8
@@ -186,7 +187,11 @@ extension ReaderWindowController {
             titleLabel.leadingAnchor.constraint(equalTo: coverImageView.trailingAnchor, constant: ReaderUILayout.titleLeading),
             titleLabel.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
             titleLabel.widthAnchor.constraint(lessThanOrEqualToConstant: ReaderUILayout.titleMaxWidth),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: readAloudButton.leadingAnchor, constant: -ReaderUILayout.titleToReadAloudMinimum),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: relatedFormsToggle.leadingAnchor, constant: -ReaderUILayout.titleToReadAloudMinimum),
+
+            relatedFormsToggle.trailingAnchor.constraint(equalTo: readAloudButton.leadingAnchor, constant: ReaderUILayout.relatedFormsToggleTrailing),
+            relatedFormsToggle.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
+            relatedFormsToggle.heightAnchor.constraint(equalToConstant: ReaderUILayout.toolbarButtonHeight),
 
             readAloudButton.trailingAnchor.constraint(equalTo: readAloudStopButton.leadingAnchor, constant: -ReaderUILayout.readAloudStopLeading),
             readAloudButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),

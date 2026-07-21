@@ -36,6 +36,8 @@ extension ReaderWindowController {
         updateCoverThumbnail(from: document)
         pageLayoutButton.isHidden = false
         cropButton.isHidden = false
+        relatedFormsToggle.isHidden = false
+        relatedFormsSwitch.state = showsRelatedWordForms ? .on : .off
         updatePDFMarginCropButton()
         applyPDFPageLayout(animated: false)
 
@@ -104,6 +106,7 @@ extension ReaderWindowController {
         coverImageView.isHidden = false
         pageLayoutButton.isHidden = true
         cropButton.isHidden = true
+        relatedFormsToggle.isHidden = true
         updateWebProgressLabel(0)
         zoomField.stringValue = "100%"
         if let htmlFileURL = document.htmlFileURL {

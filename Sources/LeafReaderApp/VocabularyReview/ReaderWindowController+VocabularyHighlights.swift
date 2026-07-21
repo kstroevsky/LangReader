@@ -2,6 +2,28 @@ import Cocoa
 import PDFKit
 
 extension ReaderWindowController {
+    private static let showsRelatedWordFormsDefaultsKey = "reader.showsRelatedWordForms"
+
+    /// Whether the faded-blue markings for related inflected forms are shown.
+    /// The exact word the user saved is always marked; this only governs the
+    /// other forms the lemma matcher turned up. Persisted, defaults to on.
+    var showsRelatedWordForms: Bool {
+        get {
+            UserDefaults.standard.object(forKey: Self.showsRelatedWordFormsDefaultsKey) as? Bool ?? true
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Self.showsRelatedWordFormsDefaultsKey)
+        }
+    }
+
+    /// Toolbar tumbler handler: remember the choice and repaint the markings.
+    /// Related forms only exist for PDF vocabulary, so a repaint of the PDF
+    /// annotations is all that is needed (the tumbler is hidden for web docs).
+    @objc func toggleRelatedWordForms(_ sender: NSSwitch) {
+        showsRelatedWordForms = sender.state == .on
+        restoreStoredWordAnnotations()
+    }
+
     func restoreStoredWordAnnotations() {
         guard currentDocumentKind == .pdf else { return }
         removeAllVocabularyWordAnnotations()
@@ -48,6 +70,8 @@ extension ReaderWindowController {
         isSavedForm: Bool,
         refineBounds: Bool
     ) {
+        // Related (non-saved) forms are suppressed when the tumbler is off.
+        guard isSavedForm || showsRelatedWordForms else { return }
         guard let page = pdfView.document?.page(at: pageIndex) else { return }
         let bounds = refineBounds ? displayBounds(bounds: storedBounds, word: word, page: page) : storedBounds
         let key = wordAnnotationKey(pageIndex: pageIndex, bounds: bounds)
