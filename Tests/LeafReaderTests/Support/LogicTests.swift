@@ -694,6 +694,8 @@ private let tests: [(String, () throws -> Void)] = [
     ("German noun not grouped with verb homograph", VocabularyLogicTests.testGermanNounNotGroupedWithVerbHomograph),
     ("Lemma engine is language-parameterized", VocabularyLogicTests.testLemmaEngineIsLanguageParameterized),
     ("Language detection samples prose not front matter", VocabularyLogicTests.testLanguageDetectionSamplesProseNotFrontMatter),
+    ("English form labeling", VocabularyLogicTests.testEnglishFormLabeling),
+    ("Form labeling routes by language", VocabularyLogicTests.testFormLabelingRoutesByLanguage),
     ("Mis-filed occurrence detection", VocabularyLogicTests.testMisfiledOccurrenceDetection),
     ("Vocabulary answerless list mode", VocabularyLogicTests.testVocabularyAnswerlessListMode),
     ("Vocabulary review card selector", VocabularyLogicTests.testVocabularyReviewCardSelector),

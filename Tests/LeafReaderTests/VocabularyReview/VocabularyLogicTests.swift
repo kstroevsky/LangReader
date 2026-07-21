@@ -276,12 +276,13 @@ enum VocabularyLogicTests {
 
         for (lemma, selected) in [("gehen", "gegangen"), ("Haus", "Häuser"), ("gehen", "ging")] {
             let sequential = pages.map {
-                GermanLemmaOccurrenceMatcher.matches(lemma: lemma, selectedForm: selected, in: $0)
+                GermanLemmaOccurrenceMatcher.matches(lemma: lemma, selectedForm: selected, in: $0, language: .german)
             }
             let batch = GermanLemmaOccurrenceMatcher.matches(
                 lemma: lemma,
                 selectedForm: selected,
-                inTexts: pages
+                inTexts: pages,
+                language: .german
             )
             try expectEqual(
                 batch.count,
@@ -297,22 +298,23 @@ enum VocabularyLogicTests {
 
         // Boundary cases around the parallel path.
         try expectEqual(
-            GermanLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", inTexts: []),
+            GermanLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", inTexts: [], language: .german),
             [],
             "an empty page list yields no results"
         )
         let single = GermanLemmaOccurrenceMatcher.matches(
             lemma: "gehen",
             selectedForm: "gegangen",
-            inTexts: [pages[0]]
+            inTexts: [pages[0]],
+            language: .german
         )
         try expectEqual(
             single,
-            [GermanLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", in: pages[0])],
+            [GermanLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", in: pages[0], language: .german)],
             "the single-page path should agree with the per-page scanner"
         )
         try expectEqual(
-            GermanLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", inTexts: ["", "", ""]),
+            GermanLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", inTexts: ["", "", ""], language: .german),
             [[], [], []],
             "empty pages should produce empty results rather than being skipped"
         )
@@ -325,19 +327,19 @@ enum VocabularyLogicTests {
         let tagger = NLTagger(tagSchemes: [.lemma])
         for word in words {
             try expectEqual(
-                GermanLemmaResolver.lemma(for: word, tagger: tagger),
-                GermanLemmaResolver.lemma(for: word),
+                GermanLemmaResolver.lemma(for: word, tagger: tagger, language: .german),
+                GermanLemmaResolver.lemma(for: word, language: .german),
                 "reusing a tagger must not change the lemma resolved for '\(word)'"
             )
         }
     }
 
     static func testGermanLemmaGrouping() throws {
-        try expectEqual(GermanLemmaResolver.lemma(for: "fehlerhafte"), "fehlerhaft", "German adjective inflection should resolve to its lemma")
-        try expectEqual(GermanLemmaResolver.lemma(for: "fehlerhaften"), "fehlerhaft", "related German adjective forms should share one lemma")
+        try expectEqual(GermanLemmaResolver.lemma(for: "fehlerhafte", language: .german), "fehlerhaft", "German adjective inflection should resolve to its lemma")
+        try expectEqual(GermanLemmaResolver.lemma(for: "fehlerhaften", language: .german), "fehlerhaft", "related German adjective forms should share one lemma")
         try expectEqual(
-            GermanLemmaResolver.groupingKey(word: "Fehlerhaften"),
-            GermanLemmaResolver.groupingKey(word: "fehlerhafte"),
+            GermanLemmaResolver.groupingKey(word: "Fehlerhaften", language: .german),
+            GermanLemmaResolver.groupingKey(word: "fehlerhafte", language: .german),
             "German inflected forms should share a case-insensitive grouping key"
         )
 
@@ -345,7 +347,8 @@ enum VocabularyLogicTests {
         let matches = GermanLemmaOccurrenceMatcher.matches(
             lemma: "fehlerhaft",
             selectedForm: "fehlerhafte",
-            in: text
+            in: text,
+            language: .german
         )
         try expectEqual(
             matches.map(\.matchedText),
@@ -354,7 +357,8 @@ enum VocabularyLogicTests {
         )
         let batchMatches = GermanLemmaOccurrenceMatcher.matches(
             lemmasByKey: ["fehlerhaft": "fehlerhaft"],
-            in: text
+            in: text,
+            language: .german
         )
         try expectEqual(batchMatches["fehlerhaft"]?.map(\.matchedText), matches.map(\.matchedText), "batch rescans should preserve all exact and line-wrapped inflected occurrences")
         try expect(batchMatches["fehler"] == nil, "batch rescans should not create an unrelated noun group")
@@ -373,7 +377,8 @@ enum VocabularyLogicTests {
         let matches = GermanLemmaOccurrenceMatcher.matches(
             lemma: "folgen",
             selectedForm: "folgen",
-            in: text
+            in: text,
+            language: .german
         )
         try expect(
             !matches.contains { VocabularyTextPolicy.canonicalVocabularyKey($0.matchedText) == "folg" },
@@ -385,7 +390,7 @@ enum VocabularyLogicTests {
             "real occurrences of 'folgen' should still be matched around the false fragment"
         )
 
-        let batch = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["folgen": "folgen"], in: text)
+        let batch = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["folgen": "folgen"], in: text, language: .german)
         try expectEqual(
             batch["folgen"]?.map(\.matchedText),
             ["folgen", "folgten"],
@@ -439,6 +444,89 @@ enum VocabularyLogicTests {
             VocabularyLanguageDetector.language(forSample: "kort"),
             VocabularyLanguageDetector.fallback,
             "too-short samples fall back rather than guessing"
+        )
+    }
+
+    /// English gets the same grammatical labeling German has, built on the same
+    /// "never guess" rule: only signals measured to be reliable are claimed.
+    static func testEnglishFormLabeling() throws {
+        func label(_ surface: String, _ lemma: String, _ context: String) -> WordFormLabel? {
+            EnglishFormLabeler.label(surfaceForm: surface, lemma: lemma, context: context)
+        }
+
+        // Verbs — each label rests on a proven signal.
+        try expectEqual(label("walk", "walk", "I walk to work every day and enjoy the long morning air."), .grundform, "surface equal to the lemma is the base form")
+        try expectEqual(label("running", "run", "They are running fast across the wide green field today."), .presentParticiple, "the -ing form is proven morphologically")
+        try expectEqual(label("walks", "walk", "He walks to work each morning before the sun comes up."), .thirdPersonSingular, "lemma+s on a verb is the third person singular")
+        try expectEqual(label("walked", "walk", "She has walked home already, so the room is now empty."), .pastParticiple, "an auxiliary in the clause proves the past participle")
+        // Morphology outranks the auxiliary rule: a lemma+s form cannot be a
+        // participle, however a copular "is"/"was" sits earlier in the clause.
+        try expectEqual(
+            label("looks", "look", "The reason she looks away is that the light is far too bright."),
+            .thirdPersonSingular,
+            "a lemma+s verb stays third person singular despite a copula in the clause"
+        )
+        try expectEqual(label("written", "write", "I have written the letter and posted it this morning."), .pastParticiple, "irregular participles are proven by the auxiliary too")
+
+        // Nouns — English has no case system, so a differing surface is a plural.
+        try expectEqual(label("children", "child", "The children played outside for hours in the summer sun."), .plural, "irregular plurals are labeled")
+        try expectEqual(label("books", "book", "She read three books during the long quiet weekend at home."), .plural, "regular plurals are labeled")
+        try expectEqual(label("book", "book", "She read a book during the long quiet weekend at home."), .grundform, "a singular noun is the base form")
+
+        // Never guess: an attributive participle is indistinguishable from a
+        // past tense here ("the completed work"), so neither is claimed.
+        try expectEqual(
+            label("completed", "complete", "The completed work impressed everyone who saw it that day."),
+            .finiteVerb,
+            "an ambiguous past form takes the honest coarse label, never a guessed tense"
+        )
+        try expectEqual(
+            label("walked", "walk", "She walked home yesterday evening after the meeting ended."),
+            .finiteVerb,
+            "a past form with no auxiliary is reported as a conjugated form"
+        )
+
+        // Comparatives are tagged Adverb by the tagger, exactly as in German, so
+        // no adjective-specific label is trustworthy.
+        try expect(
+            label("bigger", "big", "This is a bigger house than the one they lived in before.") == nil,
+            "comparatives stay unlabeled rather than mislabeled"
+        )
+
+        // A document in another language must never get English labels.
+        try expect(
+            label("gegangen", "gehen", "Er ist gestern nach Hause gegangen und hat nichts gesagt.") == nil,
+            "German text must not receive English grammatical labels"
+        )
+    }
+
+    /// Labeling routes by language, and languages without a labeler produce no
+    /// labels rather than borrowing another language's grammar.
+    static func testFormLabelingRoutesByLanguage() throws {
+        let englishContext = "She has walked home already, so the room is now empty."
+        try expectEqual(
+            VocabularyFormLabeling.label(surfaceForm: "walked", lemma: "walk", context: englishContext, language: .english),
+            .pastParticiple,
+            "English routes to the English labeler"
+        )
+        let germanContext = "Er ist gestern nach Hause gegangen und hat nichts gesagt."
+        try expectEqual(
+            VocabularyFormLabeling.label(surfaceForm: "gegangen", lemma: "gehen", context: germanContext, language: .german),
+            .partizipII,
+            "German still routes to the German labeler"
+        )
+        try expect(
+            VocabularyFormLabeling.label(surfaceForm: "parle", lemma: "parler", context: "Je parle français.", language: .french) == nil,
+            "a language with no labeler yields no label rather than a borrowed one"
+        )
+        try expect(VocabularyFormLabeling.hasLabeler(for: .english) && VocabularyFormLabeling.hasLabeler(for: .german), "English and German both have labelers")
+        try expect(!VocabularyFormLabeling.hasLabeler(for: .french), "French has no labeler yet")
+
+        // The label cache has no language column, so the version namespaces it.
+        // Without this the same spelling in two languages would collide.
+        try expect(
+            VocabularyFormLabeling.cacheVersion(for: .english) != VocabularyFormLabeling.cacheVersion(for: .german),
+            "each language's cached labels must live in their own version namespace"
         )
     }
 
@@ -537,21 +625,24 @@ enum VocabularyLogicTests {
         try expect(
             !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
                 surfaceForm: "folg", groupLemma: "folgen",
-                in: "Für den Erfolg muss das richtige Portal gewählt werden."
+                in: "Für den Erfolg muss das richtige Portal gewählt werden.",
+                language: .german
             ),
             "'folg' from 'Erfolg' is no longer assigned to group 'folgen' ⇒ prune"
         )
         try expect(
             !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
                 surfaceForm: "Folgen", groupLemma: "folgen",
-                in: "Welche Folgen hätte das?"
+                in: "Welche Folgen hätte das?",
+                language: .german
             ),
             "the noun 'Folgen' (lemma 'Folge') is no longer assigned to verb group 'folgen' ⇒ prune"
         )
         try expect(
             GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
                 surfaceForm: "Abteilung", groupLemma: "Abteilung",
-                in: "Und ihr von der IT-Abteilung organisiert das doch, oder?"
+                in: "Und ihr von der IT-Abteilung organisiert das doch, oder?",
+                language: .german
             ),
             "'Abteilung' in 'IT-Abteilung' is still assigned to its group ⇒ keep"
         )
@@ -568,7 +659,7 @@ enum VocabularyLogicTests {
         let text = "Wir folgen dem Plan. Welche Folgen hätte das? Der Fehler folgt daraus."
 
         // Backfill / group-expansion path (no exact-form query).
-        let batch = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["folgen": "folgen"], in: text)
+        let batch = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["folgen": "folgen"], in: text, language: .german)
         try expect(
             batch["folgen"]?.contains { $0.matchedText == "Folgen" } != true,
             "the backfill scan must keep the noun 'Folgen' out of the verb group 'folgen'"
@@ -580,7 +671,7 @@ enum VocabularyLogicTests {
 
         // Lemma/surface expansion around a different saved form ("folgt"): the
         // noun "Folgen" must not be swept in, while real verb forms still match.
-        let sequential = GermanLemmaOccurrenceMatcher.matches(lemma: "folgen", selectedForm: "folgt", in: text)
+        let sequential = GermanLemmaOccurrenceMatcher.matches(lemma: "folgen", selectedForm: "folgt", in: text, language: .german)
         try expect(
             !sequential.contains { $0.matchedText == "Folgen" },
             "expanding the verb group must not match the noun 'Folgen'"
@@ -593,7 +684,8 @@ enum VocabularyLogicTests {
         // Group membership (used by the load-time prune) excludes the noun.
         try expect(
             !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
-                surfaceForm: "Folgen", groupLemma: "folgen", in: "Welche Folgen hätte das?"
+                surfaceForm: "Folgen", groupLemma: "folgen", in: "Welche Folgen hätte das?",
+                language: .german
             ),
             "the noun 'Folgen' is not a member of the verb group 'folgen'"
         )

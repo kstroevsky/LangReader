@@ -43,7 +43,7 @@ extension ReaderWindowController {
                 )
                 return self?.normalizedPDFVocabularyContext(context) ?? context
             },
-            formLabel: GermanFormLabeler.persistentCachedFormLabelResolver
+            formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(language: vocabularyDocumentLanguage)
         )
     }
 

@@ -79,7 +79,7 @@ enum GermanLemmaFixtureTests {
         ]
         for (surface, expected) in cases {
             try expectEqual(
-                GermanLemmaResolver.lemma(for: surface),
+                GermanLemmaResolver.lemma(for: surface, language: .german),
                 expected,
                 "German verb '\(surface)' should lemmatize to '\(expected)'"
             )
@@ -122,7 +122,7 @@ enum GermanLemmaFixtureTests {
         ]
         for (surface, expected) in cases {
             try expectEqual(
-                GermanLemmaResolver.lemma(for: surface),
+                GermanLemmaResolver.lemma(for: surface, language: .german),
                 expected,
                 "German plural '\(surface)' should lemmatize to '\(expected)'"
             )
@@ -159,7 +159,7 @@ enum GermanLemmaFixtureTests {
         // so the dictionary tier is expected to fix this. When it does, move
         // this case into testNounPluralBaseline.
         try expectEqual(
-            GermanLemmaResolver.lemma(for: "Häuser"),
+            GermanLemmaResolver.lemma(for: "Häuser", language: .german),
             "Häuser",
             "KNOWN GAP: 'Häuser' does not currently reduce to 'Haus'"
         )
@@ -209,7 +209,7 @@ enum GermanLemmaFixtureTests {
         // 'aßen' in isolation lemmatizes correctly but is tagged Adjective,
         // confirming that isolated-word POS is unreliable and context is required.
         try expectEqual(
-            GermanLemmaResolver.lemma(for: "aßen"),
+            GermanLemmaResolver.lemma(for: "aßen", language: .german),
             "essen",
             "isolated 'aßen' still lemmatizes correctly"
         )

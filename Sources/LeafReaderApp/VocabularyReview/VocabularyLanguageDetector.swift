@@ -4,11 +4,11 @@ import NaturalLanguage
 ///
 /// The occurrence engine is language-neutral; only the tagger's language
 /// differs. We detect the document's dominant language and use it when it is
-/// one Apple's tagger lemmatizes well. Anything else falls back to German —
-/// this app's primary audience — which for non-matching text simply degrades to
+/// one Apple's tagger lemmatizes well. Anything else falls back to English,
+/// the default language, which for non-matching text simply degrades to
 /// exact-form matching rather than producing wrong groupings.
 enum VocabularyLanguageDetector {
-    static let fallback: NLLanguage = .german
+    static let fallback: NLLanguage = .english
 
     /// Languages allowed for lemma-based inflected-form grouping. Restricting to
     /// a vetted set keeps a mis-detected or poorly-supported language from
@@ -76,6 +76,26 @@ enum VocabularyLanguageDetector {
             }
         }
         return language(forSample: String(sample.prefix(maxSampleCharacters)))
+    }
+
+    /// The language of a document we cannot re-read, inferred from the context
+    /// sentences stored with its saved words.
+    ///
+    /// The Words window lists every document, but only the open one is loaded in
+    /// PDFKit. Those saved contexts are real sentences from the document, so
+    /// they identify its language well enough to label its forms — and using
+    /// them beats labeling another document's words with the open document's
+    /// grammar.
+    static func language(forContexts contexts: [String]) -> NLLanguage {
+        var sample = ""
+        for context in contexts {
+            guard sample.count < maxSampleCharacters else { break }
+            let trimmed = context.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+            sample.append(trimmed)
+            sample.append("\n")
+        }
+        return language(forSample: sample)
     }
 
     /// Page indices spread across the document, skipping the front matter that
