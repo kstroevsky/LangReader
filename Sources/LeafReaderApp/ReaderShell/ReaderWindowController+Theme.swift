@@ -13,7 +13,11 @@ extension ReaderWindowController {
         window?.appearance = isDark ? NSAppearance(named: .darkAqua) : nil
         contentArea.layer?.backgroundColor = chromeBackground.cgColor
         pdfContainer.layer?.backgroundColor = chromeBackground.cgColor
-        webView.layer?.backgroundColor = chromeBackground.cgColor
+        // The one place AppKit and the web page meet: the container behind the
+        // document. Both now read the same canvas token, so the seam cannot
+        // drift — previously this was the chrome colour (#12141a in dark) while
+        // the page painted its own canvas (#111418).
+        webView.layer?.backgroundColor = theme.surfaceTokens.canvas.nsColor.cgColor
         toolbarView?.layer?.backgroundColor = toolbarBackground.cgColor
         toolbarView?.layer?.borderColor = toolbarBorder.cgColor
         bottomBarView?.layer?.backgroundColor = toolbarView?.layer?.backgroundColor
@@ -132,86 +136,9 @@ extension ReaderWindowController {
 
     func applyWebReaderTheme(theme: ReaderTheme = ReaderTheme.selected) {
         guard webView != nil, currentDocumentKind != .pdf, webView.isHidden == false else { return }
-        let themeCSS = """
-        html.leaf-reader-dark { background: #111418 !important; color-scheme: dark; }
-        html.leaf-reader-dark body {
-          color: #d9dee7 !important;
-          background: #171a20 !important;
-        }
-        html.leaf-reader-dark p,
-        html.leaf-reader-dark div,
-        html.leaf-reader-dark span,
-        html.leaf-reader-dark li,
-        html.leaf-reader-dark blockquote,
-        html.leaf-reader-dark td,
-        html.leaf-reader-dark th,
-        html.leaf-reader-dark h1,
-        html.leaf-reader-dark h2,
-        html.leaf-reader-dark h3,
-        html.leaf-reader-dark h4,
-        html.leaf-reader-dark h5,
-        html.leaf-reader-dark h6,
-        html.leaf-reader-dark strong,
-        html.leaf-reader-dark em,
-        html.leaf-reader-dark b,
-        html.leaf-reader-dark i {
-          color: #d9dee7 !important;
-          background-color: transparent !important;
-          text-shadow: none !important;
-        }
-        html.leaf-reader-dark body * {
-          border-color: #343b46 !important;
-        }
-        html.leaf-reader-dark a {
-          color: #9fc0ff !important;
-        }
-        html.leaf-reader-dark img,
-        html.leaf-reader-dark svg {
-          filter: brightness(.88) contrast(.98);
-        }
-        html.leaf-reader-dark ::selection {
-          background: rgba(255, 221, 87, .46) !important;
-        }
-        html.leaf-reader-eye-care ::selection {
-          background: rgba(204, 149, 39, .30) !important;
-        }
-        html.leaf-reader-eye-care { background: #eee8d5 !important; color-scheme: light; }
-        html.leaf-reader-eye-care body {
-          color: #24261f !important;
-          background: #f3eddb !important;
-        }
-        html.leaf-reader-eye-care p,
-        html.leaf-reader-eye-care div,
-        html.leaf-reader-eye-care span,
-        html.leaf-reader-eye-care li,
-        html.leaf-reader-eye-care blockquote,
-        html.leaf-reader-eye-care td,
-        html.leaf-reader-eye-care th,
-        html.leaf-reader-eye-care h1,
-        html.leaf-reader-eye-care h2,
-        html.leaf-reader-eye-care h3,
-        html.leaf-reader-eye-care h4,
-        html.leaf-reader-eye-care h5,
-        html.leaf-reader-eye-care h6,
-        html.leaf-reader-eye-care strong,
-        html.leaf-reader-eye-care em,
-        html.leaf-reader-eye-care b,
-        html.leaf-reader-eye-care i {
-          color: #24261f !important;
-          background-color: transparent !important;
-          text-shadow: none !important;
-        }
-        html.leaf-reader-eye-care body * {
-          border-color: #d8cda9 !important;
-        }
-        html.leaf-reader-eye-care a {
-          color: #315d93 !important;
-        }
-        html.leaf-reader-eye-care img,
-        html.leaf-reader-eye-care svg {
-          filter: brightness(.94) saturate(.92) contrast(.98);
-        }
-        """
+        // Derived from the design tokens, never hand-written: see
+        // `ReaderWebThemeCSS` and `ReaderSurfaceTokens`.
+        let themeCSS = ReaderWebThemeCSS.stylesheet()
         let cssLiteral = jsStringLiteral(themeCSS)
         let aiSourceUnderlineColor = jsStringLiteral(cssRGBAString(for: theme.aiSourceUnderlineColor))
         let selectionBackgroundColor = jsStringLiteral(webSelectionBackgroundCSS(for: theme))
