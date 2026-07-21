@@ -361,6 +361,146 @@ enum VocabularyLogicTests {
 
     }
 
+    /// A word split across a line as "Er-\nfolg" tokenizes into a stray "folg",
+    /// whose lemma is "folgen". Matching that fragment turned the unrelated noun
+    /// "Erfolg" into a false occurrence of the verb "folgen" — a phantom the user
+    /// could not find highlighted in the document. The joined form is "Erfolg"
+    /// (lemma "Erfolg"), so the line-break must contribute no match at all, while
+    /// genuine standalone forms on the same page still resolve.
+    static func testGermanLemmaLineWrapFragmentIsNotAFalseMatch() throws {
+        let text = "Für den Er-\nfolg muss das Portal gewählt werden. Wir folgen dem Plan und folgten gestern."
+
+        let matches = GermanLemmaOccurrenceMatcher.matches(
+            lemma: "folgen",
+            selectedForm: "folgen",
+            in: text
+        )
+        try expect(
+            !matches.contains { VocabularyTextPolicy.canonicalVocabularyKey($0.matchedText) == "folg" },
+            "the hyphen-line-break fragment 'folg' of 'Erfolg' must not match the lemma 'folgen'"
+        )
+        try expectEqual(
+            matches.map(\.matchedText),
+            ["folgen", "folgten"],
+            "real occurrences of 'folgen' should still be matched around the false fragment"
+        )
+
+        let batch = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["folgen": "folgen"], in: text)
+        try expectEqual(
+            batch["folgen"]?.map(\.matchedText),
+            ["folgen", "folgten"],
+            "the backfill matcher must agree and must not spawn a 'folg' occurrence"
+        )
+    }
+
+    /// The load-time prune that heals libraries saved before the recognizer fix.
+    /// A candidate is either a line-break fragment (surface only inside a larger
+    /// word) or a case-folded homograph (surface folds to the group key but is
+    /// spelled with different case). A candidate is dropped only if the fixed
+    /// group scan no longer assigns it to the group, so same-line compound
+    /// constituents ("Abteilung" in "IT-Abteilung") and differently-keyed
+    /// inflections ("folgende", "folgt") are always kept.
+    static func testMisfiledOccurrenceDetection() throws {
+        // Line-break fragment candidates: surface only ever inside a larger word.
+        for (surface, context) in [
+            ("folg", "Für den Erfolg muss das richtige Portal gewählt werden."),
+            ("kommt", "Worauf es noch ankommt, erfährst du in den Tipps."),
+            ("Abteilung", "Und ihr von der IT-Abteilung organisiert das doch, oder?")
+        ] {
+            try expect(
+                VocabularyTextPolicy.surfaceOccursOnlyWithinLargerWord(surface: surface, context: context),
+                "'\(surface)' only appears inside a larger word in its context ⇒ candidate"
+            )
+        }
+        for (surface, context) in [
+            ("folgt", "Zuerst kommt der Antrag, dann folgt der Bescheid."),
+            ("Portal", "Man muss das richtige Portal wählen, sonst klappt es nicht."),
+            ("folg", ""),
+            ("folg", "Ein Satz ganz ohne das Wort.")
+        ] {
+            try expect(
+                !VocabularyTextPolicy.surfaceOccursOnlyWithinLargerWord(surface: surface, context: context),
+                "'\(surface)' is a whole word / empty / absent and is not a line-break candidate"
+            )
+        }
+
+        // Case-folded homograph: same key as the group lemma, different case.
+        try expect(
+            VocabularyTextPolicy.canonicalVocabularyKey("Folgen") == VocabularyTextPolicy.canonicalVocabularyKey("folgen")
+                && !VocabularyTextPolicy.surfaceMatchesLemmaExactly("Folgen", "folgen"),
+            "the noun 'Folgen' folds to the verb group key 'folgen' but differs by case ⇒ candidate"
+        )
+        try expect(
+            VocabularyTextPolicy.surfaceMatchesLemmaExactly("folgen", "folgen"),
+            "the verb base 'folgen' matches the group lemma exactly ⇒ not a candidate"
+        )
+
+        // Group re-scan decides candidates.
+        try expect(
+            !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
+                surfaceForm: "folg", groupLemma: "folgen",
+                in: "Für den Erfolg muss das richtige Portal gewählt werden."
+            ),
+            "'folg' from 'Erfolg' is no longer assigned to group 'folgen' ⇒ prune"
+        )
+        try expect(
+            !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
+                surfaceForm: "Folgen", groupLemma: "folgen",
+                in: "Welche Folgen hätte das?"
+            ),
+            "the noun 'Folgen' (lemma 'Folge') is no longer assigned to verb group 'folgen' ⇒ prune"
+        )
+        try expect(
+            GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
+                surfaceForm: "Abteilung", groupLemma: "Abteilung",
+                in: "Und ihr von der IT-Abteilung organisiert das doch, oder?"
+            ),
+            "'Abteilung' in 'IT-Abteilung' is still assigned to its group ⇒ keep"
+        )
+    }
+
+    /// The German noun "Folgen" (lemma "Folge") must never be filed under the
+    /// verb group "folgen" via the lemma/surface expansion: their surfaces fold
+    /// to one key, so a case-insensitive surface match would merge them.
+    /// Capitalization is the noun/verb signal. (The exact-form query path, which
+    /// matches whatever spelling the user actually saved, is out of scope here —
+    /// the real group is filed under "folgenden", so "Folgen" only ever entered
+    /// it through the lemma/surface path exercised below.)
+    static func testGermanNounNotGroupedWithVerbHomograph() throws {
+        let text = "Wir folgen dem Plan. Welche Folgen hätte das? Der Fehler folgt daraus."
+
+        // Backfill / group-expansion path (no exact-form query).
+        let batch = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["folgen": "folgen"], in: text)
+        try expect(
+            batch["folgen"]?.contains { $0.matchedText == "Folgen" } != true,
+            "the backfill scan must keep the noun 'Folgen' out of the verb group 'folgen'"
+        )
+        try expect(
+            batch["folgen"]?.contains { $0.matchedText == "folgt" } == true,
+            "the backfill scan must still find the real verb form 'folgt'"
+        )
+
+        // Lemma/surface expansion around a different saved form ("folgt"): the
+        // noun "Folgen" must not be swept in, while real verb forms still match.
+        let sequential = GermanLemmaOccurrenceMatcher.matches(lemma: "folgen", selectedForm: "folgt", in: text)
+        try expect(
+            !sequential.contains { $0.matchedText == "Folgen" },
+            "expanding the verb group must not match the noun 'Folgen'"
+        )
+        try expect(
+            sequential.contains { $0.matchedText == "folgt" } && sequential.contains { $0.matchedText == "folgen" },
+            "expanding the verb group must still match 'folgt' and the base 'folgen'"
+        )
+
+        // Group membership (used by the load-time prune) excludes the noun.
+        try expect(
+            !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
+                surfaceForm: "Folgen", groupLemma: "folgen", in: "Welche Folgen hätte das?"
+            ),
+            "the noun 'Folgen' is not a member of the verb group 'folgen'"
+        )
+    }
+
     static func testPersonalVocabularyTokenizerAndPolicy() throws {
         let counts = PersonalVocabularyTokenizer.lemmaCounts(in: """
         The Reader’s dogs, and high-pitched dogs, Nine-tenths.

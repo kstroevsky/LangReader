@@ -105,6 +105,22 @@ enum GermanLemmaOccurrenceMatcher {
         return results
     }
 
+    /// Whether the fixed group scan still assigns `surfaceForm` to the group
+    /// identified by `groupLemma` within `context`. Used at load to drop
+    /// occurrences the pre-fix recognizer mis-filed: hyphenated line-break
+    /// fragments ("folg" out of "Er-\nfolg") and case-folded homographs (the
+    /// noun "Folgen", lemma "Folge", swept into the verb group "folgen"). It
+    /// asks about *group membership*, not mere findability, so it leaves
+    /// same-line compound constituents ("Abteilung" in "IT-Abteilung") intact.
+    static func groupReproducesOccurrence(surfaceForm: String, groupLemma: String, in context: String) -> Bool {
+        let key = VocabularyTextPolicy.canonicalVocabularyKey(groupLemma)
+        let surfaceKey = VocabularyTextPolicy.canonicalVocabularyKey(surfaceForm)
+        guard !key.isEmpty, !surfaceKey.isEmpty, !context.isEmpty else { return false }
+        return matches(lemmasByKey: [key: groupLemma], in: context)[key]?.contains {
+            VocabularyTextPolicy.canonicalVocabularyKey($0.matchedText) == surfaceKey
+        } ?? false
+    }
+
     static func matches(lemma rawLemma: String, selectedForm: String, in text: String) -> [VocabularyTextOccurrence] {
         matches(
             lemma: rawLemma,
@@ -168,6 +184,18 @@ enum GermanLemmaOccurrenceMatcher {
         } ?? []
         var seenRanges = Set(occurrences.map { "\($0.range.location):\($0.range.length)" })
 
+        // Ranges spanning a hyphenated line break ("Er-\nfolg"). A token that
+        // falls inside one is a fragment of a split word, not a word in its own
+        // right, so it is matched only via the joined form in the line-wrap pass
+        // below — never on its own, which would turn "folg" (the tail of
+        // "Erfolg") into a false hit for the lemma "folgen".
+        let nsText = text as NSString
+        let lineWrapMatches = lineWrapRegex?.matches(
+            in: text,
+            range: NSRange(location: 0, length: nsText.length)
+        ) ?? []
+        let lineWrapSpans = lineWrapMatches.map(\.range)
+
         tagger.string = text
         let fullRange = text.startIndex..<text.endIndex
         tagger.setLanguage(.german, range: fullRange)
@@ -177,6 +205,10 @@ enum GermanLemmaOccurrenceMatcher {
             scheme: .lemma,
             options: [.omitWhitespace, .omitPunctuation]
         ) { tag, tokenRange in
+            let range = NSRange(tokenRange, in: text)
+            if lineWrapSpans.contains(where: { NSIntersectionRange(range, $0).length > 0 }) {
+                return true
+            }
             let matchedText = String(text[tokenRange])
             let matchedLemma: String
             if let tag {
@@ -187,36 +219,33 @@ enum GermanLemmaOccurrenceMatcher {
                 matchedLemma = GermanLemmaResolver.lemma(for: matchedText, tagger: fallbackTagger)
                 lemmaMemo[matchedText] = matchedLemma
             }
-            let surfaceKey = VocabularyTextPolicy.canonicalVocabularyKey(matchedText)
+            // Match by lemma, or by a surface that IS the base form spelled
+            // identically. The surface test is case-sensitive on purpose: the
+            // capitalized noun "Folgen" (lemma "Folge") must not be swept into
+            // the verb group "folgen" just because the two fold to one key.
             let matchedLemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(matchedLemma)
-            guard surfaceKey == lemmaKey || matchedLemmaKey == lemmaKey else { return true }
+            guard VocabularyTextPolicy.surfaceMatchesLemmaExactly(matchedText, lemma)
+                    || matchedLemmaKey == lemmaKey else { return true }
 
-            let range = NSRange(tokenRange, in: text)
             let rangeKey = "\(range.location):\(range.length)"
             guard seenRanges.insert(rangeKey).inserted else { return true }
             occurrences.append(VocabularyTextOccurrence(range: range, matchedText: matchedText))
             return true
         }
 
-        if let lineWrapRegex {
-            let nsText = text as NSString
-            for match in lineWrapRegex.matches(
-                in: text,
-                range: NSRange(location: 0, length: nsText.length)
-            ) {
-                let rawMatch = nsText.substring(with: match.range)
-                let normalizedMatch = VocabularyTextPolicy.normalizedOccurrenceText(
-                    rawMatch,
-                    matching: selected
-                )
-                let matchedLemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(
-                    GermanLemmaResolver.lemma(for: normalizedMatch)
-                )
-                let rangeKey = "\(match.range.location):\(match.range.length)"
-                guard matchedLemmaKey == lemmaKey,
-                      seenRanges.insert(rangeKey).inserted else { continue }
-                occurrences.append(VocabularyTextOccurrence(range: match.range, matchedText: rawMatch))
-            }
+        for match in lineWrapMatches {
+            let rawMatch = nsText.substring(with: match.range)
+            let normalizedMatch = VocabularyTextPolicy.normalizedOccurrenceText(
+                rawMatch,
+                matching: selected
+            )
+            let matchedLemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(
+                GermanLemmaResolver.lemma(for: normalizedMatch)
+            )
+            let rangeKey = "\(match.range.location):\(match.range.length)"
+            guard matchedLemmaKey == lemmaKey,
+                  seenRanges.insert(rangeKey).inserted else { continue }
+            occurrences.append(VocabularyTextOccurrence(range: match.range, matchedText: rawMatch))
         }
 
         return occurrences.sorted {
@@ -239,6 +268,27 @@ enum GermanLemmaOccurrenceMatcher {
             occurrencesByKey[key, default: []].append(occurrence)
         }
 
+        // File an occurrence under a group only when its surface IS that group's
+        // base form spelled identically (case-sensitive). This keeps the German
+        // noun "Folgen" (lemma "Folge") out of the verb group "folgen", which a
+        // case-folded key match would wrongly merge.
+        func appendBySurface(_ occurrence: VocabularyTextOccurrence, surface: String) {
+            let key = VocabularyTextPolicy.canonicalVocabularyKey(surface)
+            guard let groupLemma = lemmasByKey[key],
+                  VocabularyTextPolicy.surfaceMatchesLemmaExactly(surface, groupLemma) else { return }
+            append(occurrence, for: key)
+        }
+
+        // See the sibling matcher: tokens inside a hyphenated line break are
+        // fragments of a split word and must be matched only via the joined
+        // form in the line-wrap pass below, never on their own.
+        let nsText = text as NSString
+        let lineWrapMatches = lineWrapRegex?.matches(
+            in: text,
+            range: NSRange(location: 0, length: nsText.length)
+        ) ?? []
+        let lineWrapSpans = lineWrapMatches.map(\.range)
+
         let tagger = NLTagger(tagSchemes: [.lemma])
         tagger.string = text
         let fullRange = text.startIndex..<text.endIndex
@@ -249,42 +299,37 @@ enum GermanLemmaOccurrenceMatcher {
             scheme: .lemma,
             options: [.omitWhitespace, .omitPunctuation]
         ) { tag, tokenRange in
+            let range = NSRange(tokenRange, in: text)
+            if lineWrapSpans.contains(where: { NSIntersectionRange(range, $0).length > 0 }) {
+                return true
+            }
             let matchedText = String(text[tokenRange])
             let matchedLemma = tag.map { VocabularyTextPolicy.normalizedVocabularyText($0.rawValue) }
                 ?? GermanLemmaResolver.lemma(for: matchedText)
             let occurrence = VocabularyTextOccurrence(
-                range: NSRange(tokenRange, in: text),
+                range: range,
                 matchedText: matchedText
             )
             append(occurrence, for: VocabularyTextPolicy.canonicalVocabularyKey(matchedLemma))
-            append(occurrence, for: VocabularyTextPolicy.canonicalVocabularyKey(matchedText))
+            appendBySurface(occurrence, surface: matchedText)
             return true
         }
 
-        if let lineWrapRegex {
-            let nsText = text as NSString
-            for match in lineWrapRegex.matches(
-                in: text,
-                range: NSRange(location: 0, length: nsText.length)
-            ) {
-                let rawMatch = nsText.substring(with: match.range)
-                let candidates = [
-                    VocabularyTextPolicy.normalizedOccurrenceText(rawMatch, matching: "layout"),
-                    VocabularyTextPolicy.normalizedOccurrenceText(rawMatch, matching: "layout-word")
-                ]
-                let occurrence = VocabularyTextOccurrence(range: match.range, matchedText: rawMatch)
-                for candidate in candidates {
-                    append(
-                        occurrence,
-                        for: VocabularyTextPolicy.canonicalVocabularyKey(
-                            GermanLemmaResolver.lemma(for: candidate)
-                        )
+        for match in lineWrapMatches {
+            let rawMatch = nsText.substring(with: match.range)
+            let candidates = [
+                VocabularyTextPolicy.normalizedOccurrenceText(rawMatch, matching: "layout"),
+                VocabularyTextPolicy.normalizedOccurrenceText(rawMatch, matching: "layout-word")
+            ]
+            let occurrence = VocabularyTextOccurrence(range: match.range, matchedText: rawMatch)
+            for candidate in candidates {
+                append(
+                    occurrence,
+                    for: VocabularyTextPolicy.canonicalVocabularyKey(
+                        GermanLemmaResolver.lemma(for: candidate)
                     )
-                    append(
-                        occurrence,
-                        for: VocabularyTextPolicy.canonicalVocabularyKey(candidate)
-                    )
-                }
+                )
+                appendBySurface(occurrence, surface: candidate)
             }
         }
 

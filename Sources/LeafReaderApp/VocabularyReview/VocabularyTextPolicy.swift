@@ -31,6 +31,16 @@ enum VocabularyTextPolicy {
             .lowercased(with: comparisonLocale)
     }
 
+    /// Whether `surface` is the group's base form spelled identically, case and
+    /// diacritics included. Used to gate the "surface equals lemma" occurrence
+    /// shortcut: unlike `canonicalVocabularyKey`, it does NOT fold case, so the
+    /// German noun "Folgen" (lemma "Folge") is not mistaken for the verb lemma
+    /// "folgen". Capitalization is the noun/verb signal and must be preserved.
+    static func surfaceMatchesLemmaExactly(_ surface: String, _ lemma: String) -> Bool {
+        normalizedVocabularyText(surface).precomposedStringWithCanonicalMapping
+            == normalizedVocabularyText(lemma).precomposedStringWithCanonicalMapping
+    }
+
     static func normalizedOccurrenceText(_ text: String, matching query: String) -> String {
         let normalizedQuery = normalizedVocabularyText(query)
         let hasGenuineHyphen = normalizedQuery.range(of: #"[‐‑‒–—-]"#, options: .regularExpression) != nil
@@ -111,6 +121,38 @@ enum VocabularyTextPolicy {
         let words = value.split { $0.isWhitespace || $0.isNewline }
         guard (1...5).contains(words.count) else { return false }
         return value.range(of: vocabularySelectionPattern, options: .regularExpression) != nil
+    }
+
+    /// Whether `surfaceForm` appears in `context` but *only ever inside a larger
+    /// word*, never as a whole word (e.g. "folg" within "Erfolg", or "Abteilung"
+    /// within "IT-Abteilung"). This is the cheap first gate for the load-time
+    /// prune of pre-fix recognizer artifacts: a surface that stands as a whole
+    /// word is unconditionally a real occurrence and needs no further checking.
+    ///
+    /// Deliberately conservative — it returns `false` (not a candidate) whenever
+    /// it cannot be certain: an empty surface or context, or a surface the
+    /// context does not contain at all. A `true` result only marks the record as
+    /// a *candidate*; whether it is genuinely stale is decided by re-running the
+    /// matcher against the context (a same-line compound like "IT-Abteilung"
+    /// still reproduces "Abteilung" and must be kept).
+    static func surfaceOccursOnlyWithinLargerWord(surface surfaceForm: String, context: String) -> Bool {
+        let surface = normalizedVocabularyText(surfaceForm)
+        let trimmedContext = context.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !surface.isEmpty, !trimmedContext.isEmpty, isSingleEnglishWord(surface) else {
+            return false
+        }
+        // The surface must occur in the context at all; if it does not, the
+        // stored context does not describe this surface and we leave it alone.
+        guard trimmedContext.range(of: surface, options: [.caseInsensitive]) != nil else {
+            return false
+        }
+        guard let pattern = boundedSearchPattern(for: surface),
+              let regex = try? NSRegularExpression(pattern: pattern) else {
+            return false
+        }
+        let range = NSRange(trimmedContext.startIndex..<trimmedContext.endIndex, in: trimmedContext)
+        // A whole-word occurrence anywhere ⇒ it is a real word ⇒ not a candidate.
+        return regex.firstMatch(in: trimmedContext, range: range) == nil
     }
 
     static func shouldUseSystemTTSForShortSelection(_ text: String) -> Bool {
