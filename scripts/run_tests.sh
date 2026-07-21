@@ -33,6 +33,8 @@ excluded_logic_app_source() {
     AppDelegate*|\
     AIChatPanel*|\
     AISettingsPanel*|\
+    GeneralSettingsModel.swift|\
+    GeneralSettingsView.swift|\
     AITextActionRunner.swift|\
     AIClient.swift|\
     DebouncedTask.swift|\

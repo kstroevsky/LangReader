@@ -25,6 +25,9 @@ final class AISettingsPanelController {
         static let settingsSpeechRowCard = NSUserInterfaceItemIdentifier("settingsSpeechRowCard")
     }
 
+    /// State behind the SwiftUI General page, and the source of truth for
+    /// saving it. Created when the panel is built.
+    var generalSettings: GeneralSettingsModel?
     var onSaved: (() -> Void)?
     var onAppearanceChanged: (() -> Void)?
     var currentVectorIndexStatus: (() -> String)?

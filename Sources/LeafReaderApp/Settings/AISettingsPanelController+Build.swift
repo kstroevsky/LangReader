@@ -207,9 +207,12 @@ extension AISettingsPanelController {
         for view in [customEndpointLabel, customEndpointField, customModelLabel, customModelField] {
             customModelContainer.addSubview(view)
         }
-        for view in [languageLabel, languagePopup, languageHelpLabel, themeLabel, themePopup, themeHelpLabel, pdfDimmingLabel, pdfDimmingSlider, speakSelectedWordLabel, speakSelectedWordCheckbox, saveAIConversationLabel, saveAIConversationCheckbox] {
-            basicPage.addSubview(view)
-        }
+        // The General page is SwiftUI, hosted inside the existing panel so the
+        // tabs, Save and Cancel keep working unchanged. The AppKit controls
+        // above are still built because other code still references them, but
+        // they are no longer attached to the page — removing them is the
+        // follow-up cleanup once nothing reads them.
+        installGeneralSettingsPage(in: basicPage)
         for view in [modelLabel, modelPopup, modelHelpLabel, customModelContainer, keyLabel, keyField, keyHelpLabel, testChatButton] {
             modelPage.addSubview(view)
         }
@@ -321,48 +324,8 @@ extension AISettingsPanelController {
             cachePage.trailingAnchor.constraint(equalTo: formContent.trailingAnchor),
             cachePage.bottomAnchor.constraint(equalTo: formContent.bottomAnchor),
 
-            languageLabel.topAnchor.constraint(equalTo: basicPage.topAnchor, constant: 4),
-            languageLabel.leadingAnchor.constraint(equalTo: basicPage.leadingAnchor),
-            languageLabel.widthAnchor.constraint(equalToConstant: labelColumnWidth),
-            languagePopup.topAnchor.constraint(equalTo: languageLabel.topAnchor),
-            languagePopup.leadingAnchor.constraint(equalTo: basicPage.leadingAnchor, constant: labelColumnWidth),
-            languagePopup.widthAnchor.constraint(equalToConstant: fieldWidth),
-            languagePopup.heightAnchor.constraint(equalToConstant: controlHeight),
-            languageHelpLabel.topAnchor.constraint(equalTo: languagePopup.bottomAnchor, constant: 4),
-            languageHelpLabel.leadingAnchor.constraint(equalTo: languagePopup.leadingAnchor),
-            languageHelpLabel.widthAnchor.constraint(equalToConstant: fieldWidth),
-
-            themeLabel.topAnchor.constraint(equalTo: languagePopup.bottomAnchor, constant: 34),
-            themeLabel.leadingAnchor.constraint(equalTo: basicPage.leadingAnchor),
-            themeLabel.widthAnchor.constraint(equalToConstant: labelColumnWidth),
-            themePopup.topAnchor.constraint(equalTo: themeLabel.topAnchor),
-            themePopup.leadingAnchor.constraint(equalTo: basicPage.leadingAnchor, constant: labelColumnWidth),
-            themePopup.widthAnchor.constraint(equalToConstant: fieldWidth),
-            themePopup.heightAnchor.constraint(equalToConstant: controlHeight),
-            themeHelpLabel.topAnchor.constraint(equalTo: themePopup.bottomAnchor, constant: 4),
-            themeHelpLabel.leadingAnchor.constraint(equalTo: themePopup.leadingAnchor),
-            themeHelpLabel.widthAnchor.constraint(equalToConstant: fieldWidth),
-
-            pdfDimmingLabelTopConstraint,
-            pdfDimmingLabel.leadingAnchor.constraint(equalTo: basicPage.leadingAnchor),
-            pdfDimmingLabel.widthAnchor.constraint(equalToConstant: labelColumnWidth),
-            pdfDimmingSlider.centerYAnchor.constraint(equalTo: pdfDimmingLabel.centerYAnchor),
-            pdfDimmingSlider.leadingAnchor.constraint(equalTo: basicPage.leadingAnchor, constant: labelColumnWidth),
-            pdfDimmingSlider.widthAnchor.constraint(equalToConstant: fieldWidth),
-
-            speakSelectedWordTopToDimmingConstraint,
-            speakSelectedWordLabel.leadingAnchor.constraint(equalTo: basicPage.leadingAnchor),
-            speakSelectedWordLabel.widthAnchor.constraint(equalToConstant: labelColumnWidth),
-            speakSelectedWordCheckbox.centerYAnchor.constraint(equalTo: speakSelectedWordLabel.centerYAnchor),
-            speakSelectedWordCheckbox.leadingAnchor.constraint(equalTo: basicPage.leadingAnchor, constant: labelColumnWidth),
-            speakSelectedWordCheckbox.widthAnchor.constraint(equalToConstant: 32),
-            saveAIConversationLabel.topAnchor.constraint(equalTo: speakSelectedWordLabel.bottomAnchor, constant: 22),
-            saveAIConversationLabel.leadingAnchor.constraint(equalTo: basicPage.leadingAnchor),
-            saveAIConversationLabel.widthAnchor.constraint(equalToConstant: labelColumnWidth),
-            saveAIConversationCheckbox.centerYAnchor.constraint(equalTo: saveAIConversationLabel.centerYAnchor),
-            saveAIConversationCheckbox.leadingAnchor.constraint(equalTo: basicPage.leadingAnchor, constant: labelColumnWidth),
-            saveAIConversationCheckbox.widthAnchor.constraint(equalToConstant: 32),
-            saveAIConversationCheckbox.bottomAnchor.constraint(lessThanOrEqualTo: basicPage.bottomAnchor, constant: -8),
+            // The General page is SwiftUI now; its hosting view sizes the page,
+            // so the old per-control constraints are gone with the controls.
 
             modelLabel.topAnchor.constraint(equalTo: modelPage.topAnchor, constant: 4),
             modelLabel.leadingAnchor.constraint(equalTo: modelPage.leadingAnchor),

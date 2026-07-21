@@ -52,17 +52,8 @@ extension AISettingsPanelController {
             return false
         }
 
-        if let rawLanguage = languagePopup?.selectedItem?.representedObject as? String,
-           let language = AppText.Language(rawValue: rawLanguage) {
-            AppText.selectedLanguage = language
-        }
-        if let rawTheme = themePopup?.selectedItem?.representedObject as? String,
-           let theme = ReaderTheme(rawValue: rawTheme) {
-            ReaderTheme.selected = theme
-        }
-        if let pdfDimmingSlider {
-            ReaderTheme.pdfDimmingStrength = pdfDimmingStrength(forBrightnessSliderValue: pdfDimmingSlider.doubleValue)
-        }
+        // General page: the SwiftUI model owns these, so it persists them.
+        generalSettings?.commit()
         AISettingsStore.save(
             modelID: modelID,
             apiKey: keyField.stringValue,
@@ -76,8 +67,6 @@ extension AISettingsPanelController {
             apiKey: embeddingKeyField?.stringValue ?? "",
             optionID: embeddingProviderPopup?.selectedItem?.representedObject as? String
         )
-        AISettingsStore.saveSpeakSelectedWordEnabled(speakSelectedWordCheckbox?.state == .on)
-        AISettingsStore.saveAIConversationEnabled(saveAIConversationCheckbox?.state == .on)
         AISettingsStore.saveAutoEmbeddingIndexEnabled(autoEmbeddingIndexCheckbox?.state == .on)
         saveSelectedSpeechSettings(
             runtimeID: speechRuntimePopup?.selectedItem?.representedObject as? String,
