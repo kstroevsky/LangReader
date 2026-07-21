@@ -32,7 +32,7 @@ extension ReaderWindowController {
                 didRepair = true
             }
             let lemma = VocabularyExporter.nonEmptyText(record.lemma)
-                ?? GermanLemmaResolver.lemma(for: surfaceForm)
+                ?? GermanLemmaResolver.lemma(for: surfaceForm, language: vocabularyDocumentLanguage)
             if repairedRecord.lemma != lemma {
                 repairedRecord.lemma = lemma
                 didRepair = true
@@ -40,7 +40,7 @@ extension ReaderWindowController {
             if let repairedWord = repairedWords[key], repairedWord != repairedRecord.word {
                 repairedRecord.word = repairedWord
                 repairedRecord.surfaceForm = repairedWord
-                repairedRecord.lemma = GermanLemmaResolver.lemma(for: repairedWord)
+                repairedRecord.lemma = GermanLemmaResolver.lemma(for: repairedWord, language: vocabularyDocumentLanguage)
                 didRepair = true
             }
             if let context = repairedRecord.context {
@@ -91,7 +91,8 @@ extension ReaderWindowController {
             return !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
                 surfaceForm: surface,
                 groupLemma: groupLemma,
-                in: context
+                in: context,
+                language: vocabularyDocumentLanguage
             )
         }.map(\.id))
         let cleanedRecords = repairedRecords.filter { !staleIDs.contains($0.id) }

@@ -393,6 +393,104 @@ enum VocabularyLogicTests {
         )
     }
 
+    /// The occurrence engine is language-neutral: pass a language and it groups
+    /// that language's inflected forms. The same forms under a different
+    /// language do NOT group, proving the language parameter is load-bearing.
+    static func testLemmaEngineIsLanguageParameterized() throws {
+        // French — all forms of "parler" collapse to one lemma under .french.
+        let fr = "Je parle, tu parles, ils parlent souvent. Nous avons parlé hier."
+        let frGroups = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["parler": "parler"], in: fr, language: .french)
+        try expectEqual(
+            Set((frGroups["parler"] ?? []).map { $0.matchedText.lowercased() }),
+            ["parle", "parles", "parlent", "parlé"],
+            "French inflected forms of 'parler' should group under one lemma"
+        )
+        // The identical text under German fails to group them — the parameter,
+        // not the text, is what makes the grouping work.
+        let frUnderGerman = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["parler": "parler"], in: fr, language: .german)
+        try expect(
+            (frUnderGerman["parler"]?.count ?? 0) < (frGroups["parler"]?.count ?? 0),
+            "German lemmatization must not reproduce the French grouping"
+        )
+
+        // Spanish.
+        let es = "Yo hablo, tú hablas y ellos hablan mucho."
+        let esGroups = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["hablar": "hablar"], in: es, language: .spanish)
+        try expectEqual(
+            Set((esGroups["hablar"] ?? []).map { $0.matchedText.lowercased() }),
+            ["hablo", "hablas", "hablan"],
+            "Spanish inflected forms of 'hablar' should group under one lemma"
+        )
+
+        // English, via the resolver directly.
+        try expectEqual(GermanLemmaResolver.lemma(for: "running", language: .english), "run", "English -ing form should lemmatize under .english")
+        try expectEqual(GermanLemmaResolver.lemma(for: "children", language: .english), "child", "English irregular plural should lemmatize under .english")
+
+        // Russian groups well too, and is why the supported set includes it.
+        try expectEqual(GermanLemmaResolver.lemma(for: "части", language: .russian), "часть", "Russian inflected noun should lemmatize under .russian")
+
+        // The detector picks the document language and gates on support.
+        try expectEqual(
+            VocabularyLanguageDetector.language(forSample: "Je parle français et je lis un long texte en français ici."),
+            .french,
+            "the detector should recognize a French sample"
+        )
+        try expectEqual(
+            VocabularyLanguageDetector.language(forSample: "kort"),
+            VocabularyLanguageDetector.fallback,
+            "too-short samples fall back rather than guessing"
+        )
+    }
+
+    /// Detection must sample running prose from across the document, not the
+    /// first pages. Front matter is titles, author lists and (in scanned books)
+    /// OCR noise: sampling it detected a real English art book as Turkish, which
+    /// then fell back to German. Prose-dense pages give the right answer.
+    static func testLanguageDetectionSamplesProseNotFrontMatter() throws {
+        let frontMatter = """
+        ISM “and Surreall Artists en VVeven PRNP 1DU} nn f Ti rrress Tl dea
+        Angels of Anarchy Edited by Patricia Allmer Roger Cardinal Mary Ann Caws
+        Manchester PRESM@EL Munich : Berlin - London: New York 2009 p. 255-56
+        """
+        let prose = """
+        Marie Parent was born the eighth of nine children of the architect Lucien Parent.
+        She studied art at the school of fine arts and at the studio of a non-conformist
+        artist in Montreal, and her first solo exhibition was held in the city some years
+        later. The work that she showed there was received with considerable interest by
+        the critics who wrote about it, and she continued to paint for many more decades.
+        """
+        // 12 pages: front matter first, prose in the body — the shape that broke.
+        let pages = [frontMatter, frontMatter, frontMatter] + Array(repeating: prose, count: 9)
+        try expectEqual(
+            VocabularyLanguageDetector.language(pageCount: pages.count, pageText: { pages[$0] }),
+            .english,
+            "detection should follow the body prose, not the front matter"
+        )
+
+        // Prose scoring must prefer real sentences over layout/OCR noise.
+        try expect(
+            VocabularyLanguageDetector.proseScore(prose) > VocabularyLanguageDetector.proseScore(frontMatter),
+            "running prose should outscore front matter"
+        )
+        try expectEqual(
+            VocabularyLanguageDetector.proseScore("1A - 5. 1B - 5. 1C - 2. 2 - 8. 3 - 10. 44 / 207"),
+            0,
+            "a page of numbers and layout noise should score as non-prose"
+        )
+
+        // Sampling skips front matter but never runs off the end.
+        let indices = VocabularyLanguageDetector.sampleIndices(pageCount: 264)
+        try expect(indices.first ?? 0 > 0, "sampling should skip the opening front matter")
+        try expect(indices.allSatisfy { $0 < 264 }, "sampled indices must stay in range")
+        try expect(indices.count <= VocabularyLanguageDetector.maxSampledPages, "sampling stays bounded for large documents")
+        try expectEqual(
+            VocabularyLanguageDetector.sampleIndices(pageCount: 3),
+            [0, 1, 2],
+            "a short document samples every page"
+        )
+        try expectEqual(VocabularyLanguageDetector.sampleIndices(pageCount: 0), [], "an empty document samples nothing")
+    }
+
     /// The load-time prune that heals libraries saved before the recognizer fix.
     /// A candidate is either a line-break fragment (surface only inside a larger
     /// word) or a case-folded homograph (surface folds to the group key but is

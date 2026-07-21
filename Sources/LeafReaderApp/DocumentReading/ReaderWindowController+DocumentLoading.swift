@@ -24,6 +24,7 @@ extension ReaderWindowController {
         pdfWordRecordStore = currentFileMD5.map { PDFWordRecordStore(fileMD5: $0) }
         webWordRecordStore = nil
         schedulePDFTOCBuild(for: url, displayBox: pdfView.displayBox)
+        updateVocabularyDocumentLanguage()
         storedWordRecords = loadStoredWordRecords()
         storedWebWordRecords.removeAll()
         loadReadingNotesForCurrentDocument()

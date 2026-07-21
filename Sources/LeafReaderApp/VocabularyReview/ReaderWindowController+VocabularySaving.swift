@@ -25,14 +25,28 @@ private struct PDFVocabularyGroupedPageMatch {
 }
 
 extension ReaderWindowController {
+    /// Detects and caches the language this document's vocabulary is grouped by,
+    /// from a sample of its first pages. Must run before any occurrence scanning
+    /// or lemma grouping so every grouping key uses the same language.
+    func updateVocabularyDocumentLanguage() {
+        guard currentDocumentKind == .pdf, let document = pdfView.document else {
+            vocabularyDocumentLanguage = VocabularyLanguageDetector.fallback
+            return
+        }
+        vocabularyDocumentLanguage = VocabularyLanguageDetector.language(
+            pageCount: document.pageCount,
+            pageText: { document.page(at: $0)?.string }
+        )
+    }
+
     func backfillStoredGermanLemmaOccurrences() {
         var seenKeys = Set<String>()
         let groups = storedWordRecords
             .sorted { $0.createdAt < $1.createdAt }
             .compactMap { record -> PDFVocabularyLemmaGroup? in
                 let lemma = VocabularyExporter.nonEmptyText(record.lemma)
-                    ?? GermanLemmaResolver.lemma(for: record.occurrenceSurfaceForm)
-                let key = GermanLemmaResolver.groupingKey(word: record.word, lemma: lemma)
+                    ?? GermanLemmaResolver.lemma(for: record.occurrenceSurfaceForm, language: vocabularyDocumentLanguage)
+                let key = GermanLemmaResolver.groupingKey(word: record.word, lemma: lemma, language: vocabularyDocumentLanguage)
                 guard !key.isEmpty,
                       seenKeys.insert(key).inserted,
                       let vocabularyID = record.vocabularyID else { return nil }
@@ -48,7 +62,7 @@ extension ReaderWindowController {
 
     func backfillGermanLemmaOccurrences(word: String, lemma: String, vocabularyID: String?) {
         guard let vocabularyID else { return }
-        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma)
+        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: vocabularyDocumentLanguage)
         guard !key.isEmpty else { return }
         backfillGermanLemmaOccurrences([
             PDFVocabularyLemmaGroup(key: key, word: word, lemma: lemma, vocabularyID: vocabularyID)
@@ -61,6 +75,7 @@ extension ReaderWindowController {
               let document = pdfView.document else { return }
 
         let searchID = UUID()
+        let language = vocabularyDocumentLanguage
         vocabularyState.occurrenceSearchID = searchID
         collectPDFVocabularyPageSnapshots(document: document, searchID: searchID) { [weak self, weak document] snapshots in
             DispatchQueue.global(qos: .utility).async { [weak self, weak document] in
@@ -68,7 +83,8 @@ extension ReaderWindowController {
                 let matches = snapshots.flatMap { snapshot in
                     GermanLemmaOccurrenceMatcher.matches(
                         lemmasByKey: lemmasByKey,
-                        in: snapshot.text
+                        in: snapshot.text,
+                        language: language
                     ).flatMap { groupKey, occurrences in
                         occurrences.map {
                             PDFVocabularyGroupedPageMatch(
@@ -153,7 +169,8 @@ extension ReaderWindowController {
             NSSound.beep()
             return
         }
-        let lemma = GermanLemmaResolver.lemma(for: word)
+        let language = vocabularyDocumentLanguage
+        let lemma = GermanLemmaResolver.lemma(for: word, language: language)
 
         if removeCurrentPDFVocabularySelectionIfSaved(word, lemma: lemma) {
             return
@@ -176,7 +193,8 @@ extension ReaderWindowController {
                 let perPage = GermanLemmaOccurrenceMatcher.matches(
                     lemma: lemma,
                     selectedForm: word,
-                    inTexts: snapshots.map(\.text)
+                    inTexts: snapshots.map(\.text),
+                    language: language
                 )
                 let scanFinishedAt = Date()
                 NSLog(
@@ -382,23 +400,26 @@ extension ReaderWindowController {
     }
 
     func existingPDFVocabularyID(for word: String, lemma: String? = nil) -> String? {
-        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma)
+        let language = vocabularyDocumentLanguage
+        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
         return storedWordRecords.first {
-            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma) == key
+            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key
         }?.vocabularyID
     }
 
     func isPDFVocabularySelectionSaved(_ word: String) -> Bool {
-        let key = GermanLemmaResolver.groupingKey(word: word)
+        let language = vocabularyDocumentLanguage
+        let key = GermanLemmaResolver.groupingKey(word: word, language: language)
         return !key.isEmpty && storedWordRecords.contains {
-            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma) == key
+            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key
         }
     }
 
     private func removeCurrentPDFVocabularySelectionIfSaved(_ word: String, lemma: String) -> Bool {
-        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma)
+        let language = vocabularyDocumentLanguage
+        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
         let ids = storedWordRecords.compactMap { record in
-            GermanLemmaResolver.groupingKey(word: record.word, lemma: record.lemma) == key ? record.id : nil
+            GermanLemmaResolver.groupingKey(word: record.word, lemma: record.lemma, language: language) == key ? record.id : nil
         }
         guard !ids.isEmpty else { return false }
 

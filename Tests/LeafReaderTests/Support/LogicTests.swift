@@ -692,6 +692,8 @@ private let tests: [(String, () throws -> Void)] = [
     ("German lemma tagger reuse", VocabularyLogicTests.testGermanLemmaResolverTaggerReuse),
     ("German lemma line-wrap fragment not false match", VocabularyLogicTests.testGermanLemmaLineWrapFragmentIsNotAFalseMatch),
     ("German noun not grouped with verb homograph", VocabularyLogicTests.testGermanNounNotGroupedWithVerbHomograph),
+    ("Lemma engine is language-parameterized", VocabularyLogicTests.testLemmaEngineIsLanguageParameterized),
+    ("Language detection samples prose not front matter", VocabularyLogicTests.testLanguageDetectionSamplesProseNotFrontMatter),
     ("Mis-filed occurrence detection", VocabularyLogicTests.testMisfiledOccurrenceDetection),
     ("Vocabulary answerless list mode", VocabularyLogicTests.testVocabularyAnswerlessListMode),
     ("Vocabulary review card selector", VocabularyLogicTests.testVocabularyReviewCardSelector),
