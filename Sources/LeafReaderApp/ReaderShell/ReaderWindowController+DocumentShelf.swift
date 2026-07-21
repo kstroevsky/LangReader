@@ -152,10 +152,7 @@ extension ReaderWindowController {
         aiPanel.clearSelectedText()
         titleLabel.stringValue = AppIdentity.displayName
         coverImageView.image = nil
-        coverImageView.isHidden = true
-        pageLayoutButton.isHidden = true
-        cropButton.isHidden = true
-        relatedFormsToggle.isHidden = true
+        refreshChromeState(presentation: .empty)
         pageLabel.stringValue = AppText.noPDF
         updatePageLabelTextColor()
         zoomField.stringValue = "100%"

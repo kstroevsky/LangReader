@@ -218,7 +218,7 @@ extension ReaderWindowController {
             : (isReadAloudActive
                 ? AppText.localized("暂停朗读", "Pause reading")
                 : AppText.localized("从当前屏幕顶部开始朗读", "Read from the top of the current screen")))
-        readAloudStopButton?.isHidden = !isReadAloudActive
+        refreshChromeState()
         readAloudButton.needsDisplay = true
         readAloudButton.displayIfNeeded()
         updateReadAloudFloatingControl()

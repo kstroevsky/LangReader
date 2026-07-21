@@ -35,10 +35,7 @@ extension ReaderWindowController {
         titleLabel.stringValue = url.deletingPathExtension().lastPathComponent
         applyDocumentDiagnostics([], fileName: url.lastPathComponent)
         updateCoverThumbnail(from: document)
-        pageLayoutButton.isHidden = false
-        cropButton.isHidden = false
-        relatedFormsToggle.isHidden = false
-        relatedFormsSwitch.state = showsRelatedWordForms ? .on : .off
+        refreshChromeState(presentation: .pdf)
         updatePDFMarginCropButton()
         applyPDFPageLayout(animated: false)
 
@@ -105,10 +102,7 @@ extension ReaderWindowController {
         } else {
             coverImageView.image = NSImage(systemSymbolName: kind == .epub ? "book.closed" : "doc.text", accessibilityDescription: nil)
         }
-        coverImageView.isHidden = false
-        pageLayoutButton.isHidden = true
-        cropButton.isHidden = true
-        relatedFormsToggle.isHidden = true
+        refreshChromeState(presentation: .web)
         updateWebProgressLabel(0)
         zoomField.stringValue = "100%"
         if let htmlFileURL = document.htmlFileURL {
@@ -176,14 +170,14 @@ extension ReaderWindowController {
         }
     }
 
+    /// Sets the cover image only. Whether the cover is shown is decided by
+    /// `ReaderChromeState`, which the caller applies afterwards — keeping every
+    /// visibility rule in one place.
     func updateCoverThumbnail(from document: PDFDocument) {
         guard let firstPage = document.page(at: 0) else {
             coverImageView.image = nil
-            coverImageView.isHidden = true
             return
         }
-
         coverImageView.image = firstPage.thumbnail(of: CGSize(width: 56, height: 76), for: .cropBox)
-        coverImageView.isHidden = false
     }
 }

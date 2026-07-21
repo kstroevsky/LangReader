@@ -7,6 +7,9 @@ struct ReaderToolbarSetup {
     let leftDivider: NSView
     let rightDivider: NSView
     let zoomGroup: NSView
+    let leadingStack: NSStackView
+    let beforeZoomStack: NSStackView
+    let trailingStack: NSStackView
 }
 
 struct ReaderBottomBarSetup {
@@ -98,6 +101,9 @@ extension ReaderWindowController {
         let zoomOut = toolbarSetup.zoomOut
         let zoomIn = toolbarSetup.zoomIn
         let zoomGroup = toolbarSetup.zoomGroup
+        let leadingStack = toolbarSetup.leadingStack
+        let beforeZoomStack = toolbarSetup.beforeZoomStack
+        let trailingStack = toolbarSetup.trailingStack
         let leftDivider = toolbarSetup.leftDivider
         let rightDivider = toolbarSetup.rightDivider
         let bottomBar = bottomBarSetup.bottomBar
@@ -179,29 +185,15 @@ extension ReaderWindowController {
             notesButton.widthAnchor.constraint(equalToConstant: ReaderUILayout.notesButtonWidth),
             notesButton.heightAnchor.constraint(equalToConstant: ReaderUILayout.bottomButtonHeight),
 
-            coverImageView.leadingAnchor.constraint(equalTo: toolbar.leadingAnchor, constant: ReaderUILayout.coverLeading),
-            coverImageView.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
-            coverImageView.widthAnchor.constraint(equalToConstant: ReaderUILayout.coverSize.width),
-            coverImageView.heightAnchor.constraint(equalToConstant: ReaderUILayout.coverSize.height),
-
-            titleLabel.leadingAnchor.constraint(equalTo: coverImageView.trailingAnchor, constant: ReaderUILayout.titleLeading),
-            titleLabel.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
+            // Toolbar clusters. Order and membership come from
+            // `ReaderToolbarLayout.items`; the stacks own the spacing.
+            leadingStack.leadingAnchor.constraint(equalTo: toolbar.leadingAnchor, constant: ReaderToolbarLayout.leadingInset),
+            leadingStack.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
+            leadingStack.trailingAnchor.constraint(lessThanOrEqualTo: beforeZoomStack.leadingAnchor, constant: -ReaderUILayout.titleToReadAloudMinimum),
             titleLabel.widthAnchor.constraint(lessThanOrEqualToConstant: ReaderUILayout.titleMaxWidth),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: relatedFormsToggle.leadingAnchor, constant: -ReaderUILayout.titleToReadAloudMinimum),
 
-            relatedFormsToggle.trailingAnchor.constraint(equalTo: readAloudButton.leadingAnchor, constant: ReaderUILayout.relatedFormsToggleTrailing),
-            relatedFormsToggle.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
-            relatedFormsToggle.heightAnchor.constraint(equalToConstant: ReaderUILayout.toolbarButtonHeight),
-
-            readAloudButton.trailingAnchor.constraint(equalTo: readAloudStopButton.leadingAnchor, constant: -ReaderUILayout.readAloudStopLeading),
-            readAloudButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
-            readAloudButton.widthAnchor.constraint(equalToConstant: ReaderUILayout.readAloudButtonWidth),
-            readAloudButton.heightAnchor.constraint(equalToConstant: ReaderUILayout.toolbarButtonHeight),
-
-            readAloudStopButton.trailingAnchor.constraint(equalTo: zoomGroup.leadingAnchor, constant: -ReaderUILayout.readAloudTrailingToZoom),
-            readAloudStopButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
-            readAloudStopButton.widthAnchor.constraint(equalToConstant: ReaderUILayout.readAloudStopButtonWidth),
-            readAloudStopButton.heightAnchor.constraint(equalToConstant: ReaderUILayout.toolbarButtonHeight),
+            beforeZoomStack.trailingAnchor.constraint(equalTo: zoomGroup.leadingAnchor, constant: -ReaderToolbarLayout.beforeZoomGap),
+            beforeZoomStack.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
 
             zoomGroup.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
             zoomGroup.centerXAnchor.constraint(equalTo: toolbar.centerXAnchor, constant: ReaderUILayout.zoomCenterOffset),
@@ -242,20 +234,9 @@ extension ReaderWindowController {
             searchButton.widthAnchor.constraint(equalToConstant: ReaderUILayout.iconButtonSize),
             searchButton.heightAnchor.constraint(equalToConstant: ReaderUILayout.iconButtonSize),
 
-            pageLayoutButton.trailingAnchor.constraint(equalTo: cropButton.leadingAnchor, constant: ReaderUILayout.pageLayoutTrailing),
-            pageLayoutButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
-            pageLayoutButton.widthAnchor.constraint(equalToConstant: ReaderUILayout.pageLayoutButtonWidth),
-            pageLayoutButton.heightAnchor.constraint(equalToConstant: ReaderUILayout.toolbarButtonHeight),
-
-            cropButton.trailingAnchor.constraint(equalTo: fullScreenButton.leadingAnchor, constant: ReaderUILayout.cropButtonTrailing),
-            cropButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
-            cropButton.widthAnchor.constraint(equalToConstant: ReaderUILayout.cropButtonWidth),
-            cropButton.heightAnchor.constraint(equalToConstant: ReaderUILayout.toolbarButtonHeight),
-
-            fullScreenButton.trailingAnchor.constraint(equalTo: toolbar.trailingAnchor, constant: ReaderUILayout.fullScreenTrailing),
-            fullScreenButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
-            fullScreenButton.widthAnchor.constraint(equalToConstant: ReaderUILayout.fullScreenButtonWidth),
-            fullScreenButton.heightAnchor.constraint(equalToConstant: ReaderUILayout.toolbarButtonHeight),
+            trailingStack.trailingAnchor.constraint(equalTo: toolbar.trailingAnchor, constant: -ReaderToolbarLayout.trailingInset),
+            trailingStack.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
+            trailingStack.leadingAnchor.constraint(greaterThanOrEqualTo: searchButton.trailingAnchor, constant: ReaderToolbarLayout.clusterSpacing),
 
             searchOverlay.topAnchor.constraint(equalTo: contentView.topAnchor, constant: ReaderUILayout.searchOverlayTop),
             searchOverlay.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),

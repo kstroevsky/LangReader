@@ -17,9 +17,22 @@ extension ReaderWindowController {
         configureTopRightControls()
         configureRelatedFormsToggle()
 
-        for view in [titleLabel, readAloudButton!, readAloudStopButton!, coverImageView, zoomGroup, pageLabel, searchUnderlineButton!, searchButton!, relatedFormsToggle!, pageLayoutButton!, cropButton!, fullScreenButton!] {
+        // Clusters are built from `ReaderToolbarLayout.items`, so the arrays
+        // there are the toolbar's composition. A stack also collapses hidden
+        // controls automatically, which is what makes `ReaderChromeState`
+        // visibility reflow correctly instead of leaving a hole.
+        let leadingStack = toolbarCluster(.leading, spacing: ReaderToolbarLayout.titleClusterSpacing)
+        let beforeZoomStack = toolbarCluster(.beforeZoom, spacing: ReaderToolbarLayout.clusterSpacing)
+        let trailingStack = toolbarCluster(.trailing, spacing: ReaderToolbarLayout.clusterSpacing)
+
+        // The centered cluster stays individually positioned: it is anchored to
+        // the window centre rather than flowing from an edge.
+        for view in [zoomGroup, pageLabel, searchUnderlineButton!, searchButton!] {
             view.translatesAutoresizingMaskIntoConstraints = false
             toolbar.addSubview(view)
+        }
+        for stack in [leadingStack, beforeZoomStack, trailingStack] {
+            toolbar.addSubview(stack)
         }
 
         return ReaderToolbarSetup(
@@ -28,8 +41,63 @@ extension ReaderWindowController {
             zoomIn: zoomIn,
             leftDivider: leftDivider,
             rightDivider: rightDivider,
-            zoomGroup: zoomGroup
+            zoomGroup: zoomGroup,
+            leadingStack: leadingStack,
+            beforeZoomStack: beforeZoomStack,
+            trailingStack: trailingStack
         )
+    }
+
+    /// Builds one toolbar cluster from its descriptors.
+    private func toolbarCluster(
+        _ placement: ReaderToolbarItem.Placement,
+        spacing: CGFloat
+    ) -> NSStackView {
+        let stack = NSStackView()
+        stack.orientation = .horizontal
+        stack.alignment = .centerY
+        stack.spacing = spacing
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.setHuggingPriority(.required, for: .horizontal)
+
+        for item in ReaderToolbarLayout.items(in: placement) {
+            guard let view = toolbarView(for: item.id) else { continue }
+            view.translatesAutoresizingMaskIntoConstraints = false
+            stack.addArrangedSubview(view)
+            if let width = item.width {
+                view.widthAnchor.constraint(equalToConstant: width).isActive = true
+            }
+            if item.id != .title {
+                // Only the title may compress; every other control keeps its size.
+                view.setContentCompressionResistancePriority(.required, for: .horizontal)
+            }
+            if let height = toolbarItemHeight(for: item.id) {
+                view.heightAnchor.constraint(equalToConstant: height).isActive = true
+            }
+        }
+        return stack
+    }
+
+    /// The view that renders a descriptor.
+    private func toolbarView(for id: ReaderToolbarItem.Identifier) -> NSView? {
+        switch id {
+        case .cover: return coverImageView
+        case .title: return titleLabel
+        case .relatedFormsToggle: return relatedFormsToggle
+        case .readAloud: return readAloudButton
+        case .readAloudStop: return readAloudStopButton
+        case .pageLayout: return pageLayoutButton
+        case .crop: return cropButton
+        case .fullScreen: return fullScreenButton
+        }
+    }
+
+    private func toolbarItemHeight(for id: ReaderToolbarItem.Identifier) -> CGFloat? {
+        switch id {
+        case .cover: return ReaderUILayout.coverSize.height
+        case .title: return nil
+        default: return ReaderUILayout.toolbarButtonHeight
+        }
     }
 
     func configureBottomBarViews() -> ReaderBottomBarSetup {
@@ -209,6 +277,11 @@ extension ReaderWindowController {
         toggle.state = showsRelatedWordForms ? .on : .off
         toggle.target = self
         toggle.action = #selector(toggleRelatedWordForms(_:))
+        // The cluster stack hugs its content at required priority, so both parts
+        // pin their intrinsic width rather than risk being compressed by it.
+        toggle.setContentCompressionResistancePriority(.required, for: .horizontal)
+        toggle.setContentHuggingPriority(.required, for: .horizontal)
+        icon.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         let tip = AppText.localized("显示相关词形的蓝色标注", "Show blue markings for related word forms")
         toggle.toolTip = tip

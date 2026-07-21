@@ -1,6 +1,36 @@
 import Cocoa
 
 extension ReaderWindowController {
+    /// The one place chrome visibility is applied. Callers describe the reader's
+    /// situation with a `ReaderChromeState`; nothing else may set `isHidden` on
+    /// these controls, so a new control is wired here once instead of at every
+    /// load path.
+    func applyChromeState(_ state: ReaderChromeState) {
+        chromeState = state
+        coverImageView.isHidden = !state.showsCover
+        pageLayoutButton?.isHidden = !state.showsPageLayoutButton
+        cropButton?.isHidden = !state.showsCropButton
+        relatedFormsToggle?.isHidden = !state.showsRelatedFormsToggle
+        readAloudStopButton?.isHidden = !state.showsReadAloudStopButton
+        if state.showsRelatedFormsToggle {
+            relatedFormsSwitch?.state = state.relatedFormsToggleIsOn ? .on : .off
+        }
+    }
+
+    /// Recomputes the chrome for the document now on screen. Used by the load
+    /// paths and by anything that changes a condition the chrome depends on.
+    func refreshChromeState(presentation: ReaderChromeState.Presentation? = nil) {
+        let resolved = presentation ?? chromeState.presentation
+        applyChromeState(
+            .make(
+                presentation: resolved,
+                isReadAloudActive: isReadAloudActive,
+                showsRelatedWordForms: showsRelatedWordForms,
+                hasCoverImage: coverImageView.image != nil
+            )
+        )
+    }
+
     func configureLoadingOverlay() {
         loadingOverlay.translatesAutoresizingMaskIntoConstraints = false
         loadingOverlay.isHidden = true

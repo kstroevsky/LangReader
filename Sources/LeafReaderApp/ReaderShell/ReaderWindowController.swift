@@ -89,6 +89,8 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var cropButton: NSButton!
     var relatedFormsToggle: NSView!
     var relatedFormsSwitch: NSSwitch!
+    /// Last chrome state applied; the source of truth for what is on screen.
+    var chromeState: ReaderChromeState = .empty
     var searchButton: NSButton!
     var searchUnderlineButton: SearchUnderlineButton!
     let embeddingStatusLabel = NSTextField(labelWithString: "")
