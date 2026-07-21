@@ -12,6 +12,7 @@ extension ReaderWindowController {
                 pageIndex: record.pageIndex,
                 storedBounds: record.bounds.cgRect,
                 word: record.occurrenceSurfaceForm,
+                isSavedForm: record.matchesSavedSurfaceForm,
                 refineBounds: true
             )
         }
@@ -24,12 +25,15 @@ extension ReaderWindowController {
             pageIndex: record.pageIndex,
             storedBounds: record.bounds.cgRect,
             word: record.occurrenceSurfaceForm,
+            isSavedForm: record.matchesSavedSurfaceForm,
             refineBounds: true
         )
     }
 
     func addPendingWordAnnotation(id: String, pageIndex: Int, bounds: CGRect, word: String) {
-        addPDFVocabularyAnnotation(id: id, pageIndex: pageIndex, storedBounds: bounds, word: word, refineBounds: true)
+        // A pending annotation marks the exact selection the user is saving, so
+        // it is always the saved form (the lemma matcher runs afterwards).
+        addPDFVocabularyAnnotation(id: id, pageIndex: pageIndex, storedBounds: bounds, word: word, isSavedForm: true, refineBounds: true)
     }
 
     func discardPendingWordAnnotations() {
@@ -41,6 +45,7 @@ extension ReaderWindowController {
         pageIndex: Int,
         storedBounds: CGRect,
         word: String,
+        isSavedForm: Bool,
         refineBounds: Bool
     ) {
         guard let page = pdfView.document?.page(at: pageIndex) else { return }
@@ -50,7 +55,9 @@ extension ReaderWindowController {
         highlightedSelectionKeys.insert(key)
 
         let annotation = PDFAnnotation(bounds: wordUnderlineBounds(for: bounds), forType: .highlight, withProperties: nil)
-        annotation.color = vocabularySelectionHighlightColor(for: ReaderTheme.selected)
+        annotation.color = isSavedForm
+            ? vocabularySelectionHighlightColor(for: ReaderTheme.selected)
+            : vocabularyVariantHighlightColor(for: ReaderTheme.selected)
         annotation.contents = "leaf-word:\(id)"
         page.addAnnotation(annotation)
         pdfView.setNeedsDisplay(pdfView.bounds)
@@ -89,6 +96,14 @@ extension ReaderWindowController {
 
     func vocabularySelectionHighlightColor(for theme: ReaderTheme) -> NSColor {
         theme.aiSourceUnderlineColor
+    }
+
+    /// A faded version of the saved-word highlight, used for occurrences that are
+    /// a different inflected form than the one the user actually saved. Same hue,
+    /// lower opacity, so the saved form still reads as the primary mark.
+    func vocabularyVariantHighlightColor(for theme: ReaderTheme) -> NSColor {
+        let base = vocabularySelectionHighlightColor(for: theme)
+        return base.withAlphaComponent(base.alphaComponent * 0.42)
     }
 
     func wordUnderlineBounds(for bounds: CGRect) -> CGRect {

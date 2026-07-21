@@ -27,6 +27,14 @@ struct StoredPDFWordRecord: Codable {
               !surfaceForm.isEmpty else { return word }
         return surfaceForm
     }
+
+    /// Whether this occurrence is the exact form the user saved, as opposed to
+    /// a different inflected form the lemma matcher turned up. The saved form
+    /// keeps the standard highlight; the other forms are drawn faded.
+    var matchesSavedSurfaceForm: Bool {
+        VocabularyTextPolicy.canonicalVocabularyKey(occurrenceSurfaceForm)
+            == VocabularyTextPolicy.canonicalVocabularyKey(word)
+    }
 }
 
 struct PDFWordRecordStore {
