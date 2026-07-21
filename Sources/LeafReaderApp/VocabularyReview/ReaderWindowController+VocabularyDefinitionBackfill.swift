@@ -4,7 +4,7 @@ extension ReaderWindowController {
     func backfillDictionaryAnswerAsync(vocabularyID: String?, word: String) {
         let query = VocabularyTextPolicy.normalizedVocabularyText(word)
         guard VocabularyTextPolicy.isSingleEnglishWord(query) else { return }
-        let localLemma = GermanLemmaResolver.lemma(for: query)
+        let localLemma = GermanLemmaResolver.lemma(for: query, language: vocabularyDocumentLanguage)
 
         DispatchQueue.global(qos: .utility).async { [weak self] in
             if let localAnswer = LocalDictionaryLookupService.shared.dictionaryAnswer(for: query, context: "") {
@@ -43,9 +43,10 @@ extension ReaderWindowController {
         word: String,
         lemma: String
     ) {
+        let language = vocabularyDocumentLanguage
         let trimmedAnswer = answer.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedLemma = VocabularyTextPolicy.normalizedVocabularyText(lemma)
-        let wordKey = GermanLemmaResolver.groupingKey(word: word, lemma: normalizedLemma)
+        let wordKey = GermanLemmaResolver.groupingKey(word: word, lemma: normalizedLemma, language: language)
         guard !trimmedAnswer.isEmpty, !wordKey.isEmpty else { return }
 
         var updatedRecords: [StoredPDFWordRecord] = []
@@ -54,7 +55,8 @@ extension ReaderWindowController {
             let matchingVocabularyID = vocabularyID.map { storedWordRecords[index].vocabularyID == $0 } ?? false
             let matchingWord = GermanLemmaResolver.groupingKey(
                 word: storedWordRecords[index].word,
-                lemma: storedWordRecords[index].lemma
+                lemma: storedWordRecords[index].lemma,
+                language: language
             ) == wordKey
             guard matchingVocabularyID || matchingWord,
                   storedWordRecords[index].answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {

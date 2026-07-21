@@ -1,4 +1,5 @@
 import Foundation
+import NaturalLanguage
 
 /// Per-session cache of built export records, keyed by document.
 ///
@@ -55,18 +56,22 @@ final class VocabularyLibraryBuildCache {
 
     /// A cheap fingerprint over everything that changes the built output: the set
     /// of records (adds/deletes shift the count and ids), their mutable fields
-    /// (answer/lemma/surface/context/tags edits), and the label generation (a
-    /// fetched flexion table can relabel forms without touching any record).
+    /// (answer/lemma/surface/context/tags edits), the label generation (a
+    /// fetched flexion table can relabel forms without touching any record), and
+    /// the language (which decides both the lemmatizer and which labeler runs,
+    /// so the same records build different output under a different language).
     ///
     /// `Hasher` uses a per-process seed, which is fine: this cache lives only for
     /// the session, so the fingerprint only has to be stable within one run.
     static func fingerprint(
         pdf: [StoredPDFWordRecord],
         web: [StoredWebWordRecord],
-        labelGeneration: Int
+        labelGeneration: Int,
+        language: NLLanguage
     ) -> Int {
         var hasher = Hasher()
         hasher.combine(labelGeneration)
+        hasher.combine(language.rawValue)
         hasher.combine(pdf.count)
         for record in pdf {
             hasher.combine(record.id)

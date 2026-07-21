@@ -37,6 +37,7 @@ extension ReaderWindowController {
         let currentKind = currentDocumentKind
         let currentPDFRecords = storedWordRecords
         let currentWebRecords = storedWebWordRecords
+        let language = vocabularyDocumentLanguage
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
             let currentRecords: [VocabularyExportRecord]
@@ -44,7 +45,8 @@ extension ReaderWindowController {
                 let fingerprint = VocabularyLibraryBuildCache.fingerprint(
                     pdf: currentPDFRecords,
                     web: currentWebRecords,
-                    labelGeneration: GermanLabelCacheGeneration.current
+                    labelGeneration: GermanLabelCacheGeneration.current,
+                    language: language
                 )
                 currentRecords = self.vocabularyLibraryBuildCache.records(
                     documentID: currentDocumentID,
@@ -55,7 +57,7 @@ extension ReaderWindowController {
                         pdfRecords: currentPDFRecords,
                         webRecords: currentWebRecords,
                         pdfContext: { $0.context ?? "" },
-                        formLabel: GermanFormLabeler.persistentCachedFormLabelResolver
+                        formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(language: language)
                     )
                 }
             } else {
@@ -64,7 +66,7 @@ extension ReaderWindowController {
                     pdfRecords: currentPDFRecords,
                     webRecords: currentWebRecords,
                     pdfContext: { $0.context ?? "" },
-                    formLabel: GermanFormLabeler.persistentCachedFormLabelResolver
+                    formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(language: language)
                 )
             }
             let records = self.makeVocabularyLibraryRecords(
@@ -102,10 +104,16 @@ extension ReaderWindowController {
             } else {
                 let pdfRecords = PDFWordRecordStore(fileMD5: documentID).load()
                 let webRecords = WebWordRecordStore(fileMD5: documentID).load()
+                // This document is not the open one, so its language has to come
+                // from the contexts saved with its own words.
+                let otherLanguage = VocabularyLanguageDetector.language(
+                    forContexts: pdfRecords.compactMap(\.context) + webRecords.map(\.context)
+                )
                 let fingerprint = VocabularyLibraryBuildCache.fingerprint(
                     pdf: pdfRecords,
                     web: webRecords,
-                    labelGeneration: GermanLabelCacheGeneration.current
+                    labelGeneration: GermanLabelCacheGeneration.current,
+                    language: otherLanguage
                 )
                 records = vocabularyLibraryBuildCache.records(
                     documentID: documentID,
@@ -116,7 +124,7 @@ extension ReaderWindowController {
                         pdfRecords: pdfRecords,
                         webRecords: webRecords,
                         pdfContext: { $0.context ?? "" },
-                        formLabel: GermanFormLabeler.persistentCachedFormLabelResolver
+                        formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(language: otherLanguage)
                     )
                 }
             }
@@ -185,7 +193,7 @@ extension ReaderWindowController {
             pdfRecords: storedWordRecords,
             webRecords: storedWebWordRecords,
             pdfContext: { $0.context ?? "" },
-            formLabel: GermanFormLabeler.persistentCachedFormLabelResolver
+            formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(language: vocabularyDocumentLanguage)
         )
         guard let record = records.first(where: { candidate in
             VocabularyTextPolicy.canonicalVocabularyKey(candidate.lemma ?? candidate.word) == key

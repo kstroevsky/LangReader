@@ -25,6 +25,14 @@ enum GermanFormLabel: String, Equatable {
     case plural
     /// Surface form equals the lemma: `Haus`.
     case grundform
+    /// English past participle, proven by an auxiliary in the same clause:
+    /// `has written`. Reported separately from `.partizipII` so each language
+    /// keeps its own terminology.
+    case pastParticiple
+    /// English `-ing` form, proven morphologically: `running`.
+    case presentParticiple
+    /// English third person singular, proven morphologically: `walks`, `goes`.
+    case thirdPersonSingular
 
     /// Whether this label tells the reader something they could not see for
     /// themselves. `.grundform` only earns its place alongside inflected forms
@@ -50,9 +58,20 @@ enum GermanFormLabel: String, Equatable {
             return AppText.localized("复数 (Plural)", "Plural")
         case .grundform:
             return AppText.localized("原形", "Base form")
+        case .pastParticiple:
+            return AppText.localized("过去分词", "Past participle")
+        case .presentParticiple:
+            return AppText.localized("现在分词 (-ing)", "-ing form")
+        case .thirdPersonSingular:
+            return AppText.localized("第三人称单数", "3rd person singular")
         }
     }
 }
+
+/// The label type is shared by every language's labeler; the `German` prefix is
+/// historical (it predates the other languages and is baked into the persisted
+/// cache's rawValues). New code should prefer this name.
+typealias WordFormLabel = GermanFormLabel
 
 /// Derives a grammatical form label for a German surface form, offline.
 ///

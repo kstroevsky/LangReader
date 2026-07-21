@@ -123,36 +123,54 @@ enum VocabularyTextPolicy {
         return value.range(of: vocabularySelectionPattern, options: .regularExpression) != nil
     }
 
-    /// Whether `surfaceForm` appears in `context` but *only ever inside a larger
-    /// word*, never as a whole word (e.g. "folg" within "Erfolg", or "Abteilung"
-    /// within "IT-Abteilung"). This is the cheap first gate for the load-time
-    /// prune of pre-fix recognizer artifacts: a surface that stands as a whole
-    /// word is unconditionally a real occurrence and needs no further checking.
+    /// Whether `surfaceForm` appears in `context` only as an *inner substring* of
+    /// a longer word — never as a whole word and never as a complete
+    /// hyphen-delimited component.
     ///
-    /// Deliberately conservative — it returns `false` (not a candidate) whenever
-    /// it cannot be certain: an empty surface or context, or a surface the
-    /// context does not contain at all. A `true` result only marks the record as
-    /// a *candidate*; whether it is genuinely stale is decided by re-running the
-    /// matcher against the context (a same-line compound like "IT-Abteilung"
-    /// still reproduces "Abteilung" and must be kept).
-    static func surfaceOccursOnlyWithinLargerWord(surface surfaceForm: String, context: String) -> Bool {
+    /// This is the language-independent test for a hyphenated-line-break
+    /// artifact. "folg" inside "Erfolg" and "kommt" inside "ankommt" are
+    /// arbitrary substrings and are artifacts; "Abteilung" inside "IT-Abteilung"
+    /// is a complete component of a compound and is a real word. Deciding this
+    /// on the string alone keeps the destructive load-time prune from depending
+    /// on language detection, which would delete real words when a document's
+    /// language was guessed wrong.
+    static func surfaceOccursOnlyAsInnerSubstring(surface surfaceForm: String, context: String) -> Bool {
         let surface = normalizedVocabularyText(surfaceForm)
         let trimmedContext = context.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !surface.isEmpty, !trimmedContext.isEmpty, isSingleEnglishWord(surface) else {
             return false
         }
-        // The surface must occur in the context at all; if it does not, the
-        // stored context does not describe this surface and we leave it alone.
+        // Absent from its own context ⇒ the context does not describe it; leave it.
         guard trimmedContext.range(of: surface, options: [.caseInsensitive]) != nil else {
             return false
         }
-        guard let pattern = boundedSearchPattern(for: surface),
-              let regex = try? NSRegularExpression(pattern: pattern) else {
+        // A whole-word occurrence anywhere ⇒ a real word.
+        if let pattern = boundedSearchPattern(for: surface),
+           let regex = try? NSRegularExpression(pattern: pattern) {
+            let range = NSRange(trimmedContext.startIndex..<trimmedContext.endIndex, in: trimmedContext)
+            if regex.firstMatch(in: trimmedContext, range: range) != nil { return false }
+        } else {
             return false
         }
-        let range = NSRange(trimmedContext.startIndex..<trimmedContext.endIndex, in: trimmedContext)
-        // A whole-word occurrence anywhere ⇒ it is a real word ⇒ not a candidate.
-        return regex.firstMatch(in: trimmedContext, range: range) == nil
+        // A complete hyphen-delimited component ("IT-Abteilung") is a real word
+        // too. Components are trimmed of surrounding punctuation first: the
+        // sentence "…, IT-Abteilung." yields the component "Abteilung." and
+        // would otherwise fail to match, so the record would be pruned here and
+        // immediately re-created by the occurrence scanner — a delete/re-add
+        // flip-flop on every document load.
+        let surfaceKey = canonicalVocabularyKey(surface)
+        let components = trimmedContext.split { $0.isWhitespace || $0.isNewline }
+        for token in components {
+            let parts = token.split(whereSeparator: { "‐‑‒–—-".contains($0) })
+            for part in parts {
+                let cleaned = part.drop(while: { !$0.isLetter && !$0.isNumber })
+                    .reversed().drop(while: { !$0.isLetter && !$0.isNumber }).reversed()
+                if canonicalVocabularyKey(String(cleaned)) == surfaceKey {
+                    return false
+                }
+            }
+        }
+        return true
     }
 
     static func shouldUseSystemTTSForShortSelection(_ text: String) -> Bool {

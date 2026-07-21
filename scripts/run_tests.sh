@@ -49,6 +49,7 @@ excluded_logic_app_source() {
     PDFEmbeddingStore.swift|\
     GermanFlexionStore.swift|\
     GermanCachedFormLabeling.swift|\
+    VocabularyCachedFormLabeling.swift|\
     PDFWordRecordStore.swift|\
     Reader*State.swift|\
     ReaderDropContentView.swift|\
