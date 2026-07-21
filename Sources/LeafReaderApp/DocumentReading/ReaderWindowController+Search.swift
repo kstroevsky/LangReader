@@ -32,12 +32,12 @@ extension ReaderWindowController {
             return
         }
 
-        if query != lastSearchQuery {
+        switch searchCursor.submit(query: query) {
+        case .needsSearch:
             searchResults = document.findString(query, withOptions: [.caseInsensitive, .diacriticInsensitive])
-            searchResultIndex = 0
-            lastSearchQuery = query
-        } else if !searchResults.isEmpty {
-            searchResultIndex = (searchResultIndex + 1) % searchResults.count
+            searchCursor.setTotal(searchResults.count)
+        case .advance:
+            searchCursor.advance()
         }
 
         showCurrentSearchResult()
@@ -45,8 +45,7 @@ extension ReaderWindowController {
 
     func clearSearchState() {
         searchResults.removeAll()
-        searchResultIndex = 0
-        lastSearchQuery = ""
+        searchCursor.clear()
         searchOverlay.setResultText("")
     }
 
@@ -59,7 +58,7 @@ extension ReaderWindowController {
             performSearch(searchOverlay.searchField.stringValue)
             return
         }
-        searchResultIndex = (searchResultIndex - 1 + searchResults.count) % searchResults.count
+        searchCursor.retreat()
         showCurrentSearchResult()
     }
 
@@ -72,7 +71,7 @@ extension ReaderWindowController {
             performSearch(searchOverlay.searchField.stringValue)
             return
         }
-        searchResultIndex = (searchResultIndex + 1) % searchResults.count
+        searchCursor.advance()
         showCurrentSearchResult()
     }
 
@@ -85,7 +84,7 @@ extension ReaderWindowController {
             return
         }
 
-        let selection = searchResults[searchResultIndex]
+        let selection = searchResults[min(searchCursor.index, searchResults.count - 1)]
         beginSuppressingSearchSelectionForAI()
         pdfView.setCurrentSelection(selection, animate: true)
         let pageIndex = goToVisibleSearchSelection(selection)
@@ -94,7 +93,7 @@ extension ReaderWindowController {
         }
         updatePageLabel()
         saveSession()
-        searchOverlay.setResultText("\(searchResultIndex + 1) / \(searchResults.count)")
+        searchOverlay.setResultText(searchCursor.resultText)
         clearSearchSelectionForAI()
     }
 
@@ -135,8 +134,7 @@ extension ReaderWindowController {
 
         beginSuppressingSearchSelectionForAI()
         let escapedQuery = jsStringLiteral(query)
-        let reset = query != lastSearchQuery
-        lastSearchQuery = query
+        let reset = searchCursor.submit(query: query) == .needsSearch
         let script = """
         (() => {
           const query = \(escapedQuery);
@@ -151,8 +149,8 @@ extension ReaderWindowController {
             let payload = result as? [String: Any]
             let index = payload?["index"] as? Int ?? 0
             let total = payload?["total"] as? Int ?? 0
-            self?.searchResultIndex = max(0, index - 1)
-            self?.searchOverlay.setResultText(total > 0 ? "\(index) / \(total)" : "0 / 0")
+            self?.searchCursor.adoptOneBased(index: index, total: total)
+            self?.searchOverlay.setResultText(self?.searchCursor.resultText ?? "0 / 0")
             self?.clearSearchSelectionForAI()
         }
     }

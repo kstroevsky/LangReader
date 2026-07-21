@@ -101,9 +101,11 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     weak var zoomGroupView: NSView?
     var documentSession = DocumentSession()
     var documentPresentationState = DocumentPresentationState()
+    /// Hits for the current PDF query. The web path keeps its hits in the page,
+    /// so only the PDF side stores them here.
     var searchResults: [PDFSelection] = []
-    var searchResultIndex = 0
-    var lastSearchQuery = ""
+    /// Which hit is selected and how the query changed — shared by both paths.
+    var searchCursor = ReaderSearchCursor()
     var embeddingState = ReaderEmbeddingState()
     var aiState = ReaderAIState()
     let sessionSaveTask = DebouncedTask(delay: ReaderSessionPolicy.lastPositionSaveDelay)

@@ -16,7 +16,7 @@ let sparkleHome = sparkleCandidates.first {
 let package = Package(
     name: "LeafReader",
     platforms: [
-        .macOS(.v12)
+        .macOS(.v14)
     ],
     products: [
         .executable(name: "LeafReaderApp", targets: ["LeafReaderApp"])
