@@ -29,13 +29,19 @@ extension ReaderWindowController {
     /// from a sample of its first pages. Must run before any occurrence scanning
     /// or lemma grouping so every grouping key uses the same language.
     func updateVocabularyDocumentLanguage() {
-        guard currentDocumentKind == .pdf, let document = pdfView.document else {
-            vocabularyDocumentLanguage = VocabularyLanguageDetector.fallback
+        if currentDocumentKind == .pdf, let document = pdfView.document {
+            vocabularyDocumentLanguage = VocabularyLanguageDetector.language(
+                pageCount: document.pageCount,
+                pageText: { document.page(at: $0)?.string }
+            )
             return
         }
+        // Web and EPUB documents have no page text to sample here, so the
+        // contexts saved with their words stand in. This must still run for
+        // them: leaving the previous document's language in place would
+        // lemmatize an English article with, say, German grammar.
         vocabularyDocumentLanguage = VocabularyLanguageDetector.language(
-            pageCount: document.pageCount,
-            pageText: { document.page(at: $0)?.string }
+            forContexts: storedWebWordRecords.map(\.context)
         )
     }
 

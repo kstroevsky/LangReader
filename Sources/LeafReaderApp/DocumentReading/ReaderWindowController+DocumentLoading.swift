@@ -93,6 +93,7 @@ extension ReaderWindowController {
         currentTOCItems = document.tocItems
         storedWordRecords.removeAll()
         storedWebWordRecords = loadStoredWebWordRecords()
+        updateVocabularyDocumentLanguage()
         loadReadingNotesForCurrentDocument()
         aiPanel.loadLinkedWordBubbles(webWordRecordStore?.linkedWordBubbles(from: storedWebWordRecords) ?? [])
         loadSavedAIConversationIfNeeded()

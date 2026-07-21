@@ -45,7 +45,8 @@ extension ReaderWindowController {
                 let fingerprint = VocabularyLibraryBuildCache.fingerprint(
                     pdf: currentPDFRecords,
                     web: currentWebRecords,
-                    labelGeneration: GermanLabelCacheGeneration.current
+                    labelGeneration: GermanLabelCacheGeneration.current,
+                    language: language
                 )
                 currentRecords = self.vocabularyLibraryBuildCache.records(
                     documentID: currentDocumentID,
@@ -103,15 +104,16 @@ extension ReaderWindowController {
             } else {
                 let pdfRecords = PDFWordRecordStore(fileMD5: documentID).load()
                 let webRecords = WebWordRecordStore(fileMD5: documentID).load()
-                let fingerprint = VocabularyLibraryBuildCache.fingerprint(
-                    pdf: pdfRecords,
-                    web: webRecords,
-                    labelGeneration: GermanLabelCacheGeneration.current
-                )
                 // This document is not the open one, so its language has to come
                 // from the contexts saved with its own words.
                 let otherLanguage = VocabularyLanguageDetector.language(
                     forContexts: pdfRecords.compactMap(\.context) + webRecords.map(\.context)
+                )
+                let fingerprint = VocabularyLibraryBuildCache.fingerprint(
+                    pdf: pdfRecords,
+                    web: webRecords,
+                    labelGeneration: GermanLabelCacheGeneration.current,
+                    language: otherLanguage
                 )
                 records = vocabularyLibraryBuildCache.records(
                     documentID: documentID,

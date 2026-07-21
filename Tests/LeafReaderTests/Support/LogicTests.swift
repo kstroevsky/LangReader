@@ -697,6 +697,7 @@ private let tests: [(String, () throws -> Void)] = [
     ("English form labeling", VocabularyLogicTests.testEnglishFormLabeling),
     ("Form labeling routes by language", VocabularyLogicTests.testFormLabelingRoutesByLanguage),
     ("Mis-filed occurrence detection", VocabularyLogicTests.testMisfiledOccurrenceDetection),
+    ("Fragment prune is language-independent", VocabularyLogicTests.testFragmentPruneIsLanguageIndependent),
     ("Vocabulary answerless list mode", VocabularyLogicTests.testVocabularyAnswerlessListMode),
     ("Vocabulary review card selector", VocabularyLogicTests.testVocabularyReviewCardSelector),
     ("Vocabulary daily goal policy", VocabularyLogicTests.testVocabularyDailyGoalPolicy),

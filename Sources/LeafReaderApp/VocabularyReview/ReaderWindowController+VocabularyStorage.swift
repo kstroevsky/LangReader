@@ -80,14 +80,27 @@ extension ReaderWindowController {
             let surface = record.occurrenceSurfaceForm
             let context = record.context ?? ""
             let groupLemma = record.vocabularyGroupingText
-            let isLineWrapFragment = VocabularyTextPolicy.surfaceOccursOnlyWithinLargerWord(
-                surface: surface, context: context
-            )
+
+            // 1. Hyphenated-line-break fragment. Decided on the string alone:
+            // the surface never stands as a whole word and is not a complete
+            // hyphen-delimited component of a compound. Keeping this test
+            // language-independent matters because the prune deletes data — a
+            // language-dependent test would destroy real words whenever a
+            // document's language was detected wrong.
+            if VocabularyTextPolicy.surfaceOccursOnlyAsInnerSubstring(surface: surface, context: context) {
+                return true
+            }
+
+            // 2. Case-folded homograph: the surface folds to the group's key but
+            // is spelled with different case, i.e. the noun "Folgen" filed under
+            // the verb group "folgen". This one needs the lemma, so it is
+            // language-dependent — but it is narrow, and a wrongly-kept record
+            // is merely an extra occurrence, never a deleted one.
             let isCaseFoldedHomograph =
                 VocabularyTextPolicy.canonicalVocabularyKey(surface)
                     == VocabularyTextPolicy.canonicalVocabularyKey(groupLemma)
                 && !VocabularyTextPolicy.surfaceMatchesLemmaExactly(surface, groupLemma)
-            guard isLineWrapFragment || isCaseFoldedHomograph else { return false }
+            guard isCaseFoldedHomograph else { return false }
             return !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
                 surfaceForm: surface,
                 groupLemma: groupLemma,

@@ -580,72 +580,85 @@ enum VocabularyLogicTests {
     }
 
     /// The load-time prune that heals libraries saved before the recognizer fix.
-    /// A candidate is either a line-break fragment (surface only inside a larger
-    /// word) or a case-folded homograph (surface folds to the group key but is
-    /// spelled with different case). A candidate is dropped only if the fixed
-    /// group scan no longer assigns it to the group, so same-line compound
-    /// constituents ("Abteilung" in "IT-Abteilung") and differently-keyed
-    /// inflections ("folgende", "folgt") are always kept.
+    ///
+    /// It deletes data, so its broad gate — the hyphenated-line-break fragment —
+    /// is decided on the string alone and behaves identically in every language.
+    /// Only the narrow homograph gate consults the language, and it fails safe:
+    /// an unknown language keeps the record rather than deleting it.
     static func testMisfiledOccurrenceDetection() throws {
-        // Line-break fragment candidates: surface only ever inside a larger word.
+        // Fragments: the surface never stands alone and is not a hyphen-delimited
+        // component, so it is an artifact in any language.
         for (surface, context) in [
             ("folg", "Für den Erfolg muss das richtige Portal gewählt werden."),
             ("kommt", "Worauf es noch ankommt, erfährst du in den Tipps."),
-            ("Abteilung", "Und ihr von der IT-Abteilung organisiert das doch, oder?")
+            ("gekommen", "Ich bin nur heute aus dem Urlaub wiedergekommen.")
         ] {
             try expect(
-                VocabularyTextPolicy.surfaceOccursOnlyWithinLargerWord(surface: surface, context: context),
-                "'\(surface)' only appears inside a larger word in its context ⇒ candidate"
+                VocabularyTextPolicy.surfaceOccursOnlyAsInnerSubstring(surface: surface, context: context),
+                "'\(surface)' appears only inside a longer word and is an artifact"
             )
         }
+
+        // Real words are never flagged: whole words, hyphen-delimited compound
+        // components, sentence-initial capitals, empty and absent surfaces.
         for (surface, context) in [
+            ("Abteilung", "Und ihr von der IT-Abteilung organisiert das doch, oder?"),
+            ("Abteilung", "Sie arbeiten in der Physiotherapie-Abteilung eines Krankenhauses."),
+            // Trailing punctuation must not hide the compound component: this
+            // exact context pruned the record and let the scanner re-create it,
+            // oscillating the stored count on every load.
+            ("Abteilung", "170 Nummer 39 Thomas Barthel Thomas Barthel, IT-Abteilung."),
             ("folgt", "Zuerst kommt der Antrag, dann folgt der Bescheid."),
-            ("Portal", "Man muss das richtige Portal wählen, sonst klappt es nicht."),
+            ("Look", "Look at the beautiful painting hanging on the far wall."),
+            ("Women", "Women artists were central to the surrealist movement then."),
             ("folg", ""),
             ("folg", "Ein Satz ganz ohne das Wort.")
         ] {
             try expect(
-                !VocabularyTextPolicy.surfaceOccursOnlyWithinLargerWord(surface: surface, context: context),
-                "'\(surface)' is a whole word / empty / absent and is not a line-break candidate"
+                !VocabularyTextPolicy.surfaceOccursOnlyAsInnerSubstring(surface: surface, context: context),
+                "'\(surface)' is a real word (or absent) and must never be flagged"
             )
         }
 
-        // Case-folded homograph: same key as the group lemma, different case.
-        try expect(
-            VocabularyTextPolicy.canonicalVocabularyKey("Folgen") == VocabularyTextPolicy.canonicalVocabularyKey("folgen")
-                && !VocabularyTextPolicy.surfaceMatchesLemmaExactly("Folgen", "folgen"),
-            "the noun 'Folgen' folds to the verb group key 'folgen' but differs by case ⇒ candidate"
-        )
-        try expect(
-            VocabularyTextPolicy.surfaceMatchesLemmaExactly("folgen", "folgen"),
-            "the verb base 'folgen' matches the group lemma exactly ⇒ not a candidate"
-        )
-
-        // Group re-scan decides candidates.
-        try expect(
-            !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
-                surfaceForm: "folg", groupLemma: "folgen",
-                in: "Für den Erfolg muss das richtige Portal gewählt werden.",
-                language: .german
-            ),
-            "'folg' from 'Erfolg' is no longer assigned to group 'folgen' ⇒ prune"
-        )
+        // The homograph gate needs the lemma, so it is language-dependent — but
+        // it only ever keeps extra records when the language is unknown.
         try expect(
             !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
                 surfaceForm: "Folgen", groupLemma: "folgen",
-                in: "Welche Folgen hätte das?",
-                language: .german
+                in: "Welche Folgen hätte das?", language: .german
             ),
-            "the noun 'Folgen' (lemma 'Folge') is no longer assigned to verb group 'folgen' ⇒ prune"
+            "the noun 'Folgen' is not a member of the German verb group 'folgen'"
         )
         try expect(
             GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
                 surfaceForm: "Abteilung", groupLemma: "Abteilung",
-                in: "Und ihr von der IT-Abteilung organisiert das doch, oder?",
-                language: .german
+                in: "Und ihr von der IT-Abteilung organisiert das doch, oder?", language: .german
             ),
-            "'Abteilung' in 'IT-Abteilung' is still assigned to its group ⇒ keep"
+            "'Abteilung' in 'IT-Abteilung' is still assigned to its group"
         )
+    }
+
+    /// The destructive half of the prune must not depend on the detected
+    /// language: a document whose language was guessed wrong would otherwise
+    /// have real words deleted.
+    static func testFragmentPruneIsLanguageIndependent() throws {
+        let cases = [
+            ("folg", "Für den Erfolg muss das richtige Portal gewählt werden.", true),
+            ("kommt", "Worauf es noch ankommt, erfährst du in den Tipps.", true),
+            ("gestellt", "Bei der Überprüfung haben Sie festgestellt, dass sie fehlerhaft ist.", true),
+            ("Abteilung", "Und ihr von der IT-Abteilung organisiert das doch, oder?", false),
+            ("Abteilung", "170 Nummer 39 Thomas Barthel Thomas Barthel, IT-Abteilung.", false),
+            ("Look", "Look at the beautiful painting hanging on the far wall.", false)
+        ]
+        // The gate takes no language at all, so its verdict is fixed. Asserting
+        // the exact verdicts makes a future language-dependent rewrite fail here.
+        for (surface, context, expected) in cases {
+            try expectEqual(
+                VocabularyTextPolicy.surfaceOccursOnlyAsInnerSubstring(surface: surface, context: context),
+                expected,
+                "'\(surface)' must get the same verdict regardless of any document language"
+            )
+        }
     }
 
     /// The German noun "Folgen" (lemma "Folge") must never be filed under the
