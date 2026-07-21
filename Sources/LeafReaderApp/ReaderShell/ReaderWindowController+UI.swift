@@ -110,18 +110,16 @@ extension ReaderWindowController {
     }
 
     func configurePDFReaderView() {
-        pdfView = EdgePagingPDFView()
+        pdfView = ReaderPDFView()
         pdfView.autoScales = true
-        pdfView.displayMode = .singlePage
+        pdfView.displayMode = PDFPageLayoutPolicy.displayMode(isTwoPage: false)
+        pdfView.displayDirection = .vertical
         pdfView.displayBox = .cropBox
         pdfView.displaysPageBreaks = true
         pdfView.backgroundColor = ReaderTheme.selected.chromeBackgroundColor
         pdfView.delegate = self
         pdfView.onDroppedDocumentURLs = { [weak self] urls in
             self?.handleDroppedDocumentURLs(urls)
-        }
-        pdfView.onScrollPastPageEdge = { [weak self] direction in
-            self?.turnPageFromScroll(direction)
         }
     }
 

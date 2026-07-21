@@ -38,6 +38,7 @@ let package = Package(
                 .linkedFramework("Cocoa"),
                 .linkedFramework("CryptoKit"),
                 .linkedFramework("Network"),
+                .linkedFramework("NaturalLanguage"),
                 .linkedFramework("PDFKit"),
                 .linkedFramework("WebKit"),
                 .linkedLibrary("sqlite3"),

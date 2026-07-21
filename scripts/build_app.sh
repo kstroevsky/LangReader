@@ -339,6 +339,7 @@ for ARCH in "${BUILD_ARCHS[@]}"; do
     -framework CryptoKit \
     -framework AVFoundation \
     -framework Network \
+    -framework NaturalLanguage \
     -framework Sparkle \
     -lsqlite3 \
     -Xlinker -rpath \

@@ -50,7 +50,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     static let capsuleButtonIdentifier = NSUserInterfaceItemIdentifier("leafReaderCapsuleButton")
     static let readAloudLanguageProbePageLimit = 3
 
-    var pdfView: EdgePagingPDFView!
+    var pdfView: ReaderPDFView!
     var webView: ReaderWebView!
     let contentArea = NSView()
     let pdfContainer = ClippingView()
@@ -78,6 +78,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var tocButton: NSButton!
     var recentButton: NSButton!
     var notesButton: NSButton!
+    var vocabularyLibraryButton: NSButton!
     var vocabularyButton: NSButton!
     var farthestPositionButton: NSButton!
     var prevButton: NSButton!
@@ -86,6 +87,8 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var readAloudStopButton: NSButton!
     var pageLayoutButton: NSButton!
     var cropButton: NSButton!
+    var relatedFormsToggle: NSView!
+    var relatedFormsSwitch: NSSwitch!
     var searchButton: NSButton!
     var searchUnderlineButton: SearchUnderlineButton!
     let embeddingStatusLabel = NSTextField(labelWithString: "")
@@ -96,10 +99,6 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     weak var zoomGroupView: NSView?
     var documentSession = DocumentSession()
     var documentPresentationState = DocumentPresentationState()
-    var accumulatedPDFTrackpadScroll: CGFloat = 0
-    var lastPDFTrackpadPageTurn = Date.distantPast
-    var didTurnPageForCurrentPDFTrackpadGesture = false
-    var lastPDFTrackpadEdgeDirection: EdgePagingPDFView.ScrollPageDirection?
     var searchResults: [PDFSelection] = []
     var searchResultIndex = 0
     var lastSearchQuery = ""
@@ -118,6 +117,8 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var recentDocumentsPanelController: RecentDocumentsPanelController?
     var readingNotesPanelController: ReadingNotesPanelController?
     var vocabularyPanelController: VocabularyPanelController!
+    var vocabularyLibraryWindowController: VocabularyLibraryWindowController!
+    let vocabularyLibraryBuildCache = VocabularyLibraryBuildCache()
     lazy var selectionToolbarCoordinator = SelectionToolbarCoordinator(owner: self)
     let vocabularyReviewSession = VocabularyReviewSession()
     var aiHandleLeadingConstraint: NSLayoutConstraint!
@@ -127,6 +128,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     override init(window: NSWindow?) {
         super.init(window: window)
         vocabularyPanelController = VocabularyPanelController(owner: self)
+        vocabularyLibraryWindowController = VocabularyLibraryWindowController(owner: self)
     }
 
     required init?(coder: NSCoder) {
@@ -175,6 +177,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
         pdfWordRecordsSaveTask.cancel()
         webWordRecordsSaveTask.cancel()
         vocabularyPanelController.close()
+        vocabularyLibraryWindowController.close()
         webView?.configuration.userContentController.removeScriptMessageHandler(forName: "selectionChanged")
         webView?.configuration.userContentController.removeScriptMessageHandler(forName: "scrollChanged")
         webView?.configuration.userContentController.removeScriptMessageHandler(forName: "webWordClicked")

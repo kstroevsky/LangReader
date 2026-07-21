@@ -9,6 +9,7 @@ extension ReaderWindowController {
             clearCurrentWebWordRecords()
         }
         aiPanel.loadLinkedWordBubbles([])
+        vocabularyLibraryWindowController.scheduleReload()
     }
 
     func clearCurrentPDFWordRecords() {

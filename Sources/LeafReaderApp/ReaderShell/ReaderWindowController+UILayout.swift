@@ -26,6 +26,8 @@ enum ReaderUILayout {
     static let settingsButtonSize: CGFloat = 32
     static let shelfButtonLeading: CGFloat = 18
     static let shelfButtonWidth: CGFloat = 88
+    static let vocabularyLibraryButtonLeading: CGFloat = 10
+    static let vocabularyLibraryButtonWidth: CGFloat = 88
     static let notesButtonLeading: CGFloat = 10
     static let notesButtonWidth: CGFloat = 86
     static let vocabularyButtonLeading: CGFloat = 10
@@ -55,6 +57,7 @@ enum ReaderUILayout {
     static let searchButtonLeading: CGFloat = 2
     static let iconButtonSize: CGFloat = 28
 
+    static let relatedFormsToggleTrailing: CGFloat = -12
     static let pageLayoutTrailing: CGFloat = -8
     static let pageLayoutButtonWidth: CGFloat = 84
     static let cropButtonTrailing: CGFloat = -8
@@ -161,7 +164,12 @@ extension ReaderWindowController {
             recentButton.widthAnchor.constraint(equalToConstant: ReaderUILayout.shelfButtonWidth),
             recentButton.heightAnchor.constraint(equalToConstant: ReaderUILayout.bottomButtonHeight),
 
-            vocabularyButton.leadingAnchor.constraint(equalTo: recentButton.trailingAnchor, constant: ReaderUILayout.vocabularyButtonLeading),
+            vocabularyLibraryButton.leadingAnchor.constraint(equalTo: recentButton.trailingAnchor, constant: ReaderUILayout.vocabularyLibraryButtonLeading),
+            vocabularyLibraryButton.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
+            vocabularyLibraryButton.widthAnchor.constraint(equalToConstant: ReaderUILayout.vocabularyLibraryButtonWidth),
+            vocabularyLibraryButton.heightAnchor.constraint(equalToConstant: ReaderUILayout.bottomButtonHeight),
+
+            vocabularyButton.leadingAnchor.constraint(equalTo: vocabularyLibraryButton.trailingAnchor, constant: ReaderUILayout.vocabularyButtonLeading),
             vocabularyButton.centerYAnchor.constraint(equalTo: bottomBar.centerYAnchor),
             vocabularyButton.widthAnchor.constraint(equalToConstant: ReaderUILayout.vocabularyButtonWidth),
             vocabularyButton.heightAnchor.constraint(equalToConstant: ReaderUILayout.bottomButtonHeight),
@@ -179,7 +187,11 @@ extension ReaderWindowController {
             titleLabel.leadingAnchor.constraint(equalTo: coverImageView.trailingAnchor, constant: ReaderUILayout.titleLeading),
             titleLabel.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
             titleLabel.widthAnchor.constraint(lessThanOrEqualToConstant: ReaderUILayout.titleMaxWidth),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: readAloudButton.leadingAnchor, constant: -ReaderUILayout.titleToReadAloudMinimum),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: relatedFormsToggle.leadingAnchor, constant: -ReaderUILayout.titleToReadAloudMinimum),
+
+            relatedFormsToggle.trailingAnchor.constraint(equalTo: readAloudButton.leadingAnchor, constant: ReaderUILayout.relatedFormsToggleTrailing),
+            relatedFormsToggle.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
+            relatedFormsToggle.heightAnchor.constraint(equalToConstant: ReaderUILayout.toolbarButtonHeight),
 
             readAloudButton.trailingAnchor.constraint(equalTo: readAloudStopButton.leadingAnchor, constant: -ReaderUILayout.readAloudStopLeading),
             readAloudButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),

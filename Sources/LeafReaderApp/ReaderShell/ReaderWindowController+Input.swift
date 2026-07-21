@@ -20,8 +20,7 @@ extension ReaderWindowController {
                 DispatchQueue.main.async { [weak self] in
                     self?.updateZoomLabel()
                 }
-                guard self.handlePDFTrackpadScroll(event) else { return event }
-                return nil
+                return event
             case .leftMouseDown:
                 self.hideSelectionToolbarIfClickingOutsideReader(event)
                 if self.handleStoredWordClick(event) {
@@ -106,115 +105,6 @@ extension ReaderWindowController {
             return
         }
         hideSelectionToolbar()
-    }
-
-    func handlePDFTrackpadScroll(_ event: NSEvent) -> Bool {
-        guard currentDocumentKind == .pdf,
-              event.hasPreciseScrollingDeltas,
-              abs(event.scrollingDeltaY) > abs(event.scrollingDeltaX),
-              abs(event.scrollingDeltaY) > 0,
-              isMouseEventInsidePDFArea(event) else {
-            return false
-        }
-
-        guard let edgeDirection = pdfTrackpadPageDirectionAtEdge(for: event) else {
-            accumulatedPDFTrackpadScroll = 0
-            didTurnPageForCurrentPDFTrackpadGesture = false
-            lastPDFTrackpadEdgeDirection = nil
-            return false
-        }
-
-        guard event.momentumPhase == [] else { return true }
-
-        if event.phase == .began {
-            accumulatedPDFTrackpadScroll = 0
-            didTurnPageForCurrentPDFTrackpadGesture = false
-            lastPDFTrackpadEdgeDirection = nil
-        }
-
-        if event.phase == .ended || event.phase == .cancelled {
-            accumulatedPDFTrackpadScroll = 0
-            didTurnPageForCurrentPDFTrackpadGesture = false
-            lastPDFTrackpadEdgeDirection = nil
-            return true
-        }
-
-        guard !didTurnPageForCurrentPDFTrackpadGesture else { return true }
-
-        if let lastDirection = lastPDFTrackpadEdgeDirection, lastDirection != edgeDirection {
-            accumulatedPDFTrackpadScroll = 0
-        }
-        lastPDFTrackpadEdgeDirection = edgeDirection
-
-        accumulatedPDFTrackpadScroll += abs(event.scrollingDeltaY)
-        let threshold = pdfTrackpadPageTurnThreshold()
-        guard abs(accumulatedPDFTrackpadScroll) >= threshold else { return true }
-
-        let now = Date()
-        guard now.timeIntervalSince(lastPDFTrackpadPageTurn) > PDFPagingPolicy.trackpadPageTurnCooldown else {
-            accumulatedPDFTrackpadScroll = 0
-            return true
-        }
-
-        lastPDFTrackpadPageTurn = now
-        accumulatedPDFTrackpadScroll = 0
-        didTurnPageForCurrentPDFTrackpadGesture = true
-        lastPDFTrackpadEdgeDirection = nil
-        turnPageFromScroll(edgeDirection)
-        return true
-    }
-
-    func pdfTrackpadPageDirectionAtEdge(for event: NSEvent) -> EdgePagingPDFView.ScrollPageDirection? {
-        guard let scrollView = firstScrollView(in: pdfView) else {
-            return nil
-        }
-        let clipView = scrollView.contentView
-        guard let documentView = scrollView.documentView else {
-            return nil
-        }
-        let clipHeight = clipView.bounds.height
-        let documentHeight = documentView.bounds.height
-        guard documentHeight > clipHeight + PDFPagingPolicy.documentSizeTolerance else {
-            return nil
-        }
-
-        let documentBounds = documentView.bounds
-        let clipBounds = clipView.bounds
-        let scrollerValue = scrollView.verticalScroller?.doubleValue
-        let isAtTop = clipBounds.minY <= documentBounds.minY + PDFPagingPolicy.trackpadEdgeSlop
-            || scrollerValue.map { $0 <= PDFPagingPolicy.trackpadScrollerTopLimit } == true
-        let isAtBottom = clipBounds.maxY >= documentBounds.maxY - PDFPagingPolicy.trackpadEdgeSlop
-            || scrollerValue.map { $0 >= PDFPagingPolicy.trackpadScrollerBottomLimit } == true
-
-        if isAtTop, event.scrollingDeltaY > 0 {
-            return .previous
-        }
-        if isAtBottom, event.scrollingDeltaY < 0 {
-            return .next
-        }
-        return nil
-    }
-
-    func pdfTrackpadPageTurnThreshold() -> CGFloat {
-        guard let scrollView = firstScrollView(in: pdfView),
-              let documentView = scrollView.documentView else {
-            return PDFPagingPolicy.trackpadFallbackPageTurnThreshold
-        }
-        let clipHeight = scrollView.contentView.bounds.height
-        let documentHeight = documentView.bounds.height
-        return PDFPagingPolicy.trackpadPageTurnThreshold(clipHeight: clipHeight, documentHeight: documentHeight)
-    }
-
-    func firstScrollView(in view: NSView) -> NSScrollView? {
-        if let scrollView = view as? NSScrollView {
-            return scrollView
-        }
-        for subview in view.subviews {
-            if let scrollView = firstScrollView(in: subview) {
-                return scrollView
-            }
-        }
-        return nil
     }
 
     func isMouseEventInsidePDFArea(_ event: NSEvent) -> Bool {

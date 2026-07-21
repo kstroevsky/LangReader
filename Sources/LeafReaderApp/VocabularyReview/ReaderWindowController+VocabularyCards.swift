@@ -123,10 +123,20 @@ extension ReaderWindowController {
         if !record.occurrences.isEmpty {
             let groupKey = VocabularyTextPolicy.canonicalVocabularyKey(word)
             let isExpanded = vocabularyState.expandedOccurrenceKeys.contains(groupKey)
+            // Only a count here. Listing every labeled form inline made this
+            // button's title — and therefore the whole panel, which sizes to
+            // its widest row — grow with the number of inflections. The forms
+            // themselves are shown in the library detail, where they can wrap.
+            let formPrefix = record.forms.count > 1
+                ? AppText.localized(
+                    "词形（\(record.forms.count)） · ",
+                    "Forms (\(record.forms.count)) · "
+                )
+                : ""
             let disclosure = vocabularyActionButton(
                 title: AppText.localized(
-                    "出现位置（\(record.occurrences.count)）\(isExpanded ? " ▲" : " ▼")",
-                    "Occurrences (\(record.occurrences.count)) \(isExpanded ? "▲" : "▼")"
+                    "\(formPrefix)出现位置（\(record.occurrences.count)）\(isExpanded ? " ▲" : " ▼")",
+                    "\(formPrefix)Occurrences (\(record.occurrences.count)) \(isExpanded ? "▲" : "▼")"
                 ),
                 target: self,
                 action: #selector(toggleVocabularyOccurrences(_:)),
@@ -143,7 +153,7 @@ extension ReaderWindowController {
                 occurrenceStack.spacing = 6
                 occurrenceStack.translatesAutoresizingMaskIntoConstraints = false
                 record.occurrences
-                    .map { vocabularyOccurrenceRow($0, theme: theme) }
+                    .map { vocabularyOccurrenceRow($0, word: word, theme: theme) }
                     .forEach(occurrenceStack.addArrangedSubview)
                 contentStack.addArrangedSubview(occurrenceStack)
                 occurrenceStack.widthAnchor.constraint(equalTo: contentStack.widthAnchor).isActive = true
@@ -167,7 +177,7 @@ extension ReaderWindowController {
         return card
     }
 
-    private func vocabularyOccurrenceRow(_ occurrence: VocabularyOccurrence, theme: ReaderTheme) -> NSView {
+    private func vocabularyOccurrenceRow(_ occurrence: VocabularyOccurrence, word: String, theme: ReaderTheme) -> NSView {
         let row = NSView()
         row.wantsLayer = true
         row.layer?.cornerRadius = 7
@@ -187,10 +197,15 @@ extension ReaderWindowController {
             ? occurrence.context
             : AppText.localized("没有可用的上下文", "No context available")
         let contextLabel = NSTextField(wrappingLabelWithString: context)
-        contextLabel.font = NSFont.systemFont(ofSize: 12)
-        contextLabel.textColor = vocabularyBodyTextColor(for: theme)
+        contextLabel.attributedStringValue = vocabularyExampleAttributedString(
+            context,
+            word: occurrence.surfaceForm ?? word,
+            fontSize: 12,
+            textColor: vocabularyBodyTextColor(for: theme)
+        )
         contextLabel.maximumNumberOfLines = 3
         contextLabel.lineBreakMode = .byWordWrapping
+        contextLabel.allowsEditingTextAttributes = true
         contextLabel.isSelectable = true
         contextLabel.translatesAutoresizingMaskIntoConstraints = false
 

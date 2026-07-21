@@ -85,7 +85,14 @@ extension AppDelegate {
         ))
         menu.addItem(.separator())
         menu.addItem(menuItem(
-            AppText.localized("背单词", "Vocab"),
+            AppText.localized("生词", "Words"),
+            action: #selector(ReaderWindowController.showVocabularyLibrary),
+            key: "d",
+            target: controller,
+            modifiers: [.command, .shift]
+        ))
+        menu.addItem(menuItem(
+            AppText.localized("背单词", "Review Vocabulary"),
             action: #selector(ReaderWindowController.showVocabularyBook),
             key: "d",
             target: controller

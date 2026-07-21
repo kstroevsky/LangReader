@@ -3,7 +3,9 @@ import Cocoa
 struct StoredPDFWordRecord: Codable {
     let id: String
     var vocabularyID: String? = nil
-    let word: String
+    var word: String
+    var lemma: String? = nil
+    var surfaceForm: String? = nil
     let pageIndex: Int
     let bounds: StoredPDFWordRect
     var context: String?
@@ -13,6 +15,26 @@ struct StoredPDFWordRecord: Codable {
     var dictionaryFrequency: Int? = nil
     let createdAt: Date
     var srs: VocabularySRSState?
+
+    var vocabularyGroupingText: String {
+        guard let lemma = lemma?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !lemma.isEmpty else { return word }
+        return lemma
+    }
+
+    var occurrenceSurfaceForm: String {
+        guard let surfaceForm = surfaceForm?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !surfaceForm.isEmpty else { return word }
+        return surfaceForm
+    }
+
+    /// Whether this occurrence is the exact form the user saved, as opposed to
+    /// a different inflected form the lemma matcher turned up. The saved form
+    /// keeps the standard highlight; the other forms are drawn faded.
+    var matchesSavedSurfaceForm: Bool {
+        VocabularyTextPolicy.canonicalVocabularyKey(occurrenceSurfaceForm)
+            == VocabularyTextPolicy.canonicalVocabularyKey(word)
+    }
 }
 
 struct PDFWordRecordStore {

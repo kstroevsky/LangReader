@@ -26,9 +26,6 @@ enum VocabularyRecordDeletionPlanner {
     }
 
     private static func normalizedWord(_ word: String) -> String {
-        word
-            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
+        VocabularyTextPolicy.canonicalVocabularyKey(word)
     }
 }

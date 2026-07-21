@@ -77,6 +77,7 @@ final class SelectionActionToolbar: NSView {
         action: nil
     )
     private var contextAction: ContextAction = .summarize
+    private var vocabularySaveActionIsSaved = false
 
     private var actionButtons: [SelectionActionButton] {
         [
@@ -170,10 +171,7 @@ final class SelectionActionToolbar: NSView {
         contextButton.symbolName = contextAction == .addWord
             ? "text.badge.plus"
             : "list.bullet.rectangle"
-        saveButton.title = AppText.localized("保存", "Save")
-        saveButton.symbolName = "bookmark"
-        saveButton.isEnabled = true
-        saveButton.toolTip = AppText.localized("保存单词及其在当前 PDF 中的全部位置", "Save the word and every occurrence in this PDF")
+        updateVocabularySaveActionPresentation()
         speakButton.title = AppText.localized("朗读", "Speak")
         noteButton.title = AppText.localized("笔记", "Note")
         copyButton.title = AppText.localized("复制", "Copy")
@@ -189,6 +187,8 @@ final class SelectionActionToolbar: NSView {
     func applyConfiguration(_ configuration: SelectionToolbarConfiguration) {
         setContextAction(configuration.contextAction)
         setDisplayMode(configuration.displayMode)
+        vocabularySaveActionIsSaved = configuration.isVocabularySelectionSaved
+        updateVocabularySaveActionPresentation()
         setVocabularySaveActionVisible(configuration.showsVocabularySaveAction)
     }
 
@@ -201,23 +201,28 @@ final class SelectionActionToolbar: NSView {
     }
 
     func showSaveResult(found: Int, inserted: Int) {
-        saveButton.title = inserted > 0
-            ? AppText.localized("已保存", "Saved")
-            : AppText.localized("已存在", "Saved")
-        saveButton.symbolName = "checkmark"
-        saveButton.isEnabled = false
+        vocabularySaveActionIsSaved = true
+        updateVocabularySaveActionPresentation()
         saveButton.toolTip = AppText.localized(
-            "找到 \(found) 处，新保存 \(inserted) 处",
-            "\(found) occurrences, \(inserted) newly saved"
+            "已保存 \(found) 处；再次点击可移除",
+            "Saved \(found) occurrences; click again to remove them"
+        )
+        saveButton.applyTheme(ReaderTheme.selected)
+    }
+
+    func showRemoveResult(removed: Int) {
+        vocabularySaveActionIsSaved = false
+        updateVocabularySaveActionPresentation()
+        saveButton.toolTip = AppText.localized(
+            "已移除 \(removed) 处",
+            "Removed \(removed) occurrences"
         )
         saveButton.applyTheme(ReaderTheme.selected)
     }
 
     func showSaveFailure() {
-        saveButton.title = AppText.localized("保存失败", "Failed")
-        saveButton.symbolName = "exclamationmark.triangle"
-        saveButton.isEnabled = true
-        saveButton.toolTip = AppText.localized("无法保存单词，请重试", "The vocabulary could not be saved")
+        updateVocabularySaveActionPresentation()
+        saveButton.toolTip = AppText.localized("无法保存单词，请重试", "The vocabulary could not be saved; please try again")
         saveButton.applyTheme(ReaderTheme.selected)
     }
 
@@ -271,6 +276,25 @@ final class SelectionActionToolbar: NSView {
     private func setVocabularySaveActionVisible(_ visible: Bool) {
         saveButton.isHidden = !visible
         needsLayout = true
+    }
+
+    private func updateVocabularySaveActionPresentation() {
+        if vocabularySaveActionIsSaved {
+            saveButton.title = AppText.localized("移除", "Remove")
+            saveButton.symbolName = "trash"
+            saveButton.toolTip = AppText.localized(
+                "移除此单词及其在当前 PDF 中的全部位置",
+                "Remove this word and every occurrence in this PDF"
+            )
+        } else {
+            saveButton.title = AppText.localized("保存", "Save")
+            saveButton.symbolName = "bookmark"
+            saveButton.toolTip = AppText.localized(
+                "保存单词及其在当前 PDF 中的全部位置",
+                "Save the word and every occurrence in this PDF"
+            )
+        }
+        saveButton.isEnabled = true
     }
 
     private func configureStack() {

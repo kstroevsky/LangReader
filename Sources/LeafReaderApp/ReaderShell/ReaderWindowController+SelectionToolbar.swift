@@ -112,7 +112,8 @@ extension ReaderWindowController {
             isVocabularySelection: isVocabulary,
             queryCapability: capabilityState.queryCapability,
             shouldShowSpeakAction: shouldShowSelectionSpeakAction(for: text),
-            isPDFSelection: currentDocumentKind == .pdf
+            isPDFSelection: currentDocumentKind == .pdf,
+            isVocabularySelectionSaved: isPDFVocabularySelectionSaved(wordText)
         )
         selectionActionToolbar.applyConfiguration(configuration)
     }

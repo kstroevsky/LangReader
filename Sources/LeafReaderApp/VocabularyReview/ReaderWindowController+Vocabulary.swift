@@ -110,4 +110,14 @@ extension ReaderWindowController {
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }
+
+    func styleVocabularyActionButtons(in view: NSView) {
+        let theme = ReaderTheme.selected
+        if let button = view as? ThemedSettingsActionButton {
+            button.fillColor = vocabularyButtonBackgroundColor(for: theme)
+            button.strokeColor = vocabularyBorderColor(for: theme)
+            button.labelColor = vocabularyPrimaryTextColor(for: theme)
+        }
+        view.subviews.forEach(styleVocabularyActionButtons)
+    }
 }

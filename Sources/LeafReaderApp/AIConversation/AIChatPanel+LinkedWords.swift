@@ -1,31 +1,19 @@
 import Cocoa
 
 extension AIChatPanel {
+    /// Resets the Assistant to an empty state on document load.
+    ///
+    /// The panel used to be pre-filled here with every saved word's definition,
+    /// which made "Define" open onto a scrollable list of all words. The
+    /// Assistant is now word-focused — Define and clicking a saved word each show
+    /// a single focused card (`showFocusedWord`) — so there is nothing to
+    /// pre-load; the argument is kept only so callers need not change.
     func loadLinkedWordBubbles(_ records: [LinkedWordBubble]) {
         isRestoringSavedConversation = true
         isLoadingLinkedWordBubbles = true
         defer { isRestoringSavedConversation = false }
         defer { isLoadingLinkedWordBubbles = false }
-
-        transcriptStack.arrangedSubviews.forEach { view in
-            transcriptStack.removeArrangedSubview(view)
-            view.removeFromSuperview()
-        }
-        bubbleMetadataByID.removeAll()
-        bubbleBoxByLinkID.removeAll()
-        persistentBubbleIDs.removeAll()
-        lastNotifiedConversationSources.removeAll()
-        selectedLinkID = nil
-        conversationContext.reset()
-
-        for record in records.suffix(Self.maxInitialLinkedWordBubbles) {
-            appendBubble(role: AppText.userRole, text: vocabularyBubbleTitle(for: record.word), collapsible: false, linkID: record.id)
-            appendBubble(role: AppText.aiRole, text: record.answer, collapsible: false, renderMarkdown: true, linkID: record.id)
-            recordTranscript(role: AppText.userRole, text: vocabularyBubbleTitle(for: record.word), linkID: record.id)
-            recordTranscript(role: AppText.aiRole, text: record.answer, linkID: record.id)
-            appendMessage(ChatMessage(role: "user", content: record.question, linkID: record.id))
-            appendMessage(ChatMessage(role: "assistant", content: record.answer, linkID: record.id))
-        }
+        resetTranscript()
     }
 
     func scrollToLinkedBubble(id: String) {

@@ -54,21 +54,6 @@ private final class DebouncedTask {
     }
 }
 
-private enum ScrollPageDirection: Equatable {
-    case previous
-    case next
-}
-
-private func pageDirectionAtEdge(deltaY: Double, isAtTop: Bool, isAtBottom: Bool) -> ScrollPageDirection? {
-    if isAtTop, deltaY > 0 {
-        return .previous
-    }
-    if isAtBottom, deltaY < 0 {
-        return .next
-    }
-    return nil
-}
-
 private func shouldApplyCapturedPageScroll(capturedPageIndex: Int, documentPageCount: Int) -> Bool {
     capturedPageIndex >= 0 && capturedPageIndex < documentPageCount
 }
@@ -93,30 +78,22 @@ private func testEmbeddingWarmupIdlePolicy() throws {
     try expectEqual(EmbeddingWarmupPolicy.warmupDelay, 18.0, "warmup delay should remain explicit")
 }
 
-private func testPageScrollDirection() throws {
-    try expectEqual(pageDirectionAtEdge(deltaY: 12, isAtTop: true, isAtBottom: false), .previous, "scrolling upward at page top should go previous")
-    try expectEqual(pageDirectionAtEdge(deltaY: -12, isAtTop: false, isAtBottom: true), .next, "scrolling downward at page bottom should go next")
-    try expect(pageDirectionAtEdge(deltaY: 12, isAtTop: false, isAtBottom: true) == nil, "scrolling upward at bottom should not go previous")
-    try expect(pageDirectionAtEdge(deltaY: -12, isAtTop: true, isAtBottom: false) == nil, "scrolling downward at top should not go next")
-}
-
-private func testPDFPagingPolicy() throws {
-    try expectEqual(PDFPagingPolicy.wheelEdgeScrollThreshold, 40, "wheel edge threshold should remain explicit")
-    try expectEqual(PDFPagingPolicy.wheelPageTurnCooldown, 0.45, "wheel cooldown should prevent double page turns")
-    try expectEqual(PDFPagingPolicy.trackpadEdgeSlop, 12, "trackpad edge slop should remain explicit")
-    try expectEqual(PDFPagingPolicy.trackpadScrollerTopLimit, 0.001, "trackpad top scroller limit should avoid early turns")
-    try expectEqual(PDFPagingPolicy.trackpadScrollerBottomLimit, 0.999, "trackpad bottom scroller limit should avoid early turns")
-    try expectEqual(PDFPagingPolicy.trackpadPageTurnCooldown, 0.8, "trackpad cooldown should prevent double page turns")
+private func testPDFPageLayoutPolicy() throws {
     try expectEqual(
-        PDFPagingPolicy.trackpadPageTurnThreshold(clipHeight: 800, documentHeight: 801),
-        PDFPagingPolicy.trackpadShortPageTurnThreshold,
-        "short pages should require a stronger trackpad gesture"
+        PDFPageLayoutPolicy.displayMode(isTwoPage: false),
+        .singlePageContinuous,
+        "single-page layout should scroll continuously"
     )
     try expectEqual(
-        PDFPagingPolicy.trackpadPageTurnThreshold(clipHeight: 800, documentHeight: 1200),
-        PDFPagingPolicy.trackpadLongPageTurnThreshold,
-        "long pages should allow a lighter edge gesture"
+        PDFPageLayoutPolicy.displayMode(isTwoPage: true),
+        .twoUpContinuous,
+        "two-page layout should scroll continuously"
     )
+    try expect(PDFPageLayoutPolicy.isContinuous(.singlePageContinuous), "single-page continuous mode should be recognized")
+    try expect(PDFPageLayoutPolicy.isContinuous(.twoUpContinuous), "two-up continuous mode should be recognized")
+    try expect(!PDFPageLayoutPolicy.isContinuous(.singlePage), "paged single-page mode should not be recognized as continuous")
+    try expect(PDFPageLayoutPolicy.isTwoPage(.twoUpContinuous), "continuous two-up mode should retain two-page semantics")
+    try expect(!PDFPageLayoutPolicy.isTwoPage(.singlePageContinuous), "continuous single-page mode should retain single-page semantics")
 }
 
 private func testReaderSessionPolicy() throws {
@@ -238,6 +215,27 @@ private func testReaderAIContextTextCleanup() throws {
     try expect(ReaderAIContextBuilder.pdfTextAppearsToStartMidParagraph("and then the sentence continues"), "lowercase connector should look mid-paragraph")
     try expect(ReaderAIContextBuilder.pdfTextAppearsToEndMidParagraph("This sentence keeps going without punctuation"), "long unpunctuated line should look mid-paragraph")
     try expect(!ReaderAIContextBuilder.pdfTextAppearsToEndMidParagraph("This sentence is complete."), "terminal punctuation should end paragraph")
+
+    let repeatedWordPage = """
+    4 Erklärung: einer fehlerhaften Bedienung des Geräts.
+    🖨 Drucker / Schmidt & Zeller
+    Nach Rücksprache wurde festgestellt, dass die Fehler auf eine fehlerhafte
+    Bedienung zurückzuführen sind.
+    Wir möchten Sie daher informieren.
+    """
+    let exactRange = (repeatedWordPage as NSString).range(
+        of: "fehlerhafte",
+        options: [.backwards]
+    )
+    try expectEqual(
+        ReaderAIContextBuilder.selectedTextContext(
+            occurrenceRange: exactRange,
+            sourceText: repeatedWordPage,
+            radius: 24
+        ),
+        "Nach Rücksprache wurde festgestellt, dass die Fehler auf eine fehlerhafte Bedienung zurückzuführen sind.",
+        "range-aware context should use the exact PDF occurrence instead of an earlier inflected substring"
+    )
 }
 
 private func testReaderAIContextPolicy() throws {
@@ -535,6 +533,21 @@ private func testSpeechTextPolicyEnglishCandidate() throws {
     )
     try expect(SpeechTextPolicy.isLocalTTSCandidate("这是一段中文。"), "Chinese text should be accepted for local read aloud")
     try expect(!SpeechTextPolicy.isEnglishCandidate("12345"), "text without letters should be rejected")
+    try expectEqual(
+        SpeechTextPolicy.systemSpeechLanguageCode(for: "übersende"),
+        "de-DE",
+        "German umlauts should select the German system voice"
+    )
+    try expectEqual(
+        SpeechTextPolicy.systemSpeechLanguageCode(for: "Bewerbungsunterlagen"),
+        "de-DE",
+        "German compounds should select the German system voice"
+    )
+    try expectEqual(
+        SpeechTextPolicy.systemSpeechLanguageCode(for: "A short English sentence."),
+        "en-US",
+        "English text should retain the English system voice"
+    )
 }
 
 private func testSpeechTextPolicySegments() throws {
@@ -675,6 +688,11 @@ private func testKokoroWorkerResponseReaderBuffersPartialLines() throws {
 
 private let tests: [(String, () throws -> Void)] = [
     ("Vocabulary SRS", VocabularyLogicTests.testVocabularySRS),
+    ("German lemma batch equals sequential", VocabularyLogicTests.testGermanLemmaBatchMatchesSequential),
+    ("German lemma tagger reuse", VocabularyLogicTests.testGermanLemmaResolverTaggerReuse),
+    ("German lemma line-wrap fragment not false match", VocabularyLogicTests.testGermanLemmaLineWrapFragmentIsNotAFalseMatch),
+    ("German noun not grouped with verb homograph", VocabularyLogicTests.testGermanNounNotGroupedWithVerbHomograph),
+    ("Mis-filed occurrence detection", VocabularyLogicTests.testMisfiledOccurrenceDetection),
     ("Vocabulary answerless list mode", VocabularyLogicTests.testVocabularyAnswerlessListMode),
     ("Vocabulary review card selector", VocabularyLogicTests.testVocabularyReviewCardSelector),
     ("Vocabulary daily goal policy", VocabularyLogicTests.testVocabularyDailyGoalPolicy),
@@ -742,6 +760,32 @@ private let tests: [(String, () throws -> Void)] = [
     ("ECDICT lookup key normalization", ECDICTLogicTests.testLookupKeyNormalization),
     ("Answer providers", ECDICTLogicTests.testAnswerProviders),
     ("German dictionary inflected forms", GermanDictionaryLogicTests.testInflectedFormAndDefinitionParsing),
+    ("German verb inflection baseline", GermanLemmaFixtureTests.testVerbInflectionBaseline),
+    ("German verb inflection in sentence", GermanLemmaFixtureTests.testVerbInflectionInSentenceBaseline),
+    ("German noun plural baseline", GermanLemmaFixtureTests.testNounPluralBaseline),
+    ("German noun/verb disambiguation", GermanLemmaFixtureTests.testNounVerbDisambiguationBaseline),
+    ("German known lemma gaps", GermanLemmaFixtureTests.testKnownLemmaGaps),
+    ("German known part-of-speech gaps", GermanLemmaFixtureTests.testKnownPartOfSpeechGaps),
+    ("German separable verb gap", GermanLemmaFixtureTests.testSeparableVerbGap),
+    ("German form label Partizip II", GermanFormLabelerTests.testPartizipIIWithAuxiliary),
+    ("German form label verb-final clause", GermanFormLabelerTests.testPartizipIIInVerbFinalClause),
+    ("German form label clause boundary", GermanFormLabelerTests.testAuxiliaryInAnotherClauseIsNotBorrowed),
+    ("German form label lookalikes", GermanFormLabelerTests.testMorphologicalLookalikesAreNotPartizipII),
+    ("German form label finite forms", GermanFormLabelerTests.testInfinitiveAndFiniteForms),
+    ("German form label noun plurals", GermanFormLabelerTests.testNounPlurals),
+    ("German form label ambiguous nouns", GermanFormLabelerTests.testAmbiguousNounFormsStayUnlabeled),
+    ("German form label base forms", GermanFormLabelerTests.testBaseForms),
+    ("German form label input guards", GermanFormLabelerTests.testRejectsNonWordInput),
+    ("German form label without context", GermanFormLabelerTests.testMissingContextStillLabelsWhatItCan),
+    ("German form label rejects English", GermanFormLabelerTests.testEnglishTextIsNeverLabeled),
+    ("German flexion noun table", GermanFlexionParserTests.testParsesNounTable),
+    ("German flexion drops images", GermanFlexionParserTests.testDropsImageParameters),
+    ("German flexion starred variants", GermanFlexionParserTests.testCapturesStarredVariants),
+    ("German flexion verb table", GermanFlexionParserTests.testParsesVerbTable),
+    ("German flexion missing table", GermanFlexionParserTests.testReturnsNilWithoutATable),
+    ("German flexion resolves offline gaps", GermanFlexionParserTests.testResolvesLabelsTheOfflineRulesCannot),
+    ("German flexion ambiguous priority", GermanFlexionParserTests.testAmbiguousParameterMatchesUsePriority),
+    ("German flexion unknown lookups", GermanFlexionParserTests.testUnknownAndCaseInsensitiveLookups),
     ("Embedding key isolation", AISettingsLogicTests.testEmbeddingKeyIsolation),
     ("Embedding legacy key migration", AISettingsLogicTests.testEmbeddingLegacyKeyMigration),
     ("Embedding warmup idle policy", testEmbeddingWarmupIdlePolicy),
@@ -755,14 +799,14 @@ private let tests: [(String, () throws -> Void)] = [
     ("EPUB internal links and sanitizing", EPUBLogicTests.testEPUBInternalLinkTargetsAndSanitizing),
     ("Word record incremental store", VocabularyLogicTests.testWordRecordIncrementalStore),
     ("Word record legacy migration", VocabularyLogicTests.testWordRecordLegacyMigrationDoesNotReviveClearedData),
-    ("Page scroll direction", testPageScrollDirection),
-    ("PDF paging policy", testPDFPagingPolicy),
+    ("PDF page layout policy", testPDFPageLayoutPolicy),
     ("Reader session policy", testReaderSessionPolicy),
     ("Reader session PDF anchor", testReaderSessionStorePDFAnchor),
     ("Reader session farthest progress", testReaderSessionStoreFarthestProgress),
     ("Reader session web progress bounds", testReaderSessionStoreWebProgressBounds),
     ("Reader progress formatter", testReaderProgressFormatter),
     ("Vocabulary text policy", VocabularyLogicTests.testVocabularyTextPolicy),
+    ("German lemma grouping", VocabularyLogicTests.testGermanLemmaGrouping),
     ("Vocabulary exporter", VocabularyLogicTests.testVocabularyExporter),
     ("Reading note store round trip", ReadingNoteLogicTests.testReadingNoteStoreRoundTrip),
     ("Reading note store unavailable database", ReadingNoteLogicTests.testReadingNoteStoreUnavailableDatabase),

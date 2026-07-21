@@ -36,6 +36,8 @@ extension ReaderWindowController {
         updateCoverThumbnail(from: document)
         pageLayoutButton.isHidden = false
         cropButton.isHidden = false
+        relatedFormsToggle.isHidden = false
+        relatedFormsSwitch.state = showsRelatedWordForms ? .on : .off
         updatePDFMarginCropButton()
         applyPDFPageLayout(animated: false)
 
@@ -52,6 +54,7 @@ extension ReaderWindowController {
         RecentDocumentsStore.record(url: url, kind: .pdf)
         saveSession()
         scheduleDocumentEmbeddingWarmup(priorityPageIndex: currentEmbeddingPriorityIndex())
+        completePendingVocabularyLibraryNavigationIfNeeded()
         SpeechPlaybackCoordinator.shared.stopKokoroWorkerIfLanguageDiffers(from: currentReadAloudProbeText() ?? "")
         if let generation {
             finishDocumentLoadingAfterAIBubbles(generation: generation)
@@ -103,6 +106,7 @@ extension ReaderWindowController {
         coverImageView.isHidden = false
         pageLayoutButton.isHidden = true
         cropButton.isHidden = true
+        relatedFormsToggle.isHidden = true
         updateWebProgressLabel(0)
         zoomField.stringValue = "100%"
         if let htmlFileURL = document.htmlFileURL {
@@ -134,9 +138,6 @@ extension ReaderWindowController {
         lastPersonalVocabularyPDFPageIndex = nil
         lastPersonalVocabularyWebProgressBucket = nil
         cancelScheduledEmbeddingWarmup()
-        accumulatedPDFTrackpadScroll = 0
-        didTurnPageForCurrentPDFTrackpadGesture = false
-        lastPDFTrackpadEdgeDirection = nil
         highlightedSelectionKeys.removeAll()
         clearAISourceUnderlineTracking()
         clearSearchState()

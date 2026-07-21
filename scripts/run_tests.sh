@@ -47,6 +47,8 @@ excluded_logic_app_source() {
     ModalOverlayManager.swift|\
     PDFDocumentAgentIndex.swift|\
     PDFEmbeddingStore.swift|\
+    GermanFlexionStore.swift|\
+    GermanCachedFormLabeling.swift|\
     PDFWordRecordStore.swift|\
     Reader*State.swift|\
     ReaderDropContentView.swift|\
@@ -71,6 +73,7 @@ excluded_logic_app_source() {
     VocabularyDictionaryMetadataService.swift|\
     VocabularyFrequencyBackfillService.swift|\
     VocabularyRecordProvider.swift|\
+    VocabularyLibraryBuildCache.swift|\
     VocabularyReviewCardFooterBuilder.swift|\
     VocabularyReviewScoringService.swift|\
     VocabularySpeechCoordinator.swift|\
@@ -123,6 +126,8 @@ SQLITE_WORD_TEST_SOURCES=(
   "$APP_SOURCE_ROOT/Platform/Persistence/SQLiteSchemaMigrator.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/WordRecordSQLiteRowMapper.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/WordRecordSQLiteStore.swift"
+  "$APP_SOURCE_ROOT/VocabularyReview/GermanFlexionStore.swift"
+  "$APP_SOURCE_ROOT/VocabularyReview/GermanLabelCacheGeneration.swift"
 )
 
 PERSONAL_VOCABULARY_TEST_SOURCES=(
@@ -162,6 +167,9 @@ LOGIC_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/ReadAloud/SpeechRuntimeAvailabilityTests.swift"
   "$TEST_SOURCE_ROOT/VocabularyReview/ECDICTLogicTests.swift"
   "$TEST_SOURCE_ROOT/VocabularyReview/GermanDictionaryLogicTests.swift"
+  "$TEST_SOURCE_ROOT/VocabularyReview/GermanLemmaFixtureTests.swift"
+  "$TEST_SOURCE_ROOT/VocabularyReview/GermanFormLabelerTests.swift"
+  "$TEST_SOURCE_ROOT/VocabularyReview/GermanFlexionParserTests.swift"
   "$TEST_SOURCE_ROOT/VocabularyReview/VocabularyLogicTests.swift"
   "$TEST_SOURCE_ROOT/Support/LogicTests.swift"
 )
@@ -220,7 +228,22 @@ run_swift_test /tmp/leafreader-vocabulary-record-provider-tests \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularyTextPolicy.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularyExportRecord.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularyRecordProvider.swift" \
-  -framework Cocoa
+  "$APP_SOURCE_ROOT/VocabularyReview/GermanFormLabeler.swift" \
+  -framework Cocoa \
+  -framework NaturalLanguage
+
+run_swift_test /tmp/leafreader-vocabulary-library-record-provider-tests \
+  "$TEST_SOURCE_ROOT/VocabularyReview/VocabularyLibraryRecordProviderTests.swift" \
+  "$APP_SOURCE_ROOT/App/AppText.swift" \
+  "$APP_SOURCE_ROOT/DocumentReading/ReaderDocumentKind.swift" \
+  "$APP_SOURCE_ROOT/VocabularyReview/StoredPDFWordRect.swift" \
+  "$APP_SOURCE_ROOT/VocabularyReview/VocabularySRS.swift" \
+  "$APP_SOURCE_ROOT/VocabularyReview/VocabularyTextPolicy.swift" \
+  "$APP_SOURCE_ROOT/VocabularyReview/VocabularyExportRecord.swift" \
+  "$APP_SOURCE_ROOT/VocabularyReview/VocabularyLibraryModels.swift" \
+  "$APP_SOURCE_ROOT/VocabularyReview/GermanFormLabeler.swift" \
+  -framework Cocoa \
+  -framework NaturalLanguage
 
 run_swift_test /tmp/leafreader-logic-tests \
   "${LOGIC_APP_SOURCES[@]}" \
@@ -228,6 +251,7 @@ run_swift_test /tmp/leafreader-logic-tests \
   -framework PDFKit \
   -framework Cocoa \
   -framework Network \
+  -framework NaturalLanguage \
   -lsqlite3
 
 if [[ -n "${LEAFREADER_TEST_PDF_WITH_ANSWERS:-}" && -n "${LEAFREADER_TEST_PDF_WITHOUT_ANSWERS:-}" ]]; then
@@ -250,5 +274,9 @@ if [[ "${LEAFVOCABULARY_TEST_GERMAN_DICTIONARY:-0}" == "1" ]]; then
   run_swift_test /tmp/leafvocabulary-german-dictionary-live-tests \
     "$TEST_SOURCE_ROOT/VocabularyReview/GermanDictionaryLiveLookupTests.swift" \
     "$APP_SOURCE_ROOT/VocabularyReview/VocabularyTextPolicy.swift" \
-    "$APP_SOURCE_ROOT/VocabularyReview/GermanWiktionaryDictionary.swift"
+    "$APP_SOURCE_ROOT/VocabularyReview/GermanWiktionaryDictionary.swift" \
+    "$APP_SOURCE_ROOT/VocabularyReview/DictionaryLookupService.swift" \
+    "$APP_SOURCE_ROOT/VocabularyReview/ECDICTDictionary.swift" \
+    "$APP_SOURCE_ROOT/App/AppText.swift" \
+    -lsqlite3
 fi

@@ -2,6 +2,28 @@ import Cocoa
 import PDFKit
 
 extension ReaderWindowController {
+    private static let showsRelatedWordFormsDefaultsKey = "reader.showsRelatedWordForms"
+
+    /// Whether the faded-blue markings for related inflected forms are shown.
+    /// The exact word the user saved is always marked; this only governs the
+    /// other forms the lemma matcher turned up. Persisted, defaults to on.
+    var showsRelatedWordForms: Bool {
+        get {
+            UserDefaults.standard.object(forKey: Self.showsRelatedWordFormsDefaultsKey) as? Bool ?? true
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Self.showsRelatedWordFormsDefaultsKey)
+        }
+    }
+
+    /// Toolbar tumbler handler: remember the choice and repaint the markings.
+    /// Related forms only exist for PDF vocabulary, so a repaint of the PDF
+    /// annotations is all that is needed (the tumbler is hidden for web docs).
+    @objc func toggleRelatedWordForms(_ sender: NSSwitch) {
+        showsRelatedWordForms = sender.state == .on
+        restoreStoredWordAnnotations()
+    }
+
     func restoreStoredWordAnnotations() {
         guard currentDocumentKind == .pdf else { return }
         removeAllVocabularyWordAnnotations()
@@ -11,7 +33,8 @@ extension ReaderWindowController {
                 id: record.id,
                 pageIndex: record.pageIndex,
                 storedBounds: record.bounds.cgRect,
-                word: record.word,
+                word: record.occurrenceSurfaceForm,
+                isSavedForm: record.matchesSavedSurfaceForm,
                 refineBounds: true
             )
         }
@@ -23,13 +46,16 @@ extension ReaderWindowController {
             id: record.id,
             pageIndex: record.pageIndex,
             storedBounds: record.bounds.cgRect,
-            word: record.word,
+            word: record.occurrenceSurfaceForm,
+            isSavedForm: record.matchesSavedSurfaceForm,
             refineBounds: true
         )
     }
 
     func addPendingWordAnnotation(id: String, pageIndex: Int, bounds: CGRect, word: String) {
-        addPDFVocabularyAnnotation(id: id, pageIndex: pageIndex, storedBounds: bounds, word: word, refineBounds: true)
+        // A pending annotation marks the exact selection the user is saving, so
+        // it is always the saved form (the lemma matcher runs afterwards).
+        addPDFVocabularyAnnotation(id: id, pageIndex: pageIndex, storedBounds: bounds, word: word, isSavedForm: true, refineBounds: true)
     }
 
     func discardPendingWordAnnotations() {
@@ -41,8 +67,11 @@ extension ReaderWindowController {
         pageIndex: Int,
         storedBounds: CGRect,
         word: String,
+        isSavedForm: Bool,
         refineBounds: Bool
     ) {
+        // Related (non-saved) forms are suppressed when the tumbler is off.
+        guard isSavedForm || showsRelatedWordForms else { return }
         guard let page = pdfView.document?.page(at: pageIndex) else { return }
         let bounds = refineBounds ? displayBounds(bounds: storedBounds, word: word, page: page) : storedBounds
         let key = wordAnnotationKey(pageIndex: pageIndex, bounds: bounds)
@@ -50,7 +79,9 @@ extension ReaderWindowController {
         highlightedSelectionKeys.insert(key)
 
         let annotation = PDFAnnotation(bounds: wordUnderlineBounds(for: bounds), forType: .highlight, withProperties: nil)
-        annotation.color = vocabularySelectionHighlightColor(for: ReaderTheme.selected)
+        annotation.color = isSavedForm
+            ? vocabularySelectionHighlightColor(for: ReaderTheme.selected)
+            : vocabularyVariantHighlightColor(for: ReaderTheme.selected)
         annotation.contents = "leaf-word:\(id)"
         page.addAnnotation(annotation)
         pdfView.setNeedsDisplay(pdfView.bounds)
@@ -80,7 +111,7 @@ extension ReaderWindowController {
     }
 
     func displayBounds(for record: StoredPDFWordRecord, page: PDFPage) -> CGRect {
-        displayBounds(bounds: record.bounds.cgRect, word: record.word, page: page)
+        displayBounds(bounds: record.bounds.cgRect, word: record.occurrenceSurfaceForm, page: page)
     }
 
     func refreshStoredWordAnnotationAppearance() {
@@ -89,6 +120,14 @@ extension ReaderWindowController {
 
     func vocabularySelectionHighlightColor(for theme: ReaderTheme) -> NSColor {
         theme.aiSourceUnderlineColor
+    }
+
+    /// A faded version of the saved-word highlight, used for occurrences that are
+    /// a different inflected form than the one the user actually saved. Same hue,
+    /// lower opacity, so the saved form still reads as the primary mark.
+    func vocabularyVariantHighlightColor(for theme: ReaderTheme) -> NSColor {
+        let base = vocabularySelectionHighlightColor(for: theme)
+        return base.withAlphaComponent(base.alphaComponent * 0.42)
     }
 
     func wordUnderlineBounds(for bounds: CGRect) -> CGRect {

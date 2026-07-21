@@ -192,6 +192,10 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
     var onLinkedAnswerFailed: ((String) -> Void)?
     var onLinkedBubbleSelected: ((String) -> Void)?
     var onLinkedBubbleDeleted: ((String) -> Void)?
+    /// Opens the Words window focused on the given word (the Occurrences button).
+    var onOccurrencesRequested: ((String) -> Void)?
+    /// Grammatical summary (POS, forms, occurrence count) for the focused word.
+    var onWordFocusInfoRequested: ((String) -> WordFocusInfo?)?
     var onSummarizeCurrentContent: ((@escaping ((title: String, text: String)?) -> Void) -> Void)?
     var onTranslateCurrentContent: ((@escaping ((title: String, text: String)?) -> Void) -> Void)?
     var onCurrentReadingContent: ((@escaping ((title: String, text: String)?) -> Void) -> Void)?

@@ -72,7 +72,7 @@ final class PDFReadAloudBatchBuilder {
             return document.page(at: lockedPageIndex)
         }
 
-        guard pdfView.displayMode == .twoUp,
+        guard PDFPageLayoutPolicy.isTwoPage(pdfView.displayMode),
               let document = pdfView.document else {
             return pdfView.currentPage
         }

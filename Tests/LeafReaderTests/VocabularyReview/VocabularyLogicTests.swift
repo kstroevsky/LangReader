@@ -1,4 +1,5 @@
 import Foundation
+import NaturalLanguage
 
 private struct StoredWordRecord: Equatable {
     let id: String
@@ -104,9 +105,72 @@ enum VocabularyLogicTests {
         try expect(!VocabularyTextPolicy.isSingleEnglishWord("Nine-"), "trailing hyphen should not be saved as a complete word")
         try expectEqual(VocabularyTextPolicy.speakableWord("Nine-\ntenths"), "Nine-tenths", "PDF line-broken hyphenated words should be saved as one word")
         try expectEqual(VocabularyTextPolicy.normalizedPDFVocabularyText("con-\ntemptuous"), "contemptuous", "PDF line-broken plain words should drop the layout hyphen")
+        try expectEqual(VocabularyTextPolicy.normalizedPDFVocabularyText("si-\ncherzustellen"), "sicherzustellen", "short-prefix German line wraps should restore the whole word")
+        try expectEqual(
+            VocabularyTextPolicy.normalizedPDFVocabularyText(
+                "Ausbildungs-\nkonzept",
+                isKnownHyphenatedWord: { _ in false },
+                isKnownWord: { $0 == "Ausbildungskonzept" }
+            ),
+            "Ausbildungskonzept",
+            "PDF layout hyphens should be removed when the hyphenated spelling is not a real word"
+        )
+        try expectEqual(
+            VocabularyTextPolicy.normalizedPDFVocabularyText(
+                "E-\nMail",
+                isKnownHyphenatedWord: { $0 == "E-Mail" }
+            ),
+            "E-Mail",
+            "genuine hyphenated words should retain their hyphen across a PDF line break"
+        )
+        try expectEqual(
+            VocabularyTextPolicy.normalizedPDFVocabularyText(
+                "Schadenser-satzforderung",
+                lineBrokenHyphenRange: NSRange(location: 10, length: 1),
+                isKnownHyphenatedWord: { _ in false },
+                isKnownWord: { $0 == "Schadensersatzforderung" }
+            ),
+            "Schadensersatzforderung",
+            "a visually wrapped word should drop its layout hyphen even when PDFKit omits the newline"
+        )
+        try expectEqual(
+            VocabularyTextPolicy.dehyphenatedPDFLayoutCandidate(
+                word: "Schadenser-satzforderung",
+                context: "Von einer Schadenser- satzforderung sehen wir vorerst ab."
+            ),
+            "Schadensersatzforderung",
+            "stored context should identify a legacy layout hyphen for repair"
+        )
+        try expect(
+            VocabularyTextPolicy.dehyphenatedPDFLayoutCandidate(
+                word: "E-Mail",
+                context: "Bitte senden Sie eine E-Mail."
+            ) == nil,
+            "an inline genuine hyphen should not be marked as a legacy layout break"
+        )
+        try expectEqual(
+            VocabularyTextPolicy.normalizedPDFContextText(
+                "Eine feh- lerhafte E- Mail wäre problematisch.",
+                isKnownHyphenatedWord: { $0 == "E-Mail" },
+                isKnownWord: { $0 == "fehlerhafte" }
+            ),
+            "Eine fehlerhafte E-Mail wäre problematisch.",
+            "occurrence contexts should remove layout hyphens while retaining genuine hyphens"
+        )
+        try expectEqual(
+            VocabularyTextPolicy.normalizedPDFContextText(
+                "Hinweis— bitte erneut prüfen.",
+                isKnownWord: { _ in false }
+            ),
+            "Hinweis— bitte erneut prüfen.",
+            "occurrence context cleanup should not rewrite punctuation dashes"
+        )
         try expectEqual(VocabularyTextPolicy.normalizedPDFVocabularyText("Nine-\ntenths"), "Nine-tenths", "PDF line-broken true hyphenated words should keep the hyphen")
         try expectEqual(
-            VocabularyTextPolicy.normalizedPDFVocabularyText("fam-\niliar") { $0 == "familiar" },
+            VocabularyTextPolicy.normalizedPDFVocabularyText(
+                "fam-\niliar",
+                isKnownWord: { $0 == "familiar" }
+            ),
             "familiar",
             "dictionary-backed PDF normalization should prefer known dehyphenated words"
         )
@@ -119,6 +183,18 @@ enum VocabularyLogicTests {
             dehyphenatedRegex.matches(in: splitWordSample, range: NSRange(location: 0, length: (splitWordSample as NSString).length)).count,
             1,
             "dehyphenated PDF search should match layout-split words"
+        )
+        let splitSuffixSample = "Damit die Nutzung sichergestellt ist, muss sie si-\ncherzustellen sein."
+        let splitSuffixRegex = try NSRegularExpression(
+            pattern: #"(?i)"# + VocabularyTextPolicy.lineBrokenHyphenWordPattern(suffix: "cherzustellen")
+        )
+        try expectEqual(
+            splitSuffixRegex.matches(
+                in: splitSuffixSample,
+                range: NSRange(location: 0, length: (splitSuffixSample as NSString).length)
+            ).count,
+            1,
+            "a selection from the second line of a PDF-wrapped word should find its complete word"
         )
         try expect(!VocabularyTextPolicy.isSingleEnglishWord("two words"), "phrases should not count as a single word")
         try expectEqual(VocabularyTextPolicy.speakableWord(" high-pitched "), "high-pitched", "speakable words should be trimmed")
@@ -181,6 +257,247 @@ enum VocabularyLogicTests {
             VocabularyOccurrenceMatcher.matches(query: "E-Mail", in: genuineHyphen).count,
             2,
             "occurrence matching should preserve genuine hyphens across PDF line wraps"
+        )
+    }
+
+    /// The multi-page scan runs in parallel, reuses taggers across pages and
+    /// memoizes the fallback lemma lookup. None of that may change what it
+    /// finds, so the batch result must equal scanning each page on its own —
+    /// same occurrences, same ranges, same matched text, same order.
+    static func testGermanLemmaBatchMatchesSequential() throws {
+        let pages = [
+            "Er ist gestern nach Hause gegangen und hat nichts gesagt.",
+            "Die Häuser in der Stadt sind alt. Wir gehen dorthin.",
+            "",
+            "Sie ging langsam nach Hause. Das Gehen fiel ihr schwer.",
+            "Ein ganz anderer Satz ohne das gesuchte Wort.",
+            "Am Ende ging es doch, und alle sind zufrieden gegan-\ngen."
+        ]
+
+        for (lemma, selected) in [("gehen", "gegangen"), ("Haus", "Häuser"), ("gehen", "ging")] {
+            let sequential = pages.map {
+                GermanLemmaOccurrenceMatcher.matches(lemma: lemma, selectedForm: selected, in: $0)
+            }
+            let batch = GermanLemmaOccurrenceMatcher.matches(
+                lemma: lemma,
+                selectedForm: selected,
+                inTexts: pages
+            )
+            try expectEqual(
+                batch.count,
+                pages.count,
+                "the batch scan should return one result per page for '\(selected)'"
+            )
+            try expectEqual(
+                batch,
+                sequential,
+                "parallel scanning must find exactly what sequential scanning finds for '\(selected)'"
+            )
+        }
+
+        // Boundary cases around the parallel path.
+        try expectEqual(
+            GermanLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", inTexts: []),
+            [],
+            "an empty page list yields no results"
+        )
+        let single = GermanLemmaOccurrenceMatcher.matches(
+            lemma: "gehen",
+            selectedForm: "gegangen",
+            inTexts: [pages[0]]
+        )
+        try expectEqual(
+            single,
+            [GermanLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", in: pages[0])],
+            "the single-page path should agree with the per-page scanner"
+        )
+        try expectEqual(
+            GermanLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", inTexts: ["", "", ""]),
+            [[], [], []],
+            "empty pages should produce empty results rather than being skipped"
+        )
+    }
+
+    /// The reusable-tagger overload must return exactly what the allocating one
+    /// does, including when the same tagger is reused across many words.
+    static func testGermanLemmaResolverTaggerReuse() throws {
+        let words = ["gegangen", "ging", "Häuser", "Bücher", "sprach", "gegangen", "ging"]
+        let tagger = NLTagger(tagSchemes: [.lemma])
+        for word in words {
+            try expectEqual(
+                GermanLemmaResolver.lemma(for: word, tagger: tagger),
+                GermanLemmaResolver.lemma(for: word),
+                "reusing a tagger must not change the lemma resolved for '\(word)'"
+            )
+        }
+    }
+
+    static func testGermanLemmaGrouping() throws {
+        try expectEqual(GermanLemmaResolver.lemma(for: "fehlerhafte"), "fehlerhaft", "German adjective inflection should resolve to its lemma")
+        try expectEqual(GermanLemmaResolver.lemma(for: "fehlerhaften"), "fehlerhaft", "related German adjective forms should share one lemma")
+        try expectEqual(
+            GermanLemmaResolver.groupingKey(word: "Fehlerhaften"),
+            GermanLemmaResolver.groupingKey(word: "fehlerhafte"),
+            "German inflected forms should share a case-insensitive grouping key"
+        )
+
+        let text = "Eine fehlerhafte Rechnung entstand wegen eines fehlerhaften Eintrags. Ein fehlerhaf-\nten Eintrag. Ein Fehler blieb."
+        let matches = GermanLemmaOccurrenceMatcher.matches(
+            lemma: "fehlerhaft",
+            selectedForm: "fehlerhafte",
+            in: text
+        )
+        try expectEqual(
+            matches.map(\.matchedText),
+            ["fehlerhafte", "fehlerhaften", "fehlerhaf-\nten"],
+            "lemma scanning should find different inflected forms without matching unrelated nouns"
+        )
+        let batchMatches = GermanLemmaOccurrenceMatcher.matches(
+            lemmasByKey: ["fehlerhaft": "fehlerhaft"],
+            in: text
+        )
+        try expectEqual(batchMatches["fehlerhaft"]?.map(\.matchedText), matches.map(\.matchedText), "batch rescans should preserve all exact and line-wrapped inflected occurrences")
+        try expect(batchMatches["fehler"] == nil, "batch rescans should not create an unrelated noun group")
+
+    }
+
+    /// A word split across a line as "Er-\nfolg" tokenizes into a stray "folg",
+    /// whose lemma is "folgen". Matching that fragment turned the unrelated noun
+    /// "Erfolg" into a false occurrence of the verb "folgen" — a phantom the user
+    /// could not find highlighted in the document. The joined form is "Erfolg"
+    /// (lemma "Erfolg"), so the line-break must contribute no match at all, while
+    /// genuine standalone forms on the same page still resolve.
+    static func testGermanLemmaLineWrapFragmentIsNotAFalseMatch() throws {
+        let text = "Für den Er-\nfolg muss das Portal gewählt werden. Wir folgen dem Plan und folgten gestern."
+
+        let matches = GermanLemmaOccurrenceMatcher.matches(
+            lemma: "folgen",
+            selectedForm: "folgen",
+            in: text
+        )
+        try expect(
+            !matches.contains { VocabularyTextPolicy.canonicalVocabularyKey($0.matchedText) == "folg" },
+            "the hyphen-line-break fragment 'folg' of 'Erfolg' must not match the lemma 'folgen'"
+        )
+        try expectEqual(
+            matches.map(\.matchedText),
+            ["folgen", "folgten"],
+            "real occurrences of 'folgen' should still be matched around the false fragment"
+        )
+
+        let batch = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["folgen": "folgen"], in: text)
+        try expectEqual(
+            batch["folgen"]?.map(\.matchedText),
+            ["folgen", "folgten"],
+            "the backfill matcher must agree and must not spawn a 'folg' occurrence"
+        )
+    }
+
+    /// The load-time prune that heals libraries saved before the recognizer fix.
+    /// A candidate is either a line-break fragment (surface only inside a larger
+    /// word) or a case-folded homograph (surface folds to the group key but is
+    /// spelled with different case). A candidate is dropped only if the fixed
+    /// group scan no longer assigns it to the group, so same-line compound
+    /// constituents ("Abteilung" in "IT-Abteilung") and differently-keyed
+    /// inflections ("folgende", "folgt") are always kept.
+    static func testMisfiledOccurrenceDetection() throws {
+        // Line-break fragment candidates: surface only ever inside a larger word.
+        for (surface, context) in [
+            ("folg", "Für den Erfolg muss das richtige Portal gewählt werden."),
+            ("kommt", "Worauf es noch ankommt, erfährst du in den Tipps."),
+            ("Abteilung", "Und ihr von der IT-Abteilung organisiert das doch, oder?")
+        ] {
+            try expect(
+                VocabularyTextPolicy.surfaceOccursOnlyWithinLargerWord(surface: surface, context: context),
+                "'\(surface)' only appears inside a larger word in its context ⇒ candidate"
+            )
+        }
+        for (surface, context) in [
+            ("folgt", "Zuerst kommt der Antrag, dann folgt der Bescheid."),
+            ("Portal", "Man muss das richtige Portal wählen, sonst klappt es nicht."),
+            ("folg", ""),
+            ("folg", "Ein Satz ganz ohne das Wort.")
+        ] {
+            try expect(
+                !VocabularyTextPolicy.surfaceOccursOnlyWithinLargerWord(surface: surface, context: context),
+                "'\(surface)' is a whole word / empty / absent and is not a line-break candidate"
+            )
+        }
+
+        // Case-folded homograph: same key as the group lemma, different case.
+        try expect(
+            VocabularyTextPolicy.canonicalVocabularyKey("Folgen") == VocabularyTextPolicy.canonicalVocabularyKey("folgen")
+                && !VocabularyTextPolicy.surfaceMatchesLemmaExactly("Folgen", "folgen"),
+            "the noun 'Folgen' folds to the verb group key 'folgen' but differs by case ⇒ candidate"
+        )
+        try expect(
+            VocabularyTextPolicy.surfaceMatchesLemmaExactly("folgen", "folgen"),
+            "the verb base 'folgen' matches the group lemma exactly ⇒ not a candidate"
+        )
+
+        // Group re-scan decides candidates.
+        try expect(
+            !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
+                surfaceForm: "folg", groupLemma: "folgen",
+                in: "Für den Erfolg muss das richtige Portal gewählt werden."
+            ),
+            "'folg' from 'Erfolg' is no longer assigned to group 'folgen' ⇒ prune"
+        )
+        try expect(
+            !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
+                surfaceForm: "Folgen", groupLemma: "folgen",
+                in: "Welche Folgen hätte das?"
+            ),
+            "the noun 'Folgen' (lemma 'Folge') is no longer assigned to verb group 'folgen' ⇒ prune"
+        )
+        try expect(
+            GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
+                surfaceForm: "Abteilung", groupLemma: "Abteilung",
+                in: "Und ihr von der IT-Abteilung organisiert das doch, oder?"
+            ),
+            "'Abteilung' in 'IT-Abteilung' is still assigned to its group ⇒ keep"
+        )
+    }
+
+    /// The German noun "Folgen" (lemma "Folge") must never be filed under the
+    /// verb group "folgen" via the lemma/surface expansion: their surfaces fold
+    /// to one key, so a case-insensitive surface match would merge them.
+    /// Capitalization is the noun/verb signal. (The exact-form query path, which
+    /// matches whatever spelling the user actually saved, is out of scope here —
+    /// the real group is filed under "folgenden", so "Folgen" only ever entered
+    /// it through the lemma/surface path exercised below.)
+    static func testGermanNounNotGroupedWithVerbHomograph() throws {
+        let text = "Wir folgen dem Plan. Welche Folgen hätte das? Der Fehler folgt daraus."
+
+        // Backfill / group-expansion path (no exact-form query).
+        let batch = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["folgen": "folgen"], in: text)
+        try expect(
+            batch["folgen"]?.contains { $0.matchedText == "Folgen" } != true,
+            "the backfill scan must keep the noun 'Folgen' out of the verb group 'folgen'"
+        )
+        try expect(
+            batch["folgen"]?.contains { $0.matchedText == "folgt" } == true,
+            "the backfill scan must still find the real verb form 'folgt'"
+        )
+
+        // Lemma/surface expansion around a different saved form ("folgt"): the
+        // noun "Folgen" must not be swept in, while real verb forms still match.
+        let sequential = GermanLemmaOccurrenceMatcher.matches(lemma: "folgen", selectedForm: "folgt", in: text)
+        try expect(
+            !sequential.contains { $0.matchedText == "Folgen" },
+            "expanding the verb group must not match the noun 'Folgen'"
+        )
+        try expect(
+            sequential.contains { $0.matchedText == "folgt" } && sequential.contains { $0.matchedText == "folgen" },
+            "expanding the verb group must still match 'folgt' and the base 'folgen'"
+        )
+
+        // Group membership (used by the load-time prune) excludes the noun.
+        try expect(
+            !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
+                surfaceForm: "Folgen", groupLemma: "folgen", in: "Welche Folgen hätte das?"
+            ),
+            "the noun 'Folgen' is not a member of the verb group 'folgen'"
         )
     }
 
@@ -277,10 +594,20 @@ enum VocabularyLogicTests {
         let records = [
             VocabularyExporter.Record(word: "alpha", answer: " first answer ", location: "p. 1", context: "context", source: "Book", createdAt: createdAt),
             VocabularyExporter.Record(word: "Alpha", answer: " first answer ", location: "p. 3", context: "second context", source: "Book", createdAt: createdAt),
-            VocabularyExporter.Record(word: "empty", answer: "   ", location: "p. 2", context: "", source: "Book", createdAt: createdAt)
+            VocabularyExporter.Record(word: "empty", answer: "   ", location: "p. 2", context: "", source: "Book", createdAt: createdAt),
+            VocabularyExporter.Record(
+                word: "Fehlerhafte",
+                lemma: "fehlerhaft",
+                surfaceForm: "fehlerhaften",
+                answer: "incorrect",
+                location: "p. 4",
+                context: "wegen eines fehlerhaften Eintrags",
+                source: "Buch",
+                createdAt: createdAt
+            )
         ]
         let exportable = VocabularyExporter.exportableRecords(records)
-        try expectEqual(exportable.map(\.word), ["alpha", "Alpha", "empty"], "answerless vocabulary should remain exportable")
+        try expectEqual(exportable.map(\.word), ["alpha", "Alpha", "empty", "Fehlerhafte"], "answerless and Unicode vocabulary should remain exportable")
         try expectEqual(VocabularyExporter.csvEscaped("a,\"b\""), "\"a,\"\"b\"\"\"", "CSV values should quote and escape quotes")
         try expectEqual(VocabularyExporter.safeFileName("A/B?C:D"), "A-B-C-D", "unsafe filename characters should be replaced")
 
@@ -302,6 +629,8 @@ enum VocabularyLogicTests {
         try expect(markdown.contains("- Context：context"), "markdown should include non-empty context")
         try expect(markdown.contains("- Location：p. 3"), "markdown should list every occurrence")
         try expectEqual(markdown.components(separatedBy: "## alpha").count - 1, 1, "markdown should group case-insensitive occurrences under one heading")
+        try expect(markdown.contains("## Fehlerhafte"), "markdown should preserve the first selected German form as its heading")
+        try expect(markdown.contains("**fehlerhaften**"), "markdown should retain the exact inflected form for an occurrence")
 
         let csv = VocabularyExporter.csv(records: exportable) { record in
             record.answer
@@ -309,6 +638,7 @@ enum VocabularyLogicTests {
         try expect(csv.contains("Word,Page,Context,Source,Created At,Answer"), "CSV should include occurrence-oriented header")
         try expect(csv.contains("\"alpha\",\"p. 1\",\"context\",\"Book\""), "CSV should include escaped occurrence records")
         try expect(csv.contains("\"empty\",\"p. 2\",\"\",\"Book\""), "CSV should include answerless occurrences")
+        try expect(csv.contains("\"fehlerhaften\",\"p. 4\""), "CSV should export the exact Unicode surface form for each occurrence")
     }
 
     static func testVocabularyAnswerFormatter() throws {
@@ -450,6 +780,16 @@ enum VocabularyLogicTests {
         try expectEqual(offlineWord.contextAction, .addWord, "offline word selections should keep the word action")
         try expectEqual(offlineWord.displayMode, .offlineWord, "offline word selections should show only word/speak/copy actions")
         try expect(offlineWord.showsVocabularySaveAction, "PDF vocabulary selections should expose the local save action without a model")
+        try expect(!offlineWord.isVocabularySelectionSaved, "a newly selected PDF vocabulary word should show Save")
+
+        let savedWord = SelectionToolbarConfiguration.make(
+            isVocabularySelection: true,
+            queryCapability: .offlineDictionary,
+            shouldShowSpeakAction: false,
+            isPDFSelection: true,
+            isVocabularySelectionSaved: true
+        )
+        try expect(savedWord.isVocabularySelectionSaved, "a saved PDF vocabulary word should switch the toolbar to Remove")
 
         let needsKeyText = SelectionToolbarConfiguration.make(
             isVocabularySelection: false,

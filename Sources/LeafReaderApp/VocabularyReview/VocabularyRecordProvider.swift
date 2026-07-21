@@ -1,12 +1,44 @@
 import Foundation
 
 enum VocabularyRecordProvider {
+    /// Resolves the grammatical label for one observed surface form.
+    ///
+    /// Injected so this provider stays independent of the dictionary cache:
+    /// the app supplies the cache-backed resolver, while tests and any caller
+    /// without the SQLite stack get the offline rules by default.
+    typealias FormLabelResolver = (_ surfaceForm: String, _ lemma: String, _ context: String) -> GermanFormLabel?
+
+    static let offlineFormLabelResolver: FormLabelResolver = { surfaceForm, lemma, context in
+        GermanFormLabeler.label(surfaceForm: surfaceForm, lemma: lemma, context: context)
+    }
+
     static func records(
         documentKind: ReaderDocumentKind,
         pdfRecords: [StoredPDFWordRecord],
         webRecords: [StoredWebWordRecord],
-        pdfContext: (StoredPDFWordRecord) -> String
+        pdfContext: (StoredPDFWordRecord) -> String,
+        formLabel: FormLabelResolver = offlineFormLabelResolver
     ) -> [VocabularyExportRecord] {
+        // Labeling a form runs NaturalLanguage tagging and, for cached words, a
+        // SQLite lookup — a few milliseconds each. A document with 100+ saved
+        // instances of the same word would pay that per instance, yet every
+        // record of a given surface form collapses to a single labeled
+        // `VocabularyForm` in `aggregate`/`VocabularyFormMerger`, which keeps the
+        // first non-nil label. Memoizing the first non-nil label per
+        // (surface, lemma) is therefore output-identical while cutting the work
+        // to one call per distinct form. Nil is not cached, so a later occurrence
+        // whose context finally resolves a label still gets its chance — matching
+        // the merger's "first non-nil wins" exactly.
+        var labelMemo: [String: GermanFormLabel] = [:]
+        func memoizedLabel(surface: String, lemma: String, context: String) -> GermanFormLabel? {
+            let key = VocabularyTextPolicy.canonicalVocabularyKey(surface)
+                + "\u{1}" + VocabularyTextPolicy.canonicalVocabularyKey(lemma)
+            if let hit = labelMemo[key] { return hit }
+            let resolved = formLabel(surface, lemma, context)
+            if let resolved { labelMemo[key] = resolved }
+            return resolved
+        }
+
         let records: [VocabularyExportRecord]
         if documentKind == .pdf {
             records = pdfRecords
@@ -16,6 +48,17 @@ enum VocabularyRecordProvider {
                     return VocabularyExportRecord(
                         ids: [$0.id],
                         word: $0.word,
+                        lemma: $0.lemma,
+                        forms: [
+                            VocabularyForm(
+                                surface: $0.occurrenceSurfaceForm,
+                                label: memoizedLabel(
+                                    surface: $0.occurrenceSurfaceForm,
+                                    lemma: $0.lemma ?? $0.word,
+                                    context: context
+                                )
+                            )
+                        ],
                         answer: $0.answer,
                         dictionaryTags: $0.dictionaryTags,
                         dictionaryFrequency: $0.dictionaryFrequency,
@@ -29,6 +72,7 @@ enum VocabularyRecordProvider {
                                 pageIndex: $0.pageIndex,
                                 bounds: $0.bounds,
                                 location: location,
+                                surfaceForm: $0.occurrenceSurfaceForm,
                                 context: context,
                                 createdAt: $0.createdAt
                             )
@@ -72,7 +116,7 @@ enum VocabularyRecordProvider {
         var order: [String] = []
         var grouped: [String: [VocabularyExportRecord]] = [:]
         for record in records.sorted(by: { $0.createdAt < $1.createdAt }) {
-            let key = VocabularyTextPolicy.canonicalVocabularyKey(record.word)
+            let key = VocabularyTextPolicy.canonicalVocabularyKey(record.lemma ?? record.word)
             guard !key.isEmpty else { continue }
             if grouped[key] == nil {
                 order.append(key)
@@ -101,6 +145,7 @@ enum VocabularyRecordProvider {
             let context = group
                 .map(\.context)
                 .first { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } ?? ""
+            let forms = VocabularyFormMerger.merged(group.flatMap(\.forms))
             let answer = group
                 .map(\.answer)
                 .first { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } ?? first.answer
@@ -116,6 +161,8 @@ enum VocabularyRecordProvider {
             return VocabularyExportRecord(
                 ids: group.flatMap(\.ids),
                 word: displayWord(first.word),
+                lemma: first.lemma,
+                forms: forms,
                 answer: answer,
                 dictionaryTags: dictionaryTags,
                 dictionaryFrequency: dictionaryFrequency,

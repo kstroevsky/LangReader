@@ -107,19 +107,22 @@ struct PDFVocabularySQLiteMapper {
         case occurrenceID = 0
         case vocabularyID = 1
         case word = 2
-        case pageIndex = 3
-        case boundsJSON = 4
-        case context = 5
-        case question = 6
-        case answer = 7
-        case dictionaryTags = 8
-        case dictionaryFrequency = 9
-        case createdAt = 10
-        case srsJSON = 11
+        case lemma = 3
+        case surfaceForm = 4
+        case pageIndex = 5
+        case boundsJSON = 6
+        case context = 7
+        case question = 8
+        case answer = 9
+        case dictionaryTags = 10
+        case dictionaryFrequency = 11
+        case createdAt = 12
+        case srsJSON = 13
     }
 
     static let selectSQL = """
-    SELECT occurrence.id, word.id, word.word, occurrence.page_index, occurrence.bounds_json,
+    SELECT occurrence.id, word.id, word.word, word.lemma, occurrence.surface_form,
+           occurrence.page_index, occurrence.bounds_json,
            occurrence.context, word.question, word.answer, word.dictionary_tags,
            word.dictionary_frequency, occurrence.created_at, word.srs_json
     FROM pdf_vocabulary_occurrences AS occurrence
@@ -145,6 +148,8 @@ struct PDFVocabularySQLiteMapper {
             id: id,
             vocabularyID: vocabularyID,
             word: word,
+            lemma: optionalStringColumn(statement, Column.lemma.rawValue),
+            surfaceForm: optionalStringColumn(statement, Column.surfaceForm.rawValue) ?? word,
             pageIndex: Int(sqlite3_column_int(statement, Column.pageIndex.rawValue)),
             bounds: bounds,
             context: optionalStringColumn(statement, Column.context.rawValue),

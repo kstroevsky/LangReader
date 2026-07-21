@@ -33,6 +33,7 @@ extension ReaderWindowController {
         selectionActionToolbar.applyTheme(theme)
         readingNotePanelControllers.values.forEach { $0.refreshTheme() }
         readingNotesPanelController?.refreshTheme()
+        vocabularyLibraryWindowController?.refreshTheme()
         pdfView.backgroundColor = chromeBackground
         pdfView.enclosingScrollView?.backgroundColor = chromeBackground
         applyPDFReaderTheme(theme: theme)

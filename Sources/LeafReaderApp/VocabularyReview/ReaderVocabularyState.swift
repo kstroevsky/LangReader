@@ -10,4 +10,5 @@ struct ReaderVocabularyState {
     var currentExportRecords: [VocabularyExportRecord] = []
     var occurrenceSearchID: UUID?
     var expandedOccurrenceKeys: Set<String> = []
+    var pendingLibraryOccurrence: VocabularyLibraryOccurrence?
 }
