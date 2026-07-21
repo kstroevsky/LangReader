@@ -19,7 +19,7 @@ LOGIC_APP_SOURCES=()
 always_include_logic_app_source() {
   local base="$1"
   case "$base" in
-    ReadingNoteEditorViews.swift|SelectionToolbarConfiguration.swift)
+    ReadingNoteEditorViews.swift|SelectionToolbarConfiguration.swift|ReaderChromeState.swift|ReaderToolbarItem.swift)
       return 0
       ;;
   esac
@@ -55,6 +55,8 @@ excluded_logic_app_source() {
     ReaderDropContentView.swift|\
     ReaderFileDrop.swift|\
     ReaderTheme*|\
+    ReaderDesignTokens.swift|\
+    ReaderWebThemeCSS.swift|\
     ReaderTOCHelper.swift|\
     ReaderWindowController*|\
     ReaderWindowSupportViews.swift|\
@@ -153,6 +155,9 @@ REGRESSION_TEST_SOURCES=(
 
 LOGIC_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/AIConversation/AIConversationContextStoreTests.swift"
+  "$TEST_SOURCE_ROOT/DocumentReading/ReaderSearchCursorTests.swift"
+  "$TEST_SOURCE_ROOT/DocumentReading/ReaderChromeStateTests.swift"
+  "$TEST_SOURCE_ROOT/DocumentReading/ReaderToolbarItemTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/EPUBLogicTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/DocumentImportDecisionLogicTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/DocumentSessionLogicTests.swift"
@@ -217,7 +222,10 @@ run_swift_test /tmp/leafreader-theme-palette-tests \
   "$APP_SOURCE_ROOT/App/AppText.swift" \
   "$APP_SOURCE_ROOT/SharedUI/ReaderTheme.swift" \
   "$APP_SOURCE_ROOT/SharedUI/ReaderTheme+Palette.swift" \
+  "$APP_SOURCE_ROOT/SharedUI/ReaderDesignTokens.swift" \
+  "$APP_SOURCE_ROOT/SharedUI/ReaderWebThemeCSS.swift" \
   "$TEST_SOURCE_ROOT/App/ReaderThemePaletteTests.swift" \
+  "$TEST_SOURCE_ROOT/App/ReaderDesignTokenTests.swift" \
   -framework Cocoa
 
 run_swift_test /tmp/leafreader-vocabulary-record-provider-tests \

@@ -4,7 +4,13 @@ struct TestFailure: Error, CustomStringConvertible {
     let description: String
 }
 
-private func expect(_ condition: @autoclosure () -> Bool, _ message: String) throws {
+func expectEqual<T: Equatable>(_ lhs: T, _ rhs: T, _ message: String) throws {
+    if lhs != rhs {
+        throw TestFailure(description: "\(message). expected \(rhs), got \(lhs)")
+    }
+}
+
+func expect(_ condition: @autoclosure () -> Bool, _ message: String) throws {
     if !condition() {
         throw TestFailure(description: message)
     }
@@ -110,7 +116,11 @@ private enum ReaderThemePaletteTestRunner {
             try testChromePaletteCoversAllThemes()
             try testSearchOverlayPaletteCoversAllThemes()
             try testVocabularyAndShelfPaletteCoversAllThemes()
-            print("ReaderThemePaletteTests passed")
+            try ReaderDesignTokenTests.testColorRendering()
+            try ReaderDesignTokenTests.testEveryThemeHasSurfaceTokens()
+            try ReaderDesignTokenTests.testStylesheetContainsNoUntrackedColours()
+            try ReaderDesignTokenTests.testStylesheetMatchesKnownAppearance()
+            print("ReaderThemePaletteTests passed (incl. design tokens)")
         } catch {
             fputs("ReaderThemePaletteTests failed: \(error)\n", stderr)
             exit(1)

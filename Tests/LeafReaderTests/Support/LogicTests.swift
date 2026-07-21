@@ -687,6 +687,17 @@ private func testKokoroWorkerResponseReaderBuffersPartialLines() throws {
 }
 
 private let tests: [(String, () throws -> Void)] = [
+    ("Reader search cursor query submit", ReaderSearchCursorTests.testSubmitDistinguishesNewQueryFromFindNext),
+    ("Reader search cursor wrapping", ReaderSearchCursorTests.testWrapsInBothDirections),
+    ("Reader search cursor empty results", ReaderSearchCursorTests.testEmptyResultsAreInert),
+    ("Reader search cursor result text", ReaderSearchCursorTests.testResultTextIsOneBased),
+    ("Reader search cursor web index", ReaderSearchCursorTests.testAdoptOneBasedFromWebSearch),
+    ("Reader search cursor clear", ReaderSearchCursorTests.testClearResetsEverything),
+    ("Reader chrome state by presentation", ReaderChromeStateTests.testChromeStateByPresentation),
+    ("Reader chrome read-aloud and cover", ReaderChromeStateTests.testReadAloudAndCoverConditions),
+    ("Reader chrome toggle and kind mapping", ReaderChromeStateTests.testTogglePreferenceAndKindMapping),
+    ("Reader toolbar cluster order", ReaderToolbarItemTests.testClusterOrder),
+    ("Reader toolbar visibility follows chrome state", ReaderToolbarItemTests.testVisibilityFollowsChromeState),
     ("Vocabulary SRS", VocabularyLogicTests.testVocabularySRS),
     ("German lemma batch equals sequential", VocabularyLogicTests.testGermanLemmaBatchMatchesSequential),
     ("German lemma tagger reuse", VocabularyLogicTests.testGermanLemmaResolverTaggerReuse),
