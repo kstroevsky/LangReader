@@ -168,6 +168,7 @@ LOGIC_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderShelfLogicTests.swift"
   "$TEST_SOURCE_ROOT/App/ShelfCardPresenterTests.swift"
   "$TEST_SOURCE_ROOT/VocabularyReview/VocabularyLibraryFilterTests.swift"
+  "$TEST_SOURCE_ROOT/VocabularyReview/VocabularyOccurrenceGroupingTests.swift"
   "$TEST_SOURCE_ROOT/AIConversation/AISettingsTestSupport.swift"
   "$TEST_SOURCE_ROOT/AIConversation/AISettingsLogicTests.swift"
   "$TEST_SOURCE_ROOT/ReadAloud/SpeechRuntimeLogicTests.swift"

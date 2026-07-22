@@ -633,7 +633,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         detailStack.addArrangedSubview(separator)
         separator.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
 
-        let formGroups = occurrenceFormGroups(record: record, occurrences: occurrences)
+        let formGroups = VocabularyOccurrenceGrouping.formGroups(record: record, occurrences: occurrences)
         // A filter kept from a previous render may name a form this word does
         // not have; fall back to showing everything rather than nothing.
         if let filter = occurrenceFormFilter, !formGroups.contains(where: { $0.key == filter }) {
@@ -679,52 +679,6 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         label.maximumNumberOfLines = 0
         detailStack.addArrangedSubview(label)
         label.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
-    }
-
-    private struct OccurrenceFormGroup {
-        let key: String
-        let surface: String
-        let label: GermanFormLabel?
-        let count: Int
-    }
-
-    /// Groups occurrences by the exact spelling that was highlighted.
-    ///
-    /// Counts come from the occurrences themselves rather than the record's
-    /// form list, so every tab's number matches the rows it reveals.
-    private func occurrenceFormGroups(
-        record: VocabularyLibraryRecord,
-        occurrences: [VocabularyLibraryOccurrence]
-    ) -> [OccurrenceFormGroup] {
-        var labelsByKey: [String: GermanFormLabel] = [:]
-        for form in record.forms {
-            let key = VocabularyTextPolicy.canonicalVocabularyKey(form.surface)
-            if let label = form.label, labelsByKey[key] == nil {
-                labelsByKey[key] = label
-            }
-        }
-
-        var order: [String] = []
-        var surfaces: [String: String] = [:]
-        var counts: [String: Int] = [:]
-        for occurrence in occurrences {
-            let surface = occurrence.surfaceForm ?? record.word
-            let key = VocabularyTextPolicy.canonicalVocabularyKey(surface)
-            guard !key.isEmpty else { continue }
-            if counts[key] == nil {
-                order.append(key)
-                surfaces[key] = surface
-            }
-            counts[key, default: 0] += 1
-        }
-        return order.map { key in
-            OccurrenceFormGroup(
-                key: key,
-                surface: surfaces[key] ?? key,
-                label: labelsByKey[key],
-                count: counts[key] ?? 0
-            )
-        }
     }
 
     /// Tabs that filter the occurrence list down to a single inflected form.
