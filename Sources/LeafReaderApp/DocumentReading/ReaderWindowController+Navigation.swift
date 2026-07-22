@@ -10,20 +10,16 @@ extension ReaderWindowController {
             return
         }
 
-        let raw = pageLabel.stringValue
-        let pageNumberText: String
-        if let range = raw.range(of: #"\d+"#, options: .regularExpression) {
-            pageNumberText = String(raw[range])
-        } else {
-            pageNumberText = ""
-        }
-        guard let requestedPage = Int(pageNumberText) else {
+        guard let requestedPage = ReaderFieldInput.pageNumber(from: pageLabel.stringValue),
+              let targetIndex = ReaderFieldInput.pageIndex(
+                  fromTyped: requestedPage,
+                  pageCount: document.pageCount
+              ) else {
             updatePageLabel()
             window?.makeFirstResponder(pdfView)
             return
         }
 
-        let targetIndex = min(max(requestedPage, 1), document.pageCount) - 1
         guard let page = document.page(at: targetIndex) else {
             updatePageLabel()
             window?.makeFirstResponder(pdfView)

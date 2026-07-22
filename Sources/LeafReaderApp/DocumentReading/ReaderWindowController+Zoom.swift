@@ -28,36 +28,26 @@ extension ReaderWindowController {
     @objc func applyZoomFromField() {
         markReaderInteraction()
         guard currentDocumentKind == .pdf else {
-            let raw = zoomField.stringValue
-                .replacingOccurrences(of: "%", with: "")
-                .replacingOccurrences(of: "％", with: "")
-                .replacingOccurrences(of: ",", with: "")
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            guard let percent = Int(raw), percent > 0 else {
+            guard let percent = ReaderFieldInput.zoomPercent(from: zoomField.stringValue) else {
                 updateZoomLabel()
                 return
             }
-            setWebZoom(percent)
+            setWebZoom(Int(percent))
             return
         }
-        let raw = zoomField.stringValue
-            .replacingOccurrences(of: "%", with: "")
-            .replacingOccurrences(of: "％", with: "")
-            .replacingOccurrences(of: ",", with: "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let percent = Double(raw), percent > 0 else {
+        guard let percent = ReaderFieldInput.zoomPercent(from: zoomField.stringValue) else {
             updateZoomLabel()
             return
         }
         pdfView.autoScales = false
-        pdfView.scaleFactor = min(max(percent, 10), 800) / 100
+        pdfView.scaleFactor = ReaderFieldInput.clampedPDFScale(percent: percent)
         updateZoomLabel()
         saveSession()
         window?.makeFirstResponder(currentDocumentKind == .pdf ? pdfView : webView)
     }
 
     func setWebZoom(_ percent: Int) {
-        webZoomPercent = min(max(percent, 60), 220)
+        webZoomPercent = ReaderFieldInput.clampedWebZoom(percent: percent)
         zoomField.stringValue = "\(webZoomPercent)%"
         applyWebZoomToPage()
         saveSession()

@@ -159,6 +159,7 @@ REGRESSION_TEST_SOURCES=(
 LOGIC_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/AIConversation/AIConversationContextStoreTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderSearchCursorTests.swift"
+  "$TEST_SOURCE_ROOT/DocumentReading/ReaderFieldInputTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderChromeStateTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderToolbarItemTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/EPUBLogicTests.swift"
