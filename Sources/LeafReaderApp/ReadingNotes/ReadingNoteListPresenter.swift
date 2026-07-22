@@ -35,6 +35,37 @@ enum ReadingNoteListPresenter {
         AppText.localized("共 \(noteCount) 条笔记", "\(noteCount) note(s)")
     }
 
+    /// The summary shown while a search is narrowing the list.
+    ///
+    /// An empty query is not a search, so it falls back to the plain count
+    /// rather than reading "12 of 12".
+    static func summaryText(matchCount: Int, totalCount: Int, query: String) -> String {
+        guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return summaryText(noteCount: matchCount)
+        }
+        return AppText.localized(
+            "找到 \(matchCount) / \(totalCount) 条笔记",
+            "\(matchCount) of \(totalCount) note(s)"
+        )
+    }
+
+    /// What to show when the list has no rows — which reads differently when a
+    /// search excluded everything than when there are simply no notes.
+    static func emptyStateText(query: String) -> String {
+        query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? AppText.localized("当前书还没有阅读笔记。", "No reading notes for this book yet.")
+            : AppText.localized("没有匹配的阅读笔记。", "No matching reading notes.")
+    }
+
+    /// Resolves a row back to its note.
+    ///
+    /// Rows carry only an id, so acting on one has to find the note again — and
+    /// the note may be gone, since the list can be redrawn from a store that
+    /// changed underneath it (a delete elsewhere, an export reload).
+    static func note(withID id: String, in notes: [ReadingNote]) -> ReadingNote? {
+        notes.first { $0.id == id }
+    }
+
     static func row(for note: ReadingNote) -> ReadingNoteListRowViewModel {
         ReadingNoteListRowViewModel(
             id: note.id,

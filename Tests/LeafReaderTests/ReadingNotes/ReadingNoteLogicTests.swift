@@ -737,6 +737,87 @@ enum ReadingNoteLogicTests {
         )
     }
 
+    static func testReadingNoteListSummaryText() throws {
+        // No query is not a search: the summary should read as a plain count
+        // rather than "3 of 3", which would imply something was filtered out.
+        try expectEqual(
+            ReadingNoteListPresenter.summaryText(matchCount: 3, totalCount: 3, query: ""),
+            ReadingNoteListPresenter.summaryText(noteCount: 3),
+            "empty query should fall back to the plain note count"
+        )
+        try expectEqual(
+            ReadingNoteListPresenter.summaryText(matchCount: 3, totalCount: 3, query: "   "),
+            ReadingNoteListPresenter.summaryText(noteCount: 3),
+            "whitespace-only query should count as no search"
+        )
+        let narrowed = ReadingNoteListPresenter.summaryText(matchCount: 1, totalCount: 4, query: "note")
+        try expect(
+            narrowed.contains("1") && narrowed.contains("4"),
+            "an active search should report matches against the total, got \(narrowed)"
+        )
+        try expect(
+            narrowed != ReadingNoteListPresenter.summaryText(noteCount: 1),
+            "an active search summary should differ from the plain count"
+        )
+    }
+
+    static func testReadingNoteListEmptyStateText() throws {
+        let noNotes = ReadingNoteListPresenter.emptyStateText(query: "")
+        let noMatches = ReadingNoteListPresenter.emptyStateText(query: "missing")
+        try expect(
+            noNotes != noMatches,
+            "an empty list should read differently when a search excluded everything"
+        )
+        try expectEqual(
+            ReadingNoteListPresenter.emptyStateText(query: "  "),
+            noNotes,
+            "whitespace-only query should use the no-notes wording"
+        )
+    }
+
+    static func testReadingNoteListRowResolvesToNote() throws {
+        let note = makeListTestNote(id: "note-1")
+        let other = makeListTestNote(id: "note-2")
+
+        try expectEqual(
+            ReadingNoteListPresenter.note(withID: "note-2", in: [note, other])?.id,
+            "note-2",
+            "a row id should resolve to its note"
+        )
+        // A row can outlive its note when the list is redrawn from a store that
+        // changed underneath it; acting on it must be a no-op, not a crash.
+        try expect(
+            ReadingNoteListPresenter.note(withID: "note-gone", in: [note, other]) == nil,
+            "a row whose note disappeared should resolve to nothing"
+        )
+        try expect(
+            ReadingNoteListPresenter.note(withID: "note-1", in: []) == nil,
+            "no note should resolve out of an empty list"
+        )
+    }
+
+    private static func makeListTestNote(id: String) -> ReadingNote {
+        ReadingNote(
+            id: id,
+            documentID: "doc-1",
+            documentTitle: "Book",
+            documentKind: "pdf",
+            quote: "Quote for \(id)",
+            markdown: "# Title \(id)",
+            locator: ReadingNote.Locator(
+                pdfFragments: [
+                    ReadingNote.PDFFragment(
+                        pageIndex: 1,
+                        bounds: StoredPDFWordRect(CGRect(x: 0, y: 0, width: 10, height: 10))
+                    )
+                ],
+                webAnchor: nil
+            ),
+            createdAt: Date(timeIntervalSince1970: 100),
+            updatedAt: Date(timeIntervalSince1970: 100)
+        )
+    }
+
     private static func makeTemporaryReadingNoteImageURL(fileName: String) throws -> URL {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("LeafReaderTests.ReadingNoteImage.\(UUID().uuidString)", isDirectory: true)

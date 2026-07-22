@@ -278,20 +278,10 @@ extension RecentDocumentsPanelController {
     }
 
     func documentKindText(_ kind: String) -> String {
-        switch kind {
-        case "EPUB":
-            return AppText.localized("EPUB 书籍", "EPUB Book")
-        case "DOCX":
-            return AppText.localized("DOCX 文稿", "DOCX Document")
-        default:
-            return AppText.localized("PDF 书籍", "PDF Book")
-        }
+        ShelfCardPresenter.documentKindText(kind)
     }
 
     func progressText(for item: RecentDocumentItem) -> String {
-        guard let progress = item.readingProgress else {
-            return AppText.localized("未记录进度", "No progress")
-        }
-        let percent = min(100, max(0, Int((progress * 100).rounded())))
-        return AppText.localized("已读 \(percent)%", "\(percent)% read")
-    }}
+        ShelfCardPresenter.progressText(readingProgress: item.readingProgress)
+    }
+}

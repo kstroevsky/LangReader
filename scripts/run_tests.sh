@@ -35,6 +35,7 @@ excluded_logic_app_source() {
     AISettingsPanel*|\
     GeneralSettingsModel.swift|\
     GeneralSettingsView.swift|\
+    ReadingNotesListModel.swift|\
     AITextActionRunner.swift|\
     AIClient.swift|\
     DebouncedTask.swift|\
@@ -165,6 +166,7 @@ LOGIC_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/DocumentReading/DocumentSessionLogicTests.swift"
   "$TEST_SOURCE_ROOT/ReadingNotes/ReadingNoteLogicTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderShelfLogicTests.swift"
+  "$TEST_SOURCE_ROOT/App/ShelfCardPresenterTests.swift"
   "$TEST_SOURCE_ROOT/AIConversation/AISettingsTestSupport.swift"
   "$TEST_SOURCE_ROOT/AIConversation/AISettingsLogicTests.swift"
   "$TEST_SOURCE_ROOT/ReadAloud/SpeechRuntimeLogicTests.swift"
