@@ -21,6 +21,7 @@ struct ReadingNotesListView: View {
                 .foregroundStyle(palette.secondaryText)
                 .padding(.top, 10)
                 .padding(.horizontal, 34)
+                .accessibilityIdentifier(ReadingNotesAccessibility.summaryLabel)
             list
         }
         .background(palette.panelBackground)
@@ -39,9 +40,11 @@ struct ReadingNotesListView: View {
             actionButton(AppText.localized("导出笔记", "Export Notes"), role: .primary) {
                 model.onExport?()
             }
+            .accessibilityIdentifier(ReadingNotesAccessibility.exportButton)
             actionButton(AppText.close, role: .secondary) {
                 model.onClose?()
             }
+            .accessibilityIdentifier(ReadingNotesAccessibility.closeButton)
         }
         .padding(.top, 34)
         .padding(.horizontal, 34)
@@ -59,6 +62,8 @@ struct ReadingNotesListView: View {
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(palette.primaryText)
             .focused($searchFocused)
+            .accessibilityIdentifier(ReadingNotesAccessibility.searchField)
+            .accessibilityLabel(AppText.localized("搜索笔记", "Search notes"))
             if !model.searchQuery.isEmpty {
                 Button {
                     model.searchQuery = ""
@@ -176,7 +181,13 @@ private struct ReadingNoteRow: View {
             .help(row.isFavorite
                 ? AppText.localized("取消收藏", "Remove favorite")
                 : AppText.localized("收藏并置顶", "Favorite and pin"))
-            .accessibilityLabel(AppText.localized("收藏", "Favorite"))
+            .accessibilityIdentifier(ReadingNotesAccessibility.favoriteButton)
+            // The label states the action, not the icon: a star that reads as
+            // "star" tells a screen-reader user nothing about what it will do,
+            // and the two states do opposite things.
+            .accessibilityLabel(row.isFavorite
+                ? AppText.localized("取消收藏", "Remove favorite")
+                : AppText.localized("收藏并置顶", "Favorite and pin"))
 
             Button {
                 perform(.delete)
@@ -187,12 +198,21 @@ private struct ReadingNoteRow: View {
                     .frame(width: 48, height: 32)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier(ReadingNotesAccessibility.deleteButton)
+            .accessibilityLabel(AppText.localized("删除笔记", "Delete note"))
         }
         .padding(.horizontal, 16)
         .frame(height: 74)
         .background(palette.cardBackground, in: RoundedRectangle(cornerRadius: 8))
         .contentShape(RoundedRectangle(cornerRadius: 8))
         .onTapGesture { perform(.open) }
+        // The row opens on tap, but a tap gesture is invisible to assistive
+        // tech — without an explicit action there is no way to open a note
+        // except with a pointer.
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(ReadingNotesAccessibility.row)
+        .accessibilityLabel("\(row.locationText), \(row.titleText)")
+        .accessibilityAction(named: AppText.localized("打开笔记", "Open note")) { perform(.open) }
     }
 }
 

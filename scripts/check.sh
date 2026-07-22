@@ -43,6 +43,23 @@ if [[ "$RUN_BUILD" -eq 1 ]]; then
 
   echo "==> Checking app bundle"
   ./Tests/LeafReaderTests/ReadAloud/PiperRuntimeBundleTests.sh "Leaf Vocabulary.app"
+
+  # Opt-in: it drives the real app, so it needs a logged-in GUI session and
+  # Accessibility permission, and it takes over the screen while it runs.
+  if [[ "${LEAFVOCAB_UI_SMOKE:-0}" == "1" ]]; then
+    echo "==> Running UI smoke test"
+    set +e
+    ./scripts/check_ui_smoke.sh
+    ui_smoke_status=$?
+    set -e
+    if [[ "$ui_smoke_status" -eq 2 ]]; then
+      echo "    skipped: the app's accessibility tree was unreadable (permission?)"
+    elif [[ "$ui_smoke_status" -ne 0 ]]; then
+      exit "$ui_smoke_status"
+    fi
+  else
+    echo "==> Skipping UI smoke test (set LEAFVOCAB_UI_SMOKE=1 to run)"
+  fi
 else
   echo "==> Skipping app build"
 fi

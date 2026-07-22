@@ -17,6 +17,7 @@ struct GeneralSettingsView: View {
                         Text(language.title).tag(language)
                     }
                 }
+                .accessibilityIdentifier(GeneralSettingsAccessibility.languagePicker)
                 Text(AppText.localized("更改后界面文字会立即更新。", "Interface text updates as soon as you save."))
                     .font(.callout)
                     .foregroundStyle(.secondary)
@@ -28,6 +29,7 @@ struct GeneralSettingsView: View {
                         Text(theme.title).tag(theme)
                     }
                 }
+                .accessibilityIdentifier(GeneralSettingsAccessibility.themePicker)
                 Text(ReaderTheme.selected.helpText)
                     .font(.callout)
                     .foregroundStyle(.secondary)
@@ -43,13 +45,16 @@ struct GeneralSettingsView: View {
                             Image(systemName: "sun.max")
                         }
                         .frame(minWidth: 220)
+                        .accessibilityIdentifier(GeneralSettingsAccessibility.brightnessSlider)
                     }
                 }
             }
 
             Section {
                 Toggle(AppText.localized("自动播放单词", "Auto Play Words"), isOn: $model.speaksSelectedWord)
+                    .accessibilityIdentifier(GeneralSettingsAccessibility.speakWordToggle)
                 Toggle(AppText.localized("保存 AI 对话", "Save AI Conversations"), isOn: $model.savesAIConversation)
+                    .accessibilityIdentifier(GeneralSettingsAccessibility.saveConversationToggle)
             }
         }
         .formStyle(.grouped)
