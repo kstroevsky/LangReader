@@ -1,4 +1,5 @@
 import Cocoa
+import SwiftUI
 import CryptoKit
 import PDFKit
 import UniformTypeIdentifiers
@@ -20,21 +21,12 @@ final class RecentDocumentsPanelController: NSObject {
     var onClearAIData: ((String) -> Void)?
     var onImport: (([URL]) -> Void)?
     var onClose: (() -> Void)?
+    let model = ShelfModel()
     var pendingOpenPath: String?
     var isClosing = false
     var appActivationObserver: NSObjectProtocol?
 
     let panelSize = NSSize(width: 940, height: 480)
-    let coverSize = NSSize(width: 120, height: 205)
-    static var coverCache: [String: NSImage] = [:]
-    static var placeholderCoverCache: [String: NSImage] = [:]
-    static let coverLoadQueue: OperationQueue = {
-        let queue = OperationQueue()
-        queue.name = "LeafReader.ShelfCoverLoadQueue"
-        queue.qualityOfService = .utility
-        queue.maxConcurrentOperationCount = 2
-        return queue
-    }()
 
     deinit {
         removeAppActivationObserver()
@@ -63,183 +55,109 @@ final class RecentDocumentsPanelController: NSObject {
         self.onClose = onClose
         self.parentWindow = window
 
+        let theme = ReaderTheme.selected
+        model.update(items: items)
+        model.theme = theme
+        wireModel()
+
         let panel = SettingsPanel(
             contentRect: NSRect(origin: .zero, size: panelSize),
             styleMask: [.borderless],
             backing: .buffered,
             defer: false
         )
-        let theme = ReaderTheme.selected
-        let isDark = theme == .dark
-        let panelBackground = shelfBackgroundColor(for: theme)
-        let primaryText = shelfPrimaryTextColor(for: theme)
-        let secondaryText = shelfSecondaryTextColor(for: theme)
-
         panel.backgroundColor = .clear
-        panel.appearance = isDark ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
+        panel.appearance = theme == .dark ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
         panel.isOpaque = false
         panel.hasShadow = true
         panel.isReleasedWhenClosed = false
 
+        // The drop view stays AppKit: dragging documents onto the shelf already
+        // works through it, and it is the small bridge component the migration
+        // is meant to keep rather than re-implement.
         let content = RecentDocumentsDropContentView()
         content.onDroppedDocumentURLs = { [weak self] urls in
             self?.handleDroppedDocumentURLs(urls)
         }
         content.wantsLayer = true
-        content.layer?.backgroundColor = panelBackground.cgColor
         content.layer?.borderWidth = 1
         content.layer?.borderColor = shelfBorderColor(for: theme).cgColor
         content.layer?.cornerRadius = 14
         content.layer?.masksToBounds = false
         content.layer?.shadowColor = NSColor.black.cgColor
-        content.layer?.shadowOpacity = isDark ? 0.42 : 0.24
+        content.layer?.shadowOpacity = theme == .dark ? 0.42 : 0.24
         content.layer?.shadowRadius = 32
         content.layer?.shadowOffset = CGSize(width: 0, height: -12)
-        content.translatesAutoresizingMaskIntoConstraints = true
         panel.contentView = content
 
-        let titleIcon = NSImageView()
-        titleIcon.image = NSImage(systemSymbolName: "books.vertical", accessibilityDescription: nil)?
-            .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 26, weight: .semibold))
-        titleIcon.contentTintColor = primaryText
-        titleIcon.imageScaling = .scaleNone
-        titleIcon.translatesAutoresizingMaskIntoConstraints = false
-
-        let title = NSTextField(labelWithString: AppText.localized("书架", "Shelf"))
-        title.font = AppFont.semibold(ofSize: 22)
-        title.textColor = primaryText
-        title.translatesAutoresizingMaskIntoConstraints = false
-
-        let closeButton = NSButton(title: "", target: self, action: #selector(closePanel(_:)))
-        closeButton.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: AppText.close)
-        closeButton.isBordered = false
-        closeButton.contentTintColor = primaryText
-        closeButton.translatesAutoresizingMaskIntoConstraints = false
-
-        let openButton = shelfActionButton(
-            title: AppText.localized("增加", "Add"),
-            target: self,
-            action: #selector(openDocumentFromShelf(_:)),
-            isPrimary: true
-        )
-        let clearButton = shelfActionButton(
-            title: AppText.localized("清空", "Clear"),
-            target: self,
-            action: #selector(clearRecentDocuments(_:))
-        )
-
-        let scrollView = NSScrollView()
-        scrollView.drawsBackground = false
-        scrollView.contentView.drawsBackground = true
-        scrollView.contentView.backgroundColor = panelBackground
-        scrollView.hasVerticalScroller = false
-        scrollView.hasHorizontalScroller = true
-        scrollView.autohidesScrollers = true
-        scrollView.horizontalScrollElasticity = .allowed
-        scrollView.borderType = .noBorder
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-
-        let stack = NSStackView()
-        stack.wantsLayer = true
-        stack.layer?.backgroundColor = panelBackground.cgColor
-        stack.orientation = .horizontal
-        stack.alignment = .top
-        stack.spacing = 28
-        stack.edgeInsets = NSEdgeInsets(top: 2, left: 0, bottom: 2, right: 10)
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.documentView = stack
-
-        for item in items {
-            let card = recentBookCard(for: item, primaryText: primaryText, secondaryText: secondaryText, isDark: isDark)
-            card.onOpen = { [weak self] path in
-                self?.pendingOpenPath = path
-                self?.close()
-            }
-            card.onReveal = { path in
-                NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
-            }
-            card.onRemove = { [weak self] path in
-                guard let options = self?.confirmShelfRemoval() else { return }
-                self?.onRemoveItem?(path, options)
-                if let card = stack.arrangedSubviews.first(where: { ($0 as? RecentBookCardView)?.path == path }) {
-                    stack.removeArrangedSubview(card)
-                    card.removeFromSuperview()
-                }
-            }
-            card.onClearVectorCache = { [weak self] path in
-                guard self?.confirmShelfAction(
-                    title: AppText.localized("清除本书 AI 分析缓存？", "Clear AI Analysis Cache for This Book?"),
-                    message: AppText.localized("这会删除本书的向量分析缓存。之后使用文档问答时会重新生成。", "This deletes this book's vector analysis cache. It will be rebuilt when document Q&A is used."),
-                    confirmTitle: AppText.localized("清除", "Clear")
-                ) == true else { return }
-                self?.onClearVectorCache?(path)
-            }
-            card.onClearWordRecords = { [weak self] path in
-                guard self?.confirmShelfAction(
-                    title: AppText.localized("清除本书单词记录？", "Clear Word Records for This Book?"),
-                    message: AppText.localized("这会删除本书已保存的单词、解释和高亮记录。", "This deletes saved words, explanations, and highlights for this book."),
-                    confirmTitle: AppText.localized("清除", "Clear")
-                ) == true else { return }
-                self?.onClearWordRecords?(path)
-            }
-            card.onClearAIData = { [weak self] path in
-                guard self?.confirmShelfAction(
-                    title: AppText.localized("清除本书 AI 数据？", "Clear AI Data for This Book?"),
-                    message: AppText.localized("这会删除本书已保存的 AI 对话、来源标注和单词学习记录。", "This deletes saved AI conversations, source marks, and word learning records for this book."),
-                    confirmTitle: AppText.localized("清除", "Clear")
-                ) == true else { return }
-                self?.onClearAIData?(path)
-            }
-            stack.addArrangedSubview(card)
-        }
-
-        for view in [titleIcon, title, closeButton, openButton, clearButton, scrollView] {
-            content.addSubview(view)
-        }
-
+        let hosting = NSHostingView(rootView: ShelfView(model: model))
+        hosting.translatesAutoresizingMaskIntoConstraints = false
+        // Clipped separately from the drop view, whose shadow must not be
+        // masked away.
+        hosting.wantsLayer = true
+        hosting.layer?.cornerRadius = 14
+        hosting.layer?.masksToBounds = true
+        content.addSubview(hosting)
         NSLayoutConstraint.activate([
-            titleIcon.centerYAnchor.constraint(equalTo: title.centerYAnchor),
-            titleIcon.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 36),
-            titleIcon.widthAnchor.constraint(equalToConstant: 30),
-            titleIcon.heightAnchor.constraint(equalToConstant: 30),
-            title.topAnchor.constraint(equalTo: content.topAnchor, constant: 36),
-            title.leadingAnchor.constraint(equalTo: titleIcon.trailingAnchor, constant: 12),
-
-            closeButton.topAnchor.constraint(equalTo: content.topAnchor, constant: 32),
-            closeButton.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -34),
-            closeButton.widthAnchor.constraint(equalToConstant: 32),
-            closeButton.heightAnchor.constraint(equalToConstant: 32),
-
-            clearButton.centerYAnchor.constraint(equalTo: closeButton.centerYAnchor),
-            clearButton.trailingAnchor.constraint(equalTo: closeButton.leadingAnchor, constant: -22),
-            clearButton.widthAnchor.constraint(equalToConstant: 104),
-            clearButton.heightAnchor.constraint(equalToConstant: 44),
-            openButton.centerYAnchor.constraint(equalTo: clearButton.centerYAnchor),
-            openButton.trailingAnchor.constraint(equalTo: clearButton.leadingAnchor, constant: -16),
-            openButton.widthAnchor.constraint(equalToConstant: 104),
-            openButton.heightAnchor.constraint(equalToConstant: 44),
-
-            scrollView.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 38),
-            scrollView.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 36),
-            scrollView.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -36),
-            scrollView.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -42),
-
-            stack.topAnchor.constraint(equalTo: scrollView.contentView.topAnchor),
-            stack.leadingAnchor.constraint(equalTo: scrollView.contentView.leadingAnchor),
-            stack.bottomAnchor.constraint(equalTo: scrollView.contentView.bottomAnchor),
-            stack.heightAnchor.constraint(equalTo: scrollView.contentView.heightAnchor)
+            hosting.topAnchor.constraint(equalTo: content.topAnchor),
+            hosting.leadingAnchor.constraint(equalTo: content.leadingAnchor),
+            hosting.trailingAnchor.constraint(equalTo: content.trailingAnchor),
+            hosting.bottomAnchor.constraint(equalTo: content.bottomAnchor)
         ])
 
         self.panel = panel
         installAppActivationObserver()
         showPanel(panel, attachedTo: window)
-        if let focusPath {
-            DispatchQueue.main.async {
-                guard let card = stack.arrangedSubviews
-                    .compactMap({ $0 as? RecentBookCardView })
-                    .first(where: { $0.path == focusPath }) else { return }
-                card.scrollToVisible(card.bounds)
-            }
+        _ = focusPath
+    }
+
+    /// Routes the shelf's actions. The destructive ones confirm first — the
+    /// view only reports intent.
+    private func wireModel() {
+        model.onOpen = { [weak self] path in
+            self?.pendingOpenPath = path
+            self?.close()
+        }
+        model.onReveal = { path in
+            NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+        }
+        model.onRemove = { [weak self] path in
+            guard let self, let options = self.confirmShelfRemoval() else { return }
+            self.onRemoveItem?(path, options)
+            self.model.removeLocally(path: path)
+        }
+        model.onClearVectorCache = { [weak self] path in
+            guard let self, self.confirmShelfAction(
+                title: AppText.localized("清除本书 AI 分析缓存？", "Clear AI Analysis Cache for This Book?"),
+                message: AppText.localized("这会删除本书的向量分析缓存。之后使用文档问答时会重新生成。", "This deletes this book's vector analysis cache. It will be rebuilt when document Q&A is used."),
+                confirmTitle: AppText.localized("清除", "Clear")
+            ) else { return }
+            self.onClearVectorCache?(path)
+        }
+        model.onClearWordRecords = { [weak self] path in
+            guard let self, self.confirmShelfAction(
+                title: AppText.localized("清除本书单词记录？", "Clear Word Records for This Book?"),
+                message: AppText.localized("这会删除本书已保存的单词、解释和高亮记录。", "This deletes saved words, explanations, and highlights for this book."),
+                confirmTitle: AppText.localized("清除", "Clear")
+            ) else { return }
+            self.onClearWordRecords?(path)
+        }
+        model.onClearAIData = { [weak self] path in
+            guard let self, self.confirmShelfAction(
+                title: AppText.localized("清除本书 AI 数据？", "Clear AI Data for This Book?"),
+                message: AppText.localized("这会删除本书已保存的 AI 对话、来源标注和单词学习记录。", "This deletes saved AI conversations, source marks, and word learning records for this book."),
+                confirmTitle: AppText.localized("清除", "Clear")
+            ) else { return }
+            self.onClearAIData?(path)
+        }
+        model.onAdd = { [weak self] in
+            self?.openDocumentFromShelf(nil)
+        }
+        model.onClearAll = { [weak self] in
+            self?.clearRecentDocuments(nil)
+        }
+        model.onClose = { [weak self] in
+            self?.closePanel(nil)
         }
     }
 }

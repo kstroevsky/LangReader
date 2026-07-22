@@ -27,3 +27,10 @@ enum GeneralSettingsAccessibility {
     static let speakWordToggle = "settings.general.speakWord"
     static let saveConversationToggle = "settings.general.saveConversation"
 }
+
+enum ShelfAccessibility {
+    static let addButton = "shelf.add"
+    static let clearButton = "shelf.clear"
+    static let closeButton = "shelf.close"
+    static let card = "shelf.card"
+}

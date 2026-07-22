@@ -148,18 +148,18 @@ extension RecentDocumentsPanelController {
         onImport?(supported)
     }
 
-    @objc func clearRecentDocuments(_ sender: NSButton) {
+    @objc func clearRecentDocuments(_ sender: Any?) {
         onClear?()
         close()
     }
 
-    @objc func openDocumentFromShelf(_ sender: NSButton) {
+    @objc func openDocumentFromShelf(_ sender: Any?) {
         let openPanel = NSOpenPanel()
         DocumentOpenPanelConfiguration.apply(to: openPanel)
         guard let hostWindow = panel ?? parentWindow ?? NSApp.keyWindow else { return }
-        Self.coverLoadQueue.isSuspended = true
+        ShelfCoverLoader.shared.setPaused(true)
         openPanel.beginSheetModal(for: hostWindow) { [weak self] response in
-            Self.coverLoadQueue.isSuspended = false
+            ShelfCoverLoader.shared.setPaused(false)
             guard let self, response == .OK, let url = openPanel.url else { return }
             guard ReaderDocumentKind.kind(for: url) != nil else {
                 NSSound.beep()
@@ -172,24 +172,6 @@ extension RecentDocumentsPanelController {
 
     @objc func closePanel(_ sender: Any?) {
         close()
-    }
-
-    func shelfActionButton(
-        title: String,
-        target: AnyObject,
-        action: Selector,
-        isPrimary: Bool = false
-    ) -> ThemedSettingsActionButton {
-        let theme = ReaderTheme.selected
-        let button = ThemedSettingsActionButton(title: title, target: target, action: action)
-        button.fillColor = isPrimary ? shelfPrimaryActionBackgroundColor(for: theme) : shelfButtonBackgroundColor(for: theme)
-        button.strokeColor = isPrimary ? shelfPrimaryActionBorderColor(for: theme) : shelfBorderColor(for: theme)
-        button.labelColor = isPrimary ? shelfPrimaryActionTextColor(for: theme) : shelfPrimaryTextColor(for: theme)
-        button.font = AppFont.semibold(ofSize: 14)
-        button.controlSize = .large
-        button.lineBreakMode = .byTruncatingTail
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
     }
 
     func shelfButtonBackgroundColor(for theme: ReaderTheme) -> NSColor {

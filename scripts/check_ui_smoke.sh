@@ -234,30 +234,21 @@ expect_identifier "settings.general.saveConversation" "$SETTINGS_IDS" "save-conv
 [[ "$(click_panel_button_titled "Cancel")" == *CLICKED* ]] && pass "settings cancels" || fail "settings would not cancel"
 sleep 2
 
-echo "shelf (AppKit)"
+echo "shelf (SwiftUI)"
 click_main_button "Shelf"
 sleep 4
-SHELF_TITLES="$(activate_app; osascript -e "with timeout of 30 seconds
-tell application \"System Events\" to tell process \"$APP_NAME\"
-  set out to \"\"
-  repeat with i from 1 to (count of windows)
-    if (subrole of window i) as string is not \"AXStandardWindow\" then
-      repeat with b in (buttons of window i)
-        try
-          if (title of b) is not \"\" then set out to out & (title of b) & linefeed
-        end try
-      end repeat
-    end if
-  end repeat
-  return out
-end tell
-end timeout" 2>&1)"
-# Presence only — "Clear" wipes the recents list and is never clicked.
-for title in Add Clear; do
-  if grep -qx "$title" <<<"$SHELF_TITLES"; then pass "shelf button $title"; else fail "shelf button $title missing"; fi
-done
-activate_app
-osascript -e "tell application \"System Events\" to key code 53" >/dev/null 2>&1
+SHELF_IDS="$(panel_identifiers)"
+expect_identifier "shelf.add"   "$SHELF_IDS" "add button"
+expect_identifier "shelf.clear" "$SHELF_IDS" "clear button"
+expect_identifier "shelf.close" "$SHELF_IDS" "close button"
+# Card presence is reported, not asserted: a user with no recent documents has
+# an empty shelf, which is correct rather than broken.
+if grep -qx "shelf.card" <<<"$SHELF_IDS"; then
+  pass "shelf shows at least one document card"
+else
+  echo "  --   no shelf cards (empty recents); card rendering not covered this run"
+fi
+[[ "$(click_identifier shelf.close)" == *CLICKED* ]] && pass "shelf closes" || fail "shelf would not close"
 sleep 2
 
 echo
