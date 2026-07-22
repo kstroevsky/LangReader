@@ -76,11 +76,6 @@ private final class VocabularyLibraryWordCell: NSTableCellView {
 }
 
 final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTableViewDataSource, NSTableViewDelegate, NSSearchFieldDelegate {
-    private enum SortOrder: Int {
-        case recent = 0
-        case alphabetical = 1
-    }
-
     private weak var owner: ReaderWindowController?
     private let reloadTask = DebouncedTask(delay: 0.12)
     private let rootView = NSView()
@@ -428,44 +423,22 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
     }
 
     private func applyFilters(preferredSelectionID: String? = nil) {
-        let query = searchField.stringValue
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
-        let sourcePath = sourcePopup.selectedItem?.representedObject as? String
+        // Read the controls, then hand off: the rules live in
+        // `VocabularyLibraryFilter` where they can be tested.
+        let selectionID = preferredSelectionID ?? selectedRecord?.id
+        filteredRecords = VocabularyLibraryFilter.apply(
+            records: records,
+            query: searchField.stringValue,
+            sourcePath: sourcePopup.selectedItem?.representedObject as? String,
+            sortOrder: VocabularyLibraryFilter.SortOrder(rawValue: sortPopup.indexOfSelectedItem) ?? .recent
+        )
 
-        filteredRecords = records.filter { record in
-            let matchesSource = sourcePath == nil || record.occurrences.contains {
-                $0.documentURL.standardizedFileURL.path == sourcePath
-            }
-            guard matchesSource else { return false }
-            guard !query.isEmpty else { return true }
-            let haystack = ([record.word, record.answer, record.dictionaryTags ?? ""] + record.forms.map(\.surface) + record.occurrences.flatMap {
-                [$0.context, $0.documentTitle, $0.location]
-            }).joined(separator: "\n")
-                .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
-            return haystack.contains(query)
-        }
-
-        if SortOrder(rawValue: sortPopup.indexOfSelectedItem) == .recent {
-            filteredRecords.sort {
-                if $0.latestCreatedAt != $1.latestCreatedAt {
-                    return $0.latestCreatedAt > $1.latestCreatedAt
-                }
-                return $0.word.localizedCaseInsensitiveCompare($1.word) == .orderedAscending
-            }
-        } else {
-            filteredRecords.sort {
-                $0.word.localizedCaseInsensitiveCompare($1.word) == .orderedAscending
-            }
-        }
-
-        summaryLabel.stringValue = AppText.localized(
-            "\(filteredRecords.count) / \(records.count) 个单词",
-            "\(filteredRecords.count) of \(records.count) words"
+        summaryLabel.stringValue = VocabularyLibraryFilter.summaryText(
+            matchCount: filteredRecords.count,
+            totalCount: records.count
         )
         tableView.reloadData()
-        let selectionID = preferredSelectionID ?? selectedRecord?.id
-        let row = selectionID.flatMap { id in filteredRecords.firstIndex { $0.id == id } } ?? (filteredRecords.isEmpty ? nil : 0)
+        let row = VocabularyLibraryFilter.selectionRow(in: filteredRecords, preferredID: selectionID)
         if let row {
             tableView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
             tableView.scrollRowToVisible(row)
