@@ -134,27 +134,6 @@ extension AISettingsPanelController {
         let keyField = APIKeySecureTextField(string: AISettingsStore.apiKey(for: selectedModel))
         configureKeyField(keyField, placeholder: AppText.apiKeyPlaceholder, fontSize: settingsFontSize, textColor: primaryText, backgroundColor: fieldBackground())
 
-        let languageLabel = label(AppText.language, size: settingsFontSize, weight: .semibold, color: primaryText)
-        let languageHelpLabel = label(AppText.languageHelp, size: settingsFontSize, color: secondaryText)
-        languageHelpLabel.isHidden = true
-        let languagePopup = popup(items: AppText.Language.allCases.map { ($0.title, $0.rawValue) }, selected: AppText.selectedLanguage.rawValue, fontSize: settingsFontSize)
-
-        let themeLabel = label(AppText.localized("模式", "Mode"), size: settingsFontSize, weight: .semibold, color: primaryText)
-        let themeHelpLabel = label(ReaderTheme.selected.helpText, size: settingsFontSize, color: secondaryText)
-        themeHelpLabel.isHidden = true
-        let themePopup = popup(items: ReaderTheme.allCases.map { ($0.title, $0.rawValue) }, selected: ReaderTheme.selected.rawValue, fontSize: settingsFontSize)
-        let pdfDimmingLabel = label(AppText.localized("阅读区亮度", "Reading Area Brightness"), size: settingsFontSize, weight: .semibold, color: primaryText)
-        let pdfDimmingSlider = ThemedSettingsSlider(value: pdfBrightnessSliderValue(forDimmingStrength: ReaderTheme.pdfDimmingStrength), minValue: 0, maxValue: Self.pdfBrightnessSliderMaximum)
-        pdfDimmingSlider.theme = theme
-        pdfDimmingSlider.numberOfTickMarks = 7
-        pdfDimmingSlider.target = self
-        pdfDimmingSlider.action = #selector(pdfDimmingSliderChanged(_:))
-        pdfDimmingSlider.translatesAutoresizingMaskIntoConstraints = false
-        let speakSelectedWordLabel = label(AppText.localized("自动播放单词", "Auto Play Words"), size: settingsFontSize, weight: .semibold, color: primaryText)
-        let speakSelectedWordCheckbox = settingsCheckbox(isOn: AISettingsStore.speakSelectedWordEnabled, theme: theme, fontSize: settingsFontSize)
-        let saveAIConversationLabel = label(AppText.localized("保存 AI 对话信息", "Save AI Chat"), size: settingsFontSize, weight: .semibold, color: primaryText)
-        let saveAIConversationCheckbox = settingsCheckbox(isOn: AISettingsStore.saveAIConversationEnabled, theme: theme, fontSize: settingsFontSize)
-
         let embeddingSection = makeEmbeddingSection(
             selectedEndpoint: selectedEmbeddingEndpoint,
             settingsFontSize: settingsFontSize,
@@ -194,11 +173,7 @@ extension AISettingsPanelController {
 
         modelPopup.target = self
         modelPopup.action = #selector(modelChanged(_:))
-        themePopup.target = self
-        themePopup.action = #selector(themeChanged(_:))
         modelPopup.identifier = Identifiers.modelPopup
-        languagePopup.identifier = Identifiers.languagePopup
-        themePopup.identifier = Identifiers.themePopup
         keyField.identifier = Identifiers.keyField
 
         for view in [titleIcon, titleLabel, closeButton, sidebarControl, scrollView, cancelButton, saveButton] {
@@ -208,10 +183,7 @@ extension AISettingsPanelController {
             customModelContainer.addSubview(view)
         }
         // The General page is SwiftUI, hosted inside the existing panel so the
-        // tabs, Save and Cancel keep working unchanged. The AppKit controls
-        // above are still built because other code still references them, but
-        // they are no longer attached to the page — removing them is the
-        // follow-up cleanup once nothing reads them.
+        // tabs, Save and Cancel keep working unchanged.
         installGeneralSettingsPage(in: basicPage)
         for view in [modelLabel, modelPopup, modelHelpLabel, customModelContainer, keyLabel, keyField, keyHelpLabel, testChatButton] {
             modelPage.addSubview(view)
@@ -253,14 +225,6 @@ extension AISettingsPanelController {
         keyTopWithoutCustomConstraint = keyTopWithoutCustom
         embeddingModelTopWithCustomEndpointConstraint = embeddingModelTopWithCustomEndpoint
         embeddingModelTopWithoutCustomEndpointConstraint = embeddingModelTopWithoutCustomEndpoint
-
-        let pdfDimmingLabelTopConstraint = pdfDimmingLabel.topAnchor.constraint(equalTo: themePopup.bottomAnchor, constant: 22)
-        let speakSelectedWordTopToDimmingConstraint = speakSelectedWordLabel.topAnchor.constraint(equalTo: pdfDimmingSlider.bottomAnchor, constant: 22)
-        let speakSelectedWordTopToThemeConstraint = speakSelectedWordLabel.topAnchor.constraint(equalTo: themePopup.bottomAnchor, constant: 22)
-        let pdfDimmingCollapsedConstraints = [
-            pdfDimmingLabel.heightAnchor.constraint(equalToConstant: 0),
-            pdfDimmingSlider.heightAnchor.constraint(equalToConstant: 0)
-        ]
 
         NSLayoutConstraint.activate(embeddingLayout.constraints)
         NSLayoutConstraint.activate(speechConstraints(
@@ -394,14 +358,6 @@ extension AISettingsPanelController {
         self.speechPage = speechPage
         self.cachePage = cachePage
         self.modelPopup = modelPopup
-        self.languagePopup = languagePopup
-        self.themePopup = themePopup
-        self.pdfDimmingLabel = pdfDimmingLabel
-        self.pdfDimmingSlider = pdfDimmingSlider
-        self.pdfDimmingLabelTopConstraint = pdfDimmingLabelTopConstraint
-        self.speakSelectedWordTopToDimmingConstraint = speakSelectedWordTopToDimmingConstraint
-        self.speakSelectedWordTopToThemeConstraint = speakSelectedWordTopToThemeConstraint
-        self.pdfDimmingCollapsedConstraints = pdfDimmingCollapsedConstraints
         self.secureKeyField = keyField
         self.customModelContainer = customModelContainer
         self.customEndpointLabel = customEndpointLabel
@@ -419,8 +375,6 @@ extension AISettingsPanelController {
         self.embeddingEndpointField = embeddingEndpointField
         self.embeddingModelField = embeddingModelField
         self.embeddingKeyField = embeddingKeyField
-        self.speakSelectedWordCheckbox = speakSelectedWordCheckbox
-        self.saveAIConversationCheckbox = saveAIConversationCheckbox
         self.autoEmbeddingIndexCheckbox = autoEmbeddingIndexCheckbox
         self.speechRuntimePopup = speechRuntimePopup
         self.speechVoicePopup = speechVoicePopup
@@ -431,7 +385,6 @@ extension AISettingsPanelController {
         refreshSpeechRuntimeStatus()
         updateCustomModelFields(for: selectedModel.id)
         updateEmbeddingEndpointFields(for: selectedEmbeddingEndpoint.id, fillDefaults: false)
-        updatePDFDimmingControlsVisibility()
         settingsTabChanged(index: initialTab.rawValue)
 
         installAppActivationObserver()

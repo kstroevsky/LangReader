@@ -12,8 +12,6 @@ final class AISettingsPanelController {
     enum Identifiers {
         static let saveButton = NSUserInterfaceItemIdentifier("saveAISettings")
         static let modelPopup = NSUserInterfaceItemIdentifier("modelPopup")
-        static let languagePopup = NSUserInterfaceItemIdentifier("languagePopup")
-        static let themePopup = NSUserInterfaceItemIdentifier("themePopup")
         static let keyField = NSUserInterfaceItemIdentifier("keyField")
         static let embeddingProviderPopup = NSUserInterfaceItemIdentifier("embeddingProviderPopup")
         static let embeddingEndpointField = NSUserInterfaceItemIdentifier("embeddingEndpointField")
@@ -50,14 +48,6 @@ final class AISettingsPanelController {
     weak var speechPage: NSView?
     weak var cachePage: NSView?
     weak var modelPopup: NSPopUpButton?
-    weak var languagePopup: NSPopUpButton?
-    weak var themePopup: NSPopUpButton?
-    weak var pdfDimmingLabel: NSTextField?
-    weak var pdfDimmingSlider: ThemedSettingsSlider?
-    var pdfDimmingLabelTopConstraint: NSLayoutConstraint?
-    var speakSelectedWordTopToDimmingConstraint: NSLayoutConstraint?
-    var speakSelectedWordTopToThemeConstraint: NSLayoutConstraint?
-    var pdfDimmingCollapsedConstraints: [NSLayoutConstraint] = []
     weak var secureKeyField: NSSecureTextField?
     weak var customModelContainer: NSView?
     weak var customEndpointLabel: NSTextField?
@@ -74,8 +64,6 @@ final class AISettingsPanelController {
     weak var embeddingEndpointField: NSTextField?
     weak var embeddingModelField: NSTextField?
     weak var embeddingKeyField: NSSecureTextField?
-    weak var speakSelectedWordCheckbox: NSButton?
-    weak var saveAIConversationCheckbox: NSButton?
     weak var autoEmbeddingIndexCheckbox: NSButton?
     weak var speechRuntimePopup: NSPopUpButton?
     weak var speechVoicePopup: NSPopUpButton?

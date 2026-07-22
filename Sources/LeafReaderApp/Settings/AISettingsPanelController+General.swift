@@ -8,8 +8,14 @@ extension AISettingsPanelController {
     /// view pinned to the page. Everything outside this page — the tab strip,
     /// Save and Cancel — remains AppKit.
     func installGeneralSettingsPage(in page: NSView) {
+        // Theme and brightness apply live, so both the reader *and* the panel
+        // the switch was flipped in have to restyle. The AppKit handler this
+        // replaced did the panel half itself; forgetting it here left the open
+        // panel showing the previous theme until it was reopened.
         let model = GeneralSettingsModel { [weak self] in
-            self?.onAppearanceChanged?()
+            guard let self else { return }
+            self.applySettingsPanelTheme(ReaderTheme.selected)
+            self.onAppearanceChanged?()
         }
         generalSettings = model
 
