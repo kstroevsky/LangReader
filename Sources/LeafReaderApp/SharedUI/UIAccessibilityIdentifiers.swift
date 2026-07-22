@@ -34,3 +34,7 @@ enum ShelfAccessibility {
     static let closeButton = "shelf.close"
     static let card = "shelf.card"
 }
+
+enum VocabularyLibraryAccessibility {
+    static let row = "vocabulary.row"
+}

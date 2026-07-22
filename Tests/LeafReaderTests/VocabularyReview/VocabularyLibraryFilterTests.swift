@@ -131,6 +131,33 @@ enum VocabularyLibraryFilterTests {
         )
     }
 
+    static func testRowMetadataTextPluralisesSources() throws {
+        let one = VocabularyLibraryRowPresenter.metadataText(occurrenceCount: 5, sourceCount: 1)
+        let many = VocabularyLibraryRowPresenter.metadataText(occurrenceCount: 5, sourceCount: 3)
+        try expect(one != many, "one source should read differently from several")
+        try expect(one.contains("5"), "the occurrence count should appear, got \(one)")
+        try expect(many.contains("3"), "the source count should appear, got \(many)")
+    }
+
+    static func testRowAnswerPreviewIsOneLineAndNeverBlank() throws {
+        // Answers are multi-line markdown; a row is one line.
+        let multiline = VocabularyLibraryRowPresenter.answerPreview("first line\n\nsecond   line")
+        try expect(!multiline.contains("\n"), "the preview should be a single line, got \(multiline)")
+        try expect(!multiline.contains("  "), "runs of whitespace should collapse, got \(multiline)")
+
+        // A blank row would look like a loading failure rather than a word
+        // that simply has no definition yet.
+        let empty = VocabularyLibraryRowPresenter.answerPreview("")
+        try expect(!empty.isEmpty, "an empty answer should still produce text")
+        try expectEqual(
+            VocabularyLibraryRowPresenter.answerPreview("   \n  "),
+            empty,
+            "a whitespace-only answer should read as having no definition"
+        )
+        try expect(!VocabularyLibraryRowPresenter.hasAnswer(""), "an empty answer should not count as an answer")
+        try expect(VocabularyLibraryRowPresenter.hasAnswer("a definition"), "real text should count as an answer")
+    }
+
     // MARK: Helpers
 
     private static func filtered(

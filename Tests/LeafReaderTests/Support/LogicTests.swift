@@ -836,6 +836,8 @@ private let tests: [(String, () throws -> Void)] = [
     ("Occurrence counts come from occurrences", VocabularyOccurrenceGroupingTests.testCountsComeFromOccurrencesNotTheFormList),
     ("Occurrence labels fold case, first wins", VocabularyOccurrenceGroupingTests.testLabelsMatchAcrossCaseAndTakeTheFirstOnConflict),
     ("Occurrence no occurrences no tabs", VocabularyOccurrenceGroupingTests.testNoOccurrencesProducesNoTabs),
+    ("Vocabulary row metadata text", VocabularyLibraryFilterTests.testRowMetadataTextPluralisesSources),
+    ("Vocabulary row answer preview", VocabularyLibraryFilterTests.testRowAnswerPreviewIsOneLineAndNeverBlank),
     ("Vocabulary library search folding", VocabularyLibraryFilterTests.testSearchIsCaseAndDiacriticInsensitive),
     ("Vocabulary library search fields", VocabularyLibraryFilterTests.testSearchCoversContextAndFormsNotJustTheWord),
     ("Vocabulary library blank query", VocabularyLibraryFilterTests.testBlankQueryMatchesEverything),

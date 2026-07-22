@@ -1,4 +1,5 @@
 import Cocoa
+import SwiftUI
 
 final class VocabularyLibrarySourceButton: NSButton {
     var occurrence: VocabularyLibraryOccurrence?
@@ -18,64 +19,7 @@ private final class TopAnchoredStackView: NSStackView {
     override var isFlipped: Bool { true }
 }
 
-private final class VocabularyLibraryWordCell: NSTableCellView {
-    private let wordLabel = NSTextField(labelWithString: "")
-    private let metadataLabel = NSTextField(labelWithString: "")
-    private let answerLabel = NSTextField(labelWithString: "")
-
-    override init(frame frameRect: NSRect) {
-        super.init(frame: frameRect)
-        wordLabel.font = AppFont.semibold(ofSize: 16)
-        wordLabel.lineBreakMode = .byTruncatingTail
-        answerLabel.font = NSFont.systemFont(ofSize: 12)
-        answerLabel.lineBreakMode = .byTruncatingTail
-        metadataLabel.font = AppFont.semibold(ofSize: 11)
-        metadataLabel.alignment = .right
-        metadataLabel.lineBreakMode = .byTruncatingTail
-
-        for label in [wordLabel, answerLabel, metadataLabel] {
-            label.translatesAutoresizingMaskIntoConstraints = false
-            addSubview(label)
-        }
-        NSLayoutConstraint.activate([
-            wordLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
-            wordLabel.topAnchor.constraint(equalTo: topAnchor, constant: 10),
-            wordLabel.trailingAnchor.constraint(lessThanOrEqualTo: metadataLabel.leadingAnchor, constant: -8),
-            metadataLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
-            metadataLabel.centerYAnchor.constraint(equalTo: wordLabel.centerYAnchor),
-            metadataLabel.widthAnchor.constraint(lessThanOrEqualToConstant: 128),
-            answerLabel.leadingAnchor.constraint(equalTo: wordLabel.leadingAnchor),
-            answerLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
-            answerLabel.topAnchor.constraint(equalTo: wordLabel.bottomAnchor, constant: 5)
-        ])
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    func configure(record: VocabularyLibraryRecord, theme: ReaderTheme) {
-        wordLabel.stringValue = record.word
-        let sourceText = record.sourceCount == 1
-            ? AppText.localized("1 个文件", "1 file")
-            : AppText.localized("\(record.sourceCount) 个文件", "\(record.sourceCount) files")
-        metadataLabel.stringValue = AppText.localized(
-            "\(record.occurrences.count) 处 · \(sourceText)",
-            "\(record.occurrences.count)x · \(sourceText)"
-        )
-        let answer = VocabularyAnswerSanitizer.removingTrailingTags(from: record.answer)
-            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        answerLabel.stringValue = answer.isEmpty
-            ? AppText.localized("没有释义", "No definition yet")
-            : answer
-        wordLabel.textColor = theme.vocabularyPrimaryTextColor
-        metadataLabel.textColor = theme.vocabularySecondaryTextColor
-        answerLabel.textColor = theme.vocabularySecondaryTextColor
-    }
-}
-
-final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTableViewDataSource, NSTableViewDelegate, NSSearchFieldDelegate {
+final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSearchFieldDelegate {
     private weak var owner: ReaderWindowController?
     private let reloadTask = DebouncedTask(delay: 0.12)
     private let rootView = NSView()
@@ -83,7 +27,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
     private let searchField = NSSearchField()
     private let sourcePopup = NSPopUpButton()
     private let sortPopup = NSPopUpButton()
-    private let tableView = NSTableView()
+    private let listModel = VocabularyLibraryListModel()
     private let detailStack = TopAnchoredStackView()
     private(set) var window: NSWindow?
     private var records: [VocabularyLibraryRecord] = []
@@ -206,7 +150,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
     func refreshTheme() {
         guard window != nil else { return }
         applyTheme()
-        tableView.reloadData()
+        listModel.theme = ReaderTheme.selected
         refreshDetail()
     }
 
@@ -274,7 +218,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
             fontSize: 13
         ) ?? NSButton(title: AppText.localized("刷新", "Refresh"), target: self, action: #selector(refreshTapped(_:)))
 
-        let listScroll = makeListScrollView()
+        let listScroll = makeListView()
         let detailScroll = makeDetailScrollView()
         let divider = NSBox()
         divider.boxType = .separator
@@ -328,25 +272,16 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         applyTheme()
     }
 
-    private func makeListScrollView() -> NSScrollView {
-        let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("word"))
-        column.resizingMask = .autoresizingMask
-        tableView.addTableColumn(column)
-        tableView.headerView = nil
-        tableView.rowHeight = 66
-        tableView.intercellSpacing = NSSize(width: 0, height: 2)
-        tableView.selectionHighlightStyle = .regular
-        tableView.dataSource = self
-        tableView.delegate = self
-        tableView.allowsEmptySelection = false
-        tableView.focusRingType = .none
-
-        let scroll = NSScrollView()
-        scroll.hasVerticalScroller = true
-        scroll.autohidesScrollers = true
-        scroll.borderType = .noBorder
-        scroll.documentView = tableView
-        return scroll
+    private func makeListView() -> NSView {
+        listModel.onSelect = { [weak self] _ in
+            // A form filter belongs to one word; carrying it to the next
+            // selection would silently hide occurrences of a word that has no
+            // such form.
+            self?.occurrenceFormFilter = nil
+            self?.refreshDetail()
+        }
+        let hosting = NSHostingView(rootView: VocabularyLibraryListView(model: listModel))
+        return hosting
     }
 
     private func makeDetailScrollView() -> NSScrollView {
@@ -384,7 +319,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
         rootView.wantsLayer = true
         rootView.layer?.backgroundColor = background.cgColor
         summaryLabel.textColor = theme.vocabularySecondaryTextColor
-        tableView.backgroundColor = background
+        listModel.theme = theme
         detailStack.wantsLayer = true
         detailStack.layer?.backgroundColor = background.cgColor
         owner?.styleVocabularyActionButtons(in: rootView)
@@ -437,38 +372,17 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSTab
             matchCount: filteredRecords.count,
             totalCount: records.count
         )
-        tableView.reloadData()
         let row = VocabularyLibraryFilter.selectionRow(in: filteredRecords, preferredID: selectionID)
-        if let row {
-            tableView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
-            tableView.scrollRowToVisible(row)
-        } else {
-            tableView.deselectAll(nil)
-            refreshDetail()
-        }
+        listModel.theme = ReaderTheme.selected
+        listModel.apply(records: filteredRecords, selectedID: row.map { filteredRecords[$0].id })
+        // `apply` sets the selection without notifying, so the detail pane is
+        // refreshed here explicitly — once, whatever the selection did.
+        occurrenceFormFilter = nil
+        refreshDetail()
     }
 
     private var selectedRecord: VocabularyLibraryRecord? {
-        guard tableView.selectedRow >= 0, tableView.selectedRow < filteredRecords.count else { return nil }
-        return filteredRecords[tableView.selectedRow]
-    }
-
-    func numberOfRows(in tableView: NSTableView) -> Int {
-        filteredRecords.count
-    }
-
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
-        guard row >= 0, row < filteredRecords.count else { return nil }
-        let cell = VocabularyLibraryWordCell()
-        cell.configure(record: filteredRecords[row], theme: ReaderTheme.selected)
-        return cell
-    }
-
-    func tableViewSelectionDidChange(_ notification: Notification) {
-        // A form filter belongs to one word; carrying it to the next selection
-        // would silently hide occurrences of a word that has no such form.
-        occurrenceFormFilter = nil
-        refreshDetail()
+        listModel.selectedRecord
     }
 
     func controlTextDidChange(_ obj: Notification) {

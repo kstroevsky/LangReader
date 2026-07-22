@@ -112,6 +112,59 @@ panel_identifiers() {
     return out'
 }
 
+# Walks one window by name, whatever its subrole. Needed for screens that live
+# in a real titled window (the Words library) rather than a borderless panel —
+# `panel_identifiers` skips those to avoid the reader window's PDF tree.
+named_window_identifiers() {
+  activate_app
+  run_as '    set out to ""
+    tell application "System Events" to tell process "'"$APP_NAME"'"
+        repeat with i from 1 to (count of windows)
+            if (name of window i) as string is "'"$1"'" then
+                set out to out & my walk(window i, 1, "", "list")
+            end if
+        end repeat
+    end tell
+    return out'
+}
+
+# The library's summary reads "13 of 13 words". Used to decide whether rows are
+# required: with words saved, an empty list is a regression; with none, it is
+# simply an empty library.
+library_word_count() {
+  activate_app
+  osascript -e "with timeout of 20 seconds
+tell application \"System Events\" to tell process \"$APP_NAME\"
+  repeat with i from 1 to (count of windows)
+    if (name of window i) as string is \"Words\" then
+      repeat with t in (static texts of window i)
+        try
+          set v to (value of t) as string
+          -- Must start with a digit: AppleScript's \"contains\" is
+          -- case-insensitive, so matching on the word \"words\" also matched
+          -- the window's own \"Words\" title and parsed no count from it.
+          if v is not \"\" and (character 1 of v) is in \"0123456789\" then return v
+        end try
+      end repeat
+    end if
+  end repeat
+end tell
+return \"\"
+end timeout" 2>&1
+}
+
+window_exists() {
+  activate_app
+  osascript -e "with timeout of 20 seconds
+tell application \"System Events\" to tell process \"$APP_NAME\"
+  repeat with i from 1 to (count of windows)
+    if (name of window i) as string is \"$1\" then return \"YES\"
+  end repeat
+end tell
+return \"NO\"
+end timeout" 2>&1
+}
+
 click_identifier() {
   activate_app
   run_as '    tell application "System Events" to tell process "'"$APP_NAME"'"
@@ -232,6 +285,39 @@ expect_identifier "settings.general.speakWord"       "$SETTINGS_IDS" "auto-play 
 expect_identifier "settings.general.saveConversation" "$SETTINGS_IDS" "save-conversation toggle"
 # Cancel, never Save: the smoke test must not write the user's settings.
 [[ "$(click_panel_button_titled "Cancel")" == *CLICKED* ]] && pass "settings cancels" || fail "settings would not cancel"
+sleep 2
+
+echo "vocabulary library (SwiftUI list)"
+click_main_button "Words"
+sleep 5
+# Assert the window opened. Rows alone are not enough to assert on: a library
+# with no saved words legitimately has none, so a broken list and an empty one
+# would look identical and a real regression would pass silently.
+if [[ "$(window_exists "Words")" == *YES* ]]; then
+  pass "library window opens"
+else
+  fail "library window did not open"
+fi
+LIBRARY_IDS="$(named_window_identifiers "Words")"
+LIBRARY_SUMMARY="$(library_word_count)"
+# Leading integer of "13 of 13 words"; empty/unparsed counts as zero.
+LIBRARY_WORDS="$(sed -n 's/^\([0-9][0-9]*\).*/\1/p' <<<"$LIBRARY_SUMMARY" | head -1)"
+LIBRARY_WORDS="${LIBRARY_WORDS:-0}"
+if grep -qx "vocabulary.row" <<<"$LIBRARY_IDS"; then
+  pass "library list renders word rows (vocabulary.row)"
+elif (( LIBRARY_WORDS > 0 )); then
+  fail "library reports $LIBRARY_WORDS words but rendered no rows"
+else
+  echo "  --   library is empty; row rendering not covered this run"
+fi
+activate_app
+osascript -e "with timeout of 30 seconds
+tell application \"System Events\" to tell process \"$APP_NAME\"
+  try
+    click (first button of (first window whose name is \"Words\") whose subrole is \"AXCloseButton\")
+  end try
+end tell
+end timeout" >/dev/null 2>&1
 sleep 2
 
 echo "shelf (SwiftUI)"
