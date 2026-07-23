@@ -1,4 +1,5 @@
 import Cocoa
+import SwiftUI
 
 extension ReaderWindowController {
     func configureToolbarViews() -> ReaderToolbarSetup {
@@ -102,140 +103,35 @@ extension ReaderWindowController {
 
     func configureBottomBarViews() -> ReaderBottomBarSetup {
         let bottomBar = readerBarView()
-        let settingsButton = iconButton(symbol: "gearshape", action: #selector(openAISettings))
-        settingsButton.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: AppText.settings)?
-            .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 19, weight: .regular))
-        settingsButton.setAccessibilityIdentifier(ReaderBottomBarItem.Identifier.settings.accessibilityIdentifier)
-        let navigationStack = NSStackView()
-
         bottomBarView = bottomBar
-        // Built from `ReaderBottomBarLayout`, so the bar's contents and order
-        // are the array rather than the order of these statements.
-        for item in ReaderBottomBarLayout.items where item.id != .settings {
-            let button = capsuleButton(
-                title: bottomBarTitle(for: item.id),
-                symbol: bottomBarSymbol(for: item.id),
-                action: bottomBarAction(for: item.id),
-                showsLeadingSymbol: item.showsLeadingSymbol
-            )
-            button.toolTip = bottomBarTooltip(for: item.id)
-            // A stable, locale-independent handle for the smoke test and
-            // assistive tech. Distinct from `.identifier`, which the capsule
-            // buttons already use to mark themselves for theming.
-            button.setAccessibilityIdentifier(item.id.accessibilityIdentifier)
-            assign(button, to: item.id)
-        }
-
-        embeddingStatusLabel.font = AppFont.semibold(ofSize: 12)
-        embeddingStatusLabel.alignment = .right
-        embeddingStatusLabel.lineBreakMode = .byTruncatingMiddle
-        embeddingStatusLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        embeddingStatusLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        updateEmbeddingStatusTextColor()
-        embeddingStatusLabel.isHidden = true
-        embeddingPauseButton.isHidden = true
-        embeddingCancelButton.isHidden = true
-
-        navigationStack.orientation = .horizontal
-        navigationStack.alignment = .centerY
-        navigationStack.distribution = .fill
-        navigationStack.spacing = ReaderUILayout.navigationStackSpacing
-        for button in [tocButton!, coverButton!, prevButton!, nextButton!, farthestPositionButton!] {
-            button.translatesAutoresizingMaskIntoConstraints = false
-            navigationStack.addArrangedSubview(button)
-        }
-
-        for view in [settingsButton, recentButton!, vocabularyLibraryButton!, notesButton!, vocabularyButton!, navigationStack, embeddingStatusLabel, embeddingPauseButton!, embeddingCancelButton!] {
-            view.translatesAutoresizingMaskIntoConstraints = false
-            bottomBar.addSubview(view)
-        }
-
-        return ReaderBottomBarSetup(bottomBar: bottomBar, settingsButton: settingsButton, navigationStack: navigationStack)
+        bottomBarModel.theme = ReaderTheme.selected
+        wireBottomBarModel()
+        let hosting = NSHostingView(rootView: ReaderBottomBarView(model: bottomBarModel))
+        hosting.translatesAutoresizingMaskIntoConstraints = false
+        // A findable container so the smoke test can reach the nested SwiftUI
+        // buttons without walking the reader's huge PDF accessibility tree.
+        bottomBar.setAccessibilityIdentifier("readerBottomBar")
+        bottomBar.addSubview(hosting)
+        return ReaderBottomBarSetup(bottomBar: bottomBar, hosting: hosting)
     }
 
-
-    // MARK: Bottom bar descriptors -> real buttons
-
-    /// The selector each descriptor drives. Kept here rather than in
-    /// `ReaderBottomBarItem` so the descriptor stays free of AppKit.
-    private func bottomBarAction(for id: ReaderBottomBarItem.Identifier) -> Selector {
-        switch id {
-        case .settings: return #selector(openAISettings)
-        case .shelf: return #selector(showRecentDocuments)
-        case .words: return #selector(showVocabularyLibrary)
-        case .notes: return #selector(showReadingNotesPanel(_:))
-        case .review: return #selector(showVocabularyBook)
-        case .toc: return #selector(showTableOfContents)
-        case .cover: return #selector(goToCover)
-        case .previousPage: return #selector(prevPage)
-        case .nextPage: return #selector(nextPage)
-        case .farthestPosition: return #selector(goToFarthestReadingPosition)
-        case .embeddingPause: return #selector(toggleEmbeddingBackfillPaused)
-        case .embeddingCancel: return #selector(cancelEmbeddingBackfill)
-        }
-    }
-
-    private func bottomBarTitle(for id: ReaderBottomBarItem.Identifier) -> String {
-        switch id {
-        case .settings: return ""
-        case .shelf: return AppText.localized("书架", "Shelf")
-        case .words: return AppText.localized("生词", "Words")
-        case .notes: return AppText.localized("笔记", "Notes")
-        case .review: return AppText.localized("背单词", "Review")
-        case .toc: return AppText.localized("目录", "TOC")
-        case .cover: return AppText.cover
-        case .previousPage: return AppText.prev
-        case .nextPage: return AppText.next
-        case .farthestPosition: return AppText.localized("上次位置", "Last")
-        case .embeddingPause: return AppText.localized("暂停", "Pause")
-        case .embeddingCancel: return AppText.localized("取消", "Cancel")
-        }
-    }
-
-    private func bottomBarSymbol(for id: ReaderBottomBarItem.Identifier) -> String {
-        switch id {
-        case .settings: return "gearshape"
-        case .shelf: return "books.vertical"
-        case .words: return "text.word.spacing"
-        case .notes: return "note.text"
-        case .review: return "text.book.closed"
-        case .toc: return "list.bullet"
-        case .cover: return "book.closed"
-        case .previousPage: return "chevron.left"
-        case .nextPage: return "chevron.right"
-        case .farthestPosition: return "arrow.turn.down.right"
-        case .embeddingPause: return "pause.fill"
-        case .embeddingCancel: return "xmark"
-        }
-    }
-
-    private func bottomBarTooltip(for id: ReaderBottomBarItem.Identifier) -> String? {
-        switch id {
-        case .words: return AppText.localized("打开所有文档中的生词", "Open saved words from all documents")
-        case .review: return AppText.localized("复习当前文档中的单词", "Review words from the current document")
-        case .farthestPosition: return AppText.localized("跳到本书阅读过的最远位置", "Jump to the farthest read position in this book")
-        case .embeddingPause: return AppText.localized("暂停/继续 AI 分析", "Pause/resume AI analysis")
-        case .embeddingCancel: return AppText.localized("取消本次 AI 分析任务", "Cancel this AI analysis task")
-        default: return nil
-        }
-    }
-
-    /// The controller keeps a named reference to each button for visibility and
-    /// theming; this is the one place the descriptor meets those properties.
-    private func assign(_ button: NSButton, to id: ReaderBottomBarItem.Identifier) {
-        switch id {
-        case .settings: break
-        case .shelf: recentButton = button
-        case .words: vocabularyLibraryButton = button
-        case .notes: notesButton = button
-        case .review: vocabularyButton = button
-        case .toc: tocButton = button
-        case .cover: coverButton = button
-        case .previousPage: prevButton = button
-        case .nextPage: nextButton = button
-        case .farthestPosition: farthestPositionButton = button
-        case .embeddingPause: embeddingPauseButton = button
-        case .embeddingCancel: embeddingCancelButton = button
+    private func wireBottomBarModel() {
+        bottomBarModel.action = { [weak self] id in
+            guard let self else { return }
+            switch id {
+            case .settings: self.openAISettings()
+            case .shelf: self.showRecentDocuments()
+            case .words: self.showVocabularyLibrary()
+            case .notes: self.showReadingNotesPanel(nil)
+            case .review: self.showVocabularyBook()
+            case .toc: self.showTableOfContents()
+            case .cover: self.goToCover()
+            case .previousPage: self.prevPage()
+            case .nextPage: self.nextPage()
+            case .farthestPosition: self.goToFarthestReadingPosition()
+            case .embeddingPause: self.toggleEmbeddingBackfillPaused()
+            case .embeddingCancel: self.cancelEmbeddingBackfill()
+            }
         }
     }
 

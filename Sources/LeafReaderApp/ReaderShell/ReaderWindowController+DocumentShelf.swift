@@ -172,8 +172,8 @@ extension ReaderWindowController {
         if currentFileMD5 == documentID {
             invalidateEmbeddingBackfill()
             invalidateDocumentAgentIndex()
-            embeddingStatusLabel.stringValue = AppText.localized("AI 分析数据：已清除当前书", "AI analysis data: current book cleared")
-            embeddingStatusLabel.isHidden = false
+            bottomBarModel.embeddingStatusText = AppText.localized("AI 分析数据：已清除当前书", "AI analysis data: current book cleared")
+            bottomBarModel.embeddingStatusVisible = true
             updateEmbeddingControlButtons()
         }
     }

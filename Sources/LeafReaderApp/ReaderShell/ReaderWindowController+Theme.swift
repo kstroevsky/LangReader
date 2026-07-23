@@ -3,6 +3,7 @@ import Cocoa
 extension ReaderWindowController {
     func applyReaderTheme() {
         let theme = ReaderTheme.selected
+        bottomBarModel.theme = theme
         let isDark = theme == .dark
         let chromeBackground = chromeBackgroundColor(for: theme)
         let toolbarBackground = toolbarBackgroundColor(for: theme)
@@ -103,7 +104,7 @@ extension ReaderWindowController {
     }
 
     func updateEmbeddingStatusTextColor() {
-        embeddingStatusLabel.textColor = ReaderTheme.selected.secondaryTextColor
+        // Embedding status is SwiftUI now and colours itself from the theme.
     }
 
     func applyPDFReaderTheme(theme: ReaderTheme) {

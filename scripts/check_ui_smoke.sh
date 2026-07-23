@@ -83,6 +83,41 @@ on walk(el, depth, wanted, mode)
     end tell
     return acc
 end walk
+
+on walkChrome(el, depth, wanted, mode)
+    set acc to ""
+    if depth > 10 then return acc
+    tell application "System Events"
+        set kids to {}
+        try
+            set kids to UI elements of el
+        end try
+        repeat with e in kids
+            set r to ""
+            try
+                set r to (role of e) as string
+            end try
+            -- Skip the PDF/web scroll areas: that subtree is enormous.
+            if r is not "AXScrollArea" then
+                try
+                    set theID to value of attribute "AXIdentifier" of e
+                    if theID is not missing value and theID is not "" then
+                        if mode is "list" then
+                            set acc to acc & theID & linefeed
+                        else if theID is wanted then
+                            click e
+                            return "CLICKED"
+                        end if
+                    end if
+                end try
+                set r2 to my walkChrome(e, depth + 1, wanted, mode)
+                if mode is "click" and r2 is "CLICKED" then return "CLICKED"
+                set acc to acc & r2
+            end if
+        end repeat
+    end tell
+    return acc
+end walkChrome
 APPLESCRIPT
 
 run_as() {
@@ -217,6 +252,20 @@ end tell
 end timeout" 2>&1
 }
 
+reader_chrome_identifiers() {
+  activate_app
+  run_as '    tell application "System Events" to tell process "'"$APP_NAME"'"
+        return my walkChrome(first window whose subrole is "AXStandardWindow", 1, "", "list")
+    end tell'
+}
+
+click_reader_chrome() {
+  activate_app
+  run_as '    tell application "System Events" to tell process "'"$APP_NAME"'"
+        return my walkChrome(first window whose subrole is "AXStandardWindow", 1, "'"$1"'", "click")
+    end tell'
+}
+
 main_button_identifiers() {
   activate_app
   osascript -e "with timeout of 30 seconds
@@ -283,7 +332,7 @@ fi
 # A failure here usually means accessibility permission is missing rather than a
 # real regression, so it is called out separately.
 TITLES="$(main_button_titles)"
-if ! grep -q "Notes" <<<"$TITLES"; then
+if ! grep -q "Read" <<<"$TITLES"; then
   echo "UI smoke: cannot read the app's accessibility tree." >&2
   echo "Grant Accessibility permission to this terminal and re-run." >&2
   echo "--- got: ---" >&2
@@ -296,7 +345,7 @@ echo "reader chrome"
 # title: the titles are localised (a Chinese UI would break a title match), and
 # these identifiers will carry over unchanged when the bar is rebuilt in SwiftUI,
 # turning this into a regression net for that swap.
-CHROME_IDS="$(main_button_identifiers)"
+CHROME_IDS="$(reader_chrome_identifiers)"
 for id in settings shelf words notes review toc cover previousPage nextPage farthestPosition; do
   expect_identifier "bottomBar.$id" "$CHROME_IDS" "bottom bar $id"
 done
@@ -305,7 +354,7 @@ done
 if grep -qx "Read" <<<"$TITLES"; then pass "toolbar button Read"; else fail "toolbar button Read missing"; fi
 
 echo "reading notes (SwiftUI)"
-click_main_identifier "bottomBar.notes"
+click_reader_chrome "bottomBar.notes"
 sleep 3
 NOTES_IDS="$(panel_identifiers)"
 expect_identifier "notes.search"  "$NOTES_IDS" "search field"
@@ -331,7 +380,7 @@ expect_identifier "settings.general.saveConversation" "$SETTINGS_IDS" "save-conv
 sleep 2
 
 echo "vocabulary library (SwiftUI list)"
-click_main_identifier "bottomBar.words"
+click_reader_chrome "bottomBar.words"
 sleep 5
 # Assert the window opened. Rows alone are not enough to assert on: a library
 # with no saved words legitimately has none, so a broken list and an empty one
@@ -364,7 +413,7 @@ end timeout" >/dev/null 2>&1
 sleep 2
 
 echo "shelf (SwiftUI)"
-click_main_identifier "bottomBar.shelf"
+click_reader_chrome "bottomBar.shelf"
 sleep 4
 SHELF_IDS="$(panel_identifiers)"
 expect_identifier "shelf.add"   "$SHELF_IDS" "add button"

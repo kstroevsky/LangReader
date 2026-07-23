@@ -105,22 +105,16 @@ extension ReaderWindowController {
 
     func refreshLanguageUI() {
         (NSApp.delegate as? AppDelegate)?.refreshMainMenu()
+        bottomBarModel.languageToken += 1
         aiPanel.refreshLanguage()
         fullScreenButton.title = window?.styleMask.contains(.fullScreen) == true ? AppText.windowed : AppText.fullScreen
-        coverButton.title = AppText.cover
-        tocButton.title = AppText.localized("目录", "TOC")
-        recentButton.title = AppText.localized("书架", "Shelf")
-        notesButton.title = AppText.localized("笔记", "Notes")
-        vocabularyButton.title = AppText.localized("背单词", "Vocab")
-        prevButton.title = AppText.prev
-        nextButton.title = AppText.next
-        farthestPositionButton.title = AppText.localized("上次位置", "Last")
+        // The bottom bar is SwiftUI and re-renders from the language token above.
         selectionActionToolbar.refreshLanguage()
         selectionActionToolbar.applyTheme(ReaderTheme.selected)
         refreshEmbeddingStatusLanguage()
         updatePDFPageLayoutButton()
         updatePDFMarginCropButton()
-        for button in [coverButton, tocButton, recentButton, notesButton, vocabularyButton, prevButton, nextButton, farthestPositionButton, pageLayoutButton, cropButton] {
+        for button in [pageLayoutButton, cropButton] {
             if let capsule = button as? CapsuleChromeButton {
                 capsule.theme = ReaderTheme.selected
             }

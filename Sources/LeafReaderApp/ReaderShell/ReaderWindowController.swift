@@ -74,15 +74,6 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     let selectionActionToolbar = SelectionActionToolbar()
     var selectionActionToolbarWindow: NSWindow?
     var fullScreenButton: NSButton!
-    var coverButton: NSButton!
-    var tocButton: NSButton!
-    var recentButton: NSButton!
-    var notesButton: NSButton!
-    var vocabularyLibraryButton: NSButton!
-    var vocabularyButton: NSButton!
-    var farthestPositionButton: NSButton!
-    var prevButton: NSButton!
-    var nextButton: NSButton!
     var readAloudButton: NSButton!
     var readAloudStopButton: NSButton!
     var pageLayoutButton: NSButton!
@@ -91,11 +82,9 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var relatedFormsSwitch: NSSwitch!
     /// Last chrome state applied; the source of truth for what is on screen.
     var chromeState: ReaderChromeState = .empty
+    let bottomBarModel = ReaderBottomBarModel()
     var searchButton: NSButton!
     var searchUnderlineButton: SearchUnderlineButton!
-    let embeddingStatusLabel = NSTextField(labelWithString: "")
-    var embeddingPauseButton: NSButton!
-    var embeddingCancelButton: NSButton!
     weak var toolbarView: NSView?
     weak var bottomBarView: NSView?
     weak var zoomGroupView: NSView?
