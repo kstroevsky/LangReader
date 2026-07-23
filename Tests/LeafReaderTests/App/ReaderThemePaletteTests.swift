@@ -120,7 +120,7 @@ private enum ReaderThemePaletteTestRunner {
             try ReaderDesignTokenTests.testEveryThemeHasSurfaceTokens()
             try ReaderDesignTokenTests.testStylesheetContainsNoUntrackedColours()
             try ReaderDesignTokenTests.testStylesheetMatchesKnownAppearance()
-            try ReaderDesignTokenTests.testShelfColorTokensMatchTheAppKitPalette()
+            try ReaderDesignTokenTests.testScreenColorTokensMatchTheAppKitPalette()
             print("ReaderThemePaletteTests passed (incl. design tokens)")
         } catch {
             fputs("ReaderThemePaletteTests failed: \(error)\n", stderr)

@@ -216,10 +216,12 @@ private struct ReadingNoteRow: View {
     }
 }
 
-/// The note panel's colours as SwiftUI values.
+/// The note list's colours as SwiftUI values.
 ///
-/// `ReadingNoteTheme` stays the single definition; this only converts, so the
-/// AppKit note editor and this list cannot drift apart.
+/// Built from `ReadingNoteColorTokens` (platform-neutral `DesignColor`s), so
+/// this list's colour path has no `NSColor` dependency and compiles on iOS. The
+/// AppKit note editor still draws from `ReadingNoteTheme`; a drift test keeps
+/// the tokens equal to it.
 struct ReadingNotePalette {
     let panelBackground: Color
     let cardBackground: Color
@@ -231,17 +233,16 @@ struct ReadingNotePalette {
     let primaryActionText: Color
 
     init(theme: ReaderTheme) {
-        panelBackground = Color(nsColor: ReadingNoteTheme.panelBackground(theme))
-        cardBackground = Color(nsColor: ReadingNoteTheme.cardBackground(theme))
-        insetBackground = Color(nsColor: ReadingNoteTheme.insetBackground(theme))
-        primaryText = Color(nsColor: ReadingNoteTheme.primaryText(theme))
-        secondaryText = Color(nsColor: ReadingNoteTheme.secondaryText(theme))
-        accent = Color(nsColor: ReadingNoteTheme.accent(theme))
-        secondaryButtonBackground = Color(nsColor: ReadingNoteTheme.secondaryButtonBackground(theme))
+        let tokens = theme.readingNoteColorTokens
+        panelBackground = tokens.panelBackground.color
+        cardBackground = tokens.cardBackground.color
+        insetBackground = tokens.insetBackground.color
+        primaryText = tokens.primaryText.color
+        secondaryText = tokens.secondaryText.color
+        accent = tokens.accent.color
+        secondaryButtonBackground = tokens.secondaryButtonBackground.color
         // Matches the AppKit primary button: white on the light themes, the
         // regular text colour on dark where white would glare.
-        primaryActionText = theme == .dark
-            ? Color(nsColor: ReadingNoteTheme.primaryText(theme))
-            : .white
+        primaryActionText = theme == .dark ? tokens.primaryText.color : .white
     }
 }

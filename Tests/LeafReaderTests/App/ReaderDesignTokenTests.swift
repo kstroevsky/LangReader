@@ -84,16 +84,30 @@ enum ReaderDesignTokenTests {
     /// (`DesignColor`, no `NSColor`) so it compiles on iOS, while the AppKit
     /// chrome renders from `ReaderTheme+Palette` (`NSColor`). Two definitions of
     /// the same colour can drift; this fails the build if they do.
-    static func testShelfColorTokensMatchTheAppKitPalette() throws {
+    static func testScreenColorTokensMatchTheAppKitPalette() throws {
         for theme in ReaderTheme.allCases {
-            let tokens = theme.shelfColorTokens
-            try assertMatch(tokens.background, theme.shelfBackgroundColor, theme, "background")
-            try assertMatch(tokens.primaryText, theme.shelfPrimaryTextColor, theme, "primaryText")
-            try assertMatch(tokens.secondaryText, theme.shelfSecondaryTextColor, theme, "secondaryText")
-            try assertMatch(tokens.border, theme.shelfBorderColor, theme, "border")
-            try assertMatch(tokens.accent, theme.accentColor, theme, "accent")
-            try assertMatch(tokens.secondaryButtonBackground, theme.shelfButtonBackgroundColor, theme, "secondaryButtonBackground")
-            try assertMatch(tokens.primaryActionText, theme.primaryActionTextColor, theme, "primaryActionText")
+            let shelf = theme.shelfColorTokens
+            try assertMatch(shelf.background, theme.shelfBackgroundColor, theme, "shelf background")
+            try assertMatch(shelf.primaryText, theme.shelfPrimaryTextColor, theme, "shelf primaryText")
+            try assertMatch(shelf.secondaryText, theme.shelfSecondaryTextColor, theme, "shelf secondaryText")
+            try assertMatch(shelf.border, theme.shelfBorderColor, theme, "shelf border")
+            try assertMatch(shelf.accent, theme.accentColor, theme, "shelf accent")
+            try assertMatch(shelf.secondaryButtonBackground, theme.shelfButtonBackgroundColor, theme, "shelf secondaryButtonBackground")
+            try assertMatch(shelf.primaryActionText, theme.primaryActionTextColor, theme, "shelf primaryActionText")
+
+            let notes = theme.readingNoteColorTokens
+            try assertMatch(notes.panelBackground, ReadingNoteTheme.panelBackground(theme), theme, "note panelBackground")
+            try assertMatch(notes.cardBackground, ReadingNoteTheme.cardBackground(theme), theme, "note cardBackground")
+            try assertMatch(notes.insetBackground, ReadingNoteTheme.insetBackground(theme), theme, "note insetBackground")
+            try assertMatch(notes.primaryText, ReadingNoteTheme.primaryText(theme), theme, "note primaryText")
+            try assertMatch(notes.secondaryText, ReadingNoteTheme.secondaryText(theme), theme, "note secondaryText")
+            try assertMatch(notes.accent, ReadingNoteTheme.accent(theme), theme, "note accent")
+            try assertMatch(notes.secondaryButtonBackground, ReadingNoteTheme.secondaryButtonBackground(theme), theme, "note secondaryButtonBackground")
+
+            let vocab = theme.vocabularyListColorTokens
+            try assertMatch(vocab.primaryText, theme.vocabularyPrimaryTextColor, theme, "vocab primaryText")
+            try assertMatch(vocab.secondaryText, theme.vocabularySecondaryTextColor, theme, "vocab secondaryText")
+            try assertMatch(vocab.accent, theme.accentColor, theme, "vocab accent")
         }
     }
 

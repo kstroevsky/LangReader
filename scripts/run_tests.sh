@@ -60,6 +60,8 @@ excluded_logic_app_source() {
     ReaderTheme*|\
     ReaderDesignTokens.swift|\
     ShelfColorTokens.swift|\
+    ReadingNoteColorTokens.swift|\
+    VocabularyListColorTokens.swift|\
     ReaderWebThemeCSS.swift|\
     ReaderTOCHelper.swift|\
     ReaderWindowController*|\
@@ -234,6 +236,9 @@ run_swift_test /tmp/leafreader-theme-palette-tests \
   "$APP_SOURCE_ROOT/SharedUI/ReaderDesignTokens.swift" \
   "$APP_SOURCE_ROOT/SharedUI/ReaderWebThemeCSS.swift" \
   "$APP_SOURCE_ROOT/ReaderShell/ShelfColorTokens.swift" \
+  "$APP_SOURCE_ROOT/ReadingNotes/ReadingNoteTheme.swift" \
+  "$APP_SOURCE_ROOT/ReadingNotes/ReadingNoteColorTokens.swift" \
+  "$APP_SOURCE_ROOT/VocabularyReview/VocabularyListColorTokens.swift" \
   "$TEST_SOURCE_ROOT/App/ReaderThemePaletteTests.swift" \
   "$TEST_SOURCE_ROOT/App/ReaderDesignTokenTests.swift" \
   -framework Cocoa

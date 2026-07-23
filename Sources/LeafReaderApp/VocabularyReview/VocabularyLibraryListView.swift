@@ -72,6 +72,9 @@ struct VocabularyLibraryListView: View {
 
     private func row(for record: VocabularyLibraryRecord) -> some View {
         let isSelected = record.id == model.selectedID
+        // Platform-neutral tokens, so the list's colour path has no NSColor
+        // dependency and compiles on iOS.
+        let tokens = model.theme.vocabularyListColorTokens
         return Button {
             model.selectedID = record.id
         } label: {
@@ -79,7 +82,7 @@ struct VocabularyLibraryListView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(record.word)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Color(nsColor: model.theme.vocabularyPrimaryTextColor))
+                        .foregroundStyle(tokens.primaryText.color)
                         .lineLimit(1)
                     Spacer(minLength: 8)
                     Text(VocabularyLibraryRowPresenter.metadataText(
@@ -87,13 +90,13 @@ struct VocabularyLibraryListView: View {
                         sourceCount: record.sourceCount
                     ))
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Color(nsColor: model.theme.vocabularySecondaryTextColor))
+                    .foregroundStyle(tokens.secondaryText.color)
                     .lineLimit(1)
                     .frame(maxWidth: 128, alignment: .trailing)
                 }
                 Text(VocabularyLibraryRowPresenter.answerPreview(record.answer))
                     .font(.system(size: 12))
-                    .foregroundStyle(Color(nsColor: model.theme.vocabularySecondaryTextColor))
+                    .foregroundStyle(tokens.secondaryText.color)
                     .lineLimit(1)
             }
             .padding(.horizontal, 12)
@@ -101,7 +104,7 @@ struct VocabularyLibraryListView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 isSelected
-                    ? Color(nsColor: model.theme.accentColor).opacity(0.16)
+                    ? tokens.accent.color.opacity(0.16)
                     : Color.clear,
                 in: RoundedRectangle(cornerRadius: 6)
             )
