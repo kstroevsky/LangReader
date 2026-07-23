@@ -37,4 +37,7 @@ enum ShelfAccessibility {
 
 enum VocabularyLibraryAccessibility {
     static let row = "vocabulary.row"
+    static let copyButton = "vocabulary.detail.copy"
+    static let removeButton = "vocabulary.detail.remove"
+    static let sourceButton = "vocabulary.detail.source"
 }

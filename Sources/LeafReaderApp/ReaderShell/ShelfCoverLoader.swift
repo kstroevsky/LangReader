@@ -23,7 +23,7 @@ final class ShelfCoverLoader {
 
     /// Rendered covers by cache key. Observed by the shelf, so an arriving cover
     /// swaps itself in.
-    private(set) var covers: [String: NSImage] = [:]
+    private(set) var covers: [String: PlatformImage] = [:]
 
     @ObservationIgnored private var placeholders: [String: NSImage] = [:]
     @ObservationIgnored private var inFlight: Set<String> = []
@@ -48,14 +48,14 @@ final class ShelfCoverLoader {
         return digest.prefix(16).map { String(format: "%02x", $0) }.joined()
     }
 
-    func cachedCover(for item: RecentDocumentItem) -> NSImage? {
+    func cachedCover(for item: RecentDocumentItem) -> PlatformImage? {
         covers[cacheKey(for: item)]
     }
 
     /// A drawn stand-in used until the real cover renders. Cached because the
     /// shelf rebuilds its cards on every open and redrawing text into a bitmap
     /// for each one is visible work.
-    func placeholder(title: String, kind: String, isDark: Bool) -> NSImage {
+    func placeholder(title: String, kind: String, isDark: Bool) -> PlatformImage {
         let key = "\(ReaderTheme.selected.rawValue)#\(kind)#\(title)#\(isDark)"
         if let cached = placeholders[key] { return cached }
         let image = drawPlaceholder(title: title, kind: kind, isDark: isDark)

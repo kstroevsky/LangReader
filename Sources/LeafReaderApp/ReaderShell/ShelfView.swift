@@ -120,7 +120,7 @@ private struct ShelfCard: View {
     let model: ShelfModel
     let palette: ShelfPalette
 
-    private var cover: NSImage {
+    private var cover: PlatformImage {
         model.covers.cachedCover(for: item)
             ?? model.covers.placeholder(
                 title: item.title,
@@ -163,7 +163,7 @@ private struct ShelfCard: View {
 
     private var cardBody: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Image(nsImage: cover)
+            Image(platformImage: cover)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(

@@ -1,24 +1,12 @@
 import Cocoa
 import SwiftUI
 
-final class VocabularyLibrarySourceButton: NSButton {
-    var occurrence: VocabularyLibraryOccurrence?
-
-    override func resetCursorRects() {
-        addCursorRect(bounds, cursor: .pointingHand)
-    }
-}
-
 /// A vertical stack that anchors its content to the top of its scroll view.
 ///
 /// An unflipped `NSScrollView` document view whose content is shorter than the
 /// visible area sinks to the bottom-left. Flipping the coordinate space — as
 /// `NSTableView` does — makes the content grow downward from the top edge, which
 /// is what the detail pane wants when a word has only a few occurrences.
-private final class TopAnchoredStackView: NSStackView {
-    override var isFlipped: Bool { true }
-}
-
 final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSearchFieldDelegate {
     private weak var owner: ReaderWindowController?
     private let reloadTask = DebouncedTask(delay: 0.12)
@@ -28,15 +16,10 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
     private let sourcePopup = NSPopUpButton()
     private let sortPopup = NSPopUpButton()
     private let listModel = VocabularyLibraryListModel()
-    private let detailStack = TopAnchoredStackView()
+    private let detailModel = VocabularyDetailModel()
     private(set) var window: NSWindow?
     private var records: [VocabularyLibraryRecord] = []
     private var filteredRecords: [VocabularyLibraryRecord] = []
-    /// Canonical key of the surface form the occurrence list is filtered to,
-    /// or nil for all forms. Reset whenever a different word is selected.
-    private var occurrenceFormFilter: String?
-    /// Segment index -> form key, with index 0 reserved for "all".
-    private var occurrenceFormKeys: [String] = []
     /// True once records have been delivered at least once, so a re-open shows
     /// the last-known list instantly instead of the loading placeholder.
     private var hasLoadedOnce = false
@@ -49,6 +32,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
     init(owner: ReaderWindowController) {
         self.owner = owner
         super.init()
+        configureDetailModel()
     }
 
     deinit {
@@ -123,17 +107,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
     }
 
     private func showLoadingDetail() {
-        for view in detailStack.arrangedSubviews {
-            detailStack.removeArrangedSubview(view)
-            view.removeFromSuperview()
-        }
-        let label = NSTextField(labelWithString: AppText.localized("正在载入生词…", "Loading words…"))
-        label.font = AppFont.semibold(ofSize: 16)
-        label.textColor = ReaderTheme.selected.vocabularySecondaryTextColor
-        label.alignment = .center
-        label.maximumNumberOfLines = 0
-        detailStack.addArrangedSubview(label)
-        label.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
+        detailModel.record = nil
     }
 
     func close() {
@@ -151,7 +125,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
         guard window != nil else { return }
         applyTheme()
         listModel.theme = ReaderTheme.selected
-        refreshDetail()
+        syncDetail()
     }
 
     private func buildWindow() {
@@ -219,7 +193,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
         ) ?? NSButton(title: AppText.localized("刷新", "Refresh"), target: self, action: #selector(refreshTapped(_:)))
 
         let listScroll = makeListView()
-        let detailScroll = makeDetailScrollView()
+        let detailScroll = makeDetailView()
         let divider = NSBox()
         divider.boxType = .separator
 
@@ -274,36 +248,14 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
 
     private func makeListView() -> NSView {
         listModel.onSelect = { [weak self] _ in
-            // A form filter belongs to one word; carrying it to the next
-            // selection would silently hide occurrences of a word that has no
-            // such form.
-            self?.occurrenceFormFilter = nil
-            self?.refreshDetail()
+            self?.syncDetail()
         }
         let hosting = NSHostingView(rootView: VocabularyLibraryListView(model: listModel))
         return hosting
     }
 
-    private func makeDetailScrollView() -> NSScrollView {
-        detailStack.orientation = .vertical
-        detailStack.alignment = .width
-        detailStack.spacing = 12
-        detailStack.edgeInsets = NSEdgeInsets(top: 4, left: 2, bottom: 18, right: 10)
-        detailStack.translatesAutoresizingMaskIntoConstraints = false
-
-        let scroll = NSScrollView()
-        scroll.hasVerticalScroller = true
-        scroll.autohidesScrollers = true
-        scroll.borderType = .noBorder
-        scroll.drawsBackground = false
-        scroll.documentView = detailStack
-        NSLayoutConstraint.activate([
-            detailStack.topAnchor.constraint(equalTo: scroll.contentView.topAnchor),
-            detailStack.leadingAnchor.constraint(equalTo: scroll.contentView.leadingAnchor),
-            detailStack.trailingAnchor.constraint(equalTo: scroll.contentView.trailingAnchor),
-            detailStack.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor)
-        ])
-        return scroll
+    private func makeDetailView() -> NSView {
+        NSHostingView(rootView: VocabularyDetailView(model: detailModel))
     }
 
     private func applyTheme() {
@@ -320,8 +272,6 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
         rootView.layer?.backgroundColor = background.cgColor
         summaryLabel.textColor = theme.vocabularySecondaryTextColor
         listModel.theme = theme
-        detailStack.wantsLayer = true
-        detailStack.layer?.backgroundColor = background.cgColor
         owner?.styleVocabularyActionButtons(in: rootView)
     }
 
@@ -330,7 +280,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
         let selectedSource = sourcePopup.selectedItem?.representedObject as? String
         self.records = records
         rebuildSourcePopup(selectedPath: selectedSource)
-        applyFilters(preferredSelectionID: selectedID, refreshesDetail: true)
+        applyFilters(preferredSelectionID: selectedID)
     }
 
     private func rebuildSourcePopup(selectedPath: String?) {
@@ -357,10 +307,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
         }
     }
 
-    /// - Parameter refreshesDetail: forces the detail pane to rebuild even when
-    ///   the selected word is unchanged. Set on reloads, where the record's
-    ///   contents may have changed underneath a stable selection.
-    private func applyFilters(preferredSelectionID: String? = nil, refreshesDetail: Bool = false) {
+    private func applyFilters(preferredSelectionID: String? = nil) {
         // Read the controls, then hand off: the rules live in
         // `VocabularyLibraryFilter` where they can be tested.
         let selectionID = preferredSelectionID ?? selectedRecord?.id
@@ -377,18 +324,10 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
         )
         let row = VocabularyLibraryFilter.selectionRow(in: filteredRecords, preferredID: selectionID)
         listModel.theme = ReaderTheme.selected
-        let previousID = listModel.selectedID
         listModel.apply(records: filteredRecords, selectedID: row.map { filteredRecords[$0].id })
-
-        // `apply` sets the selection without notifying, so the detail pane is
-        // driven here — but only when the selected word actually changed.
-        // Rebuilding it on every call would re-render the markdown, occurrence
-        // cards and source buttons on each keystroke in the search field, and
-        // would discard the reader's chosen form tab while they were still
-        // looking at the same word.
-        guard listModel.selectedID != previousID || refreshesDetail else { return }
-        occurrenceFormFilter = nil
-        refreshDetail()
+        // A stable selection keeps its form tab: `syncDetail` sets the same
+        // record, and the model only resets the tab when the record id changes.
+        syncDetail()
     }
 
     private var selectedRecord: VocabularyLibraryRecord? {
@@ -407,21 +346,48 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
         owner?.reloadVocabularyLibraryInBackground()
     }
 
-    @objc private func copyWord(_ sender: NSButton) {
-        guard let word = selectedRecord?.word else { return }
-        owner?.copyTextToClipboard(word)
+    // MARK: Detail pane (SwiftUI)
+
+    /// Wires the detail model's actions and rich-text producers to the
+    /// controller. The two markdown renderers stay in AppKit; the model bridges
+    /// their output to SwiftUI, so the pane reads identically to the one it
+    /// replaced without re-implementing markdown.
+    private func configureDetailModel() {
+        detailModel.onCopy = { [weak self] in
+            guard let word = self?.selectedRecord?.word else { return }
+            self?.owner?.copyTextToClipboard(word)
+        }
+        detailModel.onRemove = { [weak self] in
+            self?.confirmRemoveSelectedWord()
+        }
+        detailModel.onOpenSource = { [weak self] occurrence in
+            self?.owner?.openVocabularyLibraryOccurrence(occurrence)
+        }
+        detailModel.makeAnswer = { text in
+            MarkdownRenderer.render(text, fontSize: 15, textColor: ReaderTheme.selected.vocabularyBodyTextColor)
+        }
+        detailModel.makeContext = { [weak self] text, word in
+            self?.owner?.vocabularyExampleAttributedString(
+                text, word: word, fontSize: 14, textColor: ReaderTheme.selected.vocabularyBodyTextColor
+            ) ?? NSAttributedString(string: text)
+        }
     }
 
-    @objc private func removeWord(_ sender: Any?) {
-        guard let record = selectedRecord, let owner else { return }
+    /// Pushes the current selection, source filter and theme into the detail
+    /// model. SwiftUI diffs the result, so this is cheap to call on every list
+    /// change — the per-keystroke-rebuild guard the AppKit pane needed is gone.
+    private func syncDetail() {
+        detailModel.theme = ReaderTheme.selected
+        detailModel.sourcePath = sourcePopup.selectedItem?.representedObject as? String
+        detailModel.record = selectedRecord
+    }
 
+    private func confirmRemoveSelectedWord() {
+        guard let record = selectedRecord, let owner else { return }
         let occurrenceCount = record.occurrences.count
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = AppText.localized(
-            "删除“\(record.word)”？",
-            "Remove “\(record.word)”?"
-        )
+        alert.messageText = AppText.localized("删除“\(record.word)”？", "Remove “\(record.word)”?")
         alert.informativeText = record.sourceCount > 1
             ? AppText.localized(
                 "将从 \(record.sourceCount) 个文件中删除该单词及其 \(occurrenceCount) 处出处。此操作无法撤销。",
@@ -444,328 +410,10 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
             self.applyFilters()
             owner.reloadVocabularyLibraryInBackground()
         }
-
         if let window {
             alert.beginSheetModal(for: window, completionHandler: confirm)
         } else {
             confirm(alert.runModal())
         }
-    }
-
-    @objc private func openSource(_ sender: VocabularyLibrarySourceButton) {
-        guard let occurrence = sender.occurrence else { return }
-        owner?.openVocabularyLibraryOccurrence(occurrence)
-    }
-
-    private func refreshDetail() {
-        for view in detailStack.arrangedSubviews {
-            detailStack.removeArrangedSubview(view)
-            view.removeFromSuperview()
-        }
-        guard let record = selectedRecord else {
-            addEmptyDetail()
-            return
-        }
-        let theme = ReaderTheme.selected
-        let sourcePath = sourcePopup.selectedItem?.representedObject as? String
-        let occurrences = sourcePath.map { path in
-            record.occurrences.filter { $0.documentURL.standardizedFileURL.path == path }
-        } ?? record.occurrences
-
-        let wordRow = NSStackView()
-        wordRow.orientation = .horizontal
-        wordRow.alignment = .centerY
-        wordRow.spacing = 10
-        let wordLabel = NSTextField(labelWithString: record.word)
-        wordLabel.font = AppFont.semibold(ofSize: 30)
-        wordLabel.textColor = theme.vocabularyPrimaryTextColor
-        wordLabel.lineBreakMode = .byTruncatingTail
-        let copyButton = owner?.vocabularyActionButton(
-            title: AppText.localized("复制", "Copy"),
-            target: self,
-            action: #selector(copyWord(_:)),
-            fontSize: 13
-        ) ?? NSButton(title: AppText.localized("复制", "Copy"), target: self, action: #selector(copyWord(_:)))
-        copyButton.widthAnchor.constraint(equalToConstant: 74).isActive = true
-        copyButton.heightAnchor.constraint(equalToConstant: 30).isActive = true
-        let removeButton = owner?.vocabularyActionButton(
-            title: AppText.localized("删除", "Remove"),
-            target: self,
-            action: #selector(removeWord(_:)),
-            fontSize: 13
-        ) ?? NSButton(title: AppText.localized("删除", "Remove"), target: self, action: #selector(removeWord(_:)))
-        (removeButton as? ThemedSettingsActionButton)?.labelColor = .systemRed
-        removeButton.widthAnchor.constraint(equalToConstant: 82).isActive = true
-        removeButton.heightAnchor.constraint(equalToConstant: 30).isActive = true
-        wordRow.addArrangedSubview(wordLabel)
-        wordRow.addArrangedSubview(copyButton)
-        wordRow.addArrangedSubview(removeButton)
-        detailStack.addArrangedSubview(wordRow)
-        wordRow.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
-
-        let metadataParts = [
-            record.dictionaryTags,
-            record.dictionaryFrequency.map { AppText.localized("词频 #\($0)", "Frequency #\($0)") },
-            record.forms.count > 1
-                ? AppText.localized("\(record.forms.count) 个词形", "\(record.forms.count) forms")
-                : nil,
-            AppText.localized("\(occurrences.count) 个出处", "\(occurrences.count) occurrences")
-        ].compactMap { $0 }.filter { !$0.isEmpty }
-        let metadata = NSTextField(labelWithString: metadataParts.joined(separator: "  ·  "))
-        metadata.font = AppFont.semibold(ofSize: 12)
-        metadata.textColor = theme.vocabularySecondaryTextColor
-        metadata.lineBreakMode = .byTruncatingTail
-        metadata.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        detailStack.addArrangedSubview(metadata)
-        metadata.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
-
-        let hasInformativeLabel = record.forms.contains { $0.label?.isInformative == true }
-        if record.forms.count > 1 || hasInformativeLabel {
-            let formsText = record.forms.map(\.displayText).joined(separator: "  ·  ")
-            let formsLabel = NSTextField(labelWithString: AppText.localized(
-                "词形：\(formsText)",
-                "Forms: \(formsText)"
-            ))
-            formsLabel.font = NSFont.systemFont(ofSize: 12)
-            formsLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-            formsLabel.textColor = theme.vocabularySecondaryTextColor
-            formsLabel.maximumNumberOfLines = 0
-            formsLabel.lineBreakMode = .byWordWrapping
-            detailStack.addArrangedSubview(formsLabel)
-            formsLabel.widthAnchor.constraint(
-                equalTo: detailStack.widthAnchor,
-                constant: -12
-            ).isActive = true
-        }
-
-        if !record.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let answer = NSTextField(labelWithAttributedString: MarkdownRenderer.render(
-                String(record.answer.prefix(2400)),
-                fontSize: 15,
-                textColor: theme.vocabularyBodyTextColor
-            ))
-            answer.maximumNumberOfLines = 0
-            answer.lineBreakMode = .byWordWrapping
-            answer.isSelectable = true
-            detailStack.addArrangedSubview(answer)
-            answer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-            answer.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
-        }
-
-        let separator = NSBox()
-        separator.boxType = .separator
-        detailStack.addArrangedSubview(separator)
-        separator.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
-
-        let formGroups = VocabularyOccurrenceGrouping.formGroups(record: record, occurrences: occurrences)
-        // A filter kept from a previous render may name a form this word does
-        // not have; fall back to showing everything rather than nothing.
-        if let filter = occurrenceFormFilter, !formGroups.contains(where: { $0.key == filter }) {
-            occurrenceFormFilter = nil
-        }
-        let visibleOccurrences: [VocabularyLibraryOccurrence]
-        if let filter = occurrenceFormFilter {
-            visibleOccurrences = occurrences.filter {
-                VocabularyTextPolicy.canonicalVocabularyKey($0.surfaceForm ?? record.word) == filter
-            }
-        } else {
-            visibleOccurrences = occurrences
-        }
-
-        if formGroups.count > 1 {
-            let tabs = formFilterTabs(groups: formGroups, total: occurrences.count)
-            detailStack.addArrangedSubview(tabs)
-            tabs.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
-        }
-
-        let occurrencesTitle = NSTextField(labelWithString: AppText.localized("出处与上下文", "Occurrences & context"))
-        occurrencesTitle.font = AppFont.semibold(ofSize: 17)
-        occurrencesTitle.textColor = theme.vocabularyPrimaryTextColor
-        occurrencesTitle.lineBreakMode = .byTruncatingTail
-        occurrencesTitle.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        detailStack.addArrangedSubview(occurrencesTitle)
-        occurrencesTitle.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
-
-        for occurrence in visibleOccurrences {
-            let view = occurrenceView(occurrence, word: occurrence.surfaceForm ?? record.word, theme: theme)
-            detailStack.addArrangedSubview(view)
-            view.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
-        }
-    }
-
-    private func addEmptyDetail() {
-        let label = NSTextField(labelWithString: records.isEmpty
-            ? AppText.localized("还没有保存的单词。\n在文档中选择一个单词即可开始。", "No saved words yet.\nSelect a word in a document to get started.")
-            : AppText.localized("没有符合筛选条件的单词。", "No words match these filters."))
-        label.font = AppFont.semibold(ofSize: 16)
-        label.textColor = ReaderTheme.selected.vocabularySecondaryTextColor
-        label.alignment = .center
-        label.maximumNumberOfLines = 0
-        detailStack.addArrangedSubview(label)
-        label.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -12).isActive = true
-    }
-
-    /// Tabs that filter the occurrence list down to a single inflected form.
-    ///
-    /// Wrapped in a horizontal scroller: a word with many forms would otherwise
-    /// make the control wider than the pane, which is what pushed this window
-    /// past the edge of the screen before.
-    private func formFilterTabs(groups: [OccurrenceFormGroup], total: Int) -> NSView {
-        let theme = ReaderTheme.selected
-        var titles = [AppText.localized("全部（\(total)）", "All (\(total))")]
-        occurrenceFormKeys = [""]
-        for group in groups {
-            titles.append("\(group.surface) (\(group.count))")
-            occurrenceFormKeys.append(group.key)
-        }
-
-        let segmented = NSSegmentedControl(
-            labels: titles,
-            trackingMode: .selectOne,
-            target: self,
-            action: #selector(occurrenceFormFilterChanged(_:))
-        )
-        segmented.segmentDistribution = .fit
-        segmented.selectedSegment = occurrenceFormFilter
-            .flatMap { occurrenceFormKeys.firstIndex(of: $0) } ?? 0
-        segmented.translatesAutoresizingMaskIntoConstraints = false
-        for (index, group) in groups.enumerated() {
-            segmented.setToolTip(
-                group.label?.displayName ?? group.surface,
-                forSegment: index + 1
-            )
-        }
-
-        let scroll = NSScrollView()
-        scroll.drawsBackground = false
-        scroll.hasHorizontalScroller = true
-        scroll.hasVerticalScroller = false
-        scroll.autohidesScrollers = true
-        scroll.horizontalScrollElasticity = .allowed
-        scroll.verticalScrollElasticity = .none
-        scroll.translatesAutoresizingMaskIntoConstraints = false
-
-        let documentView = NSView()
-        documentView.translatesAutoresizingMaskIntoConstraints = false
-        documentView.addSubview(segmented)
-        scroll.documentView = documentView
-
-        let container = NSView()
-        container.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(scroll)
-        _ = theme
-
-        NSLayoutConstraint.activate([
-            segmented.leadingAnchor.constraint(equalTo: documentView.leadingAnchor),
-            segmented.trailingAnchor.constraint(equalTo: documentView.trailingAnchor),
-            segmented.topAnchor.constraint(equalTo: documentView.topAnchor),
-            segmented.bottomAnchor.constraint(equalTo: documentView.bottomAnchor),
-            documentView.heightAnchor.constraint(equalTo: scroll.contentView.heightAnchor),
-            scroll.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            scroll.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            scroll.topAnchor.constraint(equalTo: container.topAnchor),
-            scroll.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            container.heightAnchor.constraint(equalToConstant: 30)
-        ])
-        // The width constraint against detailStack is applied by the caller,
-        // after this view is added to the stack — activating it here would
-        // reference a view with no common ancestor and throw.
-        return container
-    }
-
-    @objc private func occurrenceFormFilterChanged(_ sender: NSSegmentedControl) {
-        let index = sender.selectedSegment
-        guard index > 0, index < occurrenceFormKeys.count else {
-            occurrenceFormFilter = nil
-            refreshDetail()
-            return
-        }
-        occurrenceFormFilter = occurrenceFormKeys[index]
-        refreshDetail()
-    }
-
-    private func occurrenceView(_ occurrence: VocabularyLibraryOccurrence, word: String, theme: ReaderTheme) -> NSView {
-        let card = NSView()
-        card.wantsLayer = true
-        card.layer?.cornerRadius = 10
-        card.layer?.backgroundColor = theme.vocabularyCardBackgroundColor.cgColor
-        card.layer?.borderColor = theme.vocabularyCardBorderColor.cgColor
-        card.layer?.borderWidth = 1
-        card.translatesAutoresizingMaskIntoConstraints = false
-
-        let sourceButton = VocabularyLibrarySourceButton(title: occurrence.documentTitle, target: self, action: #selector(openSource(_:)))
-        sourceButton.occurrence = occurrence
-        sourceButton.isBordered = false
-        sourceButton.image = TemplateSymbolImage.make("doc.text", accessibilityDescription: nil)
-        sourceButton.imagePosition = .imageLeading
-        sourceButton.contentTintColor = theme.vocabularyAccentColor
-        sourceButton.font = AppFont.semibold(ofSize: 14)
-        sourceButton.alignment = .left
-        sourceButton.lineBreakMode = .byTruncatingMiddle
-        sourceButton.toolTip = AppText.localized(
-            "打开 \(occurrence.documentURL.path) · \(occurrence.location)",
-            "Open \(occurrence.documentURL.path) · \(occurrence.location)"
-        )
-        sourceButton.setAccessibilityLabel(AppText.localized(
-            "在 \(occurrence.documentTitle) 中打开 \(occurrence.location)",
-            "Open \(occurrence.location) in \(occurrence.documentTitle)"
-        ))
-        sourceButton.translatesAutoresizingMaskIntoConstraints = false
-
-        let location = NSTextField(labelWithString: occurrence.location)
-        location.font = AppFont.semibold(ofSize: 12)
-        location.textColor = theme.vocabularySecondaryTextColor
-        location.alignment = .right
-        location.translatesAutoresizingMaskIntoConstraints = false
-
-        let contextText = occurrence.context.trimmingCharacters(in: .whitespacesAndNewlines)
-        let context = NSTextField(wrappingLabelWithString: contextText.isEmpty
-            ? AppText.localized("没有可用的上下文", "No context available")
-            : contextText)
-        if !contextText.isEmpty {
-            context.attributedStringValue = owner?.vocabularyExampleAttributedString(
-                contextText,
-                word: word,
-                fontSize: 14,
-                textColor: theme.vocabularyBodyTextColor
-            ) ?? NSAttributedString(
-                string: contextText,
-                attributes: [
-                    .font: NSFont.systemFont(ofSize: 14),
-                    .foregroundColor: theme.vocabularyBodyTextColor
-                ]
-            )
-        }
-        context.maximumNumberOfLines = 0
-        context.allowsEditingTextAttributes = true
-        context.isSelectable = true
-        // Wrap instead of demanding width. Without this an unbroken run of
-        // context text raises the card's required width, which propagates out
-        // to the stack and forces the whole window wider than the screen.
-        context.lineBreakMode = .byWordWrapping
-        context.cell?.wraps = true
-        context.cell?.isScrollable = false
-        context.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        context.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        context.translatesAutoresizingMaskIntoConstraints = false
-
-        card.addSubview(sourceButton)
-        card.addSubview(location)
-        card.addSubview(context)
-        NSLayoutConstraint.activate([
-            sourceButton.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 12),
-            sourceButton.topAnchor.constraint(equalTo: card.topAnchor, constant: 10),
-            sourceButton.trailingAnchor.constraint(lessThanOrEqualTo: location.leadingAnchor, constant: -10),
-            sourceButton.heightAnchor.constraint(equalToConstant: 24),
-            location.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -12),
-            location.centerYAnchor.constraint(equalTo: sourceButton.centerYAnchor),
-            location.widthAnchor.constraint(lessThanOrEqualToConstant: 150),
-            context.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
-            context.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14),
-            context.topAnchor.constraint(equalTo: sourceButton.bottomAnchor, constant: 8),
-            context.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -12),
-            card.heightAnchor.constraint(greaterThanOrEqualToConstant: 76)
-        ])
-        return card
     }
 }
