@@ -1,14 +1,26 @@
-import Cocoa
+import Foundation
+#if canImport(AppKit)
+import AppKit
+#endif
+#if canImport(SwiftUI)
+import SwiftUI
+#endif
 
 /// One colour in the design system, defined once and rendered for any surface.
 ///
-/// The reader draws to two very different canvases — AppKit chrome and a
-/// WebKit-hosted document — and until now each carried its own copy of the
-/// palette: `NSColor(red:green:blue:)` on one side, hand-written hex literals in
-/// a CSS string on the other. Nothing kept them in step, so the same concept
-/// drifted (dark body text was `rgb(0.82, 0.85, 0.90)` in the chrome and
-/// `#d9dee7` on the page). Defining the colour once and deriving every
-/// representation removes the opportunity for that drift.
+/// The reader draws to several very different canvases — AppKit chrome, a
+/// WebKit-hosted document, and SwiftUI screens — and each once carried its own
+/// copy of the palette: `NSColor(red:green:blue:)` here, hex literals in a CSS
+/// string there, `Color(nsColor:)` in the SwiftUI views. Nothing kept them in
+/// step, so the same concept drifted (dark body text was `rgb(0.82, 0.85, 0.90)`
+/// in the chrome and `#d9dee7` on the page). Defining the colour once as plain
+/// components and deriving every representation removes that drift.
+///
+/// The type is platform-neutral by construction — it stores only numbers and
+/// imports Foundation. The `nsColor` and `color` accessors are compiled only
+/// where their frameworks exist, so the same token vends an `NSColor` to AppKit,
+/// a SwiftUI `Color` to any SwiftUI view (macOS *or* iOS), and CSS to the web
+/// reader, without the storage ever depending on a UI framework.
 struct DesignColor: Equatable {
     let red: Double
     let green: Double
@@ -55,9 +67,20 @@ struct DesignColor: Equatable {
         return String(format: "rgba(%d, %d, %d, %.3f)", r, g, b, alpha)
     }
 
+    #if canImport(AppKit)
     var nsColor: NSColor {
         NSColor(srgbRed: red, green: green, blue: blue, alpha: alpha)
     }
+    #endif
+
+    #if canImport(SwiftUI)
+    /// The SwiftUI colour, in sRGB — the same space `nsColor` uses, so a token
+    /// looks the same whether a view renders it through AppKit or SwiftUI, on
+    /// macOS or iOS.
+    var color: Color {
+        Color(.sRGB, red: red, green: green, blue: blue, opacity: alpha)
+    }
+    #endif
 
     func withAlpha(_ newAlpha: Double) -> DesignColor {
         DesignColor(red, green, blue, alpha: newAlpha)

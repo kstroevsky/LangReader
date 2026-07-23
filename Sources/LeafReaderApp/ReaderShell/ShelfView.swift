@@ -201,8 +201,12 @@ private struct ShelfCard: View {
     }
 }
 
-/// The shelf's colours as SwiftUI values, converted from the single AppKit
-/// definition so the two cannot drift.
+/// The shelf's colours as SwiftUI values.
+///
+/// Built entirely from `ShelfColorTokens` (platform-neutral `DesignColor`s), so
+/// this — and the whole `ShelfView` colour path — has no `NSColor` dependency
+/// and compiles on iOS. It is the first migrated screen whose colours are
+/// portable rather than merely rendered in SwiftUI.
 struct ShelfPalette {
     let background: Color
     let primaryText: Color
@@ -217,13 +221,14 @@ struct ShelfPalette {
 
     init(theme: ReaderTheme) {
         let isDark = theme == .dark
-        background = Color(nsColor: theme.shelfBackgroundColor)
-        primaryText = Color(nsColor: theme.shelfPrimaryTextColor)
-        secondaryText = Color(nsColor: theme.shelfSecondaryTextColor)
-        accent = Color(nsColor: theme.accentColor)
-        secondaryButtonBackground = Color(nsColor: theme.shelfButtonBackgroundColor)
-        border = Color(nsColor: theme.shelfBorderColor)
-        primaryActionText = Color(nsColor: theme.primaryActionTextColor)
+        let tokens = theme.shelfColorTokens
+        background = tokens.background.color
+        primaryText = tokens.primaryText.color
+        secondaryText = tokens.secondaryText.color
+        accent = tokens.accent.color
+        secondaryButtonBackground = tokens.secondaryButtonBackground.color
+        border = tokens.border.color
+        primaryActionText = tokens.primaryActionText.color
         coverBackground = isDark
             ? Color(red: 0.14, green: 0.16, blue: 0.20)
             : Color(red: 0.98, green: 0.98, blue: 0.985)

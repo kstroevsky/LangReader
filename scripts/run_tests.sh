@@ -59,6 +59,7 @@ excluded_logic_app_source() {
     ReaderFileDrop.swift|\
     ReaderTheme*|\
     ReaderDesignTokens.swift|\
+    ShelfColorTokens.swift|\
     ReaderWebThemeCSS.swift|\
     ReaderTOCHelper.swift|\
     ReaderWindowController*|\
@@ -232,6 +233,7 @@ run_swift_test /tmp/leafreader-theme-palette-tests \
   "$APP_SOURCE_ROOT/SharedUI/ReaderTheme+Palette.swift" \
   "$APP_SOURCE_ROOT/SharedUI/ReaderDesignTokens.swift" \
   "$APP_SOURCE_ROOT/SharedUI/ReaderWebThemeCSS.swift" \
+  "$APP_SOURCE_ROOT/ReaderShell/ShelfColorTokens.swift" \
   "$TEST_SOURCE_ROOT/App/ReaderThemePaletteTests.swift" \
   "$TEST_SOURCE_ROOT/App/ReaderDesignTokenTests.swift" \
   -framework Cocoa

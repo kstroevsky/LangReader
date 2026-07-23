@@ -1,4 +1,5 @@
 import Foundation
+import Cocoa
 
 /// The shared design-token layer: one definition per colour, rendered for both
 /// AppKit and the web stylesheet.
@@ -73,6 +74,48 @@ enum ReaderDesignTokenTests {
             guard let matchRange = Range(match.range, in: css) else { continue }
             let literal = String(css[matchRange])
             try expect(allowed.contains(literal), "colour \(literal) in the stylesheet must come from a token")
+        }
+    }
+
+    /// The shelf's platform-neutral colour tokens must stay equal to the AppKit
+    /// palette the reader chrome still draws with.
+    ///
+    /// The shelf's SwiftUI view now renders colour from `ShelfColorTokens`
+    /// (`DesignColor`, no `NSColor`) so it compiles on iOS, while the AppKit
+    /// chrome renders from `ReaderTheme+Palette` (`NSColor`). Two definitions of
+    /// the same colour can drift; this fails the build if they do.
+    static func testShelfColorTokensMatchTheAppKitPalette() throws {
+        for theme in ReaderTheme.allCases {
+            let tokens = theme.shelfColorTokens
+            try assertMatch(tokens.background, theme.shelfBackgroundColor, theme, "background")
+            try assertMatch(tokens.primaryText, theme.shelfPrimaryTextColor, theme, "primaryText")
+            try assertMatch(tokens.secondaryText, theme.shelfSecondaryTextColor, theme, "secondaryText")
+            try assertMatch(tokens.border, theme.shelfBorderColor, theme, "border")
+            try assertMatch(tokens.accent, theme.accentColor, theme, "accent")
+            try assertMatch(tokens.secondaryButtonBackground, theme.shelfButtonBackgroundColor, theme, "secondaryButtonBackground")
+            try assertMatch(tokens.primaryActionText, theme.primaryActionTextColor, theme, "primaryActionText")
+        }
+    }
+
+    /// Asserts a token equals an `NSColor`, both read in sRGB. A one-count
+    /// tolerance absorbs the rounding of the colour-space conversion; a real
+    /// value drift is far larger than one 8-bit step.
+    private static func assertMatch(
+        _ token: DesignColor,
+        _ nsColor: NSColor,
+        _ theme: ReaderTheme,
+        _ label: String
+    ) throws {
+        try expect(nsColor.usingColorSpace(.sRGB) != nil, "\(theme) \(label): NSColor has no sRGB form")
+        let srgb = nsColor.usingColorSpace(.sRGB)!
+        let expected = [srgb.redComponent, srgb.greenComponent, srgb.blueComponent, srgb.alphaComponent]
+        let actual = [token.red, token.green, token.blue, token.alpha]
+        for (channel, pair) in zip(["r", "g", "b", "a"], zip(expected, actual)) {
+            let delta = abs(Double(pair.0) - pair.1)
+            try expect(
+                delta <= 1.0 / 255.0,
+                "\(theme) shelf \(label) \(channel): token \(pair.1) drifted from palette \(pair.0)"
+            )
         }
     }
 
