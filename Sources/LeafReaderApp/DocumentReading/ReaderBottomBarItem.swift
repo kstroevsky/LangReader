@@ -25,6 +25,14 @@ struct ReaderBottomBarItem: Equatable {
         case farthestPosition
         case embeddingPause
         case embeddingCancel
+
+        /// A stable accessibility identifier for the control's real view.
+        ///
+        /// Deliberately not localised and not the button title: the smoke test
+        /// and any assistive tech should find the same control whatever the
+        /// interface language, and this identifier will carry over unchanged
+        /// when the bar is rebuilt in SwiftUI.
+        var accessibilityIdentifier: String { "bottomBar.\(rawValue)" }
     }
 
     /// Which cluster of the bar the control belongs to.
@@ -55,10 +63,14 @@ enum ReaderBottomBarLayout {
     /// adding a button is appending one entry.
     static let items: [ReaderBottomBarItem] = [
         ReaderBottomBarItem(id: .settings, cluster: .settings, showsLeadingSymbol: false),
+        // Order matches the on-screen bar: Shelf, Words, Review, Notes. The
+        // named layout constraints put Review before Notes, so the descriptor
+        // has to agree — once the SwiftUI bar renders from this array, the array
+        // *is* the order.
         ReaderBottomBarItem(id: .shelf, cluster: .panels, showsLeadingSymbol: true),
         ReaderBottomBarItem(id: .words, cluster: .panels, showsLeadingSymbol: true),
-        ReaderBottomBarItem(id: .notes, cluster: .panels, showsLeadingSymbol: true),
         ReaderBottomBarItem(id: .review, cluster: .panels, showsLeadingSymbol: true),
+        ReaderBottomBarItem(id: .notes, cluster: .panels, showsLeadingSymbol: true),
         ReaderBottomBarItem(id: .toc, cluster: .navigation, showsLeadingSymbol: false),
         ReaderBottomBarItem(id: .cover, cluster: .navigation, showsLeadingSymbol: false),
         ReaderBottomBarItem(id: .previousPage, cluster: .navigation, showsLeadingSymbol: false),

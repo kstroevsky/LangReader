@@ -217,6 +217,41 @@ end tell
 end timeout" 2>&1
 }
 
+main_button_identifiers() {
+  activate_app
+  osascript -e "with timeout of 30 seconds
+tell application \"System Events\" to tell process \"$APP_NAME\"
+  set out to \"\"
+  repeat with b in (buttons of (first window whose subrole is \"AXStandardWindow\"))
+    try
+      set aid to (value of attribute \"AXIdentifier\" of b)
+      if aid is not missing value and aid is not \"\" then set out to out & aid & linefeed
+    end try
+  end repeat
+  return out
+end tell
+end timeout" 2>&1
+}
+
+# Clicks a direct main-window button by accessibility identifier. Locale-proof,
+# and survives the bar's eventual move to SwiftUI, where titles disappear.
+click_main_identifier() {
+  activate_app
+  osascript -e "with timeout of 30 seconds
+tell application \"System Events\" to tell process \"$APP_NAME\"
+  repeat with b in (buttons of (first window whose subrole is \"AXStandardWindow\"))
+    try
+      if (value of attribute \"AXIdentifier\" of b) is \"$1\" then
+        click b
+        return \"CLICKED\"
+      end if
+    end try
+  end repeat
+end tell
+return \"NOTFOUND\"
+end timeout" >/dev/null 2>&1
+}
+
 expect_identifier() {
   local id="$1" haystack="$2" label="$3"
   if grep -qx "$id" <<<"$haystack"; then pass "$label ($id)"; else fail "$label — missing $id"; fi
@@ -257,12 +292,20 @@ if ! grep -q "Notes" <<<"$TITLES"; then
 fi
 
 echo "reader chrome"
-for title in Shelf Words Notes Review TOC Cover Prev Next Last Read; do
-  if grep -qx "$title" <<<"$TITLES"; then pass "toolbar button $title"; else fail "toolbar button $title missing"; fi
+# The bottom bar is asserted by accessibility identifier rather than by button
+# title: the titles are localised (a Chinese UI would break a title match), and
+# these identifiers will carry over unchanged when the bar is rebuilt in SwiftUI,
+# turning this into a regression net for that swap.
+CHROME_IDS="$(main_button_identifiers)"
+for id in settings shelf words notes review toc cover previousPage nextPage farthestPosition; do
+  expect_identifier "bottomBar.$id" "$CHROME_IDS" "bottom bar $id"
 done
+# Read lives in the top toolbar, which is still AppKit and has no identifier yet;
+# kept as a title check until that surface is migrated too.
+if grep -qx "Read" <<<"$TITLES"; then pass "toolbar button Read"; else fail "toolbar button Read missing"; fi
 
 echo "reading notes (SwiftUI)"
-click_main_button "Notes"
+click_main_identifier "bottomBar.notes"
 sleep 3
 NOTES_IDS="$(panel_identifiers)"
 expect_identifier "notes.search"  "$NOTES_IDS" "search field"
@@ -288,7 +331,7 @@ expect_identifier "settings.general.saveConversation" "$SETTINGS_IDS" "save-conv
 sleep 2
 
 echo "vocabulary library (SwiftUI list)"
-click_main_button "Words"
+click_main_identifier "bottomBar.words"
 sleep 5
 # Assert the window opened. Rows alone are not enough to assert on: a library
 # with no saved words legitimately has none, so a broken list and an empty one
@@ -321,7 +364,7 @@ end timeout" >/dev/null 2>&1
 sleep 2
 
 echo "shelf (SwiftUI)"
-click_main_button "Shelf"
+click_main_identifier "bottomBar.shelf"
 sleep 4
 SHELF_IDS="$(panel_identifiers)"
 expect_identifier "shelf.add"   "$SHELF_IDS" "add button"

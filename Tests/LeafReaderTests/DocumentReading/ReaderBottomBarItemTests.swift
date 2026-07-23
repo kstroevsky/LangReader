@@ -31,8 +31,8 @@ enum ReaderBottomBarItemTests {
         try expect((settingsIndex ?? 0) < (shelfIndex ?? 0), "the gear should lead the bar")
         try expectEqual(
             ReaderBottomBarLayout.items(in: .panels).map(\.id),
-            [.shelf, .words, .notes, .review],
-            "the panel buttons should keep their order"
+            [.shelf, .words, .review, .notes],
+            "the panel buttons should match the on-screen order: Shelf, Words, Review, Notes"
         )
     }
 

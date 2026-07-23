@@ -42,7 +42,7 @@ extension ReaderWindowController {
             scrollWebPage(direction: -1)
             return
         }
-        turnPDFPage(direction: .previous, targetPlacement: .bottom)
+        turnPDFPage(direction: .previous)
     }
 
     @objc func nextPage() {
@@ -52,7 +52,7 @@ extension ReaderWindowController {
             scrollWebPage(direction: 1)
             return
         }
-        turnPDFPage(direction: .next, targetPlacement: .top)
+        turnPDFPage(direction: .next)
     }
 
     func scrollWebPage(direction: Int) {
@@ -148,12 +148,8 @@ extension ReaderWindowController {
         case next
     }
 
-    private enum PDFPagePlacement {
-        case top
-        case bottom
-    }
 
-    private func turnPDFPage(direction: PDFPageDirection, targetPlacement: PDFPagePlacement) {
+    private func turnPDFPage(direction: PDFPageDirection) {
         guard let document = pdfView.document, document.pageCount > 0 else { return }
         let currentIndex = currentPDFViewportAnchor()?.pageIndex ?? currentPageIndex() ?? 0
         let targetIndex: Int
@@ -170,31 +166,26 @@ extension ReaderWindowController {
             saveSession()
             return
         }
-        scrollPage(page, to: targetPlacement)
+        scrollPageToTop(page)
         lastPageIndex = targetIndex
         updatePageLabel()
         saveSession()
     }
 
+    /// Scrolls so the top of `page` sits at the top of the viewport.
+    ///
+    /// Both Prev and Next land here: a page turn shows the start of the page it
+    /// lands on, in either direction. `PDFDestination` places the point it is
+    /// given at the top of the visible area, so the page's top edge
+    /// (`bounds.maxY` in PDF space, where y grows upward) is exactly that point.
     func scrollPageToTop(_ page: PDFPage) {
-        scrollPage(page, to: .top)
-    }
-
-    private func scrollPage(_ page: PDFPage, to placement: PDFPagePlacement) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self,
                   self.pdfView.document?.index(for: page) != NSNotFound else {
                 return
             }
             let bounds = page.bounds(for: self.pdfView.displayBox)
-            let destinationY: CGFloat
-            switch placement {
-            case .top:
-                destinationY = bounds.maxY
-            case .bottom:
-                destinationY = bounds.minY
-            }
-            let destination = PDFDestination(page: page, at: NSPoint(x: bounds.minX, y: destinationY))
+            let destination = PDFDestination(page: page, at: NSPoint(x: bounds.minX, y: bounds.maxY))
             self.pdfView.go(to: destination)
             self.updatePageLabel()
         }

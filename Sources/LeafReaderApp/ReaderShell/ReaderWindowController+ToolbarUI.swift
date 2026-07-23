@@ -105,6 +105,7 @@ extension ReaderWindowController {
         let settingsButton = iconButton(symbol: "gearshape", action: #selector(openAISettings))
         settingsButton.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: AppText.settings)?
             .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 19, weight: .regular))
+        settingsButton.setAccessibilityIdentifier(ReaderBottomBarItem.Identifier.settings.accessibilityIdentifier)
         let navigationStack = NSStackView()
 
         bottomBarView = bottomBar
@@ -118,6 +119,10 @@ extension ReaderWindowController {
                 showsLeadingSymbol: item.showsLeadingSymbol
             )
             button.toolTip = bottomBarTooltip(for: item.id)
+            // A stable, locale-independent handle for the smoke test and
+            // assistive tech. Distinct from `.identifier`, which the capsule
+            // buttons already use to mark themselves for theming.
+            button.setAccessibilityIdentifier(item.id.accessibilityIdentifier)
             assign(button, to: item.id)
         }
 
