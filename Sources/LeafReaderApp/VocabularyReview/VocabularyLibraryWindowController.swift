@@ -330,7 +330,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
         let selectedSource = sourcePopup.selectedItem?.representedObject as? String
         self.records = records
         rebuildSourcePopup(selectedPath: selectedSource)
-        applyFilters(preferredSelectionID: selectedID)
+        applyFilters(preferredSelectionID: selectedID, refreshesDetail: true)
     }
 
     private func rebuildSourcePopup(selectedPath: String?) {
@@ -357,7 +357,10 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
         }
     }
 
-    private func applyFilters(preferredSelectionID: String? = nil) {
+    /// - Parameter refreshesDetail: forces the detail pane to rebuild even when
+    ///   the selected word is unchanged. Set on reloads, where the record's
+    ///   contents may have changed underneath a stable selection.
+    private func applyFilters(preferredSelectionID: String? = nil, refreshesDetail: Bool = false) {
         // Read the controls, then hand off: the rules live in
         // `VocabularyLibraryFilter` where they can be tested.
         let selectionID = preferredSelectionID ?? selectedRecord?.id
@@ -374,9 +377,16 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
         )
         let row = VocabularyLibraryFilter.selectionRow(in: filteredRecords, preferredID: selectionID)
         listModel.theme = ReaderTheme.selected
+        let previousID = listModel.selectedID
         listModel.apply(records: filteredRecords, selectedID: row.map { filteredRecords[$0].id })
+
         // `apply` sets the selection without notifying, so the detail pane is
-        // refreshed here explicitly — once, whatever the selection did.
+        // driven here — but only when the selected word actually changed.
+        // Rebuilding it on every call would re-render the markdown, occurrence
+        // cards and source buttons on each keystroke in the search field, and
+        // would discard the reader's chosen form tab while they were still
+        // looking at the same word.
+        guard listModel.selectedID != previousID || refreshesDetail else { return }
         occurrenceFormFilter = nil
         refreshDetail()
     }

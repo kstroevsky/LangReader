@@ -62,16 +62,24 @@ struct ShelfView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .padding(.horizontal, 36)
         } else {
-            ScrollView(.horizontal) {
-                LazyHStack(alignment: .top, spacing: 28) {
-                    ForEach(model.items, id: \.path) { item in
-                        ShelfCard(item: item, model: model, palette: palette)
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal) {
+                    LazyHStack(alignment: .top, spacing: 28) {
+                        ForEach(model.items, id: \.path) { item in
+                            ShelfCard(item: item, model: model, palette: palette)
+                                .id(item.path)
+                        }
                     }
+                    .padding(.trailing, 10)
+                    .padding(.vertical, 2)
                 }
-                .padding(.trailing, 10)
-                .padding(.vertical, 2)
+                .scrollContentBackground(.hidden)
+                .onAppear {
+                    // Opened right after an import: show the file just added.
+                    guard let focus = model.focusPath else { return }
+                    proxy.scrollTo(focus, anchor: .center)
+                }
             }
-            .scrollContentBackground(.hidden)
             .padding(.top, 38)
             .padding(.horizontal, 36)
             .padding(.bottom, 42)

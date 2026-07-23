@@ -71,10 +71,4 @@ enum ReaderBottomBarLayout {
     static func items(in cluster: ReaderBottomBarItem.Cluster) -> [ReaderBottomBarItem] {
         items.filter { $0.cluster == cluster }
     }
-
-    /// What the bar shows at rest — everything except the AI-analysis controls,
-    /// which appear only while an analysis is running.
-    static var restingItems: [ReaderBottomBarItem] {
-        items.filter { !$0.isTransient }
-    }
 }

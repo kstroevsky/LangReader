@@ -56,7 +56,7 @@ final class RecentDocumentsPanelController: NSObject {
         self.parentWindow = window
 
         let theme = ReaderTheme.selected
-        model.update(items: items)
+        model.update(items: items, focusPath: focusPath)
         model.theme = theme
         wireModel()
 
@@ -108,7 +108,6 @@ final class RecentDocumentsPanelController: NSObject {
         self.panel = panel
         installAppActivationObserver()
         showPanel(panel, attachedTo: window)
-        _ = focusPath
     }
 
     /// Routes the shelf's actions. The destructive ones confirm first — the

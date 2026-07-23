@@ -45,15 +45,6 @@ enum ReaderBottomBarItemTests {
             Set([.embeddingPause, .embeddingCancel]),
             "only the AI-analysis controls should be transient"
         )
-        try expectEqual(
-            ReaderBottomBarLayout.restingItems.count,
-            ReaderBottomBarLayout.items.count - 2,
-            "the resting bar should be everything but the analysis controls"
-        )
-        try expect(
-            !ReaderBottomBarLayout.restingItems.contains { $0.isTransient },
-            "the resting bar should contain no transient controls"
-        )
     }
 
     static func testOnlyPanelButtonsCarryALeadingSymbol() throws {

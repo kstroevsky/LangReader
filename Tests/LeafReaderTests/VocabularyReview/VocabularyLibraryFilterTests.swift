@@ -154,8 +154,6 @@ enum VocabularyLibraryFilterTests {
             empty,
             "a whitespace-only answer should read as having no definition"
         )
-        try expect(!VocabularyLibraryRowPresenter.hasAnswer(""), "an empty answer should not count as an answer")
-        try expect(VocabularyLibraryRowPresenter.hasAnswer("a definition"), "real text should count as an answer")
     }
 
     // MARK: Helpers

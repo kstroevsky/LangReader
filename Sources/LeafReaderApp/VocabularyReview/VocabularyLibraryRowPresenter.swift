@@ -32,10 +32,4 @@ enum VocabularyLibraryRowPresenter {
             ? AppText.localized("没有释义", "No definition yet")
             : cleaned
     }
-
-    static func hasAnswer(_ answer: String) -> Bool {
-        !VocabularyAnswerSanitizer.removingTrailingTags(from: answer)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .isEmpty
-    }
 }
