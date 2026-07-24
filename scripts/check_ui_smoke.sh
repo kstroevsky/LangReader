@@ -351,6 +351,12 @@ done
 for id in readAloud pageLayout crop fullScreen; do
   expect_identifier "topBar.$id" "$CHROME_IDS" "top bar $id"
 done
+# The AI panel's chrome (header actions + status row) is SwiftUI too. Its
+# identifiers are readable whether the panel is expanded or collapsed, so
+# asserting them needs no state change and leaves the panel as the user left it.
+for id in ask summarize translate export; do
+  expect_identifier "aiPanel.$id" "$CHROME_IDS" "AI panel $id"
+done
 
 echo "reading notes (SwiftUI)"
 click_reader_chrome "bottomBar.notes"

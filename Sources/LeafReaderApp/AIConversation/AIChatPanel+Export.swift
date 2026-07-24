@@ -41,13 +41,13 @@ extension AIChatPanel {
         }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
-        statusLabel.stringValue = AppText.localized("已复制 Markdown", "Markdown copied")
+        chromeModel.statusText = AppText.localized("已复制 Markdown", "Markdown copied")
     }
 
-    @objc func exportConversationTapped(_ sender: NSButton) {
+    func exportConversation() {
         let bubbles = exportableConversationBubbles()
         guard !bubbles.isEmpty else {
-            statusLabel.stringValue = AppText.localized("当前没有可导出的对话", "No conversation to export")
+            chromeModel.statusText = AppText.localized("当前没有可导出的对话", "No conversation to export")
             return
         }
 
@@ -112,9 +112,9 @@ extension AIChatPanel {
                 let data = try ReadingNotePDFExporter.data(html: html)
                 try data.write(to: outputURL, options: .atomic)
             }
-            statusLabel.stringValue = AppText.localized("已导出", "Exported")
+            chromeModel.statusText = AppText.localized("已导出", "Exported")
         } catch {
-            statusLabel.stringValue = AppText.localized("导出失败", "Export failed")
+            chromeModel.statusText = AppText.localized("导出失败", "Export failed")
             NSLog("LeafReader AI conversation export failed: %@", error.localizedDescription)
         }
     }

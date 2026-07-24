@@ -168,19 +168,19 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
     let client = AIClient()
     let dictionaryLookupService: DictionaryLookupService = LocalDictionaryLookupService.shared
     lazy var llmAnswerProvider: StreamingAnswerProvider = LLMAnswerProvider(client: client)
-    let askButton = GradientButton(title: "", target: nil, action: nil)
-    let summaryButton = CapsuleChromeButton(title: "", target: nil, action: nil)
-    let translateButton = CapsuleChromeButton(title: "", target: nil, action: nil)
-    let exportConversationButton = CapsuleChromeButton(title: "", target: nil, action: nil)
+    /// State behind the SwiftUI header and status row.
+    let chromeModel = AIPanelChromeModel()
+    /// The header's hosting view, kept so the selection monitor can tell a click
+    /// on the header's actions from a click that should clear the selection.
+    weak var chromeHeaderView: NSView?
     let scrollView = NSScrollView()
     let transcriptStack = FlippedStackView()
-    let statusRow = NSView()
-    let statusLabel = NSTextField(labelWithString: "")
-    let cancelRequestButton = NSButton(title: "", target: nil, action: nil)
+    // The transcript and the follow-up field stay AppKit: both are
+    // selectable/editable text, which does not receive first responder inside
+    // an NSHostingView. Only the chrome above and below them is SwiftUI.
     let inputBar = ChatInputBarView()
     let inputField = ChatInputTextField(string: "")
     let sendButton = NSButton(title: "", target: nil, action: nil)
-    let loadingDots = LoadingDotsView()
     let speechSynthesizer = AVSpeechSynthesizer()
     let requestState = AIRequestState()
     var lastFailedAIRequest: FailedAIRequest?
@@ -279,20 +279,13 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
     func setTheme(_ theme: ReaderTheme) {
         readerTheme = theme
         isDarkMode = theme == .dark
+        chromeModel.theme = theme
         layer?.backgroundColor = panelBackgroundColor.cgColor
-        statusLabel.textColor = secondaryTextColor
         inputBar.layer?.backgroundColor = inputBackgroundColor.cgColor
         inputBar.layer?.borderWidth = theme == .original ? 0 : 1
         inputBar.layer?.borderColor = inputBorderColor.cgColor
         inputField.textColor = primaryTextColor
-        askButton.theme = theme
-        askButton.layer?.shadowColor = aiAccentColor.cgColor
-        summaryButton.theme = theme
-        translateButton.theme = theme
-        exportConversationButton.theme = theme
-        loadingDots.accentColor = aiAccentColor
         sendButton.contentTintColor = sendButtonTintColor
-        cancelRequestButton.contentTintColor = secondaryTextColor
         restyleTranscript()
     }
 }

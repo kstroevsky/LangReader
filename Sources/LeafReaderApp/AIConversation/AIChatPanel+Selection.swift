@@ -23,8 +23,8 @@ extension AIChatPanel {
 
     func updateSelectedText(_ text: String) {
         selectedText = text
-        askButton.previewText = text
-        askButton.isEnabled = !text.isEmpty
+        chromeModel.askPreviewText = text
+        chromeModel.askEnabled = !text.isEmpty
     }
 
     func beginBubbleTextSelection(_ bubble: ChatBubbleTextField) {
@@ -88,10 +88,15 @@ extension AIChatPanel {
         }
     }
 
+    /// Clicking a control that *acts on* the current bubble selection must not
+    /// clear it first. That was the ask / summarize / translate buttons; now
+    /// those live in the header hosting view, so the whole header counts —
+    /// which also covers export, harmlessly (it reads stored bubbles, not the
+    /// selection, and leaving the highlight up afterwards is the nicer result).
     func shouldPreserveSelection(for event: NSEvent) -> Bool {
         isMouseEvent(event, inside: inputBar)
             || isMouseEvent(event, inside: sendButton)
-            || [askButton, summaryButton, translateButton].contains { isMouseEvent(event, inside: $0) }
+            || chromeHeaderView.map { isMouseEvent(event, inside: $0) } == true
     }
 
     func isMouseEvent(_ event: NSEvent, inside view: NSView) -> Bool {

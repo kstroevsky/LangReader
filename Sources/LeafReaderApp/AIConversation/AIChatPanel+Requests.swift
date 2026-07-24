@@ -219,7 +219,7 @@ extension AIChatPanel {
             let status = chunks.count > 1
                 ? AppText.localized("翻译中 \(index + 1)/\(chunks.count)", "Translating \(index + 1)/\(chunks.count)")
                 : AppText.localized("翻译中", "Translating")
-            statusLabel.stringValue = status
+            chromeModel.statusText = status
             updateBubble(assistantBody, role: AppText.aiRole, text: partialTranslationText(translatedChunks, currentIndex: index), renderMarkdown: false)
 
             let prompt = AIPromptStore.translationPrompt(title: title, text: chunks[index])
@@ -281,20 +281,12 @@ extension AIChatPanel {
 
     func setBusy(_ busy: Bool, text: String) {
         isBusy = busy
-        askButton.isEnabled = !selectedText.isEmpty
-        summaryButton.isEnabled = !busy
-        translateButton.isEnabled = !busy
         inputField.isEnabled = !busy
         sendButton.isEnabled = !busy
-        statusLabel.stringValue = text
-        if busy {
-            loadingDots.isHidden = false
-            cancelRequestButton.isHidden = false
-            loadingDots.startAnimating()
-        } else {
-            loadingDots.stopAnimating()
-            loadingDots.isHidden = true
-            cancelRequestButton.isHidden = true
-        }
+        chromeModel.askEnabled = !selectedText.isEmpty
+        chromeModel.contentActionsEnabled = !busy
+        chromeModel.statusText = text
+        // Drives the animated dots and the cancel button together.
+        chromeModel.isBusy = busy
     }
 }
