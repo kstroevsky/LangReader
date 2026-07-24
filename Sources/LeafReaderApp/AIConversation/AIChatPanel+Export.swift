@@ -35,7 +35,7 @@ private enum AIConversationExportFormat: Int, CaseIterable {
 extension AIChatPanel {
     @objc func copyBubbleMarkdown(_ sender: NSButton) {
         guard let bodyID = sender.identifier?.rawValue,
-              let text = bubbleMetadataByID[bodyID]?.text.trimmingCharacters(in: .whitespacesAndNewlines),
+              let text = transcript[bodyID]?.text.trimmingCharacters(in: .whitespacesAndNewlines),
               !text.isEmpty else {
             return
         }
@@ -80,19 +80,11 @@ extension AIChatPanel {
     }
 
     private func exportableConversationBubbles() -> [SavedAIConversationBubble] {
-        persistentBubbleIDs.compactMap { bodyID in
-            guard let metadata = bubbleMetadataByID[bodyID],
-                  isConversationBubble(metadata),
-                  metadata.role == AppText.userRole || metadata.role == AppText.aiRole else {
+        transcript.persistentConversationBubbles.compactMap { bubble in
+            guard bubble.role == AppText.userRole || bubble.role == AppText.aiRole else {
                 return nil
             }
-            return SavedAIConversationBubble(
-                role: metadata.role,
-                text: metadata.text,
-                collapsible: metadata.collapsible,
-                renderMarkdown: metadata.renderMarkdown,
-                sourceLocation: metadata.sourceLocation
-            )
+            return savedBubble(from: bubble)
         }
     }
 

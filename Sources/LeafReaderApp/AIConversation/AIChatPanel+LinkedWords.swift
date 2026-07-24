@@ -56,20 +56,8 @@ extension AIChatPanel {
     func removeLinkedWordBubbles(ids: [String]) {
         let idSet = Set(ids)
         guard !idSet.isEmpty else { return }
-        for view in transcriptStack.arrangedSubviews {
-            guard let box = view as? ChatBubbleView,
-                  let linkID = box.identifier?.rawValue,
-                  idSet.contains(linkID) else {
-                continue
-            }
-            for body in box.subviews.compactMap({ $0 as? NSTextField }) {
-                if let bodyID = body.identifier?.rawValue {
-                    bubbleMetadataByID.removeValue(forKey: bodyID)
-                    persistentBubbleIDs.removeAll { $0 == bodyID }
-                }
-            }
-            transcriptStack.removeArrangedSubview(box)
-            box.removeFromSuperview()
+        for bodyID in transcript.removeLinked(linkIDs: idSet) {
+            removeBubbleView(bodyID: bodyID)
         }
         for id in idSet {
             bubbleBoxByLinkID.removeValue(forKey: id)

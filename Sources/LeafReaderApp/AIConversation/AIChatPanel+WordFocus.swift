@@ -41,9 +41,8 @@ extension AIChatPanel {
             transcriptStack.removeArrangedSubview(view)
             view.removeFromSuperview()
         }
-        bubbleMetadataByID.removeAll()
+        transcript.removeAll()
         bubbleBoxByLinkID.removeAll()
-        persistentBubbleIDs.removeAll()
         lastNotifiedConversationSources.removeAll()
         selectedLinkID = nil
         conversationContext.reset()
@@ -60,19 +59,53 @@ extension AIChatPanel {
 
         resetTranscript()
 
+        let trimmed = answer.trimmingCharacters(in: .whitespacesAndNewlines)
+        transcript.focusedWord = FocusedWord(word: word, answer: trimmed, linkID: linkID)
+        buildFocusedWordViews(word: word, answer: trimmed)
+
+        if !trimmed.isEmpty {
+            // Keep the follow-up context even though the card is not a chat bubble.
+            recordTranscript(role: AppText.aiRole, text: trimmed, linkID: linkID)
+            appendMessage(ChatMessage(role: "assistant", content: trimmed, linkID: linkID))
+        }
+
+        scheduleTranscriptLayout()
+    }
+
+    /// Rebuilds the focused-word card for the current theme. The card bakes its
+    /// colours in when it is built and holds no chat bubbles, so the in-place
+    /// restyling `restyleTranscript` does for bubbles never reached it — it
+    /// stayed on the old theme until the next lookup. Rebuilding from the stored
+    /// `focusedWord` is what fixes that.
+    ///
+    /// Returns false when the transcript is a conversation rather than a
+    /// focused word, so the caller falls through to the bubble path.
+    @discardableResult
+    func restyleFocusedWordCard() -> Bool {
+        guard let focused = transcript.focusedWord else { return false }
+        transcriptStack.arrangedSubviews.forEach { view in
+            transcriptStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
+        buildFocusedWordViews(word: focused.word, answer: focused.answer)
+        transcriptStack.needsLayout = true
+        scheduleTranscriptLayout()
+        return true
+    }
+
+    /// The card itself: header, definition, and the spacer that pins them to the
+    /// top. Kept separate from `showFocusedWord` so a restyle can rebuild the
+    /// views without re-recording the conversation context.
+    private func buildFocusedWordViews(word: String, answer: String) {
         let info = onWordFocusInfoRequested?(word)
         let header = makeWordFocusHeaderView(word: word, info: info)
         transcriptStack.addArrangedSubview(header)
         header.widthAnchor.constraint(equalTo: transcriptStack.widthAnchor).isActive = true
 
-        let trimmed = answer.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !trimmed.isEmpty {
-            let definition = makeWordFocusDefinitionView(answer: trimmed)
+        if !answer.isEmpty {
+            let definition = makeWordFocusDefinitionView(answer: answer)
             transcriptStack.addArrangedSubview(definition)
             definition.widthAnchor.constraint(equalTo: transcriptStack.widthAnchor).isActive = true
-            // Keep the follow-up context even though the card is not a chat bubble.
-            recordTranscript(role: AppText.aiRole, text: trimmed, linkID: linkID)
-            appendMessage(ChatMessage(role: "assistant", content: trimmed, linkID: linkID))
         }
 
         // The transcript is a chat that grows from the bottom, so a short focused
@@ -84,8 +117,6 @@ extension AIChatPanel {
         spacer.setContentCompressionResistancePriority(NSLayoutConstraint.Priority(1), for: .vertical)
         transcriptStack.addArrangedSubview(spacer)
         spacer.widthAnchor.constraint(equalTo: transcriptStack.widthAnchor).isActive = true
-
-        scheduleTranscriptLayout()
     }
 
     private func makeWordFocusHeaderView(word: String, info: WordFocusInfo?) -> NSView {

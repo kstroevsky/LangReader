@@ -3,45 +3,39 @@ import Cocoa
 extension AIChatPanel {
     func persistBubbleIfNeeded(_ body: NSTextField?) {
         guard let bodyID = body?.identifier?.rawValue,
-              !persistentBubbleIDs.contains(bodyID),
-              let metadata = bubbleMetadataByID[bodyID],
-              shouldPersistBubble(role: metadata.role, text: metadata.text, linkID: metadata.linkID) else {
+              let bubble = transcript[bodyID],
+              !bubble.isPersistent,
+              shouldPersistBubble(role: bubble.role, text: bubble.text, linkID: bubble.linkID),
+              transcript.markPersistent(id: bodyID) else {
             return
         }
-        persistentBubbleIDs.append(bodyID)
         trimVisibleNormalConversationBubblesIfNeeded()
         notifyConversationChangedIfNeeded()
     }
 
     func trimVisibleNormalConversationBubblesIfNeeded() {
-        let normalBubbleIDs = persistentBubbleIDs.filter { bodyID in
-            guard let metadata = bubbleMetadataByID[bodyID] else { return false }
-            return isConversationBubble(metadata)
-        }
-        let excessCount = normalBubbleIDs.count - Self.maxVisibleNormalConversationBubbles
-        guard excessCount > 0 else { return }
-
-        let activeBodyID = requestState.assistantBody?.identifier?.rawValue
-        for bodyID in normalBubbleIDs.prefix(excessCount) where bodyID != activeBodyID {
+        let stale = transcript.conversationBubblesToTrim(
+            limit: Self.maxVisibleNormalConversationBubbles,
+            keeping: requestState.assistantBody?.identifier?.rawValue
+        )
+        for bodyID in stale {
             removeConversationBubble(bodyID: bodyID)
         }
     }
 
     func removeConversationBubble(bodyID: String) {
-        guard let metadata = bubbleMetadataByID[bodyID],
-              isConversationBubble(metadata) else { return }
+        guard transcript[bodyID]?.isConversation == true else { return }
         removeBubbleView(bodyID: bodyID)
-        bubbleMetadataByID.removeValue(forKey: bodyID)
-        persistentBubbleIDs.removeAll { $0 == bodyID }
+        transcript.remove(id: bodyID)
         notifyConversationChangedIfNeeded()
     }
 
     @objc func deleteBubble(_ sender: NSButton) {
         guard let bodyID = sender.identifier?.rawValue,
-              let metadata = bubbleMetadataByID[bodyID] else {
+              let bubble = transcript[bodyID] else {
             return
         }
-        if let linkID = metadata.linkID {
+        if let linkID = bubble.linkID {
             if let onLinkedBubbleDeleted {
                 onLinkedBubbleDeleted(linkID)
             } else {
@@ -65,47 +59,17 @@ extension AIChatPanel {
     }
 
     func removeConversationBubbleGroup(startingAt bodyID: String) {
-        guard let startIndex = transcriptStack.arrangedSubviews.firstIndex(where: { view in
-            guard let box = view as? ChatBubbleView else { return false }
-            return bodyIDForBubbleBox(box) == bodyID
-        }) else {
-            return
-        }
+        // Which bubbles go is a question about the transcript, not the view
+        // tree: the bubble plus the answers that follow it, up to the next
+        // user turn.
+        let group = transcript.conversationGroup(startingAt: bodyID, userRole: AppText.userRole)
+        guard !group.isEmpty else { return }
 
-        var boxesToRemove: [ChatBubbleView] = []
-        var idsToRemove: [String] = []
-        var deletedBubbles: [SavedAIConversationBubble] = []
-        for view in transcriptStack.arrangedSubviews[startIndex...] {
-            guard let box = view as? ChatBubbleView,
-                  let candidateID = bodyIDForBubbleBox(box),
-                  let metadata = bubbleMetadataByID[candidateID],
-                  isConversationBubble(metadata) else {
-                continue
-            }
-            if !idsToRemove.isEmpty, metadata.role == AppText.userRole {
-                break
-            }
-            boxesToRemove.append(box)
-            idsToRemove.append(candidateID)
-            deletedBubbles.append(SavedAIConversationBubble(
-                role: metadata.role,
-                text: metadata.text,
-                collapsible: metadata.collapsible,
-                renderMarkdown: metadata.renderMarkdown,
-                sourceLocation: metadata.sourceLocation
-            ))
+        for bubble in group {
+            removeBubbleView(bodyID: bubble.id)
         }
-
-        guard !idsToRemove.isEmpty else { return }
-        for box in boxesToRemove {
-            transcriptStack.removeArrangedSubview(box)
-            box.removeFromSuperview()
-        }
-        for removedID in idsToRemove {
-            bubbleMetadataByID.removeValue(forKey: removedID)
-            persistentBubbleIDs.removeAll { $0 == removedID }
-        }
-        onConversationBubblesDeleted?(deletedBubbles)
+        transcript.remove(ids: Set(group.map(\.id)))
+        onConversationBubblesDeleted?(group.map(savedBubble(from:)))
         notifyConversationChangedIfNeeded()
         transcriptStack.needsLayout = true
         scheduleTranscriptLayout()
@@ -115,7 +79,7 @@ extension AIChatPanel {
         box.subviews
             .compactMap { $0 as? NSTextField }
             .compactMap { $0.identifier?.rawValue }
-            .first { bubbleMetadataByID[$0] != nil }
+            .first { transcript.contains(id: $0) }
     }
 
     func textField(forBodyID bodyID: String) -> NSTextField? {
@@ -129,21 +93,21 @@ extension AIChatPanel {
     }
 
     func savedConversation() -> SavedAIConversation {
-        let normalBubbleIDs = persistentBubbleIDs.filter { bodyID in
-            guard let metadata = bubbleMetadataByID[bodyID] else { return false }
-            return isConversationBubble(metadata)
-        }
-        let savedBubbleIDs = Array(normalBubbleIDs.suffix(Self.maxSavedConversationBubbles))
-        let bubbles = savedBubbleIDs.compactMap { bubbleMetadataByID[$0] }.map {
-            SavedAIConversationBubble(
-                role: $0.role,
-                text: $0.text,
-                collapsible: $0.collapsible,
-                renderMarkdown: $0.renderMarkdown,
-                sourceLocation: $0.sourceLocation
-            )
-        }
-        return SavedAIConversation(bubbles: bubbles)
+        SavedAIConversation(
+            bubbles: transcript
+                .savedConversationBubbles(limit: Self.maxSavedConversationBubbles)
+                .map(savedBubble(from:))
+        )
+    }
+
+    func savedBubble(from bubble: TranscriptBubble) -> SavedAIConversationBubble {
+        SavedAIConversationBubble(
+            role: bubble.role,
+            text: bubble.text,
+            collapsible: bubble.collapsible,
+            renderMarkdown: bubble.renderMarkdown,
+            sourceLocation: bubble.sourceLocation
+        )
     }
 
     func defaultSourceLocation(role: String, text: String, linkID: String?) -> AIConversationSourceLocation? {
@@ -159,10 +123,6 @@ extension AIChatPanel {
         return role == AppText.userRole || role == AppText.aiRole || role == AppText.errorRole
     }
 
-    func isConversationBubble(_ metadata: BubbleMetadata) -> Bool {
-        metadata.linkID == nil
-    }
-
     func notifyConversationChangedIfNeeded() {
         guard !isRestoringSavedConversation else { return }
         onConversationChanged?(savedConversation())
@@ -174,20 +134,6 @@ extension AIChatPanel {
     }
 
     func activeConversationSources() -> [AIConversationSourceLocation] {
-        var sources: [AIConversationSourceLocation] = []
-        for bodyID in persistentBubbleIDs {
-            guard let metadata = bubbleMetadataByID[bodyID],
-                  let source = conversationSource(for: metadata),
-                  !sources.contains(source) else {
-                continue
-            }
-            sources.append(source)
-        }
-        return sources
-    }
-
-    func conversationSource(for metadata: BubbleMetadata) -> AIConversationSourceLocation? {
-        guard isConversationBubble(metadata) else { return nil }
-        return metadata.sourceLocation
+        transcript.activeSources()
     }
 }

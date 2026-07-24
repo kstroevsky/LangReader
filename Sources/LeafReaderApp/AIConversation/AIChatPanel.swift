@@ -238,9 +238,11 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
     var pendingTranscriptForceScroll = false
     var readerTheme: ReaderTheme = .original
     var isDarkMode = false
-    var bubbleMetadataByID: [String: BubbleMetadata] = [:]
+    /// The transcript's data: ordering, metadata and persistence all live here,
+    /// not in the stack view's arranged subviews.
+    let transcript = AITranscriptModel()
+    /// View lookup only — which box is showing a given linked word.
     var bubbleBoxByLinkID: [String: ChatBubbleView] = [:]
-    var persistentBubbleIDs: [String] = []
     var isLoadingLinkedWordBubbles = false
     var isRestoringSavedConversation = false
     var selectedLinkID: String?

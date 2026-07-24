@@ -151,8 +151,7 @@ extension AIChatPanel {
     @objc func regenerateBubble(_ sender: NSButton) {
         guard !isBusy,
               let bodyID = sender.identifier?.rawValue,
-              let metadata = bubbleMetadataByID[bodyID],
-              let request = metadata.regenerationRequest,
+              let request = transcript[bodyID]?.regenerationRequest,
               let body = textField(forBodyID: bodyID) else {
             return
         }

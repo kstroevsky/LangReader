@@ -67,38 +67,11 @@ extension AIChatPanel {
         return style
     }
 
-    var panelBackgroundColor: NSColor {
-        switch readerTheme {
-        case .original:
-            return NSColor.white.withAlphaComponent(0.97)
-        case .eyeCare:
-            return NSColor(red: 0.86, green: 0.82, blue: 0.68, alpha: 0.97)
-        case .dark:
-            return NSColor(red: 0.07, green: 0.09, blue: 0.11, alpha: 0.96)
-        }
-    }
+    var panelBackgroundColor: NSColor { AIPanelColors(theme: readerTheme).panelBackground }
 
-    var primaryTextColor: NSColor {
-        switch readerTheme {
-        case .original:
-            return NSColor(red: 0.12, green: 0.13, blue: 0.16, alpha: 1)
-        case .eyeCare:
-            return NSColor(red: 0.18, green: 0.15, blue: 0.09, alpha: 1)
-        case .dark:
-            return NSColor(red: 0.78, green: 0.81, blue: 0.86, alpha: 1)
-        }
-    }
+    var primaryTextColor: NSColor { AIPanelColors(theme: readerTheme).primaryText }
 
-    var secondaryTextColor: NSColor {
-        switch readerTheme {
-        case .original:
-            return NSColor(red: 0.42, green: 0.44, blue: 0.49, alpha: 1)
-        case .eyeCare:
-            return NSColor(red: 0.45, green: 0.39, blue: 0.26, alpha: 1)
-        case .dark:
-            return NSColor(red: 0.55, green: 0.60, blue: 0.68, alpha: 1)
-        }
-    }
+    var secondaryTextColor: NSColor { AIPanelColors(theme: readerTheme).secondaryText }
 
     var sourceSummaryTextColor: NSColor {
         switch readerTheme {
@@ -122,38 +95,11 @@ extension AIChatPanel {
         }
     }
 
-    var inputBackgroundColor: NSColor {
-        switch readerTheme {
-        case .original:
-            return NSColor(red: 0.93, green: 0.94, blue: 0.95, alpha: 1)
-        case .eyeCare:
-            return NSColor(red: 0.91, green: 0.86, blue: 0.70, alpha: 1)
-        case .dark:
-            return NSColor(red: 0.10, green: 0.12, blue: 0.15, alpha: 1)
-        }
-    }
+    var inputBackgroundColor: NSColor { AIPanelColors(theme: readerTheme).inputBackground }
 
-    var inputBorderColor: NSColor {
-        switch readerTheme {
-        case .original:
-            return .clear
-        case .eyeCare:
-            return NSColor(red: 0.66, green: 0.60, blue: 0.43, alpha: 1)
-        case .dark:
-            return NSColor(red: 0.22, green: 0.26, blue: 0.32, alpha: 1)
-        }
-    }
+    var inputBorderColor: NSColor { AIPanelColors(theme: readerTheme).inputBorder }
 
-    var aiAccentColor: NSColor {
-        switch readerTheme {
-        case .original:
-            return NSColor(red: 0.0, green: 0.35, blue: 0.9, alpha: 1)
-        case .eyeCare:
-            return NSColor(red: 0.53, green: 0.37, blue: 0.14, alpha: 1)
-        case .dark:
-            return NSColor(red: 0.32, green: 0.55, blue: 1, alpha: 1)
-        }
-    }
+    var aiAccentColor: NSColor { AIPanelColors(theme: readerTheme).accent }
 
     var aiSelectionBackgroundColor: NSColor {
         aiAccentColor.withAlphaComponent(readerTheme == .eyeCare ? 0.24 : 0.20)
@@ -222,45 +168,25 @@ extension AIChatPanel {
         return "\(normalized.prefix(limit))..."
     }
 
+    /// Re-applies the theme to every bubble in place. Bubbles keep their views;
+    /// only colours and the rendered attributed strings change, both read from
+    /// the transcript.
+    ///
+    /// (There used to be a branch here that tore the stack down and rebuilt it
+    /// from scratch, guarded on the bubbles being `NSBox`es. `ChatBubbleView`
+    /// has been a plain view for a long time, so that guard was never true and
+    /// the branch was dead; it is gone.)
     func restyleTranscript() {
-        let entries = transcriptStack.arrangedSubviews.compactMap { view -> BubbleMetadata? in
-            guard
-                let box = view as? NSBox,
-                let body = bubbleBody(in: box),
-                let bodyID = body.identifier?.rawValue,
-                let metadata = bubbleMetadataByID[bodyID]
-            else {
-                return nil
-            }
-            return metadata
-        }
-
-        if !entries.isEmpty {
-            transcriptStack.arrangedSubviews.forEach { view in
-                transcriptStack.removeArrangedSubview(view)
-                view.removeFromSuperview()
-            }
-            bubbleMetadataByID.removeAll()
-            for metadata in entries {
-                appendBubble(
-                    role: metadata.role,
-                    text: metadata.text,
-                    collapsible: metadata.collapsible,
-                    renderMarkdown: metadata.renderMarkdown,
-                    linkID: metadata.linkID,
-                    sourceLocation: metadata.sourceLocation
-                )
-            }
-            updateLinkedBubbleSelection()
-            return
-        }
+        // A focused-word card is not made of bubbles, so it has to be rebuilt
+        // rather than restyled in place.
+        if restyleFocusedWordCard() { return }
 
         for box in transcriptStack.arrangedSubviews.compactMap({ $0 as? ChatBubbleView }) {
             box.borderColor = bubbleBorderColor
             guard let body = bubbleBody(in: box) else { continue }
-            let metadata: BubbleMetadata?
+            let metadata: TranscriptBubble?
             if let bodyID = body.identifier?.rawValue {
-                metadata = bubbleMetadataByID[bodyID]
+                metadata = transcript[bodyID]
             } else {
                 metadata = nil
             }
@@ -300,7 +226,7 @@ extension AIChatPanel {
     private func bubbleBody(in box: NSView) -> NSTextField? {
         box.subviews.compactMap { $0 as? NSTextField }.first { textField in
             guard let id = textField.identifier?.rawValue else { return false }
-            return bubbleMetadataByID[id] != nil
+            return transcript.contains(id: id)
         }
     }
 

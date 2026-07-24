@@ -28,15 +28,17 @@ extension AIChatPanel {
         let bodyID = UUID().uuidString
         body.identifier = NSUserInterfaceItemIdentifier(bodyID)
         let effectiveSourceLocation = sourceLocation ?? defaultSourceLocation(role: role, text: text, linkID: linkID)
-        bubbleMetadataByID[bodyID] = BubbleMetadata(
+        transcript.append(TranscriptBubble(
+            id: bodyID,
             role: role,
             text: text,
             renderMarkdown: renderMarkdown,
             collapsible: collapsible,
             linkID: linkID,
             sourceLocation: effectiveSourceLocation,
-            regenerationRequest: regenerationRequest
-        )
+            regenerationRequest: regenerationRequest,
+            isPersistent: persist ?? shouldPersistBubble(role: role, text: text, linkID: linkID)
+        ))
 
         box.addSubview(body)
         let deleteButton = makeBubbleDeleteButton(bodyID: bodyID, role: role)
@@ -138,8 +140,7 @@ extension AIChatPanel {
         }
         NSLayoutConstraint.activate(constraints)
 
-        if persist ?? shouldPersistBubble(role: role, text: text, linkID: linkID) {
-            persistentBubbleIDs.append(bodyID)
+        if transcript[bodyID]?.isPersistent == true {
             trimVisibleNormalConversationBubblesIfNeeded()
         }
         notifyConversationChangedIfNeeded()
@@ -238,17 +239,8 @@ extension AIChatPanel {
     }
 
     func updateBubble(_ body: NSTextField, role: String, text: String, renderMarkdown: Bool = true, notify: Bool = true) {
-        let existingMetadata = body.identifier.flatMap { bubbleMetadataByID[$0.rawValue] }
         if let bodyID = body.identifier?.rawValue {
-            bubbleMetadataByID[bodyID] = BubbleMetadata(
-                role: role,
-                text: text,
-                renderMarkdown: renderMarkdown,
-                collapsible: existingMetadata?.collapsible ?? false,
-                linkID: existingMetadata?.linkID,
-                sourceLocation: existingMetadata?.sourceLocation,
-                regenerationRequest: existingMetadata?.regenerationRequest
-            )
+            transcript.updateContent(id: bodyID, role: role, text: text, renderMarkdown: renderMarkdown)
         }
         body.attributedStringValue = bubbleString(role: role, text: text, renderMarkdown: renderMarkdown)
         body.invalidateIntrinsicContentSize()
@@ -261,13 +253,13 @@ extension AIChatPanel {
 
     func restoreBubbleRendering(_ body: NSTextField) {
         guard let bodyID = body.identifier?.rawValue,
-              let metadata = bubbleMetadataByID[bodyID] else {
+              let bubble = transcript[bodyID] else {
             return
         }
         let rendered = NSMutableAttributedString(attributedString: bubbleString(
-            role: metadata.role,
-            text: metadata.text,
-            renderMarkdown: metadata.renderMarkdown
+            role: bubble.role,
+            text: bubble.text,
+            renderMarkdown: bubble.renderMarkdown
         ))
         if body === activeBubbleTextField,
            let highlightRange = activeBubbleHighlightRange(in: rendered) {
