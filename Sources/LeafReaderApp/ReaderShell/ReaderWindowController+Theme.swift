@@ -3,6 +3,7 @@ import Cocoa
 extension ReaderWindowController {
     func applyReaderTheme() {
         let theme = ReaderTheme.selected
+        topBarModel.theme = theme
         bottomBarModel.theme = theme
         let isDark = theme == .dark
         let chromeBackground = chromeBackgroundColor(for: theme)

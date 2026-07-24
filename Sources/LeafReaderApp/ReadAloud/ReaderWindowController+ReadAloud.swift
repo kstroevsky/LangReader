@@ -200,27 +200,13 @@ extension ReaderWindowController {
     }
 
     func updateReadAloudButton() {
-        guard let readAloudButton else { return }
-        let symbolName = isReadAloudLoading
-            ? "hourglass"
-            : (isReadAloudPaused ? "play.fill" : (isReadAloudActive ? "pause.fill" : "speaker.wave.2"))
-        readAloudButton.title = isReadAloudLoading
-            ? AppText.localized("加载中", "Loading")
-            : (isReadAloudPaused
-            ? AppText.localized("继续", "Resume")
-            : (isReadAloudActive ? AppText.localized("暂停", "Pause") : AppText.localized("朗读", "Read")))
-        readAloudButton.isEnabled = !isReadAloudLoading
-        setCapsuleButtonSymbol(symbolName, on: readAloudButton, accessibilityDescription: readAloudButton.title)
-        readAloudButton.toolTip = isReadAloudLoading
-            ? AppText.localized("正在加载朗读模型", "Loading read aloud model")
-            : (isReadAloudPaused
-            ? AppText.localized("继续朗读", "Resume reading")
-            : (isReadAloudActive
-                ? AppText.localized("暂停朗读", "Pause reading")
-                : AppText.localized("从当前屏幕顶部开始朗读", "Read from the top of the current screen")))
+        // Runs only once the toolbar exists; the SwiftUI Read button derives its
+        // title, symbol and tooltip from these three flags via `ReaderTopBarTitles`.
+        guard toolbarView != nil else { return }
+        topBarModel.readAloudActive = isReadAloudActive
+        topBarModel.readAloudPaused = isReadAloudPaused
+        topBarModel.readAloudLoading = isReadAloudLoading
         refreshChromeState()
-        readAloudButton.needsDisplay = true
-        readAloudButton.displayIfNeeded()
         updateReadAloudFloatingControl()
     }
 }

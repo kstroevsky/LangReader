@@ -2,14 +2,7 @@ import Cocoa
 
 struct ReaderToolbarSetup {
     let toolbar: NSView
-    let zoomOut: NSButton
-    let zoomIn: NSButton
-    let leftDivider: NSView
-    let rightDivider: NSView
-    let zoomGroup: NSView
-    let leadingStack: NSStackView
-    let beforeZoomStack: NSStackView
-    let trailingStack: NSStackView
+    let hosting: NSView
 }
 
 struct ReaderBottomBarSetup {
@@ -97,14 +90,7 @@ extension ReaderWindowController {
         bottomBarSetup: ReaderBottomBarSetup
     ) {
         let toolbar = toolbarSetup.toolbar
-        let zoomOut = toolbarSetup.zoomOut
-        let zoomIn = toolbarSetup.zoomIn
-        let zoomGroup = toolbarSetup.zoomGroup
-        let leadingStack = toolbarSetup.leadingStack
-        let beforeZoomStack = toolbarSetup.beforeZoomStack
-        let trailingStack = toolbarSetup.trailingStack
-        let leftDivider = toolbarSetup.leftDivider
-        let rightDivider = toolbarSetup.rightDivider
+        let toolbarHosting = toolbarSetup.hosting
         let bottomBar = bottomBarSetup.bottomBar
         let hosting = bottomBarSetup.hosting
 
@@ -163,40 +149,18 @@ extension ReaderWindowController {
             hosting.topAnchor.constraint(equalTo: bottomBar.topAnchor),
             hosting.bottomAnchor.constraint(equalTo: bottomBar.bottomAnchor),
 
-            // Toolbar clusters. Order and membership come from
-            // `ReaderToolbarLayout.items`; the stacks own the spacing.
-            leadingStack.leadingAnchor.constraint(equalTo: toolbar.leadingAnchor, constant: ReaderToolbarLayout.leadingInset),
-            leadingStack.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
-            leadingStack.trailingAnchor.constraint(lessThanOrEqualTo: beforeZoomStack.leadingAnchor, constant: -ReaderUILayout.titleToReadAloudMinimum),
-            titleLabel.widthAnchor.constraint(lessThanOrEqualToConstant: ReaderUILayout.titleMaxWidth),
+            // The top toolbar's buttons are a SwiftUI view filling the bar; it
+            // positions the edge clusters from the same `ReaderUILayout` constants.
+            toolbarHosting.leadingAnchor.constraint(equalTo: toolbar.leadingAnchor),
+            toolbarHosting.trailingAnchor.constraint(equalTo: toolbar.trailingAnchor),
+            toolbarHosting.topAnchor.constraint(equalTo: toolbar.topAnchor),
+            toolbarHosting.bottomAnchor.constraint(equalTo: toolbar.bottomAnchor),
 
-            beforeZoomStack.trailingAnchor.constraint(equalTo: zoomGroup.leadingAnchor, constant: -ReaderToolbarLayout.beforeZoomGap),
-            beforeZoomStack.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
-
-            zoomGroup.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
-            zoomGroup.centerXAnchor.constraint(equalTo: toolbar.centerXAnchor, constant: ReaderUILayout.zoomCenterOffset),
-            zoomGroup.widthAnchor.constraint(equalToConstant: ReaderUILayout.zoomGroupSize.width),
-            zoomGroup.heightAnchor.constraint(equalToConstant: ReaderUILayout.zoomGroupSize.height),
-
-            zoomOut.leadingAnchor.constraint(equalTo: zoomGroup.leadingAnchor),
-            zoomOut.topAnchor.constraint(equalTo: zoomGroup.topAnchor),
-            zoomOut.bottomAnchor.constraint(equalTo: zoomGroup.bottomAnchor),
-            zoomOut.widthAnchor.constraint(equalToConstant: ReaderUILayout.zoomButtonWidth),
-            leftDivider.leadingAnchor.constraint(equalTo: zoomOut.trailingAnchor),
-            leftDivider.topAnchor.constraint(equalTo: zoomGroup.topAnchor),
-            leftDivider.bottomAnchor.constraint(equalTo: zoomGroup.bottomAnchor),
-            leftDivider.widthAnchor.constraint(equalToConstant: ReaderUILayout.zoomDividerWidth),
-            zoomField.leadingAnchor.constraint(equalTo: leftDivider.trailingAnchor),
-            zoomField.centerYAnchor.constraint(equalTo: zoomGroup.centerYAnchor),
-            zoomField.widthAnchor.constraint(equalToConstant: ReaderUILayout.zoomFieldWidth),
-            rightDivider.leadingAnchor.constraint(equalTo: zoomField.trailingAnchor),
-            rightDivider.topAnchor.constraint(equalTo: zoomGroup.topAnchor),
-            rightDivider.bottomAnchor.constraint(equalTo: zoomGroup.bottomAnchor),
-            rightDivider.widthAnchor.constraint(equalToConstant: ReaderUILayout.zoomDividerWidth),
-            zoomIn.leadingAnchor.constraint(equalTo: rightDivider.trailingAnchor),
-            zoomIn.topAnchor.constraint(equalTo: zoomGroup.topAnchor),
-            zoomIn.bottomAnchor.constraint(equalTo: zoomGroup.bottomAnchor),
-            zoomIn.trailingAnchor.constraint(equalTo: zoomGroup.trailingAnchor),
+            // The editable centre cluster is AppKit, layered on top of the hosting
+            // view (editable fields can't get first responder inside it) and
+            // anchored to the window centre, matching the SwiftUI edge clusters.
+            zoomGroupView!.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
+            zoomGroupView!.centerXAnchor.constraint(equalTo: toolbar.centerXAnchor, constant: ReaderUILayout.zoomCenterOffset),
 
             pageLabel.centerXAnchor.constraint(equalTo: toolbar.centerXAnchor, constant: ReaderUILayout.pageLabelCenterOffset),
             pageLabel.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
@@ -211,10 +175,6 @@ extension ReaderWindowController {
             searchButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
             searchButton.widthAnchor.constraint(equalToConstant: ReaderUILayout.iconButtonSize),
             searchButton.heightAnchor.constraint(equalToConstant: ReaderUILayout.iconButtonSize),
-
-            trailingStack.trailingAnchor.constraint(equalTo: toolbar.trailingAnchor, constant: -ReaderToolbarLayout.trailingInset),
-            trailingStack.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
-            trailingStack.leadingAnchor.constraint(greaterThanOrEqualTo: searchButton.trailingAnchor, constant: ReaderToolbarLayout.clusterSpacing),
 
             searchOverlay.topAnchor.constraint(equalTo: contentView.topAnchor, constant: ReaderUILayout.searchOverlayTop),
             searchOverlay.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),

@@ -16,14 +16,6 @@ extension ReaderWindowController {
         }
     }
 
-    /// Toolbar tumbler handler: remember the choice and repaint the markings.
-    /// Related forms only exist for PDF vocabulary, so a repaint of the PDF
-    /// annotations is all that is needed (the tumbler is hidden for web docs).
-    @objc func toggleRelatedWordForms(_ sender: NSSwitch) {
-        showsRelatedWordForms = sender.state == .on
-        restoreStoredWordAnnotations()
-    }
-
     func restoreStoredWordAnnotations() {
         guard currentDocumentKind == .pdf else { return }
         removeAllVocabularyWordAnnotations()

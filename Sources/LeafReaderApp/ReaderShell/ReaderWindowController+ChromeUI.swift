@@ -7,13 +7,13 @@ extension ReaderWindowController {
     /// load path.
     func applyChromeState(_ state: ReaderChromeState) {
         chromeState = state
-        coverImageView.isHidden = !state.showsCover
-        pageLayoutButton?.isHidden = !state.showsPageLayoutButton
-        cropButton?.isHidden = !state.showsCropButton
-        relatedFormsToggle?.isHidden = !state.showsRelatedFormsToggle
-        readAloudStopButton?.isHidden = !state.showsReadAloudStopButton
+        topBarModel.showsCover = state.showsCover
+        topBarModel.showsPageLayoutButton = state.showsPageLayoutButton
+        topBarModel.showsCropButton = state.showsCropButton
+        topBarModel.showsRelatedFormsToggle = state.showsRelatedFormsToggle
+        topBarModel.showsReadAloudStopButton = state.showsReadAloudStopButton
         if state.showsRelatedFormsToggle {
-            relatedFormsSwitch?.state = state.relatedFormsToggleIsOn ? .on : .off
+            topBarModel.relatedFormsOn = state.relatedFormsToggleIsOn
         }
     }
 
@@ -68,27 +68,6 @@ extension ReaderWindowController {
         return button
     }
 
-    func capsuleButton(title: String, symbol: String, action: Selector, showsLeadingSymbol: Bool = false) -> NSButton {
-        let button = CapsuleChromeButton(title: title, target: self, action: action)
-        button.identifier = Self.capsuleButtonIdentifier
-        button.controlSize = .regular
-        button.font = AppFont.semibold(ofSize: 13)
-        button.theme = ReaderTheme.selected
-        if showsLeadingSymbol {
-            setCapsuleButtonSymbol(symbol, on: button, accessibilityDescription: title)
-        }
-        return button
-    }
-
-    func setCapsuleButtonSymbol(_ symbol: String, on button: NSButton, accessibilityDescription: String) {
-        if let capsule = button as? CapsuleChromeButton {
-            capsule.leadingSymbolName = symbol
-            capsule.leadingSymbolDescription = accessibilityDescription
-        } else {
-            setSystemImage(symbol, on: button, accessibilityDescription: accessibilityDescription)
-        }
-    }
-
     func setSystemImage(_ symbol: String, on button: NSButton, accessibilityDescription: String? = nil) {
         button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: accessibilityDescription)
         if button.image == nil, button.title.isEmpty {
@@ -106,26 +85,19 @@ extension ReaderWindowController {
     func refreshLanguageUI() {
         (NSApp.delegate as? AppDelegate)?.refreshMainMenu()
         bottomBarModel.languageToken += 1
+        topBarModel.languageToken += 1
         aiPanel.refreshLanguage()
-        fullScreenButton.title = window?.styleMask.contains(.fullScreen) == true ? AppText.windowed : AppText.fullScreen
-        // The bottom bar is SwiftUI and re-renders from the language token above.
+        // The top and bottom bars are SwiftUI and re-render from the language
+        // tokens above; the stateful button titles refresh via their updaters.
         selectionActionToolbar.refreshLanguage()
         selectionActionToolbar.applyTheme(ReaderTheme.selected)
         refreshEmbeddingStatusLanguage()
         updatePDFPageLayoutButton()
         updatePDFMarginCropButton()
-        for button in [pageLayoutButton, cropButton] {
-            if let capsule = button as? CapsuleChromeButton {
-                capsule.theme = ReaderTheme.selected
-            }
-        }
+        updateFullScreenButton()
         if pdfView.document == nil {
             pageLabel.stringValue = AppText.noPDF
             updatePageLabelTextColor()
         }
-        fullScreenButton.image = NSImage(
-            systemSymbolName: window?.styleMask.contains(.fullScreen) == true ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
-            accessibilityDescription: fullScreenButton.title
-        )
     }
 }

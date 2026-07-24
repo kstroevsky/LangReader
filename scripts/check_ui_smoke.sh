@@ -329,29 +329,28 @@ if ! pgrep -f "$APP_NAME" >/dev/null; then
   exit 2
 fi
 
-# A failure here usually means accessibility permission is missing rather than a
-# real regression, so it is called out separately.
-TITLES="$(main_button_titles)"
-if ! grep -q "Read" <<<"$TITLES"; then
+echo "reader chrome"
+# Both bars are asserted by accessibility identifier rather than by button title:
+# titles are localised (a Chinese UI would break a title match), and identifiers
+# are stable across the AppKit->SwiftUI migration, making this a regression net.
+CHROME_IDS="$(reader_chrome_identifiers)"
+# A failure to read any chrome identifier usually means accessibility permission
+# is missing rather than a real regression, so it is called out separately.
+if ! grep -q "bottomBar\." <<<"$CHROME_IDS"; then
   echo "UI smoke: cannot read the app's accessibility tree." >&2
   echo "Grant Accessibility permission to this terminal and re-run." >&2
   echo "--- got: ---" >&2
-  echo "$TITLES" >&2
+  echo "$CHROME_IDS" >&2
   exit 2
 fi
-
-echo "reader chrome"
-# The bottom bar is asserted by accessibility identifier rather than by button
-# title: the titles are localised (a Chinese UI would break a title match), and
-# these identifiers will carry over unchanged when the bar is rebuilt in SwiftUI,
-# turning this into a regression net for that swap.
-CHROME_IDS="$(reader_chrome_identifiers)"
 for id in settings shelf words notes review toc cover previousPage nextPage farthestPosition; do
   expect_identifier "bottomBar.$id" "$CHROME_IDS" "bottom bar $id"
 done
-# Read lives in the top toolbar, which is still AppKit and has no identifier yet;
-# kept as a title check until that surface is migrated too.
-if grep -qx "Read" <<<"$TITLES"; then pass "toolbar button Read"; else fail "toolbar button Read missing"; fi
+# The top toolbar is SwiftUI now; assert its controls by identifier too. The
+# restored PDF session shows read-aloud, page-layout, crop and full-screen.
+for id in readAloud pageLayout crop fullScreen; do
+  expect_identifier "topBar.$id" "$CHROME_IDS" "top bar $id"
+done
 
 echo "reading notes (SwiftUI)"
 click_reader_chrome "bottomBar.notes"

@@ -73,15 +73,9 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     let searchOverlay = SearchOverlayView()
     let selectionActionToolbar = SelectionActionToolbar()
     var selectionActionToolbarWindow: NSWindow?
-    var fullScreenButton: NSButton!
-    var readAloudButton: NSButton!
-    var readAloudStopButton: NSButton!
-    var pageLayoutButton: NSButton!
-    var cropButton: NSButton!
-    var relatedFormsToggle: NSView!
-    var relatedFormsSwitch: NSSwitch!
     /// Last chrome state applied; the source of truth for what is on screen.
     var chromeState: ReaderChromeState = .empty
+    let topBarModel = ReaderTopBarModel()
     let bottomBarModel = ReaderBottomBarModel()
     var searchButton: NSButton!
     var searchUnderlineButton: SearchUnderlineButton!

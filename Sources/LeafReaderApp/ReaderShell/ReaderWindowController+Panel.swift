@@ -268,12 +268,7 @@ extension ReaderWindowController {
     }
 
     func updateFullScreenButton() {
-        let isFullScreen = window?.styleMask.contains(.fullScreen) == true
-        fullScreenButton.title = isFullScreen ? AppText.windowed : AppText.fullScreen
-        fullScreenButton.image = NSImage(
-            systemSymbolName: isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
-            accessibilityDescription: fullScreenButton.title
-        )
+        topBarModel.isFullScreen = window?.styleMask.contains(.fullScreen) == true
     }
 
     func windowDidResize(_ notification: Notification) {

@@ -24,7 +24,7 @@ extension ReaderWindowController {
             updatePDFPageLayoutButton()
             return
         }
-        pageLayoutButton?.isEnabled = false
+        topBarModel.pageLayoutEnabled = false
         NSAnimationContext.runAnimationGroup { context in
             context.duration = animated ? 0.08 : 0
             pdfView.autoScales = false
@@ -47,20 +47,14 @@ extension ReaderWindowController {
                 self.pdfView.go(to: currentDestination)
             }
             self.pdfView.scaleFactor = currentScaleFactor
-            self.pageLayoutButton?.isEnabled = true
+            self.topBarModel.pageLayoutEnabled = true
             self.updateZoomLabel()
         }
         updatePDFPageLayoutButton()
     }
 
     func updatePDFPageLayoutButton() {
-        let isTwoPage = isPDFTwoPageModeEnabled()
-        pageLayoutButton?.title = isTwoPage
-            ? AppText.localized("单页", "Single")
-            : AppText.localized("双页", "Two-up")
-        pageLayoutButton?.toolTip = isTwoPage
-            ? AppText.localized("切换到单页浏览", "Switch to single-page view")
-            : AppText.localized("切换到双页浏览", "Switch to two-page view")
+        topBarModel.pageLayoutIsTwoPage = isPDFTwoPageModeEnabled()
     }
 
     func isPDFTwoPageModeEnabled() -> Bool {
