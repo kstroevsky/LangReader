@@ -148,7 +148,9 @@ final class VocabularyReviewSession {
         return true
     }
 
-    func goToNextListPage() {
+    @discardableResult
+    func goToNextListPage() -> Bool {
         listPageIndex += 1
+        return true
     }
 }

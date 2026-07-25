@@ -20,13 +20,8 @@ extension ReaderWindowController {
     }
 
     func refreshVocabularyStats(in root: NSView, records: [VocabularyExportRecord]) {
-        let stats = VocabularyLearningStatsCalculator.stats(records: records)
-        for item in VocabularyLearningStatsPresenter.items(for: stats) {
-            vocabularyStatValue(item.valueIdentifier, in: root)?.stringValue = item.value
-        }
-    }
-
-    private func vocabularyStatValue(_ identifier: String, in root: NSView) -> NSTextField? {
-        findView(identifier: identifier, in: root) as? NSTextField
+        vocabularyPanelController.headerModel.apply(
+            stats: VocabularyLearningStatsCalculator.stats(records: records)
+        )
     }
 }

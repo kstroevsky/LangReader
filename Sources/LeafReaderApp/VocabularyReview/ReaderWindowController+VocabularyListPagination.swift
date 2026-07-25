@@ -1,67 +1,71 @@
 import Cocoa
 
 extension ReaderWindowController {
-    func populateVocabularyStack(_ stack: NSStackView, records: [VocabularyExportRecord], filter: VocabularyFilter, isDark: Bool) {
-        for view in stack.arrangedSubviews {
-            stack.removeArrangedSubview(view)
-            view.removeFromSuperview()
-        }
+    /// Fills the list model from the current page of records. Replaces the old
+    /// `populateVocabularyStack`, which tore down and rebuilt a stack of views.
+    func populateVocabularyList(records: [VocabularyExportRecord], filter: VocabularyFilter) {
+        let model = vocabularyPanelController.listModel
         let page = vocabularyReviewSession.currentListPageRecords(records, matching: filter)
-        if page.total == 0 {
-            addFullWidthVocabularyListView(emptyVocabularyState(filter: filter, isDark: isDark), to: stack)
-            return
-        }
-        for record in page.records {
-            addFullWidthVocabularyListView(vocabularyCard(record: record, isDark: isDark), to: stack)
-        }
-        if page.pageCount > 1 {
-            addFullWidthVocabularyListView(
-                vocabularyPaginationView(currentPage: page.pageIndex, pageCount: page.pageCount, total: page.total, isDark: isDark),
-                to: stack
-            )
-        }
+        model.pageIndex = page.pageIndex
+        model.pageCount = page.pageCount
+        model.totalCount = page.total
+        model.emptyMessage = page.total == 0 ? emptyVocabularyStateMessage(filter: filter) : nil
+        model.rows = page.records.map(vocabularyWordRow(for:))
     }
 
-    private func addFullWidthVocabularyListView(_ view: NSView, to stack: NSStackView) {
-        stack.addArrangedSubview(view)
-        view.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    private func vocabularyWordRow(for record: VocabularyExportRecord) -> VocabularyWordRow {
+        let theme = ReaderTheme.selected
+        let word = record.word
+        let hasAnswer = VocabularyExporter.hasTrimmedText(record.answer)
+        let key = VocabularyTextPolicy.canonicalVocabularyKey(word)
+        return VocabularyWordRow(
+            id: key,
+            word: word,
+            location: record.location,
+            status: hasAnswer
+                ? vocabularySRSStatusText(record.srs)
+                : AppText.localized("已保存在本地", "Saved locally"),
+            hasPronunciation: vocabularySpeakerWord(word) != nil,
+            answer: hasAnswer
+                ? AttributedString(MarkdownRenderer.render(
+                    String(vocabularyAnswerBody(record.answer, word: word).prefix(900)),
+                    fontSize: 15,
+                    textColor: vocabularyBodyTextColor(for: theme)
+                  ))
+                : nil,
+            occurrences: record.occurrences.map { occurrence in
+                let context = VocabularyExporter.hasTrimmedText(occurrence.context)
+                    ? occurrence.context
+                    : AppText.localized("没有可用的上下文", "No context available")
+                return VocabularyWordRow.Occurrence(
+                    id: occurrence.id,
+                    location: occurrence.location,
+                    context: AttributedString(vocabularyExampleAttributedString(
+                        context,
+                        word: occurrence.surfaceForm ?? word,
+                        fontSize: 12,
+                        textColor: vocabularyBodyTextColor(for: theme)
+                    ))
+                )
+            },
+            isExpanded: vocabularyState.expandedOccurrenceKeys.contains(key),
+            formCount: record.forms.count,
+            recordIDs: record.ids
+        )
     }
 
-    func vocabularyPaginationView(currentPage: Int, pageCount: Int, total: Int, isDark: Bool) -> NSView {
-        let container = NSView()
-        container.translatesAutoresizingMaskIntoConstraints = false
-
-        let previousButton = vocabularyActionButton(title: AppText.localized("上一页", "Previous"), target: self, action: #selector(previousVocabularyListPage(_:)), fontSize: 13)
-        previousButton.isEnabled = currentPage > 0
-
-        let nextButton = vocabularyActionButton(title: AppText.localized("下一页", "Next"), target: self, action: #selector(nextVocabularyListPage(_:)), fontSize: 13)
-        nextButton.isEnabled = currentPage + 1 < pageCount
-
-        let pageLabel = NSTextField(labelWithString: AppText.localized("第 \(currentPage + 1) / \(pageCount) 页 · 共 \(total) 个", "Page \(currentPage + 1) / \(pageCount) · \(total) total"))
-        pageLabel.font = AppFont.semibold(ofSize: 13)
-        pageLabel.textColor = ReaderTheme.selected.secondaryTextColor
-        pageLabel.alignment = .center
-        pageLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        for view in [previousButton, pageLabel, nextButton] {
-            container.addSubview(view)
+    func handleVocabularyListAction(_ action: VocabularyWordListAction) {
+        switch action {
+        case .speak(let word): speakVocabularyTexts([word])
+        case .copy(let word): copyTextToClipboard(word)
+        case .delete(let ids): markVocabularyRecordsMastered(ids: ids)
+        case .toggleOccurrences(let key): toggleVocabularyOccurrences(key: key)
+        case .openOccurrence(let id): openVocabularyOccurrence(id: id)
+        case .previousPage:
+            if vocabularyReviewSession.goToPreviousListPage() { reloadVocabularyPanelContent() }
+        case .nextPage:
+            if vocabularyReviewSession.goToNextListPage() { reloadVocabularyPanelContent() }
         }
-
-        NSLayoutConstraint.activate([
-            container.heightAnchor.constraint(equalToConstant: 52),
-            previousButton.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            previousButton.trailingAnchor.constraint(equalTo: pageLabel.leadingAnchor, constant: -14),
-            previousButton.widthAnchor.constraint(equalToConstant: 86),
-            previousButton.heightAnchor.constraint(equalToConstant: 32),
-            pageLabel.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            pageLabel.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            pageLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 150),
-            nextButton.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            nextButton.leadingAnchor.constraint(equalTo: pageLabel.trailingAnchor, constant: 14),
-            nextButton.widthAnchor.constraint(equalToConstant: 86),
-            nextButton.heightAnchor.constraint(equalToConstant: 32)
-        ])
-        return container
     }
 
     @objc func previousVocabularyListPage(_ sender: NSButton) {
@@ -74,17 +78,21 @@ extension ReaderWindowController {
         reloadVocabularyPanelContent()
     }
 
+    /// Why the list or the review has nothing to show. Shared by the AppKit
+    /// list's empty view and the SwiftUI review card.
+    func emptyVocabularyStateMessage(filter: VocabularyFilter) -> String {
+        switch filter {
+        case .due:
+            return AppText.localized("今天还没有学习过的单词", "No words studied today")
+        case .new:
+            return AppText.localized("今天没有新加入的单词", "No new words added today")
+        case .all:
+            return AppText.localized("暂无单词", "No words yet")
+        }
+    }
+
     func emptyVocabularyState(filter: VocabularyFilter, isDark: Bool) -> NSView {
-        let label = NSTextField(labelWithString: {
-            switch filter {
-            case .due:
-                return AppText.localized("今天还没有学习过的单词", "No words studied today")
-            case .new:
-                return AppText.localized("今天没有新加入的单词", "No new words added today")
-            case .all:
-                return AppText.localized("暂无单词", "No words yet")
-            }
-        }())
+        let label = NSTextField(labelWithString: emptyVocabularyStateMessage(filter: filter))
         label.font = AppFont.semibold(ofSize: 15)
         label.textColor = ReaderTheme.selected.secondaryTextColor
         label.alignment = .center

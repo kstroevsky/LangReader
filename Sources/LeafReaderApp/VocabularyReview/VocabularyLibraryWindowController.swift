@@ -11,6 +11,7 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
     private weak var owner: ReaderWindowController?
     private let reloadTask = DebouncedTask(delay: 0.12)
     private let rootView = NSView()
+    private let headerIcon = NSImageView()
     private let summaryLabel = NSTextField(labelWithString: "")
     private let searchField = NSSearchField()
     private let sourcePopup = NSPopUpButton()
@@ -159,10 +160,11 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
         )
         panel.center()
 
-        let icon = NSImageView()
+        let icon = headerIcon
         icon.image = NSImage(systemSymbolName: "text.word.spacing", accessibilityDescription: nil)?
             .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 25, weight: .semibold))
         icon.imageScaling = .scaleNone
+        icon.contentTintColor = ReaderTheme.selected.vocabularyAccentColor
 
         let title = NSTextField(labelWithString: AppText.localized("生词", "Words"))
         title.font = AppFont.semibold(ofSize: 24)
@@ -271,6 +273,11 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
         rootView.wantsLayer = true
         rootView.layer?.backgroundColor = background.cgColor
         summaryLabel.textColor = theme.vocabularySecondaryTextColor
+        // The header icon was never retinted here, so it kept the system accent
+        // through every theme change. It only surfaced once an unrelated
+        // deletion removed the name-based exemption that was hiding it from
+        // `check_ui_theme.sh`.
+        headerIcon.contentTintColor = theme.vocabularyAccentColor
         listModel.theme = theme
         owner?.styleVocabularyActionButtons(in: rootView)
     }

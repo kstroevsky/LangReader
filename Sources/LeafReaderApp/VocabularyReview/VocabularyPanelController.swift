@@ -4,6 +4,12 @@ final class VocabularyPanelController {
     weak var owner: ReaderWindowController?
     private(set) weak var panel: NSWindow?
     private let reloadTask = DebouncedTask(delay: 0.04)
+    /// State behind the SwiftUI header. Held here so the summary and the stats
+    /// are updated by assignment rather than by searching the view tree for a
+    /// label with a matching identifier.
+    let headerModel = VocabularyTrainerHeaderModel()
+    /// State behind the SwiftUI word list.
+    let listModel = VocabularyWordListModel()
     private var activationObserver: NSObjectProtocol?
 
     init(owner: ReaderWindowController) {
