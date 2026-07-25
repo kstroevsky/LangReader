@@ -41,7 +41,13 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
     var isAskInputVisible: Bool {
         !askInputContainer.isHidden
     }
-    var note: ReadingNote
+    /// The note being edited. `editorModel` owns it; this is a read-only
+    /// projection so the controller cannot hold a second copy that drifts.
+    /// It used to be a stored property assigned alongside the model, and the two
+    /// silently diverged: favouriting from the notes list wrote here, `save()`
+    /// persisted `editorModel`'s copy, and the flag was lost on the next
+    /// keystroke.
+    var note: ReadingNote { editorModel.note }
     let onSave: (ReadingNote) -> Void
     private let onClose: (String) -> Void
     let onShowNotes: () -> Void
@@ -60,7 +66,6 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
         onDocumentQuestionPrompt: DocumentQuestionPromptHandler? = nil,
         onModelSettingsRequired: @escaping () -> Void = {}
     ) {
-        self.note = note
         self.editorModel = ReadingNoteEditorModel(note: note)
         self.onSave = onSave
         self.onClose = onClose

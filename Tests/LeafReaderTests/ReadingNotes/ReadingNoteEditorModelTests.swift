@@ -126,4 +126,30 @@ enum ReadingNoteEditorModelTests {
         try expectEqual(model.text, "second", "the editor should show the new note")
         try expectEqual(model.hasUnsavedChanges, false, "a replaced note starts clean")
     }
+
+    /// Regression: the controller used to keep its own `note` alongside this
+    /// model. Favouriting from the notes list wrote that copy, but `save()`
+    /// persisted the model's — so the next keystroke saved `isFavorite: false`
+    /// over the change. The favourite is set on the model now, so a later commit
+    /// carries it.
+    static func testAnExternalFavouriteSurvivesTheNextCommit() throws {
+        let model = ReadingNoteEditorModel(note: note(markdown: "body", favorite: false))
+
+        model.setFavorite(true)
+        model.text = "body edited"
+        let saved = model.commitEdits()
+
+        try expectEqual(saved.isFavorite, true, "the commit must carry the favourite set outside the editor")
+        try expectEqual(saved.markdown, "body edited", "the commit must still carry the editor's text")
+    }
+
+    /// The list sends the state it wants, not a flip, so the two cannot disagree
+    /// about which way to go.
+    static func testSettingFavouriteIsIdempotent() throws {
+        let model = ReadingNoteEditorModel(note: note(favorite: true))
+
+        model.setFavorite(true)
+
+        try expectEqual(model.note.isFavorite, true, "setting an already-set favourite must not clear it")
+    }
 }

@@ -279,13 +279,13 @@ extension AIChatPanel {
     }
 
     func setBusy(_ busy: Bool, text: String) {
+        // `isBusy` forwards into the chrome model, which drives the animated dots
+        // and the cancel button.
         isBusy = busy
         inputField.isEnabled = !busy
         sendButton.isEnabled = !busy
         chromeModel.askEnabled = !selectedText.isEmpty
         chromeModel.contentActionsEnabled = !busy
         chromeModel.statusText = text
-        // Drives the animated dots and the cancel button together.
-        chromeModel.isBusy = busy
     }
 }

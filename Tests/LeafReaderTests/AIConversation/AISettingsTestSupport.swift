@@ -102,7 +102,7 @@ func withIsolatedAISettingsDefaults(_ body: (UserDefaults) throws -> Void) throw
         throw TestFailure(description: "could not create isolated defaults suite")
     }
     defer {
-        defaults.removePersistentDomain(forName: suiteName)
+        discardIsolatedDefaults(defaults, suiteName: suiteName)
     }
     try AISettingsStore.withDefaults(defaults) {
         try body(defaults)

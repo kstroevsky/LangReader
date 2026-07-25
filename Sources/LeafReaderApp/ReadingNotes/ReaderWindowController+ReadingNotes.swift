@@ -215,11 +215,18 @@ extension ReaderWindowController {
     }
 
     func toggleReadingNoteFavorite(_ note: ReadingNote) {
+        // An open panel owns this note's text, so it performs the change and
+        // saves. Writing `updated` straight to the store here would persist the
+        // list's copy of `markdown`, which is stale whenever the editor has
+        // unsaved edits.
+        if let controller = readingNotePanelControllers[note.id] {
+            controller.setFavorite(!note.isFavorite)
+            return
+        }
         var updated = note
         updated.isFavorite.toggle()
         updated.updatedAt = Date()
         saveReadingNote(updated)
-        readingNotePanelControllers[note.id]?.note = updated
     }
 
     func deleteReadingNoteWithConfirmation(_ note: ReadingNote) {

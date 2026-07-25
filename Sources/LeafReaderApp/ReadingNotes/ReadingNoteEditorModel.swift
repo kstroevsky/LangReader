@@ -103,7 +103,15 @@ final class ReadingNoteEditorModel {
 
     @discardableResult
     func toggleFavorite() -> ReadingNote {
-        note.isFavorite.toggle()
+        setFavorite(!note.isFavorite)
+    }
+
+    /// Sets the flag rather than flipping it, for changes that originate outside
+    /// the editor. The notes list knows the state it wants; a toggle there would
+    /// resolve against whichever copy it happened to read.
+    @discardableResult
+    func setFavorite(_ isFavorite: Bool) -> ReadingNote {
+        note.isFavorite = isFavorite
         status(note.isFavorite
             ? AppText.localized("已收藏", "Favorited")
             : AppText.localized("已取消收藏", "Favorite removed"))

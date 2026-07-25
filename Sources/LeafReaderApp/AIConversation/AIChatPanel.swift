@@ -223,7 +223,14 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
         get { conversationContext.messages }
         set { conversationContext.replaceMessages(newValue) }
     }
-    var isBusy = false
+    /// Forwarded rather than stored: the chrome model owns it, so the panel's
+    /// guards and the animated dots cannot disagree. They were two properties
+    /// written together by `setBusy`, which was correct only for as long as that
+    /// stayed the single writer.
+    var isBusy: Bool {
+        get { chromeModel.isBusy }
+        set { chromeModel.isBusy = newValue }
+    }
     var pendingStreamText = ""
     var lastStreamUpdateAt = Date.distantPast
     var isEditingFollowUp = false

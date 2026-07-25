@@ -17,6 +17,21 @@ func expectEqual<T: Equatable>(_ lhs: T, _ rhs: T, _ message: String) throws {
     }
 }
 
+/// Discards an isolated defaults suite **and** the file backing it.
+///
+/// `removePersistentDomain(forName:)` alone empties the domain but leaves an
+/// empty plist in `~/Library/Preferences`, so every run of the suite left a few
+/// more behind — 1,224 of them, 4.8 MB, had accumulated on the development
+/// machine before this was noticed. Tests must not litter the user's account.
+func discardIsolatedDefaults(_ defaults: UserDefaults, suiteName: String) {
+    defaults.removePersistentDomain(forName: suiteName)
+    guard suiteName.hasPrefix("LeafReaderTests.") else { return }
+    let plist = FileManager.default
+        .homeDirectoryForCurrentUser
+        .appendingPathComponent("Library/Preferences/\(suiteName).plist")
+    try? FileManager.default.removeItem(at: plist)
+}
+
 private final class DebouncedTask {
     private let delay: TimeInterval
     private var workItem: DispatchWorkItem?
@@ -113,7 +128,7 @@ private func testReaderSessionStorePDFAnchor() throws {
         throw TestFailure(description: "could not create isolated defaults suite")
     }
     defer {
-        defaults.removePersistentDomain(forName: suiteName)
+        discardIsolatedDefaults(defaults, suiteName: suiteName)
     }
 
     let store = ReaderSessionStore(fileMD5: "book", defaults: defaults)
@@ -137,7 +152,7 @@ private func testReaderSessionStoreFarthestProgress() throws {
         throw TestFailure(description: "could not create isolated defaults suite")
     }
     defer {
-        defaults.removePersistentDomain(forName: suiteName)
+        discardIsolatedDefaults(defaults, suiteName: suiteName)
     }
 
     let store = ReaderSessionStore(fileMD5: "book", defaults: defaults)
@@ -172,7 +187,7 @@ private func testReaderSessionStoreWebProgressBounds() throws {
         throw TestFailure(description: "could not create isolated defaults suite")
     }
     defer {
-        defaults.removePersistentDomain(forName: suiteName)
+        discardIsolatedDefaults(defaults, suiteName: suiteName)
     }
 
     let store = ReaderSessionStore(fileMD5: "book", defaults: defaults)
@@ -794,6 +809,8 @@ private let tests: [(String, () throws -> Void)] = [
     ("Note editor applies newest AI result only", ReadingNoteEditorModelTests.testOnlyTheNewestAIResultMayBeApplied),
     ("Note editor refuses late AI results", ReadingNoteEditorModelTests.testAClosingEditorRefusesLateAIResults),
     ("Note editor replace resets state", ReadingNoteEditorModelTests.testReplacingTheNoteResetsTheEditor),
+    ("Note editor external favourite survives commit", ReadingNoteEditorModelTests.testAnExternalFavouriteSurvivesTheNextCommit),
+    ("Note editor favourite set is idempotent", ReadingNoteEditorModelTests.testSettingFavouriteIsIdempotent),
     ("ECDICT SQLite lookup", ECDICTLogicTests.testSQLiteLookupAndMarkdownAnswer),
     ("ECDICT CSV lookup", ECDICTLogicTests.testCSVLookup),
     ("ECDICT lookup key normalization", ECDICTLogicTests.testLookupKeyNormalization),

@@ -3,8 +3,17 @@ import Cocoa
 extension ReadingNotePanelController {
     func save() {
         editorModel.text = markdownFromEditor()
-        note = editorModel.commitEdits()
-        onSave(note)
+        onSave(editorModel.commitEdits())
+    }
+
+    /// Applies a favourite change made outside this panel. Routed through here
+    /// rather than written onto the controller so the editor's own note is the
+    /// one that changes — and so the save carries the editor's live text instead
+    /// of the list's stale copy.
+    func setFavorite(_ isFavorite: Bool) {
+        editorModel.setFavorite(isFavorite)
+        save()
+        refreshStatusLabel()
     }
 
     func commitEditorChange() {
@@ -90,9 +99,7 @@ extension ReadingNotePanelController {
     }
 
     @objc func toggleFavoriteTapped(_ sender: NSMenuItem) {
-        note = editorModel.toggleFavorite()
-        save()
-        refreshStatusLabel()
+        setFavorite(!note.isFavorite)
     }
 
     @objc func templateMenuItemTapped(_ sender: NSMenuItem) {

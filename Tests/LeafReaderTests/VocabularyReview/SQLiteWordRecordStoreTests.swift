@@ -89,7 +89,17 @@ struct SQLiteWordRecordStoreTestRunner {
 
         let defaultsSuite = "LeafVocabularyTests.PDFLocation.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: defaultsSuite)!
-        defer { defaults.removePersistentDomain(forName: defaultsSuite) }
+        // This file builds as its own binary and cannot see the shared helper in
+        // `Support/LogicTests.swift`, so the same cleanup is spelled out here:
+        // removing the domain leaves an empty plist behind unless the file goes
+        // too.
+        defer {
+            defaults.removePersistentDomain(forName: defaultsSuite)
+            let plist = FileManager.default
+                .homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/Preferences/\(defaultsSuite).plist")
+            try? FileManager.default.removeItem(at: plist)
+        }
         let locationStore = PDFWordRecordStore(fileMD5: documentID, defaults: defaults)
         let sameLocation = CGRect(x: 10.2, y: 20.2, width: 30.2, height: 12.2)
         assert(
