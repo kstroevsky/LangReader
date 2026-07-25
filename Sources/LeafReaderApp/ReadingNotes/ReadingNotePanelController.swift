@@ -31,7 +31,12 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
     var aiActionButtons: [NSButton] {
         [explainButton, translateButton, summarizeButton, polishButton, difficultSentenceButton, askButton]
     }
-    let editorState = ReadingNoteEditorState()
+    /// Everything about the note that is not the text view itself.
+    let editorModel: ReadingNoteEditorModel
+    /// The two handles that cannot leave AppKit: a key monitor and the
+    /// auto-save timer.
+    var askInputKeyMonitor: Any?
+    let autoSaveTask = DebouncedTask(delay: 0.8)
     weak var scrollView: NSScrollView?
     var isAskInputVisible: Bool {
         !askInputContainer.isHidden
@@ -56,6 +61,7 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
         onModelSettingsRequired: @escaping () -> Void = {}
     ) {
         self.note = note
+        self.editorModel = ReadingNoteEditorModel(note: note)
         self.onSave = onSave
         self.onClose = onClose
         self.onShowNotes = onShowNotes
@@ -95,7 +101,7 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
     }
 
     deinit {
-        if let askInputKeyMonitor = editorState.askInputKeyMonitor {
+        if let askInputKeyMonitor {
             NSEvent.removeMonitor(askInputKeyMonitor)
         }
         NotificationCenter.default.removeObserver(self)
@@ -115,14 +121,14 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
     }
 
     func windowWillClose(_ notification: Notification) {
-        editorState.isClosing = true
-        editorState.cancelAIRequests()
+        editorModel.isClosing = true
+        editorModel.cancelAIRequests()
         aiRunner.cancel()
         if let window {
             window.parent?.removeChildWindow(window)
         }
-        editorState.cancelAutoSave()
-        if editorState.savesOnClose {
+        autoSaveTask.cancel()
+        if editorModel.savesOnClose {
             save()
         }
         onClose(note.id)
@@ -139,8 +145,8 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
     }
 
     func closeWithoutSaving() {
-        editorState.cancelAutoSave()
-        editorState.savesOnClose = false
+        autoSaveTask.cancel()
+        editorModel.savesOnClose = false
         close()
     }
 

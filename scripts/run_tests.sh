@@ -171,6 +171,7 @@ LOGIC_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/DocumentReading/DocumentImportDecisionLogicTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/DocumentSessionLogicTests.swift"
   "$TEST_SOURCE_ROOT/ReadingNotes/ReadingNoteLogicTests.swift"
+  "$TEST_SOURCE_ROOT/ReadingNotes/ReadingNoteEditorModelTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderShelfLogicTests.swift"
   "$TEST_SOURCE_ROOT/App/ShelfCardPresenterTests.swift"
   "$TEST_SOURCE_ROOT/VocabularyReview/VocabularyLibraryFilterTests.swift"

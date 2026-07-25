@@ -91,7 +91,8 @@ extension ReadingNotePanelController {
 
     func applyTemplate(_ template: ReadingNoteTemplate) {
         guard AISettingsStore.hasAPIKeyForSelectedModel else {
-            statusLabel.stringValue = AppText.localized("请先配置 API Key", "Configure API Key first")
+            editorModel.statusAPIKeyRequired()
+            refreshStatusLabel()
             NSSound.beep()
             onModelSettingsRequired()
             return

@@ -710,20 +710,6 @@ enum ReadingNoteLogicTests {
         try expect(FileManager.default.fileExists(atPath: importedURL.path), "imported image file should exist")
     }
 
-    static func testReadingNoteEditorStateRejectsStaleAIResults() throws {
-        let state = ReadingNoteEditorState()
-        let first = state.beginAIRequest()
-        let second = state.beginAIRequest()
-        try expect(!state.canApplyAIResult(first), "starting a newer AI request should stale the older request")
-        try expect(state.canApplyAIResult(second), "latest AI request should be applicable")
-        state.finishAIRequest(second)
-        try expect(!state.canApplyAIResult(second), "finished AI request should no longer be applicable")
-
-        let closing = state.beginAIRequest()
-        state.isClosing = true
-        try expect(!state.canApplyAIResult(closing), "closing note panel should reject pending AI results")
-    }
-
     static func testReadingNoteAIInsertionModePlaceholderFlag() throws {
         try expect(ReadingNoteAIInsertionMode.replacePlaceholder(title: "解析").usesPlaceholder, "placeholder insertion should mark placeholder usage")
         try expect(!ReadingNoteAIInsertionMode.replaceSlashTrigger.usesPlaceholder, "slash insertion should not mark placeholder usage")

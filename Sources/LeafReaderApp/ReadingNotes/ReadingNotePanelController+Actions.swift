@@ -2,8 +2,8 @@ import Cocoa
 
 extension ReadingNotePanelController {
     func save() {
-        note.markdown = markdownFromEditor()
-        note.updatedAt = Date()
+        editorModel.text = markdownFromEditor()
+        note = editorModel.commitEdits()
         onSave(note)
     }
 
@@ -18,37 +18,31 @@ extension ReadingNotePanelController {
     }
 
     @objc func saveTapped(_ sender: NSButton) {
-        editorState.cancelAutoSave()
+        autoSaveTask.cancel()
         save()
-        statusLabel.stringValue = AppText.localized("已保存", "Saved")
+        editorModel.statusSaved()
+        refreshStatusLabel()
     }
 
     func updateWordCount() {
-        let count = textView.string.trimmingCharacters(in: .whitespacesAndNewlines).count
-        wordCountLabel.stringValue = AppText.localized("\(count) 字", "\(count) chars")
+        editorModel.text = textView.string
+        wordCountLabel.stringValue = editorModel.wordCountText
     }
 
-    func noteLocationText() -> String {
-        if let first = note.locator.pdfFragments?.first {
-            return AppText.localized("Page \(first.pageIndex + 1)", "Page \(first.pageIndex + 1)")
-        }
-        let percent = Int((note.locator.webAnchor?.scrollProgress ?? 0) * 100)
-        return AppText.localized("网页位置 \(percent)%", "Web \(percent)%")
+    /// Mirrors the model's status line into the AppKit label. The text view and
+    /// its chrome are still AppKit, so the model is rendered rather than bound.
+    func refreshStatusLabel() {
+        statusLabel.stringValue = editorModel.statusMessage
     }
 
-    func createdAtText() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MM/dd HH:mm"
-        return formatter.string(from: note.createdAt)
-    }
+    func noteLocationText() -> String { editorModel.locationText }
+
+    func createdAtText() -> String { editorModel.createdAtText }
 
     func scheduleAutoSave() {
-        editorState.cancelAutoSave()
-        let workItem = DispatchWorkItem { [weak self] in
+        autoSaveTask.schedule { [weak self] in
             self?.save()
         }
-        editorState.autoSaveWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: workItem)
     }
 
     @objc func showNotesTapped(_ sender: NSButton) {
@@ -91,15 +85,14 @@ extension ReadingNotePanelController {
         save()
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(note.markdown, forType: .string)
-        statusLabel.stringValue = AppText.localized("已复制 Markdown", "Markdown copied")
+        editorModel.statusMarkdownCopied()
+        refreshStatusLabel()
     }
 
     @objc func toggleFavoriteTapped(_ sender: NSMenuItem) {
-        note.isFavorite.toggle()
+        note = editorModel.toggleFavorite()
         save()
-        statusLabel.stringValue = note.isFavorite
-            ? AppText.localized("已收藏", "Favorited")
-            : AppText.localized("已取消收藏", "Favorite removed")
+        refreshStatusLabel()
     }
 
     @objc func templateMenuItemTapped(_ sender: NSMenuItem) {
@@ -114,7 +107,7 @@ extension ReadingNotePanelController {
 
     private func closeAfterExplicitSave() {
         save()
-        editorState.savesOnClose = false
+        editorModel.savesOnClose = false
         close()
     }
 
