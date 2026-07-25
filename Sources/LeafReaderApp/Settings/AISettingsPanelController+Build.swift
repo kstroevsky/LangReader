@@ -3,14 +3,6 @@ import Cocoa
 extension AISettingsPanelController {
     func show(attachedTo window: NSWindow, initialTab: SettingsTab = .general) {
         parentWindow = window
-        let selectedModel = AISettingsStore.selectedModel
-        let selectedEmbeddingEndpoint = AISettingsStore.selectedEmbeddingEndpointOption
-        currentEmbeddingOptionID = selectedEmbeddingEndpoint.id
-        pendingEmbeddingKeys[selectedEmbeddingEndpoint.id] = AISettingsStore.embeddingAPIKeyMigratingLegacyIfNeeded(for: selectedEmbeddingEndpoint.id)
-        if selectedEmbeddingEndpoint.id == AISettingsStore.customEmbeddingEndpointID {
-            lastCustomEmbeddingEndpoint = selectedEmbeddingEndpoint.endpoint
-            lastCustomEmbeddingModel = AISettingsStore.embeddingModelName
-        }
         let settingsFontSize: CGFloat = 14
         let theme = ReaderTheme.selected
         let isDark = theme == .dark
@@ -105,48 +97,6 @@ extension AISettingsPanelController {
         speechPage.isHidden = true
         cachePage.isHidden = true
 
-        let modelLabel = label(AppText.model, size: settingsFontSize, weight: .semibold, color: primaryText)
-        let modelHelpLabel = label(AppText.modelHelp, size: settingsFontSize, color: secondaryText)
-        modelHelpLabel.isHidden = true
-        let modelPopup = popup(
-            items: AISettingsStore.models.map { ($0.displayName, $0.id) },
-            selected: selectedModel.id,
-            fontSize: settingsFontSize
-        )
-
-        let customEndpointLabel = label(AppText.localized("自定义 / Azure URL", "Custom / Azure URL"), size: settingsFontSize, weight: .semibold, color: primaryText)
-        let customEndpointField = inputField(AISettingsStore.customEndpointString, placeholder: "https://resource.openai.azure.com/openai/deployments/deployment/chat/completions?api-version=2024-10-21", fontSize: settingsFontSize, textColor: primaryText, backgroundColor: fieldBackground())
-        let customModelLabel = label(AppText.localized("模型 ID / Azure 部署名", "Model ID / Azure Deployment"), size: settingsFontSize, weight: .semibold, color: primaryText)
-        let initialModelFieldValue: String
-        if selectedModel.id == AISettingsStore.ollamaModelID {
-            initialModelFieldValue = AISettingsStore.ollamaModelName
-        } else if selectedModel.id == AISettingsStore.localOpenAIModelID {
-            initialModelFieldValue = AISettingsStore.localOpenAIModelName
-        } else {
-            initialModelFieldValue = AISettingsStore.customModelName
-        }
-        let customModelField = inputField(initialModelFieldValue, placeholder: "gpt-4o-mini", fontSize: settingsFontSize, textColor: primaryText, backgroundColor: fieldBackground())
-        let customModelContainer = settingsCard()
-
-        let keyLabel = label("API Key", size: settingsFontSize, weight: .semibold, color: primaryText)
-        let keyHelpLabel = label(AppText.keyHelp, size: settingsFontSize, color: secondaryText)
-        keyHelpLabel.isHidden = true
-        let keyField = APIKeySecureTextField(string: AISettingsStore.apiKey(for: selectedModel))
-        configureKeyField(keyField, placeholder: AppText.apiKeyPlaceholder, fontSize: settingsFontSize, textColor: primaryText, backgroundColor: fieldBackground())
-
-        let embeddingSection = makeEmbeddingSection(
-            selectedEndpoint: selectedEmbeddingEndpoint,
-            settingsFontSize: settingsFontSize,
-            primaryText: primaryText,
-            theme: theme
-        )
-        let embeddingProviderPopup = embeddingSection.providerPopup
-        let embeddingEndpointContainer = embeddingSection.endpointContainer
-        let embeddingEndpointLabel = embeddingSection.endpointLabel
-        let embeddingEndpointField = embeddingSection.endpointField
-        let embeddingModelField = embeddingSection.modelField
-        let embeddingKeyField = embeddingSection.keyField
-        let autoEmbeddingIndexCheckbox = embeddingSection.autoIndexCheckbox
         let speechSection = makeSpeechSection(
             settingsFontSize: settingsFontSize,
             primaryText: primaryText,
@@ -155,9 +105,6 @@ extension AISettingsPanelController {
         let speechRuntimePopup = speechSection.runtimePopup
         let speechVoicePopup = speechSection.voicePopup
         let speechSpeedPopup = speechSection.speedPopup
-
-        let testChatButton = settingsActionButton(title: AppText.localized("测试模型连接", "Test Chat"), target: self, action: #selector(testChatConnection(_:)))
-        testChatButton.font = AppFont.semibold(ofSize: settingsFontSize)
 
         let cacheSection = makeCacheSection(
             settingsFontSize: settingsFontSize,
@@ -171,26 +118,14 @@ extension AISettingsPanelController {
         let saveButton = settingsActionButton(title: AppText.confirm, target: self, action: #selector(save(_:)), isPrimary: true)
         saveButton.keyEquivalent = "\r"
 
-        modelPopup.target = self
-        modelPopup.action = #selector(modelChanged(_:))
-        modelPopup.identifier = Identifiers.modelPopup
-        keyField.identifier = Identifiers.keyField
-
         for view in [titleIcon, titleLabel, closeButton, sidebarControl, scrollView, cancelButton, saveButton] {
             content.addSubview(view)
         }
-        for view in [customEndpointLabel, customEndpointField, customModelLabel, customModelField] {
-            customModelContainer.addSubview(view)
-        }
-        // The General page is SwiftUI, hosted inside the existing panel so the
-        // tabs, Save and Cancel keep working unchanged.
+        // The General and Model pages are SwiftUI, hosted inside the existing
+        // panel so the tabs, Save and Cancel keep working unchanged.
         installGeneralSettingsPage(in: basicPage)
-        for view in [modelLabel, modelPopup, modelHelpLabel, customModelContainer, keyLabel, keyField, keyHelpLabel, testChatButton] {
-            modelPage.addSubview(view)
-        }
-        for view in embeddingSection.pageViews {
-            embeddingPage.addSubview(view)
-        }
+        installModelSettingsPage(in: modelPage)
+        installEmbeddingSettingsPage(in: embeddingPage)
         for view in speechSection.pageViews {
             speechPage.addSubview(view)
         }
@@ -198,35 +133,10 @@ extension AISettingsPanelController {
             cachePage.addSubview(view)
         }
 
-        let keyTopWithCustom = keyLabel.topAnchor.constraint(equalTo: customModelContainer.bottomAnchor, constant: 22)
-        let keyTopWithoutCustom = keyLabel.topAnchor.constraint(equalTo: modelPopup.bottomAnchor, constant: 34)
-        let customModelContainerHeight = customModelContainer.heightAnchor.constraint(equalToConstant: 116)
-        let customModelTopToEndpoint = customModelLabel.topAnchor.constraint(equalTo: customEndpointLabel.bottomAnchor, constant: 22)
-        let customModelTopToContainer = customModelLabel.topAnchor.constraint(equalTo: customModelContainer.topAnchor, constant: 14)
-        let customModelCenterYToContainer = customModelLabel.centerYAnchor.constraint(equalTo: customModelContainer.centerYAnchor)
-        customModelTopToContainer.isActive = false
-        customModelCenterYToContainer.isActive = false
         let labelColumnWidth = layout.labelColumnWidth
         let fieldWidth = layout.fieldWidth
         let formWidth = layout.formWidth
         let controlHeight = layout.controlHeight
-        let inputHeight = layout.inputHeight
-        let embeddingLayout = embeddingConstraints(
-            for: embeddingSection,
-            page: embeddingPage,
-            labelColumnWidth: labelColumnWidth,
-            fieldWidth: fieldWidth,
-            inputHeight: inputHeight,
-            controlHeight: controlHeight
-        )
-        let embeddingModelTopWithCustomEndpoint = embeddingLayout.modelTopWithCustomEndpoint
-        let embeddingModelTopWithoutCustomEndpoint = embeddingLayout.modelTopWithoutCustomEndpoint
-        keyTopWithCustomConstraint = keyTopWithCustom
-        keyTopWithoutCustomConstraint = keyTopWithoutCustom
-        embeddingModelTopWithCustomEndpointConstraint = embeddingModelTopWithCustomEndpoint
-        embeddingModelTopWithoutCustomEndpointConstraint = embeddingModelTopWithoutCustomEndpoint
-
-        NSLayoutConstraint.activate(embeddingLayout.constraints)
         NSLayoutConstraint.activate(speechConstraints(
             for: speechSection,
             page: speechPage,
@@ -288,55 +198,9 @@ extension AISettingsPanelController {
             cachePage.trailingAnchor.constraint(equalTo: formContent.trailingAnchor),
             cachePage.bottomAnchor.constraint(equalTo: formContent.bottomAnchor),
 
-            // The General page is SwiftUI now; its hosting view sizes the page,
-            // so the old per-control constraints are gone with the controls.
-
-            modelLabel.topAnchor.constraint(equalTo: modelPage.topAnchor, constant: 4),
-            modelLabel.leadingAnchor.constraint(equalTo: modelPage.leadingAnchor),
-            modelLabel.widthAnchor.constraint(equalToConstant: labelColumnWidth),
-            modelPopup.topAnchor.constraint(equalTo: modelPage.topAnchor, constant: 4),
-            modelPopup.leadingAnchor.constraint(equalTo: modelPage.leadingAnchor, constant: labelColumnWidth),
-            modelPopup.widthAnchor.constraint(equalToConstant: fieldWidth),
-            modelPopup.heightAnchor.constraint(equalToConstant: controlHeight),
-            modelHelpLabel.topAnchor.constraint(equalTo: modelPopup.bottomAnchor, constant: 4),
-            modelHelpLabel.leadingAnchor.constraint(equalTo: modelPopup.leadingAnchor),
-            modelHelpLabel.widthAnchor.constraint(equalToConstant: fieldWidth),
-
-            customModelContainer.topAnchor.constraint(equalTo: modelPopup.bottomAnchor, constant: 14),
-            customModelContainer.leadingAnchor.constraint(equalTo: modelPopup.leadingAnchor),
-            customModelContainer.widthAnchor.constraint(equalToConstant: fieldWidth),
-            customModelContainerHeight,
-            customEndpointLabel.topAnchor.constraint(equalTo: customModelContainer.topAnchor, constant: 14),
-            customEndpointLabel.leadingAnchor.constraint(equalTo: customModelContainer.leadingAnchor, constant: 14),
-            customEndpointLabel.widthAnchor.constraint(equalToConstant: 180),
-            customEndpointField.centerYAnchor.constraint(equalTo: customEndpointLabel.centerYAnchor),
-            customEndpointField.leadingAnchor.constraint(equalTo: customModelContainer.leadingAnchor, constant: 204),
-            customEndpointField.trailingAnchor.constraint(equalTo: customModelContainer.trailingAnchor, constant: -14),
-            customEndpointField.heightAnchor.constraint(equalToConstant: inputHeight),
-            customModelTopToEndpoint,
-            customModelLabel.leadingAnchor.constraint(equalTo: customEndpointLabel.leadingAnchor),
-            customModelLabel.widthAnchor.constraint(equalToConstant: 180),
-            customModelField.centerYAnchor.constraint(equalTo: customModelLabel.centerYAnchor),
-            customModelField.leadingAnchor.constraint(equalTo: customEndpointField.leadingAnchor),
-            customModelField.trailingAnchor.constraint(equalTo: customEndpointField.trailingAnchor),
-            customModelField.heightAnchor.constraint(equalToConstant: inputHeight),
-
-            keyTopWithCustom,
-            keyLabel.leadingAnchor.constraint(equalTo: modelPage.leadingAnchor),
-            keyLabel.widthAnchor.constraint(equalToConstant: labelColumnWidth),
-            keyField.topAnchor.constraint(equalTo: keyLabel.topAnchor),
-            keyField.leadingAnchor.constraint(equalTo: modelPage.leadingAnchor, constant: labelColumnWidth),
-            keyField.widthAnchor.constraint(equalToConstant: fieldWidth),
-            keyField.heightAnchor.constraint(equalToConstant: inputHeight),
-            keyHelpLabel.topAnchor.constraint(equalTo: keyField.bottomAnchor, constant: 4),
-            keyHelpLabel.leadingAnchor.constraint(equalTo: keyField.leadingAnchor),
-            keyHelpLabel.widthAnchor.constraint(equalToConstant: fieldWidth),
-
-            testChatButton.topAnchor.constraint(equalTo: keyField.bottomAnchor, constant: 18),
-            testChatButton.leadingAnchor.constraint(equalTo: keyField.leadingAnchor),
-            testChatButton.widthAnchor.constraint(equalToConstant: 136),
-            testChatButton.heightAnchor.constraint(equalToConstant: controlHeight),
-            testChatButton.bottomAnchor.constraint(lessThanOrEqualTo: modelPage.bottomAnchor, constant: -8),
+            // The General and Model pages are SwiftUI now; their hosting views
+            // size the pages, so the old per-control constraints are gone with
+            // the controls.
 
             saveButton.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -44),
             saveButton.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -36),
@@ -357,25 +221,6 @@ extension AISettingsPanelController {
         self.embeddingPage = embeddingPage
         self.speechPage = speechPage
         self.cachePage = cachePage
-        self.modelPopup = modelPopup
-        self.secureKeyField = keyField
-        self.customModelContainer = customModelContainer
-        self.customEndpointLabel = customEndpointLabel
-        self.customEndpointField = customEndpointField
-        self.customModelLabel = customModelLabel
-        self.customModelField = customModelField
-        self.customModelContainerHeightConstraint = customModelContainerHeight
-        self.customModelLabelTopToEndpointConstraint = customModelTopToEndpoint
-        self.customModelLabelTopToContainerConstraint = customModelTopToContainer
-        self.customModelLabelCenterYToContainerConstraint = customModelCenterYToContainer
-        self.secureKeyField?.isEnabled = selectedModel.acceptsAPIKey
-        self.embeddingProviderPopup = embeddingProviderPopup
-        self.embeddingEndpointContainer = embeddingEndpointContainer
-        self.embeddingEndpointLabel = embeddingEndpointLabel
-        self.embeddingEndpointField = embeddingEndpointField
-        self.embeddingModelField = embeddingModelField
-        self.embeddingKeyField = embeddingKeyField
-        self.autoEmbeddingIndexCheckbox = autoEmbeddingIndexCheckbox
         self.speechRuntimePopup = speechRuntimePopup
         self.speechVoicePopup = speechVoicePopup
         self.speechSpeedPopup = speechSpeedPopup
@@ -383,8 +228,6 @@ extension AISettingsPanelController {
         self.cacheStatusLabel = cacheStatusLabel
         self.currentIndexStatusLabel = currentIndexStatusLabel
         refreshSpeechRuntimeStatus()
-        updateCustomModelFields(for: selectedModel.id)
-        updateEmbeddingEndpointFields(for: selectedEmbeddingEndpoint.id, fillDefaults: false)
         settingsTabChanged(index: initialTab.rawValue)
 
         installAppActivationObserver()
@@ -393,13 +236,6 @@ extension AISettingsPanelController {
         showPanel(panel, attachedTo: window)
         DispatchQueue.main.async {
             panel.makeKey()
-            if selectedModel.id == AISettingsStore.customModelID {
-                panel.makeFirstResponder(customEndpointField)
-            } else if selectedModel.id == AISettingsStore.ollamaModelID {
-                panel.makeFirstResponder(customModelField)
-            } else {
-                panel.makeFirstResponder(keyField)
-            }
         }
     }
 }

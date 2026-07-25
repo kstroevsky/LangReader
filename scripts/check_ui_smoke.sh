@@ -380,6 +380,30 @@ expect_identifier "settings.general.language"        "$SETTINGS_IDS" "language p
 expect_identifier "settings.general.theme"           "$SETTINGS_IDS" "theme picker"
 expect_identifier "settings.general.speakWord"       "$SETTINGS_IDS" "auto-play toggle"
 expect_identifier "settings.general.saveConversation" "$SETTINGS_IDS" "save-conversation toggle"
+
+echo "model settings (SwiftUI)"
+activate_app
+osascript -e "with timeout of 30 seconds
+tell application \"System Events\" to tell process \"$APP_NAME\" to click menu item \"Model\" of menu 1 of menu bar item \"Settings\" of menu bar 1
+end timeout" >/dev/null 2>&1
+sleep 3
+MODEL_IDS="$(panel_identifiers)"
+expect_identifier "settings.model.picker"   "$MODEL_IDS" "model picker"
+expect_identifier "settings.model.apiKey"   "$MODEL_IDS" "API key field"
+expect_identifier "settings.model.testChat" "$MODEL_IDS" "test chat button"
+
+
+echo "AI analysis settings (SwiftUI)"
+activate_app
+osascript -e "with timeout of 30 seconds
+tell application \"System Events\" to tell process \"$APP_NAME\" to click menu item \"AI Analysis\" of menu 1 of menu bar item \"Settings\" of menu bar 1
+end timeout" >/dev/null 2>&1
+sleep 3
+EMBED_IDS="$(panel_identifiers)"
+expect_identifier "settings.embedding.picker"    "$EMBED_IDS" "embedding provider picker"
+expect_identifier "settings.embedding.apiKey"    "$EMBED_IDS" "embedding key field"
+expect_identifier "settings.embedding.autoIndex" "$EMBED_IDS" "auto-index toggle"
+
 # Cancel, never Save: the smoke test must not write the user's settings.
 [[ "$(click_panel_button_titled "Cancel")" == *CLICKED* ]] && pass "settings cancels" || fail "settings would not cancel"
 sleep 2

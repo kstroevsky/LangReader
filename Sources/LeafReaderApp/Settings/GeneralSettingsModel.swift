@@ -15,7 +15,7 @@ import Observation
 /// (`checkbox?.state == .on`), so if the controls were ever absent it would read
 /// `nil == .on` — `false` — and silently switch both settings off.
 @Observable
-final class GeneralSettingsModel {
+final class GeneralSettingsModel: SettingsPage {
     /// Applies a theme or brightness change to the rest of the app.
     private let onAppearanceChanged: () -> Void
 
@@ -60,12 +60,7 @@ final class GeneralSettingsModel {
     }
 
     /// Persists the pending settings. Called from the panel's Save.
-    ///
-    /// - Returns: whether the display language changed, since that requires the
-    ///   whole interface to be relabelled.
-    @discardableResult
-    func commit() -> Bool {
-        let languageChanged = language != AppText.selectedLanguage
+    func commit() {
         AppText.selectedLanguage = language
         AISettingsStore.saveSpeakSelectedWordEnabled(speaksSelectedWord)
         AISettingsStore.saveAIConversationEnabled(savesAIConversation)
@@ -73,7 +68,6 @@ final class GeneralSettingsModel {
         // keeps Save meaning "everything on this page is now persisted".
         ReaderTheme.selected = theme
         ReaderTheme.pdfDimmingStrength = PDFBrightnessPolicy.dimmingStrength(forSliderValue: brightness)
-        return languageChanged
     }
 
 }

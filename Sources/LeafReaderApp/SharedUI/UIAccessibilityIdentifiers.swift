@@ -28,6 +28,23 @@ enum GeneralSettingsAccessibility {
     static let saveConversationToggle = "settings.general.saveConversation"
 }
 
+enum ModelSettingsAccessibility {
+    static let modelPicker = "settings.model.picker"
+    static let endpointField = "settings.model.endpoint"
+    static let modelNameField = "settings.model.name"
+    static let apiKeyField = "settings.model.apiKey"
+    static let testButton = "settings.model.testChat"
+}
+
+enum EmbeddingSettingsAccessibility {
+    static let providerPicker = "settings.embedding.picker"
+    static let endpointField = "settings.embedding.endpoint"
+    static let modelNameField = "settings.embedding.model"
+    static let apiKeyField = "settings.embedding.apiKey"
+    static let testButton = "settings.embedding.testConnection"
+    static let autoIndexToggle = "settings.embedding.autoIndex"
+}
+
 enum ShelfAccessibility {
     static let addButton = "shelf.add"
     static let clearButton = "shelf.clear"

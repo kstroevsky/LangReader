@@ -11,12 +11,6 @@ final class AISettingsPanelController {
 
     enum Identifiers {
         static let saveButton = NSUserInterfaceItemIdentifier("saveAISettings")
-        static let modelPopup = NSUserInterfaceItemIdentifier("modelPopup")
-        static let keyField = NSUserInterfaceItemIdentifier("keyField")
-        static let embeddingProviderPopup = NSUserInterfaceItemIdentifier("embeddingProviderPopup")
-        static let embeddingEndpointField = NSUserInterfaceItemIdentifier("embeddingEndpointField")
-        static let embeddingModelField = NSUserInterfaceItemIdentifier("embeddingModelField")
-        static let embeddingKeyField = NSUserInterfaceItemIdentifier("embeddingKeyField")
         static let settingsTitleIcon = NSUserInterfaceItemIdentifier("settingsTitleIcon")
         static let settingsFormSurface = NSUserInterfaceItemIdentifier("settingsFormSurface")
         static let settingsCard = NSUserInterfaceItemIdentifier("settingsCard")
@@ -26,6 +20,10 @@ final class AISettingsPanelController {
     /// State behind the SwiftUI General page, and the source of truth for
     /// saving it. Created when the panel is built.
     var generalSettings: GeneralSettingsModel?
+    /// Same, for the SwiftUI Model page.
+    var modelSettings: ModelSettingsModel?
+    /// Same, for the SwiftUI AI Analysis page.
+    var embeddingSettings: EmbeddingSettingsModel?
     var onSaved: (() -> Void)?
     var onAppearanceChanged: (() -> Void)?
     var currentVectorIndexStatus: (() -> String)?
@@ -47,24 +45,6 @@ final class AISettingsPanelController {
     weak var embeddingPage: NSView?
     weak var speechPage: NSView?
     weak var cachePage: NSView?
-    weak var modelPopup: NSPopUpButton?
-    weak var secureKeyField: NSSecureTextField?
-    weak var customModelContainer: NSView?
-    weak var customEndpointLabel: NSTextField?
-    weak var customEndpointField: NSTextField?
-    weak var customModelLabel: NSTextField?
-    weak var customModelField: NSTextField?
-    var customModelContainerHeightConstraint: NSLayoutConstraint?
-    var customModelLabelTopToEndpointConstraint: NSLayoutConstraint?
-    var customModelLabelTopToContainerConstraint: NSLayoutConstraint?
-    var customModelLabelCenterYToContainerConstraint: NSLayoutConstraint?
-    weak var embeddingProviderPopup: NSPopUpButton?
-    weak var embeddingEndpointContainer: NSView?
-    weak var embeddingEndpointLabel: NSTextField?
-    weak var embeddingEndpointField: NSTextField?
-    weak var embeddingModelField: NSTextField?
-    weak var embeddingKeyField: NSSecureTextField?
-    weak var autoEmbeddingIndexCheckbox: NSButton?
     weak var speechRuntimePopup: NSPopUpButton?
     weak var speechVoicePopup: NSPopUpButton?
     weak var speechSpeedPopup: NSPopUpButton?
@@ -74,17 +54,9 @@ final class AISettingsPanelController {
     var cacheRefreshTimer: Timer?
     var speechDownloadRefreshTimer: Timer?
     var speechVoicePreviewWorkItem: DispatchWorkItem?
-    var keyTopWithCustomConstraint: NSLayoutConstraint?
-    var keyTopWithoutCustomConstraint: NSLayoutConstraint?
-    var embeddingModelTopWithCustomEndpointConstraint: NSLayoutConstraint?
-    var embeddingModelTopWithoutCustomEndpointConstraint: NSLayoutConstraint?
     var isClosing = false
     var shouldNotifySavedAfterClose = false
     var appActivationObserver: NSObjectProtocol?
-    var lastCustomEmbeddingEndpoint: String = ""
-    var lastCustomEmbeddingModel: String = ""
-    var currentEmbeddingOptionID: String = ""
-    var pendingEmbeddingKeys: [String: String] = [:]
 
     deinit {
         cacheRefreshTimer?.invalidate()

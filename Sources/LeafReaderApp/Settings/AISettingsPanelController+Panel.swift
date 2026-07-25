@@ -35,39 +35,16 @@ extension AISettingsPanelController {
     }
 
     func saveCurrentSettings(in panel: NSWindow) -> Bool {
-        guard let modelPopup, let keyField = secureKeyField else { return false }
-        let modelID = modelPopup.selectedItem?.representedObject as? String ?? AISettingsStore.selectedModel.id
-        let customEndpoint = customEndpointField?.stringValue ?? ""
-        let customModelName = customModelField?.stringValue ?? ""
-        if modelID == AISettingsStore.customModelID, let error = AISettingsStore.customValidationError(endpoint: customEndpoint, modelName: customModelName) {
-            showValidationAlert(message: error, in: panel)
-            return false
+        // Migrated pages own their own settings: validate them all before
+        // committing any, so a rejected page cannot leave a half-saved panel.
+        let pages = settingsPages
+        for page in pages {
+            if let error = page.validationError() {
+                showValidationAlert(message: error, in: panel)
+                return false
+            }
         }
-        if modelID == AISettingsStore.ollamaModelID, let error = AISettingsStore.ollamaValidationError(modelName: customModelName) {
-            showValidationAlert(message: error, in: panel)
-            return false
-        }
-        if modelID == AISettingsStore.localOpenAIModelID, let error = AISettingsStore.localOpenAIValidationError(endpoint: customEndpoint, modelName: customModelName) {
-            showValidationAlert(message: error, in: panel)
-            return false
-        }
-
-        // General page: the SwiftUI model owns these, so it persists them.
-        generalSettings?.commit()
-        AISettingsStore.save(
-            modelID: modelID,
-            apiKey: keyField.stringValue,
-            customEndpoint: customEndpoint,
-            customModelName: customModelName
-        )
-        let embeddingEndpoint = selectedEmbeddingEndpointForSave()?.endpoint ?? (embeddingEndpointField?.stringValue ?? "")
-        AISettingsStore.saveEmbedding(
-            endpoint: embeddingEndpoint,
-            modelName: embeddingModelField?.stringValue ?? "",
-            apiKey: embeddingKeyField?.stringValue ?? "",
-            optionID: embeddingProviderPopup?.selectedItem?.representedObject as? String
-        )
-        AISettingsStore.saveAutoEmbeddingIndexEnabled(autoEmbeddingIndexCheckbox?.state == .on)
+        pages.forEach { $0.commit() }
         saveSelectedSpeechSettings(
             runtimeID: speechRuntimePopup?.selectedItem?.representedObject as? String,
             voiceID: speechVoicePopup?.selectedItem?.representedObject as? String,
