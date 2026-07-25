@@ -45,11 +45,6 @@ extension AISettingsPanelController {
             }
         }
         pages.forEach { $0.commit() }
-        saveSelectedSpeechSettings(
-            runtimeID: speechRuntimePopup?.selectedItem?.representedObject as? String,
-            voiceID: speechVoicePopup?.selectedItem?.representedObject as? String,
-            speedID: speechSpeedPopup?.selectedItem?.representedObject as? String
-        )
         return true
     }
 
@@ -69,7 +64,7 @@ extension AISettingsPanelController {
         embeddingPage?.isHidden = index != 2
         speechPage?.isHidden = index != 3
         cachePage?.isHidden = index != 4
-        currentIndexStatusLabel?.stringValue = currentVectorIndexStatus?() ?? AppText.noPDF
+        cacheSettings?.refresh(currentBookStatus: currentVectorIndexStatus?() ?? AppText.noPDF)
         if index == 4 {
             refreshVectorCacheStatus()
         }

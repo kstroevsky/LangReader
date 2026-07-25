@@ -24,6 +24,22 @@ extension View {
     }
 }
 
+/// The explanatory line under a control. Every settings page has these and they
+/// should not drift apart in size or colour.
+struct SettingsFootnote: View {
+    let text: String
+
+    init(_ text: String) {
+        self.text = text
+    }
+
+    var body: some View {
+        Text(text)
+            .font(.callout)
+            .foregroundStyle(.secondary)
+    }
+}
+
 /// A labelled text field, the settings pages' most common row.
 struct SettingsTextRow: View {
     let label: String
@@ -45,6 +61,83 @@ struct SettingsTextRow: View {
             .labelsHidden()
             .disabled(!isEnabled)
             .accessibilityIdentifier(identifier)
+        }
+    }
+}
+
+/// One button in a `SettingsStatusRow`.
+struct SettingsAction: Identifiable {
+    enum Role {
+        case normal
+        /// Deletes something. Rendered in red, and expected to confirm first.
+        case destructive
+    }
+
+    /// Doubles as the accessibility identifier.
+    let id: String
+    let title: String
+    let symbol: String?
+    var role: Role = .normal
+    /// The AppKit rows gave each action its own colour; keeping it means the
+    /// page still reads at a glance rather than as a wall of identical buttons.
+    var tint: Color?
+    var isEnabled = true
+    let perform: () -> Void
+}
+
+/// A titled item with a status line, optional progress, and a row of actions.
+///
+/// The Cache and Read Aloud pages are both made of these — a cache with its size
+/// and a Clear button, a book's index with its progress and Build / Pause /
+/// Cancel, a speech runtime with its download state and Download / Delete. In
+/// AppKit each was hand-built with its own card, labels, buttons and
+/// constraints; they are the same row.
+struct SettingsStatusRow: View {
+    let title: String
+    let status: String
+    /// 0...1 while something is running, nil otherwise.
+    var progress: Double?
+    var actions: [SettingsAction] = []
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.headline)
+            SettingsFootnote(status)
+            if let progress {
+                ProgressView(value: progress)
+                    .progressViewStyle(.linear)
+            }
+            if !actions.isEmpty {
+                // Wraps rather than overflowing: the cache row has five.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) { buttons }
+                    VStack(alignment: .leading, spacing: 8) { buttons }
+                }
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    @ViewBuilder
+    private var buttons: some View {
+        ForEach(actions) { action in
+            Button(role: action.role == .destructive ? .destructive : nil) {
+                action.perform()
+            } label: {
+                // The glyph carries the colour and the title stays in the
+                // primary text colour, which is what the AppKit buttons did.
+                // `.tint()` alone does not colour a bordered button on macOS.
+                HStack(spacing: 5) {
+                    if let symbol = action.symbol {
+                        Image(systemName: symbol)
+                            .foregroundStyle(action.tint ?? .accentColor)
+                    }
+                    Text(action.title)
+                }
+            }
+            .disabled(!action.isEnabled)
+            .accessibilityIdentifier(action.id)
         }
     }
 }
@@ -159,9 +252,7 @@ struct AIServiceSection<Model: AIServiceSettings>: View {
                 isEnabled: model.acceptsAPIKey
             )
             if let note = model.apiKeyNote, !model.acceptsAPIKey {
-                Text(note)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                SettingsFootnote(note)
             }
 
             Button(model.testButtonTitle) {

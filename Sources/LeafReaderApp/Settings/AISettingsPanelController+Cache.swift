@@ -1,36 +1,33 @@
 import Cocoa
 
 extension AISettingsPanelController {
-    @objc func startCurrentVectorIndex(_ sender: NSButton) {
+    func startCurrentVectorIndex() {
         guard let panel, saveCurrentSettings(in: panel) else { return }
         onStartVectorIndex?()
         refreshCurrentVectorIndexStatus()
     }
 
-    @objc func toggleCurrentVectorIndex(_ sender: NSButton) {
+    func toggleCurrentVectorIndex() {
         onToggleVectorIndexPaused?()
         refreshCurrentVectorIndexStatus()
     }
 
-    @objc func cancelCurrentVectorIndex(_ sender: NSButton) {
+    func cancelCurrentVectorIndex() {
         onCancelVectorIndex?()
         refreshCurrentVectorIndexStatus()
     }
 
-    @objc func clearCurrentVectorIndex(_ sender: NSButton) {
+    func clearCurrentVectorIndex() {
         onClearCurrentVectorIndex?()
         refreshCurrentVectorIndexStatus()
         refreshVectorCacheStatus()
     }
 
-    @objc func clearCurrentWordRecords(_ sender: NSButton) {
-        onClearCurrentWordRecords?()
-    }
-
     func refreshCurrentVectorIndexStatus() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            self?.currentIndexStatusLabel?.stringValue = self?.currentVectorIndexStatus?() ?? AppText.noPDF
-            self?.refreshVectorCacheStatus()
+            guard let self else { return }
+            self.cacheSettings?.refresh(currentBookStatus: self.currentVectorIndexStatus?() ?? AppText.noPDF)
+            self.refreshVectorCacheStatus()
         }
     }
 
@@ -38,7 +35,7 @@ extension AISettingsPanelController {
         cacheRefreshTimer?.invalidate()
         cacheRefreshTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
             guard let self, self.panel?.isVisible == true else { return }
-            self.currentIndexStatusLabel?.stringValue = self.currentVectorIndexStatus?() ?? AppText.noPDF
+            self.cacheSettings?.refresh(currentBookStatus: self.currentVectorIndexStatus?() ?? AppText.noPDF)
             self.refreshVectorCacheStatus()
         }
     }
@@ -72,7 +69,7 @@ extension AISettingsPanelController {
         closePanel(notifySaved: false)
     }
 
-    @objc func clearVectorCache(_ sender: NSButton) {
+    func clearVectorCache() {
         let alert = NSAlert()
         alert.messageText = AppText.localized("清除全部 AI 分析缓存？", "Clear all AI analysis cache?")
         alert.informativeText = AppText.localized(
@@ -86,7 +83,7 @@ extension AISettingsPanelController {
         guard let panel else { return }
         alert.beginSheetModal(for: panel) { [weak self] response in
             guard response == .alertFirstButtonReturn else { return }
-            self?.cacheStatusLabel?.stringValue = AppText.localized("正在清除分析缓存...", "Clearing analysis cache...")
+            self?.cacheSettings?.refresh(cacheStatus: AppText.localized("正在清除分析缓存...", "Clearing analysis cache..."))
             self?.vectorCacheQueue.async { [weak self] in
                 PDFEmbeddingStore()?.deleteAll()
                 DispatchQueue.main.async {
@@ -101,7 +98,7 @@ extension AISettingsPanelController {
             let text = self?.vectorCacheStatusText() ?? ""
             DispatchQueue.main.async { [weak self] in
                 guard self?.panel?.isVisible == true else { return }
-                self?.cacheStatusLabel?.stringValue = text
+                self?.cacheSettings?.refresh(cacheStatus: text)
             }
         }
     }

@@ -23,7 +23,7 @@ extension AISettingsPanelController {
     /// without knowing what they are, so adding a page means adding it here and
     /// nowhere else.
     var settingsPages: [SettingsPage] {
-        let pages: [SettingsPage?] = [generalSettings, modelSettings, embeddingSettings]
+        let pages: [SettingsPage?] = [generalSettings, modelSettings, embeddingSettings, speechSettings]
         return pages.compactMap { $0 }
     }
 }

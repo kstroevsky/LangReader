@@ -29,10 +29,6 @@ extension AISettingsPanelController {
         if let popup = view as? ThemedSettingsPopUpButton {
             popup.theme = theme
             stylePopupForCurrentTheme(popup)
-        } else if let slider = view as? ThemedSettingsSlider {
-            slider.theme = theme
-        } else if let checkbox = view as? ThemedSettingsCheckbox {
-            checkbox.theme = theme
         } else if let imageView = view as? NSImageView {
             applySettingsImageTheme(imageView, theme: theme)
         } else if let progressIndicator = view as? NSProgressIndicator {
@@ -95,9 +91,7 @@ extension AISettingsPanelController {
     }
 
     private func applySettingsButtonTheme(_ button: NSButton, theme: ReaderTheme) {
-        if let checkbox = button as? ThemedSettingsCheckbox {
-            checkbox.theme = theme
-        } else if button.identifier == Identifiers.saveButton {
+        if button.identifier == Identifiers.saveButton {
             styleSettingsActionButton(
                 button,
                 backgroundColor: settingsPrimaryActionBackgroundColor(for: theme),

@@ -49,22 +49,6 @@ extension AISettingsPanelController {
         return view
     }
 
-    func inputField(_ text: String, placeholder: String, fontSize: CGFloat, textColor: NSColor, backgroundColor: NSColor) -> NSTextField {
-        let field = SettingsTextField(string: text)
-        field.placeholderString = placeholder
-        field.controlSize = .regular
-        field.font = AppFont.semibold(ofSize: fontSize)
-        field.isBordered = false
-        field.drawsBackground = false
-        field.isEditable = true
-        field.isSelectable = true
-        field.focusRingType = .none
-        field.textColor = textColor
-        applyThemedFieldChrome(to: field, backgroundColor: backgroundColor)
-        field.translatesAutoresizingMaskIntoConstraints = false
-        return field
-    }
-
     func configureKeyField(_ field: NSTextField, placeholder: String, fontSize: CGFloat, textColor: NSColor, backgroundColor: NSColor) {
         field.placeholderString = placeholder
         field.controlSize = .regular
@@ -78,36 +62,6 @@ extension AISettingsPanelController {
         field.textColor = textColor
         applyThemedFieldChrome(to: field, backgroundColor: backgroundColor)
         field.translatesAutoresizingMaskIntoConstraints = false
-    }
-
-    func popup(items: [(String, String)], selected: String, fontSize: CGFloat) -> NSPopUpButton {
-        let popup = ThemedSettingsPopUpButton(frame: .zero, pullsDown: false)
-        popup.controlSize = .large
-        popup.font = AppFont.semibold(ofSize: fontSize)
-        popup.isBordered = false
-        popup.translatesAutoresizingMaskIntoConstraints = false
-        for item in items {
-            popup.addItem(withTitle: item.0)
-            popup.lastItem?.representedObject = item.1
-            popup.lastItem?.isEnabled = true
-        }
-        popup.isEnabled = true
-        popup.menu?.autoenablesItems = false
-        if let index = items.firstIndex(where: { $0.1 == selected }) {
-            popup.selectItem(at: index)
-        }
-        stylePopupForCurrentTheme(popup)
-        return popup
-    }
-
-    func settingsCheckbox(title: String = "", isOn: Bool, theme: ReaderTheme, fontSize: CGFloat) -> ThemedSettingsCheckbox {
-        let checkbox = title.isEmpty ? ThemedSettingsCheckbox() : ThemedSettingsCheckbox(title: title)
-        checkbox.theme = theme
-        checkbox.font = AppFont.semibold(ofSize: fontSize)
-        checkbox.lineBreakMode = .byTruncatingTail
-        checkbox.state = isOn ? .on : .off
-        checkbox.translatesAutoresizingMaskIntoConstraints = false
-        return checkbox
     }
 
     func stylePopupForCurrentTheme(_ popup: NSPopUpButton) {
@@ -128,28 +82,6 @@ extension AISettingsPanelController {
         field.layer?.borderColor = settingsBorderColor(for: ReaderTheme.selected).cgColor
         field.layer?.cornerRadius = 8
         field.layer?.masksToBounds = true
-    }
-
-    func cacheActionButton(
-        title: String,
-        symbol: String,
-        tint: NSColor,
-        target: AnyObject,
-        action: Selector
-    ) -> NSButton {
-        let theme = ReaderTheme.selected
-        let button = ThemedSettingsActionButton(title: title, target: target, action: action)
-        button.leadingSymbolName = symbol
-        button.leadingSymbolBaseColor = tint
-        button.leadingSymbolColor = settingsActionIconColor(tint, for: theme)
-        styleSettingsActionButton(
-            button,
-            backgroundColor: settingsButtonBackgroundColor(for: theme),
-            titleColor: settingsPrimaryTextColor(for: theme),
-            borderColor: settingsBorderColor(for: theme)
-        )
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
     }
 
     func settingsActionIconColor(_ tint: NSColor, for theme: ReaderTheme) -> NSColor {
@@ -174,19 +106,6 @@ extension AISettingsPanelController {
         return button
     }
 
-    func speechDownloadProgressIndicator() -> NSProgressIndicator {
-        let indicator = NSProgressIndicator()
-        indicator.style = .bar
-        indicator.controlSize = .small
-        indicator.isIndeterminate = false
-        indicator.minValue = 0
-        indicator.maxValue = 1
-        indicator.doubleValue = 0
-        indicator.isHidden = true
-        indicator.translatesAutoresizingMaskIntoConstraints = false
-        return indicator
-    }
-
     func settingsCard() -> NSView {
         let view = NSView()
         view.identifier = Identifiers.settingsCard
@@ -198,16 +117,6 @@ extension AISettingsPanelController {
         view.layer?.cornerRadius = 10
         view.layer?.masksToBounds = true
         view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }
-
-    func settingsSpeechRowCard() -> NSView {
-        let view = settingsCard()
-        view.identifier = Identifiers.settingsSpeechRowCard
-        let theme = ReaderTheme.selected
-        view.layer?.backgroundColor = settingsSpeechRowBackgroundColor(for: theme).cgColor
-        view.layer?.cornerRadius = 7
-        view.layer?.borderWidth = 1
         return view
     }
 

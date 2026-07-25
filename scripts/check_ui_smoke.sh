@@ -404,6 +404,30 @@ expect_identifier "settings.embedding.picker"    "$EMBED_IDS" "embedding provide
 expect_identifier "settings.embedding.apiKey"    "$EMBED_IDS" "embedding key field"
 expect_identifier "settings.embedding.autoIndex" "$EMBED_IDS" "auto-index toggle"
 
+echo "cache settings (SwiftUI)"
+activate_app
+osascript -e "with timeout of 30 seconds
+tell application \"System Events\" to tell process \"$APP_NAME\" to click menu item \"Cache\" of menu 1 of menu bar item \"Settings\" of menu bar 1
+end timeout" >/dev/null 2>&1
+sleep 3
+CACHE_IDS="$(panel_identifiers)"
+# Assert only; these buttons delete the user's analysis data, so the smoke test
+# must never click them.
+expect_identifier "settings.cache.buildIndex"    "$CACHE_IDS" "build index button"
+expect_identifier "settings.cache.clearAllCache" "$CACHE_IDS" "clear all cache button"
+
+echo "read aloud settings (SwiftUI)"
+activate_app
+osascript -e "with timeout of 30 seconds
+tell application \"System Events\" to tell process \"$APP_NAME\" to click menu item \"Read Aloud\" of menu 1 of menu bar item \"Settings\" of menu bar 1
+end timeout" >/dev/null 2>&1
+sleep 3
+SPEECH_IDS="$(panel_identifiers)"
+expect_identifier "settings.speech.runtime"     "$SPEECH_IDS" "TTS model picker"
+expect_identifier "settings.speech.voice"       "$SPEECH_IDS" "voice picker"
+expect_identifier "settings.speech.speed"       "$SPEECH_IDS" "speed picker"
+expect_identifier "settings.speech.diagnostics" "$SPEECH_IDS" "diagnostics button"
+
 # Cancel, never Save: the smoke test must not write the user's settings.
 [[ "$(click_panel_button_titled "Cancel")" == *CLICKED* ]] && pass "settings cancels" || fail "settings would not cancel"
 sleep 2

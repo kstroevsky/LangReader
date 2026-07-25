@@ -97,23 +97,6 @@ extension AISettingsPanelController {
         speechPage.isHidden = true
         cachePage.isHidden = true
 
-        let speechSection = makeSpeechSection(
-            settingsFontSize: settingsFontSize,
-            primaryText: primaryText,
-            secondaryText: secondaryText
-        )
-        let speechRuntimePopup = speechSection.runtimePopup
-        let speechVoicePopup = speechSection.voicePopup
-        let speechSpeedPopup = speechSection.speedPopup
-
-        let cacheSection = makeCacheSection(
-            settingsFontSize: settingsFontSize,
-            primaryText: primaryText,
-            secondaryText: secondaryText
-        )
-        let cacheStatusLabel = cacheSection.cacheStatusLabel
-        let currentIndexStatusLabel = cacheSection.currentIndexStatusLabel
-
         let cancelButton = settingsActionButton(title: AppText.cancel, target: self, action: #selector(cancel(_:)))
         let saveButton = settingsActionButton(title: AppText.confirm, target: self, action: #selector(save(_:)), isPrimary: true)
         saveButton.keyEquivalent = "\r"
@@ -126,29 +109,10 @@ extension AISettingsPanelController {
         installGeneralSettingsPage(in: basicPage)
         installModelSettingsPage(in: modelPage)
         installEmbeddingSettingsPage(in: embeddingPage)
-        for view in speechSection.pageViews {
-            speechPage.addSubview(view)
-        }
-        for view in cacheSection.pageViews {
-            cachePage.addSubview(view)
-        }
+        installSpeechSettingsPage(in: speechPage)
+        installCacheSettingsPage(in: cachePage)
 
-        let labelColumnWidth = layout.labelColumnWidth
-        let fieldWidth = layout.fieldWidth
         let formWidth = layout.formWidth
-        let controlHeight = layout.controlHeight
-        NSLayoutConstraint.activate(speechConstraints(
-            for: speechSection,
-            page: speechPage,
-            labelColumnWidth: labelColumnWidth,
-            fieldWidth: fieldWidth,
-            controlHeight: controlHeight
-        ))
-        NSLayoutConstraint.activate(cacheConstraints(
-            for: cacheSection,
-            page: cachePage,
-            formWidth: formWidth
-        ))
         NSLayoutConstraint.activate([
             titleIcon.topAnchor.constraint(equalTo: content.topAnchor, constant: 26),
             titleIcon.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 38),
@@ -221,12 +185,6 @@ extension AISettingsPanelController {
         self.embeddingPage = embeddingPage
         self.speechPage = speechPage
         self.cachePage = cachePage
-        self.speechRuntimePopup = speechRuntimePopup
-        self.speechVoicePopup = speechVoicePopup
-        self.speechSpeedPopup = speechSpeedPopup
-        self.speechRuntimeControls = Dictionary(uniqueKeysWithValues: speechSection.runtimeRows.map { ($0.runtime, $0) })
-        self.cacheStatusLabel = cacheStatusLabel
-        self.currentIndexStatusLabel = currentIndexStatusLabel
         refreshSpeechRuntimeStatus()
         settingsTabChanged(index: initialTab.rawValue)
 

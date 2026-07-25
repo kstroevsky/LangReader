@@ -11,75 +11,31 @@ extension AISettingsPanelController {
         let paused: Bool
     }
 
-    func speechRuntimeButtonTag(for runtime: SpeechRuntimeResourceManager.Runtime) -> Int {
-        SpeechRuntimeResourceManager.Runtime.displayOrder.firstIndex(of: runtime) ?? -1
-    }
-
-    private func speechRuntime(for sender: NSButton) -> SpeechRuntimeResourceManager.Runtime? {
-        let runtimes = SpeechRuntimeResourceManager.Runtime.displayOrder
-        guard runtimes.indices.contains(sender.tag) else { return nil }
-        return runtimes[sender.tag]
-    }
-
-    @objc func downloadSpeechRuntimeButton(_ sender: NSButton) {
-        guard let runtime = speechRuntime(for: sender) else { return }
-        downloadSpeechRuntime(runtime, button: sender)
-    }
-
-    @objc func deleteSpeechRuntimeButton(_ sender: NSButton) {
-        guard let runtime = speechRuntime(for: sender) else { return }
-        deleteSpeechRuntime(runtime)
-    }
-
-    @objc func pauseSpeechRuntimeDownloadButton(_ sender: NSButton) {
-        guard let runtime = speechRuntime(for: sender) else { return }
-        toggleSpeechRuntimeDownloadPaused(runtime)
-    }
-
-    @objc func cancelSpeechRuntimeDownloadButton(_ sender: NSButton) {
-        guard let runtime = speechRuntime(for: sender) else { return }
-        cancelSpeechRuntimeDownload(runtime)
-    }
-
-    @objc func copySpeechRuntimeDiagnosticsButton(_ sender: NSButton) {
-        copySpeechRuntimeDiagnostics(error: nil, runtime: nil)
-    }
-
-    @objc func speechRuntimeChanged(_ sender: NSPopUpButton) {
-        let runtimeID = sender.selectedItem?.representedObject as? String
-        if let runtimeID,
-           let runtime = SpeechRuntimeResourceManager.Runtime.runtime(for: runtimeID),
-           speechRuntimeIsBlockedByLanguage(runtime, languageHint: currentSpeechLanguageHint?()) {
-            refreshSpeechRuntimePopup()
+    func speechRuntimeChanged(to runtimeID: String) {
+        guard let runtime = SpeechRuntimeResourceManager.Runtime.runtime(for: runtimeID),
+              !speechRuntimeIsBlockedByLanguage(runtime, languageHint: currentSpeechLanguageHint?()),
+              SpeechRuntimeResourceManager.isRunnable(runtime) else {
+            // Not selectable: snap the picker back to what is actually in use.
+            // The AppKit popup disabled these items outright, which SwiftUI's
+            // Picker cannot do per-item.
+            refreshSpeechRuntimeStatus()
             return
         }
         saveSelectedSpeechSettings(
             runtimeID: runtimeID,
-            voiceID: speechVoicePopup?.selectedItem?.representedObject as? String,
-            speedID: speechSpeedPopup?.selectedItem?.representedObject as? String
+            voiceID: speechSettings?.voiceID,
+            speedID: speechSettings?.speedID
         )
-        refreshSpeechVoicePopup(runtimeID: runtimeID)
+        refreshSpeechVoiceOptions(runtimeID: runtimeID)
         refreshSpeechRuntimeStatus()
     }
 
-    @objc func speechVoiceChanged(_ sender: NSPopUpButton) {
-        let voiceID = sender.selectedItem?.representedObject as? String
-        let runtimeID = speechRuntimePopup?.selectedItem?.representedObject as? String
+    func speechVoiceChanged(to voiceID: String) {
+        let runtimeID = speechSettings?.runtimeID
         saveSelectedSpeechSettings(
             runtimeID: runtimeID,
             voiceID: voiceID,
-            speedID: speechSpeedPopup?.selectedItem?.representedObject as? String
-        )
-        previewSelectedSpeechVoice(voiceID, runtimeID: runtimeID)
-    }
-
-    @objc func speechSpeedChanged(_ sender: NSPopUpButton) {
-        let runtimeID = speechRuntimePopup?.selectedItem?.representedObject as? String
-        let voiceID = speechVoicePopup?.selectedItem?.representedObject as? String
-        saveSelectedSpeechSettings(
-            runtimeID: runtimeID,
-            voiceID: voiceID,
-            speedID: sender.selectedItem?.representedObject as? String
+            speedID: speechSettings?.speedID
         )
         previewSelectedSpeechVoice(voiceID, runtimeID: runtimeID)
     }
@@ -88,12 +44,21 @@ extension AISettingsPanelController {
         let statuses = Dictionary(
             uniqueKeysWithValues: SpeechRuntimeResourceManager.Runtime.displayOrder.map { ($0, runtimeStatus($0)) }
         )
-        for runtime in SpeechRuntimeResourceManager.Runtime.displayOrder {
-            guard let status = statuses[runtime],
-                  let controls = speechRuntimeControls[runtime] else { continue }
-            updateRuntimeControls(runtime: runtime, status: status, controls: controls)
-        }
-        refreshSpeechRuntimePopup()
+        speechSettings?.applyRuntimes(SpeechRuntimeResourceManager.Runtime.displayOrder.compactMap { runtime in
+            guard let status = statuses[runtime] else { return nil }
+            return SpeechRuntimeRowState(
+                id: runtime.id,
+                title: runtime.title,
+                status: SpeechRuntimeResourceManager.statusText(for: runtime),
+                isDownloaded: status.downloaded,
+                isDownloading: status.downloading,
+                isPaused: status.paused,
+                progress: status.downloading
+                    ? (SpeechRuntimeResourceManager.downloadProgress(for: runtime) ?? 0)
+                    : nil
+            )
+        })
+        refreshSpeechRuntimeOptions()
         updateSpeechDownloadRefreshTimer(isDownloading: statuses.values.contains { $0.downloading })
     }
 
@@ -105,23 +70,7 @@ extension AISettingsPanelController {
         )
     }
 
-    private func updateRuntimeControls(
-        runtime: SpeechRuntimeResourceManager.Runtime,
-        status: RuntimeStatus,
-        controls: SpeechRuntimeRowControls
-    ) {
-        controls.statusLabel.stringValue = SpeechRuntimeResourceManager.statusText(for: runtime)
-        updateSpeechProgressIndicator(controls.progressIndicator, runtime: runtime, isDownloading: status.downloading)
-        controls.pauseButton.title = status.paused ? AppText.localized("继续", "Resume") : AppText.localized("暂停", "Pause")
-        controls.downloadButton.isEnabled = !status.downloading
-        controls.deleteButton.isEnabled = status.downloaded
-        controls.downloadButton.isHidden = status.downloaded || status.downloading
-        controls.pauseButton.isHidden = !status.downloading
-        controls.cancelButton.isHidden = !status.downloading
-        controls.deleteButton.isHidden = !status.downloaded || status.downloading
-    }
-
-    private func toggleSpeechRuntimeDownloadPaused(_ runtime: SpeechRuntimeResourceManager.Runtime) {
+    func toggleSpeechRuntimeDownloadPaused(_ runtime: SpeechRuntimeResourceManager.Runtime) {
         if SpeechRuntimeResourceManager.isPaused(runtime) {
             SpeechRuntimeResourceManager.resume(runtime)
         } else {
@@ -130,18 +79,9 @@ extension AISettingsPanelController {
         refreshSpeechRuntimeStatus()
     }
 
-    private func cancelSpeechRuntimeDownload(_ runtime: SpeechRuntimeResourceManager.Runtime) {
+    func cancelSpeechRuntimeDownload(_ runtime: SpeechRuntimeResourceManager.Runtime) {
         SpeechRuntimeResourceManager.cancel(runtime)
         refreshSpeechRuntimeStatus()
-    }
-
-    private func updateSpeechProgressIndicator(
-        _ indicator: NSProgressIndicator?,
-        runtime: SpeechRuntimeResourceManager.Runtime,
-        isDownloading: Bool
-    ) {
-        indicator?.isHidden = !isDownloading
-        indicator?.doubleValue = SpeechRuntimeResourceManager.downloadProgress(for: runtime) ?? 0
     }
 
     private func updateSpeechDownloadRefreshTimer(isDownloading: Bool) {
@@ -185,57 +125,51 @@ extension AISettingsPanelController {
         }
     }
 
-    private func refreshSpeechRuntimePopup() {
-        guard let popup = speechRuntimePopup else { return }
+    /// Rebuilds the runtime menu. Runtimes that cannot be used keep their place
+    /// with the reason appended to the title, exactly as the AppKit popup did.
+    private func refreshSpeechRuntimeOptions() {
+        guard let model = speechSettings else { return }
         let languageHint = currentSpeechLanguageHint?()
         syncSpeechRuntimeForLanguageIfNeeded(languageHint: languageHint)
         let runnableRuntimes = SpeechRuntimeResourceManager.runnableReadAloudRuntimes()
         let selectedRuntime = selectedSpeechRuntimeForPopup(languageHint: languageHint, runnableRuntimes: runnableRuntimes)
 
-        for item in popup.itemArray {
-            guard let id = item.representedObject as? String,
-                  let runtime = SpeechRuntimeResourceManager.Runtime.runtime(for: id) else { continue }
+        model.runtimeOptions = SpeechRuntimeResourceManager.Runtime.displayOrder.map { runtime in
             let blockedByLanguage = speechRuntimeIsBlockedByLanguage(runtime, languageHint: languageHint)
             let runnable = !blockedByLanguage && runnableRuntimes.contains(runtime)
+            let title: String
             if runnable {
-                item.title = runtime.title
+                title = runtime.title
             } else if blockedByLanguage {
-                item.title = AppText.localized("\(runtime.title)（中文使用 Kokoro）", "\(runtime.title) (Chinese uses Kokoro)")
+                title = AppText.localized("\(runtime.title)（中文使用 Kokoro）", "\(runtime.title) (Chinese uses Kokoro)")
             } else if let reason = SpeechRuntimeResourceManager.availabilityText(for: runtime) {
-                item.title = "\(runtime.title)（\(reason)）"
+                title = "\(runtime.title)（\(reason)）"
             } else {
-                item.title = AppText.localized("\(runtime.title)（不可用）", "\(runtime.title) (Unavailable)")
+                title = AppText.localized("\(runtime.title)（不可用）", "\(runtime.title) (Unavailable)")
             }
-            item.isEnabled = runnable
+            return SpeechChoice(id: runtime.id, title: title)
         }
-        popup.isEnabled = selectedRuntime != nil
-        if let selectedRuntime,
-           let selectedItem = popup.itemArray.first(where: { ($0.representedObject as? String) == selectedRuntime.id }) {
-            popup.select(selectedItem)
-        } else if let fallbackItem = popup.itemArray.first {
-            popup.select(fallbackItem)
-        }
-        refreshSpeechVoicePopup(runtimeID: popup.selectedItem?.representedObject as? String)
+
+        let effectiveID = selectedRuntime?.id ?? model.runtimeOptions.first?.id
+        model.setSelection(runtimeID: effectiveID)
+        refreshSpeechVoiceOptions(runtimeID: effectiveID)
     }
 
-    private func refreshSpeechVoicePopup(runtimeID: String?) {
-        guard let popup = speechVoicePopup else { return }
+    /// Rebuilds the voice menu for a runtime, keeping the saved voice selected
+    /// and falling back to the first when the saved one is not offered.
+    func refreshSpeechVoiceOptions(runtimeID: String?) {
+        guard let model = speechSettings else { return }
         let runtimeID = runtimeID ?? AISettingsStore.selectedSpeechRuntimeID
         let languageHint = currentSpeechLanguageHint?()
         let options = AISettingsStore.speechVoiceOptions(runtimeID: runtimeID, languageHint: languageHint)
+        model.voiceOptions = options.map { SpeechChoice(id: $0.id, title: $0.title) }
+
         let savedVoiceID = AISettingsStore.selectedSpeechVoiceID(runtimeID: runtimeID)
-        popup.removeAllItems()
-        for option in options {
-            popup.addItem(withTitle: option.title)
-            popup.lastItem?.representedObject = option.id
-        }
-        if let selectedItem = popup.itemArray.first(where: { ($0.representedObject as? String) == savedVoiceID }) {
-            popup.select(selectedItem)
-        } else {
-            popup.selectItem(at: 0)
-            if let fallbackVoiceID = popup.selectedItem?.representedObject as? String {
-                AISettingsStore.saveSpeechVoiceID(fallbackVoiceID, runtimeID: runtimeID)
-            }
+        if options.contains(where: { $0.id == savedVoiceID }) {
+            model.setSelection(voiceID: savedVoiceID)
+        } else if let fallback = options.first {
+            model.setSelection(voiceID: fallback.id)
+            AISettingsStore.saveSpeechVoiceID(fallback.id, runtimeID: runtimeID)
         }
     }
 
@@ -305,12 +239,12 @@ extension AISettingsPanelController {
         languageHint == .chinese && runtime == .piper
     }
 
-    private func downloadSpeechRuntime(_ runtime: SpeechRuntimeResourceManager.Runtime, button: NSButton) {
-        if !runtime.isSupportedOnCurrentSystem {
-            showUnsupportedRuntimeDownloadWarning(runtime) { [weak self, weak button] shouldContinue in
-                guard let self, let button else { return }
+    func downloadSpeechRuntime(_ runtime: SpeechRuntimeResourceManager.Runtime) {
+        guard runtime.isSupportedOnCurrentSystem else {
+            showUnsupportedRuntimeDownloadWarning(runtime) { [weak self] shouldContinue in
+                guard let self else { return }
                 if shouldContinue {
-                    self.startSpeechRuntimeDownload(runtime, button: button)
+                    self.startSpeechRuntimeDownload(runtime)
                 } else {
                     self.refreshSpeechRuntimeStatus()
                 }
@@ -318,12 +252,14 @@ extension AISettingsPanelController {
             return
         }
 
-        startSpeechRuntimeDownload(runtime, button: button)
+        startSpeechRuntimeDownload(runtime)
     }
 
-    private func startSpeechRuntimeDownload(_ runtime: SpeechRuntimeResourceManager.Runtime, button: NSButton) {
-        button.isEnabled = false
-        SpeechRuntimeResourceManager.download(runtime) { [weak self, weak button] result in
+    private func startSpeechRuntimeDownload(_ runtime: SpeechRuntimeResourceManager.Runtime) {
+        // The button's enabled state used to be set here; it now follows from
+        // the row's `isDownloading`, which `refreshSpeechRuntimeStatus` derives
+        // from the resource manager.
+        SpeechRuntimeResourceManager.download(runtime) { [weak self] result in
             guard let self else { return }
             switch result {
             case .success:
@@ -334,8 +270,7 @@ extension AISettingsPanelController {
                     self.refreshSpeechRuntimeStatus()
                     return
                 }
-                button?.isEnabled = true
-                self.speechRuntimeControls[runtime]?.statusLabel.stringValue = AppText.localized("下载失败", "Download failed")
+                self.refreshSpeechRuntimeStatus()
                 self.showSpeechDownloadError(error, runtime: runtime)
             }
         }
@@ -381,7 +316,7 @@ extension AISettingsPanelController {
         }
     }
 
-    private func deleteSpeechRuntime(_ runtime: SpeechRuntimeResourceManager.Runtime) {
+    func deleteSpeechRuntime(_ runtime: SpeechRuntimeResourceManager.Runtime) {
         SpeechPlaybackCoordinator.shared.shutdownRuntime(runtime)
         do {
             try SpeechRuntimeResourceManager.delete(runtime)
@@ -432,7 +367,7 @@ extension AISettingsPanelController {
         return NetworkErrorFormatter.sanitizedBody(raw.isEmpty ? fallback : raw)
     }
 
-    private func copySpeechRuntimeDiagnostics(error: Error?, runtime: SpeechRuntimeResourceManager.Runtime?) {
+    func copySpeechRuntimeDiagnostics(error: Error?, runtime: SpeechRuntimeResourceManager.Runtime?) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(speechRuntimeDiagnosticText(error: error, runtime: runtime), forType: .string)
     }

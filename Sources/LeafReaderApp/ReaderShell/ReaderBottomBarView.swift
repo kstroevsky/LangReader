@@ -162,61 +162,6 @@ struct ReaderBottomBarView: View {
     }
 }
 
-/// A SwiftUI capsule chrome button matching `CapsuleChromeButton`'s appearance
-/// (rounded rect, themed fill/stroke/text, optional leading symbol).
-struct ChromeCapsuleButton: View {
-    let title: String
-    let symbol: String?
-    let palette: ChromeCapsulePalette
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                if let symbol {
-                    Image(systemName: symbol)
-                        .font(.system(size: 13, weight: .semibold))
-                }
-                Text(title)
-                    .font(.system(size: 13, weight: .semibold))
-                    .lineLimit(1)
-            }
-            .foregroundStyle(palette.text)
-            .padding(.horizontal, 8)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(palette.fill, in: RoundedRectangle(cornerRadius: 7))
-            .overlay(RoundedRectangle(cornerRadius: 7).stroke(palette.stroke, lineWidth: 1))
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-/// The capsule button colours per theme, matching `CapsuleChromeButton.draw`.
-struct ChromeCapsulePalette {
-    let fill: Color
-    let stroke: Color
-    let text: Color
-    let iconTint: Color
-
-    init(theme: ReaderTheme) {
-        switch theme {
-        case .dark:
-            fill = Color(red: 0.09, green: 0.11, blue: 0.15)
-            stroke = Color(red: 0.22, green: 0.27, blue: 0.33)
-            text = Color(red: 0.86, green: 0.89, blue: 0.94)
-        case .eyeCare:
-            fill = Color(red: 0.88, green: 0.82, blue: 0.66)
-            stroke = Color(red: 0.66, green: 0.60, blue: 0.43)
-            text = Color(red: 0.18, green: 0.15, blue: 0.09)
-        case .original:
-            fill = Color(red: 1, green: 1, blue: 1)
-            stroke = Color(red: 0.82, green: 0.85, blue: 0.90)
-            text = Color(red: 0.12, green: 0.14, blue: 0.18)
-        }
-        iconTint = Color(nsColor: theme.secondaryTextColor)
-    }
-}
-
 /// Titles, symbols and tooltips for bottom-bar controls, in one place so the
 /// SwiftUI view and any future consumer read the same strings.
 enum ReaderBottomBarTitles {

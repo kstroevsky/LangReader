@@ -24,6 +24,11 @@ final class AISettingsPanelController {
     var modelSettings: ModelSettingsModel?
     /// Same, for the SwiftUI AI Analysis page.
     var embeddingSettings: EmbeddingSettingsModel?
+    /// State behind the SwiftUI Read Aloud page.
+    var speechSettings: SpeechSettingsModel?
+    /// The Cache page's live state. Not a `SettingsPage`: its actions apply
+    /// immediately, so there is nothing for Save to commit.
+    var cacheSettings: CacheSettingsModel?
     var onSaved: (() -> Void)?
     var onAppearanceChanged: (() -> Void)?
     var currentVectorIndexStatus: (() -> String)?
@@ -45,12 +50,6 @@ final class AISettingsPanelController {
     weak var embeddingPage: NSView?
     weak var speechPage: NSView?
     weak var cachePage: NSView?
-    weak var speechRuntimePopup: NSPopUpButton?
-    weak var speechVoicePopup: NSPopUpButton?
-    weak var speechSpeedPopup: NSPopUpButton?
-    var speechRuntimeControls: [SpeechRuntimeResourceManager.Runtime: SpeechRuntimeRowControls] = [:]
-    weak var cacheStatusLabel: NSTextField?
-    weak var currentIndexStatusLabel: NSTextField?
     var cacheRefreshTimer: Timer?
     var speechDownloadRefreshTimer: Timer?
     var speechVoicePreviewWorkItem: DispatchWorkItem?

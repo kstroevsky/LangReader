@@ -18,9 +18,7 @@ struct GeneralSettingsView: View {
                     }
                 }
                 .accessibilityIdentifier(GeneralSettingsAccessibility.languagePicker)
-                Text(AppText.localized("更改后界面文字会立即更新。", "Interface text updates as soon as you save."))
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                SettingsFootnote(AppText.localized("更改后界面文字会立即更新。", "Interface text updates as soon as you save."))
             }
 
             Section {
@@ -30,9 +28,7 @@ struct GeneralSettingsView: View {
                     }
                 }
                 .accessibilityIdentifier(GeneralSettingsAccessibility.themePicker)
-                Text(ReaderTheme.selected.helpText)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                SettingsFootnote(ReaderTheme.selected.helpText)
 
                 // Brightness only means something once the page is tinted.
                 if model.showsBrightness {
@@ -57,8 +53,7 @@ struct GeneralSettingsView: View {
                     .accessibilityIdentifier(GeneralSettingsAccessibility.saveConversationToggle)
             }
         }
-        .formStyle(.grouped)
+        .settingsFormStyle()
         .animation(.default, value: model.showsBrightness)
-        .scrollContentBackground(.hidden)
     }
 }

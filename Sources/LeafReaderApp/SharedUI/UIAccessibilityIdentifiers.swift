@@ -45,6 +45,27 @@ enum EmbeddingSettingsAccessibility {
     static let autoIndexToggle = "settings.embedding.autoIndex"
 }
 
+enum CacheSettingsAccessibility {
+    static let buildIndex = "settings.cache.buildIndex"
+    static let pauseIndex = "settings.cache.pauseIndex"
+    static let cancelIndex = "settings.cache.cancelIndex"
+    static let clearBookIndex = "settings.cache.clearBookIndex"
+    static let clearBookWords = "settings.cache.clearBookWords"
+    static let clearAllCache = "settings.cache.clearAllCache"
+}
+
+enum SpeechSettingsAccessibility {
+    static let runtimePicker = "settings.speech.runtime"
+    static let voicePicker = "settings.speech.voice"
+    static let speedPicker = "settings.speech.speed"
+    static let diagnosticsButton = "settings.speech.diagnostics"
+    // Per-runtime action identifiers are these prefixes plus the runtime id.
+    static let downloadPrefix = "settings.speech.download."
+    static let pausePrefix = "settings.speech.pause."
+    static let cancelPrefix = "settings.speech.cancel."
+    static let deletePrefix = "settings.speech.delete."
+}
+
 enum ShelfAccessibility {
     static let addButton = "shelf.add"
     static let clearButton = "shelf.clear"
