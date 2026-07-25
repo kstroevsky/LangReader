@@ -19,7 +19,7 @@ LOGIC_APP_SOURCES=()
 always_include_logic_app_source() {
   local base="$1"
   case "$base" in
-    ReadingNoteEditorViews.swift|SelectionToolbarConfiguration.swift|ReaderChromeState.swift|ReaderToolbarItem.swift)
+    ReadingNoteEditorViews.swift|SelectionToolbarConfiguration.swift|ReaderChromeState.swift|ReaderToolbarItem.swift|ReaderSelectionState.swift|ReaderWebPresentation.swift)
       return 0
       ;;
   esac

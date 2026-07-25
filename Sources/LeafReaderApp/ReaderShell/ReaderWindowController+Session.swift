@@ -198,7 +198,7 @@ extension ReaderWindowController {
             webZoomPercent = percent
             zoomField.stringValue = "\(webZoomPercent)%"
         }
-        pendingWebProgressRestore = (
+        pendingWebProgressRestore = ReaderWebPresentation.PendingProgressRestore(
             generation: documentLoadGeneration,
             progress: scrollProgress,
             zoomPercent: progress.zoomPercent

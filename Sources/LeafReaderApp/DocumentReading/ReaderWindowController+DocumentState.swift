@@ -30,43 +30,51 @@ extension ReaderWindowController {
         get { documentSession.documentLoadGeneration }
     }
 
+    /// The reader's current selection. The individual accessors below forward
+    /// into it so the ~70 call sites across the extensions did not have to
+    /// change when it moved out of `DocumentSession`.
+    var selectionState: ReaderSelectionState {
+        get { documentSession.selection }
+        set { documentSession.selection = newValue }
+    }
+
     var currentPDFSelectedText: String {
-        get { documentSession.currentPDFSelectedText }
-        set { documentSession.currentPDFSelectedText = newValue }
+        get { documentSession.selection.pdfSelectedText }
+        set { documentSession.selection.pdfSelectedText = newValue }
     }
 
     var currentWebPlainText: String {
-        get { documentSession.currentWebPlainText }
-        set { documentSession.currentWebPlainText = newValue }
+        get { documentSession.web.plainText }
+        set { documentSession.web.plainText = newValue }
     }
 
     var webPlainTextGeneration: Int {
-        get { documentSession.webPlainTextGeneration }
+        get { documentSession.web.plainTextGeneration }
     }
 
     var currentWebSelectedText: String {
-        get { documentSession.currentWebSelectedText }
-        set { documentSession.currentWebSelectedText = newValue }
+        get { documentSession.selection.webSelectedText }
+        set { documentSession.selection.webSelectedText = newValue }
     }
 
     var currentWebSelectionContext: String {
-        get { documentSession.currentWebSelectionContext }
-        set { documentSession.currentWebSelectionContext = newValue }
+        get { documentSession.selection.webSelectionContext }
+        set { documentSession.selection.webSelectionContext = newValue }
     }
 
     var currentWebSelectionOccurrenceIndex: Int? {
-        get { documentSession.currentWebSelectionOccurrenceIndex }
-        set { documentSession.currentWebSelectionOccurrenceIndex = newValue }
+        get { documentSession.selection.webSelectionOccurrenceIndex }
+        set { documentSession.selection.webSelectionOccurrenceIndex = newValue }
     }
 
     var currentWebSelectionRect: NSRect? {
-        get { documentSession.currentWebSelectionRect }
-        set { documentSession.currentWebSelectionRect = newValue }
+        get { documentSession.selection.webSelectionRect }
+        set { documentSession.selection.webSelectionRect = newValue }
     }
 
-    var pendingWebProgressRestore: (generation: Int, progress: Double, zoomPercent: Int?)? {
-        get { documentSession.pendingWebProgressRestore }
-        set { documentSession.pendingWebProgressRestore = newValue }
+    var pendingWebProgressRestore: ReaderWebPresentation.PendingProgressRestore? {
+        get { documentSession.web.pendingProgressRestore }
+        set { documentSession.web.pendingProgressRestore = newValue }
     }
 
     var currentDocumentDiagnostics: [String] {
@@ -90,13 +98,13 @@ extension ReaderWindowController {
     }
 
     var webZoomPercent: Int {
-        get { documentSession.webZoomPercent }
-        set { documentSession.webZoomPercent = newValue }
+        get { documentSession.web.zoomPercent }
+        set { documentSession.web.zoomPercent = newValue }
     }
 
     var webScrollProgress: Double {
-        get { documentSession.webScrollProgress }
-        set { documentSession.webScrollProgress = newValue }
+        get { documentSession.web.scrollProgress }
+        set { documentSession.web.scrollProgress = newValue }
     }
 
     var originalPDFCropBoxes: [Int: CGRect] {
@@ -105,23 +113,23 @@ extension ReaderWindowController {
     }
 
     var lastWebProgressSave: Date {
-        get { documentSession.lastWebProgressSave }
-        set { documentSession.lastWebProgressSave = newValue }
+        get { documentSession.web.lastProgressSave }
+        set { documentSession.web.lastProgressSave = newValue }
     }
 
     var lastPageIndex: Int? {
-        get { documentSession.lastPageIndex }
-        set { documentSession.lastPageIndex = newValue }
+        get { documentSession.position.lastPageIndex }
+        set { documentSession.position.lastPageIndex = newValue }
     }
 
     var lastPersonalVocabularyPDFPageIndex: Int? {
-        get { documentSession.lastPersonalVocabularyPDFPageIndex }
-        set { documentSession.lastPersonalVocabularyPDFPageIndex = newValue }
+        get { documentSession.position.lastPersonalVocabularyPDFPageIndex }
+        set { documentSession.position.lastPersonalVocabularyPDFPageIndex = newValue }
     }
 
     var lastPersonalVocabularyWebProgressBucket: Int? {
-        get { documentSession.lastPersonalVocabularyWebProgressBucket }
-        set { documentSession.lastPersonalVocabularyWebProgressBucket = newValue }
+        get { documentSession.position.lastPersonalVocabularyWebProgressBucket }
+        set { documentSession.position.lastPersonalVocabularyWebProgressBucket = newValue }
     }
 
     var isRestoringSession: Bool {
