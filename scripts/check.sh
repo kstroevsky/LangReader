@@ -52,8 +52,12 @@ if [[ "$RUN_BUILD" -eq 1 ]]; then
     ./scripts/check_ui_smoke.sh
     ui_smoke_status=$?
     set -e
-    if [[ "$ui_smoke_status" -eq 2 ]]; then
-      echo "    skipped: the app's accessibility tree was unreadable (permission?)"
+    # 3 is the only code that means "skipped"; the script proves the app is still
+    # running before it uses it. 2 is an infrastructure failure — a missing build,
+    # a failed launch, a crash — and used to be reported here as a skip, which let
+    # the whole suite pass on an app that never started.
+    if [[ "$ui_smoke_status" -eq 3 ]]; then
+      echo "    skipped: the app's accessibility tree was unreadable (grant Accessibility permission)"
     elif [[ "$ui_smoke_status" -ne 0 ]]; then
       exit "$ui_smoke_status"
     fi

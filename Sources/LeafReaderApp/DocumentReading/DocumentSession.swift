@@ -17,6 +17,9 @@ struct DocumentSession {
     var currentDocumentKind: ReaderDocumentKind = .pdf
     private(set) var documentLoadGeneration = 0
     var selection = ReaderSelectionState()
+    /// Where the selection toolbar anchors. Separate from `selection` because it
+    /// is presentation geometry, not what the reader picked.
+    var selectionPresentation = ReaderSelectionPresentation()
     var web = ReaderWebPresentation()
     var position = ReaderReadingPosition()
     var isRestoringSession = false

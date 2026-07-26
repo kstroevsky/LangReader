@@ -8,9 +8,10 @@ import Foundation
 /// panel asks for it to answer about, vocabulary saving turns it into a word,
 /// and note creation turns it into a quote.
 ///
-/// Platform-neutral on purpose. It uses `CGRect` rather than `NSRect` (the same
-/// type on macOS, but only one of the two spellings exists everywhere), so this
-/// compiles unchanged on a platform without AppKit.
+/// Platform-neutral on purpose, and now *semantic* only: the toolbar's anchor
+/// rectangle moved to `ReaderSelectionPresentation`, so consumers that want to
+/// know what the reader picked no longer carry window coordinates that go stale
+/// as soon as the view scrolls.
 struct ReaderSelectionState: Equatable {
     /// The PDF path's selected text, mirrored here because `PDFSelection`
     /// itself is not something the rest of the app should hold.
@@ -21,8 +22,6 @@ struct ReaderSelectionState: Equatable {
     var webSelectedText = ""
     var webSelectionContext = ""
     var webSelectionOccurrenceIndex: Int?
-    /// Where to anchor the selection toolbar, in window coordinates.
-    var webSelectionRect: CGRect?
 
     /// True when nothing is selected in either path.
     var isEmpty: Bool {

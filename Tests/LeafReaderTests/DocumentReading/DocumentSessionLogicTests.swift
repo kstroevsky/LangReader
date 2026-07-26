@@ -21,7 +21,7 @@ enum DocumentSessionLogicTests {
         session.selection.webSelectedText = "old web selection"
         session.selection.webSelectionContext = "old context"
         session.selection.webSelectionOccurrenceIndex = 3
-        session.selection.webSelectionRect = .init(x: 1, y: 2, width: 3, height: 4)
+        session.selectionPresentation.anchorRect = .init(x: 1, y: 2, width: 3, height: 4)
         session.web.pendingProgressRestore = ReaderWebPresentation.PendingProgressRestore(
             generation: generation, progress: 0.8, zoomPercent: 150
         )
@@ -40,7 +40,7 @@ enum DocumentSessionLogicTests {
         try expectEqual(session.selection.webSelectedText, "", "adopting a document should clear previous web selection")
         try expectEqual(session.selection.webSelectionContext, "", "adopting a document should clear previous web context")
         try expect(session.selection.webSelectionOccurrenceIndex == nil, "adopting a document should clear previous selection occurrence")
-        try expect(session.selection.webSelectionRect == nil, "adopting a document should clear previous selection bounds")
+        try expect(session.selectionPresentation.anchorRect == nil, "adopting a document should clear previous selection bounds")
         try expect(session.web.pendingProgressRestore == nil, "adopting a document should clear a pending web restoration")
         try expectEqual(session.web.zoomPercent, 100, "adopting a document should reset web zoom")
         try expectEqual(session.web.scrollProgress, 0, "adopting a document should reset web progress")
@@ -53,12 +53,12 @@ enum DocumentSessionLogicTests {
         session.selection.webSelectedText = "a web phrase"
         session.selection.webSelectionContext = "surrounding context"
         session.selection.webSelectionOccurrenceIndex = 3
-        session.selection.webSelectionRect = CGRect(x: 1, y: 2, width: 3, height: 4)
+        session.selectionPresentation.anchorRect = CGRect(x: 1, y: 2, width: 3, height: 4)
 
         session.adopt(url: URL(fileURLWithPath: "/tmp/next.pdf"), kind: .pdf, documentID: "id-2")
 
         try expect(session.selection.isEmpty, "opening another document must not leave the old selection behind")
-        try expect(session.selection.webSelectionRect == nil, "the selection rect belongs to the old page")
+        try expect(session.selectionPresentation.anchorRect == nil, "the toolbar anchor belongs to the old page")
         try expect(session.selection.webSelectionOccurrenceIndex == nil, "the occurrence index belongs to the old page")
     }
 
@@ -69,6 +69,37 @@ enum DocumentSessionLogicTests {
         session.unload()
 
         try expect(session.selection.isEmpty, "unloading must clear the selection")
+    }
+
+    /// A toolbar needs a rectangle with area to sit against. The web path signals
+    /// "no usable selection" with a zero-sized rect, so this rule decides whether
+    /// the toolbar is shown at all.
+    static func testAToolbarAnchorNeedsArea() throws {
+        var presentation = ReaderSelectionPresentation()
+        try expect(!presentation.canAnchorToolbar, "no rectangle means nothing to anchor to")
+
+        presentation.anchorRect = CGRect(x: 10, y: 10, width: 0, height: 12)
+        try expect(!presentation.canAnchorToolbar, "a zero-width anchor is not usable")
+
+        presentation.anchorRect = CGRect(x: 10, y: 10, width: 40, height: 0)
+        try expect(!presentation.canAnchorToolbar, "a zero-height anchor is not usable")
+
+        presentation.anchorRect = CGRect(x: 10, y: 10, width: 40, height: 12)
+        try expect(presentation.canAnchorToolbar, "a rectangle with area can host the toolbar")
+    }
+
+    /// The anchor is presentation geometry and must not outlive the document it
+    /// was measured in — window coordinates from the previous page would place
+    /// the toolbar over unrelated content.
+    static func testTheToolbarAnchorIsClearedOnUnload() throws {
+        var session = DocumentSession()
+        session.selectionPresentation.anchorRect = CGRect(x: 1, y: 2, width: 3, height: 4)
+        session.selectionPresentation.preferredEdge = .below
+
+        session.unload()
+
+        try expect(session.selectionPresentation.anchorRect == nil, "unloading must drop the stale anchor")
+        try expect(session.selectionPresentation.preferredEdge == .above, "the edge returns to its default")
     }
 
     static func testSelectedTextFollowsTheDocumentKind() throws {

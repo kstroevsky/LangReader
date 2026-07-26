@@ -2,8 +2,7 @@ import Cocoa
 
 extension ReadingNotePanelController {
     func save() {
-        editorModel.text = markdownFromEditor()
-        onSave(editorModel.commitEdits())
+        onSave(editorModel.commitEdits(markdown: markdownFromEditor()))
     }
 
     /// Applies a favourite change made outside this panel. Routed through here
@@ -34,7 +33,7 @@ extension ReadingNotePanelController {
     }
 
     func updateWordCount() {
-        editorModel.text = textView.string
+        editorModel.syncText(textView.string)
         wordCountLabel.stringValue = editorModel.wordCountText
     }
 

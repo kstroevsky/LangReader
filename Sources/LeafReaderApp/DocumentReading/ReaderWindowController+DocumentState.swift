@@ -68,8 +68,8 @@ extension ReaderWindowController {
     }
 
     var currentWebSelectionRect: NSRect? {
-        get { documentSession.selection.webSelectionRect }
-        set { documentSession.selection.webSelectionRect = newValue }
+        get { documentSession.selectionPresentation.anchorRect }
+        set { documentSession.selectionPresentation.anchorRect = newValue }
     }
 
     var pendingWebProgressRestore: ReaderWebPresentation.PendingProgressRestore? {

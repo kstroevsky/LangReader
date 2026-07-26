@@ -18,12 +18,28 @@
 #
 # Requires accessibility permission for the terminal running it
 # (System Settings > Privacy & Security > Accessibility).
+#
+# Exit codes are distinct on purpose. They used to share code 2, and the caller
+# in check.sh printed "skipped: accessibility permission?" for it — so a missing
+# build, a failed launch, or an app that crashed on startup all reported as an
+# intentional skip and the whole check suite passed.
+#
+#   0  every check passed
+#   1  a check failed: a real regression in the app
+#   2  infrastructure failure: no bundle, launch failed, or the app died.
+#      Never a skip — the app is broken or was never built.
+#   3  skipped on purpose: the accessibility tree is unreadable and the app is
+#      confirmed still running, so this is a permission problem on the host.
 
 set -uo pipefail
 
 APP_NAME="Leaf Vocabulary"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_PATH="${LEAFVOCAB_APP_PATH:-$REPO_ROOT/$APP_NAME.app}"
+
+readonly EXIT_CHECK_FAILED=1
+readonly EXIT_INFRASTRUCTURE=2
+readonly EXIT_SKIPPED=3
 
 FAILURES=0
 CHECKS=0
@@ -34,7 +50,7 @@ fail() { CHECKS=$((CHECKS + 1)); FAILURES=$((FAILURES + 1)); printf '  FAIL %s\n
 if [[ ! -d "$APP_PATH" ]]; then
   echo "UI smoke: no app bundle at $APP_PATH" >&2
   echo "Build it first: ./scripts/build_app.sh --debug" >&2
-  exit 2
+  exit $EXIT_INFRASTRUCTURE
 fi
 
 # --- AppleScript helpers -----------------------------------------------------
@@ -320,13 +336,13 @@ trap cleanup EXIT
 
 echo "UI smoke: $APP_PATH"
 quit_app
-open "$APP_PATH" || { echo "UI smoke: could not launch app" >&2; exit 2; }
+open "$APP_PATH" || { echo "UI smoke: could not launch app" >&2; exit $EXIT_INFRASTRUCTURE; }
 sleep 9
 activate_app
 
 if ! pgrep -f "$APP_NAME" >/dev/null; then
   echo "UI smoke: app did not stay running" >&2
-  exit 2
+  exit $EXIT_INFRASTRUCTURE
 fi
 
 echo "reader chrome"
@@ -334,14 +350,24 @@ echo "reader chrome"
 # titles are localised (a Chinese UI would break a title match), and identifiers
 # are stable across the AppKit->SwiftUI migration, making this a regression net.
 CHROME_IDS="$(reader_chrome_identifiers)"
-# A failure to read any chrome identifier usually means accessibility permission
-# is missing rather than a real regression, so it is called out separately.
+# An unreadable chrome tree has two very different causes that look identical
+# from here: the host is missing Accessibility permission (a legitimate skip), or
+# the app crashed/hung during launch (a failure that must never be reported as a
+# skip). Ask whether the app is still alive before deciding which one this is.
 if ! grep -q "bottomBar\." <<<"$CHROME_IDS"; then
-  echo "UI smoke: cannot read the app's accessibility tree." >&2
+  if ! pgrep -f "$APP_NAME" >/dev/null; then
+    echo "UI smoke: the app is no longer running while reading its chrome." >&2
+    echo "This is a launch or stability failure, not a permission problem." >&2
+    echo "--- got: ---" >&2
+    echo "$CHROME_IDS" >&2
+    exit $EXIT_INFRASTRUCTURE
+  fi
+  echo "UI smoke: SKIPPED - cannot read the app's accessibility tree." >&2
+  echo "The app is running, so this is a host permission problem." >&2
   echo "Grant Accessibility permission to this terminal and re-run." >&2
   echo "--- got: ---" >&2
   echo "$CHROME_IDS" >&2
-  exit 2
+  exit $EXIT_SKIPPED
 fi
 for id in settings shelf words notes review toc cover previousPage nextPage farthestPosition; do
   expect_identifier "bottomBar.$id" "$CHROME_IDS" "bottom bar $id"
@@ -485,6 +511,6 @@ sleep 2
 echo
 if (( FAILURES > 0 )); then
   echo "UI smoke: $FAILURES of $CHECKS checks failed."
-  exit 1
+  exit $EXIT_CHECK_FAILED
 fi
 echo "UI smoke: all $CHECKS checks passed."

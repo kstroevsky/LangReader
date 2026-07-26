@@ -24,11 +24,17 @@ import Observation
 final class ReadingNoteEditorModel {
     private(set) var note: ReadingNote
 
-    /// The editor's current plain text. The controller pushes this in on every
-    /// change; the word count derives from it.
-    var text: String = "" {
-        didSet { hasUnsavedChanges = true }
-    }
+    /// The editor's text **as displayed**, which is what the word count reports:
+    /// `**bold**` is four characters here, eight in the markdown source.
+    ///
+    /// It is deliberately not what gets persisted. This field used to hold both —
+    /// `save()` assigned the markdown projection, `updateWordCount()` assigned the
+    /// rendered string, and `commitEdits()` wrote whichever landed last into
+    /// `note.markdown`. That was correct only because `save()` happened to assign
+    /// immediately before committing; any other order would have persisted the
+    /// rendered text as the source and dropped the formatting. Committing now
+    /// takes the markdown as an argument.
+    private(set) var text: String = ""
 
     /// The transient message under the editor ("Saved", "Markdown copied", an
     /// error). Set through the named transitions below rather than directly.
@@ -91,11 +97,28 @@ final class ReadingNoteEditorModel {
 
     // MARK: - Editing
 
-    /// Folds the editor's text into the note and stamps it. Returns the note to
+    /// The user typed. Marks the note dirty only when the text actually changed,
+    /// so a refresh that re-reads the same string cannot fake an edit.
+    func userDidEdit(_ newText: String) {
+        guard newText != text else { return }
+        text = newText
+        hasUnsavedChanges = true
+    }
+
+    /// Mirrors the view's text without implying an edit — used after a render or
+    /// when the word count is refreshed. Previously this went through the same
+    /// assignment as typing, so every refresh marked the note unsaved; because
+    /// `commitEditorChange()` refreshes *after* saving, a note was dirty again
+    /// the instant it had been saved.
+    func syncText(_ newText: String) {
+        text = newText
+    }
+
+    /// Folds the given markdown into the note and stamps it. Returns the note to
     /// persist, so the caller does not have to reach back in for it.
     @discardableResult
-    func commitEdits(now: Date = Date()) -> ReadingNote {
-        note.markdown = text
+    func commitEdits(markdown: String, now: Date = Date()) -> ReadingNote {
+        note.markdown = markdown
         note.updatedAt = now
         hasUnsavedChanges = false
         return note

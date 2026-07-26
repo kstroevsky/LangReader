@@ -44,11 +44,11 @@ enum ReadingNoteEditorModelTests {
         let model = ReadingNoteEditorModel(note: note(markdown: "old"))
         try expectEqual(model.hasUnsavedChanges, false, "a freshly opened note is clean")
 
-        model.text = "new body"
+        model.userDidEdit("new body")
         try expectEqual(model.hasUnsavedChanges, true, "editing marks it dirty")
 
         let stamped = Date(timeIntervalSince1970: 1_000)
-        let saved = model.commitEdits(now: stamped)
+        let saved = model.commitEdits(markdown: "new body", now: stamped)
 
         try expectEqual(saved.markdown, "new body", "the edit should land in the note")
         try expectEqual(saved.updatedAt, stamped, "saving should stamp the note")
@@ -57,10 +57,10 @@ enum ReadingNoteEditorModelTests {
 
     static func testWordCountIgnoresSurroundingWhitespace() throws {
         let model = ReadingNoteEditorModel(note: note(markdown: ""))
-        model.text = "  \n abc \n "
+        model.syncText("  \n abc \n ")
         try expectEqual(model.wordCountText.hasPrefix("3"), true, "expected 3, got \(model.wordCountText)")
 
-        model.text = "   "
+        model.syncText("   ")
         try expectEqual(model.wordCountText.hasPrefix("0"), true, "whitespace only should count zero")
     }
 
@@ -119,7 +119,7 @@ enum ReadingNoteEditorModelTests {
 
     static func testReplacingTheNoteResetsTheEditor() throws {
         let model = ReadingNoteEditorModel(note: note(markdown: "first"))
-        model.text = "edited"
+        model.userDidEdit("edited")
 
         model.replaceNote(note(markdown: "second"))
 
@@ -136,11 +136,48 @@ enum ReadingNoteEditorModelTests {
         let model = ReadingNoteEditorModel(note: note(markdown: "body", favorite: false))
 
         model.setFavorite(true)
-        model.text = "body edited"
-        let saved = model.commitEdits()
+        model.userDidEdit("body edited")
+        let saved = model.commitEdits(markdown: "body edited")
 
         try expectEqual(saved.isFavorite, true, "the commit must carry the favourite set outside the editor")
         try expectEqual(saved.markdown, "body edited", "the commit must still carry the editor's text")
+    }
+
+    /// Regression for the always-dirty flag: `commitEditorChange()` saves and
+    /// *then* refreshes derived state, and the refresh pushes the same text back
+    /// in. While that went through the same assignment as typing, a note was
+    /// marked unsaved the instant it had been saved.
+    static func testRefreshingTheTextAfterSavingLeavesTheNoteClean() throws {
+        let model = ReadingNoteEditorModel(note: note(markdown: "body"))
+        model.userDidEdit("body edited")
+        _ = model.commitEdits(markdown: "body edited")
+
+        model.syncText("body edited")
+
+        try expectEqual(model.hasUnsavedChanges, false, "a refresh after saving must not re-dirty the note")
+    }
+
+    /// Typing that produces the text already held is not an edit.
+    static func testReassigningTheSameTextDoesNotDirtyTheNote() throws {
+        let model = ReadingNoteEditorModel(note: note(markdown: "same"))
+        model.syncText("same")
+
+        model.userDidEdit("same")
+
+        try expectEqual(model.hasUnsavedChanges, false, "an identical assignment is not an edit")
+    }
+
+    /// The word count reports what the reader sees, so it counts the rendered
+    /// text — not the markdown source that gets persisted.
+    static func testCommitPersistsMarkdownRatherThanTheDisplayedText() throws {
+        let model = ReadingNoteEditorModel(note: note(markdown: "old"))
+        model.syncText("bold")
+
+        let saved = model.commitEdits(markdown: "**bold**")
+
+        try expectEqual(saved.markdown, "**bold**", "the markdown source must be persisted")
+        try expectEqual(model.wordCountText.hasPrefix("4"), true,
+                        "the count should describe the displayed text, got \(model.wordCountText)")
     }
 
     /// The list sends the state it wants, not a flip, so the two cannot disagree

@@ -145,6 +145,9 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
     }
 
     func textDidChange(_ notification: Notification) {
+        // The one place a real edit enters the model. Everything else that pushes
+        // text in (word count, post-render refresh) must not mark the note dirty.
+        editorModel.userDidEdit(textView.string)
         scheduleAutoSave()
         refreshEditorDerivedState()
     }

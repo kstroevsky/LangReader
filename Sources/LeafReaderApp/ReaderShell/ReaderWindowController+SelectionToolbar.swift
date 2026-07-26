@@ -38,11 +38,14 @@ extension ReaderWindowController {
     }
 
     func showSelectionToolbarForWebSelection(rect: NSRect?, text: String) {
-        guard let rect, rect.width > 0, rect.height > 0 else {
+        // The "is this anchor usable?" rule lives on the presentation type so it
+        // is stated once and can be tested without a window.
+        let presentation = ReaderSelectionPresentation(anchorRect: rect, preferredEdge: .below)
+        guard presentation.canAnchorToolbar, let rect = presentation.anchorRect else {
             hideSelectionToolbar()
             return
         }
-        showSelectionToolbar(near: rect, text: text, preferredEdge: .below)
+        showSelectionToolbar(near: rect, text: text, preferredEdge: presentation.preferredEdge)
     }
 
     func showSelectionToolbar(near sourceRect: NSRect, text: String, preferredEdge: SelectionToolbarEdge = .above) {
@@ -183,8 +186,4 @@ extension ReaderWindowController {
         return toolbarWindow
     }
 
-    enum SelectionToolbarEdge {
-        case above
-        case below
-    }
 }
