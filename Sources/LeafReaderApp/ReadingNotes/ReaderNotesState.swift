@@ -1,4 +1,4 @@
-import Cocoa
+import Foundation
 
 struct ReaderNotesState {
     var storedReadingNotes: [ReadingNote] = []

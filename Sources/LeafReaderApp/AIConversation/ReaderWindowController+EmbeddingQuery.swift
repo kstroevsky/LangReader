@@ -1,4 +1,4 @@
-import Cocoa
+import Foundation
 
 extension ReaderWindowController {
     func queryEmbedding(for question: String, completion: @escaping ([Float]?) -> Void) {

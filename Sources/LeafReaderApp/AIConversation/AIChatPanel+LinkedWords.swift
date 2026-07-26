@@ -1,4 +1,4 @@
-import Cocoa
+import Foundation
 
 extension AIChatPanel {
     /// Resets the Assistant to an empty state on document load.

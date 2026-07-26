@@ -1,4 +1,4 @@
-import Cocoa
+import Foundation
 
 extension ReaderWindowController {
     /// Removes a row's records. The row used to be yanked out of the stack view

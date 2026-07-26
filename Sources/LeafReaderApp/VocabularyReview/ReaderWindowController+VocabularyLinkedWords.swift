@@ -1,4 +1,4 @@
-import Cocoa
+import Foundation
 
 extension ReaderWindowController {
     func updateStoredLinkedWordAnswer(linkID: String, question: String, answer: String) {

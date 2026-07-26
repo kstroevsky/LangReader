@@ -1,4 +1,4 @@
-import Cocoa
+import Foundation
 
 extension ReaderWindowController {
     func vocabularyRecords(_ records: [VocabularyExportRecord], matching filter: VocabularyFilter) -> [VocabularyExportRecord] {

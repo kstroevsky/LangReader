@@ -1,4 +1,4 @@
-import Cocoa
+import Foundation
 
 extension AIChatPanel {
     func appendNotice(_ text: String) {

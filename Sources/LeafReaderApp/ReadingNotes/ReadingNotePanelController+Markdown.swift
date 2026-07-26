@@ -1,4 +1,4 @@
-import Cocoa
+import Foundation
 
 extension ReadingNotePanelController {
     func renderMarkdownIntoEditor(_ markdown: String) {

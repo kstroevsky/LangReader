@@ -1,4 +1,4 @@
-import Cocoa
+import Foundation
 
 enum MarkdownBlockParser {
     struct BlockNode: Equatable {

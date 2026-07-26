@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 /// A declarative description of one reader toolbar control.

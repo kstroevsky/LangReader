@@ -1,4 +1,5 @@
-import Cocoa
+import CoreGraphics
+import Foundation
 
 struct StoredPDFWordRect: Codable, Equatable {
     let x: CGFloat

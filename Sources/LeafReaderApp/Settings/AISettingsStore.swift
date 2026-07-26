@@ -1,4 +1,3 @@
-import Cocoa
 import Foundation
 
 enum AISettingsStore {
