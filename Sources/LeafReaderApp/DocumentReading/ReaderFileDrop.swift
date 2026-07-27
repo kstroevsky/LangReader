@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 enum ReaderFileDrop {
     static let pasteboardTypes: [NSPasteboard.PasteboardType] = [

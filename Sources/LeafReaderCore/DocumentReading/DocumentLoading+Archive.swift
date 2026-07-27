@@ -6,7 +6,7 @@ extension WebDocumentLoader {
 
     private static var archiveProcessTimeout: TimeInterval { 60 }
 
-    static func unzipEPUBToCache(url: URL) throws -> URL {
+    package static func unzipEPUBToCache(url: URL) throws -> URL {
         let fileURL = url.standardizedFileURL
         let values = try? fileURL.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey])
         let modified = values?.contentModificationDate?.timeIntervalSince1970 ?? 0
@@ -51,7 +51,7 @@ extension WebDocumentLoader {
         }
     }
 
-    static func epubCacheRoot() throws -> URL {
+    package static func epubCacheRoot() throws -> URL {
         let root = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
             ?? FileManager.default.temporaryDirectory
         let cacheRoot = root
@@ -61,7 +61,7 @@ extension WebDocumentLoader {
         return cacheRoot
     }
 
-    static func cleanupOldEPUBCacheEntries(in cacheRoot: URL, keeping currentKey: String) {
+    package static func cleanupOldEPUBCacheEntries(in cacheRoot: URL, keeping currentKey: String) {
         let entries: [URL]
         do {
             entries = try FileManager.default.contentsOfDirectory(
@@ -93,11 +93,11 @@ extension WebDocumentLoader {
         }
     }
 
-    static func logEPUBCacheFailure(_ message: String, error: Error) {
+    package static func logEPUBCacheFailure(_ message: String, error: Error) {
         NSLog("LeafReader EPUB cache: %@ (error=%@)", message, error.localizedDescription)
     }
 
-    static func unzip(url: URL) throws -> URL {
+    package static func unzip(url: URL) throws -> URL {
         let destination = FileManager.default.temporaryDirectory
             .appendingPathComponent("LeafReader-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
@@ -105,7 +105,7 @@ extension WebDocumentLoader {
         return destination
     }
 
-    static func unzip(url: URL, to destination: URL) throws {
+    package static func unzip(url: URL, to destination: URL) throws {
         let result = try ProcessRunner.run(
             executableURL: URL(fileURLWithPath: "/usr/bin/unzip"),
             arguments: ["-qq", "-o", url.path, "-d", destination.path],
@@ -126,7 +126,7 @@ extension WebDocumentLoader {
         }
     }
 
-    static func zipEntryData(in url: URL, entryPath: String) throws -> Data? {
+    package static func zipEntryData(in url: URL, entryPath: String) throws -> Data? {
         guard let entryPath = EPUBPathResolver.safeArchivePath(entryPath) else { return nil }
         let result = try ProcessRunner.run(
             executableURL: URL(fileURLWithPath: "/usr/bin/unzip"),

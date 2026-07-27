@@ -1,17 +1,17 @@
 import Foundation
 
-struct DOCXParagraph {
-    let html: String
-    let text: String
-    let tag: String
-    let classes: [String]
-    let isListItem: Bool
+package struct DOCXParagraph {
+    package let html: String
+    package let text: String
+    package let tag: String
+    package let classes: [String]
+    package let isListItem: Bool
 }
 
 extension WebDocumentLoader {
     // MARK: - DOCX Loading
 
-    static func loadDOCX(url: URL) throws -> WebReadableDocument {
+    package static func loadDOCX(url: URL) throws -> WebReadableDocument {
         let directory = try unzip(url: url)
         let documentURL = directory.appendingPathComponent("word/document.xml")
         let xml = try String(contentsOf: documentURL, encoding: .utf8)
@@ -33,7 +33,7 @@ extension WebDocumentLoader {
 
     // MARK: - DOCX Rendering
 
-    static func docxParagraphs(from xml: String) -> [String] {
+    package static func docxParagraphs(from xml: String) -> [String] {
         let paragraphMatches = regexMatches(#"<w:p\b[\s\S]*?</w:p>"#, in: xml).compactMap(\.first)
         return paragraphMatches.map { paragraph in
             regexMatches(#"<w:t\b[^>]*>([\s\S]*?)</w:t>"#, in: paragraph)
@@ -43,7 +43,7 @@ extension WebDocumentLoader {
         }.filter { !$0.isEmpty }
     }
 
-    static let docxReaderStyles = """
+    package static let docxReaderStyles = """
             .docx-document { max-width: 760px; margin: 0 auto; }
             .docx-document h1 { font-size: 1.72em; margin: 0 0 1.1em; color: #1f3f68; font-weight: 760; line-height: 1.28; }
             .docx-document h2 { font-size: 1.34em; margin: 1.75em 0 .72em; color: #245b8f; font-weight: 720; line-height: 1.32; }
@@ -60,7 +60,7 @@ extension WebDocumentLoader {
             .docx-document img { max-width: min(100%, 680px); height: auto; margin: 1.2em auto; }
             """
 
-    static func docxBodyHTML(from xml: String, directory: URL, relationships: [String: String]) -> String {
+    package static func docxBodyHTML(from xml: String, directory: URL, relationships: [String: String]) -> String {
         let body = regexMatches(#"<w:body\b[^>]*>([\s\S]*?)</w:body>"#, in: xml).first.flatMap { $0.count > 1 ? $0[1] : nil } ?? xml
         var output: [String] = ["<main class=\"docx-document\">"]
         var listOpen = false
@@ -106,7 +106,7 @@ extension WebDocumentLoader {
         return output.joined(separator: "\n")
     }
 
-    static func docxTopLevelBlocks(from body: String) -> [String] {
+    package static func docxTopLevelBlocks(from body: String) -> [String] {
         let nsBody = body as NSString
         var blocks: [String] = []
         var cursor = 0
@@ -127,7 +127,7 @@ extension WebDocumentLoader {
         return blocks
     }
 
-    static func docxTableHTML(from table: String, directory: URL, relationships: [String: String]) -> String {
+    package static func docxTableHTML(from table: String, directory: URL, relationships: [String: String]) -> String {
         let rows = regexMatches(#"<w:tr\b[\s\S]*?</w:tr>"#, in: table).compactMap(\.first)
         let htmlRows = rows.map { row in
             let cells = regexMatches(#"<w:tc\b[\s\S]*?</w:tc>"#, in: row).compactMap(\.first)
@@ -145,7 +145,7 @@ extension WebDocumentLoader {
         return "<table>\(htmlRows)</table>"
     }
 
-    static func docxParagraphHTML(from paragraph: String, directory: URL, relationships: [String: String]) -> DOCXParagraph {
+    package static func docxParagraphHTML(from paragraph: String, directory: URL, relationships: [String: String]) -> DOCXParagraph {
         let style = firstXMLAttribute("w:val", in: regexMatches(#"<w:pStyle\b[^>]*/?>"#, in: paragraph).first?.first ?? "") ?? ""
         let alignment = firstXMLAttribute("w:val", in: regexMatches(#"<w:jc\b[^>]*/?>"#, in: paragraph).first?.first ?? "")
         let runs = regexMatches(#"<w:hyperlink\b[\s\S]*?</w:hyperlink>|<w:r\b[\s\S]*?</w:r>"#, in: paragraph).compactMap(\.first)
@@ -185,7 +185,7 @@ extension WebDocumentLoader {
         return DOCXParagraph(html: html, text: text, tag: tag, classes: classes, isListItem: isListItem)
     }
 
-    static func docxInlineHTML(from runOrHyperlink: String, directory: URL, relationships: [String: String]) -> String {
+    package static func docxInlineHTML(from runOrHyperlink: String, directory: URL, relationships: [String: String]) -> String {
         if runOrHyperlink.hasPrefix("<w:hyperlink") {
             let rid = firstXMLAttribute("r:id", in: runOrHyperlink)
             let inner = regexMatches(#"<w:r\b[\s\S]*?</w:r>"#, in: runOrHyperlink).compactMap(\.first)
@@ -226,7 +226,7 @@ extension WebDocumentLoader {
         return html
     }
 
-    static func docxMediaURL(for relationshipID: String, directory: URL, relationships: [String: String]) -> URL? {
+    package static func docxMediaURL(for relationshipID: String, directory: URL, relationships: [String: String]) -> URL? {
         guard let target = relationships[relationshipID] else { return nil }
         if target.hasPrefix("http://") || target.hasPrefix("https://") {
             return URL(string: target)
@@ -234,7 +234,7 @@ extension WebDocumentLoader {
         return directory.appendingPathComponent("word").appendingPathComponent(target)
     }
 
-    static func docxRelationships(from url: URL) -> [String: String] {
+    package static func docxRelationships(from url: URL) -> [String: String] {
         guard let xml = try? String(contentsOf: url, encoding: .utf8) else { return [:] }
         var relationships: [String: String] = [:]
         let pattern = #"<Relationship\b[^>]*\bId=["']([^"']+)["'][^>]*\bTarget=["']([^"']+)["'][^>]*/?>"#
@@ -244,7 +244,7 @@ extension WebDocumentLoader {
         return relationships
     }
 
-    static func docxTOCItems(from bodyHTML: String) -> [ReaderTOCItem] {
+    package static func docxTOCItems(from bodyHTML: String) -> [ReaderTOCItem] {
         var index = 0
         return regexMatches(#"<h([1-3])\b[^>]*>([\s\S]*?)</h\1>"#, in: bodyHTML).compactMap { match in
             guard match.count > 2, let headingLevel = Int(match[1]) else { return nil }

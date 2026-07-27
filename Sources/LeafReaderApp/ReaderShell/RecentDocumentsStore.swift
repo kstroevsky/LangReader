@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 struct RecentDocumentItem: Codable {
     let path: String

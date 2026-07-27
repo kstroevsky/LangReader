@@ -1,12 +1,12 @@
 import Foundation
 
-enum EPUBPathResolver {
+package enum EPUBPathResolver {
     private struct HrefParts {
         let path: String
         let fragment: String
     }
 
-    static func safeArchivePath(_ path: String) -> String? {
+    package static func safeArchivePath(_ path: String) -> String? {
         let standardized = (path as NSString).standardizingPath
         let components = standardized.split(separator: "/").map(String.init)
         guard !standardized.isEmpty,
@@ -20,7 +20,7 @@ enum EPUBPathResolver {
         return standardized
     }
 
-    static func normalizedTOCHref(_ href: String, relativeTo baseHref: String) -> String {
+    package static func normalizedTOCHref(_ href: String, relativeTo baseHref: String) -> String {
         let decodedHref = EPUBHTMLSanitizer.decodeEntities(href).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !decodedHref.isEmpty else { return decodedHref }
         let hrefParts = splitHref(decodedHref)
@@ -38,7 +38,7 @@ enum EPUBPathResolver {
         return hrefWithFragment(path: path, fragment: hrefParts.fragment)
     }
 
-    static func internalLinkTarget(_ href: String, resourceBaseURL: URL, documentBaseURL: URL, epubRootURL: URL) -> String? {
+    package static func internalLinkTarget(_ href: String, resourceBaseURL: URL, documentBaseURL: URL, epubRootURL: URL) -> String? {
         let decodedHref = EPUBHTMLSanitizer.decodeEntities(href).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !decodedHref.isEmpty,
               !decodedHref.lowercased().hasPrefix("data:") else { return nil }
@@ -50,7 +50,7 @@ enum EPUBPathResolver {
         return hrefWithFragment(path: path, fragment: hrefParts.fragment)
     }
 
-    static func resourcePath(_ href: String, resourceBaseURL: URL, documentBaseURL: URL, epubRootURL: URL, allowedCharacters: CharacterSet) -> String? {
+    package static func resourcePath(_ href: String, resourceBaseURL: URL, documentBaseURL: URL, epubRootURL: URL, allowedCharacters: CharacterSet) -> String? {
         let hrefWithoutFragment = href.split(separator: "#", maxSplits: 1, omittingEmptySubsequences: false).first.map(String.init) ?? href
         guard !hrefWithoutFragment.isEmpty,
               !hrefWithoutFragment.lowercased().hasPrefix("data:") else { return nil }
@@ -61,13 +61,13 @@ enum EPUBPathResolver {
             .addingPercentEncoding(withAllowedCharacters: allowedCharacters)
     }
 
-    static func isFileURL(_ url: URL, containedIn rootURL: URL) -> Bool {
+    package static func isFileURL(_ url: URL, containedIn rootURL: URL) -> Bool {
         let path = url.standardizedFileURL.path
         let rootPath = rootURL.standardizedFileURL.path
         return path == rootPath || path.hasPrefix(rootPath.hasSuffix("/") ? rootPath : "\(rootPath)/")
     }
 
-    static func relativeFilePath(from baseURL: URL, to resourceURL: URL) -> String {
+    package static func relativeFilePath(from baseURL: URL, to resourceURL: URL) -> String {
         let baseComponents = baseURL.standardizedFileURL.pathComponents
         let resourceComponents = resourceURL.standardizedFileURL.pathComponents
         var commonCount = 0
@@ -82,7 +82,7 @@ enum EPUBPathResolver {
         return path.isEmpty ? resourceURL.lastPathComponent : path
     }
 
-    static func normalizedRelativePath(_ path: String) -> String {
+    package static func normalizedRelativePath(_ path: String) -> String {
         let isAbsolute = path.hasPrefix("/")
         var components: [String] = []
         for component in path.split(separator: "/", omittingEmptySubsequences: true).map(String.init) {

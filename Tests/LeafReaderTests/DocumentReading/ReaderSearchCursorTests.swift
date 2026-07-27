@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 /// The search cursor's rules, previously inlined at each call site as modular
 /// arithmetic and duplicated query-reset checks.

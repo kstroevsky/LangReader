@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum ReaderBottomBarItemTests {
     static func testEveryControlIsPlacedExactlyOnce() throws {

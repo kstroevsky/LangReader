@@ -1,14 +1,14 @@
 import Foundation
 
-enum EPUBTextDecoder {
+package enum EPUBTextDecoder {
     // MARK: - Public API
 
-    static func text(at url: URL) throws -> String {
+    package static func text(at url: URL) throws -> String {
         let data = try Data(contentsOf: url)
         return text(from: data) ?? String(decoding: data, as: UTF8.self)
     }
 
-    static func text(from data: Data) -> String? {
+    package static func text(from data: Data) -> String? {
         if data.starts(with: [0xEF, 0xBB, 0xBF]) {
             return String(data: data.dropFirst(3), encoding: .utf8)
         }

@@ -4,6 +4,7 @@ import CryptoKit
 import PDFKit
 import UniformTypeIdentifiers
 import WebKit
+import LeafReaderCore
 
 final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFViewDelegate, NSTextFieldDelegate, WKScriptMessageHandler, WKNavigationDelegate {
     struct PendingPDFWordRecord {

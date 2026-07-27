@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 struct ReadingContextSnapshot {
     let title: String

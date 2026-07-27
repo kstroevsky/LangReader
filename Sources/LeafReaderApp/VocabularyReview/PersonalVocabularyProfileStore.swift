@@ -1,5 +1,6 @@
 import Foundation
 import SQLite3
+import LeafReaderCore
 
 private let PERSONAL_VOCABULARY_SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 

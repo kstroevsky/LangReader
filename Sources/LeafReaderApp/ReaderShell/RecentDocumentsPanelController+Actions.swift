@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension RecentDocumentsPanelController {
     func shelfBackgroundColor(for theme: ReaderTheme) -> NSColor {

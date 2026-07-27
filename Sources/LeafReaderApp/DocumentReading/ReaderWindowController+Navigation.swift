@@ -1,4 +1,5 @@
 import PDFKit
+import LeafReaderCore
 
 extension ReaderWindowController {
     @objc func applyPageFromField() {

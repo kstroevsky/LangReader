@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 /// Content-derived presentation data for the current Document Session.
 ///

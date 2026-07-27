@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 /// The document-scoped state that survives while one document is open in the Reader Shell.
 ///

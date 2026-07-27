@@ -1,6 +1,7 @@
 import Cocoa
 import CryptoKit
 import PDFKit
+import LeafReaderCore
 
 /// Renders and caches the cover thumbnails shown on the shelf.
 ///

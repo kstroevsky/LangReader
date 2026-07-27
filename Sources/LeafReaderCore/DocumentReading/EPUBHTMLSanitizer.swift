@@ -1,6 +1,6 @@
 import Foundation
 
-enum EPUBHTMLSanitizer {
+package enum EPUBHTMLSanitizer {
     private static let removableBlockPatterns = [
         #"(?i)<script\b[\s\S]*?</script>"#,
         #"(?i)<style\b[\s\S]*?</style>"#,
@@ -38,7 +38,7 @@ enum EPUBHTMLSanitizer {
         ("&amp;", "&")
     ]
 
-    static func sanitizeContent(_ html: String) -> String {
+    package static func sanitizeContent(_ html: String) -> String {
         var output = html
         for pattern in removableBlockPatterns + eventAttributePatterns {
             output = output.replacingOccurrences(of: pattern, with: "", options: .regularExpression)
@@ -54,7 +54,7 @@ enum EPUBHTMLSanitizer {
         return addLazyLoadingToImages(in: output)
     }
 
-    static func addLazyLoadingToImages(in html: String) -> String {
+    package static func addLazyLoadingToImages(in html: String) -> String {
         guard let regex = cachedRegex(#"(?i)<img\b[^>]*>"#) else { return html }
         let nsHTML = html as NSString
         var output = ""
@@ -77,7 +77,7 @@ enum EPUBHTMLSanitizer {
         return output
     }
 
-    static func plainText(from html: String) -> String {
+    package static func plainText(from html: String) -> String {
         decodeEntities(html
             .replacingOccurrences(of: #"<script\b[\s\S]*?</script>"#, with: " ", options: [.regularExpression, .caseInsensitive])
             .replacingOccurrences(of: #"<style\b[\s\S]*?</style>"#, with: " ", options: [.regularExpression, .caseInsensitive])
@@ -86,7 +86,7 @@ enum EPUBHTMLSanitizer {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func unreadableBody(diagnostics: [String]) -> String {
+    package static func unreadableBody(diagnostics: [String]) -> String {
         let items = diagnostics.prefix(8).map { "<li>\(escapeHTML($0))</li>" }.joined()
         let details = items.isEmpty ? "" : "<ul>\(items)</ul>"
         return """
@@ -97,7 +97,7 @@ enum EPUBHTMLSanitizer {
         """
     }
 
-    static func escapeHTML(_ text: String) -> String {
+    package static func escapeHTML(_ text: String) -> String {
         text
             .replacingOccurrences(of: "&", with: "&amp;")
             .replacingOccurrences(of: "<", with: "&lt;")
@@ -105,7 +105,7 @@ enum EPUBHTMLSanitizer {
             .replacingOccurrences(of: "\"", with: "&quot;")
     }
 
-    static func decodeEntities(_ text: String) -> String {
+    package static func decodeEntities(_ text: String) -> String {
         var output = decodeNumericEntities(in: text)
         for entity in namedEntities {
             output = output.replacingOccurrences(of: entity.entity, with: entity.replacement)

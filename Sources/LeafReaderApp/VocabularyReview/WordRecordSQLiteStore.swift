@@ -1,5 +1,6 @@
 import Foundation
 import SQLite3
+import LeafReaderCore
 
 final class WordRecordSQLiteStore {
     static let shared = WordRecordSQLiteStore(databaseURL: defaultDatabaseURL())

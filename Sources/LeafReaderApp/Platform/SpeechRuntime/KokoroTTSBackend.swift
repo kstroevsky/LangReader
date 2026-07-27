@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 final class KokoroTTSBackend {
     private static let responseTimeout: TimeInterval = 45

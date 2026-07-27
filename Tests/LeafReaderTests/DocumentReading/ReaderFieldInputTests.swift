@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum ReaderFieldInputTests {
     static func testZoomAcceptsWhatTheFieldItselfDisplays() throws {

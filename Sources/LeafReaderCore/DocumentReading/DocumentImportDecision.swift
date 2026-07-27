@@ -1,12 +1,12 @@
 import Foundation
 
 /// Decides whether a Finder drop opens one document or presents the shelf for a batch.
-enum DocumentImportDecision: Equatable {
+package enum DocumentImportDecision: Equatable {
     case ignore
     case open(URL)
     case showShelf([URL])
 
-    static func make(urls: [URL]) -> DocumentImportDecision {
+    package static func make(urls: [URL]) -> DocumentImportDecision {
         let supported = supportedUniqueURLs(urls)
         guard !supported.isEmpty else { return .ignore }
 

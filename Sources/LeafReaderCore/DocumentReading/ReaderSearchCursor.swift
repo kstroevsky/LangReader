@@ -12,18 +12,20 @@ import Foundation
 /// The cursor deliberately stores only the *count* of hits, not the hits
 /// themselves: the PDF path holds `PDFSelection`s and the web path holds
 /// positions inside the page, and neither belongs in shared state.
-struct ReaderSearchCursor: Equatable {
-    /// The query these results belong to. Empty when there is no active search.
-    private(set) var query: String = ""
-    /// How many hits the current query produced.
-    private(set) var total: Int = 0
-    /// Which hit is selected, zero-based. Always within `0..<total`.
-    private(set) var index: Int = 0
+package struct ReaderSearchCursor: Equatable {
+    package init() {}
 
-    var isEmpty: Bool { total == 0 }
+    /// The query these results belong to. Empty when there is no active search.
+    package private(set) var query: String = ""
+    /// How many hits the current query produced.
+    package private(set) var total: Int = 0
+    /// Which hit is selected, zero-based. Always within `0..<total`.
+    package private(set) var index: Int = 0
+
+    package var isEmpty: Bool { total == 0 }
 
     /// What a fresh query should do, so callers do not re-derive it.
-    enum QueryChange: Equatable {
+    package enum QueryChange: Equatable {
         /// A different query: the caller must find hits again.
         case needsSearch
         /// The same query repeated: advance to the next hit instead.
@@ -35,7 +37,7 @@ struct ReaderSearchCursor: Equatable {
     /// Submitting the same query again is how "find next" is spelled from the
     /// search field, which is why an unchanged query advances rather than
     /// re-running the search.
-    mutating func submit(query newQuery: String) -> QueryChange {
+    package mutating func submit(query newQuery: String) -> QueryChange {
         guard newQuery == query else {
             query = newQuery
             total = 0
@@ -46,39 +48,39 @@ struct ReaderSearchCursor: Equatable {
     }
 
     /// Records the hit count for the current query, selecting the first hit.
-    mutating func setTotal(_ newTotal: Int) {
+    package mutating func setTotal(_ newTotal: Int) {
         total = max(0, newTotal)
         index = 0
     }
 
     /// Adopts a one-based position reported by the web search, which counts from
     /// one and reports zero when nothing matched.
-    mutating func adoptOneBased(index oneBased: Int, total newTotal: Int) {
+    package mutating func adoptOneBased(index oneBased: Int, total newTotal: Int) {
         total = max(0, newTotal)
         index = max(0, oneBased - 1)
         if total > 0 { index = min(index, total - 1) }
     }
 
     /// Moves to the next hit, wrapping past the end.
-    mutating func advance() {
+    package mutating func advance() {
         guard total > 0 else { return }
         index = (index + 1) % total
     }
 
     /// Moves to the previous hit, wrapping past the start.
-    mutating func retreat() {
+    package mutating func retreat() {
         guard total > 0 else { return }
         index = (index - 1 + total) % total
     }
 
-    mutating func clear() {
+    package mutating func clear() {
         query = ""
         total = 0
         index = 0
     }
 
     /// The "3 / 12" label, and "0 / 0" when there is nothing to show.
-    var resultText: String {
+    package var resultText: String {
         total > 0 ? "\(index + 1) / \(total)" : "0 / 0"
     }
 }

@@ -7,10 +7,24 @@ APP_SOURCE_ROOT="Sources/LeafReaderApp"
 TEST_SOURCE_ROOT="Tests/LeafReaderTests"
 export CLANG_MODULE_CACHE_PATH="${CLANG_MODULE_CACHE_PATH:-/private/tmp/leafreader-clang-cache}"
 
+# The logic tests link `LeafReaderCore` as a real module rather than compiling
+# its sources in. That keeps the tests honest about the boundary: a test can
+# only reach what the core actually exposes, and a core type that quietly starts
+# needing AppKit fails when the module is built, not here.
+CORE_BUILD_DIR="$(mktemp -d "${TMPDIR:-/tmp}/leafreader-core-tests.XXXXXX")"
+trap 'rm -rf "$CORE_BUILD_DIR"' EXIT
+./scripts/build_core_module.sh "$CORE_BUILD_DIR" >/dev/null
+CORE_MODULE_FLAGS=(
+  -package-name LeafReader
+  -I "$CORE_BUILD_DIR"
+  -L "$CORE_BUILD_DIR"
+  -lLeafReaderCore
+)
+
 run_swift_test() {
   local output="$1"
   shift
-  swiftc "$@" -o "$output"
+  swiftc "${CORE_MODULE_FLAGS[@]}" "$@" -o "$output"
   "$output"
 }
 
@@ -19,7 +33,7 @@ LOGIC_APP_SOURCES=()
 always_include_logic_app_source() {
   local base="$1"
   case "$base" in
-    ReadingNoteEditorViews.swift|SelectionToolbarConfiguration.swift|ReaderChromeState.swift|ReaderToolbarItem.swift|ReaderSelectionState.swift|ReaderWebPresentation.swift|ReaderSelectionPresentation.swift)
+    ReadingNoteEditorViews.swift|SelectionToolbarConfiguration.swift|ReaderChromeState.swift|ReaderToolbarItem.swift)
       return 0
       ;;
   esac
@@ -126,7 +140,6 @@ collect_logic_app_sources() {
 
 SQLITE_WORD_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/VocabularyReview/SQLiteWordRecordStoreTests.swift"
-  "$APP_SOURCE_ROOT/App/AppIdentity.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularySRS.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularyTextPolicy.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/StoredPDFWordRect.swift"
@@ -141,19 +154,16 @@ SQLITE_WORD_TEST_SOURCES=(
 
 PERSONAL_VOCABULARY_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/VocabularyReview/PersonalVocabularyProfileStoreTests.swift"
-  "$APP_SOURCE_ROOT/App/AppIdentity.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/PersonalVocabularyProfile.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/PersonalVocabularyProfileStore.swift"
 )
 
 REGRESSION_TEST_SOURCES=(
-  "$APP_SOURCE_ROOT/Support/ProcessRunner.swift"
   "$APP_SOURCE_ROOT/App/LaunchPerformanceTracker.swift"
   "$APP_SOURCE_ROOT/AIConversation/AIRequestState.swift"
   "$APP_SOURCE_ROOT/SharedUI/MarkdownRenderer.swift"
   "$APP_SOURCE_ROOT/SharedUI/MarkdownBlockParser.swift"
   "$APP_SOURCE_ROOT/SharedUI/MarkdownInlineParser.swift"
-  "$APP_SOURCE_ROOT/DocumentReading/DocumentIdentity.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/StoredPDFWordRect.swift"
   "$APP_SOURCE_ROOT/AIConversation/AIConversationStore.swift"
   "$TEST_SOURCE_ROOT/Support/RegressionTests.swift"
@@ -212,7 +222,6 @@ run_swift_test /tmp/leafreader-personal-vocabulary-tests \
 
 run_swift_test /tmp/leafreader-pdf-embedding-store-tests \
   "$TEST_SOURCE_ROOT/DocumentReading/PDFEmbeddingStoreTests.swift" \
-  "$APP_SOURCE_ROOT/App/AppIdentity.swift" \
   "$APP_SOURCE_ROOT/AIConversation/PDFEmbeddingStore.swift" \
   "$APP_SOURCE_ROOT/AIConversation/PDFDocumentAgentIndex.swift" \
   "$APP_SOURCE_ROOT/AIConversation/ReaderAIContextBuilder.swift" \
@@ -248,7 +257,6 @@ run_swift_test /tmp/leafreader-theme-palette-tests \
 run_swift_test /tmp/leafreader-vocabulary-record-provider-tests \
   "$TEST_SOURCE_ROOT/VocabularyReview/VocabularyRecordProviderTests.swift" \
   "$APP_SOURCE_ROOT/App/AppText.swift" \
-  "$APP_SOURCE_ROOT/DocumentReading/ReaderDocumentKind.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/StoredPDFWordRect.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularySRS.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularyTextPolicy.swift" \
@@ -261,7 +269,6 @@ run_swift_test /tmp/leafreader-vocabulary-record-provider-tests \
 run_swift_test /tmp/leafreader-vocabulary-library-record-provider-tests \
   "$TEST_SOURCE_ROOT/VocabularyReview/VocabularyLibraryRecordProviderTests.swift" \
   "$APP_SOURCE_ROOT/App/AppText.swift" \
-  "$APP_SOURCE_ROOT/DocumentReading/ReaderDocumentKind.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/StoredPDFWordRect.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularySRS.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularyTextPolicy.swift" \

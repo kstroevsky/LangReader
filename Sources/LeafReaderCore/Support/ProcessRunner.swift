@@ -1,15 +1,15 @@
 import Darwin
 import Foundation
 
-struct ProcessRunResult {
-    let terminationStatus: Int32
-    let stdout: Data
-    let stderr: Data
-    let timedOut: Bool
+package struct ProcessRunResult {
+    package let terminationStatus: Int32
+    package let stdout: Data
+    package let stderr: Data
+    package let timedOut: Bool
 }
 
-enum ProcessRunner {
-    static func run(
+package enum ProcessRunner {
+    package static func run(
         executableURL: URL,
         arguments: [String],
         timeout: TimeInterval,
@@ -79,7 +79,14 @@ enum ProcessRunner {
     }
 }
 
-private final class LockedProcessBuffer {
+/// Accumulates a child process's output from the pipe-reading callbacks, which
+/// run on Foundation's own queue rather than the caller's thread.
+///
+/// `@unchecked Sendable` is accurate rather than a waiver: every access to
+/// `storage` goes through `lock`, and the type exposes no way to reach it
+/// otherwise. Swift 6 cannot see that a lock covers a field, so the guarantee
+/// has to be asserted here.
+private final class LockedProcessBuffer: @unchecked Sendable {
     private let lock = NSLock()
     private var storage = Data()
 

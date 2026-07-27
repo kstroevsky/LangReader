@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum DocumentSessionLogicTests {
     static func testLoadTicketsRejectSupersededAndUnloadedWork() throws {

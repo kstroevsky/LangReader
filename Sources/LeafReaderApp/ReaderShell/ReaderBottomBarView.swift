@@ -1,4 +1,5 @@
 import SwiftUI
+import LeafReaderCore
 
 /// State behind the reader's bottom bar.
 ///

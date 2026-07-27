@@ -11,8 +11,8 @@ import Foundation
 /// Carries no AppKit references: the controller turns each descriptor into a
 /// real button and supplies the action, which keeps the composition rules
 /// testable.
-struct ReaderBottomBarItem: Equatable {
-    enum Identifier: String, Equatable, CaseIterable {
+package struct ReaderBottomBarItem: Equatable {
+    package enum Identifier: String, Equatable, CaseIterable {
         case settings
         case shelf
         case words
@@ -32,11 +32,11 @@ struct ReaderBottomBarItem: Equatable {
         /// and any assistive tech should find the same control whatever the
         /// interface language, and this identifier will carry over unchanged
         /// when the bar is rebuilt in SwiftUI.
-        var accessibilityIdentifier: String { "bottomBar.\(rawValue)" }
+        package var accessibilityIdentifier: String { "bottomBar.\(rawValue)" }
     }
 
     /// Which cluster of the bar the control belongs to.
-    enum Cluster: Equatable {
+    package enum Cluster: Equatable {
         /// The gear, pinned to the leading edge on its own.
         case settings
         /// The panel-opening buttons, in order after the gear.
@@ -47,21 +47,21 @@ struct ReaderBottomBarItem: Equatable {
         case embedding
     }
 
-    let id: Identifier
-    let cluster: Cluster
+    package let id: Identifier
+    package let cluster: Cluster
     /// Whether the button draws its symbol beside the title. The navigation
     /// group does not: those buttons sit together and read as a unit, so a
     /// symbol on each adds noise rather than meaning.
-    let showsLeadingSymbol: Bool
+    package let showsLeadingSymbol: Bool
 
     /// True for controls that are only shown while an AI analysis is running.
-    var isTransient: Bool { cluster == .embedding }
+    package var isTransient: Bool { cluster == .embedding }
 }
 
-enum ReaderBottomBarLayout {
+package enum ReaderBottomBarLayout {
     /// The whole specification of the bar. Reordering is reordering this array;
     /// adding a button is appending one entry.
-    static let items: [ReaderBottomBarItem] = [
+    package static let items: [ReaderBottomBarItem] = [
         ReaderBottomBarItem(id: .settings, cluster: .settings, showsLeadingSymbol: false),
         // Order matches the on-screen bar: Shelf, Words, Review, Notes. The
         // named layout constraints put Review before Notes, so the descriptor
@@ -80,7 +80,7 @@ enum ReaderBottomBarLayout {
         ReaderBottomBarItem(id: .embeddingCancel, cluster: .embedding, showsLeadingSymbol: false)
     ]
 
-    static func items(in cluster: ReaderBottomBarItem.Cluster) -> [ReaderBottomBarItem] {
+    package static func items(in cluster: ReaderBottomBarItem.Cluster) -> [ReaderBottomBarItem] {
         items.filter { $0.cluster == cluster }
     }
 }

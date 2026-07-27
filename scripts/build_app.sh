@@ -3,6 +3,11 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP_SOURCE_ROOT="$ROOT_DIR/Sources/LeafReaderApp"
+# The shipped binary compiles the core and the app as one module, so it keeps
+# whole-module optimisation across the seam. The module *boundary* is proven
+# separately by `swift build`, which builds them as two targets — see
+# `scripts/check_core_portable.sh` and Package.swift.
+CORE_SOURCE_ROOT="$ROOT_DIR/Sources/LeafReaderCore"
 APP_RESOURCE_ROOT="$APP_SOURCE_ROOT/Resources"
 APP_METADATA_ROOT="$APP_SOURCE_ROOT/App"
 APP_NAME="Leaf Vocabulary"
@@ -321,6 +326,12 @@ if [[ "${#APP_SWIFT_SOURCES[@]}" -eq 0 ]]; then
   echo "No Swift app sources found under $APP_SOURCE_ROOT" >&2
   exit 1
 fi
+if ! find "$CORE_SOURCE_ROOT" -type f -name '*.swift' -print -quit | grep -q .; then
+  echo "No Swift core sources found under $CORE_SOURCE_ROOT" >&2
+  exit 1
+fi
+CORE_BUILD_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/leafreader-core-build.XXXXXX")"
+trap 'rm -rf "$CORE_BUILD_ROOT"' EXIT
 if [[ ! -f "$APP_SOURCE_ROOT/App/main.swift" ]]; then
   echo "App entry point not found at $APP_SOURCE_ROOT/App/main.swift" >&2
   exit 1
@@ -328,9 +339,18 @@ fi
 TEMP_BINARIES=()
 for ARCH in "${BUILD_ARCHS[@]}"; do
   ARCH_BINARY="$APP_PATH/Contents/MacOS/$APP_NAME-$ARCH"
+  ARCH_TRIPLE="$ARCH-apple-macos$MACOS_DEPLOYMENT_TARGET"
+  # Per architecture, because a .swiftmodule records the triple it was built for.
+  CORE_BUILD_DIR="$CORE_BUILD_ROOT/$ARCH"
+  "$ROOT_DIR/scripts/build_core_module.sh" "$CORE_BUILD_DIR" "$ARCH_TRIPLE" \
+    "${SWIFT_BUILD_FLAGS[@]}"
   swiftc "${APP_SWIFT_SOURCES[@]}" \
     "${SWIFT_BUILD_FLAGS[@]}" \
-    -target "$ARCH-apple-macos$MACOS_DEPLOYMENT_TARGET" \
+    -target "$ARCH_TRIPLE" \
+    -package-name LeafReader \
+    -I "$CORE_BUILD_DIR" \
+    -L "$CORE_BUILD_DIR" \
+    -lLeafReaderCore \
     -F "$SPARKLE_HOME" \
     -o "$ARCH_BINARY" \
     -framework Cocoa \

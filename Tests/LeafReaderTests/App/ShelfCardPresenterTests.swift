@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum ShelfCardPresenterTests {
     static func testDocumentKindText() throws {

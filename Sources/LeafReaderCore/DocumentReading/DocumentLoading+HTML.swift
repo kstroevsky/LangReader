@@ -3,7 +3,7 @@ import Foundation
 extension WebDocumentLoader {
     // MARK: - HTML Rewriting and Sanitizing
 
-    static func rewriteRelativeLinks(
+    package static func rewriteRelativeLinks(
         in html: String,
         resourceBaseURL: URL,
         documentBaseURL: URL,
@@ -28,7 +28,7 @@ extension WebDocumentLoader {
         return output
     }
 
-    static func rewriteHTMLAttributeURLs(
+    package static func rewriteHTMLAttributeURLs(
         in html: String,
         attributePattern: String,
         resourceBaseURL: URL,
@@ -70,7 +70,7 @@ extension WebDocumentLoader {
         return output
     }
 
-    static func rewriteEPUBInternalLinks(
+    package static func rewriteEPUBInternalLinks(
         in html: String,
         resourceBaseURL: URL,
         documentBaseURL: URL,
@@ -101,7 +101,7 @@ extension WebDocumentLoader {
         return output
     }
 
-    static func epubResourcePath(
+    package static func epubResourcePath(
         _ href: String,
         resourceBaseURL: URL,
         documentBaseURL: URL,
@@ -116,14 +116,14 @@ extension WebDocumentLoader {
         )
     }
 
-    static var epubPathAllowedCharacters: CharacterSet {
+    package static var epubPathAllowedCharacters: CharacterSet {
         var allowed = CharacterSet.urlPathAllowed
         allowed.insert("/")
         allowed.remove(charactersIn: "#?")
         return allowed
     }
 
-    static func htmlBodyFragment(from html: String) -> HTMLBodyFragment {
+    package static func htmlBodyFragment(from html: String) -> HTMLBodyFragment {
         let pattern = #"<body\b([^>]*)>([\s\S]*?)</body>"#
         if let body = regexMatches(pattern, in: html).first, body.count > 2 {
             return HTMLBodyFragment(
@@ -142,7 +142,7 @@ extension WebDocumentLoader {
         )
     }
 
-    static func bodyClasses(from attributes: String) -> String {
+    package static func bodyClasses(from attributes: String) -> String {
         let pattern = #"\bclass=["']([^"']+)["']"#
         return regexMatches(pattern, in: attributes).first.flatMap { $0.count > 1 ? $0[1] : nil } ?? ""
     }
@@ -327,18 +327,7 @@ extension WebDocumentLoader {
     }
 
     static func cachedRegex(_ pattern: String) -> NSRegularExpression? {
-        regexCacheLock.lock()
-        if let regex = regexCache[pattern] {
-            regexCacheLock.unlock()
-            return regex
-        }
-        regexCacheLock.unlock()
-
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else { return nil }
-        regexCacheLock.lock()
-        regexCache[pattern] = regex
-        regexCacheLock.unlock()
-        return regex
+        regexCache.regex(for: pattern)
     }
 
     static func escapeHTML(_ text: String) -> String {

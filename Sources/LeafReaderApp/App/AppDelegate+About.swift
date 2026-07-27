@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension AppDelegate {
     @objc func showAboutLeafReader(_ sender: Any?) {

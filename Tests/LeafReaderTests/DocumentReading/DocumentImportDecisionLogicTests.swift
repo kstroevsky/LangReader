@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum DocumentImportDecisionLogicTests {
     static func testSingleSupportedDropOpensDirectly() throws {

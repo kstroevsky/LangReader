@@ -1,27 +1,39 @@
 import Foundation
 
-struct EPUBManifestItem: Equatable {
-    let id: String
-    let href: String
-    let mediaType: String
-    let properties: Set<String>
+package struct EPUBManifestItem: Equatable {
+    package let id: String
+    package let href: String
+    package let mediaType: String
+    package let properties: Set<String>
+
+    package init(id: String, href: String, mediaType: String, properties: Set<String>) {
+        self.id = id
+        self.href = href
+        self.mediaType = mediaType
+        self.properties = properties
+    }
 }
 
-struct EPUBSpineItem: Equatable {
-    let id: String
-    let isLinear: Bool
+package struct EPUBSpineItem: Equatable {
+    package let id: String
+    package let isLinear: Bool
+
+    package init(id: String, isLinear: Bool) {
+        self.id = id
+        self.isLinear = isLinear
+    }
 }
 
-struct EPUBPackage {
-    let manifestItems: [EPUBManifestItem]
-    let manifest: [String: String]
-    let spineItems: [EPUBSpineItem]
+package struct EPUBPackage {
+    package let manifestItems: [EPUBManifestItem]
+    package let manifest: [String: String]
+    package let spineItems: [EPUBSpineItem]
 }
 
-enum EPUBPackageParser {
+package enum EPUBPackageParser {
     // MARK: - Public API
 
-    static func package(from xml: String) -> EPUBPackage {
+    package static func package(from xml: String) -> EPUBPackage {
         let parsed = opfParse(xml)
         let manifestItems = parsed.manifestItems.isEmpty ? manifestItemsByRegex(from: xml) : parsed.manifestItems
         let spineItems = parsed.spineItems.isEmpty ? spineItemsByRegex(from: xml) : parsed.spineItems
@@ -32,7 +44,7 @@ enum EPUBPackageParser {
         )
     }
 
-    static func spineItemsByRegex(from xml: String) -> [EPUBSpineItem] {
+    package static func spineItemsByRegex(from xml: String) -> [EPUBSpineItem] {
         regexMatches(#"<itemref\b[^>]*?/?>"#, in: xml).compactMap { match in
             guard let tag = match.first,
                   let id = firstXMLAttribute("idref", in: tag) else { return nil }
@@ -103,8 +115,8 @@ enum EPUBPackageParser {
 }
 
 private final class EPUBOPFParser: NSObject, XMLParserDelegate {
-    private(set) var manifestItems: [EPUBManifestItem] = []
-    private(set) var spineItems: [EPUBSpineItem] = []
+    package private(set) var manifestItems: [EPUBManifestItem] = []
+    package private(set) var spineItems: [EPUBSpineItem] = []
 
     func parser(
         _ parser: XMLParser,

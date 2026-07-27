@@ -3,7 +3,7 @@ import Foundation
 extension WebDocumentLoader {
     // MARK: - EPUB Loading
 
-    static func loadEPUB(url: URL) throws -> WebReadableDocument {
+    package static func loadEPUB(url: URL) throws -> WebReadableDocument {
         let directory = try unzipEPUBToCache(url: url)
         let containerURL = directory.appendingPathComponent("META-INF/container.xml")
         let containerXML = try EPUBTextDecoder.text(at: containerURL)
@@ -83,7 +83,7 @@ extension WebDocumentLoader {
         )
     }
 
-    static func coverImageData(forEPUB url: URL) throws -> Data? {
+    package static func coverImageData(forEPUB url: URL) throws -> Data? {
         guard let containerData = try zipEntryData(in: url, entryPath: "META-INF/container.xml"),
               let containerXML = EPUBTextDecoder.text(from: containerData),
               let opfPath = firstXMLAttribute("full-path", in: containerXML),
@@ -109,7 +109,7 @@ extension WebDocumentLoader {
 
     // MARK: - EPUB Text, Cover, and Resources
 
-    static func epubPlainText(from chapterURLs: [URL]) -> String {
+    package static func epubPlainText(from chapterURLs: [URL]) -> String {
         chapterURLs.compactMap { url in
             guard let chapter = try? EPUBTextDecoder.text(at: url) else { return nil }
             let text = EPUBHTMLSanitizer.plainText(from: chapter)
@@ -117,7 +117,7 @@ extension WebDocumentLoader {
         }.joined(separator: "\n\n")
     }
 
-    static func epubCoverImageURL(
+    package static func epubCoverImageURL(
         opfXML: String,
         manifestItems: [EPUBManifestItem],
         opfDirectory: URL,
@@ -137,7 +137,7 @@ extension WebDocumentLoader {
         ).flatMap { existingEPUBResourceURL($0, relativeTo: opfDirectory, epubRootURL: epubRootURL) }
     }
 
-    static func epubCoverImagePath(
+    package static func epubCoverImagePath(
         opfXML: String,
         manifestItems: [EPUBManifestItem],
         opfDirectoryPath: String,
@@ -155,7 +155,7 @@ extension WebDocumentLoader {
         ).map { epubZipPath($0, relativeTo: opfDirectoryPath) }
     }
 
-    static func epubCoverResourceHref(
+    package static func epubCoverResourceHref(
         opfXML: String,
         manifestItems: [EPUBManifestItem],
         resolveImage: (String) -> String?,
@@ -217,7 +217,7 @@ extension WebDocumentLoader {
         return nil
     }
 
-    static func epubFirstImageHref(in html: String) -> String? {
+    package static func epubFirstImageHref(in html: String) -> String? {
         let imageTags = regexMatches(#"(?i)<(?:img|image)\b[^>]*?/?>"#, in: html).compactMap(\.first)
         for tag in imageTags {
             let href = firstXMLAttribute("src", in: tag)
@@ -229,15 +229,15 @@ extension WebDocumentLoader {
         return nil
     }
 
-    static func isEPUBImageItem(_ item: EPUBManifestItem) -> Bool {
+    package static func isEPUBImageItem(_ item: EPUBManifestItem) -> Bool {
         item.mediaType.hasPrefix("image/") || isEPUBImagePath(item.href)
     }
 
-    static func isEPUBImagePath(_ path: String) -> Bool {
+    package static func isEPUBImagePath(_ path: String) -> Bool {
         ["jpg", "jpeg", "png", "gif", "webp", "svg"].contains(URL(fileURLWithPath: path).pathExtension.lowercased())
     }
 
-    static func existingEPUBResourceURL(_ href: String, relativeTo baseURL: URL, epubRootURL: URL) -> URL? {
+    package static func existingEPUBResourceURL(_ href: String, relativeTo baseURL: URL, epubRootURL: URL) -> URL? {
         let hrefWithoutFragment = href
             .split(separator: "#", maxSplits: 1, omittingEmptySubsequences: false)
             .first
@@ -250,13 +250,13 @@ extension WebDocumentLoader {
         return FileManager.default.fileExists(atPath: url.path) ? url : nil
     }
 
-    static func relativeEPUBHref(_ href: String, relativeTo documentHref: String) -> String {
+    package static func relativeEPUBHref(_ href: String, relativeTo documentHref: String) -> String {
         let documentDirectory = URL(fileURLWithPath: documentHref).deletingLastPathComponent().relativePath
         guard documentDirectory != "." else { return href }
         return "\(documentDirectory)/\(href)"
     }
 
-    static func epubZipPath(_ href: String, relativeTo opfDirectoryPath: String) -> String {
+    package static func epubZipPath(_ href: String, relativeTo opfDirectoryPath: String) -> String {
         let hrefWithoutFragment = href
             .split(separator: "#", maxSplits: 1, omittingEmptySubsequences: false)
             .first
@@ -268,7 +268,7 @@ extension WebDocumentLoader {
 
     // MARK: - EPUB Table of Contents
 
-    static func epubTOCItems(
+    package static func epubTOCItems(
         opfXML: String,
         manifest: [String: String],
         opfDirectory: URL,

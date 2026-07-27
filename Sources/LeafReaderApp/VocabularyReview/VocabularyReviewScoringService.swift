@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum VocabularyReviewScoringService {
     // One exported vocabulary card may aggregate several saved word records. Keep the

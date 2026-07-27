@@ -1,4 +1,6 @@
+import CoreGraphics
 import Foundation
+import LeafReaderCore
 
 struct ReaderAISourceMatcher {
     static let minimumTextOverlapTokens = 4

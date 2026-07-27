@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum VocabularyRecordProvider {
     /// Resolves the grammatical label for one observed surface form.

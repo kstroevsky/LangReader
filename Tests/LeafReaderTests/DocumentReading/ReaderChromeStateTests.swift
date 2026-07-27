@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 /// The reader chrome's visibility rules, now that they live in one value type
 /// instead of being duplicated across every document-load path.

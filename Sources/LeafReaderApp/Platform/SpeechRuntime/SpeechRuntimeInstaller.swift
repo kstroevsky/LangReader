@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension SpeechRuntimeResourceManager {
     static func installArchive(_ archiveURL: URL, for runtime: Runtime) throws {

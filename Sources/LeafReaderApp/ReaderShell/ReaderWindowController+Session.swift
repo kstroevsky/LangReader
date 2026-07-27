@@ -1,6 +1,7 @@
 import Cocoa
 import CryptoKit
 import PDFKit
+import LeafReaderCore
 
 extension ReaderWindowController {
     func pdfViewWillChangeScaleFactor(_ sender: PDFView) {

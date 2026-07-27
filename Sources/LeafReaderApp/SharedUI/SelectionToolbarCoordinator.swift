@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 final class SelectionToolbarCoordinator {
     private unowned let owner: ReaderWindowController
