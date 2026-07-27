@@ -1,0 +1,49 @@
+{
+  "events": [
+  {
+    "event": "launch",
+    "label": "App launch",
+    "count": 1,
+    "min_ms": 129.0,
+    "median_ms": 129.0,
+    "mean_ms": 129.0,
+    "max_ms": 129.0
+  },
+  {
+    "event": "mainWindow",
+    "label": "Main window",
+    "count": 1,
+    "min_ms": 127.0,
+    "median_ms": 127.0,
+    "mean_ms": 127.0,
+    "max_ms": 127.0
+  },
+  {
+    "event": "pdfOpen",
+    "label": "PDF open",
+    "count": 4,
+    "min_ms": 32.3,
+    "median_ms": 69.0,
+    "mean_ms": 493.5,
+    "max_ms": 1803.6
+  },
+  {
+    "event": "firstPageDisplay",
+    "label": "First page display",
+    "count": 4,
+    "min_ms": 8.5,
+    "median_ms": 42.9,
+    "mean_ms": 413.5,
+    "max_ms": 1559.5
+  },
+  {
+    "event": "themeSwitch",
+    "label": "Theme switch",
+    "count": 5,
+    "min_ms": 2.4,
+    "median_ms": 4.2,
+    "mean_ms": 50.1,
+    "max_ms": 232.1
+  }
+  ]
+}

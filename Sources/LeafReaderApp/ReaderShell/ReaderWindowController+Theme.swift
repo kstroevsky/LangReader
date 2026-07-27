@@ -2,6 +2,8 @@ import Cocoa
 
 extension ReaderWindowController {
     func applyReaderTheme() {
+        let themeSpan = ReaderPerformance.begin(.themeSwitch)
+        defer { ReaderPerformance.end(themeSpan) }
         let theme = ReaderTheme.selected
         topBarModel.theme = theme
         bottomBarModel.theme = theme

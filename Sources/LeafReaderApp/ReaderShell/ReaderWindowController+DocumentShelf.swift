@@ -7,6 +7,8 @@ extension ReaderWindowController {
     }
 
     func showRecentDocumentsPanel(focusPath: String?, priorityPaths: [String] = []) {
+        let openSpan = ReaderPerformance.begin(.shelfOpen)
+        defer { ReaderPerformance.end(openSpan) }
         let items = sortedRecentDocuments(priorityPaths: priorityPaths)
         guard !items.isEmpty else {
             NSSound.beep()

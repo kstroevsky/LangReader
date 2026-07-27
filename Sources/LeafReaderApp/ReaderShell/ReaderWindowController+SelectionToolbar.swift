@@ -50,6 +50,8 @@ extension ReaderWindowController {
     }
 
     func showSelectionToolbar(near sourceRect: NSRect, text: String, preferredEdge: SelectionToolbarEdge = .above) {
+        let toolbarSpan = ReaderPerformance.begin(.selectionToolbar)
+        defer { ReaderPerformance.end(toolbarSpan) }
         selectionToolbarCoordinator.show(near: sourceRect, text: text, preferredEdge: preferredEdge)
     }
 

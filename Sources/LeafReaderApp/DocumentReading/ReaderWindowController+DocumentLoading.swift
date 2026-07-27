@@ -4,6 +4,9 @@ import LeafReaderCore
 
 extension ReaderWindowController {
     func loadPDF(_ url: URL, generation: Int? = nil) {
+        let openSpan = ReaderPerformance.begin(.pdfOpen)
+        let firstPageSpan = ReaderPerformance.begin(.firstPageDisplay)
+        defer { ReaderPerformance.end(openSpan) }
         guard let document = PDFDocument(url: url) else {
             if let generation {
                 showDocumentLoadingFailure(
@@ -39,6 +42,10 @@ extension ReaderWindowController {
         refreshChromeState(presentation: .pdf)
         updatePDFMarginCropButton()
         applyPDFPageLayout(animated: false)
+        // Page geometry is set; the first page is now laid out for display. The
+        // PDFView still rasterises tiles asynchronously, so this is the
+        // synchronous "ready to show" point, not the last pixel.
+        ReaderPerformance.end(firstPageSpan)
 
         if !didRegisterSelectionObserver {
             didRegisterSelectionObserver = true
@@ -77,6 +84,11 @@ extension ReaderWindowController {
     }
 
     func applyLoadedWebDocument(_ document: WebReadableDocument, url: URL, kind: ReaderDocumentKind, generation: Int) {
+        // The on-main cost of presenting an already-parsed document — the part
+        // that blocks the UI. Background parsing in `loadWebDocument` is I/O and
+        // measured separately if needed.
+        let openSpan = ReaderPerformance.begin(.webOpen)
+        defer { ReaderPerformance.end(openSpan) }
         closeReadingNotePanelsForDocumentTransition()
         activateDocumentSession(url: url, kind: kind)
         pdfView.isHidden = true

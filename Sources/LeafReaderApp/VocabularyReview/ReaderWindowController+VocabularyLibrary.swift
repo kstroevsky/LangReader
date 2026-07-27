@@ -3,6 +3,11 @@ import LeafReaderCore
 
 extension ReaderWindowController {
     @objc func showVocabularyLibrary() {
+        // Measures only the synchronous window present — the click-to-paint cost.
+        // The background scan is deliberately not on this path (see below), so it
+        // is not part of this number.
+        let openSpan = ReaderPerformance.begin(.vocabularyLibraryOpen)
+        defer { ReaderPerformance.end(openSpan) }
         // Open the window immediately; the library scan (SQLite loads + form
         // labeling across every recent document) can take a second or two and
         // must not block the click. Records arrive via `apply(records:)`.

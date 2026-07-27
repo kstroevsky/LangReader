@@ -114,6 +114,8 @@ extension ReaderWindowController {
     }
 
     func presentReadingNotesListPanel() {
+        let openSpan = ReaderPerformance.begin(.notesOpen)
+        defer { ReaderPerformance.end(openSpan) }
         let controller = readingNotesPanelController ?? ReadingNotesPanelController()
         readingNotesPanelController = controller
         controller.onOpenNote = { [weak self] note in

@@ -173,6 +173,7 @@ LOGIC_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/AIConversation/AIConversationContextStoreTests.swift"
   "$TEST_SOURCE_ROOT/AIConversation/AITranscriptModelTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderSearchCursorTests.swift"
+  "$TEST_SOURCE_ROOT/Performance/PerformanceRecorderTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderFieldInputTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderChromeStateTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderToolbarItemTests.swift"

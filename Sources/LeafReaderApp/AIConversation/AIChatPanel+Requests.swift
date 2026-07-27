@@ -37,7 +37,23 @@ extension AIChatPanel {
         }
         requestState.begin(id: requestID, assistantBody: assistantBody)
         var streamedText = ""
+        // Latency is measured where the delta arrives, before the main-queue
+        // hop, so it reflects the model/network and not UI scheduling. First
+        // delta → time-to-first-token; each later delta → inter-chunk cadence.
+        let requestStartUptime = ProcessInfo.processInfo.systemUptime
+        var firstTokenRecorded = false
+        var lastDeltaUptime = requestStartUptime
         requestState.currentStreamTask = llmAnswerProvider.answerStream(messages: messages, onDelta: { [weak self, weak assistantBody] delta in
+            if ReaderPerformance.isEnabled {
+                let deltaUptime = ProcessInfo.processInfo.systemUptime
+                if firstTokenRecorded {
+                    ReaderPerformance.record(.aiStreaming, milliseconds: (deltaUptime - lastDeltaUptime) * 1000)
+                } else {
+                    firstTokenRecorded = true
+                    ReaderPerformance.record(.aiFirstToken, milliseconds: (deltaUptime - requestStartUptime) * 1000)
+                }
+                lastDeltaUptime = deltaUptime
+            }
             DispatchQueue.main.async {
                 guard let self = self, let assistantBody = assistantBody else { return }
                 guard self.requestState.isActive(requestID) else { return }

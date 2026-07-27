@@ -34,6 +34,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        ReaderPerformance.writeBaselineIfRequested(
+            launch: LaunchPerformanceTracker.shared.snapshot()
+        )
         SpeechPlaybackCoordinator.shared.shutdownForTermination()
     }
 

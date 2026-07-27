@@ -112,6 +112,10 @@ extension ReaderWindowController {
     }
 
     func setAIPanelCollapsed(_ collapsed: Bool, animated: Bool) {
+        // Only the expand direction is a "panel expansion"; the synchronous
+        // setup is what this captures, not the async width animation.
+        let expandSpan = collapsed ? nil : ReaderPerformance.begin(.aiPanelExpand)
+        defer { if let expandSpan { ReaderPerformance.end(expandSpan) } }
         if collapsed == isAIPanelCollapsed {
             if !collapsed {
                 aiPanel.setTheme(ReaderTheme.selected)
