@@ -29,6 +29,9 @@ echo "==> Checking wiki"
 echo "==> Checking UI theme coverage"
 ./scripts/check_ui_theme.sh
 
+echo "==> Checking core portability"
+./scripts/check_core_portable.sh
+
 echo "==> Running tests"
 ./scripts/run_tests.sh
 
