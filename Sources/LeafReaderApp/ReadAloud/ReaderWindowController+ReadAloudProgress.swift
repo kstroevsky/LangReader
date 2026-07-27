@@ -48,7 +48,10 @@ extension ReaderWindowController {
         }
 
         if readAloudOriginalTitle == nil {
-            readAloudOriginalTitle = titleLabel.stringValue
+            // Snapshot the model, not the label: the label is what this progress
+            // display is about to overwrite, so reading it back risks saving
+            // stale progress text as the "original".
+            readAloudOriginalTitle = documentTitle
             readAloudOriginalToolTip = titleLabel.toolTip
         }
 

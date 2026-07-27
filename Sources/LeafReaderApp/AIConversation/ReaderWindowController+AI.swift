@@ -223,7 +223,7 @@ extension ReaderWindowController {
     }
 
     func documentTitleForAI() -> String {
-        var title = titleLabel.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        var title = documentTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         let removableSuffixes = [
             " - PDF Room",
             "- PDF Room",
@@ -238,7 +238,7 @@ extension ReaderWindowController {
         title = title
             .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
             .trimmingCharacters(in: CharacterSet(charactersIn: " -_").union(.whitespacesAndNewlines))
-        return title.isEmpty ? titleLabel.stringValue : title
+        return title.isEmpty ? documentTitle : title
     }
 
     func shouldPersistHighlight(for text: String) -> Bool {

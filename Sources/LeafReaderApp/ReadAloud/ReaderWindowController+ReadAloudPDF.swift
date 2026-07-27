@@ -7,7 +7,7 @@ extension ReaderWindowController {
             pdfView: pdfView,
             chromeFilterState: readAloudState.pdfChromeFilter
         ) { [weak self] in
-            self?.titleLabel.stringValue ?? ""
+            self?.documentTitle ?? ""
         }
     }
 

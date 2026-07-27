@@ -153,7 +153,7 @@ extension ReaderWindowController {
     private func resetEmptyDocumentChrome() {
         aiPanel.loadLinkedWordBubbles([])
         aiPanel.clearSelectedText()
-        titleLabel.stringValue = AppIdentity.displayName
+        setDocumentTitle(AppIdentity.displayName)
         coverImageView.image = nil
         refreshChromeState(presentation: .empty)
         pageLabel.stringValue = AppText.noPDF

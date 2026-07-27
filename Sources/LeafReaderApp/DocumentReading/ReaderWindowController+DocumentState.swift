@@ -78,6 +78,19 @@ extension ReaderWindowController {
         set { documentSession.web.pendingProgressRestore = newValue }
     }
 
+    /// The logical document title. Read this — not `titleLabel.stringValue` —
+    /// wherever the title is wanted as *data* (AI context, embedding, read-aloud),
+    /// because the label is transiently overwritten with read-aloud progress.
+    /// `setDocumentTitle(_:)` is the only writer; it keeps the label in step.
+    var documentTitle: String {
+        documentSession.presentation.documentTitle
+    }
+
+    func setDocumentTitle(_ title: String) {
+        documentSession.presentation.setDocumentTitle(title)
+        titleLabel.stringValue = title
+    }
+
     var currentDocumentDiagnostics: [String] {
         get { documentPresentationState.currentDocumentDiagnostics }
         set { documentPresentationState.currentDocumentDiagnostics = newValue }

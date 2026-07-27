@@ -36,7 +36,7 @@ extension ReaderWindowController {
         restoreReadingNoteAnnotations()
         aiPanel.loadLinkedWordBubbles(pdfWordRecordStore?.linkedWordBubbles(from: storedWordRecords) ?? [])
         loadSavedAIConversationIfNeeded()
-        titleLabel.stringValue = url.deletingPathExtension().lastPathComponent
+        setDocumentTitle(ReaderPresentationState.documentTitle(for: url))
         applyDocumentDiagnostics([], fileName: url.lastPathComponent)
         updateCoverThumbnail(from: document)
         refreshChromeState(presentation: .pdf)
@@ -108,7 +108,7 @@ extension ReaderWindowController {
         aiPanel.loadLinkedWordBubbles(webWordRecordStore?.linkedWordBubbles(from: storedWebWordRecords) ?? [])
         loadSavedAIConversationIfNeeded()
         aiPanel.setSelectedText("")
-        titleLabel.stringValue = url.deletingPathExtension().lastPathComponent
+        setDocumentTitle(ReaderPresentationState.documentTitle(for: url))
         applyDocumentDiagnostics(document.diagnostics, fileName: url.lastPathComponent)
         if let coverImageURL = document.coverImageURL, let image = NSImage(contentsOf: coverImageURL) {
             coverImageView.image = image

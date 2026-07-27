@@ -23,6 +23,9 @@ struct DocumentSession {
     var selectionPresentation = ReaderSelectionPresentation()
     var web = ReaderWebPresentation()
     var position = ReaderReadingPosition()
+    /// The reader's presentation scalars (currently the document title). Cleared
+    /// on every document change by the `self = Self()` in `resetDocumentBoundState`.
+    var presentation = ReaderPresentationState()
     var isRestoringSession = false
 
     mutating func beginLoading() -> Int {

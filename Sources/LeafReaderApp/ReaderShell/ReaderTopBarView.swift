@@ -7,11 +7,13 @@ import SwiftUI
 /// amount of control state the toolbar's native buttons render from
 /// (read-aloud phase, page-layout/crop mode, full-screen). Everything that is
 /// *content* — the document title, cover image, page number, zoom percentage —
-/// stays on the existing AppKit instances the view bridges in, because those
-/// instances are read as the document's source of truth across the app
-/// (`titleLabel.stringValue` feeds AI context, embedding, read-aloud). The
-/// editable fields and the window-drag title keep their verified AppKit
-/// behaviour untouched; SwiftUI owns only their placement.
+/// stays on the existing AppKit instances the view bridges in, for their
+/// verified editing and window-drag behaviour. The title label is now a
+/// *reflection* of `ReaderPresentationState.documentTitle` rather than the
+/// source of truth: AI context, embedding, and read-aloud read the model
+/// (`documentTitle`), so read-aloud can overwrite the label with progress text
+/// without corrupting what those consumers see. The editable fields keep their
+/// AppKit behaviour untouched; SwiftUI owns only their placement.
 @Observable
 final class ReaderTopBarModel {
     var theme: ReaderTheme = ReaderTheme.selected

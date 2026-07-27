@@ -185,7 +185,7 @@ extension ReaderWindowController {
         let parts = (lower...upper).compactMap { index -> String? in
             guard index != currentIndex,
                   let page = document.page(at: index) else { return nil }
-            let text = ReaderAIContextBuilder.pdfPageTranslationText(document: document, page: page, title: titleLabel.stringValue)
+            let text = ReaderAIContextBuilder.pdfPageTranslationText(document: document, page: page, title: documentTitle)
             let normalized = ReaderAIContextBuilder.normalizeReaderTextPreservingParagraphs(text)
             guard !normalized.isEmpty else { return nil }
             return "[Page \(index + 1)]\n\(ReaderAIContextPolicy.prefix(normalized, limit: ReaderAIContextPolicy.nearbyPageExcerptLimit))"
@@ -217,7 +217,7 @@ extension ReaderWindowController {
         return ReaderAIContextBuilder.pdfPageTranslationText(
             document: document,
             page: page,
-            title: titleLabel.stringValue
+            title: documentTitle
         )
     }
 }

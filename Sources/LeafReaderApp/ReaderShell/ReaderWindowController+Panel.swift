@@ -90,7 +90,7 @@ extension ReaderWindowController {
                     }
                 }
             }
-            samples.append(titleLabel.stringValue)
+            samples.append(documentTitle)
             return samples.joined(separator: "\n")
         }
 
@@ -98,7 +98,7 @@ extension ReaderWindowController {
         if !webText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return webText
         }
-        return titleLabel.stringValue
+        return documentTitle
     }
 
     func applySettingsChangesToReader() {

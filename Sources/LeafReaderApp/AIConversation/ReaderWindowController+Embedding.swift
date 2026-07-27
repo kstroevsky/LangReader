@@ -6,7 +6,7 @@ extension ReaderWindowController {
         guard pdfAgentIndex == nil else { return }
         if currentDocumentKind == .pdf {
             guard let document = pdfView.document else { return }
-            pdfAgentIndex = PDFDocumentAgentIndex(document: document, title: titleLabel.stringValue)
+            pdfAgentIndex = PDFDocumentAgentIndex(document: document, title: documentTitle)
             return
         }
         guard !currentWebPlainText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
@@ -26,7 +26,7 @@ extension ReaderWindowController {
         isBuildingDocumentAgentIndex = true
         let generation = documentAgentIndexGeneration
         let kind = currentDocumentKind
-        let title = titleLabel.stringValue
+        let title = documentTitle
 
         if kind == .pdf {
             guard let url = currentFileURL else {
