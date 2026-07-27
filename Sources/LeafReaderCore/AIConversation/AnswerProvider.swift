@@ -1,36 +1,46 @@
 import Foundation
 
-struct AnswerProviderRequest {
-    let text: String
-    let context: String
-    let linkID: String?
+package struct AnswerProviderRequest {
+    package let text: String
+    package let context: String
+    package let linkID: String?
+
+    package init(text: String, context: String, linkID: String?) {
+        self.text = text
+        self.context = context
+        self.linkID = linkID
+    }
 }
 
-struct AnswerProviderResult: Equatable {
-    enum Source: Equatable {
+package struct AnswerProviderResult: Equatable {
+    package enum Source: Equatable {
         case cachedVocabulary
         case localDictionary
     }
 
-    let answer: String
-    let source: Source
-    let dictionaryMetadata: VocabularyDictionaryMetadata?
+    package let answer: String
+    package let source: Source
+    package let dictionaryMetadata: VocabularyDictionaryMetadata?
 
-    init(answer: String, source: Source, dictionaryMetadata: VocabularyDictionaryMetadata? = nil) {
+    package init(answer: String, source: Source, dictionaryMetadata: VocabularyDictionaryMetadata? = nil) {
         self.answer = answer
         self.source = source
         self.dictionaryMetadata = dictionaryMetadata
     }
 }
 
-protocol AnswerProvider {
+package protocol AnswerProvider {
     func answer(for request: AnswerProviderRequest) -> AnswerProviderResult?
 }
 
-struct CachedVocabularyAnswerProvider: AnswerProvider {
-    let answerForLinkID: (String) -> String?
+package struct CachedVocabularyAnswerProvider: AnswerProvider {
+    package let answerForLinkID: (String) -> String?
 
-    func answer(for request: AnswerProviderRequest) -> AnswerProviderResult? {
+    package init(answerForLinkID: @escaping (String) -> String?) {
+        self.answerForLinkID = answerForLinkID
+    }
+
+    package func answer(for request: AnswerProviderRequest) -> AnswerProviderResult? {
         guard let linkID = request.linkID,
               let answer = answerForLinkID(linkID)?.trimmingCharacters(in: .whitespacesAndNewlines),
               !answer.isEmpty else {
@@ -40,11 +50,11 @@ struct CachedVocabularyAnswerProvider: AnswerProvider {
     }
 }
 
-struct LocalDictionaryAnswerProvider: AnswerProvider {
-    let dictionaryLookupService: DictionaryLookupService
-    let isDictionaryInstalled: () -> Bool
+package struct LocalDictionaryAnswerProvider: AnswerProvider {
+    package let dictionaryLookupService: DictionaryLookupService
+    package let isDictionaryInstalled: () -> Bool
 
-    init(
+    package init(
         dictionaryLookupService: DictionaryLookupService = LocalDictionaryLookupService.shared,
         isDictionaryInstalled: @escaping () -> Bool = { ECDICTDictionary.shared.isInstalled }
     ) {
@@ -52,7 +62,7 @@ struct LocalDictionaryAnswerProvider: AnswerProvider {
         self.isDictionaryInstalled = isDictionaryInstalled
     }
 
-    func answer(for request: AnswerProviderRequest) -> AnswerProviderResult? {
+    package func answer(for request: AnswerProviderRequest) -> AnswerProviderResult? {
         guard VocabularyTextPolicy.isSingleEnglishWord(request.text) else { return nil }
         if let answer = dictionaryLookupService.dictionaryAnswer(for: request.text, context: request.context) {
             return AnswerProviderResult(
@@ -66,10 +76,10 @@ struct LocalDictionaryAnswerProvider: AnswerProvider {
     }
 }
 
-struct CompositeAnswerProvider: AnswerProvider {
-    let providers: [AnswerProvider]
+package struct CompositeAnswerProvider: AnswerProvider {
+    package let providers: [AnswerProvider]
 
-    func answer(for request: AnswerProviderRequest) -> AnswerProviderResult? {
+    package func answer(for request: AnswerProviderRequest) -> AnswerProviderResult? {
         for provider in providers {
             if let answer = provider.answer(for: request) {
                 return answer

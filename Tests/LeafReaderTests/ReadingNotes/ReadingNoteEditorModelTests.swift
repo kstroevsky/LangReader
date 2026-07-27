@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 /// The note editor's non-view logic. None of this was reachable from a test
 /// before: the status line was raw assignments to a label, and the AI request

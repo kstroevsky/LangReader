@@ -1,5 +1,6 @@
 import AVFoundation
 import Cocoa
+import LeafReaderCore
 
 protocol VocabularySpeechCoordinatorOwner: AnyObject {
     var shouldResumeReadAloudAfterVocabularySpeech: Bool { get }

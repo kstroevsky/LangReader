@@ -1,5 +1,5 @@
 import Foundation
 
-enum EmbeddingActionPolicy {
-    static let statusClearDelay: TimeInterval = 1.5
+package enum EmbeddingActionPolicy {
+    package static let statusClearDelay: TimeInterval = 1.5
 }

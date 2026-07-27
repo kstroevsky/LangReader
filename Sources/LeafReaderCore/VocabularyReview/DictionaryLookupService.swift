@@ -1,16 +1,26 @@
 import Foundation
 
-struct VocabularyDictionaryMetadata: Equatable {
-    let tags: String?
-    let frequency: Int?
+package struct VocabularyDictionaryMetadata: Equatable {
+    package let tags: String?
+    package let frequency: Int?
+
+    package init(tags: String?, frequency: Int?) {
+        self.tags = tags
+        self.frequency = frequency
+    }
 }
 
-struct VocabularyDictionaryAnswer {
-    let markdown: String
-    let metadata: VocabularyDictionaryMetadata
+package struct VocabularyDictionaryAnswer {
+    package let markdown: String
+    package let metadata: VocabularyDictionaryMetadata
+
+    package init(markdown: String, metadata: VocabularyDictionaryMetadata) {
+        self.markdown = markdown
+        self.metadata = metadata
+    }
 }
 
-protocol DictionaryLookupService {
+package protocol DictionaryLookupService {
     func lookup(_ query: String) -> ECDICTEntry?
     func markdownAnswer(for query: String, context: String) -> String?
     func dictionaryAnswer(for query: String, context: String) -> VocabularyDictionaryAnswer?
@@ -19,29 +29,32 @@ protocol DictionaryLookupService {
 }
 
 extension DictionaryLookupService {
-    func cachedDictionaryAnswer(for query: String, context: String = "") -> VocabularyDictionaryAnswer? {
+    package func cachedDictionaryAnswer(for query: String, context: String = "") -> VocabularyDictionaryAnswer? {
         nil
     }
 }
 
-final class LocalDictionaryLookupService: DictionaryLookupService {
-    static let shared = LocalDictionaryLookupService()
+/// Immutable after construction — its only stored property is a `let` reference
+/// to the (Sendable) dictionary — so it is safe to share; `@unchecked` because
+/// the conformance is on a class.
+package final class LocalDictionaryLookupService: DictionaryLookupService, @unchecked Sendable {
+    package static let shared = LocalDictionaryLookupService()
 
     private let dictionary: ECDICTDictionary
 
-    init(dictionary: ECDICTDictionary = .shared) {
+    package init(dictionary: ECDICTDictionary = .shared) {
         self.dictionary = dictionary
     }
 
-    func lookup(_ query: String) -> ECDICTEntry? {
+    package func lookup(_ query: String) -> ECDICTEntry? {
         dictionary.lookup(query)
     }
 
-    func markdownAnswer(for query: String, context: String = "") -> String? {
+    package func markdownAnswer(for query: String, context: String = "") -> String? {
         dictionary.markdownAnswer(for: query, context: context)
     }
 
-    func dictionaryAnswer(for query: String, context: String = "") -> VocabularyDictionaryAnswer? {
+    package func dictionaryAnswer(for query: String, context: String = "") -> VocabularyDictionaryAnswer? {
         guard let entry = lookup(query) else { return nil }
         return VocabularyDictionaryAnswer(
             markdown: ECDICTAnswerFormatter.markdownAnswer(for: entry, context: context),
@@ -49,7 +62,7 @@ final class LocalDictionaryLookupService: DictionaryLookupService {
         )
     }
 
-    func cachedDictionaryAnswer(for query: String, context: String) -> VocabularyDictionaryAnswer? {
+    package func cachedDictionaryAnswer(for query: String, context: String) -> VocabularyDictionaryAnswer? {
         guard let entry = dictionary.cachedLookupOnly(query) else { return nil }
         return VocabularyDictionaryAnswer(
             markdown: ECDICTAnswerFormatter.markdownAnswer(for: entry, context: context),
@@ -57,7 +70,7 @@ final class LocalDictionaryLookupService: DictionaryLookupService {
         )
     }
 
-    func metadata(for word: String) -> VocabularyDictionaryMetadata {
+    package func metadata(for word: String) -> VocabularyDictionaryMetadata {
         guard let entry = lookup(word) else {
             return VocabularyDictionaryMetadata(tags: nil, frequency: nil)
         }

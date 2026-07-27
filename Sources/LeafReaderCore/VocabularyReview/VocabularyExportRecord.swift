@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 struct VocabularyOccurrence: Equatable {
     let id: String

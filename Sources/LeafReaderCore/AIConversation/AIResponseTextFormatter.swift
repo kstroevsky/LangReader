@@ -1,24 +1,24 @@
 import Foundation
 
-enum AIResponseTextFormatter {
-    static let translationChunkLimit = 3600
+package enum AIResponseTextFormatter {
+    package static let translationChunkLimit = 3600
 
-    static func trimmed(_ text: String) -> String {
+    package static func trimmed(_ text: String) -> String {
         text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func hasTrimmedText(_ text: String) -> Bool {
+    package static func hasTrimmedText(_ text: String) -> Bool {
         !trimmed(text).isEmpty
     }
 
-    static func visibleAnswer(_ text: String) -> String {
+    package static func visibleAnswer(_ text: String) -> String {
         text
             .replacingOccurrences(of: #"(?s)<think>.*?(</think>|$)\s*"#, with: "", options: .regularExpression)
             .replacingOccurrences(of: #"(?s)<reasoning>.*?(</reasoning>|$)\s*"#, with: "", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func translationChunks(from text: String) -> [String] {
+    package static func translationChunks(from text: String) -> [String] {
         let trimmed = trimmed(text)
         guard trimmed.count > translationChunkLimit else { return [trimmed] }
 
@@ -50,7 +50,7 @@ enum AIResponseTextFormatter {
             .filter { !$0.isEmpty }
     }
 
-    static func partialTranslationText(_ chunks: [String], currentIndex: Int, generatingText: String) -> String {
+    package static func partialTranslationText(_ chunks: [String], currentIndex: Int, generatingText: String) -> String {
         let completed = chunks[..<currentIndex]
             .map(indentedTranslationText)
             .filter { !$0.isEmpty }
@@ -59,7 +59,7 @@ enum AIResponseTextFormatter {
         return completed + "\n\n" + generatingText
     }
 
-    static func indentedTranslationText(_ text: String) -> String {
+    package static func indentedTranslationText(_ text: String) -> String {
         text
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")

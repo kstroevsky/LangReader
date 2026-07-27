@@ -141,8 +141,6 @@ collect_logic_app_sources() {
 SQLITE_WORD_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/VocabularyReview/SQLiteWordRecordStoreTests.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularySRS.swift"
-  "$APP_SOURCE_ROOT/VocabularyReview/VocabularyTextPolicy.swift"
-  "$APP_SOURCE_ROOT/VocabularyReview/StoredPDFWordRect.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/PDFWordRecordStore.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/WebWordRecordStore.swift"
   "$APP_SOURCE_ROOT/Platform/Persistence/SQLiteSchemaMigrator.swift"
@@ -164,8 +162,6 @@ REGRESSION_TEST_SOURCES=(
   "$APP_SOURCE_ROOT/SharedUI/MarkdownRenderer.swift"
   "$APP_SOURCE_ROOT/SharedUI/MarkdownBlockParser.swift"
   "$APP_SOURCE_ROOT/SharedUI/MarkdownInlineParser.swift"
-  "$APP_SOURCE_ROOT/VocabularyReview/StoredPDFWordRect.swift"
-  "$APP_SOURCE_ROOT/AIConversation/AIConversationStore.swift"
   "$TEST_SOURCE_ROOT/Support/RegressionTests.swift"
 )
 
@@ -224,11 +220,8 @@ run_swift_test /tmp/leafreader-personal-vocabulary-tests \
 
 run_swift_test /tmp/leafreader-pdf-embedding-store-tests \
   "$TEST_SOURCE_ROOT/DocumentReading/PDFEmbeddingStoreTests.swift" \
-  "$APP_SOURCE_ROOT/AIConversation/PDFEmbeddingStore.swift" \
   "$APP_SOURCE_ROOT/AIConversation/PDFDocumentAgentIndex.swift" \
-  "$APP_SOURCE_ROOT/AIConversation/ReaderAIContextBuilder.swift" \
   "$APP_SOURCE_ROOT/AIConversation/ReaderAIContextBuilder+PDF.swift" \
-  "$APP_SOURCE_ROOT/AIConversation/ReaderAIContextPolicy.swift" \
   -framework PDFKit \
   -framework Cocoa \
   -lsqlite3
@@ -256,9 +249,7 @@ run_swift_test /tmp/leafreader-theme-palette-tests \
 
 run_swift_test /tmp/leafreader-vocabulary-record-provider-tests \
   "$TEST_SOURCE_ROOT/VocabularyReview/VocabularyRecordProviderTests.swift" \
-  "$APP_SOURCE_ROOT/VocabularyReview/StoredPDFWordRect.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularySRS.swift" \
-  "$APP_SOURCE_ROOT/VocabularyReview/VocabularyTextPolicy.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularyExportRecord.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularyRecordProvider.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/GermanFormLabeler.swift" \
@@ -267,9 +258,7 @@ run_swift_test /tmp/leafreader-vocabulary-record-provider-tests \
 
 run_swift_test /tmp/leafreader-vocabulary-library-record-provider-tests \
   "$TEST_SOURCE_ROOT/VocabularyReview/VocabularyLibraryRecordProviderTests.swift" \
-  "$APP_SOURCE_ROOT/VocabularyReview/StoredPDFWordRect.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularySRS.swift" \
-  "$APP_SOURCE_ROOT/VocabularyReview/VocabularyTextPolicy.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularyExportRecord.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularyLibraryModels.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/GermanFormLabeler.swift" \
@@ -288,7 +277,6 @@ run_swift_test /tmp/leafreader-logic-tests \
 if [[ -n "${LEAFREADER_TEST_PDF_WITH_ANSWERS:-}" && -n "${LEAFREADER_TEST_PDF_WITHOUT_ANSWERS:-}" ]]; then
   swiftc \
     "$TEST_SOURCE_ROOT/DocumentReading/PDFVocabularyDocumentTests.swift" \
-    "$APP_SOURCE_ROOT/VocabularyReview/VocabularyTextPolicy.swift" \
     "$APP_SOURCE_ROOT/VocabularyReview/VocabularyOccurrenceMatcher.swift" \
     -framework PDFKit \
     -o /tmp/leafreader-pdf-vocabulary-document-tests
@@ -304,9 +292,6 @@ fi
 if [[ "${LEAFVOCABULARY_TEST_GERMAN_DICTIONARY:-0}" == "1" ]]; then
   run_swift_test /tmp/leafvocabulary-german-dictionary-live-tests \
     "$TEST_SOURCE_ROOT/VocabularyReview/GermanDictionaryLiveLookupTests.swift" \
-    "$APP_SOURCE_ROOT/VocabularyReview/VocabularyTextPolicy.swift" \
     "$APP_SOURCE_ROOT/VocabularyReview/GermanWiktionaryDictionary.swift" \
-    "$APP_SOURCE_ROOT/VocabularyReview/DictionaryLookupService.swift" \
-    "$APP_SOURCE_ROOT/VocabularyReview/ECDICTDictionary.swift" \
       -lsqlite3
 fi

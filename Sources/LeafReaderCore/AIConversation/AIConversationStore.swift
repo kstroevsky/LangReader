@@ -1,11 +1,15 @@
 import Foundation
 
-struct SavedAIConversation: Codable {
-    var bubbles: [SavedAIConversationBubble]
+package struct SavedAIConversation: Codable {
+    package var bubbles: [SavedAIConversationBubble]
 
-    static let empty = SavedAIConversation(bubbles: [])
+    package init(bubbles: [SavedAIConversationBubble]) {
+        self.bubbles = bubbles
+    }
 
-    static func mergedForSave(
+    package static let empty = SavedAIConversation(bubbles: [])
+
+    package static func mergedForSave(
         loaded: SavedAIConversation?,
         visible: SavedAIConversation,
         maxBubbles: Int
@@ -26,40 +30,54 @@ struct SavedAIConversation: Codable {
         return SavedAIConversation(bubbles: mergedBubbles)
     }
 
-    func removing(_ deletedBubbles: [SavedAIConversationBubble]) -> SavedAIConversation {
+    package func removing(_ deletedBubbles: [SavedAIConversationBubble]) -> SavedAIConversation {
         let deletedKeys = Set(deletedBubbles.map(Self.conversationBubbleKey))
         guard !deletedKeys.isEmpty else { return self }
         return SavedAIConversation(bubbles: bubbles.filter { !deletedKeys.contains(Self.conversationBubbleKey($0)) })
     }
 
-    static func conversationBubbleKey(_ bubble: SavedAIConversationBubble) -> String {
+    package static func conversationBubbleKey(_ bubble: SavedAIConversationBubble) -> String {
         "\(bubble.role)\u{1F}\(bubble.text)"
     }
 }
 
-struct SavedAIConversationBubble: Codable {
-    let role: String
-    let text: String
-    let collapsible: Bool
-    let renderMarkdown: Bool
-    let sourceLocation: AIConversationSourceLocation?
+package struct SavedAIConversationBubble: Codable {
+    package let role: String
+    package let text: String
+    package let collapsible: Bool
+    package let renderMarkdown: Bool
+    package let sourceLocation: AIConversationSourceLocation?
+
+    package init(
+        role: String,
+        text: String,
+        collapsible: Bool,
+        renderMarkdown: Bool,
+        sourceLocation: AIConversationSourceLocation?
+    ) {
+        self.role = role
+        self.text = text
+        self.collapsible = collapsible
+        self.renderMarkdown = renderMarkdown
+        self.sourceLocation = sourceLocation
+    }
 }
 
-struct AIConversationSourceLocation: Codable, Equatable {
-    enum Kind: String, Codable {
+package struct AIConversationSourceLocation: Codable, Equatable {
+    package enum Kind: String, Codable {
         case pdfPage
         case webProgress
     }
 
-    let kind: Kind
-    let index: Int
-    let progress: Double?
-    var selectedText: String?
-    var pdfBounds: [StoredPDFWordRect]?
-    var webContext: String?
-    var occurrenceIndex: Int?
+    package let kind: Kind
+    package let index: Int
+    package let progress: Double?
+    package var selectedText: String?
+    package var pdfBounds: [StoredPDFWordRect]?
+    package var webContext: String?
+    package var occurrenceIndex: Int?
 
-    init(kind: Kind, index: Int, progress: Double?, selectedText: String? = nil, pdfBounds: [StoredPDFWordRect]? = nil, webContext: String? = nil, occurrenceIndex: Int? = nil) {
+    package init(kind: Kind, index: Int, progress: Double?, selectedText: String? = nil, pdfBounds: [StoredPDFWordRect]? = nil, webContext: String? = nil, occurrenceIndex: Int? = nil) {
         self.kind = kind
         self.index = index
         self.progress = progress
@@ -70,16 +88,16 @@ struct AIConversationSourceLocation: Codable, Equatable {
     }
 }
 
-final class AIConversationStore {
+package final class AIConversationStore {
     private let key: String
     private let defaults: UserDefaults
 
-    init(fileMD5: String, defaults: UserDefaults = .standard) {
+    package init(fileMD5: String, defaults: UserDefaults = .standard) {
         self.key = "aiConversation.\(fileMD5)"
         self.defaults = defaults
     }
 
-    func load() -> SavedAIConversation {
+    package func load() -> SavedAIConversation {
         guard let data = defaults.data(forKey: key) else {
             return .empty
         }
@@ -91,7 +109,7 @@ final class AIConversationStore {
         }
     }
 
-    func save(_ conversation: SavedAIConversation) {
+    package func save(_ conversation: SavedAIConversation) {
         guard !conversation.bubbles.isEmpty else {
             defaults.removeObject(forKey: key)
             return
@@ -106,7 +124,7 @@ final class AIConversationStore {
         defaults.set(data, forKey: key)
     }
 
-    func clear() {
+    package func clear() {
         defaults.removeObject(forKey: key)
     }
 }

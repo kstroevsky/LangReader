@@ -2,28 +2,28 @@ import Foundation
 import SQLite3
 import LeafReaderCore
 
-struct ECDICTEntry: Equatable {
-    let word: String
-    let phonetic: String
-    let definition: String
-    let translation: String
-    let pos: String
-    let tags: String
-    let bnc: String
-    let frq: String
-    let exchange: String
+package struct ECDICTEntry: Equatable {
+    package let word: String
+    package let phonetic: String
+    package let definition: String
+    package let translation: String
+    package let pos: String
+    package let tags: String
+    package let bnc: String
+    package let frq: String
+    package let exchange: String
 }
 
-struct ECDICTDiagnosticInfo {
-    let url: URL?
-    let byteCount: Int64?
-    let entryCount: Int?
+package struct ECDICTDiagnosticInfo {
+    package let url: URL?
+    package let byteCount: Int64?
+    package let entryCount: Int?
 
-    var isInstalled: Bool {
+    package var isInstalled: Bool {
         url != nil
     }
 
-    var detailText: String {
+    package var detailText: String {
         guard let url else {
             return AppText.localized("ECDICT 未安装", "ECDICT missing")
         }
@@ -39,8 +39,12 @@ struct ECDICTDiagnosticInfo {
     }
 }
 
-final class ECDICTDictionary {
-    static let shared = ECDICTDictionary()
+/// `@unchecked Sendable` is accurate, not a waiver: every mutable field
+/// (`lookupCache`, the sqlite handle and its URL) is reached only under
+/// `cacheLock`/`sqliteLock`, and the rest are immutable `let`s. Swift 6 cannot
+/// see that a lock covers a field, so the guarantee is asserted here.
+package final class ECDICTDictionary: @unchecked Sendable {
+    package static let shared = ECDICTDictionary()
 
     private enum LookupCacheValue {
         case hit(ECDICTEntry)
@@ -55,7 +59,7 @@ final class ECDICTDictionary {
     private var sqliteDatabaseURL: URL?
     private let sqliteLock = NSLock()
 
-    init(databaseURLs: [URL]? = nil, csvURLs: [URL]? = nil) {
+    package init(databaseURLs: [URL]? = nil, csvURLs: [URL]? = nil) {
         self.databaseURLs = databaseURLs ?? Self.defaultDatabaseURLs()
         self.csvURLs = csvURLs ?? Self.defaultCSVURLs()
     }
@@ -70,12 +74,12 @@ final class ECDICTDictionary {
         sqliteLock.unlock()
     }
 
-    var isInstalled: Bool {
+    package var isInstalled: Bool {
         databaseURLs.contains { FileManager.default.fileExists(atPath: $0.path) }
             || csvURLs.contains { FileManager.default.fileExists(atPath: $0.path) }
     }
 
-    func diagnosticInfo() -> ECDICTDiagnosticInfo {
+    package func diagnosticInfo() -> ECDICTDiagnosticInfo {
         for url in databaseURLs where FileManager.default.fileExists(atPath: url.path) {
             return ECDICTDiagnosticInfo(
                 url: url,
@@ -93,7 +97,7 @@ final class ECDICTDictionary {
         return ECDICTDiagnosticInfo(url: nil, byteCount: nil, entryCount: nil)
     }
 
-    func lookup(_ query: String) -> ECDICTEntry? {
+    package func lookup(_ query: String) -> ECDICTEntry? {
         let normalized = Self.lookupKey(query)
         guard !normalized.isEmpty else { return nil }
         if let cached = cachedLookup(normalized) {
@@ -104,7 +108,7 @@ final class ECDICTDictionary {
         return entry
     }
 
-    func cachedLookupOnly(_ query: String) -> ECDICTEntry? {
+    package func cachedLookupOnly(_ query: String) -> ECDICTEntry? {
         let normalized = Self.lookupKey(query)
         guard !normalized.isEmpty,
               let cached = cachedLookup(normalized) else {
@@ -148,12 +152,12 @@ final class ECDICTDictionary {
         cacheLock.unlock()
     }
 
-    func markdownAnswer(for query: String, context: String = "") -> String? {
+    package func markdownAnswer(for query: String, context: String = "") -> String? {
         guard let entry = lookup(query) else { return nil }
         return ECDICTAnswerFormatter.markdownAnswer(for: entry, context: context)
     }
 
-    static func lookupKey(_ text: String) -> String {
+    package static func lookupKey(_ text: String) -> String {
         text.trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
             .filter { $0.isLetter || $0.isNumber || $0 == "'" || $0 == "-" || $0.isWhitespace }
@@ -388,8 +392,8 @@ final class ECDICTDictionary {
     }
 }
 
-enum ECDICTAnswerFormatter {
-    static func markdownAnswer(for entry: ECDICTEntry, context: String = "") -> String {
+package enum ECDICTAnswerFormatter {
+    package static func markdownAnswer(for entry: ECDICTEntry, context: String = "") -> String {
         var lines: [String] = ["**\(entry.word)**"]
         if !entry.phonetic.isEmpty {
             lines.append("/\(entry.phonetic)/")

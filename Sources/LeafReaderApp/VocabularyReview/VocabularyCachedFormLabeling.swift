@@ -1,5 +1,6 @@
 import Foundation
 import NaturalLanguage
+import LeafReaderCore
 
 // Bridges language-routed form labeling to the persistent label cache.
 //

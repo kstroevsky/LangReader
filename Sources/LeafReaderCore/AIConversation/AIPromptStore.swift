@@ -1,7 +1,7 @@
 import Foundation
 import LeafReaderCore
 
-enum AIPromptStore {
+package enum AIPromptStore {
     private struct PromptLanguageConfig: Decodable {
         let system: String
         let compactSystem: String
@@ -78,17 +78,20 @@ enum AIPromptStore {
     private static let configFileName = "AIPrompts"
     private static let configFileExtension = "json"
 
-    private static var config: PromptConfig = loadConfig()
+    // Loaded once and never mutated — it carries both language variants and the
+    // read site picks by current language — so a `let` is both correct and what
+    // makes it concurrency-safe under Swift 6.
+    private static let config: PromptConfig = loadConfig()
 
-    static func systemPrompt() -> String {
+    package static func systemPrompt() -> String {
         promptWithResponseLanguageInstruction(languageConfig.system)
     }
 
-    static func compactSystemPrompt() -> String {
+    package static func compactSystemPrompt() -> String {
         promptWithResponseLanguageInstruction(languageConfig.compactSystem)
     }
 
-    static func wordPrompt(for word: String, context: String = "") -> String {
+    package static func wordPrompt(for word: String, context: String = "") -> String {
         return render(
             languageConfig.word,
             values: [
@@ -98,27 +101,27 @@ enum AIPromptStore {
         )
     }
 
-    static func sentencePrompt(for text: String) -> String {
+    package static func sentencePrompt(for text: String) -> String {
         render(languageConfig.sentence, values: ["text": text])
     }
 
-    static func difficultSentencePrompt(for text: String) -> String {
+    package static func difficultSentencePrompt(for text: String) -> String {
         render(languageConfig.difficultSentence, values: ["text": text])
     }
 
-    static func summaryPrompt(title: String, text: String) -> String {
+    package static func summaryPrompt(title: String, text: String) -> String {
         render(languageConfig.summary, values: ["title": title, "text": text])
     }
 
-    static func translationPrompt(title: String, text: String) -> String {
+    package static func translationPrompt(title: String, text: String) -> String {
         render(languageConfig.translation, values: ["title": title, "text": text])
     }
 
-    static func followUpPrompt(context: String, text: String) -> String {
+    package static func followUpPrompt(context: String, text: String) -> String {
         render(languageConfig.followUp, values: ["context": context, "text": text])
     }
 
-    static func readingFollowUpPrompt(readingText: String, context: String, question: String) -> String {
+    package static func readingFollowUpPrompt(readingText: String, context: String, question: String) -> String {
         render(
             languageConfig.readingFollowUp,
             values: [
@@ -129,7 +132,7 @@ enum AIPromptStore {
         )
     }
 
-    static func documentAgentPrompt(
+    package static func documentAgentPrompt(
         title: String,
         question: String,
         questionSubject: String = "",

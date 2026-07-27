@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 // Bridges the persistent flexion cache to form labeling.
 //

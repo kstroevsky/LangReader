@@ -1,20 +1,20 @@
 import Foundation
 
-struct ReaderFocusedSelection: Equatable {
-    enum Origin: Equatable {
+package struct ReaderFocusedSelection: Equatable {
+    package enum Origin: Equatable {
         case explicitSelection
         case readAloudSegment
     }
 
-    let origin: Origin
-    let text: String
-    let context: String
+    package let origin: Origin
+    package let text: String
+    package let context: String
 
-    var isEmpty: Bool {
+    package var isEmpty: Bool {
         text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    static func make(
+    package static func make(
         explicitSelection: String,
         readAloudSelection: String,
         explicitContext: String,
@@ -41,7 +41,7 @@ struct ReaderFocusedSelection: Equatable {
         return nil
     }
 
-    static func resolve(
+    package static func resolve(
         explicitSelection: String,
         readAloudSelection: String,
         contextProvider: ReaderAIContextResolver.ContextProvider

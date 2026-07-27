@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 // Bridges parsed Wiktionary flexion tables to form labels.
 //

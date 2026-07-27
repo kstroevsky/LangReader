@@ -2,28 +2,35 @@ import Foundation
 import SQLite3
 import LeafReaderCore
 
-struct PDFEmbeddingChunk {
-    let id: String
-    let pageIndex: Int
-    let chunkIndex: Int
-    let text: String
+package struct PDFEmbeddingChunk {
+    package let id: String
+    package let pageIndex: Int
+    package let chunkIndex: Int
+    package let text: String
+
+    package init(id: String, pageIndex: Int, chunkIndex: Int, text: String) {
+        self.id = id
+        self.pageIndex = pageIndex
+        self.chunkIndex = chunkIndex
+        self.text = text
+    }
 }
 
-final class PDFEmbeddingStore {
-    static let defaultMaximumCacheBytes: Int64 = 1024 * 1024 * 1024
+package final class PDFEmbeddingStore {
+    package static let defaultMaximumCacheBytes: Int64 = 1024 * 1024 * 1024
 
     private let db: OpaquePointer?
     private let databaseURL: URL
     private var cachedCacheSize: (bytes: Int64, measuredAt: Date)?
     private let cacheSizeTTL: TimeInterval = 2.0
 
-    convenience init?() {
+    package convenience init?() {
         guard let directory = Self.cacheDirectory() else { return nil }
         let url = directory.appendingPathComponent("pdf-embeddings.sqlite3")
         self.init(databaseURL: url)
     }
 
-    init?(databaseURL: URL) {
+    package init?(databaseURL: URL) {
         try? FileManager.default.createDirectory(at: databaseURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         var handle: OpaquePointer?
         guard sqlite3_open(databaseURL.path, &handle) == SQLITE_OK else {
@@ -43,7 +50,7 @@ final class PDFEmbeddingStore {
         sqlite3_close(db)
     }
 
-    func embeddings(documentID: String, model: String, chunkIDs: [String]) -> [String: [Float]] {
+    package func embeddings(documentID: String, model: String, chunkIDs: [String]) -> [String: [Float]] {
         guard !chunkIDs.isEmpty else { return [:] }
         var result: [String: [Float]] = [:]
         let sql = "SELECT chunk_id, embedding FROM embeddings WHERE document_id = ? AND model = ? AND chunk_id = ?"
@@ -73,7 +80,7 @@ final class PDFEmbeddingStore {
         return result
     }
 
-    func save(documentID: String, model: String, chunks: [PDFEmbeddingChunk], embeddings: [[Float]]) {
+    package func save(documentID: String, model: String, chunks: [PDFEmbeddingChunk], embeddings: [[Float]]) {
         guard chunks.count == embeddings.count else { return }
         let sql = """
         INSERT OR REPLACE INTO embeddings(document_id, model, chunk_id, page_index, chunk_index, text, embedding, updated_at)
@@ -115,19 +122,19 @@ final class PDFEmbeddingStore {
         pruneIfNeeded(maximumBytes: Self.defaultMaximumCacheBytes)
     }
 
-    func deleteDocument(documentID: String) {
+    package func deleteDocument(documentID: String) {
         execute(sql: "DELETE FROM embeddings WHERE document_id = ?", bindings: [documentID])
         invalidateCacheSize()
         vacuum()
     }
 
-    func deleteAll() {
+    package func deleteAll() {
         execute(sql: "DELETE FROM embeddings")
         invalidateCacheSize()
         vacuum()
     }
 
-    func cacheSizeBytes() -> Int64 {
+    package func cacheSizeBytes() -> Int64 {
         if let cachedCacheSize,
            Date().timeIntervalSince(cachedCacheSize.measuredAt) < cacheSizeTTL {
             return cachedCacheSize.bytes
@@ -137,12 +144,12 @@ final class PDFEmbeddingStore {
         return bytes
     }
 
-    func documentCount() -> Int {
+    package func documentCount() -> Int {
         scalarInt(sql: "SELECT COUNT(DISTINCT document_id) FROM embeddings")
     }
 
     @discardableResult
-    func pruneIfNeeded(maximumBytes: Int64) -> Bool {
+    package func pruneIfNeeded(maximumBytes: Int64) -> Bool {
         guard maximumBytes > 0 else { return false }
         var didDelete = false
         var deletedDocumentIDs = Set<String>()
@@ -307,7 +314,7 @@ final class PDFEmbeddingStore {
             .appendingPathComponent(AppIdentity.applicationSupportDirectoryName, isDirectory: true)
     }
 
-    static func cacheSizeBytes(forDatabaseURL url: URL) -> Int64 {
+    package static func cacheSizeBytes(forDatabaseURL url: URL) -> Int64 {
         sqliteCacheFileURLs(forDatabaseURL: url).reduce(Int64(0)) { total, fileURL in
             let bytes = (try? FileManager.default.attributesOfItem(atPath: fileURL.path)[.size] as? NSNumber)?.int64Value ?? 0
             return total + bytes

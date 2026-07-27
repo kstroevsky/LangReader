@@ -1,5 +1,6 @@
 import Cocoa
 import Foundation
+import LeafReaderCore
 
 struct StoredPDFWordRecord {
     let id: String

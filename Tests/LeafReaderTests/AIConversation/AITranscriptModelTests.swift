@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 /// The transcript's rules used to be spread across view-tree walks in
 /// `AIChatPanel+BubblePersistence`, so none of them could be tested. They are

@@ -1,7 +1,7 @@
 import Foundation
 
-enum MarkdownHTMLExporter {
-    static func document(title: String, markdown: String) -> String {
+package enum MarkdownHTMLExporter {
+    package static func document(title: String, markdown: String) -> String {
         """
         <!doctype html>
         <html>
@@ -25,7 +25,7 @@ enum MarkdownHTMLExporter {
         """
     }
 
-    static func bodyHTML(_ markdown: String) -> String {
+    package static func bodyHTML(_ markdown: String) -> String {
         var html: [String] = []
         var listKind: String?
 
@@ -80,14 +80,14 @@ enum MarkdownHTMLExporter {
         return html.joined(separator: "\n")
     }
 
-    static func escapeHTML(_ value: String) -> String {
+    package static func escapeHTML(_ value: String) -> String {
         value
             .replacingOccurrences(of: "&", with: "&amp;")
             .replacingOccurrences(of: "<", with: "&lt;")
             .replacingOccurrences(of: ">", with: "&gt;")
     }
 
-    static func escapeHTMLAttribute(_ value: String) -> String {
+    package static func escapeHTMLAttribute(_ value: String) -> String {
         escapeHTML(value).replacingOccurrences(of: "\"", with: "&quot;")
     }
 

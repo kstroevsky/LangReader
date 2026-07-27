@@ -1,21 +1,21 @@
 import Foundation
 
-enum ReaderAIContextPolicy {
-    static let summaryContentLimit = 6000
-    static let translationContentLimit = 9000
-    static let questionContentLimit = 5000
-    static let combinedContextSuffixLimit = 6000
-    static let nearbyPageExcerptLimit = 1200
-    static let documentAgentCurrentPageLimit = 3500
-    static let documentAgentNearbyTextLimit = 5000
-    static let evidenceBubbleCount = 4
-    static let evidenceBubbleTextLimit = 500
+package enum ReaderAIContextPolicy {
+    package static let summaryContentLimit = 6000
+    package static let translationContentLimit = 9000
+    package static let questionContentLimit = 5000
+    package static let combinedContextSuffixLimit = 6000
+    package static let nearbyPageExcerptLimit = 1200
+    package static let documentAgentCurrentPageLimit = 3500
+    package static let documentAgentNearbyTextLimit = 5000
+    package static let evidenceBubbleCount = 4
+    package static let evidenceBubbleTextLimit = 500
 
-    static func prefix(_ text: String, limit: Int) -> String {
+    package static func prefix(_ text: String, limit: Int) -> String {
         String(text.prefix(limit))
     }
 
-    static func suffix(_ text: String, limit: Int) -> String {
+    package static func suffix(_ text: String, limit: Int) -> String {
         String(text.suffix(limit))
     }
 }

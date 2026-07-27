@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 struct VocabularyRecordMutationResult {
     let didUpdatePDF: Bool

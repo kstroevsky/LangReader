@@ -1,8 +1,8 @@
 import Foundation
 import LeafReaderCore
 
-enum AIConversationMarkdownExporter {
-    static func markdown(title: String, bubbles: [SavedAIConversationBubble], exportedAt: Date = Date()) -> String {
+package enum AIConversationMarkdownExporter {
+    package static func markdown(title: String, bubbles: [SavedAIConversationBubble], exportedAt: Date = Date()) -> String {
         var lines: [String] = [
             "# \(title) - \(AppText.localized("AI 对话", "AI Conversation"))",
             "",
@@ -23,7 +23,7 @@ enum AIConversationMarkdownExporter {
         return lines.joined(separator: "\n")
     }
 
-    static func html(title: String, bubbles: [SavedAIConversationBubble], exportedAt: Date = Date()) -> String {
+    package static func html(title: String, bubbles: [SavedAIConversationBubble], exportedAt: Date = Date()) -> String {
         let markdown = markdown(title: title, bubbles: bubbles, exportedAt: exportedAt)
         return MarkdownHTMLExporter.document(title: title, markdown: markdown)
     }

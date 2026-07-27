@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum VocabularyReviewDisplayRecordLoader {
     static func displayRecord(

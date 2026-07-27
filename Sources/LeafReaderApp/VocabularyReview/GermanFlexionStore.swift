@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 /// One inflected form as persisted in the flexion cache.
 ///

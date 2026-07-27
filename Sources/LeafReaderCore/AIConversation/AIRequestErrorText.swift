@@ -1,8 +1,8 @@
 import Foundation
 import LeafReaderCore
 
-enum AIRequestErrorText {
-    static func message(for error: Error) -> String {
+package enum AIRequestErrorText {
+    package static func message(for error: Error) -> String {
         let nsError = error as NSError
         let description = nsError.localizedDescription.lowercased()
         let domain = nsError.domain.lowercased()

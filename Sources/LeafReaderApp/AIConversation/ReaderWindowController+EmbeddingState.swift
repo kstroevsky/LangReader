@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     var pdfAgentIndex: PDFDocumentAgentIndex? {

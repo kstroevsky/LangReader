@@ -2,15 +2,25 @@ import CoreGraphics
 import Foundation
 import LeafReaderCore
 
-struct ReaderAISourceMatcher {
-    static let minimumTextOverlapTokens = 4
-    static let webProgressMatchTolerance = 0.08
+package struct ReaderAISourceMatcher {
+    package static let minimumTextOverlapTokens = 4
+    package static let webProgressMatchTolerance = 0.08
 
-    let currentDocumentKind: ReaderDocumentKind
-    let currentWebProgress: Double
-    let candidates: [AIConversationSourceLocation]
+    package let currentDocumentKind: ReaderDocumentKind
+    package let currentWebProgress: Double
+    package let candidates: [AIConversationSourceLocation]
 
-    func readAloudSource(
+    package init(
+        currentDocumentKind: ReaderDocumentKind,
+        currentWebProgress: Double,
+        candidates: [AIConversationSourceLocation]
+    ) {
+        self.currentDocumentKind = currentDocumentKind
+        self.currentWebProgress = currentWebProgress
+        self.candidates = candidates
+    }
+
+    package func readAloudSource(
         matching text: String,
         pageIndex: Int?,
         pdfBounds: CGRect?,
@@ -65,7 +75,7 @@ struct ReaderAISourceMatcher {
         return closest.source
     }
 
-    static func pdfBounds(_ segmentBounds: CGRect, intersects sourceBounds: [StoredPDFWordRect]?) -> Bool {
+    package static func pdfBounds(_ segmentBounds: CGRect, intersects sourceBounds: [StoredPDFWordRect]?) -> Bool {
         guard !segmentBounds.isNull,
               let sourceBounds,
               !sourceBounds.isEmpty else {
@@ -77,7 +87,7 @@ struct ReaderAISourceMatcher {
         }
     }
 
-    static func aiSourceText(_ source: AIConversationSourceLocation, overlapsReadAloudText text: String) -> Bool {
+    package static func aiSourceText(_ source: AIConversationSourceLocation, overlapsReadAloudText text: String) -> Bool {
         guard let selectedText = source.selectedText?.trimmingCharacters(in: .whitespacesAndNewlines),
               !selectedText.isEmpty else {
             return false
@@ -95,26 +105,26 @@ struct ReaderAISourceMatcher {
         return overlap.count >= min(minimumTextOverlapTokens, selectedTokens.count, spokenTokens.count)
     }
 
-    static func linkedWordText(_ word: String, overlapsReadAloudText text: String) -> Bool {
+    package static func linkedWordText(_ word: String, overlapsReadAloudText text: String) -> Bool {
         let wordText = normalizedMatchText(word)
         let spoken = normalizedMatchText(text)
         guard !wordText.isEmpty, !spoken.isEmpty else { return false }
         return spoken.contains(wordText) || wordText.contains(spoken)
     }
 
-    static func isPageLevelAISource(_ source: AIConversationSourceLocation) -> Bool {
+    package static func isPageLevelAISource(_ source: AIConversationSourceLocation) -> Bool {
         let selectedText = source.selectedText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return selectedText.isEmpty && (source.pdfBounds?.isEmpty ?? true)
     }
 
-    static func normalizedMatchText(_ text: String) -> String {
+    package static func normalizedMatchText(_ text: String) -> String {
         text
             .lowercased()
             .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func matchTokens(in text: String) -> [String] {
+    package static func matchTokens(in text: String) -> [String] {
         text.split { !$0.isLetter && !$0.isNumber }
             .map(String.init)
             .filter { $0.count > 1 }

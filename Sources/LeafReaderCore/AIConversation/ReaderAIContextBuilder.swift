@@ -1,12 +1,12 @@
 import Foundation
 
-struct ReaderAIContextBuilder {
-    static func selectedTextContext(selectedText: String, sourceText: String, radius: Int) -> String? {
+package struct ReaderAIContextBuilder {
+    package static func selectedTextContext(selectedText: String, sourceText: String, radius: Int) -> String? {
         sentenceContext(containing: selectedText, in: sourceText)
             ?? characterWindowContext(containing: selectedText, in: sourceText, radius: radius)
     }
 
-    static func selectedTextContext(occurrenceRange: NSRange, sourceText: String, radius: Int) -> String? {
+    package static func selectedTextContext(occurrenceRange: NSRange, sourceText: String, radius: Int) -> String? {
         guard occurrenceRange.location != NSNotFound,
               occurrenceRange.length > 0,
               let range = Range(occurrenceRange, in: sourceText) else { return nil }
@@ -14,7 +14,7 @@ struct ReaderAIContextBuilder {
             ?? characterWindowContext(around: range, in: sourceText, radius: radius)
     }
 
-    static func visibleWebTextScript(preserveLineBreaks: Bool) -> String {
+    package static func visibleWebTextScript(preserveLineBreaks: Bool) -> String {
         let selector = preserveLineBreaks
             ? "h1,h2,h3,h4,h5,h6,p,li,blockquote,pre,td,th"
             : "h1,h2,h3,h4,h5,h6,p,li,blockquote,pre,td,th,div"
@@ -46,11 +46,11 @@ struct ReaderAIContextBuilder {
         """
     }
 
-    static func normalizeVisibleWebText(_ text: String, preserveLineBreaks: Bool) -> String {
+    package static func normalizeVisibleWebText(_ text: String, preserveLineBreaks: Bool) -> String {
         preserveLineBreaks ? normalizeReaderTextPreservingParagraphs(text) : normalizeWhitespace(text)
     }
 
-    static func webProgressTextWindow(plainText: String, progress: Double) -> String {
+    package static func webProgressTextWindow(plainText: String, progress: Double) -> String {
         let text = normalizeWhitespace(plainText)
         guard !text.isEmpty else { return "" }
         let center = Int(Double(text.count) * progress)
@@ -61,13 +61,13 @@ struct ReaderAIContextBuilder {
         return String(text[start..<end])
     }
 
-    static func normalizeWhitespace(_ text: String) -> String {
+    package static func normalizeWhitespace(_ text: String) -> String {
         text
             .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func normalizeReaderTextPreservingParagraphs(_ text: String) -> String {
+    package static func normalizeReaderTextPreservingParagraphs(_ text: String) -> String {
         text
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
@@ -77,22 +77,22 @@ struct ReaderAIContextBuilder {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func trimmed(_ text: String) -> String {
+    package static func trimmed(_ text: String) -> String {
         text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func hasTrimmedText(_ text: String) -> Bool {
+    package static func hasTrimmedText(_ text: String) -> Bool {
         !trimmed(text).isEmpty
     }
 
-    static func nonEmptyTrimmedLines(from text: String) -> [String] {
+    package static func nonEmptyTrimmedLines(from text: String) -> [String] {
         text
             .components(separatedBy: .newlines)
             .map(trimmed)
             .filter { !$0.isEmpty }
     }
 
-    static func joinedNonEmptyParagraphs(_ parts: [String]) -> String {
+    package static func joinedNonEmptyParagraphs(_ parts: [String]) -> String {
         parts
             .filter(hasTrimmedText)
             .joined(separator: "\n\n")
@@ -202,7 +202,7 @@ struct ReaderAIContextBuilder {
         return normalizeWhitespace(trimLeadingContextQuotes(String(normalizedText[prefixStart..<suffixEnd])))
     }
 
-    static func trimLeadingContextQuotes(_ text: String) -> String {
+    package static func trimLeadingContextQuotes(_ text: String) -> String {
         var result = text.trimmingCharacters(in: .whitespacesAndNewlines)
         while let first = result.first, #""“”‘’'`"#.contains(first) {
             result.removeFirst()

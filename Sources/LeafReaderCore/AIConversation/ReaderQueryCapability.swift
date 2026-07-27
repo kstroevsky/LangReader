@@ -1,18 +1,24 @@
 import Foundation
 
-struct ReaderCapabilityState: Equatable {
-    let isOnline: Bool
-    let hasModelAPIKey: Bool
-    let isLocalDictionaryInstalled: Bool
+package struct ReaderCapabilityState: Equatable {
+    package let isOnline: Bool
+    package let hasModelAPIKey: Bool
+    package let isLocalDictionaryInstalled: Bool
 
-    var queryCapability: ReaderQueryCapability {
+    package init(isOnline: Bool, hasModelAPIKey: Bool, isLocalDictionaryInstalled: Bool) {
+        self.isOnline = isOnline
+        self.hasModelAPIKey = hasModelAPIKey
+        self.isLocalDictionaryInstalled = isLocalDictionaryInstalled
+    }
+
+    package var queryCapability: ReaderQueryCapability {
         ReaderQueryCapability.current(
             isOnline: isOnline,
             hasModelAPIKey: hasModelAPIKey
         )
     }
 
-    static func make(
+    package static func make(
         isOnline: Bool,
         hasModelAPIKey: Bool,
         isLocalDictionaryInstalled: Bool
@@ -25,12 +31,12 @@ struct ReaderCapabilityState: Equatable {
     }
 }
 
-enum ReaderQueryCapability: Equatable {
+package enum ReaderQueryCapability: Equatable {
     case modelAvailable
     case offlineDictionary
     case needsModelConfiguration
 
-    static func current(
+    package static func current(
         isOnline: Bool,
         hasModelAPIKey: Bool
     ) -> ReaderQueryCapability {

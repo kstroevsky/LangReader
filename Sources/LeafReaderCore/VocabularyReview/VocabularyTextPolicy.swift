@@ -1,6 +1,6 @@
 import Foundation
 
-enum VocabularyTextPolicy {
+package enum VocabularyTextPolicy {
     private static let wordTokenPattern = #"\p{L}[\p{L}\p{M}]*(?:['’–—-](?=\p{L})\p{L}[\p{L}\p{M}]*)*"#
     private static let singleWordPattern = #"^"# + wordTokenPattern + #"$"#
     private static let vocabularySelectionPattern = #"^"# + wordTokenPattern + #"(\s+"# + wordTokenPattern + #"){0,4}$"#
@@ -8,14 +8,14 @@ enum VocabularyTextPolicy {
     private static let wordBoundaryAfter = #"(?![\p{L}\p{M}'’–—-])"#
     private static let comparisonLocale = Locale(identifier: "de_DE")
 
-    static let maxSingleWordLength = 40
-    static let maxVocabularySelectionLength = 80
+    package static let maxSingleWordLength = 40
+    package static let maxVocabularySelectionLength = 80
 
-    static func normalized(_ text: String) -> String {
+    package static func normalized(_ text: String) -> String {
         text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func normalizedVocabularyText(_ text: String) -> String {
+    package static func normalizedVocabularyText(_ text: String) -> String {
         // Fast path for single tokens, which is what the occurrence scanner
         // feeds this millions of times over a document. Both passes below key
         // off whitespace — `joinLineBrokenHyphens` needs `\s+` after a hyphen,
@@ -25,7 +25,7 @@ enum VocabularyTextPolicy {
         return collapsedWhitespace(joinLineBrokenHyphens(text))
     }
 
-    static func canonicalVocabularyKey(_ text: String) -> String {
+    package static func canonicalVocabularyKey(_ text: String) -> String {
         normalizedVocabularyText(text)
             .precomposedStringWithCanonicalMapping
             .lowercased(with: comparisonLocale)
@@ -36,12 +36,12 @@ enum VocabularyTextPolicy {
     /// shortcut: unlike `canonicalVocabularyKey`, it does NOT fold case, so the
     /// German noun "Folgen" (lemma "Folge") is not mistaken for the verb lemma
     /// "folgen". Capitalization is the noun/verb signal and must be preserved.
-    static func surfaceMatchesLemmaExactly(_ surface: String, _ lemma: String) -> Bool {
+    package static func surfaceMatchesLemmaExactly(_ surface: String, _ lemma: String) -> Bool {
         normalizedVocabularyText(surface).precomposedStringWithCanonicalMapping
             == normalizedVocabularyText(lemma).precomposedStringWithCanonicalMapping
     }
 
-    static func normalizedOccurrenceText(_ text: String, matching query: String) -> String {
+    package static func normalizedOccurrenceText(_ text: String, matching query: String) -> String {
         let normalizedQuery = normalizedVocabularyText(query)
         let hasGenuineHyphen = normalizedQuery.range(of: #"[‐‑‒–—-]"#, options: .regularExpression) != nil
         let value = hasGenuineHyphen
@@ -50,7 +50,7 @@ enum VocabularyTextPolicy {
         return collapsedWhitespace(value)
     }
 
-    static func normalizedPDFVocabularyText(
+    package static func normalizedPDFVocabularyText(
         _ text: String,
         lineBrokenHyphenRange: NSRange? = nil,
         isKnownHyphenatedWord: (String) -> Bool = { _ in false },
@@ -77,7 +77,7 @@ enum VocabularyTextPolicy {
         return hyphenated
     }
 
-    static func normalizedPDFContextText(
+    package static func normalizedPDFContextText(
         _ text: String,
         isKnownHyphenatedWord: (String) -> Bool = { _ in false },
         isKnownWord: (String) -> Bool = { _ in false }
@@ -104,18 +104,18 @@ enum VocabularyTextPolicy {
         return collapsedWhitespace(result as String)
     }
 
-    static func isSingleEnglishWord(_ text: String) -> Bool {
+    package static func isSingleEnglishWord(_ text: String) -> Bool {
         let value = normalizedVocabularyText(text)
         guard value.count <= maxSingleWordLength else { return false }
         return value.range(of: singleWordPattern, options: .regularExpression) != nil
     }
 
-    static func speakableWord(_ text: String) -> String? {
+    package static func speakableWord(_ text: String) -> String? {
         let value = normalizedVocabularyText(text)
         return isSingleEnglishWord(value) ? value : nil
     }
 
-    static func isVocabularySelection(_ text: String) -> Bool {
+    package static func isVocabularySelection(_ text: String) -> Bool {
         let value = normalizedVocabularyText(text)
         guard value.count <= maxVocabularySelectionLength else { return false }
         let words = value.split { $0.isWhitespace || $0.isNewline }
@@ -134,7 +134,7 @@ enum VocabularyTextPolicy {
     /// on the string alone keeps the destructive load-time prune from depending
     /// on language detection, which would delete real words when a document's
     /// language was guessed wrong.
-    static func surfaceOccursOnlyAsInnerSubstring(surface surfaceForm: String, context: String) -> Bool {
+    package static func surfaceOccursOnlyAsInnerSubstring(surface surfaceForm: String, context: String) -> Bool {
         let surface = normalizedVocabularyText(surfaceForm)
         let trimmedContext = context.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !surface.isEmpty, !trimmedContext.isEmpty, isSingleEnglishWord(surface) else {
@@ -173,7 +173,7 @@ enum VocabularyTextPolicy {
         return true
     }
 
-    static func shouldUseSystemTTSForShortSelection(_ text: String) -> Bool {
+    package static func shouldUseSystemTTSForShortSelection(_ text: String) -> Bool {
         let words = text
             .split { !$0.isLetter && !$0.isNumber }
             .filter { !$0.isEmpty }
@@ -181,7 +181,7 @@ enum VocabularyTextPolicy {
         return text.range(of: #"[.!?]"#, options: .regularExpression) == nil
     }
 
-    static func boundedSearchPattern(for query: String) -> String? {
+    package static func boundedSearchPattern(for query: String) -> String? {
         let value = normalized(query)
         guard !value.isEmpty else { return nil }
         let words = value.split { $0.isWhitespace || $0.isNewline }.map(String.init)
@@ -192,15 +192,15 @@ enum VocabularyTextPolicy {
         return #"(?i)"# + wordBoundaryBefore + escaped + wordBoundaryAfter
     }
 
-    static func boundedPrefixPattern(for prefix: String) -> String {
+    package static func boundedPrefixPattern(for prefix: String) -> String {
         wordBoundaryBefore + NSRegularExpression.escapedPattern(for: normalized(prefix))
     }
 
-    static func lineBrokenHyphenWordPattern(prefix: String) -> String {
+    package static func lineBrokenHyphenWordPattern(prefix: String) -> String {
         boundedPrefixPattern(for: prefix) + #"(?<layoutHyphen>[‐‑‒–—-])\s*"# + wordTokenPattern
     }
 
-    static func lineBrokenHyphenWordPattern(suffix: String) -> String {
+    package static func lineBrokenHyphenWordPattern(suffix: String) -> String {
         wordBoundaryBefore
             + wordTokenPattern
             + #"(?<layoutHyphen>[‐‑‒–—-])\s*"#
@@ -208,7 +208,7 @@ enum VocabularyTextPolicy {
             + wordBoundaryAfter
     }
 
-    static func pdfSearchQueries(for query: String) -> [String] {
+    package static func pdfSearchQueries(for query: String) -> [String] {
         let value = normalized(query)
         guard !value.isEmpty else { return [] }
 
@@ -223,7 +223,7 @@ enum VocabularyTextPolicy {
         return results
     }
 
-    static func lineBrokenDehyphenatedSearchPattern(for query: String) -> String? {
+    package static func lineBrokenDehyphenatedSearchPattern(for query: String) -> String? {
         let value = normalized(query)
         guard isSingleEnglishWord(value), !value.contains("-"), value.count >= 4 else {
             return nil
@@ -238,14 +238,14 @@ enum VocabularyTextPolicy {
         return #"(?i)"# + wordBoundaryBefore + "(?:" + variants.joined(separator: "|") + ")" + wordBoundaryAfter
     }
 
-    static func emphasisPattern(for word: String) -> String {
+    package static func emphasisPattern(for word: String) -> String {
         let value = normalized(word)
         let escaped = NSRegularExpression.escapedPattern(for: value)
         guard isSingleEnglishWord(value) else { return escaped }
         return wordBoundaryBefore + escaped + wordBoundaryAfter
     }
 
-    static func dehyphenatedPDFLayoutCandidate(word rawWord: String, context: String?) -> String? {
+    package static func dehyphenatedPDFLayoutCandidate(word rawWord: String, context: String?) -> String? {
         let word = normalizedVocabularyText(rawWord)
         guard let context, !word.isEmpty, !context.isEmpty else { return nil }
 

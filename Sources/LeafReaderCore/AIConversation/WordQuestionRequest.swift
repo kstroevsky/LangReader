@@ -1,11 +1,21 @@
 import Foundation
 
-struct WordQuestionRequest {
-    let text: String
-    let selectedContext: String?
+package struct WordQuestionRequest {
+    package let text: String
+    package let selectedContext: String?
+
+    package init(text: String, selectedContext: String?) {
+        self.text = text
+        self.selectedContext = selectedContext
+    }
 }
 
-struct WordQuestionStartResult {
-    let linkID: String?
-    let selectedContext: String?
+package struct WordQuestionStartResult {
+    package let linkID: String?
+    package let selectedContext: String?
+
+    package init(linkID: String?, selectedContext: String?) {
+        self.linkID = linkID
+        self.selectedContext = selectedContext
+    }
 }

@@ -1,15 +1,15 @@
 import Foundation
 import LeafReaderCore
 
-struct ReadingContextSnapshot {
-    let title: String
-    let documentKind: ReaderDocumentKind
-    let locationLabel: String
-    let visibleText: String
-    let nearbyText: String
-    let focusedSelection: ReaderFocusedSelection?
+package struct ReadingContextSnapshot {
+    package let title: String
+    package let documentKind: ReaderDocumentKind
+    package let locationLabel: String
+    package let visibleText: String
+    package let nearbyText: String
+    package let focusedSelection: ReaderFocusedSelection?
 
-    init(
+    package init(
         title: String,
         documentKind: ReaderDocumentKind,
         locationLabel: String,
@@ -25,7 +25,7 @@ struct ReadingContextSnapshot {
         self.focusedSelection = focusedSelection
     }
 
-    init(
+    package init(
         title: String,
         documentKind: ReaderDocumentKind,
         locationLabel: String,
@@ -48,31 +48,31 @@ struct ReadingContextSnapshot {
         )
     }
 
-    var selectedText: String {
+    package var selectedText: String {
         focusedSelection?.text ?? ""
     }
 
-    var selectedContext: String {
+    package var selectedContext: String {
         focusedSelection?.context ?? ""
     }
 
-    var currentContentTitle: String {
+    package var currentContentTitle: String {
         let trimmedLocation = trimmed(locationLabel)
         return trimmedLocation.isEmpty ? title : "\(title) - \(trimmedLocation)"
     }
 
-    var readingText: String {
+    package var readingText: String {
         let visible = trimmed(visibleText)
         if !visible.isEmpty { return visible }
         return trimmed(nearbyText)
     }
 
-    var focusedReadingText: String {
+    package var focusedReadingText: String {
         let selected = trimmed(selectedText)
         return selected.isEmpty ? readingText : selected
     }
 
-    var contextText: String {
+    package var contextText: String {
         var parts: [String] = []
         if hasTrimmedText(locationLabel) {
             parts.append(AppText.localized("【当前位置】\n\(locationLabel)", "[Current location]\n\(locationLabel)"))

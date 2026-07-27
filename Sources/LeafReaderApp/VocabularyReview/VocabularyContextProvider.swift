@@ -1,5 +1,6 @@
 import Foundation
 import PDFKit
+import LeafReaderCore
 
 enum VocabularyContextProvider {
     private static let selectionInset = CGSize(width: -120, height: -36)

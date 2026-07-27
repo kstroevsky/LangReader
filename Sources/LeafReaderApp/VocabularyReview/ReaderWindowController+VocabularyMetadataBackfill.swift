@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     func backfillDictionaryMetadataAsync(linkID: String, word: String) {

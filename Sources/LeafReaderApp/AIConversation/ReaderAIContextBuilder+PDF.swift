@@ -1,5 +1,6 @@
 import Foundation
 import PDFKit
+import LeafReaderCore
 
 extension ReaderAIContextBuilder {
     static func pdfPageSummaryText(document: PDFDocument, page: PDFPage) -> String {

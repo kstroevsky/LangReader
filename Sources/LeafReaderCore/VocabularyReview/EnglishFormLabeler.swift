@@ -1,5 +1,6 @@
 import Foundation
 import NaturalLanguage
+import LeafReaderCore
 
 /// Derives a grammatical form label for an English surface form, offline.
 ///

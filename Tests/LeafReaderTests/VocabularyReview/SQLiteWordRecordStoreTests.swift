@@ -1,6 +1,7 @@
 import Cocoa
 import Foundation
 import SQLite3
+import LeafReaderCore
 
 final class AIChatPanel {
     struct LinkedWordBubble {

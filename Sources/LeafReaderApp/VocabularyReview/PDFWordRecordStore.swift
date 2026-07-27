@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 struct StoredPDFWordRecord: Codable {
     let id: String

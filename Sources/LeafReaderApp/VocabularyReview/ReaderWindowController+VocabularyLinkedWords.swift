@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     func updateStoredLinkedWordAnswer(linkID: String, question: String, answer: String) {

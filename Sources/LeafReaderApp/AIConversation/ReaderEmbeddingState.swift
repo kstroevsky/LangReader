@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 struct ReaderEmbeddingState {
     var pdfAgentIndex: PDFDocumentAgentIndex?

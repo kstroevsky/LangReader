@@ -1,5 +1,6 @@
 import Foundation
 import SQLite3
+import LeafReaderCore
 
 struct WordRecordSQLiteJSONCodec {
     let encoder = JSONEncoder()

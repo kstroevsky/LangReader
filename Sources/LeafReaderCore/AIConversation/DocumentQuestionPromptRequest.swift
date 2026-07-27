@@ -1,18 +1,18 @@
 import Foundation
 
-struct DocumentQuestionPromptRequest {
-    let question: String
-    let questionSubject: String
-    let context: String
+package struct DocumentQuestionPromptRequest {
+    package let question: String
+    package let questionSubject: String
+    package let context: String
 
-    init(question: String, questionSubject: String = "", context: String) {
+    package init(question: String, questionSubject: String = "", context: String) {
         self.question = question
         self.questionSubject = questionSubject
         self.context = context
     }
 }
 
-typealias DocumentQuestionPromptHandler = (
+package typealias DocumentQuestionPromptHandler = (
     _ request: DocumentQuestionPromptRequest,
     _ completion: @escaping (String?) -> Void
 ) -> Void

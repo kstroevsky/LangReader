@@ -1,12 +1,17 @@
 import Foundation
 
-struct ReaderAIContextResolver {
-    typealias ContextProvider = (String) -> String
+package struct ReaderAIContextResolver {
+    package typealias ContextProvider = (String) -> String
 
-    let explicitSelection: String
-    let readAloudSelection: String
+    package let explicitSelection: String
+    package let readAloudSelection: String
 
-    func focusedSelection(contextProvider: ContextProvider) -> ReaderFocusedSelection? {
+    package init(explicitSelection: String, readAloudSelection: String) {
+        self.explicitSelection = explicitSelection
+        self.readAloudSelection = readAloudSelection
+    }
+
+    package func focusedSelection(contextProvider: ContextProvider) -> ReaderFocusedSelection? {
         if let candidate = focusedCandidate {
             return ReaderFocusedSelection(
                 origin: candidate.origin,
@@ -17,7 +22,7 @@ struct ReaderAIContextResolver {
         return nil
     }
 
-    var preferredSelectionText: String {
+    package var preferredSelectionText: String {
         focusedCandidate?.text ?? ""
     }
 

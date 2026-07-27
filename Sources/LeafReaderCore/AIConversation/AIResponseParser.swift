@@ -1,7 +1,7 @@
 import Foundation
 
-enum AIResponseParser {
-    static func responseText(from json: [String: Any]?, provider: String) -> String? {
+package enum AIResponseParser {
+    package static func responseText(from json: [String: Any]?, provider: String) -> String? {
         guard let json else { return nil }
         if provider == "claude" {
             guard let content = json["content"] as? [[String: Any]] else { return nil }
@@ -35,7 +35,7 @@ enum AIResponseParser {
         return content
     }
 
-    static func deltaText(fromStreamLine line: String, provider: String) -> String? {
+    package static func deltaText(fromStreamLine line: String, provider: String) -> String? {
         let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
         let jsonString: String

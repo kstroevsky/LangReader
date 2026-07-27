@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum VocabularyOccurrenceGroupingTests {
     static func testGroupsCollapseSpellingsThatDifferOnlyByCase() throws {

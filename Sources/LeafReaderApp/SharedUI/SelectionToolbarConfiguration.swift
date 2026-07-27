@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum SelectionToolbarContextAction: Equatable {
     case addWord

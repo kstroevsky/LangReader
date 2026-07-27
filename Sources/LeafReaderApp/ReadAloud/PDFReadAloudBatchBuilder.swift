@@ -1,5 +1,6 @@
 import Cocoa
 import PDFKit
+import LeafReaderCore
 
 final class PDFReadAloudBatchBuilder {
     struct Batch {
