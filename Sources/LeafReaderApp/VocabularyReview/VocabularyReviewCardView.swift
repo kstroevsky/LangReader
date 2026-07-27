@@ -1,4 +1,5 @@
 import SwiftUI
+import LeafReaderCore
 
 /// One flashcard in the vocabulary review.
 ///

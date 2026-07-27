@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NSTextViewDelegate {
     typealias Metrics = ReadingNotePanelMetrics

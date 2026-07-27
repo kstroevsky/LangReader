@@ -1,4 +1,5 @@
 import SwiftUI
+import LeafReaderCore
 
 /// The General settings page.
 ///

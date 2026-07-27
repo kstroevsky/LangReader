@@ -1,6 +1,7 @@
 import Cocoa
 import PDFKit
 import WebKit
+import LeafReaderCore
 
 extension ReaderWindowController {
     func currentFocusedSelectionForAI() -> ReaderFocusedSelection? {

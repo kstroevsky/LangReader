@@ -1,5 +1,6 @@
 import Cocoa
 import CoreText
+import LeafReaderCore
 
 enum ReadingNotePDFExporter {
     enum ExportError: LocalizedError {

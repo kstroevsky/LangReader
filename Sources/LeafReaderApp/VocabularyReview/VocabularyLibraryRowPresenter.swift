@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 /// The text on one row of the vocabulary library's word list.
 ///

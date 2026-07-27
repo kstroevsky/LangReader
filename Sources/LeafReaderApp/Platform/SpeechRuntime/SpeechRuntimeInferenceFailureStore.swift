@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum SpeechRuntimeInferenceFailureStore {
     private static let defaultsPrefix = "speechRuntime.lastInferenceFailure."

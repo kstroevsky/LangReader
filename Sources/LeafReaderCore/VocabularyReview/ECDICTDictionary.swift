@@ -1,5 +1,6 @@
 import Foundation
 import SQLite3
+import LeafReaderCore
 
 struct ECDICTEntry: Equatable {
     let word: String

@@ -1,4 +1,5 @@
 import SwiftUI
+import LeafReaderCore
 
 /// The trainer's list of saved words.
 ///

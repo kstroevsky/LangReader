@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 final class ReadAloudSoftHintView: NSView {
     private let iconView = NSImageView()

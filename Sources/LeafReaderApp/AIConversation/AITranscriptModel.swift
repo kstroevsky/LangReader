@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 /// One bubble in the AI panel's transcript.
 ///

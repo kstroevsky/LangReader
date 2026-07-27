@@ -229,7 +229,6 @@ run_swift_test /tmp/leafreader-pdf-embedding-store-tests \
   "$APP_SOURCE_ROOT/AIConversation/ReaderAIContextBuilder.swift" \
   "$APP_SOURCE_ROOT/AIConversation/ReaderAIContextBuilder+PDF.swift" \
   "$APP_SOURCE_ROOT/AIConversation/ReaderAIContextPolicy.swift" \
-  "$APP_SOURCE_ROOT/App/AppText.swift" \
   -framework PDFKit \
   -framework Cocoa \
   -lsqlite3
@@ -243,7 +242,6 @@ run_swift_test /tmp/leafreader-update-failure-classifier-tests \
   "$TEST_SOURCE_ROOT/App/UpdateFailureClassifierTests.swift"
 
 run_swift_test /tmp/leafreader-theme-palette-tests \
-  "$APP_SOURCE_ROOT/App/AppText.swift" \
   "$APP_SOURCE_ROOT/SharedUI/ReaderTheme.swift" \
   "$APP_SOURCE_ROOT/SharedUI/ReaderTheme+Palette.swift" \
   "$APP_SOURCE_ROOT/SharedUI/ReaderDesignTokens.swift" \
@@ -258,7 +256,6 @@ run_swift_test /tmp/leafreader-theme-palette-tests \
 
 run_swift_test /tmp/leafreader-vocabulary-record-provider-tests \
   "$TEST_SOURCE_ROOT/VocabularyReview/VocabularyRecordProviderTests.swift" \
-  "$APP_SOURCE_ROOT/App/AppText.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/StoredPDFWordRect.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularySRS.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularyTextPolicy.swift" \
@@ -270,7 +267,6 @@ run_swift_test /tmp/leafreader-vocabulary-record-provider-tests \
 
 run_swift_test /tmp/leafreader-vocabulary-library-record-provider-tests \
   "$TEST_SOURCE_ROOT/VocabularyReview/VocabularyLibraryRecordProviderTests.swift" \
-  "$APP_SOURCE_ROOT/App/AppText.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/StoredPDFWordRect.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularySRS.swift" \
   "$APP_SOURCE_ROOT/VocabularyReview/VocabularyTextPolicy.swift" \
@@ -312,6 +308,5 @@ if [[ "${LEAFVOCABULARY_TEST_GERMAN_DICTIONARY:-0}" == "1" ]]; then
     "$APP_SOURCE_ROOT/VocabularyReview/GermanWiktionaryDictionary.swift" \
     "$APP_SOURCE_ROOT/VocabularyReview/DictionaryLookupService.swift" \
     "$APP_SOURCE_ROOT/VocabularyReview/ECDICTDictionary.swift" \
-    "$APP_SOURCE_ROOT/App/AppText.swift" \
-    -lsqlite3
+      -lsqlite3
 fi

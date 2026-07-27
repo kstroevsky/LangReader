@@ -1,5 +1,6 @@
 import Combine
 import SwiftUI
+import LeafReaderCore
 
 /// State behind the AI panel's chrome — the header actions and the status row.
 ///

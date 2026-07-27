@@ -1,5 +1,6 @@
 import Observation
 import SwiftUI
+import LeafReaderCore
 
 /// State behind the vocabulary trainer's header: the title, the one-line
 /// summary, and the row of learning statistics.

@@ -1,5 +1,6 @@
 import SwiftUI
 import Observation
+import LeafReaderCore
 
 /// State behind the vocabulary library's detail pane.
 ///

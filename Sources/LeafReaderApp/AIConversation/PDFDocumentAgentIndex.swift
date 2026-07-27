@@ -1,6 +1,7 @@
 import Foundation
 import CryptoKit
 import PDFKit
+import LeafReaderCore
 
 struct PDFDocumentAgentEvidence {
     let pageIndex: Int

@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 /// The wording on a shelf card.
 ///

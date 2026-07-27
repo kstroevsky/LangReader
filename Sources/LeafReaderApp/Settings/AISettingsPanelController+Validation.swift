@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension AISettingsPanelController {
     func showValidationAlert(message: String, in panel: NSWindow) {

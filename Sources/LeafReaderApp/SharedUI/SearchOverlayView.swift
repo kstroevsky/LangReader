@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 final class SearchOverlayView: NSView {
     let searchField = NSTextField(string: "")

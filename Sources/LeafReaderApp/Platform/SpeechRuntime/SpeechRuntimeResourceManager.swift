@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum SpeechRuntimeResourceManager {
     private static let downloadCoordinator = LocalRuntimeDownloadCoordinator<LocalRuntimeDownloadKey>(

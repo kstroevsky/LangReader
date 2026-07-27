@@ -1,5 +1,6 @@
 import AVFoundation
 import Cocoa
+import LeafReaderCore
 
 extension AIChatPanel {
     func isVocabularySelection(_ text: String) -> Bool {

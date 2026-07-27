@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension AIChatPanel {
     /// Resets the Assistant to an empty state on document load.

@@ -1,5 +1,6 @@
 import Cocoa
 import SwiftUI
+import LeafReaderCore
 
 extension ReaderWindowController {
     func configureToolbarViews() -> ReaderToolbarSetup {

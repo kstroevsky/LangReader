@@ -18,7 +18,6 @@ Sources/LeafReaderApp/AIConversation/ReaderAISourceMatcher.swift
 Sources/LeafReaderApp/AIConversation/ReaderQueryCapability.swift
 Sources/LeafReaderApp/AIConversation/ReadingContextSnapshot.swift
 Sources/LeafReaderApp/AIConversation/WordQuestionRequest.swift
-Sources/LeafReaderApp/App/AppText.swift
 Sources/LeafReaderApp/App/LaunchPerformanceTracker.swift
 Sources/LeafReaderApp/App/UpdateFailureClassifier.swift
 Sources/LeafReaderApp/Platform/Networking/NetworkConnectivityMonitor.swift

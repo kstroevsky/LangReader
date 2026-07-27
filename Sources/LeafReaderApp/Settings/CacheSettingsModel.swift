@@ -1,5 +1,6 @@
 import Observation
 import SwiftUI
+import LeafReaderCore
 
 /// State behind the Cache settings page.
 ///

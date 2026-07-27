@@ -1,5 +1,6 @@
 import Observation
 import SwiftUI
+import LeafReaderCore
 
 /// One TTS runtime's row: what it is, what it is doing, and what can be done to
 /// it. Derived entirely from `SpeechRuntimeResourceManager`; the panel refreshes

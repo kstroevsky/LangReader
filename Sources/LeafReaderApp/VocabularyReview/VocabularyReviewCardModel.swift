@@ -1,5 +1,6 @@
 import Observation
 import SwiftUI
+import LeafReaderCore
 
 /// Which face of the flashcard is showing.
 ///

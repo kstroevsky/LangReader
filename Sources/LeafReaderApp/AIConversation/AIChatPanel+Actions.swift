@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension AIChatPanel {
     func appendNotice(_ text: String) {

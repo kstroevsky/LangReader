@@ -3,6 +3,7 @@ import SwiftUI
 import CryptoKit
 import PDFKit
 import UniformTypeIdentifiers
+import LeafReaderCore
 
 final class RecentDocumentsPanelController: NSObject {
     struct ShelfRemovalOptions {

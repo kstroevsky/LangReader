@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum SpeechRuntimeDownloadFailureStore {
     private static let defaultsPrefix = "speechRuntime.lastFailure."

@@ -1,4 +1,5 @@
 import SwiftUI
+import LeafReaderCore
 
 /// The contract every settings page's model satisfies, so the panel's Save can
 /// iterate its pages instead of naming each one — adding a page should not mean

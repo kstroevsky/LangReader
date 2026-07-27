@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension AISettingsPanelController {
     func label(_ text: String, size: CGFloat, weight: NSFont.Weight = .regular, color: NSColor) -> NSTextField {

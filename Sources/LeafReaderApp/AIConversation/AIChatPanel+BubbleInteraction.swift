@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension AIChatPanel {
     @objc func toggleCollapsedBubble(_ recognizer: NSClickGestureRecognizer) {

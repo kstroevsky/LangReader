@@ -1,4 +1,5 @@
 import SwiftUI
+import LeafReaderCore
 
 /// The shelf of recently opened documents.
 ///

@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReaderWindowController {
     /// Fills the list model from the current page of records. Replaces the old

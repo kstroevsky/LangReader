@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum SpeechVoiceCatalog {
     static let defaultKokoroVoiceID = "af_heart"

@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension AISettingsPanelController {
     /// Saves the panel, then round-trips one message. Driven by the SwiftUI

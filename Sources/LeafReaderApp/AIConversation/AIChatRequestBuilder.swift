@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum AIChatRequestBuilder {
     static func request(

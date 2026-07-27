@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 final class LocalRuntimeDownloader: NSObject, URLSessionDataDelegate {
     private let plan: LocalRuntimeDownloadPlan

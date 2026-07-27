@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 /// The complete, engine-neutral input needed to synthesize one audio file.
 struct SpeechSynthesisRequest {

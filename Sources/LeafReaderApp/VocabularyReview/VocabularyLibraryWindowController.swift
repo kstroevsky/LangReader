@@ -1,5 +1,6 @@
 import Cocoa
 import SwiftUI
+import LeafReaderCore
 
 /// A vertical stack that anchors its content to the top of its scroll view.
 ///

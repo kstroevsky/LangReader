@@ -1,5 +1,6 @@
 import Foundation
 import Sparkle
+import LeafReaderCore
 
 struct DiagnosticRow {
     let title: String

@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     func vocabularyRecords(_ records: [VocabularyExportRecord], matching filter: VocabularyFilter) -> [VocabularyExportRecord] {

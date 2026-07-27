@@ -1,4 +1,5 @@
 import SwiftUI
+import LeafReaderCore
 
 /// The Cache settings page: the current book's AI analysis data, and the
 /// machine-wide analysis cache.

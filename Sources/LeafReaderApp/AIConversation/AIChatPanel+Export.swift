@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 private enum AIConversationExportFormat: Int, CaseIterable {
     case markdown

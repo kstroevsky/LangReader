@@ -1,5 +1,6 @@
 import Cocoa
 import SwiftUI
+import LeafReaderCore
 
 extension ReaderWindowController {
     func populateVocabularyReviewContainer(_ container: NSView, records: [VocabularyExportRecord], filter: VocabularyFilter, isDark: Bool, autoPlayNewCard: Bool = true) {

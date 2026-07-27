@@ -1,4 +1,5 @@
 import SwiftUI
+import LeafReaderCore
 
 /// The AI Analysis settings page: which embedding service to use, its endpoint
 /// and model, the key, and whether new documents are indexed automatically.

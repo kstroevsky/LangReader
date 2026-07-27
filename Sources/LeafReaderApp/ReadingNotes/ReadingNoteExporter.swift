@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum ReadingNoteExporter {
     enum Format: String, CaseIterable {

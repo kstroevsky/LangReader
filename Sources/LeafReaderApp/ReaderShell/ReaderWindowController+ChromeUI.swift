@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReaderWindowController {
     /// The one place chrome visibility is applied. Callers describe the reader's

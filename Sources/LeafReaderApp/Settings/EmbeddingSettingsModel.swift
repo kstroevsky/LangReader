@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import LeafReaderCore
 
 /// State behind the AI Analysis (embedding) settings page.
 ///

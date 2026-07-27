@@ -1,5 +1,6 @@
 import AVFoundation
 import Cocoa
+import LeafReaderCore
 
 final class ChatInputTextField: NSTextField {
     override func performKeyEquivalent(with event: NSEvent) -> Bool {

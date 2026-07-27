@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum AIChatRequestFormat: Equatable {
     case openAICompatible

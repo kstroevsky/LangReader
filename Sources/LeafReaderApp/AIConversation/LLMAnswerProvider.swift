@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 protocol StreamingAnswerProvider {
     func answerStream(

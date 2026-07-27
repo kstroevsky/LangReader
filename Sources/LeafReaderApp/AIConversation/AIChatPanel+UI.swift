@@ -1,5 +1,6 @@
 import Cocoa
 import SwiftUI
+import LeafReaderCore
 
 extension AIChatPanel {
     /// The panel is three stacked regions: a SwiftUI header, the AppKit

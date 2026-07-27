@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import LeafReaderCore
 
 enum LocalRuntimeDownloadSupport {
     static let downloadErrorDomain = "LeafReader.LocalRuntime.Download"

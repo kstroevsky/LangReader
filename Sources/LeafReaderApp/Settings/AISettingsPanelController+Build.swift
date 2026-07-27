@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension AISettingsPanelController {
     func show(attachedTo window: NSWindow, initialTab: SettingsTab = .general) {

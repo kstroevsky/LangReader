@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension AIChatPanel {
     func bubbleString(role: String, text: String, renderMarkdown: Bool) -> NSAttributedString {

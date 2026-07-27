@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 /// Which records the vocabulary library shows, in what order, and what stays
 /// selected while the list changes underneath.

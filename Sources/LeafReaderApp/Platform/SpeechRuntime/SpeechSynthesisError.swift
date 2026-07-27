@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum SpeechSynthesisError: Error, Equatable {
     case runtimeUnavailable(String)

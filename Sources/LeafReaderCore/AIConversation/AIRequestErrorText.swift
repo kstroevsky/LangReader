@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum AIRequestErrorText {
     static func message(for error: Error) -> String {

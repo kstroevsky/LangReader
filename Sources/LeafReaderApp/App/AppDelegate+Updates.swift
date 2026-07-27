@@ -1,5 +1,6 @@
 import Cocoa
 import Sparkle
+import LeafReaderCore
 
 extension AppDelegate {
     @objc func checkForUpdates(_ sender: Any?) {

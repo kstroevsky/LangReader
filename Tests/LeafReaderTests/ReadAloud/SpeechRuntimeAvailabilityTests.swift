@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum SpeechRuntimeAvailabilityTests {
     static func testSpeechRuntimeAvailabilityText() throws {

@@ -1,5 +1,6 @@
 import Cocoa
 import SwiftUI
+import LeafReaderCore
 
 private struct VocabularyPanelViews {
     let header: NSView

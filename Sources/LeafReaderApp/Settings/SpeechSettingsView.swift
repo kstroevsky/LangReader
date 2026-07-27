@@ -1,4 +1,5 @@
 import SwiftUI
+import LeafReaderCore
 
 /// The Read Aloud settings page: which TTS runtime, voice and speed to use,
 /// then one row per runtime showing whether it is installed, downloading or

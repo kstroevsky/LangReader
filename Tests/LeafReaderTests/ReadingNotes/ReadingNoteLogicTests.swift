@@ -1,5 +1,6 @@
 import Cocoa
 import Foundation
+import LeafReaderCore
 
 enum ReadingNoteLogicTests {
     static func testReadingNoteStoreUnavailableDatabase() throws {

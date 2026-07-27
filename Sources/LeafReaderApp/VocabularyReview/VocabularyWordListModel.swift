@@ -1,5 +1,6 @@
 import Observation
 import SwiftUI
+import LeafReaderCore
 
 /// One saved word in the trainer's list.
 ///

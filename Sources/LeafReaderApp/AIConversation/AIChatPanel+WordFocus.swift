@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 /// A read-only, selectable text view that sizes its own height to its content.
 ///

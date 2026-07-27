@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum VocabularyDailyGoalPolicy {
     static let defaultGoal = 10
