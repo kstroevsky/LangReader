@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension ReadingNotePanelController {
     func renderMarkdownIntoEditor(_ markdown: String) {

@@ -1,23 +1,23 @@
 import Foundation
 import LeafReaderCore
 
-struct ReadingNoteListRowViewModel: Equatable {
-    let id: String
-    let locationText: String
-    let titleText: String
-    let isFavorite: Bool
+package struct ReadingNoteListRowViewModel: Equatable {
+    package let id: String
+    package let locationText: String
+    package let titleText: String
+    package let isFavorite: Bool
 }
 
-enum ReadingNoteListPresenter {
-    static func sortedNotes(_ notes: [ReadingNote]) -> [ReadingNote] {
+package enum ReadingNoteListPresenter {
+    package static func sortedNotes(_ notes: [ReadingNote]) -> [ReadingNote] {
         notes.sortedForReadingNoteList()
     }
 
-    static func rows(for notes: [ReadingNote]) -> [ReadingNoteListRowViewModel] {
+    package static func rows(for notes: [ReadingNote]) -> [ReadingNoteListRowViewModel] {
         sortedNotes(notes).map(row)
     }
 
-    static func filteredNotes(_ notes: [ReadingNote], query: String) -> [ReadingNote] {
+    package static func filteredNotes(_ notes: [ReadingNote], query: String) -> [ReadingNote] {
         let normalizedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalizedQuery.isEmpty else {
             return sortedNotes(notes)
@@ -28,11 +28,11 @@ enum ReadingNoteListPresenter {
         }
     }
 
-    static func rows(for notes: [ReadingNote], query: String) -> [ReadingNoteListRowViewModel] {
+    package static func rows(for notes: [ReadingNote], query: String) -> [ReadingNoteListRowViewModel] {
         filteredNotes(notes, query: query).map(row)
     }
 
-    static func summaryText(noteCount: Int) -> String {
+    package static func summaryText(noteCount: Int) -> String {
         AppText.localized("共 \(noteCount) 条笔记", "\(noteCount) note(s)")
     }
 
@@ -40,7 +40,7 @@ enum ReadingNoteListPresenter {
     ///
     /// An empty query is not a search, so it falls back to the plain count
     /// rather than reading "12 of 12".
-    static func summaryText(matchCount: Int, totalCount: Int, query: String) -> String {
+    package static func summaryText(matchCount: Int, totalCount: Int, query: String) -> String {
         guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return summaryText(noteCount: matchCount)
         }
@@ -52,7 +52,7 @@ enum ReadingNoteListPresenter {
 
     /// What to show when the list has no rows — which reads differently when a
     /// search excluded everything than when there are simply no notes.
-    static func emptyStateText(query: String) -> String {
+    package static func emptyStateText(query: String) -> String {
         query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             ? AppText.localized("当前书还没有阅读笔记。", "No reading notes for this book yet.")
             : AppText.localized("没有匹配的阅读笔记。", "No matching reading notes.")
@@ -63,11 +63,11 @@ enum ReadingNoteListPresenter {
     /// Rows carry only an id, so acting on one has to find the note again — and
     /// the note may be gone, since the list can be redrawn from a store that
     /// changed underneath it (a delete elsewhere, an export reload).
-    static func note(withID id: String, in notes: [ReadingNote]) -> ReadingNote? {
+    package static func note(withID id: String, in notes: [ReadingNote]) -> ReadingNote? {
         notes.first { $0.id == id }
     }
 
-    static func row(for note: ReadingNote) -> ReadingNoteListRowViewModel {
+    package static func row(for note: ReadingNote) -> ReadingNoteListRowViewModel {
         ReadingNoteListRowViewModel(
             id: note.id,
             locationText: locationText(for: note),

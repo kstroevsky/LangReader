@@ -1,5 +1,6 @@
 import Cocoa
 import SwiftUI
+import LeafReaderCore
 
 /// The window shell around the Reading Notes list.
 ///

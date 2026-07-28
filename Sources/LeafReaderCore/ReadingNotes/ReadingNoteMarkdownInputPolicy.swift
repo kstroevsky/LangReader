@@ -1,6 +1,6 @@
 import Foundation
 
-enum ReadingNoteMarkdownInputPolicy {
+package enum ReadingNoteMarkdownInputPolicy {
     private static let blockPatterns = [
         #"^#{1,6}\s+\S"#,
         #"^[-*]\s+\S"#,
@@ -15,7 +15,7 @@ enum ReadingNoteMarkdownInputPolicy {
         #"`[^`\n]+?`"#
     ]
 
-    static func shouldRenderCompletedLine(_ line: String) -> Bool {
+    package static func shouldRenderCompletedLine(_ line: String) -> Bool {
         let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
         return (blockPatterns + inlinePatterns).contains { pattern in
@@ -23,7 +23,7 @@ enum ReadingNoteMarkdownInputPolicy {
         }
     }
 
-    static func shouldRenderPastedText(_ text: String) -> Bool {
+    package static func shouldRenderPastedText(_ text: String) -> Bool {
         text.components(separatedBy: .newlines).contains { shouldRenderCompletedLine($0) }
     }
 }

@@ -1,21 +1,21 @@
 import Foundation
 
-struct ReadingNoteAIMarkdownImageProtector {
-    struct ImagePlaceholder: Equatable {
-        let placeholder: String
-        let markdown: String
+package struct ReadingNoteAIMarkdownImageProtector {
+    package struct ImagePlaceholder: Equatable {
+        package let placeholder: String
+        package let markdown: String
     }
 
-    struct ProtectedMarkdown {
-        let markdown: String
-        let placeholders: [ImagePlaceholder]
+    package struct ProtectedMarkdown {
+        package let markdown: String
+        package let placeholders: [ImagePlaceholder]
 
-        var isEmpty: Bool {
+        package var isEmpty: Bool {
             placeholders.isEmpty
         }
     }
 
-    static func protect(_ markdown: String) -> ProtectedMarkdown {
+    package static func protect(_ markdown: String) -> ProtectedMarkdown {
         var placeholders: [ImagePlaceholder] = []
         var protectedLines: [String] = []
         var imageIndex = 1
@@ -37,7 +37,7 @@ struct ReadingNoteAIMarkdownImageProtector {
         )
     }
 
-    static func restore(_ markdown: String, protected: ProtectedMarkdown) -> String {
+    package static func restore(_ markdown: String, protected: ProtectedMarkdown) -> String {
         var restored = markdown
         var missingImages: [String] = []
         for item in protected.placeholders {

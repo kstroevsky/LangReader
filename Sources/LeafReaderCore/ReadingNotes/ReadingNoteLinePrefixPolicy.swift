@@ -1,13 +1,13 @@
 import Foundation
 
-enum ReadingNoteLinePrefixPolicy {
-    struct Replacement: Equatable {
-        let range: NSRange
-        let text: String
-        let selection: NSRange
+package enum ReadingNoteLinePrefixPolicy {
+    package struct Replacement: Equatable {
+        package let range: NSRange
+        package let text: String
+        package let selection: NSRange
     }
 
-    static func replacement(text: String, selection: NSRange, displayPrefix: String) -> Replacement? {
+    package static func replacement(text: String, selection: NSRange, displayPrefix: String) -> Replacement? {
         let nsText = text as NSString
         guard selection.length > 0 else {
             let location = min(selection.location, nsText.length)

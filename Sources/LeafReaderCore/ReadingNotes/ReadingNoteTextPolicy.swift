@@ -1,20 +1,20 @@
 import Foundation
 import CoreGraphics
 
-enum ReadingNoteTextPolicy {
-    struct PDFLine {
-        let text: String
-        let pageIndex: Int
-        let bounds: CGRect
+package enum ReadingNoteTextPolicy {
+    package struct PDFLine {
+        package let text: String
+        package let pageIndex: Int
+        package let bounds: CGRect
 
-        init(text: String, pageIndex: Int, bounds: CGRect) {
+        package init(text: String, pageIndex: Int, bounds: CGRect) {
             self.text = text
             self.pageIndex = pageIndex
             self.bounds = bounds
         }
     }
 
-    static func normalizeQuote(_ value: String) -> String {
+    package static func normalizeQuote(_ value: String) -> String {
         let normalizedNewlines = value
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
@@ -25,7 +25,7 @@ enum ReadingNoteTextPolicy {
             .joined(separator: "\n\n")
     }
 
-    static func normalizePDFLines(_ lines: [PDFLine]) -> String {
+    package static func normalizePDFLines(_ lines: [PDFLine]) -> String {
         let cleaned = lines
             .map { PDFLine(text: collapsedSpaces($0.text), pageIndex: $0.pageIndex, bounds: $0.bounds) }
             .filter { !$0.text.isEmpty && !$0.bounds.isEmpty }
@@ -47,11 +47,11 @@ enum ReadingNoteTextPolicy {
             .joined(separator: "\n\n")
     }
 
-    static func displayTitle(markdown: String, quote: String) -> String? {
+    package static func displayTitle(markdown: String, quote: String) -> String? {
         firstDisplayLine(in: markdown) ?? firstDisplayLine(in: quote)
     }
 
-    static func compactInlineText(_ value: String, maxLength: Int) -> String {
+    package static func compactInlineText(_ value: String, maxLength: Int) -> String {
         String(collapsedSpaces(value).prefix(maxLength))
     }
 

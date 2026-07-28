@@ -1,13 +1,13 @@
 import Foundation
 import LeafReaderCore
 
-enum ReadingNoteExporter {
-    enum Format: String, CaseIterable {
+package enum ReadingNoteExporter {
+    package enum Format: String, CaseIterable {
         case markdown
         case html
         case pdf
 
-        var title: String {
+        package var title: String {
             switch self {
             case .markdown:
                 return "Markdown"
@@ -18,7 +18,7 @@ enum ReadingNoteExporter {
             }
         }
 
-        var fileExtension: String {
+        package var fileExtension: String {
             switch self {
             case .markdown:
                 return "md"
@@ -30,11 +30,11 @@ enum ReadingNoteExporter {
         }
     }
 
-    enum Scope: String, CaseIterable {
+    package enum Scope: String, CaseIterable {
         case all
         case favorites
 
-        var title: String {
+        package var title: String {
             switch self {
             case .all:
                 return AppText.localized("全部笔记", "All notes")
@@ -43,7 +43,7 @@ enum ReadingNoteExporter {
             }
         }
 
-        var fileNameSuffix: String {
+        package var fileNameSuffix: String {
             switch self {
             case .all:
                 return "notes"
@@ -52,7 +52,7 @@ enum ReadingNoteExporter {
             }
         }
 
-        func filter(_ notes: [ReadingNote]) -> [ReadingNote] {
+        package func filter(_ notes: [ReadingNote]) -> [ReadingNote] {
             switch self {
             case .all:
                 return notes
@@ -62,7 +62,7 @@ enum ReadingNoteExporter {
         }
     }
 
-    static func markdown(documentTitle: String, notes: [ReadingNote], exportedAt: Date = Date()) -> String {
+    package static func markdown(documentTitle: String, notes: [ReadingNote], exportedAt: Date = Date()) -> String {
         var lines: [String] = [
             "# \(documentTitle) - \(AppText.localized("阅读笔记", "Reading Notes"))",
             "",
@@ -80,12 +80,12 @@ enum ReadingNoteExporter {
         return lines.joined(separator: "\n")
     }
 
-    static func html(documentTitle: String, notes: [ReadingNote], exportedAt: Date = Date()) -> String {
+    package static func html(documentTitle: String, notes: [ReadingNote], exportedAt: Date = Date()) -> String {
         let body = markdown(documentTitle: documentTitle, notes: notes, exportedAt: exportedAt)
         return MarkdownHTMLExporter.document(title: documentTitle, markdown: body)
     }
 
-    static func output(format: Format, documentTitle: String, notes: [ReadingNote], exportedAt: Date = Date()) -> String {
+    package static func output(format: Format, documentTitle: String, notes: [ReadingNote], exportedAt: Date = Date()) -> String {
         switch format {
         case .markdown:
             return markdown(documentTitle: documentTitle, notes: notes, exportedAt: exportedAt)
@@ -105,12 +105,12 @@ enum ReadingNoteExporter {
 
 }
 
-enum ReadingNoteMarkdown {
-    static func defaultBody(quote: String) -> String {
+package enum ReadingNoteMarkdown {
+    package static func defaultBody(quote: String) -> String {
         "\(blockquote(quote))\n\n## \(AppText.localized("笔记", "Notes"))\n\n"
     }
 
-    static func blockquote(_ text: String) -> String {
+    package static func blockquote(_ text: String) -> String {
         text
             .components(separatedBy: .newlines)
             .map { "> \($0)" }

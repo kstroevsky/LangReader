@@ -1,13 +1,13 @@
 import Foundation
 
-enum ReadingNoteSlashRangePolicy {
-    struct Trigger: Equatable {
-        let triggerRange: NSRange
-        let lineRange: NSRange
-        let isLineCommand: Bool
+package enum ReadingNoteSlashRangePolicy {
+    package struct Trigger: Equatable {
+        package let triggerRange: NSRange
+        package let lineRange: NSRange
+        package let isLineCommand: Bool
     }
 
-    static func trigger(text: String, selection: NSRange) -> Trigger? {
+    package static func trigger(text: String, selection: NSRange) -> Trigger? {
         let nsText = text as NSString
         let location = min(selection.location, nsText.length)
         guard location > 0,
@@ -20,7 +20,7 @@ enum ReadingNoteSlashRangePolicy {
         return Trigger(triggerRange: triggerRange, lineRange: lineRange, isLineCommand: line == "/")
     }
 
-    static func currentLineRange(text: String, selection: NSRange) -> NSRange {
+    package static func currentLineRange(text: String, selection: NSRange) -> NSRange {
         let nsText = text as NSString
         let location = min(selection.location, nsText.length)
         return nsText.lineRange(for: NSRange(location: max(0, location - 1), length: 0))

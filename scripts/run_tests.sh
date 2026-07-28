@@ -142,7 +142,6 @@ SQLITE_WORD_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/VocabularyReview/SQLiteWordRecordStoreTests.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/PDFWordRecordStore.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/WebWordRecordStore.swift"
-  "$APP_SOURCE_ROOT/Platform/Persistence/SQLiteSchemaMigrator.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/WordRecordSQLiteRowMapper.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/WordRecordSQLiteStore.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/GermanFlexionStore.swift"

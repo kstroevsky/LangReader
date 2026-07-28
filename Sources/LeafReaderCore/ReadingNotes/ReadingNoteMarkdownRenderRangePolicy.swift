@@ -1,7 +1,7 @@
 import Foundation
 
-enum ReadingNoteMarkdownRenderRangePolicy {
-    static func completedLineRangeBeforeCursor(text: String, selection: NSRange) -> NSRange? {
+package enum ReadingNoteMarkdownRenderRangePolicy {
+    package static func completedLineRangeBeforeCursor(text: String, selection: NSRange) -> NSRange? {
         let nsText = text as NSString
         let cursor = min(selection.location, nsText.length)
         guard cursor > 0 else { return nil }
@@ -12,7 +12,7 @@ enum ReadingNoteMarkdownRenderRangePolicy {
         return nsText.lineRange(for: NSRange(location: lineLocation, length: 0))
     }
 
-    static func pastedParagraphRange(text: String, insertedRange: NSRange) -> NSRange? {
+    package static func pastedParagraphRange(text: String, insertedRange: NSRange) -> NSRange? {
         let nsText = text as NSString
         guard nsText.length > 0 else { return nil }
         let bounded = ReadingNoteTextReplacementPolicy.boundedRange(

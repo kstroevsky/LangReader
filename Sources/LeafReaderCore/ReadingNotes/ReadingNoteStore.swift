@@ -4,15 +4,18 @@ import LeafReaderCore
 
 private let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
-final class ReadingNoteStore {
-    static let shared = ReadingNoteStore(databaseURL: defaultDatabaseURL())
+/// `@unchecked Sendable` is accurate: the sqlite handle `db` is reached only
+/// under `lock`, and the encoder/decoder are configured once and immutable
+/// thereafter.
+package final class ReadingNoteStore: @unchecked Sendable {
+    package static let shared = ReadingNoteStore(databaseURL: defaultDatabaseURL())
 
     private let lock = NSLock()
     private var db: OpaquePointer?
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
-    init(databaseURL: URL?) {
+    package init(databaseURL: URL?) {
         guard let url = databaseURL else {
             NSLog("LeafReader reading notes: no database URL available")
             return
@@ -37,7 +40,7 @@ final class ReadingNoteStore {
         sqlite3_close(db)
     }
 
-    func load(documentID: String) -> [ReadingNote] {
+    package func load(documentID: String) -> [ReadingNote] {
         locked {
             guard let db else { return [] }
             let sql = """
@@ -83,7 +86,7 @@ final class ReadingNoteStore {
     }
 
     @discardableResult
-    func upsert(_ note: ReadingNote) -> Bool {
+    package func upsert(_ note: ReadingNote) -> Bool {
         locked {
             guard let db else { return false }
             let sql = """
@@ -117,7 +120,7 @@ final class ReadingNoteStore {
     }
 
     @discardableResult
-    func delete(id: String) -> Bool {
+    package func delete(id: String) -> Bool {
         locked {
             guard let db else { return false }
             let sql = "DELETE FROM reading_notes WHERE id = ?"

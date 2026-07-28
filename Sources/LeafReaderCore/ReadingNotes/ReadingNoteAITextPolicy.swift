@@ -1,10 +1,10 @@
 import Foundation
 import LeafReaderCore
 
-enum ReadingNoteAITextPolicy {
-    static let noteContextLimit = 2000
+package enum ReadingNoteAITextPolicy {
+    package static let noteContextLimit = 2000
 
-    static func markdownBody(from value: String) -> String {
+    package static func markdownBody(from value: String) -> String {
         var lines = value.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: .newlines)
         guard let first = lines.first?.trimmingCharacters(in: .whitespacesAndNewlines),
               first.hasPrefix("```") else {
@@ -17,7 +17,7 @@ enum ReadingNoteAITextPolicy {
         return lines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func documentContext(selectedText: String, noteMarkdown: String, isChinese: Bool) -> String {
+    package static func documentContext(selectedText: String, noteMarkdown: String, isChinese: Bool) -> String {
         let note = ReaderAIContextPolicy.prefix(noteMarkdown, limit: noteContextLimit)
         if isChinese {
             return """
@@ -37,11 +37,11 @@ enum ReadingNoteAITextPolicy {
         """
     }
 
-    static func userFacingError(_ error: Error) -> String {
+    package static func userFacingError(_ error: Error) -> String {
         AIRequestErrorText.message(for: error)
     }
 
-    static func emptyOutputMessage() -> String {
+    package static func emptyOutputMessage() -> String {
         AppText.localized(
             "AI 没有返回内容。请重试，或换一个问题。",
             "AI returned no content. Try again, or ask a different question."

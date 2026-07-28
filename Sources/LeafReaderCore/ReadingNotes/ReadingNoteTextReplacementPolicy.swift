@@ -1,14 +1,14 @@
 import Foundation
 
-enum ReadingNoteTextReplacementPolicy {
-    enum Selection {
+package enum ReadingNoteTextReplacementPolicy {
+    package enum Selection {
         case caretAfterReplacement
         case caret(Int)
         case range(NSRange)
         case adjustedOriginal(NSRange)
     }
 
-    static func selectionRange(
+    package static func selectionRange(
         replacing replacedRange: NSRange,
         replacementLength: Int,
         textLengthAfterReplacement: Int,
@@ -27,7 +27,7 @@ enum ReadingNoteTextReplacementPolicy {
         }
     }
 
-    static func boundedRange(location: Int, length: Int, textLength: Int) -> NSRange {
+    package static func boundedRange(location: Int, length: Int, textLength: Int) -> NSRange {
         let boundedLocation = min(max(0, location), textLength)
         let boundedLength = min(max(0, length), textLength - boundedLocation)
         return NSRange(location: boundedLocation, length: boundedLength)

@@ -1,5 +1,6 @@
 import Cocoa
 import UniformTypeIdentifiers
+import LeafReaderCore
 
 extension ReadingNotePanelController {
     @objc func undoTapped(_ sender: NSButton) {

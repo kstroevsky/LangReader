@@ -1,7 +1,7 @@
 import Foundation
 import LeafReaderCore
 
-enum ReadingNoteSlashCommand: String, CaseIterable {
+package enum ReadingNoteSlashCommand: String, CaseIterable {
     case text
     case heading1
     case heading2
@@ -16,7 +16,7 @@ enum ReadingNoteSlashCommand: String, CaseIterable {
     case aiSummarize
     case aiOrganize
 
-    var title: String {
+    package var title: String {
         switch self {
         case .text: return AppText.localized("文本", "Text")
         case .heading1: return AppText.localized("标题 1", "Heading 1")
@@ -34,7 +34,7 @@ enum ReadingNoteSlashCommand: String, CaseIterable {
         }
     }
 
-    var marker: String {
+    package var marker: String {
         switch self {
         case .text: return ""
         case .heading1: return "# "
@@ -52,7 +52,7 @@ enum ReadingNoteSlashCommand: String, CaseIterable {
         }
     }
 
-    var isAICommand: Bool {
+    package var isAICommand: Bool {
         switch self {
         case .aiContinue, .aiExplain, .aiTranslate, .aiSummarize, .aiOrganize:
             return true
@@ -61,15 +61,15 @@ enum ReadingNoteSlashCommand: String, CaseIterable {
         }
     }
 
-    static var blockCommands: [ReadingNoteSlashCommand] {
+    package static var blockCommands: [ReadingNoteSlashCommand] {
         [.text, .heading1, .heading2, .heading3, .heading4, .bulletedList, .numberedList, .template]
     }
 
-    static var aiCommands: [ReadingNoteSlashCommand] {
+    package static var aiCommands: [ReadingNoteSlashCommand] {
         [.aiContinue]
     }
 
-    static func menuCommandGroups(isLineCommand: Bool) -> [[ReadingNoteSlashCommand]] {
+    package static func menuCommandGroups(isLineCommand: Bool) -> [[ReadingNoteSlashCommand]] {
         isLineCommand ? [aiCommands, blockCommands] : [aiCommands]
     }
 }

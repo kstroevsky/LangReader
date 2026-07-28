@@ -1,8 +1,8 @@
 import Foundation
 import SQLite3
 
-enum SQLiteSchemaMigrator {
-    static func ensureColumn(
+package enum SQLiteSchemaMigrator {
+    package static func ensureColumn(
         db: OpaquePointer?,
         table: String,
         name: String,
@@ -14,7 +14,7 @@ enum SQLiteSchemaMigrator {
         _ = execute("ALTER TABLE \(table) ADD COLUMN \(name) \(definition);", "migrate \(table).\(name)")
     }
 
-    static func columnExists(
+    package static func columnExists(
         db: OpaquePointer?,
         table: String,
         name: String,

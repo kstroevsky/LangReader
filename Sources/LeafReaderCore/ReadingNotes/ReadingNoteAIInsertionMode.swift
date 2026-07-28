@@ -1,6 +1,6 @@
 import Foundation
 
-enum ReadingNoteAIInsertionMode {
+package enum ReadingNoteAIInsertionMode {
     case appendSection(title: String)
     case replacePlaceholder(title: String)
     case replaceSelection(
@@ -16,7 +16,7 @@ enum ReadingNoteAIInsertionMode {
     )
     case replaceSlashTrigger
 
-    var usesPlaceholder: Bool {
+    package var usesPlaceholder: Bool {
         if case .replacePlaceholder = self {
             return true
         }

@@ -1,14 +1,14 @@
 import Foundation
 import LeafReaderCore
 
-enum ReadingNoteAssetStore {
-    static func defaultDirectoryURL() -> URL? {
+package enum ReadingNoteAssetStore {
+    package static func defaultDirectoryURL() -> URL? {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
             .appendingPathComponent(AppIdentity.applicationSupportDirectoryName, isDirectory: true)
             .appendingPathComponent("ReadingNoteAssets", isDirectory: true)
     }
 
-    static func importImage(from sourceURL: URL, directoryURL: URL? = defaultDirectoryURL()) throws -> URL {
+    package static func importImage(from sourceURL: URL, directoryURL: URL? = defaultDirectoryURL()) throws -> URL {
         guard let directoryURL else {
             throw NSError(domain: "LeafReader.ReadingNoteAssetStore", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "Reading note asset directory is unavailable"

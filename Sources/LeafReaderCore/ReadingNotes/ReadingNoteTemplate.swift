@@ -1,12 +1,12 @@
 import Foundation
 import LeafReaderCore
 
-enum ReadingNoteTemplate: String, CaseIterable {
+package enum ReadingNoteTemplate: String, CaseIterable {
     case reading
     case phrase
     case character
 
-    var title: String {
+    package var title: String {
         switch self {
         case .reading:
             return AppText.localized("阅读理解模板", "Reading template")
@@ -17,7 +17,7 @@ enum ReadingNoteTemplate: String, CaseIterable {
         }
     }
 
-    var insertionStatus: String {
+    package var insertionStatus: String {
         switch self {
         case .reading:
             return AppText.localized("已插入阅读模板", "Reading template inserted")
@@ -28,7 +28,7 @@ enum ReadingNoteTemplate: String, CaseIterable {
         }
     }
 
-    func markdown(quote: String) -> String {
+    package func markdown(quote: String) -> String {
         switch self {
         case .reading:
             return [
@@ -98,14 +98,14 @@ enum ReadingNoteTemplate: String, CaseIterable {
     }
 }
 
-enum ReadingNoteTemplateInsertionPolicy {
-    static func shouldReplaceExistingMarkdown(currentMarkdown: String, defaultMarkdown: String) -> Bool {
+package enum ReadingNoteTemplateInsertionPolicy {
+    package static func shouldReplaceExistingMarkdown(currentMarkdown: String, defaultMarkdown: String) -> Bool {
         let current = currentMarkdown.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !current.isEmpty else { return true }
         return current == defaultMarkdown.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func spacerBeforeInsertion(existingText: String) -> String {
+    package static func spacerBeforeInsertion(existingText: String) -> String {
         guard !existingText.isEmpty else { return "" }
         if existingText.hasSuffix("\n\n") { return "" }
         return existingText.hasSuffix("\n") ? "\n" : "\n\n"
