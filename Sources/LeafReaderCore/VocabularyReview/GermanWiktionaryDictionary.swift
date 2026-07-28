@@ -1,27 +1,41 @@
 import Foundation
 import LeafReaderCore
 
-struct GermanDictionaryEntry: Equatable {
-    let requestedWord: String
-    let lemma: String
-    let partOfSpeech: String?
-    let meanings: [String]
+package struct GermanDictionaryEntry: Equatable {
+    package let requestedWord: String
+    package let lemma: String
+    package let partOfSpeech: String?
+    package let meanings: [String]
     /// Parsed flexion table, when the page had one. Carried as plain data so
     /// this type stays free of any storage dependency; persisting it is the
     /// caller's job.
-    var flexion: GermanWiktionaryParser.FlexionTable?
+    package var flexion: GermanWiktionaryParser.FlexionTable?
 
-    var metadata: VocabularyDictionaryMetadata {
+    package init(
+        requestedWord: String,
+        lemma: String,
+        partOfSpeech: String?,
+        meanings: [String],
+        flexion: GermanWiktionaryParser.FlexionTable? = nil
+    ) {
+        self.requestedWord = requestedWord
+        self.lemma = lemma
+        self.partOfSpeech = partOfSpeech
+        self.meanings = meanings
+        self.flexion = flexion
+    }
+
+    package var metadata: VocabularyDictionaryMetadata {
         VocabularyDictionaryMetadata(tags: partOfSpeech, frequency: nil)
     }
 
-    var sourceURL: URL? {
+    package var sourceURL: URL? {
         var components = URLComponents(string: "https://de.wiktionary.org/wiki/")
         components?.path = "/wiki/" + lemma.replacingOccurrences(of: " ", with: "_")
         return components?.url
     }
 
-    var markdown: String {
+    package var markdown: String {
         var lines = ["**\(lemma)**"]
         if let partOfSpeech, !partOfSpeech.isEmpty {
             lines[0] += " *(\(partOfSpeech))*"
@@ -38,15 +52,15 @@ struct GermanDictionaryEntry: Equatable {
     }
 }
 
-enum GermanWiktionaryParser {
-    struct ParsedPage: Equatable {
-        let lemma: String?
-        let partOfSpeech: String?
-        let meanings: [String]
-        var flexion: FlexionTable?
+package enum GermanWiktionaryParser {
+    package struct ParsedPage: Equatable {
+        package let lemma: String?
+        package let partOfSpeech: String?
+        package let meanings: [String]
+        package var flexion: FlexionTable?
     }
 
-    static func parse(wikitext: String) -> ParsedPage? {
+    package static func parse(wikitext: String) -> ParsedPage? {
         guard let german = germanSection(in: wikitext) else { return nil }
         let partOfSpeech = firstCapture(
             pattern: #"\{\{Wortart\|([^|}]+)\|Deutsch"#,
@@ -70,24 +84,24 @@ enum GermanWiktionaryParser {
 
     // MARK: - Flexion tables
 
-    struct FlexionForm: Equatable {
+    package struct FlexionForm: Equatable {
         /// The Wiktionary parameter name, e.g. `Nominativ Plural`, `Partizip II`.
-        let label: String
-        let surface: String
+        package let label: String
+        package let surface: String
         /// Wiktionary marks alternative forms with a trailing `*`
         /// (`Dativ Singular*=Hause`).
-        let isVariant: Bool
+        package let isVariant: Bool
     }
 
-    struct FlexionTable: Equatable {
+    package struct FlexionTable: Equatable {
         /// `m`, `f` or `n`. More discriminating than a part-of-speech tag for
         /// the noun/noun homographs German is full of — `die Steuer` (tax)
         /// versus `das Steuer` (helm).
-        let genus: String?
-        let auxiliary: String?
-        let forms: [FlexionForm]
+        package let genus: String?
+        package let auxiliary: String?
+        package let forms: [FlexionForm]
 
-        func forms(labeled label: String) -> [String] {
+        package func forms(labeled label: String) -> [String] {
             forms.filter { $0.label == label }.map(\.surface)
         }
     }
@@ -119,7 +133,7 @@ enum GermanWiktionaryParser {
     /// (`{{Deutsch Verb unregelmäßig|3=ging|5=gegangen}}`), so they yield no
     /// literal forms to read. That makes this table a labeled subset of the
     /// paradigm rather than the whole of it.
-    static func parseFlexion(wikitext: String) -> FlexionTable? {
+    package static func parseFlexion(wikitext: String) -> FlexionTable? {
         let scope = germanSection(in: wikitext) ?? wikitext
         guard let block = uebersichtBlock(in: scope) else { return nil }
 
@@ -258,24 +272,26 @@ enum GermanWiktionaryParser {
     }
 }
 
-final class GermanWiktionaryDictionary {
-    enum LookupError: Error {
+/// `@unchecked Sendable` is accurate: the `cache` is reached only under `lock`
+/// and `session` is an immutable `let`.
+package final class GermanWiktionaryDictionary: @unchecked Sendable {
+    package enum LookupError: Error {
         case invalidWord
         case noEntry
         case invalidResponse
     }
 
-    static let shared = GermanWiktionaryDictionary()
+    package static let shared = GermanWiktionaryDictionary()
 
     private let session: URLSession
     private let lock = NSLock()
     private var cache: [String: GermanDictionaryEntry] = [:]
 
-    init(session: URLSession = .shared) {
+    package init(session: URLSession = .shared) {
         self.session = session
     }
 
-    func lookup(_ query: String, completion: @escaping (Result<GermanDictionaryEntry, Error>) -> Void) {
+    package func lookup(_ query: String, completion: @escaping (Result<GermanDictionaryEntry, Error>) -> Void) {
         let word = VocabularyTextPolicy.normalizedVocabularyText(query)
         guard VocabularyTextPolicy.isSingleEnglishWord(word) else {
             completion(.failure(LookupError.invalidWord))

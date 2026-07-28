@@ -1,5 +1,6 @@
 import Cocoa
 import Foundation
+import LeafReaderCore
 
 private func assert(_ condition: @autoclosure () -> Bool, _ message: String) {
     if !condition() {

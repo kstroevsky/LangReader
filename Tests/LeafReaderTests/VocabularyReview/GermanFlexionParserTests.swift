@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 // T3 tests for the Wiktionary flexion-table parser.
 //

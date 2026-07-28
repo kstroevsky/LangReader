@@ -17,7 +17,7 @@ extension GermanFormLabeler {
     /// A surface form often matches several parameters — `gehe` is both
     /// `Präsens_ich` and `Imperativ Singular*` — so matches resolve in a fixed
     /// priority order rather than by whichever happens to appear first.
-    static func label(
+    package static func label(
         surfaceForm: String,
         using table: GermanWiktionaryParser.FlexionTable
     ) -> GermanFormLabel? {
@@ -42,7 +42,7 @@ extension GermanFormLabeler {
     ///
     /// Internal rather than private so the store-backed resolver, which lives
     /// alongside the SQLite cache, shares exactly this priority order.
-    static func resolve(parameters: [String]) -> GermanFormLabel? {
+    package static func resolve(parameters: [String]) -> GermanFormLabel? {
         let matched = parameters.compactMap { formLabel(forParameter: $0) }
         guard !matched.isEmpty else { return nil }
         let priority: [GermanFormLabel] = [
@@ -51,7 +51,7 @@ extension GermanFormLabeler {
         return priority.first { matched.contains($0) } ?? matched.first
     }
 
-    static func formLabel(forParameter parameter: String) -> GermanFormLabel? {
+    package static func formLabel(forParameter parameter: String) -> GermanFormLabel? {
         if parameter == "Partizip II" { return .partizipII }
         if parameter.hasPrefix("Präteritum_") { return .praeteritum }
         if parameter.hasPrefix("Präsens_") { return .praesens }

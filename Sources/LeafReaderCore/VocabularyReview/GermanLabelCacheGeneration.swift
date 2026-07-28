@@ -9,17 +9,19 @@ import Foundation
 /// Kept dependency-free (Foundation only) so both the flexion store and the
 /// build cache can reference it without dragging in the NaturalLanguage-backed
 /// labeler.
-enum GermanLabelCacheGeneration {
+package enum GermanLabelCacheGeneration {
     private static let lock = NSLock()
-    private static var value = 0
+    // Guarded by `lock` on every access below; `nonisolated(unsafe)` asserts that
+    // to Swift 6, which cannot see that a lock covers a static.
+    private nonisolated(unsafe) static var value = 0
 
-    static var current: Int {
+    package static var current: Int {
         lock.lock()
         defer { lock.unlock() }
         return value
     }
 
-    static func bump() {
+    package static func bump() {
         lock.lock()
         value += 1
         lock.unlock()

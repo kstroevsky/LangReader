@@ -1,18 +1,18 @@
 import Foundation
 import LeafReaderCore
 
-struct VocabularyExporter {
-    struct Record {
-        let word: String
-        let lemma: String?
-        let surfaceForm: String?
-        let answer: String
-        let location: String
-        let context: String
-        let source: String
-        let createdAt: Date
+package struct VocabularyExporter {
+    package struct Record {
+        package let word: String
+        package let lemma: String?
+        package let surfaceForm: String?
+        package let answer: String
+        package let location: String
+        package let context: String
+        package let source: String
+        package let createdAt: Date
 
-        init(
+        package init(
             word: String,
             lemma: String? = nil,
             surfaceForm: String? = nil,
@@ -33,19 +33,33 @@ struct VocabularyExporter {
         }
     }
 
-    struct MarkdownLabels {
-        let titleSuffix: String
-        let exportedAt: String
-        let wordCount: String
-        let location: String
-        let context: String
+    package struct MarkdownLabels {
+        package let titleSuffix: String
+        package let exportedAt: String
+        package let wordCount: String
+        package let location: String
+        package let context: String
+
+        package init(
+            titleSuffix: String,
+            exportedAt: String,
+            wordCount: String,
+            location: String,
+            context: String
+        ) {
+            self.titleSuffix = titleSuffix
+            self.exportedAt = exportedAt
+            self.wordCount = wordCount
+            self.location = location
+            self.context = context
+        }
     }
 
-    static func exportableRecords(_ records: [Record]) -> [Record] {
+    package static func exportableRecords(_ records: [Record]) -> [Record] {
         records.filter { hasTrimmedText($0.word) }
     }
 
-    static func markdown(
+    package static func markdown(
         records: [Record],
         documentTitle: String,
         labels: MarkdownLabels,
@@ -93,7 +107,7 @@ struct VocabularyExporter {
         return lines.joined(separator: "\n")
     }
 
-    static func csv(records: [Record], answerBody: (Record) -> String) -> String {
+    package static func csv(records: [Record], answerBody: (Record) -> String) -> String {
         var rows = ["Word,Page,Context,Source,Created At,Answer"]
         let formatter = ISO8601DateFormatter()
         for record in records {
@@ -109,12 +123,12 @@ struct VocabularyExporter {
         return rows.joined(separator: "\n")
     }
 
-    static func csvEscaped(_ value: String) -> String {
+    package static func csvEscaped(_ value: String) -> String {
         let escaped = value.replacingOccurrences(of: "\"", with: "\"\"")
         return "\"\(escaped)\""
     }
 
-    static func safeFileName(_ name: String) -> String {
+    package static func safeFileName(_ name: String) -> String {
         let invalid = CharacterSet(charactersIn: "/\\?%*|\"<>:")
         return name
             .components(separatedBy: invalid)
@@ -122,16 +136,16 @@ struct VocabularyExporter {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func trimmed(_ text: String) -> String {
+    package static func trimmed(_ text: String) -> String {
         text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func nonEmptyText(_ text: String?) -> String? {
+    package static func nonEmptyText(_ text: String?) -> String? {
         guard let value = text.map(trimmed), !value.isEmpty else { return nil }
         return value
     }
 
-    static func hasTrimmedText(_ text: String) -> Bool {
+    package static func hasTrimmedText(_ text: String) -> Bool {
         !trimmed(text).isEmpty
     }
 }

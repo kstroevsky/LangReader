@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum GermanDictionaryLogicTests {
     static func testInflectedFormAndDefinitionParsing() throws {

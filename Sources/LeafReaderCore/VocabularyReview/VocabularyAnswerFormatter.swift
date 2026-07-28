@@ -1,7 +1,7 @@
 import Foundation
 
-enum VocabularyAnswerFormatter {
-    static func answerBody(_ answer: String, word: String) -> String {
+package enum VocabularyAnswerFormatter {
+    package static func answerBody(_ answer: String, word: String) -> String {
         var lines = answer.components(separatedBy: .newlines)
         let normalizedWord = normalizedHeading(word)
         while let first = lines.first {
@@ -19,7 +19,7 @@ enum VocabularyAnswerFormatter {
         return lines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func normalizedHeading(_ text: String) -> String {
+    package static func normalizedHeading(_ text: String) -> String {
         text
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: #"^#{1,6}\s+"#, with: "", options: .regularExpression)

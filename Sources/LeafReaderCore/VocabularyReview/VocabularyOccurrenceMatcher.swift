@@ -1,23 +1,23 @@
 import Foundation
 import LeafReaderCore
 
-struct VocabularyTextOccurrence: Equatable {
-    let range: NSRange
-    let matchedText: String
+package struct VocabularyTextOccurrence: Equatable {
+    package let range: NSRange
+    package let matchedText: String
 }
 
-enum VocabularyOccurrenceMatcher {
+package enum VocabularyOccurrenceMatcher {
     /// A query with its patterns already compiled.
     ///
     /// Scanning a document runs the same query against every page, so the
     /// regexes are built once here instead of being recompiled per page.
-    struct CompiledQuery {
-        let normalizedQuery: String
-        let queryKey: String
-        let regexes: [NSRegularExpression]
+    package struct CompiledQuery {
+        package let normalizedQuery: String
+        package let queryKey: String
+        package let regexes: [NSRegularExpression]
     }
 
-    static func compile(query: String) -> CompiledQuery? {
+    package static func compile(query: String) -> CompiledQuery? {
         let normalizedQuery = VocabularyTextPolicy.normalizedVocabularyText(query)
         guard VocabularyTextPolicy.isVocabularySelection(normalizedQuery) else { return nil }
         return CompiledQuery(
@@ -29,12 +29,12 @@ enum VocabularyOccurrenceMatcher {
         )
     }
 
-    static func matches(query: String, in text: String) -> [VocabularyTextOccurrence] {
+    package static func matches(query: String, in text: String) -> [VocabularyTextOccurrence] {
         guard let compiled = compile(query: query) else { return [] }
         return matches(compiled: compiled, in: text)
     }
 
-    static func matches(compiled: CompiledQuery, in text: String) -> [VocabularyTextOccurrence] {
+    package static func matches(compiled: CompiledQuery, in text: String) -> [VocabularyTextOccurrence] {
         guard !text.isEmpty else { return [] }
 
         let normalizedQuery = compiled.normalizedQuery

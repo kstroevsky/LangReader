@@ -1,13 +1,18 @@
 import Foundation
 import LeafReaderCore
 
-struct VocabularyDeletionRecord {
-    let id: String
-    let word: String
+package struct VocabularyDeletionRecord {
+    package let id: String
+    package let word: String
+
+    package init(id: String, word: String) {
+        self.id = id
+        self.word = word
+    }
 }
 
-enum VocabularyRecordDeletionPlanner {
-    static func expandedIDs(
+package enum VocabularyRecordDeletionPlanner {
+    package static func expandedIDs(
         requestedIDs: Set<String>,
         storedRecords: [VocabularyDeletionRecord],
         pendingRecords: [VocabularyDeletionRecord]

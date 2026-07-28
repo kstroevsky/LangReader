@@ -1,36 +1,36 @@
 import Foundation
 
-enum PersonalVocabularyStatus: String {
+package enum PersonalVocabularyStatus: String {
     case observed
     case learning
     case likelyKnown = "likely_known"
     case known
 }
 
-struct PersonalVocabularyProfile: Equatable {
-    let lemma: String
-    var surfaceCount: Int
-    var seenCount: Int
-    var unqueriedSeenCount: Int
-    var postQueryUnqueriedSeenCount: Int
-    var queriedCount: Int
-    var aiExplainCount: Int
-    var reviewCorrectCount: Int
-    var reviewWrongCount: Int
-    var documentsSeen: Int
-    var status: PersonalVocabularyStatus
-    var confidence: Double
-    var lastSeenAt: Date?
-    var updatedAt: Date
+package struct PersonalVocabularyProfile: Equatable {
+    package let lemma: String
+    package var surfaceCount: Int
+    package var seenCount: Int
+    package var unqueriedSeenCount: Int
+    package var postQueryUnqueriedSeenCount: Int
+    package var queriedCount: Int
+    package var aiExplainCount: Int
+    package var reviewCorrectCount: Int
+    package var reviewWrongCount: Int
+    package var documentsSeen: Int
+    package var status: PersonalVocabularyStatus
+    package var confidence: Double
+    package var lastSeenAt: Date?
+    package var updatedAt: Date
 }
 
-struct PersonalVocabularyExposure {
-    let documentID: String
-    let lemmaCounts: [String: Int]
-    let date: Date
+package struct PersonalVocabularyExposure {
+    package let documentID: String
+    package let lemmaCounts: [String: Int]
+    package let date: Date
 }
 
-enum PersonalVocabularyTokenizer {
+package enum PersonalVocabularyTokenizer {
     private static let tokenPattern = #"[A-Za-z](?:[A-Za-z]|['’](?=[A-Za-z]))*(?:-(?=[A-Za-z])[A-Za-z](?:[A-Za-z]|['’](?=[A-Za-z]))*)*"#
     private static let stopWords: Set<String> = [
         "a", "an", "the",
@@ -51,7 +51,7 @@ enum PersonalVocabularyTokenizer {
         "com", "ebook", "ebooks", "http", "https", "ing", "www"
     ]
 
-    static func lemmaCounts(in text: String) -> [String: Int] {
+    package static func lemmaCounts(in text: String) -> [String: Int] {
         let normalized = cleanedReadingText(text)
         guard let regex = try? NSRegularExpression(pattern: tokenPattern) else { return [:] }
         let range = NSRange(normalized.startIndex..<normalized.endIndex, in: normalized)
@@ -68,7 +68,7 @@ enum PersonalVocabularyTokenizer {
         return counts
     }
 
-    static func lemma(for token: String) -> String {
+    package static func lemma(for token: String) -> String {
         var value = token
             .lowercased()
             .replacingOccurrences(of: "’", with: "'")
@@ -79,11 +79,11 @@ enum PersonalVocabularyTokenizer {
         return value
     }
 
-    static func isStoredLemmaTrackable(_ rawLemma: String) -> Bool {
+    package static func isStoredLemmaTrackable(_ rawLemma: String) -> Bool {
         isTrackableLemma(lemma(for: rawLemma))
     }
 
-    static func cleanedReadingText(_ text: String) -> String {
+    package static func cleanedReadingText(_ text: String) -> String {
         text
             .split(whereSeparator: \.isNewline)
             .map(String.init)
@@ -114,8 +114,8 @@ enum PersonalVocabularyTokenizer {
     }
 }
 
-enum PersonalVocabularyProfilePolicy {
-    static func status(
+package enum PersonalVocabularyProfilePolicy {
+    package static func status(
         seenCount: Int,
         unqueriedSeenCount: Int,
         postQueryUnqueriedSeenCount: Int,
@@ -142,7 +142,7 @@ enum PersonalVocabularyProfilePolicy {
         return .observed
     }
 
-    static func confidence(
+    package static func confidence(
         seenCount: Int,
         unqueriedSeenCount: Int,
         postQueryUnqueriedSeenCount: Int,
@@ -160,10 +160,10 @@ enum PersonalVocabularyProfilePolicy {
     }
 }
 
-enum PersonalVocabularyExposurePolicy {
-    static let webProgressBucketCount = 200
+package enum PersonalVocabularyExposurePolicy {
+    package static let webProgressBucketCount = 200
 
-    static func webProgressBucket(_ progress: Double) -> Int {
+    package static func webProgressBucket(_ progress: Double) -> Int {
         let clamped = min(1, max(0, progress))
         return Int((clamped * Double(webProgressBucketCount)).rounded(.down))
     }

@@ -6,8 +6,8 @@ import LeafReaderCore
 // the grouping, line-wrap, and homograph logic are the same everywhere and only
 // the tagger's language differs. Callers pass an `NLLanguage`, defaulting to
 // English; the app always passes the detected document language explicitly.
-enum GermanLemmaResolver {
-    static func lemma(for surfaceForm: String, language: NLLanguage = .english) -> String {
+package enum GermanLemmaResolver {
+    package static func lemma(for surfaceForm: String, language: NLLanguage = .english) -> String {
         lemma(for: surfaceForm, tagger: NLTagger(tagSchemes: [.lemma]), language: language)
     }
 
@@ -18,7 +18,7 @@ enum GermanLemmaResolver {
     ///   words, but it must not be shared across threads or reentered from
     ///   inside its own `enumerateTags` callback.
     /// - Parameter language: the document's language, used to lemmatize.
-    static func lemma(for surfaceForm: String, tagger: NLTagger, language: NLLanguage = .english) -> String {
+    package static func lemma(for surfaceForm: String, tagger: NLTagger, language: NLLanguage = .english) -> String {
         let word = VocabularyTextPolicy.normalizedVocabularyText(surfaceForm)
         guard VocabularyTextPolicy.isSingleEnglishWord(word),
               !word.isEmpty else { return word }
@@ -38,7 +38,7 @@ enum GermanLemmaResolver {
         return lemma
     }
 
-    static func groupingKey(word: String, lemma: String? = nil, language: NLLanguage = .english) -> String {
+    package static func groupingKey(word: String, lemma: String? = nil, language: NLLanguage = .english) -> String {
         let trimmedLemma = lemma?.trimmingCharacters(in: .whitespacesAndNewlines)
         let resolved = trimmedLemma.flatMap { value in
             value.isEmpty ? nil : value
@@ -47,11 +47,11 @@ enum GermanLemmaResolver {
     }
 }
 
-enum GermanLemmaOccurrenceMatcher {
+package enum GermanLemmaOccurrenceMatcher {
     /// Compiled once and shared: this pattern never varies, but the matcher is
     /// called once per page, so building it per call cost a regex compilation
     /// for every page of the document.
-    static let lineWrapRegex = try? NSRegularExpression(
+    package static let lineWrapRegex = try? NSRegularExpression(
         pattern: #"\p{L}[\p{L}\p{M}]*[‐‑‒–—-]\s+\p{L}[\p{L}\p{M}]*"#
     )
 
@@ -62,7 +62,7 @@ enum GermanLemmaOccurrenceMatcher {
     /// is per-page independent, so it parallelises exactly; results are written
     /// to distinct indices and returned in page order, making the output
     /// identical to scanning sequentially.
-    static func matches(
+    package static func matches(
         lemma rawLemma: String,
         selectedForm: String,
         inTexts texts: [String],
@@ -121,7 +121,7 @@ enum GermanLemmaOccurrenceMatcher {
     /// noun "Folgen", lemma "Folge", swept into the verb group "folgen"). It
     /// asks about *group membership*, not mere findability, so it leaves
     /// same-line compound constituents ("Abteilung" in "IT-Abteilung") intact.
-    static func groupReproducesOccurrence(
+    package static func groupReproducesOccurrence(
         surfaceForm: String,
         groupLemma: String,
         in context: String,
@@ -135,7 +135,7 @@ enum GermanLemmaOccurrenceMatcher {
         } ?? false
     }
 
-    static func matches(lemma rawLemma: String, selectedForm: String, in text: String, language: NLLanguage = .english) -> [VocabularyTextOccurrence] {
+    package static func matches(lemma rawLemma: String, selectedForm: String, in text: String, language: NLLanguage = .english) -> [VocabularyTextOccurrence] {
         matches(
             lemma: rawLemma,
             selectedForm: selectedForm,
@@ -274,7 +274,7 @@ enum GermanLemmaOccurrenceMatcher {
         }
     }
 
-    static func matches(lemmasByKey: [String: String], in text: String, language: NLLanguage = .english) -> [String: [VocabularyTextOccurrence]] {
+    package static func matches(lemmasByKey: [String: String], in text: String, language: NLLanguage = .english) -> [String: [VocabularyTextOccurrence]] {
         guard !lemmasByKey.isEmpty, !text.isEmpty else { return [:] }
         var occurrencesByKey: [String: [VocabularyTextOccurrence]] = [:]
         var seenRangesByKey: [String: Set<String>] = [:]

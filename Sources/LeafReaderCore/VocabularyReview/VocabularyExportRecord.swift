@@ -1,16 +1,16 @@
 import Foundation
 import LeafReaderCore
 
-struct VocabularyOccurrence: Equatable {
-    let id: String
-    let pageIndex: Int?
-    let bounds: StoredPDFWordRect?
-    let location: String
-    let surfaceForm: String?
-    let context: String
-    let createdAt: Date
+package struct VocabularyOccurrence: Equatable {
+    package let id: String
+    package let pageIndex: Int?
+    package let bounds: StoredPDFWordRect?
+    package let location: String
+    package let surfaceForm: String?
+    package let context: String
+    package let createdAt: Date
 
-    init(
+    package init(
         id: String,
         pageIndex: Int?,
         bounds: StoredPDFWordRect?,
@@ -36,28 +36,28 @@ struct VocabularyOccurrence: Equatable {
 /// non-German text, or a form that is genuinely ambiguous such as `Autos`,
 /// which is both a plural and a genitive singular. Callers render unlabeled
 /// forms plainly rather than guessing.
-struct VocabularyForm: Equatable {
-    let surface: String
-    let label: GermanFormLabel?
-    let occurrenceCount: Int
+package struct VocabularyForm: Equatable {
+    package let surface: String
+    package let label: GermanFormLabel?
+    package let occurrenceCount: Int
 
-    init(surface: String, label: GermanFormLabel? = nil, occurrenceCount: Int = 1) {
+    package init(surface: String, label: GermanFormLabel? = nil, occurrenceCount: Int = 1) {
         self.surface = surface
         self.label = label
         self.occurrenceCount = occurrenceCount
     }
 
-    var displayText: String {
+    package var displayText: String {
         guard let label else { return surface }
         return "\(surface) (\(label.displayName))"
     }
 }
 
-enum VocabularyFormMerger {
+package enum VocabularyFormMerger {
     /// Collapses repeated surface forms, summing their occurrence counts and
     /// keeping the first label that resolved. First-seen order is preserved so
     /// the display stays stable between refreshes.
-    static func merged(_ forms: [VocabularyForm]) -> [VocabularyForm] {
+    package static func merged(_ forms: [VocabularyForm]) -> [VocabularyForm] {
         var order: [String] = []
         var byKey: [String: VocabularyForm] = [:]
 
@@ -79,21 +79,21 @@ enum VocabularyFormMerger {
     }
 }
 
-struct VocabularyExportRecord {
-    let ids: [String]
-    let word: String
-    let lemma: String?
-    let forms: [VocabularyForm]
-    let answer: String
-    let dictionaryTags: String?
-    let dictionaryFrequency: Int?
-    let location: String
-    let context: String
-    let createdAt: Date
-    let srs: VocabularySRSState
-    let occurrences: [VocabularyOccurrence]
+package struct VocabularyExportRecord {
+    package let ids: [String]
+    package let word: String
+    package let lemma: String?
+    package let forms: [VocabularyForm]
+    package let answer: String
+    package let dictionaryTags: String?
+    package let dictionaryFrequency: Int?
+    package let location: String
+    package let context: String
+    package let createdAt: Date
+    package let srs: VocabularySRSState
+    package let occurrences: [VocabularyOccurrence]
 
-    init(
+    package init(
         ids: [String],
         word: String,
         lemma: String? = nil,
@@ -121,7 +121,7 @@ struct VocabularyExportRecord {
         self.occurrences = occurrences
     }
 
-    func withDictionaryMetadata(tags: String? = nil, frequency: Int? = nil) -> VocabularyExportRecord {
+    package func withDictionaryMetadata(tags: String? = nil, frequency: Int? = nil) -> VocabularyExportRecord {
         VocabularyExportRecord(
             ids: ids,
             word: word,

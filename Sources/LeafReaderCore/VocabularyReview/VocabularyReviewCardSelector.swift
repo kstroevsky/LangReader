@@ -1,13 +1,13 @@
 import Foundation
 
-struct VocabularyReviewCardSelection {
-    let record: VocabularyExportRecord
-    let position: Int
-    let total: Int
+package struct VocabularyReviewCardSelection {
+    package let record: VocabularyExportRecord
+    package let position: Int
+    package let total: Int
 }
 
-enum VocabularyReviewCardSelector {
-    static func selection(
+package enum VocabularyReviewCardSelector {
+    package static func selection(
         records: [VocabularyExportRecord],
         session: VocabularyReviewSession
     ) -> VocabularyReviewCardSelection? {

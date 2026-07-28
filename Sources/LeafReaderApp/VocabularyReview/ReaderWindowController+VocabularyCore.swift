@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReaderWindowController {
     @objc func changeVocabularyTab(_ sender: NSSegmentedControl) {

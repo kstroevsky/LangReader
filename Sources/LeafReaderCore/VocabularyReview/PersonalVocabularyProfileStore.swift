@@ -4,13 +4,15 @@ import LeafReaderCore
 
 private let PERSONAL_VOCABULARY_SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
-final class PersonalVocabularyProfileStore {
-    static let shared = PersonalVocabularyProfileStore(databaseURL: defaultDatabaseURL())
+/// `@unchecked Sendable` is accurate: the only mutable field is the sqlite
+/// handle `db`, reached solely under `lock`; the rest are immutable.
+package final class PersonalVocabularyProfileStore: @unchecked Sendable {
+    package static let shared = PersonalVocabularyProfileStore(databaseURL: defaultDatabaseURL())
 
     private let lock = NSLock()
     private var db: OpaquePointer?
 
-    init(databaseURL: URL?) {
+    package init(databaseURL: URL?) {
         guard let url = databaseURL else {
             NSLog("LeafReader personal vocabulary: no database URL available")
             return
@@ -36,14 +38,14 @@ final class PersonalVocabularyProfileStore {
     }
 
     @discardableResult
-    func recordExposure(documentID: String, text: String, date: Date = Date()) -> Bool {
+    package func recordExposure(documentID: String, text: String, date: Date = Date()) -> Bool {
         let counts = PersonalVocabularyTokenizer.lemmaCounts(in: text)
         guard !counts.isEmpty else { return true }
         return recordExposure(PersonalVocabularyExposure(documentID: documentID, lemmaCounts: counts, date: date))
     }
 
     @discardableResult
-    func recordExposure(_ exposure: PersonalVocabularyExposure) -> Bool {
+    package func recordExposure(_ exposure: PersonalVocabularyExposure) -> Bool {
         locked {
             guard !exposure.documentID.isEmpty, !exposure.lemmaCounts.isEmpty else { return true }
             guard beginTransaction() else { return false }
@@ -64,7 +66,7 @@ final class PersonalVocabularyProfileStore {
     }
 
     @discardableResult
-    func recordQuery(text: String, aiExplainCount: Int = 1, date: Date = Date()) -> Bool {
+    package func recordQuery(text: String, aiExplainCount: Int = 1, date: Date = Date()) -> Bool {
         let counts = PersonalVocabularyTokenizer.lemmaCounts(in: text)
         guard !counts.isEmpty else { return true }
         return locked {
@@ -85,14 +87,14 @@ final class PersonalVocabularyProfileStore {
         }
     }
 
-    func loadProfile(lemma rawLemma: String) -> PersonalVocabularyProfile? {
+    package func loadProfile(lemma rawLemma: String) -> PersonalVocabularyProfile? {
         let lemma = PersonalVocabularyTokenizer.lemma(for: rawLemma)
         return locked {
             loadProfileLocked(lemma: lemma)
         }
     }
 
-    func loadKnownProfiles(limit: Int = 200) -> [PersonalVocabularyProfile] {
+    package func loadKnownProfiles(limit: Int = 200) -> [PersonalVocabularyProfile] {
         locked {
             loadProfilesLocked(statuses: [.known, .likelyKnown], limit: limit)
         }
@@ -130,7 +132,7 @@ final class PersonalVocabularyProfileStore {
         cleanupNoiseProfiles()
     }
 
-    func cleanupNoiseProfiles() {
+    package func cleanupNoiseProfiles() {
         var noiseLemmas: [String] = []
         var statement: OpaquePointer?
         guard sqlite3_prepare_v2(

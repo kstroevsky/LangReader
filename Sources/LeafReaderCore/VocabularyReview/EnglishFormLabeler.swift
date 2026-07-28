@@ -15,11 +15,11 @@ import LeafReaderCore
 ///     Past tense is therefore never claimed — such forms fall to `.finiteVerb`.
 ///   * Comparatives ("bigger") are tagged `Adverb`, exactly as in German, so no
 ///     adjective-specific label is trustworthy here either.
-enum EnglishFormLabeler {
+package enum EnglishFormLabeler {
     /// Bumped whenever the heuristics in this file change, so labels persisted
     /// by an older ruleset are treated as absent. Shares the cache table with
     /// the German labeler, which is why the two versions move independently.
-    static let labelingVersion = 1
+    package static let labelingVersion = 1
 
     /// Auxiliaries that prove a following/preceding participle.
     private static let auxiliaryLemmas: Set<String> = ["have", "be"]
@@ -33,7 +33,7 @@ enum EnglishFormLabeler {
     ///
     /// Context is what separates a past participle from any other past form:
     /// "has walked" is a participle, "walked" alone is not provably one.
-    static func label(
+    package static func label(
         surfaceForm rawSurface: String,
         lemma rawLemma: String,
         context: String? = nil

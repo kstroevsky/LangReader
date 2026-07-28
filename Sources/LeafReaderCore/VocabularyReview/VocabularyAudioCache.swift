@@ -1,15 +1,15 @@
 import CryptoKit
 import Foundation
 
-enum VocabularyAudioCache {
-    static let maximumBytes: Int64 = 100 * 1024 * 1024
+package enum VocabularyAudioCache {
+    package static let maximumBytes: Int64 = 100 * 1024 * 1024
 
-    struct Entry {
-        let url: URL
-        let key: String
+    package struct Entry {
+        package let url: URL
+        package let key: String
     }
 
-    static func entry(text: String, runtimeID: String, voiceID: String, speedID: String) -> Entry {
+    package static func entry(text: String, runtimeID: String, voiceID: String, speedID: String) -> Entry {
         let digestInput = "vocabulary-audio-v1|\(runtimeID)|\(voiceID)|\(speedID)|\(text)"
         let digest = SHA256.hash(data: Data(digestInput.utf8))
             .map { String(format: "%02x", $0) }
@@ -17,11 +17,11 @@ enum VocabularyAudioCache {
         return Entry(url: cacheDirectory.appendingPathComponent("\(digest).wav"), key: digest)
     }
 
-    static func markAccessed(_ url: URL, at date: Date = Date()) {
+    package static func markAccessed(_ url: URL, at date: Date = Date()) {
         try? FileManager.default.setAttributes([.modificationDate: date], ofItemAtPath: url.path)
     }
 
-    static func store(tempURL: URL, to cacheURL: URL) -> Bool {
+    package static func store(tempURL: URL, to cacheURL: URL) -> Bool {
         let fileManager = FileManager.default
         do {
             try fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
@@ -37,7 +37,7 @@ enum VocabularyAudioCache {
         }
     }
 
-    static func pruneIfNeeded(maximumBytes: Int64 = maximumBytes) {
+    package static func pruneIfNeeded(maximumBytes: Int64 = maximumBytes) {
         let fileManager = FileManager.default
         let entries = cacheEntries()
         var total = entries.reduce(Int64(0)) { $0 + $1.size }
@@ -51,7 +51,7 @@ enum VocabularyAudioCache {
         }
     }
 
-    static func cacheSizeBytes() -> Int64 {
+    package static func cacheSizeBytes() -> Int64 {
         cacheEntries().reduce(Int64(0)) { $0 + $1.size }
     }
 

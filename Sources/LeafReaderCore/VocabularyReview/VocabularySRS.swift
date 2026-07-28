@@ -1,17 +1,39 @@
 import Foundation
 
-struct VocabularySRSState: Codable {
-    var easeFactor: Double
-    var intervalDays: Int
-    var repetition: Int
-    var dueDate: Date
-    var lastReviewedAt: Date?
-    var reviewCount: Int
-    var lapseCount: Int
-    var activeRecallStreak: Int?
-    var masteredAt: Date?
+package struct VocabularySRSState: Codable {
+    package var easeFactor: Double
+    package var intervalDays: Int
+    package var repetition: Int
+    package var dueDate: Date
+    package var lastReviewedAt: Date?
+    package var reviewCount: Int
+    package var lapseCount: Int
+    package var activeRecallStreak: Int?
+    package var masteredAt: Date?
 
-    static func initial(createdAt: Date = Date()) -> VocabularySRSState {
+    package init(
+        easeFactor: Double,
+        intervalDays: Int,
+        repetition: Int,
+        dueDate: Date,
+        lastReviewedAt: Date?,
+        reviewCount: Int,
+        lapseCount: Int,
+        activeRecallStreak: Int?,
+        masteredAt: Date?
+    ) {
+        self.easeFactor = easeFactor
+        self.intervalDays = intervalDays
+        self.repetition = repetition
+        self.dueDate = dueDate
+        self.lastReviewedAt = lastReviewedAt
+        self.reviewCount = reviewCount
+        self.lapseCount = lapseCount
+        self.activeRecallStreak = activeRecallStreak
+        self.masteredAt = masteredAt
+    }
+
+    package static func initial(createdAt: Date = Date()) -> VocabularySRSState {
         VocabularySRSState(
             easeFactor: 2.5,
             intervalDays: 0,
@@ -25,24 +47,24 @@ struct VocabularySRSState: Codable {
         )
     }
 
-    var isDue: Bool {
+    package var isDue: Bool {
         dueDate <= Date()
     }
 
-    var isNew: Bool {
+    package var isNew: Bool {
         reviewCount == 0
     }
 
-    var isMastered: Bool {
+    package var isMastered: Bool {
         (activeRecallStreak ?? 0) >= 3 && intervalDays >= 7 && !isDue
     }
 
-    var masteredToday: Bool {
+    package var masteredToday: Bool {
         guard let masteredAt else { return false }
         return Calendar.current.isDateInToday(masteredAt)
     }
 
-    func reviewed(grade: Int, at date: Date = Date()) -> VocabularySRSState {
+    package func reviewed(grade: Int, at date: Date = Date()) -> VocabularySRSState {
         let boundedGrade = min(max(grade, 1), 4)
         let wasMastered = isMastered
         var next = self

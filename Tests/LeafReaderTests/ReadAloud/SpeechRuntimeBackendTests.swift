@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum SpeechRuntimeBackendTests {
     static func testPiperWorkerInputLineNormalizesNewlines() throws {

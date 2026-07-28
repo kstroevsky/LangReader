@@ -2,11 +2,11 @@ import Foundation
 import LeafReaderCore
 
 /// One inflected spelling of a saved word, and how often it was met.
-struct OccurrenceFormGroup: Equatable {
-    let key: String
-    let surface: String
-    let label: GermanFormLabel?
-    let count: Int
+package struct OccurrenceFormGroup: Equatable {
+    package let key: String
+    package let surface: String
+    package let label: GermanFormLabel?
+    package let count: Int
 }
 
 /// Groups a word's occurrences by the exact spelling that was highlighted.
@@ -15,12 +15,12 @@ struct OccurrenceFormGroup: Equatable {
 /// kommen (37) · kam (9) …"). It ran inside the library window, so the rules it
 /// encodes — which spellings collapse together, what order the tabs appear in,
 /// and where the counts come from — could not be checked without opening it.
-enum VocabularyOccurrenceGrouping {
+package enum VocabularyOccurrenceGrouping {
     /// Counts come from the occurrences themselves rather than the record's
     /// form list, so every tab's number matches the rows it actually reveals.
     /// The two can disagree: the form list is built from a dictionary, the
     /// occurrences from what is really in the document.
-    static func formGroups(
+    package static func formGroups(
         record: VocabularyLibraryRecord,
         occurrences: [VocabularyLibraryOccurrence]
     ) -> [OccurrenceFormGroup] {
@@ -60,7 +60,7 @@ enum VocabularyOccurrenceGrouping {
     /// The first label wins: a key repeated in the form list is a dictionary
     /// ambiguity, and picking later ones would make the tab flip label between
     /// reloads.
-    static func labels(for record: VocabularyLibraryRecord) -> [String: GermanFormLabel] {
+    package static func labels(for record: VocabularyLibraryRecord) -> [String: GermanFormLabel] {
         var labelsByKey: [String: GermanFormLabel] = [:]
         for form in record.forms {
             let key = VocabularyTextPolicy.canonicalVocabularyKey(form.surface)

@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 final class VocabularyPanelController {
     weak var owner: ReaderWindowController?

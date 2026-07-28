@@ -1,4 +1,5 @@
 import SwiftUI
+import LeafReaderCore
 
 /// The vocabulary trainer's header: icon, title, the summary line, and the row
 /// of learning stat cards.

@@ -1,23 +1,23 @@
 import Foundation
 import LeafReaderCore
 
-enum VocabularyDailyGoalPolicy {
-    static let defaultGoal = 10
-    static let options = [5, 10, 20, 30, 50]
+package enum VocabularyDailyGoalPolicy {
+    package static let defaultGoal = 10
+    package static let options = [5, 10, 20, 30, 50]
 
-    static func normalizedGoal(_ goal: Int) -> Int {
+    package static func normalizedGoal(_ goal: Int) -> Int {
         guard goal > 0 else { return defaultGoal }
         return goal
     }
 
-    static func reviewedTodayCount(records: [VocabularyExportRecord], calendar: Calendar = .current) -> Int {
+    package static func reviewedTodayCount(records: [VocabularyExportRecord], calendar: Calendar = .current) -> Int {
         records.filter { record in
             guard let lastReviewedAt = record.srs.lastReviewedAt else { return false }
             return calendar.isDateInToday(lastReviewedAt)
         }.count
     }
 
-    static func progressText(records: [VocabularyExportRecord], goal: Int) -> String {
+    package static func progressText(records: [VocabularyExportRecord], goal: Int) -> String {
         let normalizedGoal = normalizedGoal(goal)
         let reviewed = reviewedTodayCount(records: records)
         return AppText.localized(

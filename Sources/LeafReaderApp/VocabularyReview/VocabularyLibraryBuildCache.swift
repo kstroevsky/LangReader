@@ -1,5 +1,6 @@
 import Foundation
 import NaturalLanguage
+import LeafReaderCore
 
 /// Per-session cache of built export records, keyed by document.
 ///

@@ -1,15 +1,15 @@
 import Foundation
 
-struct VocabularyReviewPreferences {
+package struct VocabularyReviewPreferences {
     private let fileID: String
     private let defaults: UserDefaults
 
-    init(fileID: String, defaults: UserDefaults = .standard) {
+    package init(fileID: String, defaults: UserDefaults = .standard) {
         self.fileID = fileID
         self.defaults = defaults
     }
 
-    var reviewPriority: VocabularyReviewPriority {
+    package var reviewPriority: VocabularyReviewPriority {
         get {
             guard let rawValue = defaults.string(forKey: reviewPriorityKey),
                   let priority = VocabularyReviewPriority(rawValue: rawValue) else {
@@ -22,7 +22,7 @@ struct VocabularyReviewPreferences {
         }
     }
 
-    var dailyReviewGoal: Int {
+    package var dailyReviewGoal: Int {
         get {
             let goal = defaults.integer(forKey: dailyReviewGoalKey)
             return VocabularyDailyGoalPolicy.normalizedGoal(goal)
@@ -32,11 +32,11 @@ struct VocabularyReviewPreferences {
         }
     }
 
-    var isFrequencyBackfilled: Bool {
+    package var isFrequencyBackfilled: Bool {
         defaults.bool(forKey: frequencyBackfilledKey)
     }
 
-    func markFrequencyBackfilled() {
+    package func markFrequencyBackfilled() {
         defaults.set(true, forKey: frequencyBackfilledKey)
     }
 

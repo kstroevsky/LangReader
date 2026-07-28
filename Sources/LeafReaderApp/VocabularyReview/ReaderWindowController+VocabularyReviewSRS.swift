@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     func prepareVocabularyReviewTiming(for record: VocabularyExportRecord, autoPlay: Bool = true) {

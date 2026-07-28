@@ -1,45 +1,97 @@
 import Foundation
 import LeafReaderCore
 
-struct VocabularyLibrarySource {
-    let documentURL: URL
-    let documentTitle: String
-    let documentKind: ReaderDocumentKind
-    let records: [VocabularyExportRecord]
+package struct VocabularyLibrarySource {
+    package let documentURL: URL
+    package let documentTitle: String
+    package let documentKind: ReaderDocumentKind
+    package let records: [VocabularyExportRecord]
+
+    package init(
+        documentURL: URL,
+        documentTitle: String,
+        documentKind: ReaderDocumentKind,
+        records: [VocabularyExportRecord]
+    ) {
+        self.documentURL = documentURL
+        self.documentTitle = documentTitle
+        self.documentKind = documentKind
+        self.records = records
+    }
 }
 
-struct VocabularyLibraryOccurrence {
-    let recordID: String
-    let documentURL: URL
-    let documentTitle: String
-    let documentKind: ReaderDocumentKind
-    let location: String
-    let surfaceForm: String?
-    let context: String
-    let createdAt: Date
+package struct VocabularyLibraryOccurrence {
+    package let recordID: String
+    package let documentURL: URL
+    package let documentTitle: String
+    package let documentKind: ReaderDocumentKind
+    package let location: String
+    package let surfaceForm: String?
+    package let context: String
+    package let createdAt: Date
+
+    package init(
+        recordID: String,
+        documentURL: URL,
+        documentTitle: String,
+        documentKind: ReaderDocumentKind,
+        location: String,
+        surfaceForm: String?,
+        context: String,
+        createdAt: Date
+    ) {
+        self.recordID = recordID
+        self.documentURL = documentURL
+        self.documentTitle = documentTitle
+        self.documentKind = documentKind
+        self.location = location
+        self.surfaceForm = surfaceForm
+        self.context = context
+        self.createdAt = createdAt
+    }
 }
 
-struct VocabularyLibraryRecord {
-    let id: String
-    let word: String
-    let lemma: String?
-    let forms: [VocabularyForm]
-    let answer: String
-    let dictionaryTags: String?
-    let dictionaryFrequency: Int?
-    let occurrences: [VocabularyLibraryOccurrence]
+package struct VocabularyLibraryRecord {
+    package let id: String
+    package let word: String
+    package let lemma: String?
+    package let forms: [VocabularyForm]
+    package let answer: String
+    package let dictionaryTags: String?
+    package let dictionaryFrequency: Int?
+    package let occurrences: [VocabularyLibraryOccurrence]
 
-    var latestCreatedAt: Date {
+    package init(
+        id: String,
+        word: String,
+        lemma: String?,
+        forms: [VocabularyForm],
+        answer: String,
+        dictionaryTags: String?,
+        dictionaryFrequency: Int?,
+        occurrences: [VocabularyLibraryOccurrence]
+    ) {
+        self.id = id
+        self.word = word
+        self.lemma = lemma
+        self.forms = forms
+        self.answer = answer
+        self.dictionaryTags = dictionaryTags
+        self.dictionaryFrequency = dictionaryFrequency
+        self.occurrences = occurrences
+    }
+
+    package var latestCreatedAt: Date {
         occurrences.map(\.createdAt).max() ?? .distantPast
     }
 
-    var sourceCount: Int {
+    package var sourceCount: Int {
         Set(occurrences.map { $0.documentURL.standardizedFileURL.path }).count
     }
 }
 
-enum VocabularyLibraryRecordProvider {
-    static func records(sources: [VocabularyLibrarySource]) -> [VocabularyLibraryRecord] {
+package enum VocabularyLibraryRecordProvider {
+    package static func records(sources: [VocabularyLibrarySource]) -> [VocabularyLibraryRecord] {
         typealias Entry = (source: VocabularyLibrarySource, record: VocabularyExportRecord)
         var grouped: [String: [Entry]] = [:]
 

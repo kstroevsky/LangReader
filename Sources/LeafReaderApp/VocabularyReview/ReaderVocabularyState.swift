@@ -1,5 +1,6 @@
 import Foundation
 import NaturalLanguage
+import LeafReaderCore
 
 struct ReaderVocabularyState {
     /// Language the current document's vocabulary is lemmatized and grouped by.

@@ -1,30 +1,32 @@
 import Foundation
 
-final class VocabularyReviewSession {
-    let listPageSize = 20
-    var filter: VocabularyFilter = .due
-    var priority: VocabularyReviewPriority = .frequencyFirst
-    var dailyReviewGoal = VocabularyDailyGoalPolicy.defaultGoal
-    var reviewIndex = 0
-    var listPageIndex = 0
-    var contextShown = false
-    var answerShown = false
-    var listModeEnabled = false
-    var cardKey: String?
-    var cardShownAt = Date()
-    var answerShownAt: Date?
-    var didScoreCurrentCard = false
-    var batchKeys: [String] = []
-    var undoSRSByID: [String: VocabularySRSState] = [:]
+package final class VocabularyReviewSession {
+    package init() {}
 
-    func resetForReviewMode() {
+    package let listPageSize = 20
+    package var filter: VocabularyFilter = .due
+    package var priority: VocabularyReviewPriority = .frequencyFirst
+    package var dailyReviewGoal = VocabularyDailyGoalPolicy.defaultGoal
+    package var reviewIndex = 0
+    package var listPageIndex = 0
+    package var contextShown = false
+    package var answerShown = false
+    package var listModeEnabled = false
+    package var cardKey: String?
+    package var cardShownAt = Date()
+    package var answerShownAt: Date?
+    package var didScoreCurrentCard = false
+    package var batchKeys: [String] = []
+    package var undoSRSByID: [String: VocabularySRSState] = [:]
+
+    package func resetForReviewMode() {
         listModeEnabled = false
         reviewIndex = 0
         batchKeys = []
         resetCard(clearCardKey: true)
     }
 
-    func resetForListMode(filter: VocabularyFilter) {
+    package func resetForListMode(filter: VocabularyFilter) {
         self.filter = filter
         listModeEnabled = true
         reviewIndex = 0
@@ -32,7 +34,7 @@ final class VocabularyReviewSession {
         resetCard(clearCardKey: true)
     }
 
-    func resetCard(clearCardKey: Bool) {
+    package func resetCard(clearCardKey: Bool) {
         contextShown = false
         answerShown = false
         if clearCardKey {
@@ -43,7 +45,7 @@ final class VocabularyReviewSession {
         undoSRSByID = [:]
     }
 
-    func reviewRecords(
+    package func reviewRecords(
         _ records: [VocabularyExportRecord]
     ) -> [VocabularyExportRecord] {
         let batchKeys = ensureBatch(records: records)
@@ -62,7 +64,7 @@ final class VocabularyReviewSession {
     }
 
     @discardableResult
-    func ensureBatch(
+    package func ensureBatch(
         records: [VocabularyExportRecord]
     ) -> [String] {
         var recordsByKey: [String: VocabularyExportRecord] = [:]
@@ -89,21 +91,21 @@ final class VocabularyReviewSession {
         return batchKeys
     }
 
-    func key(for record: VocabularyExportRecord) -> String {
+    package func key(for record: VocabularyExportRecord) -> String {
         record.ids.sorted().joined(separator: "|")
     }
 
-    func isDoneForToday(_ record: VocabularyExportRecord) -> Bool {
+    package func isDoneForToday(_ record: VocabularyExportRecord) -> Bool {
         guard let lastReviewedAt = record.srs.lastReviewedAt,
               Calendar.current.isDateInToday(lastReviewedAt) else { return false }
         return (record.srs.activeRecallStreak ?? 0) > 0 && record.srs.intervalDays >= 1 && !record.srs.isDue
     }
 
-    func isShowingCurrentCard(key: String) -> Bool {
+    package func isShowingCurrentCard(key: String) -> Bool {
         (contextShown || answerShown) && cardKey == key
     }
 
-    func listRecords(
+    package func listRecords(
         _ records: [VocabularyExportRecord],
         matching filter: VocabularyFilter
     ) -> [VocabularyExportRecord] {
@@ -126,11 +128,11 @@ final class VocabularyReviewSession {
         }
     }
 
-    func listPageCount(total: Int) -> Int {
+    package func listPageCount(total: Int) -> Int {
         max(1, Int(ceil(Double(total) / Double(listPageSize))))
     }
 
-    func currentListPageRecords(
+    package func currentListPageRecords(
         _ records: [VocabularyExportRecord],
         matching filter: VocabularyFilter
     ) -> (records: ArraySlice<VocabularyExportRecord>, pageIndex: Int, pageCount: Int, total: Int) {
@@ -142,14 +144,14 @@ final class VocabularyReviewSession {
         return (visibleRecords[start..<end], listPageIndex, pageCount, visibleRecords.count)
     }
 
-    func goToPreviousListPage() -> Bool {
+    package func goToPreviousListPage() -> Bool {
         guard listPageIndex > 0 else { return false }
         listPageIndex -= 1
         return true
     }
 
     @discardableResult
-    func goToNextListPage() -> Bool {
+    package func goToNextListPage() -> Bool {
         listPageIndex += 1
         return true
     }

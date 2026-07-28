@@ -8,7 +8,7 @@ import LeafReaderCore
 /// distinctions and not others, so this type only encodes what is
 /// measurably reliable; the Wiktionary flexion tier refines
 /// `.finiteVerb` into Präsens/Präteritum and `.plural` into a specific case.
-enum GermanFormLabel: String, Equatable {
+package enum GermanFormLabel: String, Equatable {
     /// Surface form equals the lemma and is a verb: `gehen`.
     case infinitiv
     /// Past participle, proven by an auxiliary in the same clause: `gegangen`.
@@ -39,11 +39,11 @@ enum GermanFormLabel: String, Equatable {
     /// themselves. `.grundform` only earns its place alongside inflected forms
     /// — on its own it restates the headword, which on real documents accounts
     /// for the majority of labels and reads as noise.
-    var isInformative: Bool {
+    package var isInformative: Bool {
         self != .grundform
     }
 
-    var displayName: String {
+    package var displayName: String {
         switch self {
         case .infinitiv:
             return AppText.localized("原形 (Infinitiv)", "Infinitiv")
@@ -72,7 +72,7 @@ enum GermanFormLabel: String, Equatable {
 /// The label type is shared by every language's labeler; the `German` prefix is
 /// historical (it predates the other languages and is baked into the persisted
 /// cache's rawValues). New code should prefer this name.
-typealias WordFormLabel = GermanFormLabel
+package typealias WordFormLabel = GermanFormLabel
 
 /// Derives a grammatical form label for a German surface form, offline.
 ///
@@ -80,11 +80,11 @@ typealias WordFormLabel = GermanFormLabel
 /// against a labeled corpus and tuned for zero false positives, accepting
 /// misses instead. A `nil` label means "unknown", which the UI shows as an
 /// unlabeled form rather than an incorrect one.
-enum GermanFormLabeler {
+package enum GermanFormLabeler {
     /// Bumped whenever the offline heuristics in this file change. A label
     /// persisted by an older ruleset carries an older version and is treated as
     /// absent, so a labeler improvement takes effect without a manual cache wipe.
-    static let labelingVersion = 1
+    package static let labelingVersion = 1
 
     private static let auxiliaryLemmas: Set<String> = ["haben", "sein", "werden"]
     private static let umlauts = CharacterSet(charactersIn: "äöüÄÖÜ")
@@ -100,7 +100,7 @@ enum GermanFormLabeler {
     /// detectable with context: morphology alone mislabels `geht`, `gehört`
     /// and `gewinnt` as participles while missing `verstanden`, `besucht` and
     /// `studiert`, which carry no `ge-` prefix.
-    static func label(
+    package static func label(
         surfaceForm rawSurface: String,
         lemma rawLemma: String,
         context: String? = nil

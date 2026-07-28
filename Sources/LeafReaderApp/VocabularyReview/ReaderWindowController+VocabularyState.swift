@@ -1,5 +1,6 @@
 import Foundation
 import NaturalLanguage
+import LeafReaderCore
 
 extension ReaderWindowController {
     /// Language the current document's vocabulary is grouped by. All lemma

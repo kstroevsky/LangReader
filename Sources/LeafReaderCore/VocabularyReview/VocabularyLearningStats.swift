@@ -1,22 +1,22 @@
 import Foundation
 import LeafReaderCore
 
-struct VocabularyLearningStats: Equatable {
-    let totalCount: Int
-    let reviewedTodayCount: Int
-    let masteredCount: Int
-    let recallRatePercent: Int?
-    let streakDays: Int
+package struct VocabularyLearningStats: Equatable {
+    package let totalCount: Int
+    package let reviewedTodayCount: Int
+    package let masteredCount: Int
+    package let recallRatePercent: Int?
+    package let streakDays: Int
 }
 
-struct VocabularyLearningStatDisplayItem: Equatable {
-    let title: String
-    let value: String
-    let valueIdentifier: String
+package struct VocabularyLearningStatDisplayItem: Equatable {
+    package let title: String
+    package let value: String
+    package let valueIdentifier: String
 }
 
-enum VocabularyLearningStatsCalculator {
-    static func stats(
+package enum VocabularyLearningStatsCalculator {
+    package static func stats(
         records: [VocabularyExportRecord],
         now: Date = Date(),
         calendar: Calendar = .current
@@ -62,15 +62,15 @@ enum VocabularyLearningStatsCalculator {
     }
 }
 
-enum VocabularyLearningStatsPresenter {
-    static let containerIdentifier = "vocabularyStatsContainer"
+package enum VocabularyLearningStatsPresenter {
+    package static let containerIdentifier = "vocabularyStatsContainer"
     private static let totalIdentifier = "vocabularyStatTotalValue"
     private static let reviewedTodayIdentifier = "vocabularyStatReviewedTodayValue"
     private static let masteredIdentifier = "vocabularyStatMasteredValue"
     private static let recallRateIdentifier = "vocabularyStatRecallRateValue"
     private static let streakIdentifier = "vocabularyStatStreakValue"
 
-    static func items(for stats: VocabularyLearningStats) -> [VocabularyLearningStatDisplayItem] {
+    package static func items(for stats: VocabularyLearningStats) -> [VocabularyLearningStatDisplayItem] {
         [
             VocabularyLearningStatDisplayItem(
                 title: AppText.localized("总词数", "Words"),
@@ -100,7 +100,7 @@ enum VocabularyLearningStatsPresenter {
         ]
     }
 
-    static func recallRateText(_ value: Int?) -> String {
+    package static func recallRateText(_ value: Int?) -> String {
         value.map { "\($0)%" } ?? "--"
     }
 }

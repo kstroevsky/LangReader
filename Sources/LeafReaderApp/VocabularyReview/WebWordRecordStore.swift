@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 struct StoredWebWordRecord: Codable {
     let id: String

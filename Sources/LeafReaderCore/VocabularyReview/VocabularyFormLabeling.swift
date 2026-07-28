@@ -11,14 +11,14 @@ import NaturalLanguage
 /// Deliberately free of any storage dependency, like `GermanFormLabeler`: the
 /// cache-backed resolvers live in `VocabularyCachedFormLabeling` so the offline
 /// test binaries can build this routing without SQLite.
-enum VocabularyFormLabeling {
+package enum VocabularyFormLabeling {
     /// Whether labels can be produced for `language`.
-    static func hasLabeler(for language: NLLanguage) -> Bool {
+    package static func hasLabeler(for language: NLLanguage) -> Bool {
         language == .german || language == .english
     }
 
     /// The offline label for one surface form in `language`.
-    static func label(
+    package static func label(
         surfaceForm: String,
         lemma: String,
         context: String?,
@@ -36,7 +36,7 @@ enum VocabularyFormLabeling {
 
     /// The labeling ruleset version for `language`, so a cached label produced
     /// by an older ruleset is treated as absent.
-    static func labelingVersion(for language: NLLanguage) -> Int {
+    package static func labelingVersion(for language: NLLanguage) -> Int {
         switch language {
         case .german: return GermanFormLabeler.labelingVersion
         case .english: return EnglishFormLabeler.labelingVersion
@@ -50,7 +50,7 @@ enum VocabularyFormLabeling {
     /// column, so the language is folded into the version. Without this, the
     /// same spelling in two languages — "was", "die", "hat" — would collide and
     /// serve one language's label to the other.
-    static func cacheVersion(for language: NLLanguage) -> Int {
+    package static func cacheVersion(for language: NLLanguage) -> Int {
         let base = labelingVersion(for: language)
         switch language {
         case .german: return base

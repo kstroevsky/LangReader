@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum VocabularyLibraryFilterTests {
     static func testSearchIsCaseAndDiacriticInsensitive() throws {

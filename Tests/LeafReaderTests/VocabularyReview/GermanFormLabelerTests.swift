@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 // T1 tests for GermanFormLabeler.
 //

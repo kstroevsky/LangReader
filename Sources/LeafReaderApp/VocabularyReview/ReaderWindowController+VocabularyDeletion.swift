@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     /// Removes a row's records. The row used to be yanked out of the stack view

@@ -1,8 +1,8 @@
 import Foundation
 import LeafReaderCore
 
-enum VocabularyReviewDisplayRecordLoader {
-    static func displayRecord(
+package enum VocabularyReviewDisplayRecordLoader {
+    package static func displayRecord(
         for record: VocabularyExportRecord,
         metadataLookup: (String) -> (tags: String?, frequency: Int?),
         persistTags: (String, VocabularyExportRecord) -> Void

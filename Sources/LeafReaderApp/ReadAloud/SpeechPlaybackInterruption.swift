@@ -1,5 +1,6 @@
 import Cocoa
 import AVFoundation
+import LeafReaderCore
 
 extension SpeechPlaybackCoordinator {
     func speakCachedPreviewInterruption(

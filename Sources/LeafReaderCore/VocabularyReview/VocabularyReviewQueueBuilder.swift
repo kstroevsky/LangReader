@@ -1,7 +1,7 @@
 import Foundation
 
-enum VocabularyReviewQueueBuilder {
-    static func queue(
+package enum VocabularyReviewQueueBuilder {
+    package static func queue(
         records: [VocabularyExportRecord],
         priority: VocabularyReviewPriority
     ) -> [VocabularyExportRecord] {
@@ -24,7 +24,7 @@ enum VocabularyReviewQueueBuilder {
         }
     }
 
-    static func prioritySort(
+    package static func prioritySort(
         _ lhs: VocabularyExportRecord,
         _ rhs: VocabularyExportRecord,
         priority: VocabularyReviewPriority

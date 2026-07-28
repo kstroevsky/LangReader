@@ -9,8 +9,8 @@ import LeafReaderCore
 /// without building a window — including the parts most likely to be wrong:
 /// diacritic folding, which fields are searched, and whether the user's
 /// selection survives a filter change.
-enum VocabularyLibraryFilter {
-    enum SortOrder: Int {
+package enum VocabularyLibraryFilter {
+    package enum SortOrder: Int {
         case recent = 0
         case alphabetical = 1
     }
@@ -19,7 +19,7 @@ enum VocabularyLibraryFilter {
     /// languages the user is still learning: someone reading German should find
     /// "Engpässen" by typing "engpassen", and search that only matched exact
     /// accents would look broken to them.
-    static func normalized(_ text: String) -> String {
+    package static func normalized(_ text: String) -> String {
         text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
     }
 
@@ -28,7 +28,7 @@ enum VocabularyLibraryFilter {
     /// Deliberately wide: a word is often easier to recall by the sentence it
     /// was met in, or by the document it came from, than by its dictionary
     /// form — so contexts, titles and inflected forms are all searchable.
-    static func searchableText(for record: VocabularyLibraryRecord) -> String {
+    package static func searchableText(for record: VocabularyLibraryRecord) -> String {
         var parts = [record.word, record.answer, record.dictionaryTags ?? ""]
         parts.append(contentsOf: record.forms.map(\.surface))
         for occurrence in record.occurrences {
@@ -39,7 +39,7 @@ enum VocabularyLibraryFilter {
         return normalized(parts.joined(separator: "\n"))
     }
 
-    static func matchesSource(_ record: VocabularyLibraryRecord, sourcePath: String?) -> Bool {
+    package static func matchesSource(_ record: VocabularyLibraryRecord, sourcePath: String?) -> Bool {
         guard let sourcePath else { return true }
         return record.occurrences.contains {
             $0.documentURL.standardizedFileURL.path == sourcePath
@@ -47,7 +47,7 @@ enum VocabularyLibraryFilter {
     }
 
     /// The records to show, filtered and sorted.
-    static func apply(
+    package static func apply(
         records: [VocabularyLibraryRecord],
         query: String,
         sourcePath: String?,
@@ -62,7 +62,7 @@ enum VocabularyLibraryFilter {
         return sorted(filtered, by: sortOrder)
     }
 
-    static func sorted(
+    package static func sorted(
         _ records: [VocabularyLibraryRecord],
         by sortOrder: SortOrder
     ) -> [VocabularyLibraryRecord] {
@@ -89,7 +89,7 @@ enum VocabularyLibraryFilter {
     /// Keeps the selected word if it survived the filter, so typing does not
     /// yank the detail pane away mid-read; otherwise falls back to the first
     /// row, and to nothing when the filter matched nothing.
-    static func selectionRow(
+    package static func selectionRow(
         in records: [VocabularyLibraryRecord],
         preferredID: String?
     ) -> Int? {
@@ -99,7 +99,7 @@ enum VocabularyLibraryFilter {
         return records.isEmpty ? nil : 0
     }
 
-    static func summaryText(matchCount: Int, totalCount: Int) -> String {
+    package static func summaryText(matchCount: Int, totalCount: Int) -> String {
         AppText.localized(
             "\(matchCount) / \(totalCount) 个单词",
             "\(matchCount) of \(totalCount) words"

@@ -1,7 +1,7 @@
 import Foundation
 
-enum VocabularyAnswerSanitizer {
-    static func removingTrailingTags(from text: String) -> String {
+package enum VocabularyAnswerSanitizer {
+    package static func removingTrailingTags(from text: String) -> String {
         var lines = text.components(separatedBy: .newlines)
         while let last = lines.last?.trimmingCharacters(in: .whitespacesAndNewlines),
               (last.isEmpty || isTagOnlyLine(last)) {

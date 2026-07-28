@@ -7,30 +7,30 @@ import NaturalLanguage
 /// one Apple's tagger lemmatizes well. Anything else falls back to English,
 /// the default language, which for non-matching text simply degrades to
 /// exact-form matching rather than producing wrong groupings.
-enum VocabularyLanguageDetector {
-    static let fallback: NLLanguage = .english
+package enum VocabularyLanguageDetector {
+    package static let fallback: NLLanguage = .english
 
     /// Languages allowed for lemma-based inflected-form grouping. Restricting to
     /// a vetted set keeps a mis-detected or poorly-supported language from
     /// scattering a word's forms across bogus lemmas. Italian is deliberately
     /// absent: its lemmas come back inconsistent ("parlo" → "parlarsi" but
     /// "parlato" → "parlare"), which would split one word across two groups.
-    static let supported: Set<NLLanguage> = [
+    package static let supported: Set<NLLanguage> = [
         .german, .english, .french, .spanish, .portuguese, .dutch, .russian
     ]
 
     /// Pages to sample and score. Bounded so detection stays cheap on the
     /// document-load path even for a 250-page book.
-    static let maxSampledPages = 16
+    package static let maxSampledPages = 16
     /// Best-scoring pages actually fed to the recognizer.
-    static let maxScoredPagesUsed = 8
-    static let maxSampleCharacters = 8000
+    package static let maxScoredPagesUsed = 8
+    package static let maxSampleCharacters = 8000
     /// Minimum words before a page counts as prose at all.
-    static let minimumProseWords = 60
+    package static let minimumProseWords = 60
 
     /// The language to group by, from a representative sample of document text.
     /// Short or empty samples are inconclusive, so they take the fallback.
-    static func language(forSample sample: String) -> NLLanguage {
+    package static func language(forSample sample: String) -> NLLanguage {
         let trimmed = sample.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.count >= 40 else { return fallback }
         let recognizer = NLLanguageRecognizer()
@@ -48,7 +48,7 @@ enum VocabularyLanguageDetector {
     /// a real English art book was detected as Turkish that way. Instead this
     /// spreads its samples across the whole document and keeps the pages that
     /// look most like running prose, which is what the recognizer needs.
-    static func language(pageCount: Int, pageText: (Int) -> String?) -> NLLanguage {
+    package static func language(pageCount: Int, pageText: (Int) -> String?) -> NLLanguage {
         guard pageCount > 0 else { return fallback }
 
         let indices = sampleIndices(pageCount: pageCount)
@@ -86,7 +86,7 @@ enum VocabularyLanguageDetector {
     /// they identify its language well enough to label its forms — and using
     /// them beats labeling another document's words with the open document's
     /// grammar.
-    static func language(forContexts contexts: [String]) -> NLLanguage {
+    package static func language(forContexts contexts: [String]) -> NLLanguage {
         var sample = ""
         for context in contexts {
             guard sample.count < maxSampleCharacters else { break }
@@ -100,7 +100,7 @@ enum VocabularyLanguageDetector {
 
     /// Page indices spread across the document, skipping the front matter that
     /// rarely contains running prose.
-    static func sampleIndices(pageCount: Int) -> [Int] {
+    package static func sampleIndices(pageCount: Int) -> [Int] {
         guard pageCount > 0 else { return [] }
         guard pageCount > 4 else { return Array(0..<pageCount) }
 
@@ -126,7 +126,7 @@ enum VocabularyLanguageDetector {
     /// of the page is letters rather than digits, punctuation and layout noise.
     /// This keeps tables, figure captions and OCR garbage from outscoring the
     /// body text the recognizer actually needs.
-    static func proseScore(_ text: String) -> Int {
+    package static func proseScore(_ text: String) -> Int {
         var letters = 0
         var nonSpace = 0
         for character in text where !character.isWhitespace {
