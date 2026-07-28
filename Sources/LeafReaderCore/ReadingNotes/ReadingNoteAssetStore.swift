@@ -1,5 +1,4 @@
 import Foundation
-import LeafReaderCore
 
 package enum ReadingNoteAssetStore {
     package static func defaultDirectoryURL() -> URL? {

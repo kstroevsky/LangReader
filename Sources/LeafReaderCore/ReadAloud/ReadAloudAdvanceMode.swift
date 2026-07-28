@@ -1,13 +1,12 @@
 import Foundation
-import LeafReaderCore
 
-enum ReadAloudAdvanceMode: String {
+package enum ReadAloudAdvanceMode: String {
     case automatic
     case manual
 
-    static let defaultsKey = "readAloudAdvanceMode"
+    package static let defaultsKey = "readAloudAdvanceMode"
 
-    static func load() -> ReadAloudAdvanceMode {
+    package static func load() -> ReadAloudAdvanceMode {
         guard let rawValue = UserDefaults.standard.string(forKey: defaultsKey),
               let mode = ReadAloudAdvanceMode(rawValue: rawValue) else {
             return .automatic
@@ -15,15 +14,15 @@ enum ReadAloudAdvanceMode: String {
         return mode
     }
 
-    func save() {
+    package func save() {
         UserDefaults.standard.set(rawValue, forKey: Self.defaultsKey)
     }
 
-    var toggled: ReadAloudAdvanceMode {
+    package var toggled: ReadAloudAdvanceMode {
         self == .automatic ? .manual : .automatic
     }
 
-    var title: String {
+    package var title: String {
         switch self {
         case .automatic:
             return AppText.localized("自动", "Auto")
@@ -32,7 +31,7 @@ enum ReadAloudAdvanceMode: String {
         }
     }
 
-    var tooltip: String {
+    package var tooltip: String {
         switch self {
         case .automatic:
             return AppText.localized("播完后自动进入下一句", "Automatically continue to the next sentence")

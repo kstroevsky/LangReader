@@ -1,25 +1,25 @@
 import Foundation
 
-enum ReadAloudPlaybackPhase: Equatable {
+package enum ReadAloudPlaybackPhase: Equatable {
     case idle
     case loading
     case playing
     case paused
 
-    var isActive: Bool {
+    package var isActive: Bool {
         self != .idle
     }
 
-    var isLoading: Bool {
+    package var isLoading: Bool {
         self == .loading
     }
 
-    var isPaused: Bool {
+    package var isPaused: Bool {
         self == .paused
     }
 }
 
-enum ReadAloudPlaybackEvent: Equatable {
+package enum ReadAloudPlaybackEvent: Equatable {
     case startLoading
     case playbackStarted
     case pause

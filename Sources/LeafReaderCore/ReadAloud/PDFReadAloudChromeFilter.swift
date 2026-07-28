@@ -1,33 +1,43 @@
 import CoreGraphics
 import Foundation
 
-enum PDFReadAloudChromeFilter {
-    final class State {
+package enum PDFReadAloudChromeFilter {
+    package final class State {
         private var edgeLineCounts: [String: Int] = [:]
         private let repeatedLineThreshold: Int
 
-        init(repeatedLineThreshold: Int = 2) {
+        package init(repeatedLineThreshold: Int = 2) {
             self.repeatedLineThreshold = max(2, repeatedLineThreshold)
         }
 
-        func reset() {
+        package func reset() {
             edgeLineCounts.removeAll()
         }
 
-        func shouldFilterRepeatedEdgeLine(_ normalized: String) -> Bool {
+        package func shouldFilterRepeatedEdgeLine(_ normalized: String) -> Bool {
             let count = (edgeLineCounts[normalized] ?? 0) + 1
             edgeLineCounts[normalized] = count
             return count >= repeatedLineThreshold
         }
     }
 
-    struct Line {
-        let text: String
-        let bounds: CGRect
-        let pageBounds: CGRect
+    package struct Line {
+        package let text: String
+        package let bounds: CGRect
+        package let pageBounds: CGRect
+
+        package init(
+            text: String,
+            bounds: CGRect,
+            pageBounds: CGRect
+        ) {
+            self.text = text
+            self.bounds = bounds
+            self.pageBounds = pageBounds
+        }
     }
 
-    static func filteredText(
+    package static func filteredText(
         lines: [Line],
         state: State
     ) -> String {

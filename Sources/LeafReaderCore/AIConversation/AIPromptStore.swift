@@ -1,5 +1,4 @@
 import Foundation
-import LeafReaderCore
 
 package enum AIPromptStore {
     private struct PromptLanguageConfig: Decodable {

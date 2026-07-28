@@ -1,7 +1,10 @@
 import Foundation
-import LeafReaderCore
 
-final class LocalRuntimeDownloader: NSObject, URLSessionDataDelegate {
+/// `@unchecked Sendable` because a `URLSession` delegate must be Sendable under
+/// Swift 6, and this one's mutable state (`fileHandle`, byte counters, the
+/// completion latch) is only ever touched from the session's serialized delegate
+/// callbacks — never concurrently.
+package final class LocalRuntimeDownloader: NSObject, URLSessionDataDelegate, @unchecked Sendable {
     private let plan: LocalRuntimeDownloadPlan
     private let downloadID: UUID
     private let partialURL: URL
@@ -17,10 +20,10 @@ final class LocalRuntimeDownloader: NSObject, URLSessionDataDelegate {
     private var completionSent = false
     private var downloadError: Error?
 
-    var session: URLSession?
-    weak var task: URLSessionTask?
+    package var session: URLSession?
+    package weak var task: URLSessionTask?
 
-    init(
+    package init(
         plan: LocalRuntimeDownloadPlan,
         downloadID: UUID,
         partialURL: URL,
@@ -43,7 +46,7 @@ final class LocalRuntimeDownloader: NSObject, URLSessionDataDelegate {
         self.completedBytes = existingSize
     }
 
-    func urlSession(
+    package func urlSession(
         _ session: URLSession,
         dataTask: URLSessionDataTask,
         didReceive response: URLResponse,
@@ -58,7 +61,7 @@ final class LocalRuntimeDownloader: NSObject, URLSessionDataDelegate {
         }
     }
 
-    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+    package func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         do {
             try fileHandle?.write(contentsOf: data)
             completedBytes += Int64(data.count)
@@ -69,7 +72,7 @@ final class LocalRuntimeDownloader: NSObject, URLSessionDataDelegate {
         }
     }
 
-    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+    package func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         try? fileHandle?.close()
         fileHandle = nil
         session.invalidateAndCancel()

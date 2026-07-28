@@ -1,5 +1,4 @@
 import Foundation
-import LeafReaderCore
 
 package enum AIConversationMarkdownExporter {
     package static func markdown(title: String, bubbles: [SavedAIConversationBubble], exportedAt: Date = Date()) -> String {

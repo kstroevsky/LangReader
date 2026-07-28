@@ -1,5 +1,4 @@
 import Foundation
-import LeafReaderCore
 
 package final class AIConversationContextStore {
     private let maxContextMessages: Int

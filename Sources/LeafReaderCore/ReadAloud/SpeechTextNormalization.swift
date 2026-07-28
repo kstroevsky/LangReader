@@ -2,7 +2,7 @@ import Foundation
 import NaturalLanguage
 
 extension SpeechTextPolicy {
-    static func isEnglishCandidate(_ text: String) -> Bool {
+    package static func isEnglishCandidate(_ text: String) -> Bool {
         guard !text.isEmpty,
               text.range(of: #"[A-Za-z]"#, options: .regularExpression) != nil else {
             return false
@@ -17,11 +17,11 @@ extension SpeechTextPolicy {
         }
     }
 
-    static func isChineseCandidate(_ text: String) -> Bool {
+    package static func isChineseCandidate(_ text: String) -> Bool {
         text.unicodeScalars.contains(where: Self.isCJK)
     }
 
-    static func prefersChineseTTS(_ text: String) -> Bool {
+    package static func prefersChineseTTS(_ text: String) -> Bool {
         let counts = languageSignalCounts(in: text)
         guard counts.cjk > 0 else { return false }
         guard counts.latin > 0 else { return true }
@@ -31,7 +31,7 @@ extension SpeechTextPolicy {
         return counts.cjk >= 8 && counts.cjk * 4 >= counts.latin
     }
 
-    static func prefersChineseReadAloudDocumentTTS(_ text: String) -> Bool {
+    package static func prefersChineseReadAloudDocumentTTS(_ text: String) -> Bool {
         let counts = languageSignalCounts(in: text)
         guard counts.cjk >= 40 else { return false }
         guard counts.latin > 0 else { return true }
@@ -41,7 +41,7 @@ extension SpeechTextPolicy {
     /// Returns the language used by macOS's built-in voice for short vocabulary
     /// playback. Local runtimes currently cover English and Chinese; German is
     /// deliberately routed to the system voice, which has native German voices.
-    static func systemSpeechLanguageCode(for text: String) -> String {
+    package static func systemSpeechLanguageCode(for text: String) -> String {
         if prefersChineseTTS(text) {
             return "zh-CN"
         }
@@ -51,7 +51,7 @@ extension SpeechTextPolicy {
         return "en-US"
     }
 
-    static func prefersGermanTTS(_ text: String) -> Bool {
+    package static func prefersGermanTTS(_ text: String) -> Bool {
         let value = normalizedCommonInput(text)
         guard !value.isEmpty,
               !prefersChineseTTS(value),
@@ -73,18 +73,18 @@ extension SpeechTextPolicy {
         return germanConfidence >= 0.5 && germanConfidence > englishConfidence
     }
 
-    static func isLocalTTSCandidate(_ text: String) -> Bool {
+    package static func isLocalTTSCandidate(_ text: String) -> Bool {
         isEnglishCandidate(text) || isChineseCandidate(text)
     }
 
-    static func normalizedReadAloudInput(_ text: String) -> String {
+    package static func normalizedReadAloudInput(_ text: String) -> String {
         if prefersChineseTTS(text) {
             return normalizedCommonInput(text)
         }
         return normalizedEnglishInput(text)
     }
 
-    static func normalizedEnglishInput(_ text: String) -> String {
+    package static func normalizedEnglishInput(_ text: String) -> String {
         var value = normalizedPunctuationInput(text)
         value = value.replacingOccurrences(
             of: #"(?i)([A-Za-z])-\s*[\r\n]+\s*([A-Za-z])"#,
@@ -105,12 +105,12 @@ extension SpeechTextPolicy {
         return value.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func normalizedCommonInput(_ text: String) -> String {
+    package static func normalizedCommonInput(_ text: String) -> String {
         collapseWhitespace(in: normalizedPunctuationInput(text))
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func normalizedPunctuationInput(_ text: String) -> String {
+    package static func normalizedPunctuationInput(_ text: String) -> String {
         text
             .replacingOccurrences(of: "\u{00AD}", with: "")
             .replacingOccurrences(of: "\u{2018}", with: "'")
@@ -122,7 +122,7 @@ extension SpeechTextPolicy {
             .replacingOccurrences(of: "\u{2026}", with: "...")
     }
 
-    static func collapseWhitespace(in text: String) -> String {
+    package static func collapseWhitespace(in text: String) -> String {
         text
             .replacingOccurrences(
                 of: #"[\r\n\t]+"#,
@@ -136,7 +136,7 @@ extension SpeechTextPolicy {
             )
     }
 
-    static func languageSignalCounts(in text: String) -> (cjk: Int, latin: Int) {
+    package static func languageSignalCounts(in text: String) -> (cjk: Int, latin: Int) {
         var cjk = 0
         var latin = 0
         for scalar in text.unicodeScalars {

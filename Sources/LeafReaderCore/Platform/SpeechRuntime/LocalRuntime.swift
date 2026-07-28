@@ -1,27 +1,26 @@
 import Foundation
-import LeafReaderCore
 
-enum LocalRuntimeFamily: String, Codable, Hashable {
+package enum LocalRuntimeFamily: String, Codable, Hashable {
     case speech
     case localLLM
 }
 
-struct LocalRuntimeInstallManifest: Codable, Equatable {
-    let family: LocalRuntimeFamily
-    let runtimeID: String
-    let cacheDirectoryPaths: [String]
+package struct LocalRuntimeInstallManifest: Codable, Equatable {
+    package let family: LocalRuntimeFamily
+    package let runtimeID: String
+    package let cacheDirectoryPaths: [String]
 
-    init(family: LocalRuntimeFamily, runtimeID: String, cacheDirectoryPaths: [String]) {
+    package init(family: LocalRuntimeFamily, runtimeID: String, cacheDirectoryPaths: [String]) {
         self.family = family
         self.runtimeID = runtimeID
         self.cacheDirectoryPaths = cacheDirectoryPaths
     }
 
-    init(runtimeID: String, cacheDirectoryPaths: [String]) {
+    package init(runtimeID: String, cacheDirectoryPaths: [String]) {
         self.init(family: .speech, runtimeID: runtimeID, cacheDirectoryPaths: cacheDirectoryPaths)
     }
 
-    init(legacySpeechRuntimeID runtimeID: String, cacheDirectoryPaths: [String]) {
+    package init(legacySpeechRuntimeID runtimeID: String, cacheDirectoryPaths: [String]) {
         self.init(family: .speech, runtimeID: runtimeID, cacheDirectoryPaths: cacheDirectoryPaths)
     }
 
@@ -31,14 +30,14 @@ struct LocalRuntimeInstallManifest: Codable, Equatable {
         case cacheDirectoryPaths
     }
 
-    init(from decoder: Decoder) throws {
+    package init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         family = try container.decodeIfPresent(LocalRuntimeFamily.self, forKey: .family) ?? .speech
         runtimeID = try container.decode(String.self, forKey: .runtimeID)
         cacheDirectoryPaths = try container.decode([String].self, forKey: .cacheDirectoryPaths)
     }
 
-    func encode(to encoder: Encoder) throws {
+    package func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(family, forKey: .family)
         try container.encode(runtimeID, forKey: .runtimeID)
@@ -46,13 +45,13 @@ struct LocalRuntimeInstallManifest: Codable, Equatable {
     }
 }
 
-enum LocalRuntimeInstallState: Equatable {
+package enum LocalRuntimeInstallState: Equatable {
     case complete
     case missingRuntime
     case missingModel
     case missingRuntimeAndModel
 
-    static func state(hasRuntime: Bool, hasModel: Bool) -> LocalRuntimeInstallState {
+    package static func state(hasRuntime: Bool, hasModel: Bool) -> LocalRuntimeInstallState {
         switch (hasRuntime, hasModel) {
         case (true, true):
             return .complete
@@ -66,78 +65,144 @@ enum LocalRuntimeInstallState: Equatable {
     }
 }
 
-struct LocalRuntimeDescriptor {
-    let family: LocalRuntimeFamily
-    let id: String
-    let title: String
-    let summaryText: String
-    let downloadSizeText: String
-    let minimumSystemVersion: OperatingSystemVersion
-    let minimumSystemVersionText: String
-    let downloadURL: URL
-    let manifestURL: URL?
-    let installDirectory: URL
-    let bundledInstallDirectory: URL?
-    let installDirectories: [URL]
-    let executableURL: URL
-    let bundledExecutableURL: URL?
-    let modelDirectory: URL
-    let requiredPaths: [URL]
+package struct LocalRuntimeDescriptor {
+    package let family: LocalRuntimeFamily
+    package let id: String
+    package let title: String
+    package let summaryText: String
+    package let downloadSizeText: String
+    package let minimumSystemVersion: OperatingSystemVersion
+    package let minimumSystemVersionText: String
+    package let downloadURL: URL
+    package let manifestURL: URL?
+    package let installDirectory: URL
+    package let bundledInstallDirectory: URL?
+    package let installDirectories: [URL]
+    package let executableURL: URL
+    package let bundledExecutableURL: URL?
+    package let modelDirectory: URL
+    package let requiredPaths: [URL]
+
+    package init(
+        family: LocalRuntimeFamily,
+        id: String,
+        title: String,
+        summaryText: String,
+        downloadSizeText: String,
+        minimumSystemVersion: OperatingSystemVersion,
+        minimumSystemVersionText: String,
+        downloadURL: URL,
+        manifestURL: URL?,
+        installDirectory: URL,
+        bundledInstallDirectory: URL?,
+        installDirectories: [URL],
+        executableURL: URL,
+        bundledExecutableURL: URL?,
+        modelDirectory: URL,
+        requiredPaths: [URL]
+    ) {
+        self.family = family
+        self.id = id
+        self.title = title
+        self.summaryText = summaryText
+        self.downloadSizeText = downloadSizeText
+        self.minimumSystemVersion = minimumSystemVersion
+        self.minimumSystemVersionText = minimumSystemVersionText
+        self.downloadURL = downloadURL
+        self.manifestURL = manifestURL
+        self.installDirectory = installDirectory
+        self.bundledInstallDirectory = bundledInstallDirectory
+        self.installDirectories = installDirectories
+        self.executableURL = executableURL
+        self.bundledExecutableURL = bundledExecutableURL
+        self.modelDirectory = modelDirectory
+        self.requiredPaths = requiredPaths
+    }
 }
 
-struct LocalRuntimeDownloadPlan {
-    let descriptor: LocalRuntimeDescriptor
-    let archiveURL: URL
-    let manifestURL: URL?
-    let expectedAssetName: String
+package struct LocalRuntimeDownloadPlan {
+    package let descriptor: LocalRuntimeDescriptor
+    package let archiveURL: URL
+    package let manifestURL: URL?
+    package let expectedAssetName: String
+
+    package init(
+        descriptor: LocalRuntimeDescriptor,
+        archiveURL: URL,
+        manifestURL: URL?,
+        expectedAssetName: String
+    ) {
+        self.descriptor = descriptor
+        self.archiveURL = archiveURL
+        self.manifestURL = manifestURL
+        self.expectedAssetName = expectedAssetName
+    }
 }
 
-struct LocalRuntimeDownloadKey: Hashable {
-    let family: LocalRuntimeFamily
-    let id: String
+package struct LocalRuntimeDownloadKey: Hashable {
+    package let family: LocalRuntimeFamily
+    package let id: String
 
-    init(family: LocalRuntimeFamily, id: String) {
+    package init(family: LocalRuntimeFamily, id: String) {
         self.family = family
         self.id = id
     }
 
-    init(descriptor: LocalRuntimeDescriptor) {
+    package init(descriptor: LocalRuntimeDescriptor) {
         self.init(family: descriptor.family, id: descriptor.id)
     }
 }
 
-struct LocalRuntimeRegistry {
-    let downloadPlans: [LocalRuntimeDownloadPlan]
+package struct LocalRuntimeRegistry {
+    package let downloadPlans: [LocalRuntimeDownloadPlan]
 
-    var descriptors: [LocalRuntimeDescriptor] {
+    package var descriptors: [LocalRuntimeDescriptor] {
         downloadPlans.map(\.descriptor)
     }
 
-    init(downloadPlans: [LocalRuntimeDownloadPlan]) {
+    package init(downloadPlans: [LocalRuntimeDownloadPlan]) {
         self.downloadPlans = downloadPlans
     }
 
-    func descriptor(family: LocalRuntimeFamily, id: String) -> LocalRuntimeDescriptor? {
+    package func descriptor(family: LocalRuntimeFamily, id: String) -> LocalRuntimeDescriptor? {
         descriptors.first { $0.family == family && $0.id == id }
     }
 
-    func downloadPlan(family: LocalRuntimeFamily, id: String) -> LocalRuntimeDownloadPlan? {
+    package func downloadPlan(family: LocalRuntimeFamily, id: String) -> LocalRuntimeDownloadPlan? {
         downloadPlans.first { $0.descriptor.family == family && $0.descriptor.id == id }
     }
 }
 
-struct LocalRuntimeStatusContext {
-    let descriptor: LocalRuntimeDescriptor
-    let installState: LocalRuntimeInstallState
-    let isSupported: Bool
-    let isDownloading: Bool
-    let isPaused: Bool
-    let downloadFailureMessage: String?
-    let inferenceFailureText: String?
+package struct LocalRuntimeStatusContext {
+    package let descriptor: LocalRuntimeDescriptor
+    package let installState: LocalRuntimeInstallState
+    package let isSupported: Bool
+    package let isDownloading: Bool
+    package let isPaused: Bool
+    package let downloadFailureMessage: String?
+    package let inferenceFailureText: String?
+
+    package init(
+        descriptor: LocalRuntimeDescriptor,
+        installState: LocalRuntimeInstallState,
+        isSupported: Bool,
+        isDownloading: Bool,
+        isPaused: Bool,
+        downloadFailureMessage: String?,
+        inferenceFailureText: String?
+    ) {
+        self.descriptor = descriptor
+        self.installState = installState
+        self.isSupported = isSupported
+        self.isDownloading = isDownloading
+        self.isPaused = isPaused
+        self.downloadFailureMessage = downloadFailureMessage
+        self.inferenceFailureText = inferenceFailureText
+    }
 }
 
-enum LocalRuntimeStatusPresenter {
-    static func availabilityText(
+package enum LocalRuntimeStatusPresenter {
+    package static func availabilityText(
         isSupported: Bool,
         downloaded: Bool,
         minimumSystemVersionText: String
@@ -155,7 +220,7 @@ enum LocalRuntimeStatusPresenter {
         return AppText.localized("未下载", "Not downloaded")
     }
 
-    static func statusText(_ context: LocalRuntimeStatusContext) -> String {
+    package static func statusText(_ context: LocalRuntimeStatusContext) -> String {
         let descriptor = context.descriptor
         let size = descriptor.downloadSizeText
         let summary = descriptor.summaryText
@@ -204,7 +269,7 @@ enum LocalRuntimeStatusPresenter {
         return AppText.localized("未下载 · \(summary) · \(size)", "Not downloaded · \(summary) · \(size)")
     }
 
-    static func incompleteInstallStatusText(
+    package static func incompleteInstallStatusText(
         descriptor: LocalRuntimeDescriptor,
         installState: LocalRuntimeInstallState
     ) -> String? {

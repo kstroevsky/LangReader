@@ -1,7 +1,6 @@
 import Foundation
-import LeafReaderCore
 
-enum SpeechSynthesisError: Error, Equatable {
+package enum SpeechSynthesisError: Error, Equatable {
     case runtimeUnavailable(String)
     case voiceUnavailable(String)
     case workerStartFailed(String)
@@ -15,7 +14,7 @@ enum SpeechSynthesisError: Error, Equatable {
     case outputWriteFailed(String)
     case unsupportedLanguage(String)
 
-    var localizedDescription: String {
+    package var localizedDescription: String {
         switch self {
         case .runtimeUnavailable(let runtime):
             return AppText.localized(
@@ -80,7 +79,7 @@ enum SpeechSynthesisError: Error, Equatable {
         }
     }
 
-    var supportsRedownload: Bool {
+    package var supportsRedownload: Bool {
         switch self {
         case .voiceUnavailable, .modelLoadFailed, .invalidAudioOutput:
             return true
@@ -91,7 +90,7 @@ enum SpeechSynthesisError: Error, Equatable {
         }
     }
 
-    var primaryActionTitle: String {
+    package var primaryActionTitle: String {
         switch self {
         case .voiceUnavailable, .modelLoadFailed, .invalidAudioOutput:
             return AppText.localized("重新下载该模型", "Download Model Again")
@@ -106,7 +105,7 @@ enum SpeechSynthesisError: Error, Equatable {
         }
     }
 
-    var diagnosticKind: String {
+    package var diagnosticKind: String {
         switch self {
         case .runtimeUnavailable:
             return "runtimeUnavailable"
@@ -135,7 +134,7 @@ enum SpeechSynthesisError: Error, Equatable {
         }
     }
 
-    static func classifiedProcessFailure(
+    package static func classifiedProcessFailure(
         runtime: String,
         diagnostic: String,
         timedOut: Bool = false
@@ -174,7 +173,7 @@ enum SpeechSynthesisError: Error, Equatable {
 }
 
 extension Result where Failure == SpeechSynthesisError {
-    var isSuccess: Bool {
+    package var isSuccess: Bool {
         if case .success = self { return true }
         return false
     }

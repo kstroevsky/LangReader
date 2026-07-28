@@ -1,13 +1,13 @@
 import Foundation
 
-enum ReadAloudManualAdvanceKeyPolicy {
-    enum Action: Equatable {
+package enum ReadAloudManualAdvanceKeyPolicy {
+    package enum Action: Equatable {
         case next
         case replayCurrent
         case replayPrevious
     }
 
-    static func action(for key: String?) -> Action? {
+    package static func action(for key: String?) -> Action? {
         guard let key else { return nil }
         switch key {
         case "\\", "、":
@@ -21,7 +21,7 @@ enum ReadAloudManualAdvanceKeyPolicy {
         }
     }
 
-    static func accepts(_ key: String?) -> Bool {
+    package static func accepts(_ key: String?) -> Bool {
         action(for: key) != nil
     }
 }

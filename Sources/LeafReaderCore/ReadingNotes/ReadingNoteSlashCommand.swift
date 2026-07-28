@@ -1,5 +1,4 @@
 import Foundation
-import LeafReaderCore
 
 package enum ReadingNoteSlashCommand: String, CaseIterable {
     case text

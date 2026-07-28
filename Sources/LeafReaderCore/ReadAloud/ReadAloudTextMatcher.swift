@@ -1,11 +1,11 @@
 import Foundation
 
-enum ReadAloudTextMatcher {
+package enum ReadAloudTextMatcher {
     private static let partialTokenWindowSizes = [12, 10, 8, 6, 4]
     private static let minimumPartialQueryTokens = 6
     private static let minimumPartialPageTokens = 4
 
-    static func range(
+    package static func range(
         of query: String,
         in pageText: String,
         searchRange: NSRange? = nil,

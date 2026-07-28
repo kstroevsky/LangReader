@@ -1,5 +1,4 @@
 import Foundation
-import LeafReaderCore
 
 package struct ReadingNote: Codable, Identifiable {
     package let id: String

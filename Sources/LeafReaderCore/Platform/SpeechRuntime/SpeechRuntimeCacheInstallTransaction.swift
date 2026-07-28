@@ -1,6 +1,6 @@
 import Foundation
 
-struct KokoroCacheInstallTransaction {
+package struct KokoroCacheInstallTransaction {
     private struct Replacement {
         let destination: URL
         let backup: URL
@@ -9,14 +9,14 @@ struct KokoroCacheInstallTransaction {
 
     private let fileManager: FileManager
     private var replacements: [Replacement] = []
-    private(set) var installedDirectories: [URL] = []
+    package private(set) var installedDirectories: [URL] = []
     private var isCommitted = false
 
-    init(fileManager: FileManager) {
+    package init(fileManager: FileManager) {
         self.fileManager = fileManager
     }
 
-    mutating func replace(source: URL, destination: URL, backup: URL) throws {
+    package mutating func replace(source: URL, destination: URL, backup: URL) throws {
         let hadExistingDestination = fileManager.fileExists(atPath: destination.path)
         do {
             if hadExistingDestination {
@@ -36,7 +36,7 @@ struct KokoroCacheInstallTransaction {
         }
     }
 
-    mutating func commit() {
+    package mutating func commit() {
         isCommitted = true
         for replacement in replacements {
             try? fileManager.removeItem(at: replacement.backup)
@@ -44,7 +44,7 @@ struct KokoroCacheInstallTransaction {
         replacements.removeAll()
     }
 
-    mutating func rollback() {
+    package mutating func rollback() {
         guard !isCommitted else { return }
         for replacement in replacements.reversed() {
             try? fileManager.removeItem(at: replacement.destination)

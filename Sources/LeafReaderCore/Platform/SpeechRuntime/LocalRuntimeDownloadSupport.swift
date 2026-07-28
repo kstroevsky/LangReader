@@ -1,29 +1,44 @@
 import CryptoKit
 import Foundation
-import LeafReaderCore
 
-enum LocalRuntimeDownloadSupport {
-    static let downloadErrorDomain = "LeafReader.LocalRuntime.Download"
-    static let resumeRangeMismatchCode = 417
-    static let insufficientDiskSpaceCode = -10
+package enum LocalRuntimeDownloadSupport {
+    package static let downloadErrorDomain = "LeafReader.LocalRuntime.Download"
+    package static let resumeRangeMismatchCode = 417
+    package static let insufficientDiskSpaceCode = -10
     private static let maxDownloadAttempts = 4
     private static let minimumInstallSafetyMarginBytes: Int64 = 200 * 1024 * 1024
 
-    enum DownloadRecoveryAction: Equatable {
+    package enum DownloadRecoveryAction: Equatable {
         case retry(resumePartial: Bool)
         case fail(removePartial: Bool)
     }
 
-    struct PartialDownloadMetadata: Codable, Equatable {
-        let downloadURL: String
-        let assetName: String?
-        let expectedSize: Int64?
-        let sha256: String?
-        let eTag: String?
-        let lastModified: String?
+    package struct PartialDownloadMetadata: Codable, Equatable {
+        package let downloadURL: String
+        package let assetName: String?
+        package let expectedSize: Int64?
+        package let sha256: String?
+        package let eTag: String?
+        package let lastModified: String?
+
+        package init(
+            downloadURL: String,
+            assetName: String?,
+            expectedSize: Int64?,
+            sha256: String?,
+            eTag: String?,
+            lastModified: String?
+        ) {
+            self.downloadURL = downloadURL
+            self.assetName = assetName
+            self.expectedSize = expectedSize
+            self.sha256 = sha256
+            self.eTag = eTag
+            self.lastModified = lastModified
+        }
     }
 
-    static func shouldRetryDownload(error: NSError, attempt: Int) -> Bool {
+    package static func shouldRetryDownload(error: NSError, attempt: Int) -> Bool {
         guard attempt < maxDownloadAttempts else { return false }
         if error.domain == downloadErrorDomain,
            shouldRestartWithoutPartialDownload(error: error) {
@@ -35,7 +50,7 @@ enum LocalRuntimeDownloadSupport {
         return false
     }
 
-    static func downloadRecoveryAction(error: NSError, attempt: Int) -> DownloadRecoveryAction {
+    package static func downloadRecoveryAction(error: NSError, attempt: Int) -> DownloadRecoveryAction {
         let removePartial = shouldRestartWithoutPartialDownload(error: error)
         if shouldRetryDownload(error: error, attempt: attempt) {
             return .retry(resumePartial: !removePartial)
@@ -43,7 +58,7 @@ enum LocalRuntimeDownloadSupport {
         return .fail(removePartial: removePartial)
     }
 
-    static func downloadSessionConfiguration() -> URLSessionConfiguration {
+    package static func downloadSessionConfiguration() -> URLSessionConfiguration {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 30
         configuration.timeoutIntervalForResource = 60 * 60
@@ -52,21 +67,21 @@ enum LocalRuntimeDownloadSupport {
         return configuration
     }
 
-    static func expectedDownloadTotalBytes(asset: LocalRuntimeDownloadManifestAsset?) -> Int64? {
+    package static func expectedDownloadTotalBytes(asset: LocalRuntimeDownloadManifestAsset?) -> Int64? {
         guard let size = asset?.byteSize, size > 0 else { return nil }
         return size
     }
 
-    static func requiredInstallFreeSpaceBytes(archiveSize: Int64) -> Int64 {
+    package static func requiredInstallFreeSpaceBytes(archiveSize: Int64) -> Int64 {
         max(0, archiveSize) * 3 + minimumInstallSafetyMarginBytes
     }
 
-    static func hasEnoughFreeSpace(availableBytes: Int64?, requiredBytes: Int64) -> Bool {
+    package static func hasEnoughFreeSpace(availableBytes: Int64?, requiredBytes: Int64) -> Bool {
         guard let availableBytes else { return true }
         return availableBytes >= requiredBytes
     }
 
-    static func validateAvailableDiskSpace(
+    package static func validateAvailableDiskSpace(
         for plan: LocalRuntimeDownloadPlan,
         archiveURL: URL,
         asset: LocalRuntimeDownloadManifestAsset?
@@ -88,7 +103,7 @@ enum LocalRuntimeDownloadSupport {
         }
     }
 
-    static func shouldRestartWithoutPartialDownload(error: NSError) -> Bool {
+    package static func shouldRestartWithoutPartialDownload(error: NSError) -> Bool {
         guard error.domain == downloadErrorDomain else { return false }
         return error.code == 416
             || error.code == resumeRangeMismatchCode
@@ -97,7 +112,7 @@ enum LocalRuntimeDownloadSupport {
             || error.code == -8
     }
 
-    static func contentRangeStart(_ value: String?) -> Int64? {
+    package static func contentRangeStart(_ value: String?) -> Int64? {
         guard let value else { return nil }
         let pattern = #"(?i)^\s*bytes\s+(\d+)-\d+/(\d+|\*)\s*$"#
         guard let regex = try? NSRegularExpression(pattern: pattern),
@@ -112,17 +127,17 @@ enum LocalRuntimeDownloadSupport {
         return Int64(value[range])
     }
 
-    static func partialDownloadURL(for plan: LocalRuntimeDownloadPlan) -> URL {
+    package static func partialDownloadURL(for plan: LocalRuntimeDownloadPlan) -> URL {
         FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".local/share/leafvocabulary/downloads", isDirectory: true)
             .appendingPathComponent(plan.archiveURL.lastPathComponent + ".part")
     }
 
-    static func partialDownloadMetadataURL(for plan: LocalRuntimeDownloadPlan) -> URL {
+    package static func partialDownloadMetadataURL(for plan: LocalRuntimeDownloadPlan) -> URL {
         partialDownloadURL(for: plan).appendingPathExtension("meta")
     }
 
-    static func partialDownloadMetadataMatches(
+    package static func partialDownloadMetadataMatches(
         _ metadata: PartialDownloadMetadata,
         plan: LocalRuntimeDownloadPlan,
         asset: LocalRuntimeDownloadManifestAsset?
@@ -133,7 +148,7 @@ enum LocalRuntimeDownloadSupport {
             && metadata.sha256 == asset?.sha256
     }
 
-    static func ifRangeHeaderValue(for metadata: PartialDownloadMetadata) -> String? {
+    package static func ifRangeHeaderValue(for metadata: PartialDownloadMetadata) -> String? {
         if let eTag = metadata.eTag?.trimmingCharacters(in: .whitespacesAndNewlines),
            !eTag.isEmpty {
             return eTag
@@ -145,14 +160,14 @@ enum LocalRuntimeDownloadSupport {
         return nil
     }
 
-    static func readPartialDownloadMetadata(for plan: LocalRuntimeDownloadPlan) -> PartialDownloadMetadata? {
+    package static func readPartialDownloadMetadata(for plan: LocalRuntimeDownloadPlan) -> PartialDownloadMetadata? {
         guard let data = try? Data(contentsOf: partialDownloadMetadataURL(for: plan)) else {
             return nil
         }
         return try? JSONDecoder().decode(PartialDownloadMetadata.self, from: data)
     }
 
-    static func writePartialDownloadMetadata(
+    package static func writePartialDownloadMetadata(
         for plan: LocalRuntimeDownloadPlan,
         asset: LocalRuntimeDownloadManifestAsset?,
         response: URLResponse
@@ -175,12 +190,12 @@ enum LocalRuntimeDownloadSupport {
         }
     }
 
-    static func removePartialDownload(for plan: LocalRuntimeDownloadPlan) {
+    package static func removePartialDownload(for plan: LocalRuntimeDownloadPlan) {
         try? FileManager.default.removeItem(at: partialDownloadURL(for: plan))
         try? FileManager.default.removeItem(at: partialDownloadMetadataURL(for: plan))
     }
 
-    static func resumablePartialDownloadSize(
+    package static func resumablePartialDownloadSize(
         for plan: LocalRuntimeDownloadPlan,
         asset: LocalRuntimeDownloadManifestAsset?
     ) -> Int64 {
@@ -194,7 +209,7 @@ enum LocalRuntimeDownloadSupport {
         return size
     }
 
-    static func partialDownloadSize(at url: URL) -> Int64 {
+    package static func partialDownloadSize(at url: URL) -> Int64 {
         guard let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
               let size = attributes[.size] as? NSNumber else {
             return 0
@@ -202,7 +217,7 @@ enum LocalRuntimeDownloadSupport {
         return size.int64Value
     }
 
-    static func validateArchive(at archiveURL: URL) throws {
+    package static func validateArchive(at archiveURL: URL) throws {
         let handle = try FileHandle(forReadingFrom: archiveURL)
         defer { try? handle.close() }
         let magic = handle.readData(ofLength: 2)
@@ -215,7 +230,7 @@ enum LocalRuntimeDownloadSupport {
         }
     }
 
-    static func sha256HexDigest(for fileURL: URL) throws -> String {
+    package static func sha256HexDigest(for fileURL: URL) throws -> String {
         let handle = try FileHandle(forReadingFrom: fileURL)
         defer { try? handle.close() }
         var hasher = SHA256()
@@ -227,7 +242,7 @@ enum LocalRuntimeDownloadSupport {
         return hasher.finalize().map { String(format: "%02x", $0) }.joined()
     }
 
-    static func validateArchiveManifest(_ archiveURL: URL, asset: LocalRuntimeDownloadManifestAsset?) throws {
+    package static func validateArchiveManifest(_ archiveURL: URL, asset: LocalRuntimeDownloadManifestAsset?) throws {
         guard let asset else { return }
         if let expectedSize = asset.byteSize {
             let actualSize = partialDownloadSize(at: archiveURL)
@@ -242,7 +257,7 @@ enum LocalRuntimeDownloadSupport {
         try validateArchiveChecksum(archiveURL, expectedSHA256: asset.sha256)
     }
 
-    static func validateArchiveChecksum(_ archiveURL: URL, expectedSHA256: String?) throws {
+    package static func validateArchiveChecksum(_ archiveURL: URL, expectedSHA256: String?) throws {
         guard let expectedSHA256,
               !expectedSHA256.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return

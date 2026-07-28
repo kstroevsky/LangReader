@@ -1,5 +1,4 @@
 import Foundation
-import LeafReaderCore
 
 package enum ReadingNoteTemplate: String, CaseIterable {
     case reading

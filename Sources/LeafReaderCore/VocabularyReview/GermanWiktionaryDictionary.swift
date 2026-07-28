@@ -1,5 +1,4 @@
 import Foundation
-import LeafReaderCore
 
 package struct GermanDictionaryEntry: Equatable {
     package let requestedWord: String

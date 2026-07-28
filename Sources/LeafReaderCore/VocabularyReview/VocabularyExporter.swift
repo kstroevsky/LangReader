@@ -1,5 +1,4 @@
 import Foundation
-import LeafReaderCore
 
 package struct VocabularyExporter {
     package struct Record {

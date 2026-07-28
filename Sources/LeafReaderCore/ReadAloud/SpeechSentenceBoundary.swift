@@ -1,7 +1,7 @@
 import Foundation
 
 extension SpeechTextPolicy {
-    static let englishAbbreviations: Set<String> = [
+    package static let englishAbbreviations: Set<String> = [
         "adm", "approx", "apr", "aug", "ave", "capt", "cf", "ch", "co", "col", "corp",
         "dec", "dept", "dr", "e.g", "etc", "feb", "fig", "gen", "gov", "hon", "i.e",
         "inc", "jan", "jr", "jul", "jun", "ltd", "maj", "mar", "mr", "mrs", "ms",
@@ -9,7 +9,7 @@ extension SpeechTextPolicy {
         "sept", "sr", "st", "vs", "vol"
     ]
 
-    static func englishSentenceUnits(for text: String) -> [String] {
+    package static func englishSentenceUnits(for text: String) -> [String] {
         var sentenceUnits: [String] = []
         let characters = Array(text)
         var sentenceStart = characters.startIndex
@@ -49,11 +49,11 @@ extension SpeechTextPolicy {
         return sentenceUnits
     }
 
-    static func isEnglishSentenceTerminator(_ character: Character) -> Bool {
+    package static func isEnglishSentenceTerminator(_ character: Character) -> Bool {
         character == "." || character == "!" || character == "?"
     }
 
-    static func isEnglishSentenceBoundary(at index: Int, in characters: [Character]) -> Bool {
+    package static func isEnglishSentenceBoundary(at index: Int, in characters: [Character]) -> Bool {
         let character = characters[index]
         guard character == "." else { return true }
         if index + 1 < characters.endIndex,
@@ -81,7 +81,7 @@ extension SpeechTextPolicy {
         return true
     }
 
-    static func periodEndsKnownNonTerminalToken(at index: Int, in characters: [Character]) -> Bool {
+    package static func periodEndsKnownNonTerminalToken(at index: Int, in characters: [Character]) -> Bool {
         let token = tokenBeforePeriod(at: index, in: characters)
         guard !token.isEmpty else { return false }
         if englishAbbreviations.contains(token.lowercased()) {
@@ -98,7 +98,7 @@ extension SpeechTextPolicy {
         return false
     }
 
-    static func tokenBeforePeriod(at index: Int, in characters: [Character]) -> String {
+    package static func tokenBeforePeriod(at index: Int, in characters: [Character]) -> String {
         var start = index
         while start > characters.startIndex {
             let candidate = characters[start - 1]
@@ -109,7 +109,7 @@ extension SpeechTextPolicy {
             .trimmingCharacters(in: CharacterSet(charactersIn: "."))
     }
 
-    static func hasFollowingToken(after index: Int, in characters: [Character]) -> Bool {
+    package static func hasFollowingToken(after index: Int, in characters: [Character]) -> Bool {
         var cursor = index + 1
         while cursor < characters.endIndex {
             let character = characters[cursor]
@@ -122,7 +122,7 @@ extension SpeechTextPolicy {
         return false
     }
 
-    static func isTrailingSentenceCloser(_ character: Character) -> Bool {
+    package static func isTrailingSentenceCloser(_ character: Character) -> Bool {
         "\"'”’»›)]}".contains(character)
     }
 }

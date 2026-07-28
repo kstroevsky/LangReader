@@ -1,5 +1,4 @@
 import Foundation
-import LeafReaderCore
 
 package struct VocabularyLearningStats: Equatable {
     package let totalCount: Int

@@ -1,20 +1,30 @@
 import Foundation
 
-struct PDFReadAloudPageText {
-    let pageIndex: Int
-    let speechSourceText: String
-    let fullPageText: String
+package struct PDFReadAloudPageText {
+    package let pageIndex: Int
+    package let speechSourceText: String
+    package let fullPageText: String
+
+    package init(
+        pageIndex: Int,
+        speechSourceText: String,
+        fullPageText: String
+    ) {
+        self.pageIndex = pageIndex
+        self.speechSourceText = speechSourceText
+        self.fullPageText = fullPageText
+    }
 }
 
-struct PDFReadAloudMatchedSegment {
-    let speechText: String
-    let sourceText: String
-    let pageIndex: Int
-    let range: NSRange?
+package struct PDFReadAloudMatchedSegment {
+    package let speechText: String
+    package let sourceText: String
+    package let pageIndex: Int
+    package let range: NSRange?
 }
 
-enum PDFReadAloudSegmentMatcher {
-    static func segments(from pages: [PDFReadAloudPageText]) -> [PDFReadAloudMatchedSegment] {
+package enum PDFReadAloudSegmentMatcher {
+    package static func segments(from pages: [PDFReadAloudPageText]) -> [PDFReadAloudMatchedSegment] {
         var matchedSegments: [PDFReadAloudMatchedSegment] = []
         for page in pages {
             matchedSegments.append(contentsOf: segments(from: page))

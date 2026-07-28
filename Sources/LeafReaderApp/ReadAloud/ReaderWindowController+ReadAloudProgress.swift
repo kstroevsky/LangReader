@@ -1,5 +1,6 @@
 import Cocoa
 import PDFKit
+import LeafReaderCore
 
 private struct SpeechProgressPayload {
     let text: String

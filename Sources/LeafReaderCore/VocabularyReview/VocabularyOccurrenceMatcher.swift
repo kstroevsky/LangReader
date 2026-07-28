@@ -1,5 +1,4 @@
 import Foundation
-import LeafReaderCore
 
 package struct VocabularyTextOccurrence: Equatable {
     package let range: NSRange

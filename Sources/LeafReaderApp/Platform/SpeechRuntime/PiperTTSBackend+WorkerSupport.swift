@@ -1,5 +1,6 @@
 import Darwin
 import Foundation
+import LeafReaderCore
 
 extension PiperTTSBackend {
     func cancelWorkerIdleShutdown() {

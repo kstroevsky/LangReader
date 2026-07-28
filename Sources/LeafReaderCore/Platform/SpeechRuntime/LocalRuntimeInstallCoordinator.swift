@@ -1,14 +1,14 @@
 import Foundation
 
-final class LocalRuntimeInstallCoordinator<Key: Hashable> {
+package final class LocalRuntimeInstallCoordinator<Key: Hashable> {
     private let queue: DispatchQueue
     private var activeInstalls = Set<Key>()
 
-    init(label: String) {
+    package init(label: String) {
         queue = DispatchQueue(label: label)
     }
 
-    func ensureNotInstalling(_ key: Key, makeError: () -> NSError) throws {
+    package func ensureNotInstalling(_ key: Key, makeError: () -> NSError) throws {
         let isInstalling = queue.sync {
             activeInstalls.contains(key)
         }
@@ -17,7 +17,7 @@ final class LocalRuntimeInstallCoordinator<Key: Hashable> {
         }
     }
 
-    func perform(_ key: Key, makeError: () -> NSError, work: () throws -> Void) throws {
+    package func perform(_ key: Key, makeError: () -> NSError, work: () throws -> Void) throws {
         let didStart = queue.sync {
             guard !activeInstalls.contains(key) else { return false }
             activeInstalls.insert(key)

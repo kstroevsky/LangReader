@@ -1,8 +1,8 @@
 import AVFoundation
 import Foundation
 
-enum SpeechUtteranceFactory {
-    static func utterance(for text: String, languageCode: String? = nil) -> AVSpeechUtterance {
+package enum SpeechUtteranceFactory {
+    package static func utterance(for text: String, languageCode: String? = nil) -> AVSpeechUtterance {
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = voice(for: text, languageCode: languageCode)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.9

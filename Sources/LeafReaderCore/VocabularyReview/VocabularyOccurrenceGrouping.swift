@@ -1,5 +1,4 @@
 import Foundation
-import LeafReaderCore
 
 /// One inflected spelling of a saved word, and how often it was met.
 package struct OccurrenceFormGroup: Equatable {

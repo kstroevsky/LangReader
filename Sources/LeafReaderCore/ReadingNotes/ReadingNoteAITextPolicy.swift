@@ -1,5 +1,4 @@
 import Foundation
-import LeafReaderCore
 
 package enum ReadingNoteAITextPolicy {
     package static let noteContextLimit = 2000

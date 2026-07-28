@@ -1,5 +1,6 @@
 import Darwin
 import Foundation
+import LeafReaderCore
 
 final class PiperTTSBackend {
     private let executableEnvironmentKey = "LEAFREADER_PIPER_CLI"

@@ -1,6 +1,5 @@
 import Foundation
 import NaturalLanguage
-import LeafReaderCore
 
 /// A grammatical form label for an observed German surface form.
 ///

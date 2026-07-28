@@ -1,5 +1,4 @@
 import Foundation
-import LeafReaderCore
 
 package struct VocabularyDeletionRecord {
     package let id: String

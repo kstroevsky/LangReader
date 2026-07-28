@@ -1,16 +1,16 @@
 import Foundation
 
-enum SpeechTextPolicy {
+package enum SpeechTextPolicy {
     private static let maxSentenceLength = 520
     private static let maxMergedSegmentLength = 420
     private static let maxChineseSegmentLength = 120
     private static let minSegmentWordCount = 18
 
-    static func readAloudSegments(for text: String) -> [String] {
+    package static func readAloudSegments(for text: String) -> [String] {
         segments(for: normalizedReadAloudInput(text))
     }
 
-    static func segments(for text: String) -> [String] {
+    package static func segments(for text: String) -> [String] {
         if prefersChineseTTS(text) {
             return chineseSegments(for: text)
         }
@@ -169,7 +169,7 @@ enum SpeechTextPolicy {
         return segments.isEmpty ? [sentence] : segments
     }
 
-    static func wordCount(in text: String) -> Int {
+    package static func wordCount(in text: String) -> Int {
         text.split { !$0.isLetter && !$0.isNumber }.count
     }
 }

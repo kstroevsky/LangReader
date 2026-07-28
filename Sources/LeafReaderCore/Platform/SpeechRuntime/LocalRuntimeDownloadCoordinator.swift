@@ -1,7 +1,7 @@
 import Foundation
 
-final class LocalRuntimeDownloadCoordinator<Key: Hashable> {
-    typealias Completion = (Result<Void, Error>) -> Void
+package final class LocalRuntimeDownloadCoordinator<Key: Hashable> {
+    package typealias Completion = (Result<Void, Error>) -> Void
 
     private let queue: DispatchQueue
     private var completions: [Key: [Completion]] = [:]
@@ -11,19 +11,19 @@ final class LocalRuntimeDownloadCoordinator<Key: Hashable> {
     private var progressValues: [Key: Double] = [:]
     private var pausedKeys = Set<Key>()
 
-    init(label: String) {
+    package init(label: String) {
         queue = DispatchQueue(label: label)
     }
 
-    func isDownloading(_ key: Key) -> Bool {
+    package func isDownloading(_ key: Key) -> Bool {
         queue.sync { completions[key] != nil }
     }
 
-    func isPaused(_ key: Key) -> Bool {
+    package func isPaused(_ key: Key) -> Bool {
         queue.sync { pausedKeys.contains(key) }
     }
 
-    func pause(_ key: Key) {
+    package func pause(_ key: Key) {
         queue.sync {
             guard completions[key] != nil else { return }
             tasks[key]?.suspend()
@@ -31,7 +31,7 @@ final class LocalRuntimeDownloadCoordinator<Key: Hashable> {
         }
     }
 
-    func resume(_ key: Key) {
+    package func resume(_ key: Key) {
         queue.sync {
             guard completions[key] != nil else { return }
             tasks[key]?.resume()
@@ -39,7 +39,7 @@ final class LocalRuntimeDownloadCoordinator<Key: Hashable> {
         }
     }
 
-    func progress(for key: Key) -> Double? {
+    package func progress(for key: Key) -> Double? {
         queue.sync {
             guard completions[key] != nil,
                   let progress = tasks[key]?.progress.fractionCompleted,
@@ -51,7 +51,7 @@ final class LocalRuntimeDownloadCoordinator<Key: Hashable> {
         }
     }
 
-    func begin(_ key: Key, completion: @escaping Completion) -> UUID? {
+    package func begin(_ key: Key, completion: @escaping Completion) -> UUID? {
         queue.sync {
             if completions[key] != nil {
                 completions[key]?.append(completion)
@@ -64,7 +64,7 @@ final class LocalRuntimeDownloadCoordinator<Key: Hashable> {
         }
     }
 
-    func stop(_ key: Key) -> [Completion] {
+    package func stop(_ key: Key) -> [Completion] {
         queue.sync {
             let completions = completions[key] ?? []
             let task = tasks[key]
@@ -74,7 +74,7 @@ final class LocalRuntimeDownloadCoordinator<Key: Hashable> {
         }
     }
 
-    func finish(_ key: Key, downloadID: UUID) -> [Completion] {
+    package func finish(_ key: Key, downloadID: UUID) -> [Completion] {
         queue.sync {
             guard downloadIDs[key] == downloadID else {
                 return []
@@ -85,11 +85,11 @@ final class LocalRuntimeDownloadCoordinator<Key: Hashable> {
         }
     }
 
-    func isCurrent(_ key: Key, downloadID: UUID) -> Bool {
+    package func isCurrent(_ key: Key, downloadID: UUID) -> Bool {
         queue.sync { downloadIDs[key] == downloadID }
     }
 
-    func attach(
+    package func attach(
         key: Key,
         downloadID: UUID,
         task: URLSessionTask,
@@ -107,7 +107,7 @@ final class LocalRuntimeDownloadCoordinator<Key: Hashable> {
         }
     }
 
-    func updateProgress(key: Key, downloadID: UUID, completedBytes: Int64, expectedBytes: Int64?) {
+    package func updateProgress(key: Key, downloadID: UUID, completedBytes: Int64, expectedBytes: Int64?) {
         guard let expectedBytes, expectedBytes > 0 else { return }
         queue.sync {
             guard downloadIDs[key] == downloadID else { return }

@@ -1,8 +1,8 @@
 import CryptoKit
 import Foundation
 
-enum TTSPreviewCache {
-    static func audioURL(text: String, runtimeID: String, voiceID: String, speedID: String) -> URL {
+package enum TTSPreviewCache {
+    package static func audioURL(text: String, runtimeID: String, voiceID: String, speedID: String) -> URL {
         let digestInput = "preview-v4|\(runtimeID)|\(voiceID)|\(speedID)|\(text)"
         let digest = SHA256.hash(data: Data(digestInput.utf8))
             .map { String(format: "%02x", $0) }

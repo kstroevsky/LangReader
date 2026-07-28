@@ -1,6 +1,5 @@
 import Foundation
 import NaturalLanguage
-import LeafReaderCore
 
 // Despite the "German" name, the resolver and matcher are language-neutral:
 // the grouping, line-wrap, and homograph logic are the same everywhere and only

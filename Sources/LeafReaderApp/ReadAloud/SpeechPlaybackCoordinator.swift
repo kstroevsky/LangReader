@@ -1,5 +1,6 @@
 import Cocoa
 import AVFoundation
+import LeafReaderCore
 
 final class SpeechPlaybackCoordinator: NSObject, AVAudioPlayerDelegate {
     static let shared = SpeechPlaybackCoordinator()
