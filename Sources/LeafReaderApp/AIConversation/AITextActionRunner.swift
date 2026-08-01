@@ -1,6 +1,7 @@
 import Foundation
 import LeafReaderCore
 
+@MainActor
 final class AITextActionRunner {
     enum Action {
         case explain
@@ -25,7 +26,7 @@ final class AITextActionRunner {
         runID = nil
     }
 
-    func run(action: Action, text: String, noteContext: String = "", completion: @escaping (Result<String, Error>) -> Void) {
+    func run(action: Action, text: String, noteContext: String = "", completion: @escaping @MainActor @Sendable (Result<String, Error>) -> Void) {
         cancel()
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
@@ -39,7 +40,7 @@ final class AITextActionRunner {
         let currentRunID = UUID()
         runID = currentRunID
         task = client.send(messages: messages) { [weak self] result in
-            DispatchQueue.main.async {
+            Task { @MainActor [weak self] in
                 guard self?.runID == currentRunID else { return }
                 self?.task = nil
                 self?.runID = nil
@@ -52,7 +53,7 @@ final class AITextActionRunner {
         question: String,
         selectedText: String,
         systemPrompt: String = AIPromptStore.systemPrompt(),
-        completion: @escaping (Result<String, Error>) -> Void
+        completion: @escaping @MainActor @Sendable (Result<String, Error>) -> Void
     ) {
         cancel()
         let trimmedQuestion = question.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -68,7 +69,7 @@ final class AITextActionRunner {
         let currentRunID = UUID()
         runID = currentRunID
         task = client.send(messages: messages) { [weak self] result in
-            DispatchQueue.main.async {
+            Task { @MainActor [weak self] in
                 guard self?.runID == currentRunID else { return }
                 self?.task = nil
                 self?.runID = nil
@@ -80,7 +81,7 @@ final class AITextActionRunner {
     func runPrompt(
         _ prompt: String,
         systemPrompt: String = AIPromptStore.systemPrompt(),
-        completion: @escaping (Result<String, Error>) -> Void
+        completion: @escaping @MainActor @Sendable (Result<String, Error>) -> Void
     ) {
         cancel()
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -95,7 +96,7 @@ final class AITextActionRunner {
         let currentRunID = UUID()
         runID = currentRunID
         task = client.send(messages: messages) { [weak self] result in
-            DispatchQueue.main.async {
+            Task { @MainActor [weak self] in
                 guard self?.runID == currentRunID else { return }
                 self?.task = nil
                 self?.runID = nil

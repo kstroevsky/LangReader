@@ -1,6 +1,8 @@
 import Foundation
 
-package struct VocabularyReviewPreferences {
+/// `UserDefaults` provides synchronized access; this value only scopes keys to
+/// one document and does not add mutable storage of its own.
+package struct VocabularyReviewPreferences: @unchecked Sendable {
     private let fileID: String
     private let defaults: UserDefaults
 

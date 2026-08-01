@@ -1,6 +1,7 @@
 import Foundation
 
-package final class LocalRuntimeDownloadCoordinator<Key: Hashable> {
+/// All mutable dictionaries are confined to the private serial queue.
+package final class LocalRuntimeDownloadCoordinator<Key: Hashable>: @unchecked Sendable {
     package typealias Completion = (Result<Void, Error>) -> Void
 
     private let queue: DispatchQueue

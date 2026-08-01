@@ -14,7 +14,9 @@ import LeafReaderCore
 /// anything that affects the built output changes. `VocabularyLibraryBuildCache`
 /// itself never decides freshness; it only compares fingerprints the caller
 /// supplies.
-final class VocabularyLibraryBuildCache {
+/// Thread-safe through `lock`; callers intentionally share this cache between
+/// the main actor and background library rebuilds.
+final class VocabularyLibraryBuildCache: @unchecked Sendable {
     private let lock = NSLock()
     private var entries: [String: (fingerprint: Int, records: [VocabularyExportRecord])] = [:]
 

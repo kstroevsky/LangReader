@@ -9,7 +9,7 @@ extension ReaderWindowController {
 
         DispatchQueue.global(qos: .utility).async { [weak self] in
             if let localAnswer = LocalDictionaryLookupService.shared.dictionaryAnswer(for: query, context: "") {
-                DispatchQueue.main.async {
+                Task { @MainActor [weak self] in
                     self?.applyDictionaryAnswer(
                         localAnswer.markdown,
                         metadata: localAnswer.metadata,
@@ -24,7 +24,7 @@ extension ReaderWindowController {
             guard NetworkConnectivityMonitor.shared.isOnline else { return }
             GermanWiktionaryDictionary.shared.lookup(query) { [weak self] result in
                 guard case .success(let entry) = result else { return }
-                DispatchQueue.main.async {
+                Task { @MainActor [weak self] in
                     self?.applyDictionaryAnswer(
                         entry.markdown,
                         metadata: entry.metadata,

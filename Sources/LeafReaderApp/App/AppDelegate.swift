@@ -1,6 +1,7 @@
 import Cocoa
 import Sparkle
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     static let updateWindowOpenRetryLimit = 20
     static let updateWindowOpenRetryDelay: TimeInterval = 0.15
@@ -46,7 +47,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ sender: NSApplication, openFiles filenames: [String]) {
-        filenames.map { URL(fileURLWithPath: $0) }.forEach(openFileURLWhenReady)
+        for filename in filenames {
+            openFileURLWhenReady(URL(fileURLWithPath: filename))
+        }
         sender.reply(toOpenOrPrint: .success)
     }
 

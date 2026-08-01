@@ -8,6 +8,7 @@ struct DiagnosticRow {
     let isOK: Bool
 }
 
+@MainActor
 enum DiagnosticsReport {
     static func rows(
         updater: SPUUpdater?,

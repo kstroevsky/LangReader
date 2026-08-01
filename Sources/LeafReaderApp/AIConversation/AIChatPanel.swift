@@ -262,12 +262,14 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
     }
 
     deinit {
-        if let localMouseMonitor {
-            NSEvent.removeMonitor(localMouseMonitor)
+        MainActor.assumeIsolated {
+            if let localMouseMonitor {
+                NSEvent.removeMonitor(localMouseMonitor)
+            }
+            streamUpdateWorkItem?.cancel()
+            transcriptLayoutWorkItem?.cancel()
+            requestState.cancelTasks()
         }
-        streamUpdateWorkItem?.cancel()
-        transcriptLayoutWorkItem?.cancel()
-        requestState.cancelTasks()
     }
 
     required init?(coder: NSCoder) {

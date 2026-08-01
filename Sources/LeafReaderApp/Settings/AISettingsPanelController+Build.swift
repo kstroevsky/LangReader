@@ -4,25 +4,20 @@ import LeafReaderCore
 extension AISettingsPanelController {
     func show(attachedTo window: NSWindow, initialTab: SettingsTab = .general) {
         parentWindow = window
-        let settingsFontSize: CGFloat = 14
         let theme = ReaderTheme.selected
         let isDark = theme == .dark
         let panelBackground: NSColor
         let primaryText: NSColor
-        let secondaryText: NSColor
         switch theme {
         case .original:
             panelBackground = .white
             primaryText = NSColor(red: 0.12, green: 0.13, blue: 0.16, alpha: 1)
-            secondaryText = NSColor(red: 0.47, green: 0.50, blue: 0.58, alpha: 1)
         case .eyeCare:
             panelBackground = NSColor(red: 0.91, green: 0.87, blue: 0.74, alpha: 1)
             primaryText = NSColor(red: 0.15, green: 0.13, blue: 0.09, alpha: 1)
-            secondaryText = NSColor(red: 0.45, green: 0.39, blue: 0.27, alpha: 1)
         case .dark:
             panelBackground = NSColor(red: 0.10, green: 0.12, blue: 0.15, alpha: 1)
             primaryText = NSColor(red: 0.86, green: 0.88, blue: 0.92, alpha: 1)
-            secondaryText = NSColor(red: 0.58, green: 0.63, blue: 0.70, alpha: 1)
         }
         let formBackground = settingsFormBackgroundColor(for: theme)
         let layout = AISettingsLayoutMetrics()

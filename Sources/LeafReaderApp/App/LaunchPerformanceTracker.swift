@@ -10,7 +10,9 @@ struct LaunchPerformanceSnapshot {
     }
 }
 
-final class LaunchPerformanceTracker {
+/// Marks may arrive during launch from framework callbacks; `lock` protects
+/// the mutable mark list and the finished snapshot.
+final class LaunchPerformanceTracker: @unchecked Sendable {
     static let shared = LaunchPerformanceTracker()
 
     private let lock = NSLock()

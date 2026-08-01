@@ -2,6 +2,7 @@ import AVFoundation
 import Cocoa
 import LeafReaderCore
 
+@MainActor
 protocol VocabularySpeechCoordinatorOwner: AnyObject {
     var shouldResumeReadAloudAfterVocabularySpeech: Bool { get }
     var vocabularySpeechLanguageCode: String? { get }
@@ -12,7 +13,8 @@ protocol VocabularySpeechCoordinatorOwner: AnyObject {
     func clearReaderSelectionForVocabularySpeech()
 }
 
-final class VocabularySpeechCoordinator: NSObject, AVSpeechSynthesizerDelegate {
+@MainActor
+final class VocabularySpeechCoordinator: NSObject, @preconcurrency AVSpeechSynthesizerDelegate {
     private weak var owner: VocabularySpeechCoordinatorOwner?
     private let synthesizer: AVSpeechSynthesizer
     private var selectionSpeechCompletion: (() -> Void)?

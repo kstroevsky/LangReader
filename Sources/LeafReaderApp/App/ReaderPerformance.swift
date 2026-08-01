@@ -5,6 +5,7 @@ import os
 /// One open measurement on the app side: the core span plus the matching
 /// `os_signpost` interval, so Instruments and the committed baseline stay in
 /// step. Opaque on purpose — call sites hold it and hand it back, nothing else.
+@MainActor
 struct ReaderPerformanceSpan {
     fileprivate let core: PerformanceSpan?
     fileprivate let signpostState: OSSignpostIntervalState?
@@ -21,6 +22,7 @@ struct ReaderPerformanceSpan {
 /// `applyReaderTheme` without a guard at every call site and without costing a
 /// normal launch anything measurable — a disabled `begin` is two comparisons
 /// and a struct return.
+@MainActor
 enum ReaderPerformance {
     /// Captured once. A capture run sets it; a shipped launch never does.
     static let isEnabled: Bool =

@@ -1,6 +1,7 @@
 import Cocoa
 import LeafReaderCore
 
+@MainActor
 final class VocabularyPanelController {
     weak var owner: ReaderWindowController?
     private(set) weak var panel: NSWindow?
@@ -18,8 +19,10 @@ final class VocabularyPanelController {
     }
 
     deinit {
-        reloadTask.cancel()
-        removeActivationObserver()
+        MainActor.assumeIsolated {
+            reloadTask.cancel()
+            removeActivationObserver()
+        }
     }
 
     var rootView: NSView? {
@@ -59,8 +62,10 @@ final class VocabularyPanelController {
             object: NSApp,
             queue: .main
         ) { [weak self] _ in
-            guard let panel = self?.panel else { return }
-            ModalOverlayManager.shared.reactivate(panel)
+            Task { @MainActor [weak self] in
+                guard let panel = self?.panel else { return }
+                ModalOverlayManager.shared.reactivate(panel)
+            }
         }
     }
 

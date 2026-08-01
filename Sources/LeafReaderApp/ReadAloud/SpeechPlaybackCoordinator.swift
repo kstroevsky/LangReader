@@ -2,7 +2,11 @@ import Cocoa
 import AVFoundation
 import LeafReaderCore
 
-final class SpeechPlaybackCoordinator: NSObject, AVAudioPlayerDelegate {
+/// Synthesis work is serialized by `queue`; AVAudioPlayer and presentation
+/// state are accessed through the explicit main-queue hops in the coordinator.
+/// Several public controls accept off-main callers and perform that hop, so a
+/// global-actor annotation would misdescribe the existing API boundary.
+final class SpeechPlaybackCoordinator: NSObject, AVAudioPlayerDelegate, @unchecked Sendable {
     static let shared = SpeechPlaybackCoordinator()
     static let readingSegmentDidChangeNotification = Notification.Name("LeafReader.SpeechPlayback.readingSegmentDidChange")
     static let idleShutdownDelay: TimeInterval = 180

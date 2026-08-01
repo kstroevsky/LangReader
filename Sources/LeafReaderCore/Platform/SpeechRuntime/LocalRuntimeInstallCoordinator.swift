@@ -1,6 +1,7 @@
 import Foundation
 
-package final class LocalRuntimeInstallCoordinator<Key: Hashable> {
+/// `activeInstalls` is confined to the private serial queue.
+package final class LocalRuntimeInstallCoordinator<Key: Hashable>: @unchecked Sendable {
     private let queue: DispatchQueue
     private var activeInstalls = Set<Key>()
 

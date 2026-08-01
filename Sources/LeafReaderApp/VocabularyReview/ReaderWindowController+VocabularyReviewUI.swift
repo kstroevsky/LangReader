@@ -166,7 +166,7 @@ extension ReaderWindowController {
 
     @objc func changeVocabularyDailyGoal(_ sender: NSPopUpButton) {
         guard let goal = sender.selectedItem?.representedObject as? Int,
-              let root = vocabularyPanelController.rootView else { return }
+              vocabularyPanelController.rootView != nil else { return }
         vocabularyReviewSession.dailyReviewGoal = goal
         saveVocabularyDailyGoalPreference(goal)
         vocabularyPanelController.headerModel.summary = vocabularySummaryText(

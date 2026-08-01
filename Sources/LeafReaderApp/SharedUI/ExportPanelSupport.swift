@@ -11,6 +11,7 @@ enum ExportPanelSupport {
         formats.compactMap { UTType(filenameExtension: $0.fileExtension) }
     }
 
+    @MainActor
     static func popup(for titles: [String], selectedIndex: Int = 0) -> NSPopUpButton {
         let popup = NSPopUpButton(frame: .zero, pullsDown: false)
         popup.addItems(withTitles: titles)
@@ -21,6 +22,7 @@ enum ExportPanelSupport {
         return popup
     }
 
+    @MainActor
     static func selectedIndex(from popup: NSPopUpButton, count: Int, defaultIndex: Int = 0) -> Int {
         let index = popup.indexOfSelectedItem
         return (0..<count).contains(index) ? index : defaultIndex
@@ -30,6 +32,7 @@ enum ExportPanelSupport {
         url.deletingPathExtension().appendingPathExtension(format.fileExtension)
     }
 
+    @MainActor
     static func accessoryView(rows: [(title: String, control: NSView)]) -> NSView {
         let rowHeight: CGFloat = 32
         let rowSpacing: CGFloat = 8
@@ -55,6 +58,7 @@ enum ExportPanelSupport {
         return container
     }
 
+    @MainActor
     private static func accessoryRow(title: String, control: NSView) -> NSView {
         let label = NSTextField(labelWithString: title)
         label.alignment = .right

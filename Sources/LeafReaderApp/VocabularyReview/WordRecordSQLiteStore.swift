@@ -2,7 +2,9 @@ import Foundation
 import SQLite3
 import LeafReaderCore
 
-final class WordRecordSQLiteStore {
+/// SQLite access is serialized by `lock`; the handle and lazy row mappers are
+/// never used outside that critical section after initialization.
+final class WordRecordSQLiteStore: @unchecked Sendable {
     static let shared = WordRecordSQLiteStore(databaseURL: defaultDatabaseURL())
 
     private let lock = NSLock()

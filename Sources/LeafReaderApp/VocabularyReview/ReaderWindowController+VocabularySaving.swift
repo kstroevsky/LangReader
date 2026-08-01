@@ -159,7 +159,9 @@ extension ReaderWindowController {
         guard !newRecords.isEmpty,
               store.upsert(newRecords) else { return }
         storedWordRecords.append(contentsOf: newRecords)
-        newRecords.forEach(addStoredWordAnnotation)
+        for record in newRecords {
+            addStoredWordAnnotation(record)
+        }
         refreshVocabularyPanelAfterLocalSave()
     }
 
@@ -336,7 +338,9 @@ extension ReaderWindowController {
             return
         }
         storedWordRecords.append(contentsOf: newRecords)
-        newRecords.forEach(addStoredWordAnnotation)
+        for record in newRecords {
+            addStoredWordAnnotation(record)
+        }
         refreshVocabularyPanelAfterLocalSave()
         backfillDictionaryAnswerAsync(vocabularyID: selectedRecord.vocabularyID, word: word)
         selectionActionToolbar.showSaveResult(found: foundKeys.count, inserted: newRecords.count)

@@ -7,7 +7,7 @@ enum VocabularyRecordProvider {
     /// Injected so this provider stays independent of the dictionary cache:
     /// the app supplies the cache-backed resolver, while tests and any caller
     /// without the SQLite stack get the offline rules by default.
-    typealias FormLabelResolver = (_ surfaceForm: String, _ lemma: String, _ context: String) -> GermanFormLabel?
+    typealias FormLabelResolver = @Sendable (_ surfaceForm: String, _ lemma: String, _ context: String) -> GermanFormLabel?
 
     static let offlineFormLabelResolver: FormLabelResolver = { surfaceForm, lemma, context in
         GermanFormLabeler.label(surfaceForm: surfaceForm, lemma: lemma, context: context)

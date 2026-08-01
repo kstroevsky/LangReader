@@ -45,7 +45,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     static let preferredAIWidthDefaultsKey = "preferredAIWidth"
     static let pdfTwoPageModeDefaultsKey = "pdfTwoPageMode"
     static let pdfMarginCropDefaultsKey = "pdfMarginCrop"
-    static let fileMD5CacheDefaultsKey = "fileMD5Cache"
+    nonisolated static let fileMD5CacheDefaultsKey = "fileMD5Cache"
     static let embeddingControlStateDefaultsKey = "embeddingControlState"
     static let minimumReadablePDFScale: CGFloat = 1.0
     static let capsuleButtonIdentifier = NSUserInterfaceItemIdentifier("leafReaderCapsuleButton")
@@ -106,7 +106,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var readingNotesPanelController: ReadingNotesPanelController?
     var vocabularyPanelController: VocabularyPanelController!
     var vocabularyLibraryWindowController: VocabularyLibraryWindowController!
-    let vocabularyLibraryBuildCache = VocabularyLibraryBuildCache()
+    nonisolated let vocabularyLibraryBuildCache = VocabularyLibraryBuildCache()
     lazy var selectionToolbarCoordinator = SelectionToolbarCoordinator(owner: self)
     let vocabularyReviewSession = VocabularyReviewSession()
     var aiHandleLeadingConstraint: NSLayoutConstraint!
@@ -152,26 +152,31 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     }
 
     deinit {
-        if let localEventMonitor {
-            NSEvent.removeMonitor(localEventMonitor)
+        // NSWindowController and every resource below are main-thread objects.
+        // Swift 6 treats deinit as nonisolated, so state the AppKit lifetime
+        // invariant explicitly while tearing them down.
+        MainActor.assumeIsolated {
+            if let localEventMonitor {
+                NSEvent.removeMonitor(localEventMonitor)
+            }
+            sessionSaveTask.cancel()
+            aiConversationSaveTask.cancel()
+            preferredAIWidthSaveTask.cancel()
+            windowResizeLayoutTask.cancel()
+            aiPanelResizeLayoutTask.cancel()
+            pendingAISourceClickWorkItem?.cancel()
+            retrievalQueryTask?.cancel()
+            pdfWordRecordsSaveTask.cancel()
+            webWordRecordsSaveTask.cancel()
+            vocabularyPanelController.close()
+            vocabularyLibraryWindowController.close()
+            webView?.configuration.userContentController.removeScriptMessageHandler(forName: "selectionChanged")
+            webView?.configuration.userContentController.removeScriptMessageHandler(forName: "scrollChanged")
+            webView?.configuration.userContentController.removeScriptMessageHandler(forName: "webWordClicked")
+            webView?.configuration.userContentController.removeScriptMessageHandler(forName: "webNoteClicked")
+            webView?.configuration.userContentController.removeScriptMessageHandler(forName: "webAISourceClicked")
+            NotificationCenter.default.removeObserver(self)
         }
-        sessionSaveTask.cancel()
-        aiConversationSaveTask.cancel()
-        preferredAIWidthSaveTask.cancel()
-        windowResizeLayoutTask.cancel()
-        aiPanelResizeLayoutTask.cancel()
-        pendingAISourceClickWorkItem?.cancel()
-        retrievalQueryTask?.cancel()
-        pdfWordRecordsSaveTask.cancel()
-        webWordRecordsSaveTask.cancel()
-        vocabularyPanelController.close()
-        vocabularyLibraryWindowController.close()
-        webView?.configuration.userContentController.removeScriptMessageHandler(forName: "selectionChanged")
-        webView?.configuration.userContentController.removeScriptMessageHandler(forName: "scrollChanged")
-        webView?.configuration.userContentController.removeScriptMessageHandler(forName: "webWordClicked")
-        webView?.configuration.userContentController.removeScriptMessageHandler(forName: "webNoteClicked")
-        webView?.configuration.userContentController.removeScriptMessageHandler(forName: "webAISourceClicked")
-        NotificationCenter.default.removeObserver(self)
     }
 
     override func keyDown(with event: NSEvent) {

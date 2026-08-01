@@ -94,7 +94,7 @@ extension ReaderWindowController {
 
     /// Background-safe: uses the pre-snapshotted current-document records rather
     /// than reaching back into PDFKit, so it can run off the main thread.
-    func makeVocabularyLibraryRecords(
+    nonisolated func makeVocabularyLibraryRecords(
         currentPath: String?,
         currentRecords: [VocabularyExportRecord]
     ) -> [VocabularyLibraryRecord] {

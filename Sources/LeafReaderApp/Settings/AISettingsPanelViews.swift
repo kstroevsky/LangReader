@@ -1,5 +1,6 @@
 import Cocoa
 
+@MainActor
 func applyLeafTextSelectionTheme(to textObj: NSText) {
     guard let textView = textObj as? NSTextView else { return }
     let theme = ReaderTheme.selected

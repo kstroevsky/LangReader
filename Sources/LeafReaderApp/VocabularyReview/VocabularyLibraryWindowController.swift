@@ -8,6 +8,7 @@ import LeafReaderCore
 /// visible area sinks to the bottom-left. Flipping the coordinate space — as
 /// `NSTableView` does — makes the content grow downward from the top edge, which
 /// is what the detail pane wants when a word has only a few occurrences.
+@MainActor
 final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSearchFieldDelegate {
     private weak var owner: ReaderWindowController?
     private let reloadTask = DebouncedTask(delay: 0.12)
@@ -38,7 +39,9 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
     }
 
     deinit {
-        reloadTask.cancel()
+        MainActor.assumeIsolated {
+            reloadTask.cancel()
+        }
     }
 
     /// Shows the window immediately, before records are computed, so the click

@@ -149,7 +149,7 @@ enum SpeechRuntimeResourceManager {
                     guard isCurrentDownload(runtime, downloadID: downloadID) else { return }
                     try installer.installDownloadedArchive(partialURL, asset: expectedAsset)
                     LocalRuntimeDownloadSupport.removePartialDownload(for: plan)
-                    DispatchQueue.main.async { completion(.success(())) }
+                    completion(.success(()))
                 case .failure(let error):
                     recoverDownloadFailure(
                         error,
@@ -224,7 +224,7 @@ enum SpeechRuntimeResourceManager {
             if removePartial {
                 LocalRuntimeDownloadSupport.removePartialDownload(for: plan)
             }
-            DispatchQueue.main.async { completion(.failure(error)) }
+            completion(.failure(error))
         }
     }
 

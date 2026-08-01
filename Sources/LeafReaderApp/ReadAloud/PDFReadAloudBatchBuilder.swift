@@ -2,6 +2,7 @@ import Cocoa
 import PDFKit
 import LeafReaderCore
 
+@MainActor
 final class PDFReadAloudBatchBuilder {
     struct Batch {
         let pages: [PDFPage]

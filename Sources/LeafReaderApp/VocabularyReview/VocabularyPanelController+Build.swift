@@ -186,7 +186,7 @@ extension VocabularyPanelController {
     }
 
     private func addPanelViews(_ views: VocabularyPanelViews, to root: NSView) {
-        [
+        let panelViews = [
             views.header,
             views.filterControl,
             views.reviewContainer,
@@ -196,7 +196,10 @@ extension VocabularyPanelController {
             views.exportMarkdownButton,
             views.exportCSVButton,
             views.closeButton
-        ].forEach(root.addSubview)
+        ]
+        for view in panelViews {
+            root.addSubview(view)
+        }
     }
 
     private func installPanelConstraints(_ views: VocabularyPanelViews, in root: NSView) {

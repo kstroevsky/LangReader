@@ -7,6 +7,7 @@ import LeafReaderCore
 /// The list itself is SwiftUI (`ReadingNotesListView`); what stays here is the
 /// part SwiftUI does not own — a borderless panel, where it sits relative to
 /// the reader window, and keeping the model's theme in step with the app's.
+@MainActor
 final class ReadingNotesPanelController: NSObject {
     private enum Metrics {
         static let panelSize = NSSize(width: 560, height: 420)
@@ -146,6 +147,7 @@ final class ReadingNotesPanelController: NSObject {
     }
 }
 
+@MainActor
 private final class ReadingNotesPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }

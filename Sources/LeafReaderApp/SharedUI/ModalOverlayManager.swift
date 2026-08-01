@@ -15,6 +15,7 @@ private final class ModalBlockerView: NSView {
     }
 }
 
+@MainActor
 final class ModalOverlayManager {
     static let shared = ModalOverlayManager()
 

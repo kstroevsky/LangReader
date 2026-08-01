@@ -1,5 +1,6 @@
 import Cocoa
 
+@MainActor
 final class AISettingsPanelController {
     enum SettingsTab: Int {
         case general = 0
@@ -58,10 +59,12 @@ final class AISettingsPanelController {
     var appActivationObserver: NSObjectProtocol?
 
     deinit {
-        cacheRefreshTimer?.invalidate()
-        speechDownloadRefreshTimer?.invalidate()
-        speechVoicePreviewWorkItem?.cancel()
-        removeAppActivationObserver()
+        MainActor.assumeIsolated {
+            cacheRefreshTimer?.invalidate()
+            speechDownloadRefreshTimer?.invalidate()
+            speechVoicePreviewWorkItem?.cancel()
+            removeAppActivationObserver()
+        }
     }
 
 }

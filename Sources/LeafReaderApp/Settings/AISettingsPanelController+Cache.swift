@@ -35,9 +35,11 @@ extension AISettingsPanelController {
     func startCacheRefreshTimer() {
         cacheRefreshTimer?.invalidate()
         cacheRefreshTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
-            guard let self, self.panel?.isVisible == true else { return }
-            self.cacheSettings?.refresh(currentBookStatus: self.currentVectorIndexStatus?() ?? AppText.noPDF)
-            self.refreshVectorCacheStatus()
+            Task { @MainActor [weak self] in
+                guard let self, self.panel?.isVisible == true else { return }
+                self.cacheSettings?.refresh(currentBookStatus: self.currentVectorIndexStatus?() ?? AppText.noPDF)
+                self.refreshVectorCacheStatus()
+            }
         }
     }
 
@@ -96,7 +98,7 @@ extension AISettingsPanelController {
 
     func refreshVectorCacheStatus() {
         vectorCacheQueue.async { [weak self] in
-            let text = self?.vectorCacheStatusText() ?? ""
+            let text = Self.vectorCacheStatusText()
             DispatchQueue.main.async { [weak self] in
                 guard self?.panel?.isVisible == true else { return }
                 self?.cacheSettings?.refresh(cacheStatus: text)
@@ -104,7 +106,7 @@ extension AISettingsPanelController {
         }
     }
 
-    func vectorCacheStatusText() -> String {
+    nonisolated static func vectorCacheStatusText() -> String {
         guard let store = PDFEmbeddingStore() else {
             return AppText.localized("缓存不可用", "Cache unavailable")
         }
@@ -116,7 +118,7 @@ extension AISettingsPanelController {
         )
     }
 
-    func formatBytes(_ bytes: Int64) -> String {
+    nonisolated static func formatBytes(_ bytes: Int64) -> String {
         let units = ["B", "KB", "MB", "GB"]
         var value = Double(bytes)
         var index = 0

@@ -169,8 +169,9 @@ extension ReaderWindowController {
             return
         }
         clearStoredEmbeddingControlState(documentID: documentID)
-        embeddingStoreQueue.async { [weak self] in
-            self?.pdfEmbeddingStore?.deleteDocument(documentID: documentID)
+        let store = pdfEmbeddingStore
+        embeddingStoreQueue.async {
+            store?.deleteDocument(documentID: documentID)
         }
         if currentFileMD5 == documentID {
             invalidateEmbeddingBackfill()

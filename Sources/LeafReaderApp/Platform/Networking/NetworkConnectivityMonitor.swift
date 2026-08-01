@@ -5,7 +5,10 @@ extension Notification.Name {
     static let leafReaderNetworkConnectivityChanged = Notification.Name("leafReaderNetworkConnectivityChanged")
 }
 
-final class NetworkConnectivityMonitor {
+/// Mutable connectivity state is protected by `lock`; retry scheduling is
+/// serialized on `queue`. URLSession and NWPathMonitor callbacks may enter from
+/// arbitrary threads, so this service is intentionally not main-actor bound.
+final class NetworkConnectivityMonitor: @unchecked Sendable {
     static let shared = NetworkConnectivityMonitor()
 
     private enum State {

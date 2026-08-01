@@ -99,7 +99,9 @@ extension RecentDocumentsPanelController {
             object: NSApp,
             queue: .main
         ) { [weak self] _ in
-            self?.reactivatePanelIfNeeded()
+            Task { @MainActor [weak self] in
+                self?.reactivatePanelIfNeeded()
+            }
         }
     }
 

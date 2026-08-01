@@ -38,7 +38,7 @@ struct StoredGermanFlexionMatch: Equatable {
 /// table fetched once keeps working offline and across relaunches — the point
 /// of the dictionary tier is that difficult forms stay resolved without
 /// requiring the network again.
-struct GermanFlexionStore {
+struct GermanFlexionStore: Sendable {
     static let shared = GermanFlexionStore()
 
     private let store: WordRecordSQLiteStore

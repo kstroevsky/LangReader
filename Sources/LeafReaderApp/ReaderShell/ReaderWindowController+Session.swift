@@ -135,7 +135,7 @@ extension ReaderWindowController {
     }
 
 
-    func fileMD5(for url: URL) -> String? {
+    nonisolated func fileMD5(for url: URL) -> String? {
         let fastID = DocumentIdentity.fastID(for: url)
         let legacyMD5 = cachedLegacyMD5(for: url)
         return DocumentIdentity.selectedID(
@@ -146,13 +146,13 @@ extension ReaderWindowController {
         )
     }
 
-    func cachedLegacyMD5(for url: URL) -> String? {
+    nonisolated func cachedLegacyMD5(for url: URL) -> String? {
         let defaults = UserDefaults.standard
         let cache = defaults.dictionary(forKey: Self.fileMD5CacheDefaultsKey) as? [String: String] ?? [:]
         return cache[DocumentIdentity.legacyCacheKey(for: url)]
     }
 
-    func hasStoredDocumentData(documentID: String) -> Bool {
+    nonisolated func hasStoredDocumentData(documentID: String) -> Bool {
         let defaults = UserDefaults.standard
         for suffix in [
             "pageIndex",

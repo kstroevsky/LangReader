@@ -353,7 +353,7 @@ extension ReaderWindowController {
             completion?()
             return
         }
-        let payload = storedReadingNotes.compactMap(webHighlightPayload(for:))
+        let payload = storedReadingNotes.compactMap { webHighlightPayload(for: $0) }
         guard !payload.isEmpty,
               let data = try? JSONSerialization.data(withJSONObject: payload),
               let json = String(data: data, encoding: .utf8) else {

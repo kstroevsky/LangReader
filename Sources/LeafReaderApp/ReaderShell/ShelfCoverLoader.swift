@@ -15,7 +15,9 @@ import LeafReaderCore
 /// is why a placeholder is shown immediately and replaced when the real cover
 /// arrives.
 @Observable
-final class ShelfCoverLoader {
+/// UI-facing cache mutations occur on the main queue; rendering is submitted
+/// to the private operation queue and publishes its result back to main.
+final class ShelfCoverLoader: @unchecked Sendable {
     /// Shared because the caches should outlive any one shelf window — reopening
     /// the shelf should not re-render every cover.
     static let shared = ShelfCoverLoader()

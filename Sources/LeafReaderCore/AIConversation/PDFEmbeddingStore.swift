@@ -15,7 +15,11 @@ package struct PDFEmbeddingChunk {
     }
 }
 
-package final class PDFEmbeddingStore {
+/// The app confines each instance to its dedicated embedding-store queue.
+/// SQLite is opened in its default serialized mode; this conformance allows
+/// the queue-owned reference to cross from the main-actor controller into that
+/// queue without implying that callers may perform concurrent operations.
+package final class PDFEmbeddingStore: @unchecked Sendable {
     package static let defaultMaximumCacheBytes: Int64 = 1024 * 1024 * 1024
 
     private let db: OpaquePointer?

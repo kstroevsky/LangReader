@@ -10,6 +10,7 @@ extension SpeechPlaybackCoordinator {
         completion: @escaping (Bool) -> Void,
         finished: (() -> Void)?
     ) {
+        let completionBox = SpeechGenerationCompletion(completion)
         let generationID = UUID()
         beginGeneration(
             generationID,
@@ -22,7 +23,7 @@ extension SpeechPlaybackCoordinator {
         if !initialPlaybackSegments.isEmpty {
             pendingSegments.append(contentsOf: initialPlaybackSegments)
             playNextOutputIfNeeded()
-            completion(true)
+            completionBox.call(true)
         }
         queue.async { [weak self] in
             guard let self else { return }
@@ -79,7 +80,7 @@ extension SpeechPlaybackCoordinator {
                         pageIndex: segment.pageIndex
                     ))
                     if shouldReportSuccess {
-                        completion(true)
+                        completionBox.call(true)
                     }
                 }
             }
@@ -89,7 +90,7 @@ extension SpeechPlaybackCoordinator {
                 }
                 self.isGeneratingSegments = false
                 if !didGenerateAnySegment, !didReportSuccess {
-                    completion(false)
+                    completionBox.call(false)
                     self.finishPlaybackIfIdle()
                 } else {
                     self.playNextOutputIfNeeded()
@@ -163,5 +164,20 @@ extension SpeechPlaybackCoordinator {
             return
         }
         playNextOutputIfNeeded()
+    }
+}
+
+/// Generation crosses the coordinator's serial queue before reporting on the
+/// main queue. The callback itself remains caller-owned and is only invoked by
+/// those existing serialized paths.
+private final class SpeechGenerationCompletion: @unchecked Sendable {
+    private let callback: (Bool) -> Void
+
+    init(_ callback: @escaping (Bool) -> Void) {
+        self.callback = callback
+    }
+
+    func call(_ success: Bool) {
+        callback(success)
     }
 }

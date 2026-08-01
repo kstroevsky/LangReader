@@ -5,6 +5,7 @@ import PDFKit
 import UniformTypeIdentifiers
 import LeafReaderCore
 
+@MainActor
 final class RecentDocumentsPanelController: NSObject {
     struct ShelfRemovalOptions {
         let clearVectorCache: Bool
@@ -30,7 +31,9 @@ final class RecentDocumentsPanelController: NSObject {
     let panelSize = NSSize(width: 940, height: 480)
 
     deinit {
-        removeAppActivationObserver()
+        MainActor.assumeIsolated {
+            removeAppActivationObserver()
+        }
     }
 
     func show(

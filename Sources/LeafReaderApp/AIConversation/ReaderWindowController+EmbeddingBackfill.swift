@@ -16,8 +16,9 @@ extension ReaderWindowController {
             return
         }
         let chunkIDs = chunks.map(\.id)
+        let store = pdfEmbeddingStore
         embeddingStoreQueue.async { [weak self] in
-            guard let self, let store = self.pdfEmbeddingStore else {
+            guard let self, let store else {
                 DispatchQueue.main.async { completion?() }
                 return
             }
@@ -149,8 +150,9 @@ extension ReaderWindowController {
                     self.notifyEmbeddingReady(afterFirstBatch, includePending: notifyPendingAfterBatch && !shouldDeferPendingCallbacks)
                     self.updateEmbeddingStatusForCoverage(isComplete: false)
                     let shouldNotifyPendingAfterNextBatch = shouldDeferPendingCallbacks
+                    let store = self.pdfEmbeddingStore
                     self.embeddingStoreQueue.async { [weak self] in
-                        self?.pdfEmbeddingStore?.save(documentID: documentID, model: config.cacheModelID, chunks: missing, embeddings: embeddings)
+                        store?.save(documentID: documentID, model: config.cacheModelID, chunks: missing, embeddings: embeddings)
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
                             self?.continuePDFEmbeddingBackfill(
                                 documentID: documentID,

@@ -49,10 +49,7 @@ let package = Package(
             ],
             swiftSettings: [
                 .unsafeFlags(["-F", sparkleHome]),
-                // The app is still Swift 5: it is full of AppKit callbacks that
-                // Swift 6 would want isolation annotations for. The core is
-                // already .v6, so the strictness arrives one target at a time.
-                .swiftLanguageMode(.v5)
+                .swiftLanguageMode(.v6)
             ],
             linkerSettings: [
                 .linkedFramework("AVFoundation"),

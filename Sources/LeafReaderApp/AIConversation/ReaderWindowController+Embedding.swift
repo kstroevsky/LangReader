@@ -38,7 +38,7 @@ extension ReaderWindowController {
                 autoreleasepool {
                     let document = PDFDocument(url: url)
                     let index = document.map { PDFDocumentAgentIndex(document: $0, title: title) }
-                    DispatchQueue.main.async {
+                    Task { @MainActor [weak self] in
                         self?.finishDocumentAgentIndexBuild(index, generation: generation)
                     }
                 }
@@ -53,7 +53,7 @@ extension ReaderWindowController {
         }
         DispatchQueue.global(qos: .utility).async { [weak self] in
             let index = PDFDocumentAgentIndex(text: text)
-            DispatchQueue.main.async {
+            Task { @MainActor [weak self] in
                 self?.finishDocumentAgentIndexBuild(index, generation: generation)
             }
         }

@@ -1,14 +1,15 @@
 import Foundation
 import LeafReaderCore
 
-final class AIClient {
+final class AIClient: Sendable {
 
     @discardableResult
     func send(messages: [ChatMessage], completion: @escaping (Result<String, Error>) -> Void) -> URLSessionDataTask? {
+        let callback = AIClientCallback(completion)
         let config = AISettingsStore.selectedModel
         let apiKey = AISettingsStore.apiKey(for: config)
         guard !config.requiresAPIKey || !apiKey.isEmpty else {
-            completion(.failure(Self.missingAPIKeyError(for: config)))
+            callback.call(.failure(Self.missingAPIKeyError(for: config)))
             return nil
         }
 
@@ -21,19 +22,19 @@ final class AIClient {
                 stream: false
             )
         } catch {
-            completion(.failure(error))
+            callback.call(.failure(error))
             return nil
         }
 
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
-                completion(.failure(error))
+                callback.call(.failure(error))
                 return
             }
 
             if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
                 let body = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
-                completion(.failure(NSError(domain: config.provider, code: http.statusCode, userInfo: [
+                callback.call(.failure(NSError(domain: config.provider, code: http.statusCode, userInfo: [
                     NSLocalizedDescriptionKey: NetworkErrorFormatter.httpErrorDescription(
                         prefix: config.displayName,
                         statusCode: http.statusCode,
@@ -44,7 +45,7 @@ final class AIClient {
             }
 
             guard let data = data else {
-                completion(.failure(NSError(domain: config.provider, code: -1, userInfo: [
+                callback.call(.failure(NSError(domain: config.provider, code: -1, userInfo: [
                     NSLocalizedDescriptionKey: "No response data"
                 ])))
                 return
@@ -58,9 +59,9 @@ final class AIClient {
                         NSLocalizedDescriptionKey: "Unexpected response: \(body)"
                     ])
                 }
-                completion(.success(AIResponseTextFormatter.visibleAnswer(content)))
+                callback.call(.success(AIResponseTextFormatter.visibleAnswer(content)))
             } catch {
-                completion(.failure(error))
+                callback.call(.failure(error))
             }
         }
         task.resume()
@@ -73,10 +74,12 @@ final class AIClient {
         onDelta: @escaping (String) -> Void,
         completion: @escaping (Result<String, Error>) -> Void
     ) -> Task<Void, Never>? {
+        let deltaCallback = AIClientCallback(onDelta)
+        let completionCallback = AIClientCallback(completion)
         let config = AISettingsStore.selectedModel
         let apiKey = AISettingsStore.apiKey(for: config)
         guard !config.requiresAPIKey || !apiKey.isEmpty else {
-            completion(.failure(Self.missingAPIKeyError(for: config)))
+            completionCallback.call(.failure(Self.missingAPIKeyError(for: config)))
             return nil
         }
 
@@ -89,7 +92,7 @@ final class AIClient {
                 stream: true
             )
         } catch {
-            completion(.failure(error))
+            completionCallback.call(.failure(error))
             return nil
         }
 
@@ -122,12 +125,12 @@ final class AIClient {
                 for try await line in bytes.lines {
                     guard let delta = AIChatResponseDecoder.deltaText(fromStreamLine: line, config: config), !delta.isEmpty else { continue }
                     fullText += delta
-                    onDelta(delta)
+                    deltaCallback.call(delta)
                 }
 
-                completion(.success(AIResponseTextFormatter.visibleAnswer(fullText)))
+                completionCallback.call(.success(AIResponseTextFormatter.visibleAnswer(fullText)))
             } catch {
-                completion(.failure(error))
+                completionCallback.call(.failure(error))
             }
         }
         return task
@@ -139,4 +142,20 @@ final class AIClient {
         ])
     }
 
+}
+
+/// URLSession and unstructured tasks require sendable captures, while callers
+/// deliberately receive their callbacks on the queues they already select.
+/// The box transfers the closure as an opaque value; it never invokes a callback
+/// concurrently on its own.
+private final class AIClientCallback<Value>: @unchecked Sendable {
+    private let callback: (Value) -> Void
+
+    init(_ callback: @escaping (Value) -> Void) {
+        self.callback = callback
+    }
+
+    func call(_ value: Value) {
+        callback(value)
+    }
 }

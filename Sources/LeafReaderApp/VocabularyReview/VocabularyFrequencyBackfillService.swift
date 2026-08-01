@@ -28,9 +28,13 @@ final class VocabularyFrequencyBackfillService {
         progress: @escaping (VocabularyFrequencyBackfillProgress) -> Void,
         completion: @escaping (VocabularyFrequencyBackfillResult) -> Void
     ) {
+        let callbacks = VocabularyFrequencyBackfillCallbacks(
+            progress: progress,
+            completion: completion
+        )
         if preferences.isFrequencyBackfilled || items.isEmpty {
             preferences.markFrequencyBackfilled()
-            completion(VocabularyFrequencyBackfillResult(frequenciesByID: [:]))
+            callbacks.complete(VocabularyFrequencyBackfillResult(frequenciesByID: [:]))
             return
         }
 
@@ -38,7 +42,7 @@ final class VocabularyFrequencyBackfillService {
             var frequenciesByID: [String: Int] = [:]
             for (offset, item) in items.enumerated() {
                 DispatchQueue.main.async {
-                    progress(VocabularyFrequencyBackfillProgress(word: item.word, current: offset + 1, total: items.count))
+                    callbacks.report(VocabularyFrequencyBackfillProgress(word: item.word, current: offset + 1, total: items.count))
                 }
                 guard let frequency = metadataService.metadata(for: item.word).frequency else {
                     continue
@@ -47,8 +51,29 @@ final class VocabularyFrequencyBackfillService {
             }
             DispatchQueue.main.async {
                 preferences.markFrequencyBackfilled()
-                completion(VocabularyFrequencyBackfillResult(frequenciesByID: frequenciesByID))
+                callbacks.complete(VocabularyFrequencyBackfillResult(frequenciesByID: frequenciesByID))
             }
         }
+    }
+}
+
+private final class VocabularyFrequencyBackfillCallbacks: @unchecked Sendable {
+    private let progress: (VocabularyFrequencyBackfillProgress) -> Void
+    private let completion: (VocabularyFrequencyBackfillResult) -> Void
+
+    init(
+        progress: @escaping (VocabularyFrequencyBackfillProgress) -> Void,
+        completion: @escaping (VocabularyFrequencyBackfillResult) -> Void
+    ) {
+        self.progress = progress
+        self.completion = completion
+    }
+
+    func report(_ value: VocabularyFrequencyBackfillProgress) {
+        progress(value)
+    }
+
+    func complete(_ value: VocabularyFrequencyBackfillResult) {
+        completion(value)
     }
 }

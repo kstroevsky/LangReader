@@ -89,7 +89,9 @@ extension AISettingsPanelController {
         if isDownloading {
             guard speechDownloadRefreshTimer == nil else { return }
             speechDownloadRefreshTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-                self?.refreshSpeechRuntimeStatus()
+                Task { @MainActor [weak self] in
+                    self?.refreshSpeechRuntimeStatus()
+                }
             }
         } else {
             speechDownloadRefreshTimer?.invalidate()

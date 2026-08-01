@@ -90,19 +90,23 @@ extension ReaderWindowController {
            let pageIndex,
            let pdfBounds,
            let page = pdfView.document?.page(at: pageIndex) {
-            storedWordRecords
+            let matchingIDs = storedWordRecords
                 .filter {
                     $0.pageIndex == pageIndex
                         && pdfBounds.insetBy(dx: -4, dy: -4).intersects(displayBounds(for: $0, page: page).insetBy(dx: -4, dy: -4))
                 }
                 .map(\.id)
-                .forEach(append)
+            for id in matchingIDs {
+                append(id)
+            }
         }
 
-        storedWebWordRecords
+        let matchingWebIDs = storedWebWordRecords
             .filter { ReaderAISourceMatcher.linkedWordText($0.word, overlapsReadAloudText: text) }
             .map(\.id)
-            .forEach(append)
+        for id in matchingWebIDs {
+            append(id)
+        }
 
         return linkedIDs
     }
@@ -147,11 +151,19 @@ extension ReaderWindowController {
             guard !sources.contains(source) else { return }
             sources.append(source)
         }
-        activeAISourceUnderlines.forEach(append)
-        aiSourceLocationsByUnderlineKey.values.forEach(append)
-        webAISourceLocationsByKey.values.forEach(append)
+        for source in activeAISourceUnderlines {
+            append(source)
+        }
+        for source in aiSourceLocationsByUnderlineKey.values {
+            append(source)
+        }
+        for source in webAISourceLocationsByKey.values {
+            append(source)
+        }
         if let conversation = loadedAIConversation ?? aiConversationStore?.load() {
-            conversation.bubbles.compactMap(\.sourceLocation).forEach(append)
+            for source in conversation.bubbles.compactMap(\.sourceLocation) {
+                append(source)
+            }
         }
         return sources
     }

@@ -345,6 +345,7 @@ for ARCH in "${BUILD_ARCHS[@]}"; do
     "${SWIFT_BUILD_FLAGS[@]}"
   swiftc "${APP_SWIFT_SOURCES[@]}" \
     "${SWIFT_BUILD_FLAGS[@]}" \
+    -swift-version 6 \
     -target "$ARCH_TRIPLE" \
     -package-name LeafReader \
     -I "$CORE_BUILD_DIR" \

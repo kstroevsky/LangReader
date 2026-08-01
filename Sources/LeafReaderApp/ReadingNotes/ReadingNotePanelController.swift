@@ -107,10 +107,12 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
     }
 
     deinit {
-        if let askInputKeyMonitor {
-            NSEvent.removeMonitor(askInputKeyMonitor)
+        MainActor.assumeIsolated {
+            if let askInputKeyMonitor {
+                NSEvent.removeMonitor(askInputKeyMonitor)
+            }
+            NotificationCenter.default.removeObserver(self)
         }
-        NotificationCenter.default.removeObserver(self)
     }
 
     func show(relativeTo parent: NSWindow?) {

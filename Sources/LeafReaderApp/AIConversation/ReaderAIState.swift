@@ -1,6 +1,10 @@
 import Foundation
 import LeafReaderCore
 
+/// Mutable AI-panel presentation and request coordination owned by the reader
+/// window. It is never a background service; network callbacks publish their
+/// results back through the controller.
+@MainActor
 struct ReaderAIState {
     let retrievalQueryClient = AIClient()
     var suppressSearchSelectionForAIUntil = Date.distantPast

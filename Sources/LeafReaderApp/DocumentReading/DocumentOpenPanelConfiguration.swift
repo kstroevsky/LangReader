@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 enum DocumentOpenPanelConfiguration {
     static let contentTypes: [UTType] = [.pdf, .epub, .init(filenameExtension: "docx")].compactMap { $0 }
 
+    @MainActor
     static func apply(to panel: NSOpenPanel) {
         panel.allowedContentTypes = contentTypes
         panel.allowsOtherFileTypes = false
