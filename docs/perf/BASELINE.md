@@ -33,6 +33,26 @@ The capture script drives the real bundle through Apple Events, so `loadPDF`
 runs exactly as it does for a user. `docs/perf/baseline.json` is the committed
 machine-readable copy; diff it after a change.
 
+For the representative gate, copy `private-fixtures.example.json` to the
+gitignored `private-fixtures.json`, replace the three paths, and record the
+actual sizes of the long-conversation, notes, and vocabulary datasets:
+
+```sh
+cp docs/perf/private-fixtures.example.json docs/perf/private-fixtures.json
+./scripts/capture_perf_baseline.sh \
+  --private-manifest docs/perf/private-fixtures.json \
+  docs/perf/representative-baseline
+```
+
+The manifest validator requires PDF, EPUB, and DOCX fixtures plus at least 100
+AI messages, 100 notes, and 1,000 vocabulary records. The script opens every
+document twice (cold and warm paths), then pauses while the operator exercises
+Shelf, Notes, Vocabulary Library, a long AI conversation, selection tools, and
+theme switching. It writes the aggregate report and a separate
+`representative-baseline.fixtures.json`. That sidecar contains only generic
+aliases, formats, byte counts, and dataset counts — never source paths or file
+names. The private manifest and documents must not be committed.
+
 ## What this run captured
 
 Captured 2026-07-27 on Apple Silicon, Command Line Tools toolchain, debug build.
@@ -73,6 +93,11 @@ the automated run:
   machine deliberately does not have. Latency is recorded where the stream
   delta arrives, before the main-queue hop, so the number reflects the
   model/network rather than UI scheduling.
+
+The repository does not contain private documents, so the representative
+aggregate remains a machine-local release checkpoint until an operator supplies
+the manifest above. The synthetic baseline remains the checked-in measurement
+plumbing reference; it must not be presented as the representative gate.
 
 ## Notes / debt
 

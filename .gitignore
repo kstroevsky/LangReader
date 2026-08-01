@@ -3,6 +3,7 @@
 *.zip
 *.pkg
 docs/tts/*.tar.gz
+docs/perf/private-fixtures.json
 
 # Generated app bundles and release folders stay out of git.
 *.app/

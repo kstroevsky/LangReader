@@ -202,6 +202,7 @@ node --check "$APP_SOURCE_ROOT/Resources/reader-web-search.js"
 node --check "$APP_SOURCE_ROOT/Resources/reader-web-marks.js"
 node --check "$APP_SOURCE_ROOT/Resources/reader-web.js"
 node "$TEST_SOURCE_ROOT/DocumentReading/ReaderWebScriptTests.js"
+"$TEST_SOURCE_ROOT/Performance/PrivatePerformanceCaptureTests.sh"
 
 collect_logic_app_sources
 
