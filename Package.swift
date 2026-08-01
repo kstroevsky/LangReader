@@ -25,11 +25,12 @@ let package = Package(
         // The platform-neutral core. It links no UI framework, so anything that
         // reaches for AppKit, PDFKit or WebKit fails here rather than in review.
         //
-        // Note that `scripts/build_app.sh` does *not* build through SwiftPM — it
-        // compiles every source as one module — so this split is a boundary
-        // *proof*, run by `scripts/check.sh`, not the shipping build. That is
-        // deliberate: the app keeps whole-module optimisation across the seam
-        // while the compiler still refuses to let the core depend upwards.
+        // The shipping build compiles the core as a real, separate module too:
+        // `scripts/build_app.sh` builds it via `scripts/build_core_module.sh`
+        // (Swift 6, `-package-name LeafReader`) and links the app against it, so
+        // the boundary the compiler enforces here is the same one the app binary
+        // is built on — not just a check. This SwiftPM manifest is what
+        // `swift build` and the portability check use; the two stay in step.
         .target(
             name: "LeafReaderCore",
             path: "Sources/LeafReaderCore",

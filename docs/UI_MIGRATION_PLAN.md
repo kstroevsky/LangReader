@@ -212,7 +212,7 @@ Completed so far:
 * Shared reader design tokens introduced
 * Accessibility identifiers and UI smoke checks introduced
 
-The top bar is visually migrated but not yet fully state-driven: title, cover, page, zoom, and search controls still use AppKit objects as authoritative data sources. This remains part of the reader-state migration.
+The top bar is visually migrated. Document title is now authoritative model state. Page, zoom, search, and cover presentation remain deliberately owned by their document/view adapters where those objects are the native source of truth; they should move only when a concrete duplicate-state bug or cross-platform consumer requires it.
 
 The AI transcript renderer remains AppKit. Its domain state should continue moving into testable models, but view replacement is not part of the planned migration.
 
@@ -223,6 +223,8 @@ The AI transcript renderer remains AppKit. Its domain state should continue movi
 This phase should happen before more large view migrations.
 
 ## 0.1 Create a real `LeafReaderCore` target
+
+**Status: complete.** The shipping build, custom test harness, portability check, and SwiftPM manifest all compile the platform-neutral core as a separate Swift 6 module.
 
 Move already-clean types into it incrementally.
 
@@ -242,11 +244,15 @@ Do not rely on filename filtering or source-code grep to determine whether a typ
 
 ## 0.2 Add target-based tests
 
+**Status: next gate.** Add a dedicated `LeafReaderCoreTests` SwiftPM target and run it on a macOS CI host with a complete Xcode toolchain. The existing custom harness remains a broad compatibility suite while core behavior migrates incrementally; the target-based suite is the authoritative module-boundary proof.
+
 Create dedicated tests for `LeafReaderCore`.
 
 The existing logic-test script may remain temporarily, but the new target becomes the authoritative portability proof.
 
 ## 0.3 Capture performance baselines
+
+**Status: instrumentation complete; representative baseline pending.** Synthetic PDF timing exists and protects the measurement plumbing. Before another large UI migration, capture a private baseline using real large PDF/EPUB/DOCX fixtures plus long-conversation, vocabulary, and notes datasets. Commit only aggregate measurements and fixture metadata, never private documents.
 
 Add lightweight signposts or timing instrumentation for:
 
@@ -276,6 +282,8 @@ Keep a repeatable fixture set:
 
 ## 0.4 Fix UI smoke-test reliability
 
+**Status: complete.** Failure, infrastructure failure, and intentional skip use distinct exit codes, and a skip first proves the app is still alive.
+
 The smoke environment must be deterministic:
 
 * Use a known interface language
@@ -286,6 +294,8 @@ The smoke environment must be deterministic:
 * Never report a launch failure as an accessibility-permission skip
 
 ## 0.5 Define actor boundaries
+
+**Status: next gate after 0.2.** Adopt Swift 6 for `LeafReaderApp`, isolate UI-facing observable models and controllers to the main actor, and keep blocking storage/parsing/network work behind non-UI services that publish compact results back to the UI.
 
 UI-facing observable models should be main-actor isolated.
 
@@ -372,7 +382,9 @@ The goal is not to rewrite the document views. The goal is to stop using UI cont
 
 ## 2.1 Extract authoritative reader presentation state
 
-Add model state for:
+Add model state only for facts that otherwise have duplicate mutable owners or that portable/domain consumers must read. The document title met that test and is complete. Do not mirror native PDFKit/WebKit state merely to satisfy an architectural checklist.
+
+Potential future candidates, driven by an actual consumer or defect, include:
 
 * Document title
 * Cover presentation
@@ -393,7 +405,7 @@ AI, embedding, and read-aloud features must read document state from models, not
 
 The existing page and zoom fields may remain AppKit while responder-chain behaviour is preserved.
 
-They should bind to model state:
+When a portable presentation model is justified, they should bind to model state:
 
 * The model supplies the displayed value.
 * User editing produces a command.
@@ -779,15 +791,11 @@ The migration is complete when:
 
 # Immediate next actions
 
-1. Create the `LeafReaderCore` target.
-2. Move the already-pure reader, AI conversation, note, and vocabulary policy types into it.
-3. Fix the Notes editor dirty-state behaviour.
-4. Remove the duplicate mutable note from `ReadingNotePanelController`.
-5. Correct UI smoke-test exit codes and make tests deterministic.
-6. Capture baseline launch, panel, document-open, AI streaming, and memory measurements.
-7. Continue reader decomposition by extracting title, page, zoom, search, and panel presentation state.
-8. Introduce on-demand PDF and web selection interfaces.
-9. Finish Notes editor chrome while retaining the AppKit editor.
-10. Keep the AI transcript renderer AppKit and improve only its state ownership, incremental updates, caching, and tests.
+1. Add `LeafReaderCoreTests` to SwiftPM and make a pinned macOS/Xcode CI job its authoritative runner.
+2. Adopt Swift 6 in `LeafReaderApp`, starting from compiler diagnostics and explicit actor boundaries rather than broad source movement.
+3. Capture a private, representative performance baseline for PDF, EPUB, DOCX, long AI conversations, notes, and vocabulary data; commit aggregate results only.
+4. Give EPUB/DOCX vocabulary records the same stable identity and lemma/surface metadata as PDF records, with additive SQLite migration and regression tests.
+5. Add a versioned, validated backup/restore service for user databases and preferences, with atomic restore and rollback behavior.
+6. Run the full portability, target-test, custom logic-test, build/sign, smoke, and private performance gates before resuming discretionary UI migration.
 
 This version treats the AI transcript’s AppKit renderer as an intentional permanent component rather than an incomplete migration.

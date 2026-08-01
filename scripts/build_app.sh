@@ -3,10 +3,9 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP_SOURCE_ROOT="$ROOT_DIR/Sources/LeafReaderApp"
-# The shipped binary compiles the core and the app as one module, so it keeps
-# whole-module optimisation across the seam. The module *boundary* is proven
-# separately by `swift build`, which builds them as two targets — see
-# `scripts/check_core_portable.sh` and Package.swift.
+# The shipping build compiles the core first as a separate Swift module and
+# static library, then compiles and links the app against that module. This is
+# the same boundary enforced by SwiftPM and `check_core_portable.sh`.
 CORE_SOURCE_ROOT="$ROOT_DIR/Sources/LeafReaderCore"
 APP_RESOURCE_ROOT="$APP_SOURCE_ROOT/Resources"
 APP_METADATA_ROOT="$APP_SOURCE_ROOT/App"

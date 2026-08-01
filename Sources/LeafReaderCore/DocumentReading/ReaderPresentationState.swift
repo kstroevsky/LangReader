@@ -12,9 +12,9 @@ import Foundation
 /// With the title owned here, the label is free to show whatever it likes while
 /// consumers read the real value.
 ///
-/// Phase 2.1 grows this type to the rest of the reader's presentation scalars
-/// (page, count, zoom, search, panel visibility). It starts with the title
-/// because that is the value read as data in the most places.
+/// This type grows only when another presentation fact needs a portable owner
+/// or currently has duplicate mutable owners. Native PDFKit/WebKit state is not
+/// mirrored here merely to make the type look comprehensive.
 package struct ReaderPresentationState: Equatable {
     package init() {}
 
