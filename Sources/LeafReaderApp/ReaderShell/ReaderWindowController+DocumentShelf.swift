@@ -158,7 +158,7 @@ extension ReaderWindowController {
         refreshChromeState(presentation: .empty)
         pageLabel.stringValue = AppText.noPDF
         updatePageLabelTextColor()
-        zoomField.stringValue = "100%"
+        updateZoomLabel()
         updateEmbeddingControlButtons()
         applyReaderTheme()
     }

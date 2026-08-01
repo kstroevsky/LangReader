@@ -10,6 +10,7 @@ extension ReaderWindowController {
         }
         pdfView.autoScales = false
         pdfView.scaleFactor = min(pdfView.scaleFactor * 1.25, 8)
+        syncPDFZoomPercentFromNative()
         updateZoomLabel()
         saveSession()
     }
@@ -22,6 +23,7 @@ extension ReaderWindowController {
         }
         pdfView.autoScales = false
         pdfView.scaleFactor = max(pdfView.scaleFactor * 0.8, 0.1)
+        syncPDFZoomPercentFromNative()
         updateZoomLabel()
         saveSession()
     }
@@ -42,6 +44,7 @@ extension ReaderWindowController {
         }
         pdfView.autoScales = false
         pdfView.scaleFactor = ReaderFieldInput.clampedPDFScale(percent: percent)
+        syncPDFZoomPercentFromNative()
         updateZoomLabel()
         saveSession()
         window?.makeFirstResponder(currentDocumentKind == .pdf ? pdfView : webView)
@@ -49,7 +52,7 @@ extension ReaderWindowController {
 
     func setWebZoom(_ percent: Int) {
         webZoomPercent = ReaderFieldInput.clampedWebZoom(percent: percent)
-        zoomField.stringValue = "\(webZoomPercent)%"
+        updateZoomLabel()
         applyWebZoomToPage()
         saveSession()
         window?.makeFirstResponder(webView)

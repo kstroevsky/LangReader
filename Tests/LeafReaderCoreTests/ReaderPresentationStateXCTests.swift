@@ -9,6 +9,14 @@ final class ReaderPresentationStateXCTests: XCTestCase {
         try ReaderPresentationStateTests.testSetTitleIsAuthoritative()
     }
 
+    func testPDFZoomDefaultsTo100Percent() throws {
+        try ReaderPresentationStateTests.testPDFZoomDefaultsTo100Percent()
+    }
+
+    func testPDFZoomIsClamped() throws {
+        try ReaderPresentationStateTests.testPDFZoomIsClamped()
+    }
+
     func testClearResetsTitle() throws {
         try ReaderPresentationStateTests.testClearResetsTitle()
     }

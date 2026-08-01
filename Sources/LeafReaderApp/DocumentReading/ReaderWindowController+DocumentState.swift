@@ -65,6 +65,22 @@ extension ReaderWindowController {
         titleLabel.stringValue = title
     }
 
+    /// The editable zoom field reflects this model value. PDFKit remains the
+    /// rendering adapter; it reports its scale through
+    /// `syncPDFZoomPercentFromNative()` after a native change.
+    var pdfZoomPercent: Int {
+        documentSession.presentation.pdfZoomPercent
+    }
+
+    func setPDFZoomPercent(_ percent: Int) {
+        documentSession.presentation.setPDFZoomPercent(percent)
+    }
+
+    func syncPDFZoomPercentFromNative() {
+        guard currentDocumentKind == .pdf, pdfView != nil else { return }
+        setPDFZoomPercent(Int(round(pdfView.scaleFactor * 100)))
+    }
+
     var currentDocumentDiagnostics: [String] {
         get { documentPresentationState.currentDocumentDiagnostics }
         set { documentPresentationState.currentDocumentDiagnostics = newValue }

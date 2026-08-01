@@ -703,6 +703,8 @@ private let tests: [(String, () throws -> Void)] = [
     ("Performance recorder reset", PerformanceRecorderTests.testResetDiscardsSamples),
     ("Reader presentation default title", ReaderPresentationStateTests.testDefaultTitleIsEmpty),
     ("Reader presentation set title", ReaderPresentationStateTests.testSetTitleIsAuthoritative),
+    ("Reader presentation PDF zoom defaults", ReaderPresentationStateTests.testPDFZoomDefaultsTo100Percent),
+    ("Reader presentation PDF zoom clamps", ReaderPresentationStateTests.testPDFZoomIsClamped),
     ("Reader presentation clear title", ReaderPresentationStateTests.testClearResetsTitle),
     ("Reader presentation title from URL", ReaderPresentationStateTests.testTitleForURLDropsExtension),
     ("Reader presentation title stable", ReaderPresentationStateTests.testTitleForURLIsStableAcrossPaths),

@@ -7,9 +7,10 @@ import LeafReaderCore
 /// language-change token, the chrome-state visibility flags, and the small
 /// amount of control state the toolbar's native buttons render from
 /// (read-aloud phase, page-layout/crop mode, full-screen). Everything that is
-/// *content* — the document title, cover image, page number, zoom percentage —
-/// stays on the existing AppKit instances the view bridges in, for their
-/// verified editing and window-drag behaviour. The title label is now a
+/// *content* — the document title and cover image — stays on the existing
+/// AppKit instances the view bridges in, for their verified window-drag
+/// behaviour. Page and zoom fields remain AppKit editing adapters, but their
+/// displayed values are projections of focused reader state. The title label is now a
 /// *reflection* of `ReaderPresentationState.documentTitle` rather than the
 /// source of truth: AI context, embedding, and read-aloud read the model
 /// (`documentTitle`), so read-aloud can overwrite the label with progress text

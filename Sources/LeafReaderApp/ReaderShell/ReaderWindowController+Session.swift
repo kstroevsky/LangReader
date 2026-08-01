@@ -5,8 +5,10 @@ import LeafReaderCore
 
 extension ReaderWindowController {
     func pdfViewWillChangeScaleFactor(_ sender: PDFView) {
+        syncPDFZoomPercentFromNative()
         updateZoomLabel()
         DispatchQueue.main.async { [weak self] in
+            self?.syncPDFZoomPercentFromNative()
             self?.updateZoomLabel()
             self?.saveSession()
         }
@@ -21,7 +23,7 @@ extension ReaderWindowController {
             isEditingZoomField = true
         } else if obj.object as? NSTextField === pageLabel {
             isEditingPageField = true
-            if currentDocumentKind == .pdf, let pageIndex = currentPageIndex() {
+            if currentDocumentKind == .pdf, let pageIndex = lastPageIndex ?? currentPageIndex() {
                 pageLabel.stringValue = "\(pageIndex + 1)"
                 updatePageLabelTextColor()
             }
@@ -56,7 +58,7 @@ extension ReaderWindowController {
             zoomField.stringValue = "\(webZoomPercent)%"
             return
         }
-        zoomField.stringValue = "\(Int(round(pdfView.scaleFactor * 100)))%"
+        zoomField.stringValue = "\(pdfZoomPercent)%"
     }
 
     func updatePageLabel() {
@@ -71,15 +73,13 @@ extension ReaderWindowController {
             updatePageLabelTextColor()
             return
         }
-        guard let page = pdfView.currentPage else {
-            pageLabel.stringValue = ReaderProgressFormatter.pdfPageText(pageIndex: 0, pageCount: document.pageCount)
-            pageLabel.toolTip = pdfProgressTooltip(pageIndex: 0, pageCount: document.pageCount)
-            updatePageLabelTextColor()
-            return
+        if let nativePageIndex = currentPageIndex() {
+            lastPageIndex = nativePageIndex
         }
-        let pageIndex = document.index(for: page)
-        pageLabel.stringValue = ReaderProgressFormatter.pdfPageText(pageIndex: pageIndex, pageCount: document.pageCount)
-        pageLabel.toolTip = pdfProgressTooltip(pageIndex: pageIndex, pageCount: document.pageCount)
+        let pageCount = max(document.pageCount, 1)
+        let pageIndex = min(max(lastPageIndex ?? 0, 0), pageCount - 1)
+        pageLabel.stringValue = ReaderProgressFormatter.pdfPageText(pageIndex: pageIndex, pageCount: pageCount)
+        pageLabel.toolTip = pdfProgressTooltip(pageIndex: pageIndex, pageCount: pageCount)
         updatePageLabelTextColor()
     }
 
@@ -197,7 +197,7 @@ extension ReaderWindowController {
         updateWebProgressLabel(scrollProgress)
         if let percent = progress.zoomPercent {
             webZoomPercent = percent
-            zoomField.stringValue = "\(webZoomPercent)%"
+            updateZoomLabel()
         }
         pendingWebProgressRestore = ReaderWebPresentation.PendingProgressRestore(
             generation: documentLoadGeneration,
@@ -215,7 +215,7 @@ extension ReaderWindowController {
         pendingWebProgressRestore = nil
         if let zoomPercent = pending.zoomPercent {
             webZoomPercent = zoomPercent
-            zoomField.stringValue = "\(webZoomPercent)%"
+            updateZoomLabel()
         }
         applyWebZoomToPage()
         scrollWebToProgress(pending.progress, animated: false)
@@ -262,6 +262,7 @@ extension ReaderWindowController {
     func applyReadablePDFScale(_ scale: CGFloat = ReaderWindowController.minimumReadablePDFScale) {
         pdfView.autoScales = false
         pdfView.scaleFactor = min(max(scale, Self.minimumReadablePDFScale), 8)
+        syncPDFZoomPercentFromNative()
         updateZoomLabel()
     }
 

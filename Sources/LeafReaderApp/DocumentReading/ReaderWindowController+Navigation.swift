@@ -90,7 +90,7 @@ extension ReaderWindowController {
             let storedProgress = sessionStore.loadFarthestWebProgress()
             if let zoomPercent = storedProgress?.zoomPercent {
                 webZoomPercent = zoomPercent
-                zoomField.stringValue = "\(webZoomPercent)%"
+                updateZoomLabel()
                 applyWebZoomToPage()
             }
             jumpToWebProgress(storedProgress?.scrollProgress ?? webScrollProgress, animated: true)

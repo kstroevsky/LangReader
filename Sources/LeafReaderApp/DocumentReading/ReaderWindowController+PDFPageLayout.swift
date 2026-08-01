@@ -47,6 +47,7 @@ extension ReaderWindowController {
                 self.pdfView.go(to: currentDestination)
             }
             self.pdfView.scaleFactor = currentScaleFactor
+            self.syncPDFZoomPercentFromNative()
             self.topBarModel.pageLayoutEnabled = true
             self.updateZoomLabel()
         }

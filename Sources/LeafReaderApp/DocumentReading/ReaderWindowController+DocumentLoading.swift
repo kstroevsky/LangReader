@@ -54,6 +54,7 @@ extension ReaderWindowController {
 
         restoreBookProgressOrGoHome()
         lastPageIndex = currentPageIndex()
+        syncPDFZoomPercentFromNative()
         applyReaderTheme()
         updatePageLabel()
         updateZoomLabel()
@@ -117,7 +118,7 @@ extension ReaderWindowController {
         }
         refreshChromeState(presentation: .web)
         updateWebProgressLabel(0)
-        zoomField.stringValue = "100%"
+        updateZoomLabel()
         if let htmlFileURL = document.htmlFileURL {
             webView.loadFileURL(htmlFileURL, allowingReadAccessTo: document.baseURL)
         } else {

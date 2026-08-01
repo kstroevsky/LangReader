@@ -14,7 +14,9 @@ import Foundation
 ///
 /// This type grows only when another presentation fact needs a portable owner
 /// or currently has duplicate mutable owners. Native PDFKit/WebKit state is not
-/// mirrored here merely to make the type look comprehensive.
+/// mirrored here merely to make the type look comprehensive. The PDF zoom
+/// percentage is kept because the editable toolbar field used to be both its
+/// display and data source; the PDF view remains the rendering adapter.
 package struct ReaderPresentationState: Equatable {
     package init() {}
 
@@ -22,8 +24,17 @@ package struct ReaderPresentationState: Equatable {
     /// chrome) sets one.
     package private(set) var documentTitle: String = ""
 
+    /// The PDF zoom percentage shown by the reader chrome. PDFKit still owns
+    /// the scale factor; this typed value is the state that the editable field
+    /// reflects and that commands update after applying a native scale.
+    package private(set) var pdfZoomPercent: Int = 100
+
     package mutating func setDocumentTitle(_ title: String) {
         documentTitle = title
+    }
+
+    package mutating func setPDFZoomPercent(_ percent: Int) {
+        pdfZoomPercent = min(max(percent, 10), 800)
     }
 
     package mutating func clear() {

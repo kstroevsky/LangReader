@@ -405,11 +405,22 @@ Potential future candidates, driven by an actual consumer or defect, include:
 * AI panel width and collapsed state
 * Read-aloud presentation state
 
+The first page/zoom projection slice is now complete. `ReaderReadingPosition.lastPageIndex`
+is the reader's current PDF page state, `ReaderPresentationState.pdfZoomPercent` owns
+the PDF zoom percentage, and `ReaderWebPresentation.zoomPercent` already owns web zoom.
+The AppKit page and zoom fields remain editing adapters: they display projections of
+those models, turn user edits into navigation/zoom commands, and receive native
+PDFKit updates through explicit controller sync methods. Search, loading, cover,
+panel, and read-aloud presentation state remain future candidates until a concrete
+consumer or duplicate-state defect justifies extracting each one.
+
 AI, embedding, and read-aloud features must read document state from models, not from `titleLabel.stringValue`, page fields, or other controls.
 
 ## 2.2 Keep temporary AppKit control bridges
 
-The existing page and zoom fields may remain AppKit while responder-chain behaviour is preserved.
+The existing page and zoom fields remain AppKit while responder-chain behaviour is preserved;
+their displayed page/zoom values now come from focused reader state rather than from
+the controls themselves.
 
 When a portable presentation model is justified, they should bind to model state:
 

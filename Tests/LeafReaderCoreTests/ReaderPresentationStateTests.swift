@@ -16,11 +16,28 @@ enum ReaderPresentationStateTests {
         try expectEqual(state.documentTitle, "Effi Briest", "the model holds the title it was given")
     }
 
+    static func testPDFZoomDefaultsTo100Percent() throws {
+        let state = ReaderPresentationState()
+        try expectEqual(state.pdfZoomPercent, 100, "a fresh PDF presentation starts at 100% zoom")
+    }
+
+    static func testPDFZoomIsClamped() throws {
+        var state = ReaderPresentationState()
+        state.setPDFZoomPercent(245)
+        try expectEqual(state.pdfZoomPercent, 245, "the model keeps the native PDF zoom percentage")
+        state.setPDFZoomPercent(999)
+        try expectEqual(state.pdfZoomPercent, 800, "PDF zoom is capped at the reader's native maximum")
+        state.setPDFZoomPercent(1)
+        try expectEqual(state.pdfZoomPercent, 10, "PDF zoom is floored at the reader's native minimum")
+    }
+
     static func testClearResetsTitle() throws {
         var state = ReaderPresentationState()
         state.setDocumentTitle("Effi Briest")
+        state.setPDFZoomPercent(245)
         state.clear()
         try expectEqual(state.documentTitle, "", "clearing returns to the empty title for the next document")
+        try expectEqual(state.pdfZoomPercent, 100, "clearing resets the PDF zoom for the next document")
     }
 
     static func testTitleForURLDropsExtension() throws {
