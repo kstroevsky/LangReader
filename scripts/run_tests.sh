@@ -162,6 +162,7 @@ REGRESSION_TEST_SOURCES=(
 
 LOGIC_TEST_SOURCES=(
   "Tests/LeafReaderCoreTests/TestSupport.swift"
+  "Tests/LeafReaderCoreTests/UserDataBackupServiceTests.swift"
   "$TEST_SOURCE_ROOT/AIConversation/AIConversationContextStoreTests.swift"
   "$TEST_SOURCE_ROOT/AIConversation/AITranscriptModelTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderSearchCursorTests.swift"

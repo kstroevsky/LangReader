@@ -244,7 +244,7 @@ Do not rely on filename filtering or source-code grep to determine whether a typ
 
 ## 0.2 Add target-based tests
 
-**Status: next gate.** Add a dedicated `LeafReaderCoreTests` SwiftPM target and run it on a macOS CI host with a complete Xcode toolchain. The existing custom harness remains a broad compatibility suite while core behavior migrates incrementally; the target-based suite is the authoritative module-boundary proof.
+**Status: complete.** `LeafReaderCoreTests` is a dedicated SwiftPM test target. The Architecture workflow runs it and the portability compiler gate on `macos-15` with Xcode 16.4 explicitly selected. The existing custom harness remains the broad compatibility suite while target-based XCTest is the authoritative module-boundary proof.
 
 Create dedicated tests for `LeafReaderCore`.
 
@@ -252,7 +252,7 @@ The existing logic-test script may remain temporarily, but the new target become
 
 ## 0.3 Capture performance baselines
 
-**Status: instrumentation complete; representative baseline pending.** Synthetic PDF timing exists and protects the measurement plumbing. Before another large UI migration, capture a private baseline using real large PDF/EPUB/DOCX fixtures plus long-conversation, vocabulary, and notes datasets. Commit only aggregate measurements and fixture metadata, never private documents.
+**Status: representative workflow complete; private capture pending.** The checked-in manifest validator, capture driver, sanitized fixture sidecar, and regression tests cover the complete PDF/EPUB/DOCX plus long-conversation, vocabulary, and notes workflow. The repository has no private representative documents, so an operator must still run the workflow locally before another large UI migration. Commit only aggregate measurements and sanitized fixture metadata, never private documents.
 
 Add lightweight signposts or timing instrumentation for:
 
@@ -295,7 +295,7 @@ The smoke environment must be deterministic:
 
 ## 0.5 Define actor boundaries
 
-**Status: next gate after 0.2.** Adopt Swift 6 for `LeafReaderApp`, isolate UI-facing observable models and controllers to the main actor, and keep blocking storage/parsing/network work behind non-UI services that publish compact results back to the UI.
+**Status: Swift 6 adoption complete; diagnostic hardening continues.** Both the core and app compile in Swift 6 language mode, the shipping build uses that mode, and UI controllers/models state their main-actor ownership. Full Xcode validation still reports a bounded warning backlog at serialized legacy boundaries such as PDFKit values, networking completions, read-aloud closures, and the parallel German-lemma buffer; resolve these incrementally without moving blocking work onto the main actor.
 
 UI-facing observable models should be main-actor isolated.
 
@@ -791,11 +791,11 @@ The migration is complete when:
 
 # Immediate next actions
 
-1. Add `LeafReaderCoreTests` to SwiftPM and make a pinned macOS/Xcode CI job its authoritative runner.
-2. Adopt Swift 6 in `LeafReaderApp`, starting from compiler diagnostics and explicit actor boundaries rather than broad source movement.
-3. Capture a private, representative performance baseline for PDF, EPUB, DOCX, long AI conversations, notes, and vocabulary data; commit aggregate results only.
-4. Give EPUB/DOCX vocabulary records the same stable identity and lemma/surface metadata as PDF records, with additive SQLite migration and regression tests.
-5. Add a versioned, validated backup/restore service for user databases and preferences, with atomic restore and rollback behavior.
-6. Run the full portability, target-test, custom logic-test, build/sign, smoke, and private performance gates before resuming discretionary UI migration.
+1. **Complete:** `LeafReaderCoreTests` is CI-owned on a pinned macOS/Xcode runner.
+2. **Complete:** `LeafReaderApp` and the shipping build use Swift 6 language mode; remaining strict-concurrency warnings form an explicit follow-up queue.
+3. **Operator checkpoint:** run the private representative performance workflow with real PDF, EPUB, DOCX, long-conversation, notes, and vocabulary fixtures; commit aggregate results and sanitized metadata only.
+4. **Complete:** EPUB/DOCX vocabulary records now have stable vocabulary identity plus lemma/surface metadata, with additive SQLite migration and legacy repair tests.
+5. **Complete:** the versioned user-data backup service validates its allow-listed package, hashes, plist, and SQLite integrity, then restores with staged replacements and reverse-order rollback. See `docs/BACKUP_FORMAT.md`.
+6. **Validation:** portability, target XCTest, the custom regression harness, and build/sign pass under full Xcode 16.2. UI smoke and the private performance capture remain machine/operator gates before discretionary UI migration resumes.
 
 This version treats the AI transcript’s AppKit renderer as an intentional permanent component rather than an incomplete migration.

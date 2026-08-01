@@ -74,6 +74,9 @@ let package = Package(
             path: "Tests/LeafReaderCoreTests",
             swiftSettings: [
                 .swiftLanguageMode(.v6)
+            ],
+            linkerSettings: [
+                .linkedLibrary("sqlite3")
             ]
         )
     ]
