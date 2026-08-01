@@ -26,7 +26,8 @@ extension ReaderWindowController {
         if currentDocumentKind == .pdf {
             return pdfReadAloudLanguageProbeText(pageLimit: Self.readAloudLanguageProbePageLimit)
         }
-        return currentWebSelectedText.isEmpty ? currentWebPlainText : currentWebSelectedText
+        let selectedText = selectionState.webSelectedText
+        return selectedText.isEmpty ? currentWebPlainText : selectedText
     }
 
     func canReadAloudSegmentsWithAvailableRuntime(_ segments: [SpeechPlaybackCoordinator.ReadAloudSegment]) -> Bool {

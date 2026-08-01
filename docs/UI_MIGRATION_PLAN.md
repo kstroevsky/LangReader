@@ -345,6 +345,12 @@ This is a permanent, acceptable adapter unless a future SwiftUI editor provides 
 
 ## 1.4 Migrate surrounding chrome to SwiftUI
 
+**Status: first Notes editor chrome slice complete.** The header, metadata,
+more/list triggers, status line, and word count are now model-backed SwiftUI
+views hosted beside the native editor. The AppKit adapter retains the rich-text
+surface, formatting toolbar, floating AI controls, and menu implementation;
+SwiftUI invokes focused controller commands for the two chrome actions.
+
 SwiftUI may own:
 
 * Window header
@@ -464,6 +470,14 @@ The number should decrease after adapters are introduced.
 A direct-access ceiling is useful temporarily, but the long-term goal is that feature code asks interfaces rather than reaching into reader views.
 
 ## 2.6 Retire writable property proxies gradually
+
+**Status: first reader-selection slice complete.** The controller no longer exposes
+writable aliases for PDF selection text, web selection text/context/occurrence, or
+selection geometry. Feature code reads and updates `ReaderSelectionState` and
+`ReaderSelectionPresentation` directly, so the controller is no longer the seam
+through which semantic selection is passed around. PDFKit/WebKit still own native
+selection and rendering; this change only removes the controller-level duplicate
+accessors.
 
 Controller proxies are migration scaffolding.
 

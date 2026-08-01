@@ -13,7 +13,6 @@ extension ReadingNotePanelController {
     func setFavorite(_ isFavorite: Bool) {
         editorModel.setFavorite(isFavorite)
         save()
-        refreshStatusLabel()
     }
 
     func commitEditorChange() {
@@ -30,18 +29,10 @@ extension ReadingNotePanelController {
         autoSaveTask.cancel()
         save()
         editorModel.statusSaved()
-        refreshStatusLabel()
     }
 
     func updateWordCount() {
         editorModel.syncText(textView.string)
-        wordCountLabel.stringValue = editorModel.wordCountText
-    }
-
-    /// Mirrors the model's status line into the AppKit label. The text view and
-    /// its chrome are still AppKit, so the model is rendered rather than bound.
-    func refreshStatusLabel() {
-        statusLabel.stringValue = editorModel.statusMessage
     }
 
     func noteLocationText() -> String { editorModel.locationText }
@@ -60,6 +51,10 @@ extension ReadingNotePanelController {
     }
 
     @objc func moreTapped(_ sender: NSButton) {
+        presentMoreMenu(in: sender, at: NSPoint(x: sender.bounds.minX, y: sender.bounds.maxY + 4))
+    }
+
+    func presentMoreMenu(in view: NSView, at point: NSPoint) {
         let menu = NSMenu()
         menu.addItem(menuItem(
             title: note.isFavorite
@@ -82,7 +77,7 @@ extension ReadingNotePanelController {
         menu.addItem(menuItem(title: AppText.localized("复制 Markdown", "Copy Markdown"), action: #selector(copyMarkdownTapped(_:))))
         menu.addItem(.separator())
         menu.addItem(menuItem(title: AppText.localized("删除笔记", "Delete Note"), action: #selector(deleteCurrentNoteTapped(_:))))
-        menu.popUp(positioning: nil, at: NSPoint(x: sender.bounds.minX, y: sender.bounds.maxY + 4), in: sender)
+        menu.popUp(positioning: nil, at: point, in: view)
     }
 
     @objc func exportCurrentNoteTapped(_ sender: NSMenuItem) {
@@ -95,7 +90,6 @@ extension ReadingNotePanelController {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(note.markdown, forType: .string)
         editorModel.statusMarkdownCopied()
-        refreshStatusLabel()
     }
 
     @objc func toggleFavoriteTapped(_ sender: NSMenuItem) {

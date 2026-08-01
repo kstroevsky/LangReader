@@ -17,13 +17,13 @@ extension ReaderWindowController {
         guard !normalizedSelection.isEmpty else { return "" }
 
         guard currentDocumentKind == .pdf else {
-            if !currentWebSelectionContext.isEmpty {
+            if !selectionState.webSelectionContext.isEmpty {
                 return ReaderAIContextBuilder.selectedTextContext(
                     selectedText: normalizedSelection,
-                    sourceText: currentWebSelectionContext,
+                    sourceText: selectionState.webSelectionContext,
                     radius: 40
                 )
-                    ?? currentWebSelectionContext
+                    ?? selectionState.webSelectionContext
             }
             return ReaderAIContextBuilder.selectedTextContext(
                 selectedText: normalizedSelection,
@@ -137,9 +137,9 @@ extension ReaderWindowController {
 
     func explicitReaderSelectedTextForAI() -> String {
         if currentDocumentKind == .pdf {
-            return currentPDFSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
+            return selectionState.pdfSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        return currentWebSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return selectionState.webSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func currentReadAloudSelectionTextForAI() -> String {

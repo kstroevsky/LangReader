@@ -95,7 +95,8 @@ extension ReaderWindowController {
             return samples.joined(separator: "\n")
         }
 
-        let webText = currentWebSelectedText.isEmpty ? currentWebPlainText : currentWebSelectedText
+        let selectedText = selectionState.webSelectedText
+        let webText = selectedText.isEmpty ? currentWebPlainText : selectedText
         if !webText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return webText
         }

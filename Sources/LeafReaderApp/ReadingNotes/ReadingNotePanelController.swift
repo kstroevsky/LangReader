@@ -1,4 +1,5 @@
 import Cocoa
+import SwiftUI
 import LeafReaderCore
 
 final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NSTextViewDelegate {
@@ -22,13 +23,11 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
     let askInputContainer = NSView()
     let askInputField = ReadingNoteAskTextField(string: "")
     let askSendButton = NSButton(title: "", target: nil, action: nil)
-    let statusLabel = NSTextField(labelWithString: "")
-    let wordCountLabel = NSTextField(labelWithString: "")
     let rootView = NSView()
-    let titleIconView = NSImageView()
-    let metadataView = NSView()
     let editorContainer = NSView()
-    var topIconButtons: [NSButton] = []
+    var editorChromeHostingView: NSHostingView<ReadingNoteEditorChromeView>?
+    var editorStatusHostingView: NSHostingView<ReadingNoteEditorStatusView>?
+    var editorWordCountHostingView: NSHostingView<ReadingNoteEditorWordCountView>?
     var aiActionButtons: [NSButton] {
         [explainButton, translateButton, summarizeButton, polishButton, difficultSentenceButton, askButton]
     }

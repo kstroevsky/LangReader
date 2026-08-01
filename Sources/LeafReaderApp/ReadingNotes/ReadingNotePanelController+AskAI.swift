@@ -111,7 +111,6 @@ extension ReadingNotePanelController {
         )
         guard !requestContext.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             editorModel.statusSelectionRequired()
-            refreshStatusLabel()
             NSSound.beep()
             return
         }
@@ -140,7 +139,6 @@ extension ReadingNotePanelController {
                     self.removeAIPlaceholder()
                 }
                 self.editorModel.status(self.userFacingError(error))
-                self.refreshStatusLabel()
             }
         }
     }
@@ -166,10 +164,8 @@ extension ReadingNotePanelController {
                 }
                 self.applyAIOutput(value, insertionMode: insertionMode)
                 self.editorModel.status(template.insertionStatus)
-                self.refreshStatusLabel()
             case .failure(let error):
                 self.editorModel.status(self.userFacingError(error))
-                self.refreshStatusLabel()
             }
         }
     }
@@ -312,7 +308,6 @@ extension ReadingNotePanelController {
         let selected = editorModel.pendingAskSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !selected.isEmpty else {
             editorModel.statusSelectionRequired()
-            refreshStatusLabel()
             NSSound.beep()
             return nil
         }
@@ -350,7 +345,6 @@ extension ReadingNotePanelController {
 
     private func showMissingModelAPIKeyPrompt() {
         editorModel.statusAPIKeyRequired()
-        refreshStatusLabel()
         NSSound.beep()
         onModelSettingsRequired()
     }
@@ -399,13 +393,11 @@ extension ReadingNotePanelController {
         case .failure(let error):
             removeAIPlaceholder()
             editorModel.status(userFacingError(error))
-            refreshStatusLabel()
         }
     }
 
     private func setRunning(_ running: Bool, title: String) {
         editorModel.statusRunning(title, isRunning: running)
-        refreshStatusLabel()
         refreshAIToolbar()
     }
 
@@ -418,6 +410,5 @@ extension ReadingNotePanelController {
             removeAIPlaceholder()
         }
         editorModel.status(ReadingNoteAITextPolicy.emptyOutputMessage())
-        refreshStatusLabel()
     }
 }

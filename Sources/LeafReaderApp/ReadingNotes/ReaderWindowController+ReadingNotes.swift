@@ -287,8 +287,8 @@ extension ReaderWindowController {
         }
         let anchor = ReadingNote.WebAnchor(
             selectedText: quote,
-            context: currentWebSelectionContext,
-            occurrenceIndex: currentWebSelectionOccurrenceIndex,
+            context: selectionState.webSelectionContext,
+            occurrenceIndex: selectionState.webSelectionOccurrenceIndex,
             scrollProgress: webScrollProgress
         )
         return ReadingNote.Locator(pdfFragments: nil, webAnchor: anchor)

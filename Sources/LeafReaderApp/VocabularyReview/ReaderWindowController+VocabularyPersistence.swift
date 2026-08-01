@@ -82,11 +82,11 @@ extension ReaderWindowController {
         let lemma = GermanLemmaResolver.lemma(for: surfaceForm, language: vocabularyDocumentLanguage)
         let vocabularyID = existingWebVocabularyID(for: word, lemma: lemma) ?? UUID().uuidString
         recordPersonalVocabularyQuery(word)
-        let context = sanitizedVocabularyContext(precomputedContext ?? currentWebSelectionContext)
+        let context = sanitizedVocabularyContext(precomputedContext ?? selectionState.webSelectionContext)
         if let pending = existingPendingWebWordRecord(
             word: word,
             context: context,
-            occurrenceIndex: currentWebSelectionOccurrenceIndex
+            occurrenceIndex: selectionState.webSelectionOccurrenceIndex
         ) {
             markCurrentWebSelectionAsStoredWord(id: pending.id)
             return WordQuestionStartResult(linkID: pending.id, selectedContext: nil)
@@ -95,7 +95,7 @@ extension ReaderWindowController {
             in: storedWebWordRecords,
             word: word,
             context: context,
-            occurrenceIndex: currentWebSelectionOccurrenceIndex
+            occurrenceIndex: selectionState.webSelectionOccurrenceIndex
         ) {
             markCurrentWebSelectionAsStoredWord(id: existing.id)
             return WordQuestionStartResult(linkID: existing.id, selectedContext: nil)
@@ -109,7 +109,7 @@ extension ReaderWindowController {
                 lemma: reusable.lemma ?? lemma,
                 surfaceForm: surfaceForm,
                 context: context,
-                occurrenceIndex: currentWebSelectionOccurrenceIndex,
+                occurrenceIndex: selectionState.webSelectionOccurrenceIndex,
                 scrollProgress: webScrollProgress,
                 question: reusable.question,
                 answer: reusable.answer,
@@ -133,7 +133,7 @@ extension ReaderWindowController {
             lemma: lemma,
             surfaceForm: surfaceForm,
             context: context,
-            occurrenceIndex: currentWebSelectionOccurrenceIndex,
+            occurrenceIndex: selectionState.webSelectionOccurrenceIndex,
             scrollProgress: webScrollProgress,
             dictionaryTags: nil,
             dictionaryFrequency: nil,

@@ -6,6 +6,9 @@ enum ReadingNotePanelMetrics {
     static let panelOuterMargin: CGFloat = 22
     static let metadataHorizontalInset: CGFloat = 26
     static let metadataHeight: CGFloat = 42
+    /// Header (74pt) plus the metadata inset (42pt) retained from the AppKit
+    /// layout while the surrounding chrome moves to SwiftUI.
+    static let chromeHeaderHeight: CGFloat = 116
     static let editorToolbarHeight: CGFloat = 52
     static let floatingToolbarInset: CGFloat = 8
     static let topIconPointSize: CGFloat = 17

@@ -93,7 +93,6 @@ extension ReadingNotePanelController {
     func applyTemplate(_ template: ReadingNoteTemplate) {
         guard AISettingsStore.hasAPIKeyForSelectedModel else {
             editorModel.statusAPIKeyRequired()
-            refreshStatusLabel()
             NSSound.beep()
             onModelSettingsRequired()
             return

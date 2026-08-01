@@ -18,9 +18,9 @@ extension ReaderWindowController {
 
     func selectedReaderTextForToolbar() -> String {
         if currentDocumentKind == .pdf {
-            return currentPDFSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
+            return selectionState.pdfSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        return currentWebSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return selectionState.webSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func showSelectionToolbarForPDFSelection(_ selection: PDFSelection, text: String) {
@@ -135,7 +135,10 @@ extension ReaderWindowController {
             showSelectionToolbarForPDFSelection(selection, text: text)
             return
         }
-        showSelectionToolbarForWebSelection(rect: currentWebSelectionRect, text: text)
+        showSelectionToolbarForWebSelection(
+            rect: documentSession.selectionPresentation.anchorRect,
+            text: text
+        )
     }
 
     private func shouldShowSelectionSpeakAction(for text: String) -> Bool {

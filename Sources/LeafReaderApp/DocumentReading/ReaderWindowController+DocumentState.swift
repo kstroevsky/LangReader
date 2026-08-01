@@ -31,17 +31,11 @@ extension ReaderWindowController {
         get { documentSession.documentLoadGeneration }
     }
 
-    /// The reader's current selection. The individual accessors below forward
-    /// into it so the ~70 call sites across the extensions did not have to
-    /// change when it moved out of `DocumentSession`.
+    /// The reader's semantic selection. Feature code reads this focused model
+    /// directly; native PDF/Web selection remains owned by the active adapter.
     var selectionState: ReaderSelectionState {
         get { documentSession.selection }
         set { documentSession.selection = newValue }
-    }
-
-    var currentPDFSelectedText: String {
-        get { documentSession.selection.pdfSelectedText }
-        set { documentSession.selection.pdfSelectedText = newValue }
     }
 
     var currentWebPlainText: String {
@@ -51,26 +45,6 @@ extension ReaderWindowController {
 
     var webPlainTextGeneration: Int {
         get { documentSession.web.plainTextGeneration }
-    }
-
-    var currentWebSelectedText: String {
-        get { documentSession.selection.webSelectedText }
-        set { documentSession.selection.webSelectedText = newValue }
-    }
-
-    var currentWebSelectionContext: String {
-        get { documentSession.selection.webSelectionContext }
-        set { documentSession.selection.webSelectionContext = newValue }
-    }
-
-    var currentWebSelectionOccurrenceIndex: Int? {
-        get { documentSession.selection.webSelectionOccurrenceIndex }
-        set { documentSession.selection.webSelectionOccurrenceIndex = newValue }
-    }
-
-    var currentWebSelectionRect: NSRect? {
-        get { documentSession.selectionPresentation.anchorRect }
-        set { documentSession.selectionPresentation.anchorRect = newValue }
     }
 
     var pendingWebProgressRestore: ReaderWebPresentation.PendingProgressRestore? {
@@ -152,6 +126,8 @@ extension ReaderWindowController {
     }
 
     func clearPDFSelectionState() {
-        currentPDFSelectedText = ""
+        var selection = selectionState
+        selection.pdfSelectedText = ""
+        selectionState = selection
     }
 }

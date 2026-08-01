@@ -28,7 +28,9 @@ extension ReaderWindowController {
         let selection = pdfView.currentSelection
         let text = selection?.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let selectedText = text.count > 1 ? text : ""
-        currentPDFSelectedText = selectedText
+        var readerSelection = selectionState
+        readerSelection.pdfSelectedText = selectedText
+        selectionState = readerSelection
         updateAISelection(explicitText: selectedText)
 
         if selectedText.isEmpty {
@@ -51,19 +53,23 @@ extension ReaderWindowController {
             occurrenceIndex: selection.occurrenceIndex,
             rect: selection.rect
         )
-        updateAISelection(explicitText: currentWebSelectedText)
+        let selectedText = selectionState.webSelectedText
+        updateAISelection(explicitText: selectedText)
 
-        if currentWebSelectedText.isEmpty {
+        if selectedText.isEmpty {
             hideSelectionToolbar()
         } else {
-            showSelectionToolbarForWebSelection(rect: currentWebSelectionRect, text: currentWebSelectedText)
+            showSelectionToolbarForWebSelection(
+                rect: documentSession.selectionPresentation.anchorRect,
+                text: selectedText
+            )
         }
     }
 
     func setWebSelectionFromVisibleText(_ text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         setWebSelection(text: trimmed, context: trimmed, occurrenceIndex: nil, rect: nil)
-        aiPanel.setSelectedText(currentWebSelectedText)
+        aiPanel.setSelectedText(selectionState.webSelectedText)
     }
 
     private func updateAISelection(explicitText: String) {
@@ -74,11 +80,16 @@ extension ReaderWindowController {
         aiPanel.setSelectedText(selectedText)
     }
 
-    private func clearWebSelectionState() {
-        currentWebSelectedText = ""
-        currentWebSelectionContext = ""
-        currentWebSelectionOccurrenceIndex = nil
-        currentWebSelectionRect = nil
+    func clearWebSelectionState() {
+        var selection = selectionState
+        selection.webSelectedText = ""
+        selection.webSelectionContext = ""
+        selection.webSelectionOccurrenceIndex = nil
+        selectionState = selection
+
+        var presentation = documentSession.selectionPresentation
+        presentation.anchorRect = nil
+        documentSession.selectionPresentation = presentation
     }
 
     private func clearReaderDocumentSelection() {
@@ -90,10 +101,15 @@ extension ReaderWindowController {
     }
 
     private func setWebSelection(text: String, context: String, occurrenceIndex: Int?, rect: NSRect?) {
-        currentWebSelectedText = text.count > 1 ? text : ""
-        currentWebSelectionContext = currentWebSelectedText.isEmpty ? "" : context
-        currentWebSelectionOccurrenceIndex = currentWebSelectedText.isEmpty ? nil : occurrenceIndex
-        currentWebSelectionRect = currentWebSelectedText.isEmpty ? nil : rect
+        var selection = selectionState
+        selection.webSelectedText = text.count > 1 ? text : ""
+        selection.webSelectionContext = selection.webSelectedText.isEmpty ? "" : context
+        selection.webSelectionOccurrenceIndex = selection.webSelectedText.isEmpty ? nil : occurrenceIndex
+        selectionState = selection
+
+        var presentation = documentSession.selectionPresentation
+        presentation.anchorRect = selection.webSelectedText.isEmpty ? nil : rect
+        documentSession.selectionPresentation = presentation
     }
 
     private func webSelection(from body: Any) -> (text: String, context: String, occurrenceIndex: Int?, rect: NSRect?) {
