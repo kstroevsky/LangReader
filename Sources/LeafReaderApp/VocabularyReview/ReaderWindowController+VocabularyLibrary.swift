@@ -109,12 +109,21 @@ extension ReaderWindowController {
                 records = currentRecords
             } else {
                 let pdfRecords = PDFWordRecordStore(fileMD5: documentID).load()
-                let webRecords = WebWordRecordStore(fileMD5: documentID).load()
+                let webStore = WebWordRecordStore(fileMD5: documentID)
+                let loadedWebRecords = webStore.load()
                 // This document is not the open one, so its language has to come
                 // from the contexts saved with its own words.
                 let otherLanguage = VocabularyLanguageDetector.language(
-                    forContexts: pdfRecords.compactMap(\.context) + webRecords.map(\.context)
+                    forContexts: pdfRecords.compactMap(\.context) + loadedWebRecords.map(\.context)
                 )
+                let repairedWeb = WebWordRecordMetadataRepair.repair(
+                    loadedWebRecords,
+                    language: otherLanguage
+                )
+                let webRecords = repairedWeb.records
+                if repairedWeb.didChange {
+                    webStore.save(webRecords)
+                }
                 let fingerprint = VocabularyLibraryBuildCache.fingerprint(
                     pdf: pdfRecords,
                     web: webRecords,

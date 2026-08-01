@@ -90,6 +90,17 @@ enum VocabularyRecordProvider {
                     return VocabularyExportRecord(
                         ids: [$0.id],
                         word: $0.word,
+                        lemma: $0.lemma,
+                        forms: [
+                            VocabularyForm(
+                                surface: $0.occurrenceSurfaceForm,
+                                label: memoizedLabel(
+                                    surface: $0.occurrenceSurfaceForm,
+                                    lemma: $0.lemma ?? $0.word,
+                                    context: $0.context
+                                )
+                            )
+                        ],
                         answer: $0.answer,
                         dictionaryTags: $0.dictionaryTags,
                         dictionaryFrequency: $0.dictionaryFrequency,
@@ -103,6 +114,7 @@ enum VocabularyRecordProvider {
                                 pageIndex: nil,
                                 bounds: nil,
                                 location: location,
+                                surfaceForm: $0.occurrenceSurfaceForm,
                                 context: $0.context,
                                 createdAt: $0.createdAt
                             )

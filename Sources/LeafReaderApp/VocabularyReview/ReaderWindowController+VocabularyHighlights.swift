@@ -140,7 +140,7 @@ extension ReaderWindowController {
         let payload = storedWebWordRecords.map { record -> [String: Any] in
             var item: [String: Any] = [
                 "id": record.id,
-                "word": record.word,
+                "word": record.occurrenceSurfaceForm,
                 "context": record.context
             ]
             if let occurrenceIndex = record.occurrenceIndex {

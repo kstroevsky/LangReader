@@ -21,7 +21,10 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
 
     struct PendingWebWordRecord {
         let id: String
+        let vocabularyID: String
         let word: String
+        let lemma: String
+        let surfaceForm: String
         let context: String
         let occurrenceIndex: Int?
         let scrollProgress: Double

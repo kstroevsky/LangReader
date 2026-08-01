@@ -44,11 +44,17 @@ private func webRecord(
     word: String,
     answer: String,
     createdAt: TimeInterval,
+    vocabularyID: String? = nil,
+    lemma: String? = nil,
+    surfaceForm: String? = nil,
     srs: VocabularySRSState? = nil
 ) -> StoredWebWordRecord {
     StoredWebWordRecord(
         id: id,
+        vocabularyID: vocabularyID,
         word: word,
+        lemma: lemma,
+        surfaceForm: surfaceForm,
         context: "web context",
         occurrenceIndex: nil,
         scrollProgress: 0.42,
@@ -134,8 +140,26 @@ struct SQLiteWordRecordStoreTestRunner {
         assert(store.deletePDFRecords(documentID: documentID, ids: ["pdf-a", "pdf-c", "pdf-d"]), "PDF delete(ids:) should succeed")
         assert(store.loadPDFRecords(documentID: documentID).map(\.id) == ["pdf-b"], "PDF delete(ids:) should remove only selected rows")
 
-        let webFirst = webRecord(id: "web-a", word: "gamma", answer: "one", createdAt: 1, srs: srs)
-        let webUpdated = webRecord(id: "web-a", word: "gamma", answer: "updated", createdAt: 2, srs: srs)
+        let webFirst = webRecord(
+            id: "web-a",
+            word: "ging",
+            answer: "one",
+            createdAt: 1,
+            vocabularyID: "web-vocabulary-go",
+            lemma: "gehen",
+            surfaceForm: "ging",
+            srs: srs
+        )
+        let webUpdated = webRecord(
+            id: "web-a",
+            word: "ging",
+            answer: "updated",
+            createdAt: 2,
+            vocabularyID: "web-vocabulary-go",
+            lemma: "gehen",
+            surfaceForm: "Ging",
+            srs: srs
+        )
         let webSecond = webRecord(id: "web-b", word: "delta", answer: "two", createdAt: 3)
         assert(store.saveWebRecords(documentID: documentID, records: [webFirst, webSecond]), "Web full save should succeed")
         assert(store.upsertWebRecord(documentID: documentID, record: webUpdated), "Web upsert should succeed")
@@ -143,7 +167,25 @@ struct SQLiteWordRecordStoreTestRunner {
         let loadedWeb = store.loadWebRecords(documentID: documentID)
         assert(loadedWeb.map(\.id) == ["web-a", "web-b"], "Web records should load ordered records")
         assert(loadedWeb.first?.answer == "updated", "Web upsert should replace existing rows")
+        assert(loadedWeb.first?.vocabularyID == "web-vocabulary-go", "Web vocabulary identity should round-trip")
+        assert(loadedWeb.first?.lemma == "gehen", "Web lemma should round-trip")
+        assert(loadedWeb.first?.occurrenceSurfaceForm == "Ging", "Web surface form should round-trip exactly")
         assert(loadedWeb.first?.srs?.dueDate == Date(timeIntervalSince1970: 20), "Web SRS state should round-trip")
+
+        let ungroupedWeb = [
+            webRecord(id: "legacy-first", word: "ging", answer: "went", createdAt: 1),
+            webRecord(id: "legacy-second", word: "gegangen", answer: "gone", createdAt: 2)
+        ]
+        let parityRepair = WebWordRecordMetadataRepair.repair(
+            ungroupedWeb,
+            language: .german,
+            lemmaResolver: { _, _ in "gehen" }
+        )
+        assert(parityRepair.didChange, "legacy web rows without parity metadata should be repaired")
+        assert(Set(parityRepair.records.compactMap(\.vocabularyID)) == ["legacy-first"], "inflected web occurrences should receive one stable vocabulary identity")
+        assert(parityRepair.records.allSatisfy { $0.lemma == "gehen" }, "web repair should attach the resolved lemma")
+        assert(parityRepair.records.map(\.occurrenceSurfaceForm) == ["ging", "gegangen"], "web repair should preserve exact occurrence surfaces")
+
         assert(store.deleteWebRecords(documentID: documentID, ids: ["web-a"]), "Web delete(ids:) should succeed")
         assert(store.loadWebRecords(documentID: documentID).map(\.id) == ["web-b"], "Web delete(ids:) should remove only selected rows")
 
@@ -202,6 +244,28 @@ struct SQLiteWordRecordStoreTestRunner {
             assert(migrated.count == 2, "legacy occurrence rows should migrate without data loss")
             assert(Set(migrated.compactMap(\.vocabularyID)).count == 1, "legacy duplicate words should migrate into one canonical vocabulary row")
             assert(migrated.allSatisfy { $0.answer == "legacy definition" }, "legacy definitions should be shared after migration")
+        }
+
+        let legacyWebDBURL = dbDirectory.appendingPathComponent("legacy-web-word-records.sqlite3")
+        createLegacyWebDatabase(at: legacyWebDBURL)
+        do {
+            let legacyStore = WordRecordSQLiteStore(databaseURL: legacyWebDBURL)
+            let legacy = legacyStore.loadWebRecords(documentID: "legacy-web-doc")
+            assert(legacy.count == 1, "additive web migration should preserve legacy rows")
+            assert(legacy.first?.occurrenceSurfaceForm == "ging", "legacy web rows should fall back to their saved word as surface")
+
+            var repaired = legacy[0]
+            repaired.vocabularyID = "legacy-go"
+            repaired.lemma = "gehen"
+            repaired.surfaceForm = "ging"
+            assert(legacyStore.upsertWebRecord(documentID: "legacy-web-doc", record: repaired), "migrated web columns should accept parity metadata")
+        }
+        do {
+            let reopened = WordRecordSQLiteStore(databaseURL: legacyWebDBURL)
+            let repaired = reopened.loadWebRecords(documentID: "legacy-web-doc").first
+            assert(repaired?.vocabularyID == "legacy-go", "migrated web vocabulary identity should persist after reopen")
+            assert(repaired?.lemma == "gehen", "migrated web lemma should persist after reopen")
+            assert(repaired?.surfaceForm == "ging", "migrated web surface should persist after reopen")
         }
 
         // MARK: - German flexion cache
@@ -605,4 +669,23 @@ private func createLegacyPDFDatabase(at url: URL) {
       ('legacy-doc','legacy-b','straße',3,'{"x":15,"y":25,"width":40,"height":12}','zweite Stelle','Definition','legacy definition',NULL,NULL,2,NULL);
     """
     assert(sqlite3_exec(db, sql, nil, nil, nil) == SQLITE_OK, "legacy migration fixture should be created")
+}
+
+private func createLegacyWebDatabase(at url: URL) {
+    try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+    var db: OpaquePointer?
+    assert(sqlite3_open(url.path, &db) == SQLITE_OK, "legacy web migration fixture should open")
+    defer { sqlite3_close(db) }
+    let sql = """
+    CREATE TABLE web_word_records (
+        document_id TEXT NOT NULL, id TEXT NOT NULL, word TEXT NOT NULL,
+        context TEXT NOT NULL, occurrence_index INTEGER, scroll_progress REAL NOT NULL,
+        question TEXT NOT NULL, answer TEXT NOT NULL, dictionary_tags TEXT,
+        dictionary_frequency INTEGER, created_at REAL NOT NULL, srs_json TEXT,
+        PRIMARY KEY(document_id, id)
+    );
+    INSERT INTO web_word_records VALUES
+      ('legacy-web-doc','legacy-web-a','ging','Er ging nach Hause.',7,0.42,'','went',NULL,NULL,1,NULL);
+    """
+    assert(sqlite3_exec(db, sql, nil, nil, nil) == SQLITE_OK, "legacy web migration fixture should be created")
 }

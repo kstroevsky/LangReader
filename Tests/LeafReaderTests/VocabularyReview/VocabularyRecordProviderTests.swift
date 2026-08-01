@@ -24,7 +24,10 @@ struct StoredPDFWordRecord {
 
 struct StoredWebWordRecord {
     let id: String
+    var vocabularyID: String? = nil
     let word: String
+    var lemma: String? = nil
+    var surfaceForm: String? = nil
     let context: String
     let occurrenceIndex: Int?
     let scrollProgress: Double
@@ -34,6 +37,10 @@ struct StoredWebWordRecord {
     var dictionaryFrequency: Int?
     let createdAt: Date
     var srs: VocabularySRSState?
+
+    var occurrenceSurfaceForm: String {
+        surfaceForm ?? word
+    }
 }
 
 private func assert(_ condition: @autoclosure () -> Bool, _ message: String) {
@@ -200,6 +207,36 @@ struct VocabularyRecordProviderTestRunner {
             english.forms.first?.label == nil,
             "an English record must reach the view model with no German label"
         )
+
+        // EPUB and DOCX records now carry the same lemma/surface occurrence
+        // model as PDF records; their locator remains web-specific.
+        let webInflected = StoredWebWordRecord(
+            id: "web-inflected",
+            vocabularyID: "web-go",
+            word: "gehen",
+            lemma: "gehen",
+            surfaceForm: "gegangen",
+            context: "Er ist nach Hause gegangen.",
+            occurrenceIndex: 12,
+            scrollProgress: 0.42,
+            question: "",
+            answer: "went",
+            dictionaryTags: nil,
+            dictionaryFrequency: nil,
+            createdAt: Date(timeIntervalSince1970: 8),
+            srs: nil
+        )
+        let webRecords = VocabularyRecordProvider.records(
+            documentKind: .epub,
+            pdfRecords: [],
+            webRecords: [webInflected],
+            pdfContext: { _ in "" },
+            formLabel: { _, _, _ in .partizipII }
+        )
+        assert(webRecords.first?.lemma == "gehen", "EPUB/DOCX lemma should reach the vocabulary model")
+        assert(webRecords.first?.forms.first?.surface == "gegangen", "EPUB/DOCX surface form should reach the vocabulary model")
+        assert(webRecords.first?.forms.first?.label == .partizipII, "EPUB/DOCX surface labels should use the same pipeline as PDF")
+        assert(webRecords.first?.occurrences.first?.surfaceForm == "gegangen", "web navigation occurrence should retain the exact surface")
 
         // MARK: - Form merging
 

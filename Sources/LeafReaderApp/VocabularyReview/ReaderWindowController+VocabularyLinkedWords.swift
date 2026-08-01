@@ -30,9 +30,26 @@ extension ReaderWindowController {
             return
         }
         if let index = storedWebWordRecords.firstIndex(where: { $0.id == linkID }) {
-            storedWebWordRecords[index].question = question
-            storedWebWordRecords[index].answer = trimmedAnswer
-            saveStoredWebWordRecord(storedWebWordRecords[index])
+            let target = storedWebWordRecords[index]
+            let targetKey = target.vocabularyID
+                ?? GermanLemmaResolver.groupingKey(
+                    word: target.word,
+                    lemma: target.lemma,
+                    language: vocabularyDocumentLanguage
+                )
+            for recordIndex in storedWebWordRecords.indices {
+                let record = storedWebWordRecords[recordIndex]
+                let recordKey = record.vocabularyID
+                    ?? GermanLemmaResolver.groupingKey(
+                        word: record.word,
+                        lemma: record.lemma,
+                        language: vocabularyDocumentLanguage
+                    )
+                guard recordKey == targetKey else { continue }
+                storedWebWordRecords[recordIndex].question = question
+                storedWebWordRecords[recordIndex].answer = trimmedAnswer
+                saveStoredWebWordRecord(storedWebWordRecords[recordIndex])
+            }
             return
         }
 
@@ -60,7 +77,10 @@ extension ReaderWindowController {
         if let pending = pendingWebWordRecords.removeValue(forKey: linkID) {
             let record = StoredWebWordRecord(
                 id: pending.id,
+                vocabularyID: pending.vocabularyID,
                 word: pending.word,
+                lemma: pending.lemma,
+                surfaceForm: pending.surfaceForm,
                 context: pending.context,
                 occurrenceIndex: pending.occurrenceIndex,
                 scrollProgress: pending.scrollProgress,
@@ -103,10 +123,20 @@ extension ReaderWindowController {
     }
 
     func reusableWebWordRecord(for word: String) -> StoredWebWordRecord? {
-        let normalized = normalizedVocabularyKey(word)
+        let language = vocabularyDocumentLanguage
+        let key = GermanLemmaResolver.groupingKey(word: word, language: language)
         return storedWebWordRecords.first {
-            normalizedVocabularyKey($0.word) == normalized && !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key
+                && !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
+    }
+
+    func existingWebVocabularyID(for word: String, lemma: String? = nil) -> String? {
+        let language = vocabularyDocumentLanguage
+        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+        return storedWebWordRecords.first {
+            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key
+        }?.vocabularyID
     }
 
     func normalizedVocabularyKey(_ word: String) -> String {

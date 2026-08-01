@@ -565,7 +565,10 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
         CREATE TABLE IF NOT EXISTS web_word_records (
             document_id TEXT NOT NULL,
             id TEXT NOT NULL,
+            vocabulary_id TEXT,
             word TEXT NOT NULL,
+            lemma TEXT,
+            surface_form TEXT,
             context TEXT NOT NULL,
             occurrence_index INTEGER,
             scroll_progress REAL NOT NULL,
@@ -615,6 +618,9 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
 
     private func migrateColumns() {
         ensureColumn(table: "web_word_records", name: "occurrence_index", definition: "INTEGER")
+        ensureColumn(table: "web_word_records", name: "vocabulary_id", definition: "TEXT")
+        ensureColumn(table: "web_word_records", name: "lemma", definition: "TEXT")
+        ensureColumn(table: "web_word_records", name: "surface_form", definition: "TEXT")
         ensureColumn(table: "pdf_word_records", name: "dictionary_tags", definition: "TEXT")
         ensureColumn(table: "web_word_records", name: "dictionary_tags", definition: "TEXT")
         ensureColumn(table: "pdf_word_records", name: "dictionary_frequency", definition: "INTEGER")

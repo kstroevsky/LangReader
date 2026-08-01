@@ -167,20 +167,43 @@ struct PDFVocabularySQLiteMapper {
 struct WebWordRecordSQLiteMapper {
     enum Column: Int32 {
         case id = 0
-        case word = 1
-        case context = 2
-        case occurrenceIndex = 3
-        case scrollProgress = 4
-        case question = 5
-        case answer = 6
-        case dictionaryTags = 7
-        case dictionaryFrequency = 8
-        case createdAt = 9
-        case srsJSON = 10
+        case vocabularyID = 1
+        case word = 2
+        case lemma = 3
+        case surfaceForm = 4
+        case context = 5
+        case occurrenceIndex = 6
+        case scrollProgress = 7
+        case question = 8
+        case answer = 9
+        case dictionaryTags = 10
+        case dictionaryFrequency = 11
+        case createdAt = 12
+        case srsJSON = 13
+    }
+
+    private enum Bind: Int32 {
+        case documentID = 1
+        case id = 2
+        case vocabularyID = 3
+        case word = 4
+        case lemma = 5
+        case surfaceForm = 6
+        case context = 7
+        case occurrenceIndex = 8
+        case scrollProgress = 9
+        case question = 10
+        case answer = 11
+        case dictionaryTags = 12
+        case dictionaryFrequency = 13
+        case createdAt = 14
+        case srsJSON = 15
     }
 
     static let selectSQL = """
-    SELECT id, word, context, occurrence_index, scroll_progress, question, answer, dictionary_tags, dictionary_frequency, created_at, srs_json
+    SELECT id, vocabulary_id, word, lemma, surface_form, context,
+           occurrence_index, scroll_progress, question, answer,
+           dictionary_tags, dictionary_frequency, created_at, srs_json
     FROM web_word_records
     WHERE document_id = ?
     ORDER BY created_at ASC, id ASC
@@ -188,9 +211,11 @@ struct WebWordRecordSQLiteMapper {
 
     static let insertSQL = """
     INSERT OR REPLACE INTO web_word_records(
-        document_id, id, word, context, occurrence_index, scroll_progress, question, answer, dictionary_tags, dictionary_frequency, created_at, srs_json
+        document_id, id, vocabulary_id, word, lemma, surface_form, context,
+        occurrence_index, scroll_progress, question, answer, dictionary_tags,
+        dictionary_frequency, created_at, srs_json
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
     let codec: WordRecordSQLiteJSONCodec
@@ -205,7 +230,10 @@ struct WebWordRecordSQLiteMapper {
         }
         return StoredWebWordRecord(
             id: id,
+            vocabularyID: optionalStringColumn(statement, Column.vocabularyID.rawValue),
             word: word,
+            lemma: optionalStringColumn(statement, Column.lemma.rawValue),
+            surfaceForm: optionalStringColumn(statement, Column.surfaceForm.rawValue),
             context: context,
             occurrenceIndex: sqlite3_column_type(statement, Column.occurrenceIndex.rawValue) == SQLITE_NULL
                 ? nil
@@ -221,19 +249,42 @@ struct WebWordRecordSQLiteMapper {
     }
 
     func bind(documentID: String, record: StoredWebWordRecord, to statement: OpaquePointer?) {
-        bindText(documentID, at: .documentID, statement: statement)
-        bindText(record.id, at: .id, statement: statement)
-        bindText(record.word, at: .word, statement: statement)
-        bindText(record.context, at: .firstSourceField, statement: statement)
-        bindOptionalInt(record.occurrenceIndex, at: .secondSourceField, statement: statement)
-        sqlite3_bind_double(statement, WordRecordSQLiteBindIndex.thirdSourceField.rawValue, record.scrollProgress)
-        bindText(record.question, at: .question, statement: statement)
-        bindText(record.answer, at: .answer, statement: statement)
-        bindOptionalText(record.dictionaryTags, at: .dictionaryTags, statement: statement)
-        bindOptionalInt(record.dictionaryFrequency, at: .dictionaryFrequency, statement: statement)
-        sqlite3_bind_double(statement, WordRecordSQLiteBindIndex.createdAt.rawValue, record.createdAt.timeIntervalSince1970)
-        bindOptionalText(codec.encode(record.srs), at: .srsJSON, statement: statement)
+        bindText(documentID, index: Bind.documentID.rawValue, statement: statement)
+        bindText(record.id, index: Bind.id.rawValue, statement: statement)
+        bindOptionalText(record.vocabularyID, index: Bind.vocabularyID.rawValue, statement: statement)
+        bindText(record.word, index: Bind.word.rawValue, statement: statement)
+        bindOptionalText(record.lemma, index: Bind.lemma.rawValue, statement: statement)
+        bindOptionalText(record.surfaceForm, index: Bind.surfaceForm.rawValue, statement: statement)
+        bindText(record.context, index: Bind.context.rawValue, statement: statement)
+        bindOptionalInt(record.occurrenceIndex, index: Bind.occurrenceIndex.rawValue, statement: statement)
+        sqlite3_bind_double(statement, Bind.scrollProgress.rawValue, record.scrollProgress)
+        bindText(record.question, index: Bind.question.rawValue, statement: statement)
+        bindText(record.answer, index: Bind.answer.rawValue, statement: statement)
+        bindOptionalText(record.dictionaryTags, index: Bind.dictionaryTags.rawValue, statement: statement)
+        bindOptionalInt(record.dictionaryFrequency, index: Bind.dictionaryFrequency.rawValue, statement: statement)
+        sqlite3_bind_double(statement, Bind.createdAt.rawValue, record.createdAt.timeIntervalSince1970)
+        bindOptionalText(codec.encode(record.srs), index: Bind.srsJSON.rawValue, statement: statement)
     }
+}
+
+private func bindText(_ value: String, index: Int32, statement: OpaquePointer?) {
+    sqlite3_bind_text(statement, index, value, -1, WORD_RECORD_SQLITE_TRANSIENT)
+}
+
+private func bindOptionalText(_ value: String?, index: Int32, statement: OpaquePointer?) {
+    guard let value else {
+        sqlite3_bind_null(statement, index)
+        return
+    }
+    sqlite3_bind_text(statement, index, value, -1, WORD_RECORD_SQLITE_TRANSIENT)
+}
+
+private func bindOptionalInt(_ value: Int?, index: Int32, statement: OpaquePointer?) {
+    guard let value else {
+        sqlite3_bind_null(statement, index)
+        return
+    }
+    sqlite3_bind_int64(statement, index, sqlite3_int64(value))
 }
 
 func bindText(_ value: String, at index: WordRecordSQLiteBindIndex, statement: OpaquePointer?) {
