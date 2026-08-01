@@ -2,22 +2,6 @@ import Foundation
 import CoreGraphics
 import LeafReaderCore
 
-struct TestFailure: Error, CustomStringConvertible {
-    let description: String
-}
-
-func expect(_ condition: @autoclosure () -> Bool, _ message: String) throws {
-    if !condition() {
-        throw TestFailure(description: message)
-    }
-}
-
-func expectEqual<T: Equatable>(_ lhs: T, _ rhs: T, _ message: String) throws {
-    if lhs != rhs {
-        throw TestFailure(description: "\(message). expected \(rhs), got \(lhs)")
-    }
-}
-
 /// Discards an isolated defaults suite **and** the file backing it.
 ///
 /// `removePersistentDomain(forName:)` alone empties the domain but leaves an

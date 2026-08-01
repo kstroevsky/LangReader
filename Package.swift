@@ -70,6 +70,14 @@ let package = Package(
                     "-Xlinker", "@executable_path/../Frameworks"
                 ])
             ]
+        ),
+        .testTarget(
+            name: "LeafReaderCoreTests",
+            dependencies: ["LeafReaderCore"],
+            path: "Tests/LeafReaderCoreTests",
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
+            ]
         )
     ]
 )
