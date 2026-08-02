@@ -56,6 +56,10 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
     let onDeleteNote: (ReadingNote) -> Void
     let onDocumentQuestionPrompt: DocumentQuestionPromptHandler?
     let onModelSettingsRequired: () -> Void
+    /// Unlike `AITextActionRunner` this task covers retrieval of a
+    /// document-aware prompt.  It belongs to this editor only, so closing one
+    /// note never invalidates another note's request.
+    var documentQuestionPromptTask: Task<Void, Never>?
 
     init(
         note: ReadingNote,
@@ -130,8 +134,7 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
 
     func windowWillClose(_ notification: Notification) {
         editorModel.isClosing = true
-        editorModel.cancelAIRequests()
-        aiRunner.cancel()
+        cleanupActiveAIRequest()
         if let window {
             window.parent?.removeChildWindow(window)
         }

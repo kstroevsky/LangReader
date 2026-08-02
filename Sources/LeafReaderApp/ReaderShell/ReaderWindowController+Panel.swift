@@ -29,6 +29,12 @@ extension ReaderWindowController {
 
     func openSettingsPanel(tab: AISettingsPanelController.SettingsTab) {
         guard let window else { return }
+        if aiSettingsPanelController?.selectVisibleTab(tab) == true {
+            return
+        }
+        // A controller whose panel was already dismissed must release its
+        // refresh timer and activation observer before a new panel takes over.
+        aiSettingsPanelController?.closeWithoutSaving()
         let controller = AISettingsPanelController()
         controller.onSaved = { [weak self] in
             self?.applySettingsChangesToReader()
@@ -274,8 +280,7 @@ extension ReaderWindowController {
     }
 
     func updateFullScreenButton() {
-        readerPresentation.isFullScreen = window?.styleMask.contains(.fullScreen) == true
-        topBarModel.isFullScreen = readerPresentation.isFullScreen
+        topBarModel.isFullScreen = window?.styleMask.contains(.fullScreen) == true
     }
 
     func windowDidResize(_ notification: Notification) {

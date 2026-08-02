@@ -88,7 +88,7 @@ extension ReaderWindowController {
     }
 
     func hideSearchOverlayIfClickingReader(_ event: NSEvent) {
-        guard !searchOverlay.isHidden else { return }
+        guard readerPresentation.isSearchVisible else { return }
 
         let pointInContent = contentArea.convert(event.locationInWindow, from: nil)
         guard contentArea.bounds.contains(pointInContent) else { return }

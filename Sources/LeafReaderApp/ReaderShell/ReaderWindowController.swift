@@ -58,6 +58,9 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var webView: ReaderWebView!
     lazy var pdfReaderAdapter = PDFKitReaderAdapter(view: pdfView)
     lazy var webReaderAdapter = WebKitReaderAdapter(view: webView)
+    /// The active native rendering adapter. It is selected only when a Document
+    /// Session begins loading and consumed through the reader backend seam.
+    var activeReaderBackend: (any ReaderContentBackend)?
     let contentArea = NSView()
     let pdfContainer = ClippingView()
     let pdfDimOverlay = PassthroughOverlayView()
@@ -172,7 +175,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
             windowResizeLayoutTask.cancel()
             aiPanelResizeLayoutTask.cancel()
             pendingAISourceClickWorkItem?.cancel()
-            retrievalQueryTask?.cancel()
+            cancelDocumentAgentPrompt()
             pdfWordRecordsSaveTask.cancel()
             webWordRecordsSaveTask.cancel()
             vocabularyPanelController.close()

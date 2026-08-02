@@ -94,13 +94,13 @@ extension ReaderWindowController {
             self?.exportSingleReadingNoteMarkdown(note)
         } onDeleteNote: { [weak self] note in
             self?.deleteReadingNoteWithConfirmation(note)
-        } onDocumentQuestionPrompt: { [weak self] request, completion in
-            self?.documentAgentPrompt(
+        } onDocumentQuestionPrompt: { [weak self] request in
+            guard let self else { return nil }
+            return await self.documentAgentPrompt(
                 question: request.question,
                 questionSubject: request.questionSubject,
                 context: request.context,
-                showsEvidenceBubbles: false,
-                completion: completion
+                showsEvidenceBubbles: false
             )
         } onModelSettingsRequired: { [weak self] in
             self?.openModelSettings()

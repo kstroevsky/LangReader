@@ -4,8 +4,8 @@ import LeafReaderCore
 extension ReaderWindowController {
     @objc func applyPageFromField() {
         guard currentDocumentKind == .pdf,
-              let document = pdfView.document,
-              document.pageCount > 0 else {
+              let backend = activePagedReaderBackend,
+              backend.pageCount > 0 else {
             updatePageLabel()
             window?.makeFirstResponder(currentDocumentKind == .pdf ? pdfView : webView)
             return
@@ -14,21 +14,20 @@ extension ReaderWindowController {
         guard let requestedPage = ReaderFieldInput.pageNumber(from: pageLabel.stringValue),
               let targetIndex = ReaderFieldInput.pageIndex(
                   fromTyped: requestedPage,
-                  pageCount: document.pageCount
+                  pageCount: backend.pageCount
               ) else {
             updatePageLabel()
             window?.makeFirstResponder(pdfView)
             return
         }
 
-        guard let page = document.page(at: targetIndex) else {
+        guard backend.go(toPage: targetIndex), let page = pdfView.currentPage else {
             updatePageLabel()
             window?.makeFirstResponder(pdfView)
             return
         }
 
         clearAISelectionForNavigation()
-        pdfView.go(to: page)
         documentSession.position.lastPageIndex = targetIndex
         scrollPageToTop(page)
         updatePageLabel()
@@ -76,8 +75,8 @@ extension ReaderWindowController {
             """)
             return
         }
-        guard let firstPage = pdfView.document?.page(at: 0) else { return }
-        pdfView.go(to: firstPage)
+        guard activePagedReaderBackend?.go(toPage: 0) == true,
+              let firstPage = pdfView.currentPage else { return }
         scrollPageToTop(firstPage)
         updatePageLabel()
         saveSession()
@@ -96,11 +95,10 @@ extension ReaderWindowController {
             jumpToWebProgress(storedProgress?.scrollProgress ?? webScrollProgress, animated: true)
             return
         }
-        guard let document = pdfView.document, document.pageCount > 0 else { return }
+        guard let backend = activePagedReaderBackend, backend.pageCount > 0 else { return }
         let storedProgress = sessionStore.loadFarthestPDFProgress()
-        let targetIndex = min(max(storedProgress?.pageIndex ?? currentPageIndex() ?? 0, 0), document.pageCount - 1)
-        guard let page = document.page(at: targetIndex) else { return }
-        pdfView.go(to: page)
+        let targetIndex = min(max(storedProgress?.pageIndex ?? backend.currentPageIndex ?? 0, 0), backend.pageCount - 1)
+        guard backend.go(toPage: targetIndex), let page = pdfView.currentPage else { return }
         documentSession.position.lastPageIndex = targetIndex
         if let storedProgress, ReaderSessionPolicy.isRestorablePDFScale(storedProgress.scale) {
             applyReadablePDFScale(storedProgress.scale)
@@ -151,8 +149,8 @@ extension ReaderWindowController {
 
 
     private func turnPDFPage(direction: PDFPageDirection) {
-        guard let document = pdfView.document, document.pageCount > 0 else { return }
-        let currentIndex = currentPDFViewportAnchor()?.pageIndex ?? currentPageIndex() ?? 0
+        guard let backend = activePagedReaderBackend, backend.pageCount > 0 else { return }
+        let currentIndex = currentPDFViewportAnchor()?.pageIndex ?? backend.currentPageIndex ?? 0
         let targetIndex: Int
         switch direction {
         case .previous:
@@ -161,8 +159,9 @@ extension ReaderWindowController {
             targetIndex = currentIndex + 1
         }
         guard targetIndex >= 0,
-              targetIndex < document.pageCount,
-              let page = document.page(at: targetIndex) else {
+              targetIndex < backend.pageCount,
+              backend.go(toPage: targetIndex),
+              let page = pdfView.currentPage else {
             updatePageLabel()
             saveSession()
             return

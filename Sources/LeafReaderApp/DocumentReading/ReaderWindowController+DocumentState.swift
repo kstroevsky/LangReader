@@ -77,7 +77,7 @@ extension ReaderWindowController {
     }
 
     func syncPDFZoomPercentFromNative() {
-        guard currentDocumentKind == .pdf, let percent = pdfReaderAdapter.nativeZoomPercent else { return }
+        guard currentDocumentKind == .pdf, let percent = activeReaderBackend?.zoomPercent else { return }
         setPDFZoomPercent(percent)
     }
 

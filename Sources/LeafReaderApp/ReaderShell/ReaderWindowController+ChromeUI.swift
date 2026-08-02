@@ -34,7 +34,6 @@ extension ReaderWindowController {
 
     func configureLoadingOverlay() {
         loadingOverlay.translatesAutoresizingMaskIntoConstraints = false
-        loadingOverlay.isHidden = true
         loadingOverlay.wantsLayer = true
         loadingOverlay.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.86).cgColor
 
@@ -51,6 +50,7 @@ extension ReaderWindowController {
 
         loadingOverlay.addSubview(loadingIndicator)
         loadingOverlay.addSubview(loadingLabel)
+        renderReaderShellPresentation()
     }
 
     func iconButton(symbol: String, action: Selector) -> NSButton {

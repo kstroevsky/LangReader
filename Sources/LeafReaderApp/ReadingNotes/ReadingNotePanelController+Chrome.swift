@@ -67,8 +67,6 @@ extension ReadingNotePanelController {
     }
 
     private func cancelAIRequestFromSwiftUI() {
-        editorModel.cancelAIRequests()
-        aiRunner.cancel()
-        setRunning(false, title: "")
+        cleanupActiveAIRequest()
     }
 }

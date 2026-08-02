@@ -114,7 +114,7 @@ extension ReadingNotePanelController {
             NSSound.beep()
             return
         }
-        removeAIPlaceholder()
+        cleanupActiveAIRequest()
         let requestID = editorModel.beginAIRequest()
         setRunning(true, title: title)
         aiToolbarContainer.isHidden = true
@@ -144,7 +144,7 @@ extension ReadingNotePanelController {
     }
 
     func runTemplatePolish(_ template: ReadingNoteTemplate, markdown: String) {
-        removeAIPlaceholder()
+        cleanupActiveAIRequest()
         let requestID = editorModel.beginAIRequest()
         let title = AppText.localized("模板润色", "Template polish")
         let insertionMode = templateInsertionMode()
@@ -322,20 +322,21 @@ extension ReadingNotePanelController {
         setAskInputVisible(false)
         askInputField.stringValue = ""
         window?.makeFirstResponder(textView)
-        removeAIPlaceholder()
+        cleanupActiveAIRequest()
         let requestID = editorModel.beginAIRequest()
         setRunning(true, title: AppText.localized("问 AI", "Ask AI"))
         appendAIPlaceholder(title: request.question)
         if let onDocumentQuestionPrompt {
-            onDocumentQuestionPrompt(documentQuestionPromptRequest(for: request)) { [weak self] prompt in
-                DispatchQueue.main.async {
-                    guard let self else { return }
-                    guard self.editorModel.canApplyAIResult(requestID) else { return }
-                    if let prompt, !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        self.runAskPrompt(prompt, request: request, requestID: requestID)
-                    } else {
-                        self.runAskFallback(request, requestID: requestID)
-                    }
+            let documentRequest = documentQuestionPromptRequest(for: request)
+            documentQuestionPromptTask = Task { [weak self] in
+                let prompt = await onDocumentQuestionPrompt(documentRequest)
+                guard let self, !Task.isCancelled,
+                      self.editorModel.canApplyAIResult(requestID) else { return }
+                self.documentQuestionPromptTask = nil
+                if let prompt, !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    self.runAskPrompt(prompt, request: request, requestID: requestID)
+                } else {
+                    self.runAskFallback(request, requestID: requestID)
                 }
             }
             return
@@ -379,6 +380,7 @@ extension ReadingNotePanelController {
 
     private func finishAskQuestion(_ result: Result<String, Error>, request: AskRequest, requestID: UUID) {
         guard editorModel.canApplyAIResult(requestID) else { return }
+        documentQuestionPromptTask = nil
         editorModel.finishAIRequest(requestID)
         setRunning(false, title: "")
         switch result {
@@ -399,6 +401,20 @@ extension ReadingNotePanelController {
     func setRunning(_ running: Bool, title: String) {
         editorModel.statusRunning(title, isRunning: running)
         refreshAIToolbar()
+    }
+
+    /// Every terminal path (cancel, supersession, close, an empty response, or
+    /// a failed request) comes through here before a save may observe editor
+    /// content.  The serializer has a second, defensive transient-content
+    /// filter, but normal operation removes the placeholder immediately.
+    func cleanupActiveAIRequest() {
+        documentQuestionPromptTask?.cancel()
+        documentQuestionPromptTask = nil
+        editorModel.cancelAIRequests()
+        aiRunner.cancel()
+        removeAIPlaceholder()
+        editorModel.pendingAskSelectedText = ""
+        setRunning(false, title: "")
     }
 
     private func userFacingError(_ error: Error) -> String {

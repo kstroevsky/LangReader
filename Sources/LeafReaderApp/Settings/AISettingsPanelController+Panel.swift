@@ -2,6 +2,18 @@ import Cocoa
 import LeafReaderCore
 
 extension AISettingsPanelController {
+    /// Selects a tab in the panel that is already on screen. Settings menu
+    /// actions can arrive while the user is editing another tab; creating a
+    /// second modal panel in that case leaves several activation observers
+    /// competing to become key and can surface the wrong page.
+    @discardableResult
+    func selectVisibleTab(_ tab: SettingsTab) -> Bool {
+        guard let panel, panel.isVisible else { return false }
+        settingsTabChanged(index: tab.rawValue)
+        ModalOverlayManager.shared.reactivate(panel)
+        return true
+    }
+
     func showPanel(_ panel: NSWindow, attachedTo parent: NSWindow) {
         ModalOverlayManager.shared.present(panel, attachedTo: parent)
     }

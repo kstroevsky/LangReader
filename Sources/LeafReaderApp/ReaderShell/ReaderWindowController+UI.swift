@@ -92,9 +92,12 @@ extension ReaderWindowController {
     }
 
     private func configureSearchOverlay(in contentView: NSView) {
-        searchOverlay.isHidden = true
+        searchOverlay.setAccessibilityIdentifier("readerSearchOverlay")
         searchOverlay.onSubmit = { [weak self] query in
             self?.performSearch(query)
+        }
+        searchOverlay.onQueryChanged = { [weak self] query in
+            self?.mutateReaderPresentation { $0.setSearchQuery(query) }
         }
         searchOverlay.onPrevious = { [weak self] in
             self?.goToPreviousSearchResult()
@@ -107,6 +110,7 @@ extension ReaderWindowController {
         }
         searchOverlay.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(searchOverlay, positioned: .above, relativeTo: contentArea)
+        renderReaderShellPresentation()
     }
 
     func configurePDFReaderView() {

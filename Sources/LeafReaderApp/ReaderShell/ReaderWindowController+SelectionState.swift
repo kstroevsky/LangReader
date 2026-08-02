@@ -93,9 +93,8 @@ extension ReaderWindowController {
     }
 
     private func clearReaderDocumentSelection() {
-        if currentDocumentKind == .pdf {
-            pdfView.clearSelection()
-        } else {
+        activeReaderBackend?.clearSelection()
+        if currentDocumentKind != .pdf {
             clearWebSearchSelection()
         }
     }

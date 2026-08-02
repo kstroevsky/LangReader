@@ -78,6 +78,28 @@ let package = Package(
             linkerSettings: [
                 .linkedLibrary("sqlite3")
             ]
+        ),
+        // App-target tests exercise the AppKit/SwiftUI ownership seam.  Core
+        // tests intentionally cannot import these types.
+        .testTarget(
+            name: "LeafReaderAppTests",
+            dependencies: ["LeafReaderApp", "LeafReaderCore"],
+            path: "Tests/LeafReaderAppTests",
+            swiftSettings: [
+                .unsafeFlags(["-F", sparkleHome]),
+                .swiftLanguageMode(.v6)
+            ],
+            linkerSettings: [
+                .linkedFramework("Cocoa"),
+                .linkedFramework("PDFKit"),
+                .linkedFramework("WebKit"),
+                .unsafeFlags([
+                    "-F", sparkleHome,
+                    "-framework", "Sparkle",
+                    "-Xlinker", "-rpath",
+                    "-Xlinker", sparkleHome
+                ])
+            ]
         )
     ]
 )

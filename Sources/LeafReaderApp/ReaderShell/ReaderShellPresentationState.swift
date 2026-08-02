@@ -10,11 +10,9 @@ struct ReaderShellPresentationState: Equatable {
     var searchQuery = ""
     var isAIPanelCollapsed = true
     var preferredAIWidth: CGFloat = 420
-    var isFullScreen = false
 
-    mutating func beginDocumentLoading(query: String = "") {
+    mutating func beginDocumentLoading() {
         isDocumentLoading = true
-        searchQuery = query
     }
 
     mutating func finishDocumentLoading() {
@@ -32,4 +30,28 @@ struct ReaderShellPresentationState: Equatable {
     mutating func setSearchQuery(_ query: String) {
         searchQuery = query
     }
+
+    /// A document change is the only intentional point at which a search is
+    /// discarded. Starting a loading indicator must not silently change it.
+    mutating func resetForDocumentChange() {
+        isSearchVisible = false
+        searchQuery = ""
+    }
+
+    var projection: ReaderShellProjection {
+        ReaderShellProjection(
+            loadingOverlayHidden: !isDocumentLoading,
+            searchOverlayHidden: !isSearchVisible,
+            searchOverlayClearance: isSearchVisible ? 150 : 64
+        )
+    }
+}
+
+/// The complete AppKit projection of Reader Shell presentation state. Keeping
+/// the inversion here means native views cannot become a second source of
+/// truth for visibility or layout decisions.
+struct ReaderShellProjection: Equatable {
+    let loadingOverlayHidden: Bool
+    let searchOverlayHidden: Bool
+    let searchOverlayClearance: CGFloat
 }

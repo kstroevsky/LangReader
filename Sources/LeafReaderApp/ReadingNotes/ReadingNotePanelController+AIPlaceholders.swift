@@ -79,9 +79,15 @@ extension ReadingNotePanelController {
             string: text,
             attributes: [
                 .font: NSFont.systemFont(ofSize: Metrics.editorFontSize),
-                .foregroundColor: ReadingNoteTheme.secondaryText(ReaderTheme.selected)
+                .foregroundColor: ReadingNoteTheme.secondaryText(ReaderTheme.selected),
+                .readingNoteTransientAIPlaceholder: true
             ]
         ))
+        output.addAttribute(
+            .readingNoteTransientAIPlaceholder,
+            value: true,
+            range: NSRange(location: 0, length: output.length)
+        )
         return output
     }
 }

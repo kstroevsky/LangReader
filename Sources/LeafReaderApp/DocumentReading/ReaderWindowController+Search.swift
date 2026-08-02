@@ -4,24 +4,22 @@ import WebKit
 
 extension ReaderWindowController {
     @objc func showSearchOverlay() {
-        readerPresentation.showSearch()
-        searchOverlay.isHidden = !readerPresentation.isSearchVisible
+        mutateReaderPresentation { $0.showSearch() }
         window?.makeFirstResponder(searchOverlay.searchField)
     }
 
     func hideSearchOverlay() {
-        readerPresentation.hideSearch()
-        searchOverlay.isHidden = readerPresentation.isSearchVisible
+        mutateReaderPresentation { $0.hideSearch() }
         window?.makeFirstResponder(currentDocumentKind == .pdf ? pdfView : webView)
     }
 
     func performSearch(_ rawQuery: String) {
         let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-        readerPresentation.setSearchQuery(query)
+        mutateReaderPresentation { $0.setSearchQuery(query) }
         guard !query.isEmpty else {
             clearSearchState()
             clearPDFSelectionState()
-            pdfReaderAdapter.clearSelection()
+            activeReaderBackend?.clearSelection()
             clearWebSearchSelection()
             clearSearchSelectionForAI()
             return
@@ -54,11 +52,11 @@ extension ReaderWindowController {
 
     func goToPreviousSearchResult() {
         guard currentDocumentKind == .pdf else {
-            performWebSearch(searchOverlay.searchField.stringValue, backwards: true)
+            performWebSearch(readerPresentation.searchQuery, backwards: true)
             return
         }
         guard !searchResults.isEmpty else {
-            performSearch(searchOverlay.searchField.stringValue)
+            performSearch(readerPresentation.searchQuery)
             return
         }
         searchCursor.retreat()
@@ -67,11 +65,11 @@ extension ReaderWindowController {
 
     func goToNextSearchResult() {
         guard currentDocumentKind == .pdf else {
-            performWebSearch(searchOverlay.searchField.stringValue, backwards: false)
+            performWebSearch(readerPresentation.searchQuery, backwards: false)
             return
         }
         guard !searchResults.isEmpty else {
-            performSearch(searchOverlay.searchField.stringValue)
+            performSearch(readerPresentation.searchQuery)
             return
         }
         searchCursor.advance()
@@ -82,7 +80,7 @@ extension ReaderWindowController {
         guard !searchResults.isEmpty else {
             searchOverlay.setResultText("0 / 0")
             clearPDFSelectionState()
-            pdfReaderAdapter.clearSelection()
+            activeReaderBackend?.clearSelection()
             clearSearchSelectionForAI()
             return
         }
@@ -115,7 +113,7 @@ extension ReaderWindowController {
 
         pdfView.go(to: page)
         let pageBounds = page.bounds(for: pdfView.displayBox)
-        let overlayClearance = searchOverlay.isHidden ? CGFloat(64) : CGFloat(150)
+        let overlayClearance = readerPresentation.projection.searchOverlayClearance
         let yOffset = overlayClearance / max(pdfView.scaleFactor, 0.1)
         let destinationY = min(pageBounds.maxY, selectionBounds.maxY + yOffset)
         let destination = PDFDestination(
@@ -128,6 +126,7 @@ extension ReaderWindowController {
 
     func performWebSearch(_ rawQuery: String, backwards: Bool) {
         let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        mutateReaderPresentation { $0.setSearchQuery(query) }
         guard !query.isEmpty else {
             clearSearchState()
             clearWebSearchSelection()

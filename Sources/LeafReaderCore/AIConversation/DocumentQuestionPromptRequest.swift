@@ -1,6 +1,6 @@
 import Foundation
 
-package struct DocumentQuestionPromptRequest {
+package struct DocumentQuestionPromptRequest: Sendable {
     package let question: String
     package let questionSubject: String
     package let context: String
@@ -12,7 +12,10 @@ package struct DocumentQuestionPromptRequest {
     }
 }
 
-package typealias DocumentQuestionPromptHandler = (
-    _ request: DocumentQuestionPromptRequest,
-    _ completion: @escaping (String?) -> Void
-) -> Void
+/// A note editor asks the reader for document-aware context without sharing a
+/// callback lifetime with another editor.  The handler deliberately returns a
+/// value instead of retaining a completion: the editor owns and cancels the
+/// request-scoped task that awaits it.
+package typealias DocumentQuestionPromptHandler = @MainActor @Sendable (
+    _ request: DocumentQuestionPromptRequest
+) async -> String?

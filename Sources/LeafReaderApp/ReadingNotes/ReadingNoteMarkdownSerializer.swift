@@ -1,7 +1,17 @@
 import Cocoa
 
+extension NSAttributedString.Key {
+    /// Never serialised. This lives with the serializer rather than a panel
+    /// extension because both editor code and standalone Markdown tests need
+    /// the same persistence boundary.
+    static let readingNoteTransientAIPlaceholder = NSAttributedString.Key(
+        "LeafReader.ReadingNote.transientAIPlaceholder"
+    )
+}
+
 enum ReadingNoteMarkdownSerializer {
     static func markdown(from attributed: NSAttributedString) -> String {
+        let attributed = omittingTransientContent(from: attributed)
         let output = NSMutableString()
         (attributed.string as NSString).enumerateSubstrings(
             in: NSRange(location: 0, length: attributed.length),
@@ -12,6 +22,23 @@ enum ReadingNoteMarkdownSerializer {
             output.append("\n")
         }
         return (output as String).trimmingCharacters(in: .whitespacesAndNewlines) + "\n"
+    }
+
+    private static func omittingTransientContent(from attributed: NSAttributedString) -> NSAttributedString {
+        let filtered = NSMutableAttributedString(attributedString: attributed)
+        var transientRanges: [NSRange] = []
+        filtered.enumerateAttribute(
+            .readingNoteTransientAIPlaceholder,
+            in: NSRange(location: 0, length: filtered.length)
+        ) { value, range, _ in
+            if value != nil {
+                transientRanges.append(range)
+            }
+        }
+        for range in transientRanges.reversed() {
+            filtered.deleteCharacters(in: range)
+        }
+        return filtered
     }
 
     private static func markdownLine(from attributed: NSAttributedString) -> String {

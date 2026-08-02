@@ -166,7 +166,7 @@ extension ReaderWindowController {
         NSLog("LeafReader EPUB diagnostics for %@: %@", fileName, diagnostics.joined(separator: " | "))
     }
 
-    func scheduleWebPlainTextLoad(_ loader: (() -> String)?, generation: Int) {
+    func scheduleWebPlainTextLoad(_ loader: (@Sendable () -> String)?, generation: Int) {
         guard let loader else { return }
         let documentID = currentFileMD5
         DispatchQueue.global(qos: .utility).async { [weak self] in

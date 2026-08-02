@@ -73,10 +73,10 @@ extension ReaderWindowController {
             updatePageLabelTextColor()
             return
         }
-        if let nativePageIndex = pdfReaderAdapter.currentPageIndex {
+        if let nativePageIndex = activePagedReaderBackend?.currentPageIndex {
             documentSession.position.lastPageIndex = nativePageIndex
         }
-        let pageCount = max(pdfReaderAdapter.pageCount, 1)
+        let pageCount = max(activePagedReaderBackend?.pageCount ?? 0, 1)
         let pageIndex = min(max(documentSession.position.lastPageIndex ?? 0, 0), pageCount - 1)
         pageLabel.stringValue = ReaderProgressFormatter.pdfPageText(pageIndex: pageIndex, pageCount: pageCount)
         pageLabel.toolTip = pdfProgressTooltip(pageIndex: pageIndex, pageCount: pageCount)
@@ -260,7 +260,7 @@ extension ReaderWindowController {
     }
 
     func applyReadablePDFScale(_ scale: CGFloat = ReaderWindowController.minimumReadablePDFScale) {
-        pdfReaderAdapter.setScaleFactor(min(max(scale, Self.minimumReadablePDFScale), 8))
+        _ = activeReaderBackend?.setZoomPercent(Int(round(min(max(scale, Self.minimumReadablePDFScale), 8) * 100)))
         syncPDFZoomPercentFromNative()
         updateZoomLabel()
     }

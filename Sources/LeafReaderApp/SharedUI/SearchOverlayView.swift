@@ -10,6 +10,7 @@ final class SearchOverlayView: NSView {
     private let separator = NSView()
 
     var onSubmit: ((String) -> Void)?
+    var onQueryChanged: ((String) -> Void)?
     var onPrevious: (() -> Void)?
     var onNext: (() -> Void)?
     var onClose: (() -> Void)?
@@ -29,6 +30,11 @@ final class SearchOverlayView: NSView {
 
     func setResultText(_ text: String) {
         resultLabel.stringValue = text
+    }
+
+    func setQuery(_ query: String) {
+        guard searchField.stringValue != query else { return }
+        searchField.stringValue = query
     }
 
     func setDarkMode(_ enabled: Bool) {
@@ -64,6 +70,8 @@ final class SearchOverlayView: NSView {
         searchField.target = self
         searchField.action = #selector(submitSearch)
         searchField.cell?.sendsActionOnEndEditing = false
+        searchField.delegate = self
+        searchField.setAccessibilityIdentifier("readerSearchField")
 
         resultLabel.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .medium)
         resultLabel.textColor = ReaderTheme.selected.secondaryTextColor
@@ -135,5 +143,11 @@ final class SearchOverlayView: NSView {
 
     @objc private func closeSearch() {
         onClose?()
+    }
+}
+
+extension SearchOverlayView: NSTextFieldDelegate {
+    func controlTextDidChange(_ notification: Notification) {
+        onQueryChanged?(searchField.stringValue)
     }
 }
