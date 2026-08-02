@@ -32,8 +32,20 @@ echo "==> Checking UI theme coverage"
 echo "==> Checking core portability"
 ./scripts/check_core_portable.sh
 
-echo "==> Running tests"
+echo "==> Checking Reader native-view access seam"
+bash ./scripts/check_reader_native_access.sh
+
+echo "==> Building with strict Swift 6 warnings"
+swift build -Xswiftc -warnings-as-errors
+
+echo "==> Running strict Swift 6 tests"
+swift test -Xswiftc -warnings-as-errors
+
+echo "==> Running regression harness"
 ./scripts/run_tests.sh
+
+echo "==> Testing performance-capture validator"
+bash ./scripts/test_perf_capture_validator.sh
 
 if [[ "$RUN_BUILD" -eq 1 ]]; then
   echo "==> Building docs site"

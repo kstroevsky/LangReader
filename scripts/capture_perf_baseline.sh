@@ -22,6 +22,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP_NAME="Leaf Vocabulary"
 APP_BINARY="$ROOT_DIR/$APP_NAME.app/Contents/MacOS/$APP_NAME"
 MANIFEST_TOOL="$ROOT_DIR/scripts/private_perf_fixture_manifest.swift"
+VALIDATOR="$ROOT_DIR/scripts/validate_perf_capture.swift"
 export CLANG_MODULE_CACHE_PATH="${CLANG_MODULE_CACHE_PATH:-/private/tmp/leafreader-clang-cache}"
 
 if [[ $# -lt 1 ]]; then
@@ -62,30 +63,55 @@ if [[ ! -x "$APP_BINARY" ]]; then
   exit 2
 fi
 mkdir -p "$(dirname "$OUT_BASE")"
+RUN_DIRECTORY="$(mktemp -d "$(dirname "$OUT_BASE")/.perf-capture.XXXXXX")"
+RUN_BASE="$RUN_DIRECTORY/report"
+RUN_STARTED="$(date +%s)"
+PERFORMANCE_ENVIRONMENT_INSTALLED=0
 
 quit_app() { osascript -e "tell application \"$APP_NAME\" to quit" >/dev/null 2>&1 || true; }
+app_is_running() { pgrep -x "$APP_NAME" >/dev/null; }
 wait_gone() {
   for _ in $(seq 1 50); do pgrep -x "$APP_NAME" >/dev/null || return 0; sleep 0.2; done
 }
+clear_performance_environment() {
+  if [[ "$PERFORMANCE_ENVIRONMENT_INSTALLED" == "1" ]]; then
+    launchctl unsetenv LEAFVOCAB_PERF || true
+    launchctl unsetenv LEAFVOCAB_PERF_OUT || true
+  fi
+}
+trap clear_performance_environment EXIT
 
 echo "==> Stopping any running instance"
 quit_app; wait_gone
 
 echo "==> Launching with performance capture enabled"
-LEAFVOCAB_PERF=1 LEAFVOCAB_PERF_OUT="$OUT_BASE" "$APP_BINARY" >/dev/null 2>&1 &
-APP_PID=$!
+# Opening fixtures is routed by Launch Services. Launch the bundle by the same
+# route; executing its binary directly can leave later file opens on a distinct
+# uninstrumented instance, producing a stale-looking one-sample capture.
+launchctl setenv LEAFVOCAB_PERF 1
+launchctl setenv LEAFVOCAB_PERF_OUT "$RUN_BASE"
+PERFORMANCE_ENVIRONMENT_INSTALLED=1
+open -n "$ROOT_DIR/$APP_NAME.app"
 # Give it time to finish launching and lay out the main window.
 for _ in $(seq 1 40); do
-  osascript -e "tell application \"$APP_NAME\" to exists" >/dev/null 2>&1 && break
+  app_is_running && break
   sleep 0.25
 done
 sleep 2
+if ! app_is_running; then
+  echo "Performance capture app exited during launch." >&2
+  exit 1
+fi
 
 open_fixture() {
   local file="$1"
   echo "==> Opening $(basename "$file")"
   /usr/bin/open -a "$ROOT_DIR/$APP_NAME.app" "$file"
   sleep 3
+  if ! app_is_running; then
+    echo "Performance capture app exited while opening $file." >&2
+    exit 1
+  fi
 }
 
 for fixture in "${FIXTURE_FILES[@]}"; do
@@ -101,7 +127,7 @@ if [[ "$PRIVATE_MODE" == "1" ]]; then
     echo "Private capture needs an interactive terminal for its manual surface checkpoint." >&2
     echo "Open Shelf, Notes, Vocabulary Library, a long AI conversation, and selection tools, then run this command in Terminal." >&2
     quit_app
-    wait "$APP_PID" 2>/dev/null || true
+    wait_gone
     exit 2
   fi
   echo
@@ -113,13 +139,23 @@ fi
 
 echo "==> Quitting (flushes the baseline)"
 quit_app
-wait "$APP_PID" 2>/dev/null || true
 wait_gone
 
-if [[ -f "$OUT_BASE.txt" ]]; then
+if [[ -f "$RUN_BASE.txt" && -f "$RUN_BASE.json" ]]; then
   if [[ "$PRIVATE_MODE" == "1" ]]; then
-    swift "$MANIFEST_TOOL" metadata "$PRIVATE_MANIFEST" "$OUT_BASE.fixtures.json"
+    swift "$VALIDATOR" private "$RUN_BASE.json" --not-before "$RUN_STARTED"
+  else
+    swift "$VALIDATOR" synthetic "$RUN_BASE.json" --not-before "$RUN_STARTED"
   fi
+  if [[ "$PRIVATE_MODE" == "1" ]]; then
+    swift "$MANIFEST_TOOL" metadata "$PRIVATE_MANIFEST" "$RUN_BASE.fixtures.json"
+  fi
+  mv "$RUN_BASE.txt" "$OUT_BASE.txt"
+  mv "$RUN_BASE.json" "$OUT_BASE.json"
+  if [[ "$PRIVATE_MODE" == "1" ]]; then
+    mv "$RUN_BASE.fixtures.json" "$OUT_BASE.fixtures.json"
+  fi
+  rmdir "$RUN_DIRECTORY"
   echo
   echo "Captured baseline ($OUT_BASE.txt):"
   echo
@@ -130,6 +166,6 @@ if [[ -f "$OUT_BASE.txt" ]]; then
     echo "Path-free fixture metadata written to $OUT_BASE.fixtures.json"
   fi
 else
-  echo "No baseline written — the app did not flush $OUT_BASE.txt." >&2
+  echo "No baseline written — the app did not flush $RUN_BASE.txt." >&2
   exit 1
 fi

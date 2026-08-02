@@ -414,9 +414,12 @@ else
 fi
 
 if [[ "$APP_SIGN_IDENTITY" == "-" ]]; then
-  codesign --force --sign - "$APP_PATH"
+  # Sparkle 2.9.4 ships nested XPC services.  Seal the enclosing app after
+  # signing those services so the outer CodeResources manifest cannot retain
+  # the framework's pre-copy signature.
+  codesign --force --deep --sign - "$APP_PATH"
 else
-  codesign --force --options runtime --timestamp --sign "$APP_SIGN_IDENTITY" "$APP_PATH"
+  codesign --force --deep --options runtime --timestamp --sign "$APP_SIGN_IDENTITY" "$APP_PATH"
 fi
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 

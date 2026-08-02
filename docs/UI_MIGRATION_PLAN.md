@@ -242,9 +242,23 @@ Initial candidates include:
 
 Do not rely on filename filtering or source-code grep to determine whether a type is portable. The compiler should enforce the boundary.
 
+## Current ownership table
+
+| Surface | Authoritative state | AppKit projection / native access | Test seam |
+| --- | --- | --- | --- |
+| Reader loading, search, AI-panel chrome | `ReaderShellPresentationState` | `renderReaderShellPresentation()` updates overlays; native controls do not own values | `LeafReaderAppTests` and pure projection tests |
+| PDF navigation, selection, zoom | `DocumentSession` plus `ReaderContentBackend` / `ReaderPagedBackend` | `PDFKitReaderAdapter`; direct `PDFView` use is limited to rendering, geometry, annotation, delegate, and lifecycle coordination | fake backend protocol implementations |
+| EPUB/DOCX selection and zoom | `DocumentSession` plus `ReaderContentBackend` | `WebKitReaderAdapter`; direct `WKWebView` use is limited to JavaScript, delegate, rendering, and lifecycle coordination | fake backend protocol implementations |
+| Reading Note chrome and request lifecycle | `ReadingNoteEditorModel`, editor-scoped tasks | `NSTextView` renders attributed text and transient placeholders | cancellation and serializer tests |
+| AI transcript / selection geometry / responder chain | Native renderer state | AppKit is permanent for incremental transcript rendering, geometry, menus, and responder chain | deterministic AppKit smoke tests |
+
+SwiftUI chrome completion does not imply a renderer migration. PDFKit, WebKit,
+`NSTextView`, transcript rendering, selection geometry, and responder-chain
+work remain intentional AppKit areas.
+
 ## 0.2 Add target-based tests
 
-**Status: complete.** `LeafReaderCoreTests` is a dedicated SwiftPM test target. The Architecture workflow runs it and the portability compiler gate on `macos-15` with Xcode 16.4 explicitly selected. The existing custom harness remains the broad compatibility suite while target-based XCTest is the authoritative module-boundary proof.
+**Status: complete for the correction block.** `LeafReaderCoreTests` remains the domain boundary and `LeafReaderAppTests` covers the AppKit/SwiftUI presentation seam. Strict Swift 6 tests, native-view access enforcement, backup-recovery coverage, and the deterministic UI smoke gate are now required checks.
 
 Create dedicated tests for `LeafReaderCore`.
 
@@ -252,7 +266,7 @@ The existing logic-test script may remain temporarily, but the new target become
 
 ## 0.3 Capture performance baselines
 
-**Status: representative workflow complete; private capture pending.** The checked-in manifest validator, capture driver, sanitized fixture sidecar, and regression tests cover the complete PDF/EPUB/DOCX plus long-conversation, vocabulary, and notes workflow. The repository has no private representative documents, so an operator must still run the workflow locally before another large UI migration. Commit only aggregate measurements and sanitized fixture metadata, never private documents.
+**Status: synthetic capture complete; private capture pending.** Capture writes to a fresh temporary base and validates event counts before promotion. A full-Xcode synthetic run recorded five PDF-open and five first-page samples. The repository has no private representative documents, so an operator must still run the local PDF/EPUB/DOCX workflow; never fabricate or commit private paths.
 
 Add lightweight signposts or timing instrumentation for:
 
@@ -830,11 +844,11 @@ The migration is complete when:
 
 # Immediate next actions
 
-1. **Complete:** `LeafReaderCoreTests` is CI-owned on a pinned macOS/Xcode runner.
-2. **Complete:** `LeafReaderApp` and the shipping build use Swift 6 language mode; remaining strict-concurrency warnings form an explicit follow-up queue.
+1. **Complete:** `LeafReaderCoreTests` and `LeafReaderAppTests` pass alongside the 47-check AppKit wiring smoke test.
+2. **Complete:** `LeafReaderApp` uses Swift 6 language mode with warning-free strict build and test gates.
 3. **Operator checkpoint:** run the private representative performance workflow with real PDF, EPUB, DOCX, long-conversation, notes, and vocabulary fixtures; commit aggregate results and sanitized metadata only. The deterministic full-Xcode PDF capture has been rerun; the private gate still needs those local fixtures.
 4. **Complete:** EPUB/DOCX vocabulary records now have stable vocabulary identity plus lemma/surface metadata, with additive SQLite migration and legacy repair tests.
-5. **Complete:** the versioned user-data backup service validates its allow-listed package, hashes, plist, and SQLite integrity, then restores with staged replacements and reverse-order rollback. See `docs/BACKUP_FORMAT.md`.
-6. **Validation:** portability, target XCTest, the custom regression harness, and build/sign pass under full Xcode 16.2. UI smoke and the private performance capture remain machine/operator gates before discretionary UI migration resumes.
+5. **Complete:** the versioned backup service has cold-start orchestration and interrupted-restore recovery. See `docs/BACKUP_FORMAT.md`.
+6. **Phase 1/2 correction block: complete.** Strict concurrency, persistence recovery, AppKit wiring, atomic vocabulary persistence, UI smoke, and synthetic capture pass. The representative private capture remains an explicit operator checkpoint rather than a fabricated gate result.
 
 This version treats the AI transcript’s AppKit renderer as an intentional permanent component rather than an incomplete migration.
