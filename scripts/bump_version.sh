@@ -34,8 +34,10 @@ check_version_references() {
   local failures=0
   local short_version
   local bundle_version
+  local minimum_system_version
   short_version="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$ROOT_DIR/Sources/LeafReaderApp/App/Info.plist")"
   bundle_version="$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$ROOT_DIR/Sources/LeafReaderApp/App/Info.plist")"
+  minimum_system_version="$(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" "$ROOT_DIR/Sources/LeafReaderApp/App/Info.plist")"
 
   if [[ "$short_version" != "$VERSION" ]]; then
     echo "Version check failed: Info.plist CFBundleShortVersionString is $short_version, expected $VERSION" >&2
@@ -58,8 +60,13 @@ check_version_references() {
   expect_contains "$ROOT_DIR/docs/index.html" "Leaf Reader $VERSION is a native macOS reader" || failures=$((failures + 1))
   expect_contains "$ROOT_DIR/docs/index.html" "$DOWNLOAD_URL" || failures=$((failures + 1))
   expect_contains "$ROOT_DIR/docs/index.html" "下载 $VERSION" || failures=$((failures + 1))
+  expect_contains "$ROOT_DIR/docs/index.html" "Download $VERSION" || failures=$((failures + 1))
   expect_contains "$ROOT_DIR/docs/index.html" "当前版本 $VERSION" || failures=$((failures + 1))
+  expect_contains "$ROOT_DIR/docs/index.html" "Current version $VERSION" || failures=$((failures + 1))
   expect_contains "$ROOT_DIR/docs/index.html" "<h2>Leaf Reader $VERSION</h2>" || failures=$((failures + 1))
+  expect_contains "$ROOT_DIR/README.md" "macOS $minimum_system_version" || failures=$((failures + 1))
+  expect_contains "$ROOT_DIR/docs/index.html" "requires macOS $minimum_system_version" || failures=$((failures + 1))
+  expect_contains "$ROOT_DIR/docs/appcast.xml" "<sparkle:minimumSystemVersion>$minimum_system_version</sparkle:minimumSystemVersion>" || failures=$((failures + 1))
 
   if [[ "$failures" -gt 0 ]]; then
     return 1
@@ -87,7 +94,9 @@ perl -0pi -e 's#<title>Leaf Reader [0-9.]+</title>#<title>Leaf Reader '"$VERSION
 perl -0pi -e 's#Leaf Reader [0-9.]+ is a native macOS reader#Leaf Reader '"$VERSION"' is a native macOS reader#g' "$ROOT_DIR/docs/index.html"
 perl -0pi -e 's#https://github\.com/dowellhz/LeafReader/releases/download/v[0-9.]+/LeafReader-[0-9.]+\.pkg#'"$DOWNLOAD_URL"'#g' "$ROOT_DIR/docs/index.html"
 perl -0pi -e 's#下载 [0-9.]+#下载 '"$VERSION"'#g' "$ROOT_DIR/docs/index.html"
+perl -0pi -e 's#Download [0-9.]+#Download '"$VERSION"'#g' "$ROOT_DIR/docs/index.html"
 perl -0pi -e 's#当前版本 [0-9.]+#当前版本 '"$VERSION"'#g' "$ROOT_DIR/docs/index.html"
+perl -0pi -e 's#Current version [0-9.]+#Current version '"$VERSION"'#g' "$ROOT_DIR/docs/index.html"
 perl -0pi -e 's#<h2>Leaf Reader [0-9.]+</h2>#<h2>Leaf Reader '"$VERSION"'</h2>#g' "$ROOT_DIR/docs/index.html"
 
 echo "Updated Leaf Reader version references to $VERSION"

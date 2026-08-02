@@ -1,140 +1,45 @@
-# 阅读笔记
+# Reading Notes
 
-关键词：阅读笔记、选中文本、翻译、难句解析、AI 补全、Markdown、斜杠菜单。
+Keywords: notes, selected text, translation, difficult sentences, AI completion, Markdown, slash commands.
 
-阅读笔记用于把当前书里的重点段落、翻译、难句解析和自己的想法记录在一起。笔记会关联当前书籍、页码和创建时间，方便之后从本书笔记列表中回看。
+Reading Notes combine source passages, translations, analysis, and personal comments. Each note is linked to its book, location, and creation time.
 
-## 从选中文本创建笔记
+## Create a Note from Selected Text
 
-1. 在阅读页选中一段文字。
-2. 点击浮动工具栏里的“笔记”。
-3. Leaf Reader 会把选中的原文带入阅读笔记窗口，并记录书名、页码和创建时间。
-4. 你可以继续在原文下面补充翻译、解析、总结或自己的备注。
+1. Configure a model key if one is not already configured; the selection toolbar only shows the Note action in its full mode.
+2. Select a passage in the reader.
+3. Choose Note from the floating toolbar.
+4. Leaf Reader inserts the source text and records the document title, page or location, and creation time.
+5. Add a translation, analysis, summary, or personal comment.
 
-笔记窗口顶部会显示：
+## Editing Toolbar
 
-- 书籍：当前文档标题。
-- 位置：当前页码。
-- 创建时间：这条笔记创建的本地时间。
+The toolbar provides undo, redo, bold, italic, bulleted list, task list, and local image insertion. A word count appears in the lower-right corner.
 
-## 编辑工具栏
+## Slash Commands
 
-阅读笔记底部工具栏提供常用编辑操作：
+Type `/` to open the command menu. At the start of a line, the full menu offers text, headings, bulleted and numbered lists, and AI completion. Elsewhere in a line, only AI completion is offered.
 
-| 按钮 | 作用 |
-| --- | --- |
-| 撤销 | 撤销上一次编辑。 |
-| 重做 | 重做刚撤销的编辑。 |
-| B | 加粗选中文本。 |
-| I | 斜体选中文本。 |
-| 列表 | 把当前行或选中段落切换为项目列表。 |
-| 待办列表 | 把当前行或选中段落切换为待办列表。 |
-| 图片 | 插入本地图片。 |
+Choosing a heading renders its visual style while preserving the corresponding Markdown structure when the note is saved. Pressing Return after `/` does not start an AI request; explicitly choose AI Completion to avoid accidental requests.
 
-编辑器右下角会显示当前笔记字数。
+## AI Assistance
 
-## 使用 `/` 命令菜单
+Select note text to explain, translate, summarize, organize, or ask a custom question. Organize replaces the selected text and renders returned Markdown as editor formatting.
 
-在阅读笔记里输入 `/` 会打开命令菜单。
+Ask AI includes the selection, your question, and the current note as context. During generation, the note shows a placeholder that is replaced by the response.
 
-### 行首 `/`
+AI Completion uses the text before the cursor to add a short, useful continuation. AI actions require a configured provider and API key.
 
-如果 `/` 是当前行的第一个非空字符，会显示完整命令菜单：
+## Markdown Behavior
 
-- 文本
-- 标题 1
-- 标题 2
-- 标题 3
-- 标题 4
-- 项目列表
-- 编号列表
-- AI 补全
+Reading Notes support headings, bulleted and numbered lists, tasks, bold text, and italics. Markdown typed manually is rendered after the line is completed; saved notes retain the Markdown representation.
 
-选择标题后，编辑器会直接显示标题效果，不显示 `#` 号；保存时仍会保留对应 Markdown 结构。
+## Export and Manage Notes
 
-### 非行首 `/`
+- Open the current book's notes from the reader bottom bar.
+- Search by title, source passage, note content, book, or location.
+- Favorite notes to pin them to the top of the list.
+- Export all notes or favorites in Markdown, HTML, or PDF. An individual note can also be exported from its editor.
+- Open, edit, export, or delete individual notes from the list.
 
-如果 `/` 不在行首，只显示“AI 补全”。这适合在一句话后面让 AI 接着补一句、补一个解释或补一个例子。
-
-AI 补全不会再通过输入 `/` 后直接按回车触发。必须先在菜单里选择“AI 补全”，避免误触发模型请求。
-
-## 用 AI 补充笔记
-
-阅读笔记支持两种 AI 工作流。
-
-### 选中文本后使用浮动操作
-
-选中笔记中的一段内容后，会出现浮动操作：
-
-- 解析：解释选中内容。
-- 翻译：翻译选中内容。
-- 总结：总结选中内容。
-- 整理：把选中内容整理成结构更清晰的 Markdown。
-- 问 AI：针对选中内容继续提问。
-
-“整理”会替换当前选中的文字，并把 AI 返回的 Markdown 渲染成编辑器里的实际样式，例如列表、粗体和标题。
-
-### 问 AI
-
-如果你想提出自己的问题，可以选中笔记中的文字后点击“问 AI”。
-
-1. 在笔记中选中要提问的词、短语或句子。
-2. 点击浮动操作里的“问 AI”。
-3. 在输入框里输入问题，例如“能用这个举几个例句”。
-4. 点击发送按钮。
-5. Leaf Reader 会在笔记中插入你的问题，并显示“正在生成...”占位。
-6. AI 返回后，占位内容会替换为回答，并继续保留在当前笔记里。
-
-适合使用“问 AI”的场景：
-
-- 让 AI 给某个词或短语补充例句。
-- 追问一个难句为什么这么翻译。
-- 让 AI 解释某个语法结构、修辞或上下文含义。
-- 基于已经写好的笔记继续扩展一段说明。
-
-“问 AI”使用当前选中内容、你的问题和当前阅读笔记作为上下文。生成过程中底部状态会显示“问 AI中...”，笔记正文里会显示带沙漏图标的生成占位。
-
-### 用 `/` 做 AI 补全
-
-在笔记里输入上下文后输入 `/`，选择“AI 补全”。Leaf Reader 会基于光标前的内容补充一句简洁、有用的内容。
-
-例如：
-
-```text
-难句解析：
-/
-```
-
-选择“AI 补全”后，可以生成对当前段落的难词、句式或含义说明。
-
-## Markdown 显示规则
-
-阅读笔记支持常见 Markdown，并会在编辑时显示接近最终效果：
-
-| 输入 | 显示效果 |
-| --- | --- |
-| `# 标题` | 一级标题。 |
-| `## 标题` | 二级标题。 |
-| `- 项目` | 项目列表。 |
-| `1. 项目` | 编号列表。 |
-| `- [ ] 任务` | 待办项。 |
-| `**加粗**` | 加粗文字。 |
-| `*斜体*` | 斜体文字。 |
-
-通过 `/` 选择标题时，不需要手动输入 `#`。如果你手动输入 Markdown 并完成当前行，编辑器会把它渲染为对应效果。
-
-## 导出和管理
-
-- 阅读器底部“笔记”按钮可以打开本书阅读笔记列表。
-- 笔记列表顶部支持搜索，可按标题、原文、笔记内容、书名和位置过滤当前书的笔记。
-- 笔记列表每行有星标按钮。收藏后的笔记会在列表中置顶；再次点击星标可以取消收藏。
-- 阅读笔记窗口右上角的更多菜单也可以切换“收藏并置顶 / 取消收藏”。
-- 菜单“文件 -> 导出阅读笔记...”可以导出本书笔记。
-- 在笔记列表中可以继续打开、编辑、导出或删除单条笔记。
-
-## 注意事项
-
-- AI 功能需要先在设置中配置模型服务和 API Key。
-- 普通笔记编辑、Markdown、图片和导出不需要 API Key。
-- 文本输入框、搜索框或阅读笔记正在编辑时，阅读区翻页和朗读快捷键不会截获普通输入。
-- 笔记内容保存在本机；只有主动使用 AI 功能时，相关文本才会发送到你配置的模型服务。
+Notes and inserted images are stored locally. Content is sent externally only when you explicitly use an AI feature.

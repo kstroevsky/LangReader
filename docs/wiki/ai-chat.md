@@ -1,65 +1,42 @@
-# AI 使用
+# AI Chat
 
-关键词：AI、翻译、解释、总结、选中文本、追问、流式输出、气泡、API Key。
+Keywords: AI, translation, explanation, summary, selected text, follow-up questions, streaming, API key.
 
-AI 面板负责选中文本解释、总结、翻译、继续追问，以及结合当前阅读内容的问题。没有配置 API Key 时，需要引导用户进入设置首页完成配置。
+The AI panel explains, summarizes, and translates selected text and supports follow-up questions about the current reading context. If no API key is configured, the app directs the user to Settings.
 
-## 使用入口
+## Entry Points
 
-- 选中文本后的浮动菜单：解释、翻译、总结、追问。
-- 右侧 AI 面板：对当前内容总结、翻译，或继续追问。
-- 单词气泡：可以请求 AI 解释单词；如果本地词典有标签，会追加到 AI 结果尾部，供背单词复用。
-- 阅读笔记整理：把笔记内容发送给 AI 时，图片会用占位符保留位置，避免整理后图片丢失。
+- The selected-text toolbar offers Explain, Translate, Summarize, and Ask actions.
+- The side panel can summarize or translate the current content and continue a conversation.
+- The vocabulary popover can request an AI explanation and append local dictionary tags.
+- Reading Notes can send text for AI organization while preserving image placeholders.
 
-## 气泡行为
+## Conversation Behavior
 
-- 用户气泡和 AI 气泡按对话顺序显示。
-- AI 气泡支持复制 Markdown；普通 AI 回答支持重新生成。
-- 有来源的气泡可以回跳并高亮对应阅读位置。
-- 气泡生成完成后，如果气泡 header 不在可视区域顶部，会滚动到 header，方便直接阅读结果。
-- Markdown 内容由统一渲染器处理，避免复制、重新生成、恢复会话时样式不一致。
+User and assistant bubbles appear in conversation order. Assistant responses support Markdown copying, and ordinary responses can be regenerated. Bubbles with source locations can return to and highlight the matching passage.
 
-## 请求流程
+Streaming updates are throttled before rendering to avoid relayout for every token. Recent conversations are trimmed to limit startup and restoration work.
+
+## Request Flow
 
 ```text
-选中文本或当前阅读内容
-  -> AIChatPanel 收集上下文
-     -> Actions 组装用户动作
-     -> Requests 管理请求生命周期
-        -> AIClient 发送请求
-        -> 流式增量返回
-     -> Bubbles 渲染气泡
-     -> Conversation 保存和恢复会话
+Selected text or current reading context
+  -> AIChatPanel collects context
+  -> Actions build the request
+  -> Requests manage streaming, retry, and cancellation
+  -> AIClient sends the request
+  -> Bubbles render and persist the response
 ```
 
-## 文件入口
+## Main Files
 
-- `AIChatPanel.swift`：AI 面板核心状态和选中文本入口。
-- `AIChatPanel+UI.swift`：面板布局、按钮和控件。
-- `AIChatPanel+Actions.swift`：用户动作、选中文本问题、总结、翻译和追问上下文。
-- `AIChatPanel+Requests.swift`：请求生命周期、重试、取消、翻译、忙碌状态和错误映射。
-- `AIChatPanel+Selection.swift`：鼠标交互监听和气泡内文本选择。
-- `AIChatPanel+Bubbles.swift`：气泡创建、渲染、布局节流和滚动定位。
-- `AIChatPanel+Conversation.swift`：已保存对话的恢复。
-- `AIChatPanel+LinkedWords.swift`：和单词记录关联的气泡行为。
-- `AIChatPanel+Export.swift`：对话复制和导出。
-- `AIConversationMarkdownExporter.swift`：对话 Markdown 导出格式。
-- `AIClient.swift`：HTTP 请求和流式响应客户端。
-- `AIPromptStore.swift` 和 `Resources/AIPrompts.json`：内置提示词模板。
+- `AIChatPanel.swift`: panel state and selected-text entry point.
+- `AIChatPanel+Actions.swift`: summary, translation, and follow-up actions.
+- `AIChatPanel+Requests.swift`: request lifecycle, retry, cancellation, and error mapping.
+- `AIChatPanel+Bubbles.swift`: bubble creation, rendering, layout, and scrolling.
+- `AIChatPanel+Conversation.swift`: saved-conversation restoration.
+- `AIChatPanel+Export.swift`: conversation copy and export.
+- `AIClient.swift`: HTTP and streaming response client.
+- `AIPromptStore.swift` and `Resources/AIPrompts.json`: built-in prompt templates.
 
-## 性能与维护
-
-- 流式输出会先节流再刷新气泡，避免每个 token 都触发布局。
-- 对话列表布局有 debounce，长对话不会在每次更新时完整重排。
-- 最近会话会裁剪，限制启动和恢复气泡时的工作量。
-- 涉及 API Key 的入口要统一走设置检查，避免不同按钮出现不同错误提示。
-
-## 相关文件
-
-- `Sources/LeafReaderApp/AIConversation/AIChatPanel.swift`
-- `Sources/LeafReaderApp/AIConversation/AIChatPanel+Actions.swift`
-- `Sources/LeafReaderApp/AIConversation/AIChatPanel+Requests.swift`
-- `Sources/LeafReaderApp/AIConversation/AIChatPanel+Bubbles.swift`
-- `Sources/LeafReaderApp/Platform/Networking/AIClient.swift`
-- `Sources/LeafReaderApp/AIConversation/AIResponseTextFormatter.swift`
-- `Sources/LeafReaderApp/AIConversation/AIPromptStore.swift`
+All AI entry points should use the shared model-configuration check so missing credentials produce consistent guidance.

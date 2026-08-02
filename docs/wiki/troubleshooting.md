@@ -1,163 +1,62 @@
-# 故障排查
+# Troubleshooting
 
-关键词：更新失败、SSL 证书、GitHub Pages、Appcast、签名、公证、PDF 翻页、AI 分析、Wiki 同步。
+Keywords: Sparkle, updates, GitHub Pages, TLS, signing, notarization, PDF paging, AI cache, network, wiki sync.
 
-这页记录 Leaf Reader 反复出现过的问题，以及改代码前应该先做的快速检查。
+## Update Check Fails
 
-## 快速索引
+- Confirm the appcast URL is reachable over HTTPS.
+- Validate the appcast XML and its EdDSA signature.
+- Confirm the installed app version is lower than the published version.
+- Check that the download URL resolves to the signed installer.
+- Inspect application logs before changing Sparkle configuration.
 
-| 现象 | 先看这里 |
-| --- | --- |
-| 更新检查拿不到信息 | [Sparkle 更新检查失败](#sparkle) |
-| 网站或 appcast 出现 HTTPS/证书错误 | [GitHub Pages SSL 或自定义域名问题](#github-pages-ssl) |
-| 打包、签名、公证或安装校验失败 | [安装包签名或公证失败](#_3) |
-| PDF 滚动翻页太早、太晚或触发两次 | [PDF 翻页手感异常或重复触发](#pdf) |
-| 右下角 AI 分析状态过期或显示异常 | [AI 分析状态显示异常](#ai) |
-| AI 没返回，或单词一直走本地词典 | [AI 请求或网络状态异常](#ai_1) |
-| 书籍、单词或笔记数据看起来没刷新 | [书籍或词汇记录看起来过期](#_4) |
-| Wiki 无法 clone、pull 或 push | [Wiki 同步失败](#wiki) |
+## Website TLS or Custom Domain Problems
 
-## Sparkle 更新检查失败
+- Confirm the repository Pages source and custom domain settings.
+- Verify DNS records before requesting another certificate.
+- Keep the `CNAME` file consistent with the configured domain.
+- Allow DNS and certificate changes time to propagate.
 
-现象：
+## Installer Signing or Notarization Fails
 
-- 更新弹窗提示无法获取更新信息。
-- 已安装 app 仍然像是在使用旧的更新 URL。
+- Verify the Developer ID Installer and Application identities are available.
+- Check package and embedded app signatures independently.
+- Confirm required entitlements and hardened runtime settings.
+- Inspect the notarization log rather than retrying unchanged artifacts.
+- Do not publish an appcast entry until the package passes Gatekeeper assessment.
 
-检查：
+## PDF Paging Feels Wrong
 
-```sh
-curl -I -L https://leafreader.space/appcast.xml
-curl -I -L https://dowellhz.github.io/LeafReader/appcast.xml
-```
+- Check whether single-page or two-page layout is active.
+- Confirm whether cropped or original PDF bounds are selected.
+- Ensure a text field is not consuming arrow keys.
+- Reproduce with scroll paging and keyboard paging separately.
+- Inspect debouncing if one gesture advances more than once.
 
-期望：
+## AI Analysis State Is Incorrect
 
-- 当前 appcast URL 返回 `200`。
-- HTTPS 没有证书错误。
-- `docs/appcast.xml` 里的 release URL 指向预期域名。
+- Confirm the current document identity matches the cached analysis data.
+- Check embedding model and provider settings.
+- Distinguish missing chunks from a fully rebuilt cache.
+- Clear only the current book's cache before clearing all local analysis data.
 
-常见原因：
+## AI Requests or Network State Fail
 
-- 已安装 app 里还是旧的 `SUFeedURL`。
-- GitHub Pages 自定义域名 DNS 或证书还在生效中。
-- 本地更新了 appcast，但还没有推到 GitHub Pages。
+- Verify the endpoint, model name, and API key.
+- Check whether the provider requires a specific URL path or header.
+- Test basic connectivity separately from model availability.
+- Confirm cancellation and retry states are not leaving stale UI behind.
 
-## GitHub Pages SSL 或自定义域名问题
+## Book or Vocabulary Data Looks Stale
 
-检查：
+- Reopen the document so location-based highlights are restored.
+- Confirm the document identity and stored source path match.
+- Check SQLite migrations and stored metadata before deleting user data.
+- Back up the user profile before attempting manual repair.
 
-```sh
-dig leafreader.space
-dig www.leafreader.space
-curl -I -L https://leafreader.space/
-```
+## Wiki Sync Fails
 
-期望：
-
-- `docs/CNAME` 包含规范自定义域名。
-- DNS 指向 GitHub Pages。
-- GitHub Pages 设置里 HTTPS 可用并已强制开启。
-
-如果证书错误或缺失，在仓库 Pages 设置里移除并重新添加自定义域名，然后等待 GitHub 重新签发证书。
-
-## 安装包签名或公证失败
-
-检查：
-
-```sh
-./scripts/check.sh
-security find-identity -v
-pkgutil --check-signature release/pkg/LeafReader-<version>.pkg
-```
-
-常见原因：
-
-- 当前 keychain 里缺少 Developer ID 证书。
-- 本地 keychain profile 里没有公证凭据。
-- 复用了上一次构建留下的 release 产物。
-
-## PDF 翻页手感异常或重复触发
-
-相关文件：
-
-- `Sources/LeafReaderApp/DocumentReading/PDFReaderView.swift`
-- `Sources/LeafReaderApp/DocumentReading/PDFPagingPolicy.swift`
-- `Sources/LeafReaderApp/DocumentReading/ReaderWindowController+Navigation.swift`
-
-检查：
-
-- 确认边缘翻页只在页面顶部或底部触发。
-- 保留 PDFKit 原生滚动行为，不要拦截正常滚动。
-- 降低阈值前，先确认重复翻页 cooldown 是否生效。
-
-## AI 分析状态显示异常
-
-相关文件：
-
-- `Sources/LeafReaderApp/AIConversation/ReaderWindowController+EmbeddingStatus.swift`
-- `Sources/LeafReaderApp/AIConversation/ReaderWindowController+EmbeddingActions.swift`
-- `Sources/LeafReaderApp/ReaderShell/ReaderWindowController+Theme.swift`
-- `Sources/LeafReaderApp/AIConversation/PDFEmbeddingStore.swift`
-
-检查：
-
-- 状态标签只应在索引中、暂停、失败、取消或缓存状态提示时显示。
-- 主题切换后，要重新应用预期的状态文字颜色。
-- 当前文档如果已有缓存 chunks，界面应该显示缓存状态，而不是继续显示旧的分析中状态。
-
-## AI 请求或网络状态异常
-
-现象：
-
-- 明明网络可用，单词查询仍然一直走本地词典。
-- 中途断网后，其他 AI 请求已经成功恢复，但单词侧仍然认为不可用。
-- 没有配置 API Key 时，某些 AI 入口没有跳到设置首页。
-
-检查：
-
-- API Key、Base URL 和模型是否在设置页配置完整。
-- 失败后是否进入了本地词典 fallback。
-- 如果其他 AI 请求成功返回，应恢复全局网络可用状态。
-- 如果单词侧认为只能用本地词典，有网络时后台按间隔测试设置页 AI 连接；成功后停止测试，直到下一次请求失败。
-
-相关文件：
-
-- `Sources/LeafReaderApp/Platform/Networking/AIClient.swift`
-- `Sources/LeafReaderApp/Settings/AISettingsPanelController.swift`
-- `Sources/LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyCore.swift`
-- `Sources/LeafReaderApp/VocabularyReview/DictionaryLookupService.swift`
-
-## 书籍或词汇记录看起来过期
-
-相关文件：
-
-- `Sources/LeafReaderApp/DocumentReading/DocumentIdentity.swift`
-- `Sources/LeafReaderApp/VocabularyReview/WordRecordSQLiteStore.swift`
-- `Sources/LeafReaderApp/AIConversation/PDFEmbeddingStore.swift`
-- `Sources/LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyStorage.swift`
-- `Sources/LeafReaderApp/ReadingNotes/ReadingNoteStore.swift`
-
-检查：
-
-- 文档 ID 对同一个文件是否稳定。
-- 文件是否移动、大小是否变化、修改时间是否变化。
-- 词汇问题先检查 word record store，不要直接删除用户数据。
-- 阅读笔记问题先检查 note id、source id 和图片附件占位符是否一致。
-
-## Wiki 同步失败
-
-命令：
-
-```sh
-./scripts/update_wiki.sh
-./scripts/update_wiki.sh --push
-```
-
-常见原因：
-
-- `/private/tmp/leafreader-wiki-sync` 下的 GitHub Wiki worktree 有意外本地改动。
-- 当前网络或 GitHub SSH/HTTPS 访问不可用。
-- 上次同步后修改了 `docs/wiki` 源文件，但还没有提交到主仓库。
-
-先用 dry-run 模式检查。push 模式会更新 GitHub Wiki，并把变更后的 `docs/wiki` 文件提交回主仓库。
+- Run the local documentation build first.
+- Regenerate Code Map and Type Index if required.
+- Confirm the wiki remote exists and credentials permit pushing.
+- Inspect generated changes before retrying `scripts/update_wiki.sh --push`.

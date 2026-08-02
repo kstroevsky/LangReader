@@ -1,98 +1,59 @@
-# TTS 与朗读
+# TTS and Read Aloud
 
-关键词：TTS、朗读、语音、Piper、Kokoro、Supertonic、运行时、快捷键、下划线、高亮。
+Keywords: TTS, speech, Piper, Kokoro, Supertonic, Core ML, runtime downloads, read aloud.
 
-这页用于维护本地语音播放、朗读进度高亮和可下载 TTS 模型运行时。
+Leaf Reader supports document-level read aloud and short selection pronunciation. It uses a selected local runtime when available and falls back to macOS system speech for short words or phrases.
 
-## 使用入口
+## Entry Points
 
-- 顶部工具栏：开始朗读、停止、重播当前朗读条目。
-- 底部朗读浮动工具条：上一条、播放/暂停、停止、下一条、重播、语速。
-- 快捷键：`[` 往前朗读一条，`]` 重复当前朗读条目。
-- AI 气泡和单词气泡里的发音按钮：短文本发音，优先使用可用本地 TTS，必要时回退到系统语音。
+- Start document read aloud from the reader controls.
+- Use the floating player to pause, resume, move between segments, replay, or stop.
+- Pronounce selected text or vocabulary from its popover.
+- Download, pause, resume, cancel, or remove speech models in Settings.
 
-朗读浮动工具条会提示快捷键，帮助用户理解 `[`、`]` 等按键的含义。
+## Runtime Structure
 
-## 运行时结构
+Piper provides local English speech. Kokoro provides English and Chinese voices through FluidAudio Core ML. Supertonic provides multilingual speech and shares the FluidAudio Core ML runtime where possible. Small executables ship with the app; larger model assets are downloaded on demand.
 
-```text
-ReaderWindowController+ReadAloud
-     -> SpeechPlaybackCoordinator
-     -> SpeechRuntimeResourceManager
-        -> Piper runtime
-        -> FluidAudio Core ML runtime (Kokoro, Supertonic)
-     -> AVAudioPlayer
-  -> ReaderWindowController+ReadAloudProgress
-```
+The selected runnable runtime is preferred. Chinese content switches to Kokoro. A downloaded runtime is considered runnable only when its files exist and the current macOS version is compatible.
 
-短单词、AI 面板短句和不适合走本地模型的内容，可以通过 `SpeechUtteranceFactory` 回退到 `NSSpeechSynthesizer`。
-
-## 播放流程
+## Playback Flow
 
 ```text
-阅读文本
-  -> SpeechTextPolicy 分段和清洗
-  -> SpeechPlaybackCoordinator 选择运行时
-  -> 生成或复用 WAV
-  -> AVAudioPlayer 播放
-  -> ReadAloudProgress 更新下划线和高亮
+Reader selection or document text
+  -> normalize and segment text
+  -> choose a runnable speech backend
+  -> generate WAV audio
+  -> play and publish progress
+  -> update the current passage highlight
 ```
 
-如果用户通过浮动窗口或快捷键切换上一条/下一条，而当前页不在朗读位置，阅读器会跳转到对应页面和位置。
+## Runtime Rules
 
-## 主要文件
+- Piper's runtime supports Apple Silicon Macs running macOS 12 or later, although the current Leaf Reader app requires macOS 14 or later.
+- Kokoro requires macOS 14 or later.
+- Supertonic requires macOS 14 or later.
+- Installations write `.leafreader-install-manifest.json`; a manifest failure aborts and rolls back installation.
+- Download state includes an active task identifier so stale callbacks cannot replace current state.
+- Runtime failures remain visible in Settings until a successful download, cancellation, or removal.
+- Removing an inactive runtime must not stop current playback.
 
-- `SpeechPlaybackCoordinator.swift`：语音播放中枢，负责选择运行时、文本分段、WAV 文件、播放控制和进度通知。
-- `KokoroWorkerResponseReader.swift`：解析 Kokoro worker 的 JSON-line 响应，并忽略不相关 request id。
-- `SpeechTextPolicy.swift`：TTS 文本归一化、英文候选判断和朗读分段。
-- `SpeechRuntimeResourceManager.swift`：运行时安装检测、下载 URL、模型大小、兼容性、暂停/恢复/取消和清理。
-- `RuntimeDownload.swift`：URLSession 下载、进度、断点数据和 HTTP 错误处理。
-- `AISettingsPanelController+Speech.swift`：设置页里选择、下载、暂停、取消、删除和兼容性警告。
-- `AISettingsPanelController+Build.swift`：朗读设置行、模型选择器、状态标签、按钮和进度条。
-- `ReaderWindowController+ReadAloud.swift`：PDF 和 WebKit 内容的文档级朗读入口。
-- `ReaderWindowController+ReadAloudProgress.swift`：朗读时的当前段落下划线和高亮更新。
-- `AIChatPanel+Actions.swift`：AI 文本发音，优先本地 TTS，必要时系统语音回退。
-- `ReaderWindowController+VocabularyActions.swift`：单词发音、中断行为和回退语音。
-- `SpeechUtteranceFactory.swift`：系统语音的通用 utterance 设置。
+## Main Files
 
-## 运行时规则
+- `SpeechPlaybackCoordinator.swift`: runtime choice, segmentation, audio files, playback, and progress.
+- `SpeechTextPolicy.swift`: normalization and segmentation rules.
+- `SpeechRuntimeResourceManager.swift`: compatibility, download URLs, install state, and cleanup.
+- `LocalRuntimeDownloader.swift`, `LocalRuntimeDownloadCoordinator.swift`, and `LocalRuntimeDownloadSupport.swift`: downloads, pause/resume/cancel state, partial data, validation, and HTTP errors.
+- `AISettingsPanelController+Speech.swift`: speech settings actions.
+- `ReaderWindowController+ReadAloud.swift`: PDF and WebKit read-aloud entry points.
+- `ReaderWindowController+ReadAloudProgress.swift`: active passage highlighting.
+- `SpeechUtteranceFactory.swift`: macOS system-speech configuration.
 
-- macOS 12 及以上默认目标是 Piper。
-- Kokoro 可以在旧系统下载，但运行需要 macOS 14 或以上；不兼容系统会在设置页提示。
-- Supertonic 使用独立 Supertonic 3 模型目录，但在 app bundle 内优先复用 Kokoro 的 FluidAudio CoreML CLI；包内 `supertonic-coreml/supertonic-mini` 可以是指向 `kokoro-coreml/fluidaudiocli` 的 symlink。
-- `SpeechRuntimeResourceManager.isDownloaded(_:)` 只检查运行时文件是否存在。
-- `SpeechRuntimeResourceManager.isRunnable(_:)` 同时检查文件和当前 macOS 版本要求。
-- `SpeechRuntimeResourceManager.runnableRuntime(preferredID:)` 是播放代码选择运行时的统一入口。
-- 运行时安装会写入 `.leafreader-install-manifest.json`；manifest 写入失败会中止安装并回滚。
-- 删除运行时时，只删除 Leaf Reader 安装的 FluidAudio 缓存目录，并兼容旧安装。
-- 下载状态包含 active task id，避免已取消或被替换的下载回调覆盖当前状态。
-- 下载失败会按运行时保存，并显示在设置页，直到下一次下载成功、取消或删除。
-- Core ML CLI 回退有超时；删除非当前运行时不应停止正在播放的运行时。
+## Packaging and Verification
 
-## 打包与发布
+- `scripts/build_app.sh` bundles and validates speech runtimes.
+- `scripts/audit_app_bundle.sh` reports runtime, library, resource, and symlink sizes.
+- `scripts/package_speech_models.sh` packages downloadable models and updates their manifest.
+- `scripts/publish_release.sh` uploads speech archives only when `--with-speech-models` is supplied.
 
-- `scripts/build_app.sh`：把语音运行时复制进 app bundle，清理打包/调试噪声，并验证 bundle 布局；日常默认 `--debug --arm64`，发布包使用 `--release --universal`。
-- `scripts/audit_app_bundle.sh`：报告 app、资源、runtime、dylib 和 symlink 体积，适合做包体积审计。
-- `scripts/package_speech_models.sh`：打包可下载 TTS 模型，生成 `docs/tts/speech-models-manifest.json` 的大小和 SHA256。
-- `scripts/publish_release.sh`：上传发布产物；只有模型归档变化时才传 `--with-speech-models`。
-
-模型下载 URL 指向 `SpeechRuntimeResourceManager.Runtime.runtimeAssetsReleaseTag`，不是普通 app 版本号。常规 app 发布不需要重复上传未变化的模型归档。
-
-修改内置原生运行时二进制后，发布前要用 `vtool` 或 `otool` 检查最低 macOS 版本。
-
-## 检查
-
-```sh
-./scripts/run_tests.sh
-./scripts/build_app.sh
-./scripts/audit_app_bundle.sh
-./scripts/check.sh --no-build
-```
-
-下载行为至少覆盖这些状态：
-
-- 运行时不存在
-- 正在下载
-- 已暂停
-- 已安装且兼容
-- 已下载但当前 macOS 不兼容
+Model download URLs use `SpeechRuntimeResourceManager.Runtime.runtimeAssetsReleaseTag`, independently of the application release number. Verify modified native runtime binaries with `vtool` or `otool` before release.

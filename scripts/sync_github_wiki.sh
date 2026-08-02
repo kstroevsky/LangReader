@@ -115,7 +115,6 @@ copy_page() {
 }
 
 copy_page "getting-started.md" "Getting-Started.md"
-copy_page "zh.md" "Chinese.md"
 copy_page "en.md" "English.md"
 copy_page "architecture.md" "Architecture.md"
 copy_page "feature-map.md" "Feature-Map.md"
@@ -135,44 +134,26 @@ copy_page "troubleshooting.md" "Troubleshooting.md"
 copy_page "code-map.md" "Code-Map.md"
 copy_page "type-index.md" "Type-Index.md"
 
+# Remove the retired Chinese entry page from existing wiki checkouts and stage
+# its deletion with the rest of the synchronized page set.
+rm -f "$WIKI_WORKTREE/Chinese.md"
+
 CURRENT_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$ROOT_DIR/Sources/LeafReaderApp/App/Info.plist")"
 
 cat > "$WIKI_WORKTREE/Home.md" <<EOF
 # Leaf Reader Wiki
 
-Leaf Reader Wiki keeps Chinese user documentation and English/engineering documentation as separate entry points.
+Leaf Reader Wiki contains user and engineering documentation in English.
 
-## 文档状态 / Current Version
+## Current Version
 
-- 当前版本 / Current version: \`$CURRENT_VERSION\`
+- Current version: \`$CURRENT_VERSION\`
 - Git tag: \`v$CURRENT_VERSION\`
 - Website: [leafreader.space](https://leafreader.space)
 - Appcast: [docs/appcast.xml](https://dowellhz.github.io/LeafReader/appcast.xml)
 - Latest installer: [LeafReader-$CURRENT_VERSION.pkg](https://github.com/dowellhz/LeafReader/releases/download/v$CURRENT_VERSION/LeafReader-$CURRENT_VERSION.pkg)
 
-## 中文文档
-
-- [中文入口](Chinese)
-- [安装与入门](Getting-Started)
-- [阅读笔记](Reading-Notes)
-- [快捷键](Shortcuts)
-- [AI 使用](AI-Chat)
-- [背单词与单词高亮](Word-Highlights)
-- [TTS 与朗读](TTS-And-Read-Aloud)
-- [故障排查](Troubleshooting)
-- [架构](Architecture)
-- [功能地图](Feature-Map)
-- [开发任务](Development-Tasks)
-- [文档加载](Document-Loading)
-- [AI 分析缓存](AI-Analysis-Cache)
-- [发布流程](Release-Process)
-- [发布检查清单](Release-Checklist)
-- [发布运行手册](Release-Runbook)
-- [安全](Security)
-- [代码地图](Code-Map)
-- [类型索引](Type-Index)
-
-## English & Engineering
+## Documentation
 
 - [English Index](English)
 - [Architecture](Architecture)
@@ -210,32 +191,16 @@ Leaf Reader Wiki keeps Chinese user documentation and English/engineering docume
 EOF
 
 cat > "$WIKI_WORKTREE/_Sidebar.md" <<'EOF'
-## 中文文档
+## Documentation
 
-- [首页](Home)
-- [中文入口](Chinese)
-- [安装与入门](Getting-Started)
-- [阅读笔记](Reading-Notes)
-- [快捷键](Shortcuts)
-- [AI 使用](AI-Chat)
-- [背单词](Word-Highlights)
-- [TTS 与朗读](TTS-And-Read-Aloud)
-- [故障排查](Troubleshooting)
-- [架构](Architecture)
-- [功能地图](Feature-Map)
-- [开发任务](Development-Tasks)
-- [文档加载](Document-Loading)
-- [AI 分析缓存](AI-Analysis-Cache)
-- [发布流程](Release-Process)
-- [发布检查清单](Release-Checklist)
-- [发布运行手册](Release-Runbook)
-- [安全](Security)
-- [代码地图](Code-Map)
-- [类型索引](Type-Index)
-
-## English & Engineering
-
+- [Home](Home)
 - [English Index](English)
+- [Getting Started](Getting-Started)
+- [Reading Notes](Reading-Notes)
+- [Shortcuts](Shortcuts)
+- [AI Chat](AI-Chat)
+- [Vocabulary and Highlights](Word-Highlights)
+- [TTS and Read Aloud](TTS-And-Read-Aloud)
 - [Architecture](Architecture)
 - [Feature Map](Feature-Map)
 - [Development Tasks](Development-Tasks)

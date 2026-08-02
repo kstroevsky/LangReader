@@ -1,69 +1,53 @@
-# 快捷键
+# Keyboard Shortcuts
 
-关键词：快捷键、键盘、翻页、搜索、朗读、AI 面板、阅读笔记。
+Keywords: keyboard, paging, search, read aloud, AI panel, reading notes.
 
-## 全局和菜单
+## Application and Menus
 
-| 快捷键 | 功能 | 说明 |
-| --- | --- | --- |
-| `Command + O` | 打开文档 | 打开 PDF、EPUB 或 DOCX。 |
-| `Command + ,` | 设置 | 打开设置窗口的基础设置页。 |
-| `Command + Q` | 退出 | 退出 Leaf Reader。 |
-| `Command + W` | 关闭窗口 | 关闭当前阅读窗口。 |
-| `Command + M` | 最小化 | 最小化窗口。 |
-| `Command + Shift + ?` | 帮助 | 打开 Leaf Reader 帮助。 |
+| Shortcut | Action |
+| --- | --- |
+| `Command + O` | Open a PDF, EPUB, or DOCX document. |
+| `Command + ,` | Open Settings. |
+| `Command + L` | Open the bookshelf. |
+| `Command + Shift + E` | Export Reading Notes. |
+| `Command + Q` | Quit Leaf Reader. |
+| `Command + W` | Close the current window. |
+| `Command + M` | Minimize the window. |
+| `Command + Shift + ?` | Open Help. |
 
-## 阅读和视图
+## Reading and Navigation
 
-| 快捷键 | 功能 | 说明 |
-| --- | --- | --- |
-| `Command + F` | 搜索 | 打开文档搜索。 |
-| `Command + D` | 背单词 | 打开本书背单词面板。 |
-| `Command + N` | 阅读笔记 | 打开阅读笔记面板。 |
-| `Command + 1` | 封面 | 跳到封面。 |
-| `Command + \` | 显示/隐藏 AI 面板 | 切换右侧 AI 面板。 |
-| `Command + 2` | 单页/双页 | 切换 PDF 单页和双页显示。 |
-| `Command + 3` | 裁边/原边 | 切换 PDF 裁边显示。 |
-| `Command + +` | 放大 | 放大阅读区域。 |
-| `Command + -` | 缩小 | 缩小阅读区域。 |
-| `Command + Control + F` | 全屏 | 进入或退出全屏。 |
+| Shortcut | Action |
+| --- | --- |
+| `Command + F` | Search the document. |
+| `Command + D` | Open vocabulary review for the current book. |
+| `Command + Shift + D` | Open the vocabulary library. |
+| `Command + N` | Open Reading Notes. |
+| `Command + 1` | Go to the cover. |
+| `Command + \` | Show or hide the AI panel. |
+| `Command + 2` | Toggle single-page and two-page PDF layout. |
+| `Command + 3` | Toggle cropped and original PDF bounds. |
+| `Command + +` | Zoom in. |
+| `Command + -` | Zoom out. |
+| `Command + Control + F` | Enter or leave full screen. |
+| `Left Arrow` | Previous page when no text field is active. |
+| `Right Arrow` | Next page when no text field is active. |
+| `Command + A` | Select the current reading content. |
+| `Command + C` | Copy the current reader selection. |
+| `Escape` | Close the selection popover. |
 
-## 翻页和选择
+## Read Aloud
 
-| 快捷键 | 功能 | 说明 |
-| --- | --- | --- |
-| `←` | 上一页 | 阅读区未在文本输入状态时生效。 |
-| `→` | 下一页 | 阅读区未在文本输入状态时生效。 |
-| `Command + ←` | 上一页 | 菜单导航快捷键。 |
-| `Command + →` | 下一页 | 菜单导航快捷键。 |
-| `Command + A` | 选择当前阅读内容 | PDF 选择当前页内容；网页文档选择可见阅读文本。 |
-| `Command + C` | 复制阅读选择 | 复制当前 PDF 或网页文档选区。 |
-| `Esc` | 关闭选词浮窗 | 选词浮窗显示时生效。 |
+| Shortcut | Action |
+| --- | --- |
+| `\` | Continue or move to the next segment in manual mode. |
+| `[` | Replay the previous segment in manual mode. |
+| `]` | Replay the current segment in manual mode. |
 
-## 朗读
+Read-aloud shortcuts do not change text segmentation; they perform the same action as the floating player's Continue or Next control.
 
-| 快捷键 | 功能 | 说明 |
-| --- | --- | --- |
-| `\` | 继续/下一条 | 仅在朗读已启动、手动模式、非文本输入状态时生效。 |
-| `、` | 继续/下一条 | 同上，适合中文输入环境。 |
+## Reading Note Editing
 
-朗读快捷键不会改变 TTS 文本分段；它们只等同于点击朗读浮动控制器里的“下一条/继续”。
+Standard macOS editing shortcuts for select all, copy, cut, paste, undo, and redo work in the note editor. Type `/` to open the note command menu. A slash at the start of a line offers text styles, headings, lists, and AI completion; elsewhere it offers AI completion only.
 
-## 阅读笔记编辑
-
-| 快捷键 | 功能 | 说明 |
-| --- | --- | --- |
-| `Command + A` | 全选 | 在笔记编辑器或 AI 输入框内按文本编辑语义处理。 |
-| `Command + C` | 复制 | 在笔记编辑器或 AI 输入框内按文本编辑语义处理。 |
-| `Command + X` | 剪切 | 在笔记编辑器或 AI 输入框内按文本编辑语义处理。 |
-| `Command + V` | 粘贴 | 在笔记编辑器或 AI 输入框内按文本编辑语义处理。 |
-| `Command + Z` | 撤销 | 阅读笔记编辑器内生效。 |
-| `Command + Shift + Z` | 重做 | 阅读笔记编辑器内生效。 |
-| `/` | 打开笔记命令菜单 | 行首输入 `/` 可选择文本、标题、列表或 AI 补全；如果 `/` 不是行首，只显示 AI 补全。标题输入时直接显示标题效果。 |
-
-笔记 AI 补全不会再通过 `/` 后直接按 `Return` 触发；需要先在命令菜单里选择 AI 补全，避免误触发模型请求。
-
-## 输入状态例外
-
-- 文本输入框、搜索框、AI 输入框、阅读笔记编辑器正在编辑时，阅读区翻页和朗读手动快捷键不会截获普通输入。
-- 带 `Command`、`Option` 或 `Control` 的组合键优先按菜单或文本编辑语义处理。
+When a text field, search field, AI input, or note editor is active, reader paging and manual read-aloud shortcuts do not intercept ordinary typing.

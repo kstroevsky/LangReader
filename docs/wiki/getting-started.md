@@ -1,83 +1,50 @@
-# 安装与入门
+# Getting Started
 
-关键词：安装、下载、首次打开、AI 配置、API Key、PDF、EPUB、DOCX、翻译、背单词、更新。
+Keywords: installation, macOS, PDF, EPUB, DOCX, AI settings, translation, vocabulary.
 
-## 下载与安装
+## Download and Install
 
-1. 打开 [leafreader.space](https://leafreader.space/)。
-2. 下载当前版本安装包。
-3. 打开 `.pkg` 安装包并按提示安装。
-4. 从“应用程序”启动 Leaf Reader。
+1. Download the current `.pkg` installer from the project website or GitHub Releases.
+2. Open the package and follow the installer.
+3. Launch Leaf Reader from Applications.
 
-当前版本安装包：
+Leaf Reader requires macOS 14 or later. The reader supports Apple Silicon and Intel Macs; downloadable local speech runtimes require Apple Silicon.
 
-[LeafReader-1.7.4.pkg](https://github.com/dowellhz/LeafReader/releases/download/v1.7.4/LeafReader-1.7.4.pkg)
+## First Launch
 
-## 首次打开
+The bookshelf appears when no document is open. Drag a supported file into the window or use `Command + O` to choose one. Recent documents remain available from the bookshelf.
 
-- 使用书架导入最近阅读的书。
-- 也可以直接打开 PDF、EPUB 或 DOCX 文件。
-- Leaf Reader 会记录阅读位置，重新打开时恢复进度。
+## Open a Document
 
-## 打开文档
+Leaf Reader supports PDF, EPUB, and DOCX files. It restores the last page or reading position when a document is reopened. PDF documents use PDFKit; EPUB and DOCX content is rendered with WebKit.
 
-支持格式：
+## Configure AI
 
-- PDF
-- EPUB
-- DOCX
+AI features are optional. Open Settings and provide the model endpoint, model name, and API key required by your provider. Normal reading, document search, existing-note editing, note export, and local features do not send model requests.
 
-PDF 使用 PDFKit 阅读；EPUB 和 DOCX 会转换为本地 HTML 后在 WebKit 中阅读。
+Only text included in an AI action is sent to the configured provider. Documents otherwise remain local.
 
-## 配置 AI
+## Translate or Explain Text
 
-AI 功能不是必须项。未配置 AI 时，普通阅读、书架、翻页和基础文档打开仍可使用。
+Select text in the document and choose an action from the floating toolbar. Available actions include explanation, summary, translation, and follow-up questions. Without a configured model, Leaf Reader directs you to Settings.
 
-配置步骤：
+## Create Reading Notes
 
-1. 打开设置。
-2. 选择聊天模型供应商和模型。
-3. 填入 API Key。
-4. 如需整本书问答或文档检索，配置 embedding 模型。
-5. 运行连接测试。
+With a model key configured, select a passage and choose Note to create a note linked to the current book and location. The current selection toolbar shows this creation action together with the AI actions only when the selected model is configured. After creation, ordinary editing, images, search, favorites, and export work locally; only explicit AI assistance sends note content to the provider. See [Reading Notes](reading-notes.md).
 
-API Key 保存在本机。只有使用 AI 功能时，选中的文本、问题或用于分析的片段才会发送到你配置的模型服务。
+## Save Vocabulary
 
-## 使用翻译和解释
+Select a word, look it up, and save it to the current book's vocabulary. Saved words can be reviewed, highlighted when the document is reopened, and exported. See [Vocabulary and Highlights](word-highlights.md).
 
-1. 在书中选中文本。
-2. 打开 AI 面板。
-3. 选择解释、翻译、总结或继续追问。
-4. 长文本翻译会自动分段处理。
+## Check for Updates
 
-## 使用阅读笔记
+Use the application update command to ask Sparkle for the latest available release. See [Troubleshooting](troubleshooting.md) if the check fails.
 
-1. 在书中选中一段文字。
-2. 点击浮动工具栏里的“笔记”。
-3. 在阅读笔记窗口中补充翻译、难句解析或自己的备注。
-4. 选中笔记中的词句后，可以使用“解析”“翻译”“总结”“整理”或“问 AI”继续加工。
+## Related Pages
 
-阅读笔记支持 `/` 命令菜单、Markdown 显示、AI 补全和导出。完整说明见 [阅读笔记](reading-notes.md)。
-
-## 使用背单词
-
-1. 选中单词或短语。
-2. 让 AI 解释含义。
-3. 保存到本书背单词。
-4. 在词汇面板中复习、查看上下文或导出。
-
-## 检查更新
-
-Leaf Reader 使用 Sparkle 更新通道。发布版本后，可以在应用内检查更新。
-
-如果更新失败，先看 [故障排查](troubleshooting.md)。
-
-## 相关页面
-
-- [功能地图](feature-map.md)
-- [快捷键](shortcuts.md)
-- [阅读笔记](reading-notes.md)
+- [Shortcuts](shortcuts.md)
+- [Reading Notes](reading-notes.md)
 - [AI Chat](ai-chat.md)
-- [AI Analysis Cache](ai-analysis-cache.md)
-- [Word Highlights](word-highlights.md)
+- [TTS and Read Aloud](tts.md)
+- [Vocabulary and Highlights](word-highlights.md)
 - [Troubleshooting](troubleshooting.md)

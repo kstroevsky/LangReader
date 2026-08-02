@@ -32,10 +32,10 @@ Open file
 ## Related Files
 
 - `Sources/LeafReaderApp/DocumentReading/DocumentSession.swift`
-- `Sources/LeafReaderApp/DocumentReading/DocumentLoading.swift`
-- `Sources/LeafReaderApp/DocumentReading/DocumentLoading+Archive.swift`
-- `Sources/LeafReaderApp/DocumentReading/DocumentLoading+EPUB.swift`
-- `Sources/LeafReaderApp/DocumentReading/DocumentLoading+DOCX.swift`
-- `Sources/LeafReaderApp/DocumentReading/DocumentLoading+HTML.swift`
-- `Sources/LeafReaderApp/DocumentReading/ReaderDocumentKind.swift`
+- `Sources/LeafReaderCore/DocumentReading/DocumentLoading.swift`
+- `Sources/LeafReaderCore/DocumentReading/DocumentLoading+Archive.swift`
+- `Sources/LeafReaderCore/DocumentReading/DocumentLoading+EPUB.swift`
+- `Sources/LeafReaderCore/DocumentReading/DocumentLoading+DOCX.swift`
+- `Sources/LeafReaderCore/DocumentReading/DocumentLoading+HTML.swift`
+- `Sources/LeafReaderCore/DocumentReading/ReaderDocumentKind.swift`
 - `Sources/LeafReaderApp/Resources/reader-web.js`

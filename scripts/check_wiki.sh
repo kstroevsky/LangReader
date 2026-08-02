@@ -82,7 +82,7 @@ check_generated_files() {
 check_version_status() {
   local version
   version="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$ROOT_DIR/Sources/LeafReaderApp/App/Info.plist")"
-  if ! grep -q "当前版本：\`$version\`" "$WIKI_DIR/index.md"; then
+  if ! grep -q "Current version: \`$version\`" "$WIKI_DIR/index.md"; then
     fail "docs/wiki/index.md current version does not match Info.plist ($version)"
   fi
 }
@@ -94,6 +94,21 @@ check_retired_paths() {
   if grep -rnE 'mac-app/|\./tests/run\.sh' --include='*.md' "$WIKI_DIR" >&2; then
     fail "wiki still references the retired flat source tree or test command"
   fi
+}
+
+check_english_only() {
+  local file
+  while IFS= read -r file; do
+    if LC_ALL=C perl -CSD -ne 'exit 1 if /\p{Han}/' "$file"; then
+      continue
+    fi
+    fail "$file contains Chinese text"
+  done < <(
+    find "$ROOT_DIR" -name '*.md' \
+      -not -path '*/.git/*' \
+      -not -path '*/.venv-docs/*' \
+      -print | sort
+  )
 }
 
 check_scripts() {
@@ -109,6 +124,7 @@ check_sync_registration
 check_generated_files
 check_version_status
 check_retired_paths
+check_english_only
 
 if [[ "$FAILURES" -ne 0 ]]; then
   echo "Wiki checks failed: $FAILURES issue(s)." >&2
