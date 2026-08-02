@@ -1,5 +1,6 @@
 import Cocoa
 import Sparkle
+import LeafReaderCore
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -16,10 +17,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var manualUpdateProbeHandledResult = false
     weak var manualUpdateSender: AnyObject?
     var pendingOpenFileURLs: [URL] = []
+    private var backupCoordinator: UserDataBackupCoordinator?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         LaunchPerformanceTracker.shared.mark("didFinishLaunching")
+        do {
+            if let configuration = UserDataBackupConfiguration.production() {
+                let coordinator = UserDataBackupCoordinator(configuration: configuration)
+                try coordinator.recoverBeforePersistenceActivation()
+                backupCoordinator = coordinator
+            }
+        } catch {
+            let alert = NSAlert(error: error)
+            alert.messageText = AppText.localized("需要恢复用户数据", "User-data recovery is required")
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .critical
+            alert.runModal()
+            NSApp.terminate(nil)
+            return
+        }
         controller = ReaderWindowController()
+        backupCoordinator?.markPersistenceActive()
         LaunchPerformanceTracker.shared.mark("windowController")
         installMainMenu()
         LaunchPerformanceTracker.shared.mark("menu")

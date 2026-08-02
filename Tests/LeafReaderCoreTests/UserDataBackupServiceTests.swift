@@ -158,6 +158,80 @@ enum UserDataBackupServiceTests {
         }
     }
 
+    static func testColdStartRecoveryRollsBackInterruptedRestore() throws {
+        let fixture = try Fixture()
+        defer { fixture.cleanUp() }
+        try seedManagedData(fixture, value: "before")
+
+        let transaction = fixture.support.deletingLastPathComponent()
+            .appendingPathComponent(".LeafVocabulary-restore-interrupted", isDirectory: true)
+        let rollback = transaction.appendingPathComponent("rollback", isDirectory: true)
+        try FileManager.default.createDirectory(at: rollback, withIntermediateDirectories: true)
+        let wordDatabase = fixture.support.appendingPathComponent("word-records.sqlite3")
+        try FileManager.default.moveItem(at: wordDatabase, to: rollback.appendingPathComponent("word-records.sqlite3"))
+        try createDatabase(at: wordDatabase, value: "after")
+        let priorPreferences = try PropertyListSerialization.data(fromPropertyList: [:], format: .binary, options: 0)
+        try priorPreferences.write(to: rollback.appendingPathComponent("previous-preferences.plist"), options: .atomic)
+        let journal = """
+        {"phase":"applying","units":[
+        {"name":"word-records.sqlite3","hadOriginal":true,"phase":"installed"},
+        {"name":"personal-vocabulary.sqlite3","hadOriginal":true,"phase":"pending"},
+        {"name":"reading-notes.sqlite","hadOriginal":true,"phase":"pending"},
+        {"name":"ReadingNoteAssets","hadOriginal":true,"phase":"pending"}
+        ],"preferencesApplyStarted":false,"preferencesApplied":false}
+        """
+        try Data(journal.utf8).write(to: transaction.appendingPathComponent("restore-journal.json"), options: .atomic)
+
+        try fixture.service().recoverInterruptedRestoreIfNeeded()
+        try expectEqual(try databaseValue(wordDatabase), "before", "cold-start recovery restores the original swapped database")
+        try expect(!FileManager.default.fileExists(atPath: transaction.path), "verified recovery cleans its journal directory")
+    }
+
+    static func testBackupRejectsSymbolicLinkInManagedAssets() throws {
+        let fixture = try Fixture()
+        defer { fixture.cleanUp() }
+        try seedManagedData(fixture, value: "before")
+        let assets = fixture.support.appendingPathComponent("ReadingNoteAssets", isDirectory: true)
+        let symlink = assets.appendingPathComponent("linked-secret.txt")
+        try FileManager.default.createSymbolicLink(
+            atPath: symlink.path,
+            withDestinationPath: fixture.root.appendingPathComponent("outside.txt").path
+        )
+
+        do {
+            _ = try fixture.service().createBackup(at: fixture.backup)
+            throw TestFailure(description: "a managed asset symlink must fail closed")
+        } catch is TestFailure {
+            throw TestFailure(description: "a managed asset symlink must fail closed")
+        } catch {
+            // Expected: archive enumeration rejects links instead of copying a
+            // partial or out-of-tree asset set into the manifest.
+        }
+        try expect(!FileManager.default.fileExists(atPath: fixture.backup.path), "a rejected enumeration does not publish a backup")
+    }
+
+    @MainActor
+    static func testCoordinatorRejectsBackupAfterPersistenceActivation() throws {
+        let fixture = try Fixture()
+        defer { fixture.cleanUp() }
+        try seedManagedData(fixture, value: "before")
+        let coordinator = UserDataBackupCoordinator(configuration: UserDataBackupConfiguration(
+            applicationSupportDirectory: fixture.support,
+            preferencesDomainName: fixture.domain,
+            defaults: fixture.defaults
+        ))
+        coordinator.markPersistenceActive()
+
+        do {
+            _ = try coordinator.createColdStartBackup(at: fixture.backup)
+            throw TestFailure(description: "a live persistence capture must be rejected")
+        } catch is TestFailure {
+            throw TestFailure(description: "a live persistence capture must be rejected")
+        } catch {
+            // Expected: only the cold-start coordinator may orchestrate a snapshot.
+        }
+    }
+
     private static func seedManagedData(_ fixture: Fixture, value: String) throws {
         for name in ["word-records.sqlite3", "personal-vocabulary.sqlite3", "reading-notes.sqlite"] {
             let url = fixture.support.appendingPathComponent(name)

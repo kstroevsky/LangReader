@@ -46,7 +46,8 @@ Restore does not mutate the live profile until all of these checks pass:
 * Every relative path is safe, unique, and on the format's allow-list
 * The assets-directory presence agrees with the manifest, including the empty
   directory case
-* The payload contains exactly the listed regular files and no symbolic links
+* Recursive enumeration fails closed on an enumeration error and rejects
+  symbolic links and special files; it never creates a partial asset manifest
 * Byte counts and SHA-256 digests match
 * `preferences.plist` decodes to a dictionary
 * Every SQLite snapshot returns `ok` from `PRAGMA integrity_check`
@@ -58,10 +59,19 @@ from an untrusted sender.
 ## Restore contract
 
 Restore first copies validated payload files into a same-volume staging
-directory. It then moves each current managed unit into a rollback directory
-and replaces it from staging. Preferences are applied last. If any replacement
-or preference synchronization fails, applied units are reverted in reverse
-order and the previous preferences domain is restored.
+directory. It records a write-ahead journal before every managed-unit move and
+before applying preferences, then moves each current managed unit into a
+rollback directory and replaces it from staging. Preferences are applied last.
+If any replacement or preference synchronization fails, applied units are
+reverted in reverse order and the previous preferences domain is restored.
+
+`UserDataBackupCoordinator` is the only production orchestration seam. It
+permits capture and restore only before persistence activation, preventing a
+mixed-time snapshot across preferences, SQLite stores, and note assets. On
+startup, before shared stores or `ReaderWindowController` are constructed, it
+reconciles every unfinished restore journal. A journal that cannot be reconciled
+stops launch with a blocking recovery error; committed journals are only cleaned
+up after their commit record is durable.
 
 Production restore must run before shared SQLite store singletons are opened.
 After a successful restore the app must terminate and relaunch: open SQLite

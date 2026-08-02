@@ -124,6 +124,8 @@ package final class UserDataBackupService {
     private static let payloadName = "payload"
     private static let preferencesName = "preferences.plist"
     private static let readingNoteAssetsName = "ReadingNoteAssets"
+    private static let restoreJournalName = "restore-journal.json"
+    private static let rollbackPreferencesName = "previous-preferences.plist"
     private static let databaseNames = [
         "word-records.sqlite3",
         "personal-vocabulary.sqlite3",
@@ -134,6 +136,36 @@ package final class UserDataBackupService {
     private let fileManager: FileManager
     private let restoreCheckpoint: (@Sendable (Int) throws -> Void)?
 
+    /// A restore never deletes its transaction directory until this journal has
+    /// reached a terminal state.  The file is rewritten atomically before each
+    /// filesystem transition, making an interrupted restore recoverable on the
+    /// next cold start.
+    private struct RestoreJournal: Codable {
+        enum TransactionPhase: String, Codable {
+            case applying
+            case committed
+        }
+
+        enum UnitPhase: String, Codable {
+            case pending
+            case movingOriginal
+            case originalMoved
+            case installingStaged
+            case installed
+        }
+
+        struct Unit: Codable {
+            let name: String
+            let hadOriginal: Bool
+            var phase: UnitPhase
+        }
+
+        var phase: TransactionPhase
+        var units: [Unit]
+        var preferencesApplyStarted: Bool
+        var preferencesApplied: Bool
+    }
+
     package init(
         configuration: UserDataBackupConfiguration,
         fileManager: FileManager = .default,
@@ -142,6 +174,38 @@ package final class UserDataBackupService {
         self.configuration = configuration
         self.fileManager = fileManager
         self.restoreCheckpoint = restoreCheckpoint
+    }
+
+    /// Must be called before the app opens shared stores.  An unrecoverable
+    /// journal is deliberately surfaced rather than guessing which version of
+    /// a user's files is authoritative.
+    package func recoverInterruptedRestoreIfNeeded() throws {
+        let parent = configuration.applicationSupportDirectory.deletingLastPathComponent()
+        guard fileManager.fileExists(atPath: parent.path) else { return }
+        let prefix = ".\(AppIdentity.applicationSupportDirectoryName)-restore-"
+        let candidates: [URL]
+        do {
+            candidates = try fileManager.contentsOfDirectory(
+                at: parent,
+                includingPropertiesForKeys: [.isDirectoryKey],
+                options: []
+            ).filter { $0.lastPathComponent.hasPrefix(prefix) }
+        } catch {
+            throw UserDataBackupError.fileOperation("could not inspect restore recovery state: \(error.localizedDescription)")
+        }
+        for transactionURL in candidates.sorted(by: { $0.path < $1.path }) {
+            let journalURL = transactionURL.appendingPathComponent(Self.restoreJournalName)
+            guard fileManager.fileExists(atPath: journalURL.path) else {
+                throw UserDataBackupError.rollbackFailed("restore transaction without journal at \(transactionURL.path)")
+            }
+            var journal = try readRestoreJournal(at: journalURL)
+            if journal.phase == .committed {
+                try fileManager.removeItem(at: transactionURL)
+                continue
+            }
+            try rollbackRestoreTransaction(at: transactionURL, journal: &journal)
+            try fileManager.removeItem(at: transactionURL)
+        }
     }
 
     @discardableResult
@@ -341,10 +405,6 @@ package final class UserDataBackupService {
         let restoredPreferences = try preferencesDictionary(
             at: try validatedPayloadURL(for: preferencesEntry.relativePath, payloadRoot: payloadURL)
         )
-        let previousPreferences = configuration.defaults.persistentDomain(
-            forName: configuration.preferencesDomainName
-        ) ?? [:]
-
         try fileManager.createDirectory(
             at: configuration.applicationSupportDirectory,
             withIntermediateDirectories: true
@@ -355,7 +415,39 @@ package final class UserDataBackupService {
         let rollbackURL = transactionURL.appendingPathComponent("rollback", isDirectory: true)
         try fileManager.createDirectory(at: stageURL, withIntermediateDirectories: true)
         try fileManager.createDirectory(at: rollbackURL, withIntermediateDirectories: true)
-        defer { try? fileManager.removeItem(at: transactionURL) }
+
+        let units = Self.databaseNames + [Self.readingNoteAssetsName]
+        var journal = RestoreJournal(
+            phase: .applying,
+            units: units.map { name in
+                RestoreJournal.Unit(
+                    name: name,
+                    hadOriginal: fileManager.fileExists(
+                        atPath: configuration.applicationSupportDirectory.appendingPathComponent(name).path
+                    ),
+                    phase: .pending
+                )
+            },
+            preferencesApplyStarted: false,
+            preferencesApplied: false
+        )
+        try writeRestoreJournal(journal, at: transactionURL)
+        let previousPreferences = configuration.defaults.persistentDomain(
+            forName: configuration.preferencesDomainName
+        ) ?? [:]
+        do {
+            let previousPreferencesData = try PropertyListSerialization.data(
+                fromPropertyList: previousPreferences,
+                format: .binary,
+                options: 0
+            )
+            try previousPreferencesData.write(
+                to: rollbackURL.appendingPathComponent(Self.rollbackPreferencesName),
+                options: .atomic
+            )
+        } catch {
+            throw UserDataBackupError.preferences("could not journal previous preferences: \(error.localizedDescription)")
+        }
 
         let databaseEntries = Dictionary(uniqueKeysWithValues: manifest.entries
             .filter { $0.kind == .database }
@@ -379,11 +471,9 @@ package final class UserDataBackupService {
             }
         }
 
-        let units = Self.databaseNames + [Self.readingNoteAssetsName]
-        var applied: [String] = []
-        var preferencesApplied = false
         do {
-            for name in units {
+            for index in journal.units.indices {
+                let name = journal.units[index].name
                 let destination = configuration.applicationSupportDirectory.appendingPathComponent(name)
                 let staged = stageURL.appendingPathComponent(name)
                 let rollback = rollbackURL.appendingPathComponent(name)
@@ -391,59 +481,143 @@ package final class UserDataBackupService {
                 let hasDestination = fileManager.fileExists(atPath: destination.path)
                 guard hasStaged || hasDestination else { continue }
 
-                applied.append(name)
                 if hasDestination {
+                    journal.units[index].phase = .movingOriginal
+                    try writeRestoreJournal(journal, at: transactionURL)
                     try fileManager.moveItem(at: destination, to: rollback)
+                    journal.units[index].phase = .originalMoved
+                    try writeRestoreJournal(journal, at: transactionURL)
                 }
                 if hasStaged {
+                    journal.units[index].phase = .installingStaged
+                    try writeRestoreJournal(journal, at: transactionURL)
                     try fileManager.moveItem(at: staged, to: destination)
+                    journal.units[index].phase = .installed
+                    try writeRestoreJournal(journal, at: transactionURL)
                 }
-                try restoreCheckpoint?(applied.count)
+                try restoreCheckpoint?(index + 1)
             }
 
+            journal.preferencesApplyStarted = true
+            try writeRestoreJournal(journal, at: transactionURL)
             configuration.defaults.setPersistentDomain(
                 restoredPreferences,
                 forName: configuration.preferencesDomainName
             )
-            preferencesApplied = true
             guard configuration.defaults.synchronize() else {
                 throw UserDataBackupError.preferences("the restored domain could not be synchronized")
             }
+            journal.preferencesApplied = true
+            journal.phase = .committed
+            try writeRestoreJournal(journal, at: transactionURL)
         } catch {
-            var rollbackFailures: [String] = []
-            if preferencesApplied {
-                configuration.defaults.setPersistentDomain(
-                    previousPreferences,
-                    forName: configuration.preferencesDomainName
-                )
-                if !configuration.defaults.synchronize() {
-                    rollbackFailures.append("preferences")
-                }
-            }
-            for name in applied.reversed() {
-                let destination = configuration.applicationSupportDirectory.appendingPathComponent(name)
-                let rollback = rollbackURL.appendingPathComponent(name)
-                do {
-                    if fileManager.fileExists(atPath: destination.path) {
-                        try fileManager.removeItem(at: destination)
-                    }
-                    if fileManager.fileExists(atPath: rollback.path) {
-                        try fileManager.moveItem(at: rollback, to: destination)
-                    }
-                } catch {
-                    rollbackFailures.append(name)
-                }
-            }
-            if !rollbackFailures.isEmpty {
-                throw UserDataBackupError.rollbackFailed(rollbackFailures.joined(separator: ", "))
+            do {
+                try rollbackRestoreTransaction(at: transactionURL, journal: &journal)
+                try fileManager.removeItem(at: transactionURL)
+            } catch {
+                // The journal is intentionally retained for cold-start recovery.
+                throw UserDataBackupError.rollbackFailed(error.localizedDescription)
             }
             throw error
         }
+
+        // A committed journal has been durably recorded.  It is now safe to
+        // remove the transaction; if that cleanup is interrupted, cold-start
+        // recovery only removes the committed transaction and never rolls back.
+        try fileManager.removeItem(at: transactionURL)
 
         return UserDataRestoreResult(
             restoredEntryCount: manifest.entries.count,
             requiresRelaunch: true
         )
+    }
+
+    private func writeRestoreJournal(_ journal: RestoreJournal, at transactionURL: URL) throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        do {
+            try encoder.encode(journal).write(
+                to: transactionURL.appendingPathComponent(Self.restoreJournalName),
+                options: .atomic
+            )
+        } catch {
+            throw UserDataBackupError.fileOperation("could not write restore journal: \(error.localizedDescription)")
+        }
+    }
+
+    private func readRestoreJournal(at url: URL) throws -> RestoreJournal {
+        do {
+            return try JSONDecoder().decode(RestoreJournal.self, from: Data(contentsOf: url))
+        } catch {
+            throw UserDataBackupError.rollbackFailed("restore journal is unreadable at \(url.path)")
+        }
+    }
+
+    /// Restores the pre-transaction filesystem and preferences state using the
+    /// durable journal.  It is intentionally conservative: if an original is
+    /// expected but neither the destination nor rollback copy can prove its
+    /// whereabouts, recovery fails and keeps the transaction for inspection.
+    private func rollbackRestoreTransaction(
+        at transactionURL: URL,
+        journal: inout RestoreJournal
+    ) throws {
+        let rollbackURL = transactionURL.appendingPathComponent("rollback", isDirectory: true)
+        var failures: [String] = []
+
+        if journal.preferencesApplyStarted {
+            do {
+                let preferencesURL = rollbackURL.appendingPathComponent(Self.rollbackPreferencesName)
+                let priorPreferences = try preferencesDictionary(at: preferencesURL)
+                configuration.defaults.setPersistentDomain(
+                    priorPreferences,
+                    forName: configuration.preferencesDomainName
+                )
+                guard configuration.defaults.synchronize() else {
+                    throw UserDataBackupError.preferences("could not synchronize restored previous preferences")
+                }
+                journal.preferencesApplied = false
+            } catch {
+                failures.append("preferences")
+            }
+        }
+
+        for unit in journal.units.reversed() {
+            let destination = configuration.applicationSupportDirectory.appendingPathComponent(unit.name)
+            let rollback = rollbackURL.appendingPathComponent(unit.name)
+            let hasRollback = fileManager.fileExists(atPath: rollback.path)
+            let hasDestination = fileManager.fileExists(atPath: destination.path)
+            do {
+                if hasRollback {
+                    if hasDestination {
+                        try fileManager.removeItem(at: destination)
+                    }
+                    try fileManager.moveItem(at: rollback, to: destination)
+                    continue
+                }
+
+                // A new unit may have been installed before interruption. It
+                // has no original rollback copy, so remove only after the
+                // journal proves we had entered its install transition.
+                if !unit.hadOriginal,
+                   unit.phase == .installingStaged || unit.phase == .installed,
+                   hasDestination {
+                    try fileManager.removeItem(at: destination)
+                    continue
+                }
+
+                if unit.hadOriginal,
+                   unit.phase != .pending,
+                   !hasDestination {
+                    throw UserDataBackupError.rollbackFailed("missing original \(unit.name)")
+                }
+            } catch {
+                failures.append(unit.name)
+            }
+        }
+
+        guard failures.isEmpty else {
+            throw UserDataBackupError.rollbackFailed(failures.joined(separator: ", "))
+        }
     }
 
     private func validateAllowed(_ entry: UserDataBackupManifest.Entry) throws {
@@ -491,22 +665,38 @@ package final class UserDataBackupService {
     }
 
     private func regularFilesRecursively(in directory: URL) throws -> [URL] {
+        let rootValues = try directory.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+        guard rootValues.isDirectory == true, rootValues.isSymbolicLink != true else {
+            throw UserDataBackupError.fileOperation("managed directory is not a real directory: \(directory.path)")
+        }
+        var enumerationError: Error?
         guard let enumerator = fileManager.enumerator(
             at: directory,
             includingPropertiesForKeys: [.isRegularFileKey, .isDirectoryKey, .isSymbolicLinkKey],
             options: [],
-            errorHandler: { _, _ in false }
+            errorHandler: { url, error in
+                enumerationError = UserDataBackupError.fileOperation(
+                    "could not enumerate \(url.path): \(error.localizedDescription)"
+                )
+                return false
+            }
         ) else {
             throw UserDataBackupError.fileOperation("could not enumerate \(directory.path)")
         }
         var files: [URL] = []
         for case let url as URL in enumerator {
-            let values = try url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
+            if let enumerationError { throw enumerationError }
+            let values = try url.resourceValues(forKeys: [.isRegularFileKey, .isDirectoryKey, .isSymbolicLinkKey])
             if values.isSymbolicLink == true {
-                throw UserDataBackupError.invalidBackup("symbolic links are not allowed")
+                throw UserDataBackupError.fileOperation("symbolic links are not allowed: \(url.path)")
             }
             if values.isRegularFile == true { files.append(url) }
+            else if values.isDirectory == true { continue }
+            else {
+                throw UserDataBackupError.fileOperation("unsupported filesystem entry: \(url.path)")
+            }
         }
+        if let enumerationError { throw enumerationError }
         return files.sorted { $0.path < $1.path }
     }
 

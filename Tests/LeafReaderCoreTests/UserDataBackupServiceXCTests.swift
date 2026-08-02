@@ -16,4 +16,17 @@ final class UserDataBackupServiceXCTests: XCTestCase {
     func testMissingDeclaredEmptyAssetsDirectoryIsRejected() throws {
         try UserDataBackupServiceTests.testMissingDeclaredEmptyAssetsDirectoryIsRejected()
     }
+
+    func testColdStartRecoveryRollsBackInterruptedRestore() throws {
+        try UserDataBackupServiceTests.testColdStartRecoveryRollsBackInterruptedRestore()
+    }
+
+    func testBackupRejectsSymbolicLinkInManagedAssets() throws {
+        try UserDataBackupServiceTests.testBackupRejectsSymbolicLinkInManagedAssets()
+    }
+
+    @MainActor
+    func testCoordinatorRejectsBackupAfterPersistenceActivation() throws {
+        try UserDataBackupServiceTests.testCoordinatorRejectsBackupAfterPersistenceActivation()
+    }
 }
