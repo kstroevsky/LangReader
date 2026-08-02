@@ -6,7 +6,7 @@ import LeafReaderCore
 /// Like `ReaderBottomBarModel`, this stays thin. It carries the theme, a
 /// language-change token, the chrome-state visibility flags, and the small
 /// amount of control state the toolbar's native buttons render from
-/// (read-aloud phase, page-layout/crop mode, full-screen). Everything that is
+/// (read-aloud phase and page-layout/crop mode). Everything that is
 /// *content* — the document title and cover image — stays on the existing
 /// AppKit instances the view bridges in, for their verified window-drag
 /// behaviour. Page and zoom fields remain AppKit editing adapters, but their
@@ -38,7 +38,6 @@ final class ReaderTopBarModel {
     var pageLayoutIsTwoPage: Bool = false
     var pageLayoutEnabled: Bool = true
     var cropIsEnabled: Bool = false
-    var isFullScreen: Bool = false
 
     @ObservationIgnored var action: ((ReaderTopBarButton) -> Void)?
     /// Called only when the user flips the related-forms switch, never when the
@@ -52,13 +51,12 @@ enum ReaderTopBarButton {
     case readAloudStop
     case pageLayout
     case crop
-    case fullScreen
 }
 
 /// The reader's top toolbar, declarative SwiftUI.
 ///
 /// Replaces the hand-placed constraints in `ReaderWindowController+UILayout` for
-/// the buttons: native SwiftUI renders the read-aloud/page-layout/crop/full-screen
+/// the buttons: native SwiftUI renders the read-aloud/page-layout/crop
 /// capsules and the related-forms toggle, and bridges the (non-editable) title and
 /// cover so window-drag and the title-as-data reads stay intact.
 ///
@@ -93,12 +91,13 @@ struct ReaderTopBarView: View {
     /// Natural width of the visible trailing capsules (page-layout and crop are
     /// hidden for non-PDF documents).
     private var trailingWidth: CGFloat {
-        var width = ReaderUILayout.fullScreenButtonWidth
+        var width: CGFloat = 0
         if model.showsPageLayoutButton {
-            width += ReaderUILayout.pageLayoutButtonWidth + ReaderToolbarLayout.clusterSpacing
+            width += ReaderUILayout.pageLayoutButtonWidth
         }
         if model.showsCropButton {
-            width += ReaderUILayout.cropButtonWidth + ReaderToolbarLayout.clusterSpacing
+            if width > 0 { width += ReaderToolbarLayout.clusterSpacing }
+            width += ReaderUILayout.cropButtonWidth
         }
         return width
     }
@@ -192,8 +191,7 @@ struct ReaderTopBarView: View {
         }
     }
 
-    /// Page-layout, crop and full-screen capsules, pinned trailing. Page-layout
-    /// and crop keep their slots even when hidden so the order never shifts.
+    /// Page-layout and crop capsules, pinned trailing.
     private var trailingCluster: some View {
         HStack(spacing: ReaderToolbarLayout.clusterSpacing) {
             if model.showsPageLayoutButton {
@@ -208,9 +206,6 @@ struct ReaderTopBarView: View {
                 capsule(.crop, title: text.title, symbol: nil, tooltip: text.tooltip,
                         width: ReaderUILayout.cropButtonWidth)
             }
-            let full = ReaderTopBarTitles.fullScreen(isFullScreen: model.isFullScreen)
-            capsule(.fullScreen, title: full.title, symbol: nil, tooltip: nil,
-                    width: ReaderUILayout.fullScreenButtonWidth)
         }
     }
 
@@ -265,7 +260,6 @@ extension ReaderTopBarButton {
         case .readAloudStop: return "topBar.readAloudStop"
         case .pageLayout: return "topBar.pageLayout"
         case .crop: return "topBar.crop"
-        case .fullScreen: return "topBar.fullScreen"
         }
     }
 }
@@ -342,9 +336,4 @@ enum ReaderTopBarTitles {
             : (AppText.localized("裁边", "Crop"), AppText.localized("裁掉 PDF 页面外侧空白", "Crop outer PDF margins"))
     }
 
-    static func fullScreen(isFullScreen: Bool) -> (title: String, symbol: String) {
-        isFullScreen
-            ? (AppText.windowed, "arrow.down.right.and.arrow.up.left")
-            : (AppText.fullScreen, "arrow.up.left.and.arrow.down.right")
-    }
 }

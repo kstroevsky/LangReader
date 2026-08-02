@@ -29,6 +29,8 @@ extension ReaderWindowController {
         bottomBarView?.layer?.borderColor = toolbarView?.layer?.borderColor
         zoomGroupView?.layer?.backgroundColor = controlBackground.cgColor
         zoomGroupView?.layer?.borderColor = controlBorder.cgColor
+        pageLabel.layer?.backgroundColor = controlBackground.cgColor
+        pageLabel.layer?.borderColor = controlBorder.cgColor
         resizeHandle.theme = theme
         searchUnderlineButton?.theme = theme
         applyChromeTheme(to: window?.contentView, theme: theme)

@@ -31,10 +31,10 @@ final class ReaderBottomBarModel {
 ///
 /// Replaces a row of custom-drawn `CapsuleChromeButton`s positioned by hand in
 /// `ReaderWindowController+UILayout`. Three groups, matching the original: the
-/// settings gear and panel buttons pinned leading, the page-navigation group
+/// settings gear and panel buttons pinned leading, the table of contents
 /// centred, and the AI-analysis controls trailing (shown only while an analysis
-/// runs). PDFKit/WebKit and the document itself are untouched — this is only the
-/// chrome.
+/// runs). Direct page jumps live in the top bar's page field. PDFKit/WebKit and
+/// the document itself are untouched — this is only the chrome.
 struct ReaderBottomBarView: View {
     @Bindable var model: ReaderBottomBarModel
 
@@ -154,9 +154,6 @@ struct ReaderBottomBarView: View {
         case .review: return ReaderUILayout.vocabularyButtonWidth
         case .notes: return ReaderUILayout.notesButtonWidth
         case .toc: return ReaderUILayout.tocButtonWidth
-        case .cover: return ReaderUILayout.coverButtonWidth
-        case .previousPage, .nextPage: return ReaderUILayout.readerNavButtonWidth
-        case .farthestPosition: return ReaderUILayout.farthestPositionButtonWidth
         case .embeddingPause, .embeddingCancel: return ReaderUILayout.embeddingButtonWidth
         case .settings: return ReaderUILayout.settingsButtonSize
         }
@@ -174,10 +171,6 @@ enum ReaderBottomBarTitles {
         case .notes: return AppText.localized("笔记", "Notes")
         case .review: return AppText.localized("背单词", "Review")
         case .toc: return AppText.localized("目录", "TOC")
-        case .cover: return AppText.cover
-        case .previousPage: return AppText.prev
-        case .nextPage: return AppText.next
-        case .farthestPosition: return AppText.localized("上次位置", "Last")
         case .embeddingPause: return AppText.localized("暂停", "Pause")
         case .embeddingCancel: return AppText.localized("取消", "Cancel")
         }
@@ -191,10 +184,6 @@ enum ReaderBottomBarTitles {
         case .notes: return "note.text"
         case .review: return "text.book.closed"
         case .toc: return "list.bullet"
-        case .cover: return "book.closed"
-        case .previousPage: return "chevron.left"
-        case .nextPage: return "chevron.right"
-        case .farthestPosition: return "arrow.turn.down.right"
         case .embeddingPause: return "pause.fill"
         case .embeddingCancel: return "xmark"
         }

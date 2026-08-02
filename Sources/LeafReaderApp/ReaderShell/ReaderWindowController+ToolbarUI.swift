@@ -42,7 +42,6 @@ extension ReaderWindowController {
         // Seed the stateful native buttons from current state.
         updatePDFPageLayoutButton()
         updatePDFMarginCropButton()
-        updateFullScreenButton()
 
         return ReaderToolbarSetup(toolbar: toolbar, hosting: hosting)
     }
@@ -55,7 +54,6 @@ extension ReaderWindowController {
             case .readAloudStop: self.stopReadAloudFromToolbarAction()
             case .pageLayout: self.togglePDFPageLayout()
             case .crop: self.togglePDFMarginCrop()
-            case .fullScreen: self.toggleFullScreen()
             }
         }
         topBarModel.onRelatedFormsChanged = { [weak self] on in
@@ -92,10 +90,6 @@ extension ReaderWindowController {
             case .notes: self.showReadingNotesPanel(nil)
             case .review: self.showVocabularyBook()
             case .toc: self.showTableOfContents()
-            case .cover: self.goToCover()
-            case .previousPage: self.prevPage()
-            case .nextPage: self.nextPage()
-            case .farthestPosition: self.goToFarthestReadingPosition()
             case .embeddingPause: self.toggleEmbeddingBackfillPaused()
             case .embeddingCancel: self.cancelEmbeddingBackfill()
             }
@@ -189,13 +183,20 @@ extension ReaderWindowController {
         pageLabel.alignment = .center
         pageLabel.isBordered = false
         pageLabel.drawsBackground = false
-        pageLabel.focusRingType = .none
+        pageLabel.focusRingType = .default
         pageLabel.isEditable = true
         pageLabel.isSelectable = true
+        pageLabel.wantsLayer = true
+        pageLabel.layer?.backgroundColor = controlBackgroundColor(for: ReaderTheme.selected).cgColor
+        pageLabel.layer?.borderColor = controlBorderColor(for: ReaderTheme.selected).cgColor
+        pageLabel.layer?.borderWidth = 1
+        pageLabel.layer?.cornerRadius = 7
         pageLabel.delegate = self
         pageLabel.target = self
         pageLabel.action = #selector(applyPageFromField)
         pageLabel.toolTip = AppText.localized("输入页码后按回车跳转", "Enter a page number and press Return")
+        pageLabel.setAccessibilityIdentifier("topBar.pageNavigation")
+        pageLabel.setAccessibilityLabel(AppText.localized("页面导航", "Page navigation"))
         updatePageLabelTextColor()
 
         searchUnderlineButton = SearchUnderlineButton(title: "", target: self, action: #selector(showSearchOverlay))

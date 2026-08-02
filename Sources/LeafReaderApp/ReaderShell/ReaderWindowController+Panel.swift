@@ -279,13 +279,8 @@ extension ReaderWindowController {
         preferredAIWidthSaveTask.flush()
     }
 
-    func updateFullScreenButton() {
-        topBarModel.isFullScreen = window?.styleMask.contains(.fullScreen) == true
-    }
-
     func windowDidResize(_ notification: Notification) {
         hideSelectionToolbar()
-        updateFullScreenButton()
         syncAIPanelLayoutAfterResize()
         showReadAloudFloatingControlWindow()
     }
@@ -309,7 +304,6 @@ extension ReaderWindowController {
 
     func windowDidEnterFullScreen(_ notification: Notification) {
         hideSelectionToolbar()
-        updateFullScreenButton()
         windowResizeLayoutTask.cancel()
         syncAIPanelLayoutAfterResize()
         windowResizeLayoutTask.flush()
@@ -318,7 +312,6 @@ extension ReaderWindowController {
 
     func windowDidExitFullScreen(_ notification: Notification) {
         hideSelectionToolbar()
-        updateFullScreenButton()
         windowResizeLayoutTask.cancel()
         syncAIPanelLayoutAfterResize()
         windowResizeLayoutTask.flush()

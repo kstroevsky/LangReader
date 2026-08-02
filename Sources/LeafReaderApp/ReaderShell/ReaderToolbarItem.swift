@@ -21,7 +21,6 @@ struct ReaderToolbarItem: Equatable {
         case readAloudStop
         case pageLayout
         case crop
-        case fullScreen
     }
 
     /// Which cluster of the toolbar the control belongs to.
@@ -46,10 +45,9 @@ struct ReaderToolbarItem: Equatable {
         switch id {
         case .cover:
             return state.showsCover
-        case .title, .readAloud, .pageLayout, .crop, .fullScreen:
-            // Title and Read are always present; page layout and crop are hidden
-            // by the chrome state on non-PDF documents but keep their slot here
-            // so their order is stable.
+        case .title, .readAloud, .pageLayout, .crop:
+            // Title and Read are always present; page layout and crop follow the
+            // PDF-only visibility owned by the chrome state.
             return visibilityFromChromeState(state)
         case .relatedFormsToggle:
             return state.showsRelatedFormsToggle
@@ -93,8 +91,7 @@ enum ReaderToolbarLayout {
         ReaderToolbarItem(id: .readAloudStop, placement: .beforeZoom, width: 82),
 
         ReaderToolbarItem(id: .pageLayout, placement: .trailing, width: 84),
-        ReaderToolbarItem(id: .crop, placement: .trailing, width: 84),
-        ReaderToolbarItem(id: .fullScreen, placement: .trailing, width: 76)
+        ReaderToolbarItem(id: .crop, placement: .trailing, width: 84)
     ]
 
     static func items(in placement: ReaderToolbarItem.Placement) -> [ReaderToolbarItem] {

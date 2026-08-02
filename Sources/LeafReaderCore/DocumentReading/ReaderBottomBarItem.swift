@@ -3,7 +3,7 @@ import Foundation
 /// A declarative description of one control in the reader's bottom bar.
 ///
 /// The counterpart to `ReaderToolbarItem`, which already describes the top
-/// toolbar this way. The bottom bar's nine buttons were instead built by hand,
+/// toolbar this way. The bottom bar's buttons were instead built by hand,
 /// each repeating the same four lines with a different title and symbol, so its
 /// order lived only in the order of those statements and could not be inspected
 /// or tested.
@@ -19,10 +19,6 @@ package struct ReaderBottomBarItem: Equatable {
         case notes
         case review
         case toc
-        case cover
-        case previousPage
-        case nextPage
-        case farthestPosition
         case embeddingPause
         case embeddingCancel
 
@@ -72,10 +68,6 @@ package enum ReaderBottomBarLayout {
         ReaderBottomBarItem(id: .review, cluster: .panels, showsLeadingSymbol: true),
         ReaderBottomBarItem(id: .notes, cluster: .panels, showsLeadingSymbol: true),
         ReaderBottomBarItem(id: .toc, cluster: .navigation, showsLeadingSymbol: false),
-        ReaderBottomBarItem(id: .cover, cluster: .navigation, showsLeadingSymbol: false),
-        ReaderBottomBarItem(id: .previousPage, cluster: .navigation, showsLeadingSymbol: false),
-        ReaderBottomBarItem(id: .nextPage, cluster: .navigation, showsLeadingSymbol: false),
-        ReaderBottomBarItem(id: .farthestPosition, cluster: .navigation, showsLeadingSymbol: false),
         ReaderBottomBarItem(id: .embeddingPause, cluster: .embedding, showsLeadingSymbol: false),
         ReaderBottomBarItem(id: .embeddingCancel, cluster: .embedding, showsLeadingSymbol: false)
     ]

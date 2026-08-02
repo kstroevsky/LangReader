@@ -19,8 +19,8 @@ enum ReaderBottomBarItemTests {
     static func testNavigationGroupIsInReadingOrder() throws {
         try expectEqual(
             ReaderBottomBarLayout.items(in: .navigation).map(\.id),
-            [.toc, .cover, .previousPage, .nextPage, .farthestPosition],
-            "the navigation group should keep its reading order"
+            [.toc],
+            "cross-document navigation should be consolidated in the TOC and page field"
         )
     }
 

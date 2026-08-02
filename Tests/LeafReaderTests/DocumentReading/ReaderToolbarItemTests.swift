@@ -16,8 +16,8 @@ enum ReaderToolbarItemTests {
         )
         try expectEqual(
             ReaderToolbarLayout.items(in: .trailing).map(\.id),
-            [.pageLayout, .crop, .fullScreen],
-            "the trailing cluster runs page layout, crop, full screen"
+            [.pageLayout, .crop],
+            "the trailing cluster contains only reader-specific PDF controls"
         )
         // Every control belongs to exactly one cluster.
         try expectEqual(
@@ -31,8 +31,8 @@ enum ReaderToolbarItemTests {
         let pdf = ReaderChromeState.make(presentation: .pdf)
         try expectEqual(
             ReaderToolbarLayout.visibleItems(in: .trailing, state: pdf),
-            [.pageLayout, .crop, .fullScreen],
-            "a PDF shows every trailing control"
+            [.pageLayout, .crop],
+            "a PDF shows its reader-specific trailing controls"
         )
         try expectEqual(
             ReaderToolbarLayout.visibleItems(in: .beforeZoom, state: pdf),
@@ -45,8 +45,8 @@ enum ReaderToolbarItemTests {
         let web = ReaderChromeState.make(presentation: .web)
         try expectEqual(
             ReaderToolbarLayout.visibleItems(in: .trailing, state: web),
-            [.fullScreen],
-            "web keeps only full screen in the trailing cluster"
+            [],
+            "web leaves native macOS window controls to manage the window"
         )
         try expectEqual(
             ReaderToolbarLayout.visibleItems(in: .beforeZoom, state: web),

@@ -57,8 +57,6 @@ enum ReaderUILayout {
     static let pageLayoutButtonWidth: CGFloat = 84
     static let cropButtonTrailing: CGFloat = -8
     static let cropButtonWidth: CGFloat = 84
-    static let fullScreenTrailing: CGFloat = -14
-    static let fullScreenButtonWidth: CGFloat = 76
     static let toolbarButtonHeight: CGFloat = 30
 
     static let searchOverlayTop: CGFloat = 10
@@ -68,9 +66,6 @@ enum ReaderUILayout {
     static let loadingLabelHorizontalInset: CGFloat = 32
 
     static let tocButtonWidth: CGFloat = 88
-    static let farthestPositionButtonWidth: CGFloat = 112
-    static let coverButtonWidth: CGFloat = 100
-    static let readerNavButtonWidth: CGFloat = 84
     static let navigationStackSpacing: CGFloat = 20
     static let navigationStackCenterOffset: CGFloat = 104
 
@@ -165,6 +160,7 @@ extension ReaderWindowController {
             pageLabel.centerXAnchor.constraint(equalTo: toolbar.centerXAnchor, constant: ReaderUILayout.pageLabelCenterOffset),
             pageLabel.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),
             pageLabel.widthAnchor.constraint(equalToConstant: ReaderUILayout.pageLabelWidth),
+            pageLabel.heightAnchor.constraint(equalToConstant: ReaderUILayout.zoomGroupSize.height),
 
             searchUnderlineButton.leadingAnchor.constraint(equalTo: pageLabel.trailingAnchor, constant: ReaderUILayout.searchUnderlineLeading),
             searchUnderlineButton.centerYAnchor.constraint(equalTo: toolbar.centerYAnchor),

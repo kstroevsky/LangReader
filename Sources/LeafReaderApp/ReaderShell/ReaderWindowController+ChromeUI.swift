@@ -95,10 +95,7 @@ extension ReaderWindowController {
         refreshEmbeddingStatusLanguage()
         updatePDFPageLayoutButton()
         updatePDFMarginCropButton()
-        updateFullScreenButton()
-        if pdfView.document == nil {
-            pageLabel.stringValue = AppText.noPDF
-            updatePageLabelTextColor()
-        }
+        pageLabel.setAccessibilityLabel(AppText.localized("页面导航", "Page navigation"))
+        updatePageLabel()
     }
 }
