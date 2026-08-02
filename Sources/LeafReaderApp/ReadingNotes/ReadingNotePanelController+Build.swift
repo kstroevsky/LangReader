@@ -21,7 +21,11 @@ extension ReadingNotePanelController {
         editorChrome.translatesAutoresizingMaskIntoConstraints = false
         editorChromeHostingView = editorChrome
 
-        let editorStatus = NSHostingView(rootView: ReadingNoteEditorStatusView(model: editorModel, theme: ReaderTheme.selected))
+        let editorActions = NSHostingView(rootView: makeEditorActionToolbarView(theme: ReaderTheme.selected))
+        editorActions.translatesAutoresizingMaskIntoConstraints = false
+        editorActionToolbarHostingView = editorActions
+
+        let editorStatus = NSHostingView(rootView: makeEditorStatusView(theme: ReaderTheme.selected))
         editorStatus.translatesAutoresizingMaskIntoConstraints = false
         editorStatusHostingView = editorStatus
 
@@ -34,6 +38,7 @@ extension ReadingNotePanelController {
         let editorToolbar = buildEditorToolbar()
         editorContainer.addSubview(scrollView)
         editorContainer.addSubview(editorToolbar)
+        editorContainer.addSubview(editorActions)
         editorContainer.addSubview(editorWordCount)
 
         rootView.addSubview(editorChrome)
@@ -60,6 +65,10 @@ extension ReadingNotePanelController {
             editorToolbar.trailingAnchor.constraint(equalTo: editorContainer.trailingAnchor),
             editorToolbar.bottomAnchor.constraint(equalTo: editorContainer.bottomAnchor),
             editorToolbar.heightAnchor.constraint(equalToConstant: Metrics.editorToolbarHeight),
+            editorActions.leadingAnchor.constraint(equalTo: editorContainer.leadingAnchor, constant: 10),
+            editorActions.centerYAnchor.constraint(equalTo: editorToolbar.centerYAnchor),
+            editorActions.widthAnchor.constraint(equalToConstant: 126),
+            editorActions.heightAnchor.constraint(equalToConstant: 32),
             editorStatus.leadingAnchor.constraint(equalTo: editorContainer.leadingAnchor, constant: 6),
             editorStatus.trailingAnchor.constraint(equalTo: editorContainer.trailingAnchor, constant: -6),
             editorStatus.bottomAnchor.constraint(equalTo: rootView.bottomAnchor, constant: -9),
@@ -95,10 +104,6 @@ extension ReadingNotePanelController {
     }
 
     private func buildEditorToolbar() -> NSStackView {
-        let save = iconButton(symbol: "square.and.arrow.down", action: #selector(saveTapped(_:)))
-        save.toolTip = AppText.localized("保存当前阅读笔记", "Save this reading note")
-        let undo = iconButton(symbol: "arrow.uturn.backward", action: #selector(undoTapped(_:)))
-        let redo = iconButton(symbol: "arrow.uturn.forward", action: #selector(redoTapped(_:)))
         let bold = textButton(title: "B", action: #selector(boldTapped(_:)))
         let italic = textButton(title: "I", action: #selector(italicTapped(_:)))
         italic.font = NSFontManager.shared.convert(AppFont.semibold(ofSize: 16), toHaveTrait: .italicFontMask)
@@ -107,12 +112,12 @@ extension ReadingNotePanelController {
         let template = iconButton(symbol: "doc.plaintext", action: #selector(templateTapped(_:)))
         template.toolTip = AppText.localized("插入阅读笔记模板", "Insert reading note template")
         let image = iconButton(symbol: "photo", action: #selector(imageTapped(_:)))
-        let buttons = [save, undo, redo, toolbarSeparator(), bold, italic, list, check, template, image]
+        let buttons = [toolbarSeparator(), bold, italic, list, check, template, image]
         let stack = NSStackView(views: buttons)
         stack.orientation = .horizontal
         stack.alignment = .centerY
         stack.spacing = 14
-        stack.edgeInsets = NSEdgeInsets(top: 0, left: 24, bottom: 0, right: 86)
+        stack.edgeInsets = NSEdgeInsets(top: 0, left: 150, bottom: 0, right: 86)
         stack.translatesAutoresizingMaskIntoConstraints = false
         return stack
     }

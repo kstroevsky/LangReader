@@ -38,6 +38,7 @@ extension SpeechRuntimeResourceManager {
         from manifestURL: URL = Runtime.modelManifestURL,
         completion: @escaping (Result<SpeechModelManifest?, Error>) -> Void
     ) {
+        let callback = LeafReaderSendableCallback(completion)
         let task = URLSession.shared.dataTask(with: manifestURL) { data, response, error in
             if let error {
                 let bundledManifest = bundledModelManifest()
@@ -46,17 +47,17 @@ extension SpeechRuntimeResourceManager {
                     bundledManifest != nil,
                     String(describing: error)
                 )
-                completion(.success(bundledManifest))
+                callback.call(.success(bundledManifest))
                 return
             }
 
             let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 200
             if statusCode == 404 {
-                completion(.success(bundledModelManifest()))
+                callback.call(.success(bundledModelManifest()))
                 return
             }
             guard (200...299).contains(statusCode), let data else {
-                completion(.failure(NSError(
+                callback.call(.failure(NSError(
                     domain: LocalRuntimeDownloadSupport.downloadErrorDomain,
                     code: statusCode,
                     userInfo: [NSLocalizedDescriptionKey: AppText.localized("模型校验清单下载失败，请稍后重试。", "Model checksum manifest download failed. Please try again later.")]
@@ -64,7 +65,7 @@ extension SpeechRuntimeResourceManager {
                 return
             }
 
-            completion(modelManifestDecodeResult(data: data, bundledManifest: bundledModelManifest()))
+            callback.call(modelManifestDecodeResult(data: data, bundledManifest: bundledModelManifest()))
         }
         task.resume()
     }

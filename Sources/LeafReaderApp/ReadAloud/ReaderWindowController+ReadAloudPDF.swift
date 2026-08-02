@@ -218,7 +218,7 @@ extension ReaderWindowController {
            let page = document.page(at: expectedPageIndex) {
             NSLog("LeafReader read aloud: forcing PDF page after delayed page change (target=%d)", expectedPageIndex + 1)
             if preparePDFReadAloudPageTop(page) {
-                lastPageIndex = expectedPageIndex
+                documentSession.position.lastPageIndex = expectedPageIndex
                 updatePageLabel()
                 saveSession()
             }
@@ -273,7 +273,7 @@ extension ReaderWindowController {
     private func lockPDFReadAloudPage(at pageIndex: Int, save: Bool) {
         readAloudPageLockedAtTopIndex = pageIndex
         guard save else { return }
-        lastPageIndex = pageIndex
+        documentSession.position.lastPageIndex = pageIndex
         updatePageLabel()
         saveSession()
     }

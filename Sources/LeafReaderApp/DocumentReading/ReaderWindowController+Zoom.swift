@@ -5,11 +5,10 @@ extension ReaderWindowController {
     @objc func zoomIn() {
         markReaderInteraction()
         guard currentDocumentKind == .pdf else {
-            setWebZoom(webZoomPercent + 10)
+            setWebZoom(documentSession.web.zoomPercent + 10)
             return
         }
-        pdfView.autoScales = false
-        pdfView.scaleFactor = min(pdfView.scaleFactor * 1.25, 8)
+        pdfReaderAdapter.setScaleFactor(min(pdfView.scaleFactor * 1.25, 8))
         syncPDFZoomPercentFromNative()
         updateZoomLabel()
         saveSession()
@@ -18,11 +17,10 @@ extension ReaderWindowController {
     @objc func zoomOut() {
         markReaderInteraction()
         guard currentDocumentKind == .pdf else {
-            setWebZoom(webZoomPercent - 10)
+            setWebZoom(documentSession.web.zoomPercent - 10)
             return
         }
-        pdfView.autoScales = false
-        pdfView.scaleFactor = max(pdfView.scaleFactor * 0.8, 0.1)
+        pdfReaderAdapter.setScaleFactor(max(pdfView.scaleFactor * 0.8, 0.1))
         syncPDFZoomPercentFromNative()
         updateZoomLabel()
         saveSession()
@@ -42,8 +40,7 @@ extension ReaderWindowController {
             updateZoomLabel()
             return
         }
-        pdfView.autoScales = false
-        pdfView.scaleFactor = ReaderFieldInput.clampedPDFScale(percent: percent)
+        pdfReaderAdapter.applyZoomPercent(Int(percent))
         syncPDFZoomPercentFromNative()
         updateZoomLabel()
         saveSession()
@@ -51,7 +48,7 @@ extension ReaderWindowController {
     }
 
     func setWebZoom(_ percent: Int) {
-        webZoomPercent = ReaderFieldInput.clampedWebZoom(percent: percent)
+        documentSession.web.zoomPercent = ReaderFieldInput.clampedWebZoom(percent: percent)
         updateZoomLabel()
         applyWebZoomToPage()
         saveSession()
@@ -59,10 +56,6 @@ extension ReaderWindowController {
     }
 
     func applyWebZoomToPage() {
-        guard webView != nil else { return }
-        webView.pageZoom = 1
-        webView.evaluateJavaScript("""
-        document.documentElement.style.setProperty('--reader-zoom', '\(Double(webZoomPercent) / 100)');
-        """)
+        webReaderAdapter.applyZoomPercent(documentSession.web.zoomPercent)
     }
 }

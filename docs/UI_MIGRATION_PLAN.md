@@ -295,7 +295,7 @@ The smoke environment must be deterministic:
 
 ## 0.5 Define actor boundaries
 
-**Status: Swift 6 adoption complete; diagnostic hardening continues.** Both the core and app compile in Swift 6 language mode, the shipping build uses that mode, and UI controllers/models state their main-actor ownership. Full Xcode validation still reports a bounded warning backlog at serialized legacy boundaries such as PDFKit values, networking completions, read-aloud closures, and the parallel German-lemma buffer; resolve these incrementally without moving blocking work onto the main actor.
+**Status: Swift 6 adoption complete; diagnostic hardening continues.** Both the core and app compile in Swift 6 language mode, the shipping build uses that mode, and UI controllers/models state their main-actor ownership. The German-lemma parallel buffer and two URLSession callback seams now have explicit Sendable owners; the remaining bounded warning backlog is concentrated at serialized legacy boundaries such as PDFKit values, read-aloud closures, and document text loaders. Resolve these incrementally without moving blocking work onto the main actor.
 
 UI-facing observable models should be main-actor isolated.
 
@@ -345,11 +345,12 @@ This is a permanent, acceptable adapter unless a future SwiftUI editor provides 
 
 ## 1.4 Migrate surrounding chrome to SwiftUI
 
-**Status: first Notes editor chrome slice complete.** The header, metadata,
-more/list triggers, status line, and word count are now model-backed SwiftUI
-views hosted beside the native editor. The AppKit adapter retains the rich-text
-surface, formatting toolbar, floating AI controls, and menu implementation;
-SwiftUI invokes focused controller commands for the two chrome actions.
+**Status: Notes editor chrome complete.** The header, metadata, favourite,
+more/list triggers, save/undo/redo actions, status line, word count, and AI busy
+state are model-backed SwiftUI views hosted beside the native editor. The
+AppKit adapter retains the rich-text surface, formatting toolbar, floating AI
+selection controls, and menu implementation; SwiftUI invokes focused controller
+commands at those seams.
 
 SwiftUI may own:
 
@@ -414,6 +415,11 @@ PDFKit updates through explicit controller sync methods. Search, loading, cover,
 panel, and read-aloud presentation state remain future candidates until a concrete
 consumer or duplicate-state defect justifies extracting each one.
 
+Loading, search visibility/query, AI-panel collapsed state/width, and full-screen
+state now have a named `ReaderShellPresentationState`; `ReaderReadAloudState`
+already owns the Read Aloud presentation lifecycle. The native overlays and
+constraints remain adapters that project this state.
+
 AI, embedding, and read-aloud features must read document state from models, not from `titleLabel.stringValue`, page fields, or other controls.
 
 ## 2.2 Keep temporary AppKit control bridges
@@ -451,6 +457,12 @@ Implement these through:
 
 Do not store PDF selection geometry in shared state. Ask the active backend for geometry on demand.
 
+**Status: first adapter seam complete.** `PDFKitReaderAdapter` and
+`WebKitReaderAdapter` now own the common native selection-clear and zoom
+commands, while the PDF adapter also supplies current page and page-count
+snapshots. Feature code can grow behind these focused interfaces without
+moving the rendering engines out of AppKit.
+
 ## 2.4 Separate semantic selection from presentation geometry
 
 `ReaderSelectionState` should hold:
@@ -482,7 +494,7 @@ A direct-access ceiling is useful temporarily, but the long-term goal is that fe
 
 ## 2.6 Retire writable property proxies gradually
 
-**Status: first reader-selection slice complete.** The controller no longer exposes
+**Status: selection and page/zoom proxy slices complete.** The controller no longer exposes
 writable aliases for PDF selection text, web selection text/context/occurrence, or
 selection geometry. Feature code reads and updates `ReaderSelectionState` and
 `ReaderSelectionPresentation` directly, so the controller is no longer the seam
@@ -490,7 +502,9 @@ through which semantic selection is passed around. PDFKit/WebKit still own nativ
 selection and rendering; this change only removes the controller-level duplicate
 accessors.
 
-Controller proxies are migration scaffolding.
+Controller proxies are migration scaffolding. The page-index and web-zoom
+aliases have now been removed; call sites read and write the focused
+`DocumentSession.position` / `DocumentSession.web` models directly.
 
 Rules:
 
@@ -818,7 +832,7 @@ The migration is complete when:
 
 1. **Complete:** `LeafReaderCoreTests` is CI-owned on a pinned macOS/Xcode runner.
 2. **Complete:** `LeafReaderApp` and the shipping build use Swift 6 language mode; remaining strict-concurrency warnings form an explicit follow-up queue.
-3. **Operator checkpoint:** run the private representative performance workflow with real PDF, EPUB, DOCX, long-conversation, notes, and vocabulary fixtures; commit aggregate results and sanitized metadata only.
+3. **Operator checkpoint:** run the private representative performance workflow with real PDF, EPUB, DOCX, long-conversation, notes, and vocabulary fixtures; commit aggregate results and sanitized metadata only. The deterministic full-Xcode PDF capture has been rerun; the private gate still needs those local fixtures.
 4. **Complete:** EPUB/DOCX vocabulary records now have stable vocabulary identity plus lemma/surface metadata, with additive SQLite migration and legacy repair tests.
 5. **Complete:** the versioned user-data backup service validates its allow-listed package, hashes, plist, and SQLite integrity, then restores with staged replacements and reverse-order rollback. See `docs/BACKUP_FORMAT.md`.
 6. **Validation:** portability, target XCTest, the custom regression harness, and build/sign pass under full Xcode 16.2. UI smoke and the private performance capture remain machine/operator gates before discretionary UI migration resumes.

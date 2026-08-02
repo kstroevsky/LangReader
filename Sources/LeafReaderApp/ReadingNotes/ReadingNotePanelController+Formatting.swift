@@ -4,6 +4,10 @@ import LeafReaderCore
 
 extension ReadingNotePanelController {
     @objc func undoTapped(_ sender: NSButton) {
+        performUndo()
+    }
+
+    func performUndo() {
         guard textView.undoManager?.canUndo == true else {
             NSSound.beep()
             return
@@ -13,6 +17,10 @@ extension ReadingNotePanelController {
     }
 
     @objc func redoTapped(_ sender: NSButton) {
+        performRedo()
+    }
+
+    func performRedo() {
         guard textView.undoManager?.canRedo == true else {
             NSSound.beep()
             return

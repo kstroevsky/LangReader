@@ -708,6 +708,8 @@ private let tests: [(String, () throws -> Void)] = [
     ("Reader presentation clear title", ReaderPresentationStateTests.testClearResetsTitle),
     ("Reader presentation title from URL", ReaderPresentationStateTests.testTitleForURLDropsExtension),
     ("Reader presentation title stable", ReaderPresentationStateTests.testTitleForURLIsStableAcrossPaths),
+    ("Reader shell loading and search state", ReaderShellPresentationStateTests.testLoadingAndSearchTransitions),
+    ("Reader shell panel state", ReaderShellPresentationStateTests.testPanelStateIsIndependentFromAIData),
     ("User backup round trip", UserDataBackupServiceTests.testRoundTripRestoresDatabasesPreferencesAndAssets),
     ("User backup rejects tampering", UserDataBackupServiceTests.testTamperedPayloadIsRejectedBeforeMutation),
     ("User backup restore rollback", UserDataBackupServiceTests.testFailedRestoreRollsBackEveryReplacement),

@@ -29,7 +29,7 @@ extension ReaderWindowController {
 
         clearAISelectionForNavigation()
         pdfView.go(to: page)
-        lastPageIndex = targetIndex
+        documentSession.position.lastPageIndex = targetIndex
         scrollPageToTop(page)
         updatePageLabel()
         saveSession()
@@ -89,7 +89,7 @@ extension ReaderWindowController {
         guard currentDocumentKind == .pdf else {
             let storedProgress = sessionStore.loadFarthestWebProgress()
             if let zoomPercent = storedProgress?.zoomPercent {
-                webZoomPercent = zoomPercent
+                documentSession.web.zoomPercent = zoomPercent
                 updateZoomLabel()
                 applyWebZoomToPage()
             }
@@ -101,7 +101,7 @@ extension ReaderWindowController {
         let targetIndex = min(max(storedProgress?.pageIndex ?? currentPageIndex() ?? 0, 0), document.pageCount - 1)
         guard let page = document.page(at: targetIndex) else { return }
         pdfView.go(to: page)
-        lastPageIndex = targetIndex
+        documentSession.position.lastPageIndex = targetIndex
         if let storedProgress, ReaderSessionPolicy.isRestorablePDFScale(storedProgress.scale) {
             applyReadablePDFScale(storedProgress.scale)
         }
@@ -168,7 +168,7 @@ extension ReaderWindowController {
             return
         }
         scrollPageToTop(page)
-        lastPageIndex = targetIndex
+        documentSession.position.lastPageIndex = targetIndex
         updatePageLabel()
         saveSession()
     }
@@ -204,12 +204,12 @@ extension ReaderWindowController {
         markReaderInteraction()
         hideSelectionToolbar()
         let newPageIndex = currentPageIndex()
-        guard newPageIndex != lastPageIndex else {
+        guard newPageIndex != documentSession.position.lastPageIndex else {
             updatePageLabel()
             saveSession()
             return
         }
-        lastPageIndex = newPageIndex
+        documentSession.position.lastPageIndex = newPageIndex
         updatePageLabel()
         saveSession()
         if !isReadAloudActive {

@@ -65,7 +65,7 @@ extension ReaderWindowController {
         clearAISelectionForNavigation()
         let destination = PDFDestination(page: page, at: tocDestination.point)
         pdfView.go(to: destination)
-        lastPageIndex = tocDestination.pageIndex
+        documentSession.position.lastPageIndex = tocDestination.pageIndex
         updatePageLabel()
         saveSession()
     }

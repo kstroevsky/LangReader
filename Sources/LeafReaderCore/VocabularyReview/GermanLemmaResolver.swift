@@ -47,6 +47,30 @@ package enum GermanLemmaResolver {
 }
 
 package enum GermanLemmaOccurrenceMatcher {
+    /// The parallel scanner writes each page exactly once. Keeping that write
+    /// behind a small Sendable owner avoids passing an inout buffer into a
+    /// Swift 6 concurrent closure while preserving page-order results.
+    private final class ResultsBuffer: @unchecked Sendable {
+        private var values: [[VocabularyTextOccurrence]]
+        private let lock = NSLock()
+
+        init(count: Int) {
+            values = [[VocabularyTextOccurrence]](repeating: [], count: count)
+        }
+
+        func store(_ value: [VocabularyTextOccurrence], at index: Int) {
+            lock.lock()
+            values[index] = value
+            lock.unlock()
+        }
+
+        func snapshot() -> [[VocabularyTextOccurrence]] {
+            lock.lock()
+            defer { lock.unlock() }
+            return values
+        }
+    }
+
     /// Compiled once and shared: this pattern never varies, but the matcher is
     /// called once per page, so building it per call cost a regex compilation
     /// for every page of the document.
@@ -70,47 +94,45 @@ package enum GermanLemmaOccurrenceMatcher {
         guard !texts.isEmpty else { return [] }
         let compiled = VocabularyOccurrenceMatcher.compile(query: selectedForm)
 
-        var results = [[VocabularyTextOccurrence]](repeating: [], count: texts.count)
+        let results = ResultsBuffer(count: texts.count)
         guard texts.count > 1 else {
-            results[0] = matches(
+            results.store(matches(
                 lemma: rawLemma,
                 selectedForm: selectedForm,
                 in: texts[0],
                 compiledQuery: compiled,
                 tagger: NLTagger(tagSchemes: [.lemma]),
                 language: language
-            )
-            return results
+            ), at: 0)
+            return results.snapshot()
         }
 
         // Stripe the pages across workers rather than dispatching one job per
         // page: each worker then builds a single tagger and reuses it, and
         // striping keeps the load even when page lengths vary widely.
         let workerCount = min(texts.count, max(1, ProcessInfo.processInfo.activeProcessorCount))
-        results.withUnsafeMutableBufferPointer { buffer in
-            DispatchQueue.concurrentPerform(iterations: workerCount) { worker in
-                let tagger = NLTagger(tagSchemes: [.lemma])
-                // A second tagger: the first is mid-enumeration when the
-                // fallback fires and cannot be reentered.
-                let fallbackTagger = NLTagger(tagSchemes: [.lemma])
-                var lemmaMemo: [String: String] = [:]
-                var index = worker
-                while index < texts.count {
-                    buffer[index] = matches(
-                        lemma: rawLemma,
-                        selectedForm: selectedForm,
-                        in: texts[index],
-                        compiledQuery: compiled,
-                        tagger: tagger,
-                        fallbackTagger: fallbackTagger,
-                        lemmaMemo: &lemmaMemo,
-                        language: language
-                    )
-                    index += workerCount
-                }
+        DispatchQueue.concurrentPerform(iterations: workerCount) { worker in
+            let tagger = NLTagger(tagSchemes: [.lemma])
+            // A second tagger: the first is mid-enumeration when the
+            // fallback fires and cannot be reentered.
+            let fallbackTagger = NLTagger(tagSchemes: [.lemma])
+            var lemmaMemo: [String: String] = [:]
+            var index = worker
+            while index < texts.count {
+                results.store(matches(
+                    lemma: rawLemma,
+                    selectedForm: selectedForm,
+                    in: texts[index],
+                    compiledQuery: compiled,
+                    tagger: tagger,
+                    fallbackTagger: fallbackTagger,
+                    lemmaMemo: &lemmaMemo,
+                    language: language
+                ), at: index)
+                index += workerCount
             }
         }
-        return results
+        return results.snapshot()
     }
 
     /// Whether the fixed group scan still assigns `surfaceForm` to the group

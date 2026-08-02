@@ -274,7 +274,8 @@ extension ReaderWindowController {
     }
 
     func updateFullScreenButton() {
-        topBarModel.isFullScreen = window?.styleMask.contains(.fullScreen) == true
+        readerPresentation.isFullScreen = window?.styleMask.contains(.fullScreen) == true
+        topBarModel.isFullScreen = readerPresentation.isFullScreen
     }
 
     func windowDidResize(_ notification: Notification) {

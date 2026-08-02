@@ -23,7 +23,7 @@ extension ReaderWindowController {
             isEditingZoomField = true
         } else if obj.object as? NSTextField === pageLabel {
             isEditingPageField = true
-            if currentDocumentKind == .pdf, let pageIndex = lastPageIndex ?? currentPageIndex() {
+            if currentDocumentKind == .pdf, let pageIndex = documentSession.position.lastPageIndex ?? currentPageIndex() {
                 pageLabel.stringValue = "\(pageIndex + 1)"
                 updatePageLabelTextColor()
             }
@@ -55,7 +55,7 @@ extension ReaderWindowController {
     func updateZoomLabel() {
         if isEditingZoomField { return }
         guard currentDocumentKind == .pdf else {
-            zoomField.stringValue = "\(webZoomPercent)%"
+            zoomField.stringValue = "\(documentSession.web.zoomPercent)%"
             return
         }
         zoomField.stringValue = "\(pdfZoomPercent)%"
@@ -67,17 +67,17 @@ extension ReaderWindowController {
             updateWebProgressLabel(webScrollProgress)
             return
         }
-        guard let document = pdfView.document else {
+        guard pdfView.document != nil else {
             pageLabel.stringValue = AppText.noPDF
             pageLabel.toolTip = nil
             updatePageLabelTextColor()
             return
         }
-        if let nativePageIndex = currentPageIndex() {
-            lastPageIndex = nativePageIndex
+        if let nativePageIndex = pdfReaderAdapter.currentPageIndex {
+            documentSession.position.lastPageIndex = nativePageIndex
         }
-        let pageCount = max(document.pageCount, 1)
-        let pageIndex = min(max(lastPageIndex ?? 0, 0), pageCount - 1)
+        let pageCount = max(pdfReaderAdapter.pageCount, 1)
+        let pageIndex = min(max(documentSession.position.lastPageIndex ?? 0, 0), pageCount - 1)
         pageLabel.stringValue = ReaderProgressFormatter.pdfPageText(pageIndex: pageIndex, pageCount: pageCount)
         pageLabel.toolTip = pdfProgressTooltip(pageIndex: pageIndex, pageCount: pageCount)
         updatePageLabelTextColor()
@@ -122,7 +122,7 @@ extension ReaderWindowController {
         }
         let bounds = page.bounds(for: pdfView.displayBox)
         pdfView.go(to: PDFDestination(page: page, at: NSPoint(x: bounds.minX, y: bounds.maxY)))
-        lastPageIndex = index
+        documentSession.position.lastPageIndex = index
         updatePageLabel()
         saveSession()
     }
@@ -196,7 +196,7 @@ extension ReaderWindowController {
         webScrollProgress = scrollProgress
         updateWebProgressLabel(scrollProgress)
         if let percent = progress.zoomPercent {
-            webZoomPercent = percent
+            documentSession.web.zoomPercent = percent
             updateZoomLabel()
         }
         pendingWebProgressRestore = ReaderWebPresentation.PendingProgressRestore(
@@ -214,7 +214,7 @@ extension ReaderWindowController {
         }
         pendingWebProgressRestore = nil
         if let zoomPercent = pending.zoomPercent {
-            webZoomPercent = zoomPercent
+            documentSession.web.zoomPercent = zoomPercent
             updateZoomLabel()
         }
         applyWebZoomToPage()
@@ -223,11 +223,11 @@ extension ReaderWindowController {
 
     func saveWebProgress() {
         guard !isRestoringSession, currentDocumentKind != .pdf else { return }
-        sessionStore.saveFarthestWebProgress(webScrollProgress, zoomPercent: webZoomPercent)
+        sessionStore.saveFarthestWebProgress(webScrollProgress, zoomPercent: documentSession.web.zoomPercent)
         let now = Date()
         guard now.timeIntervalSince(lastWebProgressSave) > ReaderSessionPolicy.webProgressSaveInterval else { return }
         lastWebProgressSave = now
-        sessionStore.saveWebProgress(scrollProgress: webScrollProgress, zoomPercent: webZoomPercent)
+        sessionStore.saveWebProgress(scrollProgress: webScrollProgress, zoomPercent: documentSession.web.zoomPercent)
     }
 
     func restoreBookProgressOrGoHome() {
@@ -260,8 +260,7 @@ extension ReaderWindowController {
     }
 
     func applyReadablePDFScale(_ scale: CGFloat = ReaderWindowController.minimumReadablePDFScale) {
-        pdfView.autoScales = false
-        pdfView.scaleFactor = min(max(scale, Self.minimumReadablePDFScale), 8)
+        pdfReaderAdapter.setScaleFactor(min(max(scale, Self.minimumReadablePDFScale), 8))
         syncPDFZoomPercentFromNative()
         updateZoomLabel()
     }

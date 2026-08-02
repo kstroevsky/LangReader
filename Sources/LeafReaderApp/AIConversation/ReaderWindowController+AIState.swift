@@ -88,12 +88,12 @@ extension ReaderWindowController {
     }
 
     var isAIPanelCollapsed: Bool {
-        get { aiState.isPanelCollapsed }
-        set { aiState.isPanelCollapsed = newValue }
+        get { readerPresentation.isAIPanelCollapsed }
+        set { readerPresentation.isAIPanelCollapsed = newValue }
     }
 
     var preferredAIWidth: CGFloat {
-        get { aiState.preferredWidth }
-        set { aiState.preferredWidth = newValue }
+        get { readerPresentation.preferredAIWidth }
+        set { readerPresentation.preferredAIWidth = newValue }
     }
 }

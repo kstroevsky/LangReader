@@ -26,6 +26,7 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
     let rootView = NSView()
     let editorContainer = NSView()
     var editorChromeHostingView: NSHostingView<ReadingNoteEditorChromeView>?
+    var editorActionToolbarHostingView: NSHostingView<ReadingNoteEditorToolbarView>?
     var editorStatusHostingView: NSHostingView<ReadingNoteEditorStatusView>?
     var editorWordCountHostingView: NSHostingView<ReadingNoteEditorWordCountView>?
     var aiActionButtons: [NSButton] {

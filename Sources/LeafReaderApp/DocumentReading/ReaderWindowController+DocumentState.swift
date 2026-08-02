@@ -77,8 +77,8 @@ extension ReaderWindowController {
     }
 
     func syncPDFZoomPercentFromNative() {
-        guard currentDocumentKind == .pdf, pdfView != nil else { return }
-        setPDFZoomPercent(Int(round(pdfView.scaleFactor * 100)))
+        guard currentDocumentKind == .pdf, let percent = pdfReaderAdapter.nativeZoomPercent else { return }
+        setPDFZoomPercent(percent)
     }
 
     var currentDocumentDiagnostics: [String] {
@@ -101,11 +101,6 @@ extension ReaderWindowController {
         set { documentPresentationState.pdfTOCGeneration = newValue }
     }
 
-    var webZoomPercent: Int {
-        get { documentSession.web.zoomPercent }
-        set { documentSession.web.zoomPercent = newValue }
-    }
-
     var webScrollProgress: Double {
         get { documentSession.web.scrollProgress }
         set { documentSession.web.scrollProgress = newValue }
@@ -119,11 +114,6 @@ extension ReaderWindowController {
     var lastWebProgressSave: Date {
         get { documentSession.web.lastProgressSave }
         set { documentSession.web.lastProgressSave = newValue }
-    }
-
-    var lastPageIndex: Int? {
-        get { documentSession.position.lastPageIndex }
-        set { documentSession.position.lastPageIndex = newValue }
     }
 
     var lastPersonalVocabularyPDFPageIndex: Int? {

@@ -38,15 +38,17 @@ extension ReaderWindowController {
     }
 
     func showDocumentLoading(for url: URL) {
+        readerPresentation.beginDocumentLoading()
         loadingLabel.stringValue = AppText.localized("正在打开 \(url.lastPathComponent)...", "Opening \(url.lastPathComponent)...")
-        loadingOverlay.isHidden = false
+        loadingOverlay.isHidden = !readerPresentation.isDocumentLoading
         loadingIndicator.startAnimation(nil)
     }
 
     func hideDocumentLoading(generation: Int) {
         guard documentSession.acceptsLoad(generation: generation) else { return }
+        readerPresentation.finishDocumentLoading()
         loadingIndicator.stopAnimation(nil)
-        loadingOverlay.isHidden = true
+        loadingOverlay.isHidden = readerPresentation.isDocumentLoading
     }
 
     func showDocumentLoadingFailure(_ error: Error, generation: Int) {

@@ -4,21 +4,24 @@ import WebKit
 
 extension ReaderWindowController {
     @objc func showSearchOverlay() {
-        searchOverlay.isHidden = false
+        readerPresentation.showSearch()
+        searchOverlay.isHidden = !readerPresentation.isSearchVisible
         window?.makeFirstResponder(searchOverlay.searchField)
     }
 
     func hideSearchOverlay() {
-        searchOverlay.isHidden = true
+        readerPresentation.hideSearch()
+        searchOverlay.isHidden = readerPresentation.isSearchVisible
         window?.makeFirstResponder(currentDocumentKind == .pdf ? pdfView : webView)
     }
 
     func performSearch(_ rawQuery: String) {
         let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        readerPresentation.setSearchQuery(query)
         guard !query.isEmpty else {
             clearSearchState()
             clearPDFSelectionState()
-            pdfView.clearSelection()
+            pdfReaderAdapter.clearSelection()
             clearWebSearchSelection()
             clearSearchSelectionForAI()
             return
@@ -79,7 +82,7 @@ extension ReaderWindowController {
         guard !searchResults.isEmpty else {
             searchOverlay.setResultText("0 / 0")
             clearPDFSelectionState()
-            pdfView.clearSelection()
+            pdfReaderAdapter.clearSelection()
             clearSearchSelectionForAI()
             return
         }
@@ -89,7 +92,7 @@ extension ReaderWindowController {
         pdfView.setCurrentSelection(selection, animate: true)
         let pageIndex = goToVisibleSearchSelection(selection)
         if let pageIndex {
-            lastPageIndex = pageIndex
+            documentSession.position.lastPageIndex = pageIndex
         }
         updatePageLabel()
         saveSession()

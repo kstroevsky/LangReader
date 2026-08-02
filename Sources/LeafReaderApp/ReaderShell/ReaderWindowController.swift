@@ -56,6 +56,8 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
 
     var pdfView: ReaderPDFView!
     var webView: ReaderWebView!
+    lazy var pdfReaderAdapter = PDFKitReaderAdapter(view: pdfView)
+    lazy var webReaderAdapter = WebKitReaderAdapter(view: webView)
     let contentArea = NSView()
     let pdfContainer = ClippingView()
     let pdfDimOverlay = PassthroughOverlayView()
@@ -79,6 +81,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var selectionActionToolbarWindow: NSWindow?
     /// Last chrome state applied; the source of truth for what is on screen.
     var chromeState: ReaderChromeState = .empty
+    var readerPresentation = ReaderShellPresentationState()
     let topBarModel = ReaderTopBarModel()
     let bottomBarModel = ReaderBottomBarModel()
     var searchButton: NSButton!
@@ -118,6 +121,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
 
     override init(window: NSWindow?) {
         super.init(window: window)
+        readerPresentation.preferredAIWidth = Self.loadPreferredAIWidth()
         vocabularyPanelController = VocabularyPanelController(owner: self)
         vocabularyLibraryWindowController = VocabularyLibraryWindowController(owner: self)
     }

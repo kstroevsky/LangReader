@@ -24,6 +24,4 @@ struct ReaderAIState {
     let panelResizeLayoutTask = DebouncedTask(delay: 0.05)
     var pendingPanelExpansionAction: (() -> Void)?
     var pendingSourceClickWorkItem: DispatchWorkItem?
-    var isPanelCollapsed = true
-    var preferredWidth: CGFloat = ReaderWindowController.loadPreferredAIWidth()
 }

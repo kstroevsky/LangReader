@@ -203,7 +203,7 @@ extension ReaderWindowController {
         let destination = PDFDestination(page: page, at: NSPoint(x: bounds.minX, y: bounds.maxY))
         pdfView.go(to: destination)
         readAloudPageLockedAtTopIndex = pageIndex
-        lastPageIndex = pageIndex
+        documentSession.position.lastPageIndex = pageIndex
         updatePageLabel()
         saveSession()
     }

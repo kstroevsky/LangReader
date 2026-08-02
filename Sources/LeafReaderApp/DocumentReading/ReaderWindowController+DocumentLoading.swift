@@ -53,7 +53,7 @@ extension ReaderWindowController {
         }
 
         restoreBookProgressOrGoHome()
-        lastPageIndex = currentPageIndex()
+        documentSession.position.lastPageIndex = currentPageIndex()
         syncPDFZoomPercentFromNative()
         applyReaderTheme()
         updatePageLabel()

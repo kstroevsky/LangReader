@@ -13,6 +13,7 @@ struct ReadingNoteEditorChromeView: View {
     let theme: ReaderTheme
     let onShowNotes: () -> Void
     let onMore: () -> Void
+    let onToggleFavorite: () -> Void
 
     private var palette: ReadingNotePalette { ReadingNotePalette(theme: theme) }
 
@@ -22,6 +23,13 @@ struct ReadingNoteEditorChromeView: View {
                 HStack(spacing: 8) {
                     Spacer(minLength: 0)
                     chromeButton(symbol: "sidebar.right", label: AppText.localized("显示笔记列表", "Show notes"), action: onShowNotes)
+                    chromeButton(
+                        symbol: model.isFavorite ? "star.fill" : "star",
+                        label: model.isFavorite
+                            ? AppText.localized("取消收藏", "Remove favorite")
+                            : AppText.localized("收藏笔记", "Favorite note"),
+                        action: onToggleFavorite
+                    )
                     chromeButton(symbol: "ellipsis.curlybraces", label: AppText.localized("更多笔记操作", "More note actions"), action: onMore)
                 }
                 .padding(.horizontal, 22)
@@ -103,15 +111,59 @@ struct ReadingNoteEditorChromeView: View {
 struct ReadingNoteEditorStatusView: View {
     let model: ReadingNoteEditorModel
     let theme: ReaderTheme
+    let onCancelAI: () -> Void
 
     var body: some View {
-        Text(model.statusMessage)
-            .font(.system(size: 12))
-            .foregroundStyle(ReadingNotePalette(theme: theme).primaryText.opacity(0.72))
-            .lineLimit(1)
-            .truncationMode(.tail)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .allowsHitTesting(false)
+        HStack(spacing: 6) {
+            if model.isRunningAIRequest {
+                ProgressView()
+                    .controlSize(.small)
+                Button(AppText.localized("取消", "Cancel"), action: onCancelAI)
+                    .buttonStyle(.plain)
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            Text(model.statusMessage)
+                .font(.system(size: 12))
+                .foregroundStyle(ReadingNotePalette(theme: theme).primaryText.opacity(0.72))
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .foregroundStyle(ReadingNotePalette(theme: theme).primaryText.opacity(0.72))
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// Standard editor commands are SwiftUI chrome; formatting remains in the
+/// native toolbar because it operates on the attributed selection.
+struct ReadingNoteEditorToolbarView: View {
+    let model: ReadingNoteEditorModel
+    let theme: ReaderTheme
+    let onSave: () -> Void
+    let onUndo: () -> Void
+    let onRedo: () -> Void
+
+    var body: some View {
+        HStack(spacing: 6) {
+            toolbarButton(symbol: "square.and.arrow.down", label: AppText.localized("保存", "Save"), action: onSave)
+            toolbarButton(symbol: "arrow.uturn.backward", label: AppText.localized("撤销", "Undo"), action: onUndo)
+            toolbarButton(symbol: "arrow.uturn.forward", label: AppText.localized("重做", "Redo"), action: onRedo)
+        }
+        .padding(.horizontal, 8)
+        .frame(maxHeight: .infinity)
+        .background(ReadingNotePalette(theme: theme).insetBackground.opacity(0.5), in: RoundedRectangle(cornerRadius: 7))
+    }
+
+    private func toolbarButton(symbol: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(ReadingNotePalette(theme: theme).primaryText)
+                .frame(width: 25, height: 25)
+        }
+        .buttonStyle(.plain)
+        .help(label)
+        .accessibilityLabel(label)
     }
 }
 

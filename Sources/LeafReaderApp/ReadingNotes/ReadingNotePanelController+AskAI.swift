@@ -396,7 +396,7 @@ extension ReadingNotePanelController {
         }
     }
 
-    private func setRunning(_ running: Bool, title: String) {
+    func setRunning(_ running: Bool, title: String) {
         editorModel.statusRunning(title, isRunning: running)
         refreshAIToolbar()
     }
