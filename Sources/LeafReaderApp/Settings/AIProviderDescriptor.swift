@@ -1,17 +1,17 @@
 import Foundation
 import LeafReaderCore
 
-enum AIChatRequestFormat: Equatable {
+enum AIChatRequestFormat: Equatable, Sendable {
     case openAICompatible
     case anthropicMessages
 }
 
-enum AIProviderCapability: Hashable {
+enum AIProviderCapability: Hashable, Sendable {
     case chat
     case embedding
 }
 
-struct AIProviderDescriptor: Equatable {
+struct AIProviderDescriptor: Equatable, Sendable {
     let id: String
     let displayName: String
     let capabilities: Set<AIProviderCapability>

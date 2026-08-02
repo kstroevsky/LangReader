@@ -9,6 +9,8 @@ struct ReaderEmbeddingState {
     var pdfEmbeddingStore = PDFEmbeddingStore()
     let embeddingStoreQueue = DispatchQueue(label: "com.linlu.leafreader.embedding-store", qos: .utility)
     let embeddingClient = EmbeddingClient()
+    var embeddingBackfillTask: Task<Void, Never>?
+    var embeddingQueryTask: Task<Void, Never>?
     var isPreparingPDFEmbeddings = false
     var isEmbeddingBackfillPaused = false
     var embeddingBackfillNeedsRetry = false

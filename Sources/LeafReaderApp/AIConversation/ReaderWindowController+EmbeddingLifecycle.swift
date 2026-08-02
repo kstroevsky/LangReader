@@ -103,6 +103,10 @@ extension ReaderWindowController {
     }
 
     func invalidateEmbeddingBackfill(clearPendingCallbacks: Bool = false, clearRetry: Bool = false) {
+        embeddingBackfillTask?.cancel()
+        embeddingBackfillTask = nil
+        embeddingQueryTask?.cancel()
+        embeddingQueryTask = nil
         embeddingBackfillGeneration += 1
         stopEmbeddingBackfill(clearPendingCallbacks: clearPendingCallbacks)
         if clearRetry {

@@ -1,6 +1,6 @@
 import Foundation
 
-package struct ChatMessage: Codable {
+package struct ChatMessage: Codable, Sendable {
     package let role: String
     package let content: String
     package let linkID: String?

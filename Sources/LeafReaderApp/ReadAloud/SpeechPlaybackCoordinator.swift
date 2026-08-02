@@ -35,7 +35,7 @@ final class SpeechPlaybackCoordinator: NSObject, AVAudioPlayerDelegate, @uncheck
     var interruptionPlayer: AVAudioPlayer?
     var interruptionOutputURL: URL?
     var interruptionOutputShouldRemove = true
-    var interruptionFinishHandler: (() -> Void)?
+    var interruptionCallbacks: SpeechInterruptionCallbacks?
     var activeInterruptionGenerationID = UUID()
     var idleShutdownWorkItem: DispatchWorkItem?
     private var playbackWatchdogWorkItem: DispatchWorkItem?

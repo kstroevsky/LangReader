@@ -4,6 +4,38 @@ import WebKit
 import LeafReaderCore
 
 extension ReaderWindowController {
+    /// The async surface used by Reading Note editors.  The editor owns the
+    /// returned task, and cancelling it only cancels this request ID.
+    func documentAgentPrompt(
+        question: String,
+        questionSubject: String = "",
+        context: String,
+        showsEvidenceBubbles: Bool = true
+    ) async -> String? {
+        let requestID = beginDocumentAgentPrompt()
+        return await withTaskCancellationHandler(operation: { [weak self] in
+            guard let self else { return nil }
+            return await withCheckedContinuation { continuation in
+                self.aiState.documentPromptContinuations[requestID] = continuation
+                self.startDocumentAgentPrompt(
+                    question: question,
+                    questionSubject: questionSubject,
+                    context: context,
+                    showsEvidenceBubbles: showsEvidenceBubbles,
+                    requestID: requestID
+                ) { [weak self] value in
+                    self?.resumeDocumentAgentPrompt(requestID, value: value)
+                }
+            }
+        }, onCancel: { [weak self] in
+            Task { @MainActor in
+                self?.cancelDocumentAgentPrompt(requestID: requestID)
+            }
+        })
+    }
+
+    /// Callback compatibility for the existing AI chat panel.  It has a
+    /// request ID too, so it no longer competes with note editors.
     func documentAgentPrompt(
         question: String,
         questionSubject: String = "",
@@ -11,12 +43,34 @@ extension ReaderWindowController {
         showsEvidenceBubbles: Bool = true,
         completion: @escaping (String?) -> Void
     ) {
-        documentPromptGeneration += 1
-        let generation = documentPromptGeneration
+        let requestID = beginDocumentAgentPrompt()
+        startDocumentAgentPrompt(
+            question: question,
+            questionSubject: questionSubject,
+            context: context,
+            showsEvidenceBubbles: showsEvidenceBubbles,
+            requestID: requestID,
+            completion: completion
+        )
+    }
+
+    private func startDocumentAgentPrompt(
+        question: String,
+        questionSubject: String,
+        context: String,
+        showsEvidenceBubbles: Bool,
+        requestID: UUID,
+        completion: @escaping (String?) -> Void
+    ) {
+        let finish: (String?) -> Void = { [weak self] value in
+            guard let self, self.isDocumentAgentPromptActive(requestID) else { return }
+            self.finishDocumentAgentPrompt(requestID)
+            completion(value)
+        }
         currentReadingContextSnapshot(preserveLineBreaks: true) { [weak self] snapshot in
             DispatchQueue.main.async {
-                guard let self, generation == self.documentPromptGeneration, let snapshot else {
-                    completion(nil)
+                guard let self, self.isDocumentAgentPromptActive(requestID), let snapshot else {
+                    finish(nil)
                     return
                 }
                 if self.currentDocumentKind == .pdf {
@@ -26,8 +80,8 @@ extension ReaderWindowController {
                         context: context,
                         showsEvidenceBubbles: showsEvidenceBubbles,
                         snapshot: snapshot,
-                        generation: generation,
-                        completion: completion
+                        requestID: requestID,
+                        completion: finish
                     )
                     return
                 }
@@ -37,17 +91,44 @@ extension ReaderWindowController {
                     context: context,
                     showsEvidenceBubbles: showsEvidenceBubbles,
                     snapshot: snapshot,
-                    generation: generation,
-                    completion: completion
+                    requestID: requestID,
+                    completion: finish
                 )
             }
         }
     }
 
     func cancelDocumentAgentPrompt() {
-        documentPromptGeneration += 1
-        retrievalQueryTask?.cancel()
-        retrievalQueryTask = nil
+        for requestID in aiState.activeDocumentPromptIDs {
+            cancelDocumentAgentPrompt(requestID: requestID)
+        }
+    }
+
+    func cancelDocumentAgentPrompt(requestID: UUID) {
+        guard aiState.activeDocumentPromptIDs.remove(requestID) != nil else { return }
+        aiState.retrievalQueryTasks.removeValue(forKey: requestID)?.cancel()
+        aiState.documentPromptContinuations.removeValue(forKey: requestID)?.resume(returning: nil)
+    }
+
+    private func beginDocumentAgentPrompt() -> UUID {
+        let requestID = UUID()
+        aiState.activeDocumentPromptIDs.insert(requestID)
+        return requestID
+    }
+
+    func isDocumentAgentPromptActive(_ requestID: UUID) -> Bool {
+        aiState.activeDocumentPromptIDs.contains(requestID)
+    }
+
+    private func finishDocumentAgentPrompt(_ requestID: UUID) {
+        aiState.activeDocumentPromptIDs.remove(requestID)
+        aiState.retrievalQueryTasks.removeValue(forKey: requestID)?.cancel()
+    }
+
+    private func resumeDocumentAgentPrompt(_ requestID: UUID, value: String?) {
+        guard isDocumentAgentPromptActive(requestID) else { return }
+        finishDocumentAgentPrompt(requestID)
+        aiState.documentPromptContinuations.removeValue(forKey: requestID)?.resume(returning: value)
     }
 
     func pdfDocumentAgentPrompt(
@@ -56,7 +137,7 @@ extension ReaderWindowController {
         context: String,
         showsEvidenceBubbles: Bool,
         snapshot: ReadingContextSnapshot,
-        generation: Int,
+        requestID: UUID,
         completion: @escaping (String?) -> Void
     ) {
         guard pdfView.document != nil else {
@@ -68,13 +149,13 @@ extension ReaderWindowController {
         let chapterText = snapshot.nearbyText
         let combinedContext = combinedReadingContext(base: context, snapshot: snapshot)
         ensureDocumentAgentIndexAsync { [weak self] in
-            guard let self, generation == self.documentPromptGeneration else {
+            guard let self, self.isDocumentAgentPromptActive(requestID) else {
                 completion(nil)
                 return
             }
-            self.crossLingualRetrievalQueryIfNeeded(question: question, currentPageText: currentPageText, generation: generation) { [weak self] retrievalQuery in
+            self.crossLingualRetrievalQueryIfNeeded(question: question, currentPageText: currentPageText, requestID: requestID) { [weak self] retrievalQuery in
                 DispatchQueue.main.async {
-                    guard let self, generation == self.documentPromptGeneration else {
+                    guard let self, self.isDocumentAgentPromptActive(requestID) else {
                         completion(nil)
                         return
                     }
@@ -85,13 +166,13 @@ extension ReaderWindowController {
                     let retrievalQuestion = combinedRetrievalQuestion.isEmpty ? question : combinedRetrievalQuestion
                     let currentPageIndex = self.currentPageIndex()
                     self.preparePDFEmbeddingsIfPossible(priorityPageIndex: currentPageIndex) { [weak self] in
-                        guard let self, generation == self.documentPromptGeneration else {
+                        guard let self, self.isDocumentAgentPromptActive(requestID) else {
                             completion(nil)
                             return
                         }
                         self.queryEmbedding(for: retrievalQuestion) { [weak self] queryEmbedding in
                             DispatchQueue.main.async {
-                                guard let self, generation == self.documentPromptGeneration else {
+                                guard let self, self.isDocumentAgentPromptActive(requestID) else {
                                     completion(nil)
                                     return
                                 }
@@ -127,18 +208,18 @@ extension ReaderWindowController {
         context: String,
         showsEvidenceBubbles: Bool,
         snapshot: ReadingContextSnapshot,
-        generation: Int,
+        requestID: UUID,
         completion: @escaping (String?) -> Void
     ) {
         let combinedContext = combinedReadingContext(base: context, snapshot: snapshot)
         ensureDocumentAgentIndexAsync { [weak self] in
-            guard let self, generation == self.documentPromptGeneration else {
+            guard let self, self.isDocumentAgentPromptActive(requestID) else {
                 completion(nil)
                 return
             }
-            self.crossLingualRetrievalQueryIfNeeded(question: question, currentPageText: snapshot.visibleText, generation: generation) { [weak self] retrievalQuery in
+            self.crossLingualRetrievalQueryIfNeeded(question: question, currentPageText: snapshot.visibleText, requestID: requestID) { [weak self] retrievalQuery in
                 DispatchQueue.main.async {
-                    guard let self, generation == self.documentPromptGeneration else {
+                    guard let self, self.isDocumentAgentPromptActive(requestID) else {
                         completion(nil)
                         return
                     }
@@ -149,13 +230,13 @@ extension ReaderWindowController {
                     let retrievalQuestion = combinedRetrievalQuestion.isEmpty ? question : combinedRetrievalQuestion
                     let priorityIndex = self.currentEmbeddingPriorityIndex()
                     self.preparePDFEmbeddingsIfPossible(priorityPageIndex: priorityIndex) { [weak self] in
-                        guard let self, generation == self.documentPromptGeneration else {
+                        guard let self, self.isDocumentAgentPromptActive(requestID) else {
                             completion(nil)
                             return
                         }
                         self.queryEmbedding(for: retrievalQuestion) { [weak self] queryEmbedding in
                             DispatchQueue.main.async {
-                                guard let self, generation == self.documentPromptGeneration else {
+                                guard let self, self.isDocumentAgentPromptActive(requestID) else {
                                     completion(nil)
                                     return
                                 }

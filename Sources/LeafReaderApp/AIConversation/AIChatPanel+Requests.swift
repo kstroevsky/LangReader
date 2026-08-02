@@ -239,33 +239,37 @@ extension AIChatPanel {
             updateBubble(assistantBody, role: AppText.aiRole, text: partialTranslationText(translatedChunks, currentIndex: index), renderMarkdown: false)
 
             let prompt = AIPromptStore.translationPrompt(title: title, text: chunks[index])
-            requestState.currentDataTask = client.send(messages: [
-                ChatMessage(role: "system", content: AIPromptStore.systemPrompt()),
-                ChatMessage(role: "user", content: prompt)
-            ]) { [weak self, weak assistantBody] result in
-                DispatchQueue.main.async {
-                    guard let self, let assistantBody else { return }
-                    guard self.requestState.shouldHandleCompletion(for: requestID) else { return }
-                    if self.requestState.consumeCancellation(for: requestID) {
-                        self.finishTranslationRequest(requestID: requestID, busyText: "")
-                        return
-                    }
-                    self.requestState.currentDataTask = nil
-                    switch result {
-                    case .success(let content):
-                        translatedChunks[index] = content
-                        self.updateBubble(
-                            assistantBody,
-                            role: AppText.aiRole,
-                            text: self.partialTranslationText(translatedChunks, currentIndex: index + 1),
-                            renderMarkdown: false,
-                            notify: false
-                        )
-                        translateChunk(index + 1)
-                    case .failure(let error):
-                        self.finishTranslationRequest(requestID: requestID, busyText: "")
-                        self.updateBubble(assistantBody, role: AppText.errorRole, text: self.userFacingAIError(error), notify: false)
-                    }
+            requestState.currentDataTask = Task { @MainActor [weak self, weak assistantBody] in
+                let result: Result<String, Error>
+                do {
+                    result = .success(try await self?.client.response(messages: [
+                        ChatMessage(role: "system", content: AIPromptStore.systemPrompt()),
+                        ChatMessage(role: "user", content: prompt)
+                    ]) ?? "")
+                } catch {
+                    result = .failure(error)
+                }
+                guard let self, let assistantBody, !Task.isCancelled else { return }
+                guard self.requestState.shouldHandleCompletion(for: requestID) else { return }
+                if self.requestState.consumeCancellation(for: requestID) {
+                    self.finishTranslationRequest(requestID: requestID, busyText: "")
+                    return
+                }
+                self.requestState.currentDataTask = nil
+                switch result {
+                case .success(let content):
+                    translatedChunks[index] = content
+                    self.updateBubble(
+                        assistantBody,
+                        role: AppText.aiRole,
+                        text: self.partialTranslationText(translatedChunks, currentIndex: index + 1),
+                        renderMarkdown: false,
+                        notify: false
+                    )
+                    translateChunk(index + 1)
+                case .failure(let error):
+                    self.finishTranslationRequest(requestID: requestID, busyText: "")
+                    self.updateBubble(assistantBody, role: AppText.errorRole, text: self.userFacingAIError(error), notify: false)
                 }
             }
         }

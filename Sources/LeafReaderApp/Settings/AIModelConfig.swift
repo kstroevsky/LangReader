@@ -1,6 +1,6 @@
 import Foundation
 
-struct AIModelConfig {
+struct AIModelConfig: Sendable {
     let id: String
     let providerDescriptor: AIProviderDescriptor
     let displayName: String

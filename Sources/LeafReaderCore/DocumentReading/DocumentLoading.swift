@@ -5,7 +5,7 @@ package struct WebReadableDocument {
     package let htmlFileURL: URL?
     package let baseURL: URL
     package let plainText: String
-    package let plainTextLoader: (() -> String)?
+    package let plainTextLoader: (@Sendable () -> String)?
     package let coverImageURL: URL?
     package let tocItems: [ReaderTOCItem]
     package let diagnostics: [String]

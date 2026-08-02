@@ -1,6 +1,6 @@
 import Foundation
 
-package struct GermanDictionaryEntry: Equatable {
+package struct GermanDictionaryEntry: Equatable, Sendable {
     package let requestedWord: String
     package let lemma: String
     package let partOfSpeech: String?
@@ -52,7 +52,7 @@ package struct GermanDictionaryEntry: Equatable {
 }
 
 package enum GermanWiktionaryParser {
-    package struct ParsedPage: Equatable {
+    package struct ParsedPage: Equatable, Sendable {
         package let lemma: String?
         package let partOfSpeech: String?
         package let meanings: [String]
@@ -83,7 +83,7 @@ package enum GermanWiktionaryParser {
 
     // MARK: - Flexion tables
 
-    package struct FlexionForm: Equatable {
+    package struct FlexionForm: Equatable, Sendable {
         /// The Wiktionary parameter name, e.g. `Nominativ Plural`, `Partizip II`.
         package let label: String
         package let surface: String
@@ -92,7 +92,7 @@ package enum GermanWiktionaryParser {
         package let isVariant: Bool
     }
 
-    package struct FlexionTable: Equatable {
+    package struct FlexionTable: Equatable, Sendable {
         /// `m`, `f` or `n`. More discriminating than a part-of-speech tag for
         /// the noun/noun homographs German is full of — `die Steuer` (tax)
         /// versus `das Steuer` (helm).
@@ -290,52 +290,37 @@ package final class GermanWiktionaryDictionary: @unchecked Sendable {
         self.session = session
     }
 
-    package func lookup(_ query: String, completion: @escaping (Result<GermanDictionaryEntry, Error>) -> Void) {
+    package func lookup(_ query: String) async throws -> GermanDictionaryEntry {
         let word = VocabularyTextPolicy.normalizedVocabularyText(query)
         guard VocabularyTextPolicy.isSingleEnglishWord(word) else {
-            completion(.failure(LookupError.invalidWord))
-            return
+            throw LookupError.invalidWord
         }
         let key = VocabularyTextPolicy.canonicalVocabularyKey(word)
-        lock.lock()
-        let cached = cache[key]
-        lock.unlock()
+        let cached = lock.withLock { cache[key] }
         if let cached {
-            completion(.success(cached))
-            return
+            return cached
         }
-        fetchPage(word: word) { [weak self] result in
-            switch result {
-            case .failure(let error):
-                completion(.failure(error))
-            case .success(let parsed):
-                if parsed.meanings.isEmpty,
-                   let lemma = parsed.lemma,
-                   VocabularyTextPolicy.canonicalVocabularyKey(lemma) != key {
-                    self?.fetchPage(word: lemma) { lemmaResult in
-                        switch lemmaResult {
-                        case .failure(let error):
-                            completion(.failure(error))
-                        case .success(let lemmaPage):
-                            self?.finishEntry(requestedWord: word, fallbackLemma: lemma, page: lemmaPage, completion: completion)
-                        }
-                    }
-                    return
-                }
-                self?.finishEntry(requestedWord: word, fallbackLemma: word, page: parsed, completion: completion)
-            }
+
+        let parsed = try await fetchPage(word: word)
+        if parsed.meanings.isEmpty,
+           let lemma = parsed.lemma,
+           VocabularyTextPolicy.canonicalVocabularyKey(lemma) != key {
+            return try finishEntry(
+                requestedWord: word,
+                fallbackLemma: lemma,
+                page: await fetchPage(word: lemma)
+            )
         }
+        return try finishEntry(requestedWord: word, fallbackLemma: word, page: parsed)
     }
 
     private func finishEntry(
         requestedWord: String,
         fallbackLemma: String,
-        page: GermanWiktionaryParser.ParsedPage,
-        completion: @escaping (Result<GermanDictionaryEntry, Error>) -> Void
-    ) {
+        page: GermanWiktionaryParser.ParsedPage
+    ) throws -> GermanDictionaryEntry {
         guard !page.meanings.isEmpty else {
-            completion(.failure(LookupError.noEntry))
-            return
+            throw LookupError.noEntry
         }
         let entry = GermanDictionaryEntry(
             requestedWord: requestedWord,
@@ -345,16 +330,13 @@ package final class GermanWiktionaryDictionary: @unchecked Sendable {
             flexion: page.flexion
         )
 
-        lock.lock()
-        cache[VocabularyTextPolicy.canonicalVocabularyKey(requestedWord)] = entry
-        lock.unlock()
-        completion(.success(entry))
+        lock.withLock {
+            cache[VocabularyTextPolicy.canonicalVocabularyKey(requestedWord)] = entry
+        }
+        return entry
     }
 
-    private func fetchPage(
-        word: String,
-        completion: @escaping (Result<GermanWiktionaryParser.ParsedPage, Error>) -> Void
-    ) {
+    private func fetchPage(word: String) async throws -> GermanWiktionaryParser.ParsedPage {
         var components = URLComponents(string: "https://de.wiktionary.org/w/api.php")
         components?.queryItems = [
             URLQueryItem(name: "action", value: "parse"),
@@ -364,28 +346,20 @@ package final class GermanWiktionaryDictionary: @unchecked Sendable {
             URLQueryItem(name: "formatversion", value: "2")
         ]
         guard let url = components?.url else {
-            completion(.failure(LookupError.invalidWord))
-            return
+            throw LookupError.invalidWord
         }
         var request = URLRequest(url: url)
         request.timeoutInterval = 12
         request.setValue("LeafVocabulary/1.0 (German vocabulary lookup)", forHTTPHeaderField: "User-Agent")
-        session.dataTask(with: request) { data, response, error in
-            if let error {
-                completion(.failure(error))
-                return
-            }
-            guard let http = response as? HTTPURLResponse,
-                  (200..<300).contains(http.statusCode),
-                  let data,
-                  let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let parse = object["parse"] as? [String: Any],
-                  let wikitext = parse["wikitext"] as? String,
-                  let parsed = GermanWiktionaryParser.parse(wikitext: wikitext) else {
-                completion(.failure(LookupError.noEntry))
-                return
-            }
-            completion(.success(parsed))
-        }.resume()
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse,
+              (200..<300).contains(http.statusCode),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let parse = object["parse"] as? [String: Any],
+              let wikitext = parse["wikitext"] as? String,
+              let parsed = GermanWiktionaryParser.parse(wikitext: wikitext) else {
+            throw LookupError.noEntry
+        }
+        return parsed
     }
 }

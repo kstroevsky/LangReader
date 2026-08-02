@@ -2,7 +2,7 @@ import Foundation
 
 extension SpeechPlaybackCoordinator {
     func stopSpeaking() {
-        let work = {
+        let work: @MainActor @Sendable () -> Void = { [self] in
             self.activeGenerationID = UUID()
             self.playbackFinishHandler = nil
             self.isGeneratingSegments = false
@@ -11,28 +11,20 @@ extension SpeechPlaybackCoordinator {
             self.stopAndClearPlayback()
             self.scheduleIdleShutdown()
         }
-        if Thread.isMainThread {
-            work()
-        } else {
-            DispatchQueue.main.async(execute: work)
-        }
+        executeOnMain(work)
     }
 
     func pauseSpeaking() {
-        let work = {
+        let work: @MainActor @Sendable () -> Void = { [self] in
             guard !self.isPlaybackPaused else { return }
             self.isPlaybackPaused = true
             self.currentPlayer?.pause()
         }
-        if Thread.isMainThread {
-            work()
-        } else {
-            DispatchQueue.main.async(execute: work)
-        }
+        executeOnMain(work)
     }
 
     func resumeSpeaking() {
-        let work = {
+        let work: @MainActor @Sendable () -> Void = { [self] in
             guard self.isPlaybackPaused else { return }
             self.isPlaybackPaused = false
             if let currentPlayer = self.currentPlayer {
@@ -41,15 +33,11 @@ extension SpeechPlaybackCoordinator {
                 self.playNextOutputIfNeeded()
             }
         }
-        if Thread.isMainThread {
-            work()
-        } else {
-            DispatchQueue.main.async(execute: work)
-        }
+        executeOnMain(work)
     }
 
     func setManualAdvanceEnabled(_ enabled: Bool) {
-        let work = {
+        let work: @MainActor @Sendable () -> Void = { [self] in
             self.manualAdvanceEnabled = enabled
             if !enabled {
                 self.manualAdvanceSegmentsRemaining = 0
@@ -59,15 +47,11 @@ extension SpeechPlaybackCoordinator {
                 self.playNextOutputIfNeeded()
             }
         }
-        if Thread.isMainThread {
-            work()
-        } else {
-            DispatchQueue.main.async(execute: work)
-        }
+        executeOnMain(work)
     }
 
     func advanceToNextSegment() {
-        let work = {
+        let work: @MainActor @Sendable () -> Void = { [self] in
             self.shouldPlayNextGeneratedSegmentImmediately = true
             self.isSkippingCurrentSegment = self.currentPlayer != nil
             self.allowOneManualAdvanceSegmentIfNeeded()
@@ -79,15 +63,11 @@ extension SpeechPlaybackCoordinator {
                 self.playNextOutputIfNeeded()
             }
         }
-        if Thread.isMainThread {
-            work()
-        } else {
-            DispatchQueue.main.async(execute: work)
-        }
+        executeOnMain(work)
     }
 
     func replayPreviousSegment() {
-        let work = {
+        let work: @MainActor @Sendable () -> Void = { [self] in
             guard !self.activeSpeechSegments.isEmpty else { return }
             let currentIndex = self.currentSegment?.index ?? self.lastPlayedSegmentIndex
             let targetOffset = max(0, currentIndex - 2)
@@ -119,15 +99,11 @@ extension SpeechPlaybackCoordinator {
                 finished: finished
             )
         }
-        if Thread.isMainThread {
-            work()
-        } else {
-            DispatchQueue.main.async(execute: work)
-        }
+        executeOnMain(work)
     }
 
     func replayCurrentSegment() {
-        let work = {
+        let work: @MainActor @Sendable () -> Void = { [self] in
             guard !self.activeSpeechSegments.isEmpty else { return }
             let currentIndex = self.currentSegment?.index ?? self.lastPlayedSegmentIndex
             guard currentIndex > 0 else { return }
@@ -159,11 +135,7 @@ extension SpeechPlaybackCoordinator {
                 finished: finished
             )
         }
-        if Thread.isMainThread {
-            work()
-        } else {
-            DispatchQueue.main.async(execute: work)
-        }
+        executeOnMain(work)
     }
 
     func hasActiveReadAloudWork() -> Bool {
@@ -212,5 +184,17 @@ extension SpeechPlaybackCoordinator {
     private func allowOneManualAdvanceSegmentIfNeeded() {
         guard manualAdvanceEnabled else { return }
         manualAdvanceSegmentsRemaining = 1
+    }
+
+    private func executeOnMain(_ work: @escaping @MainActor @Sendable () -> Void) {
+        if Thread.isMainThread {
+            MainActor.assumeIsolated {
+                work()
+            }
+        } else {
+            DispatchQueue.main.async {
+                work()
+            }
+        }
     }
 }

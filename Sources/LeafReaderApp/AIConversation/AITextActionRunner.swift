@@ -13,7 +13,7 @@ final class AITextActionRunner {
     }
 
     private let client = AIClient()
-    private var task: URLSessionDataTask?
+    private var task: Task<Void, Never>?
     private var runID: UUID?
 
     var isRunning: Bool {
@@ -39,14 +39,7 @@ final class AITextActionRunner {
         ]
         let currentRunID = UUID()
         runID = currentRunID
-        task = client.send(messages: messages) { [weak self] result in
-            Task { @MainActor [weak self] in
-                guard self?.runID == currentRunID else { return }
-                self?.task = nil
-                self?.runID = nil
-                completion(result)
-            }
-        }
+        run(messages: messages, runID: currentRunID, completion: completion)
     }
 
     func runQuestion(
@@ -68,14 +61,7 @@ final class AITextActionRunner {
         ]
         let currentRunID = UUID()
         runID = currentRunID
-        task = client.send(messages: messages) { [weak self] result in
-            Task { @MainActor [weak self] in
-                guard self?.runID == currentRunID else { return }
-                self?.task = nil
-                self?.runID = nil
-                completion(result)
-            }
-        }
+        run(messages: messages, runID: currentRunID, completion: completion)
     }
 
     func runPrompt(
@@ -95,13 +81,25 @@ final class AITextActionRunner {
         ]
         let currentRunID = UUID()
         runID = currentRunID
-        task = client.send(messages: messages) { [weak self] result in
-            Task { @MainActor [weak self] in
-                guard self?.runID == currentRunID else { return }
-                self?.task = nil
-                self?.runID = nil
-                completion(result)
+        run(messages: messages, runID: currentRunID, completion: completion)
+    }
+
+    private func run(
+        messages: [ChatMessage],
+        runID: UUID,
+        completion: @escaping @MainActor @Sendable (Result<String, Error>) -> Void
+    ) {
+        task = Task { [weak self] in
+            let result: Result<String, Error>
+            do {
+                result = .success(try await self?.client.response(messages: messages) ?? "")
+            } catch {
+                result = .failure(error)
             }
+            guard !Task.isCancelled, self?.runID == runID else { return }
+            self?.task = nil
+            self?.runID = nil
+            completion(result)
         }
     }
 

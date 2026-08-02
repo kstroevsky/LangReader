@@ -51,16 +51,6 @@ extension ReaderWindowController {
         set { aiState.pendingConversationToSave = newValue }
     }
 
-    var documentPromptGeneration: Int {
-        get { aiState.documentPromptGeneration }
-        set { aiState.documentPromptGeneration = newValue }
-    }
-
-    var retrievalQueryTask: URLSessionDataTask? {
-        get { aiState.retrievalQueryTask }
-        set { aiState.retrievalQueryTask = newValue }
-    }
-
     var aiConversationSaveTask: DebouncedTask {
         aiState.conversationSaveTask
     }

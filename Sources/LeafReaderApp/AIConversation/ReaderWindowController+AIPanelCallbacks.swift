@@ -30,12 +30,12 @@ extension ReaderWindowController {
         aiPanel.onCurrentReadingContent = { [weak self] completion in
             self?.currentReadingQuestionContent(completion: completion)
         }
-        aiPanel.onDocumentQuestionPrompt = { [weak self] request, completion in
-            self?.documentAgentPrompt(
+        aiPanel.onDocumentQuestionPrompt = { [weak self] request in
+            guard let self else { return nil }
+            return await self.documentAgentPrompt(
                 question: request.question,
                 questionSubject: request.questionSubject,
-                context: request.context,
-                completion: completion
+                context: request.context
             )
         }
         aiPanel.onDocumentQuestionCancelled = { [weak self] in

@@ -14,7 +14,7 @@ protocol VocabularySpeechCoordinatorOwner: AnyObject {
 }
 
 @MainActor
-final class VocabularySpeechCoordinator: NSObject, @preconcurrency AVSpeechSynthesizerDelegate {
+final class VocabularySpeechCoordinator: NSObject, AVSpeechSynthesizerDelegate {
     private weak var owner: VocabularySpeechCoordinatorOwner?
     private let synthesizer: AVSpeechSynthesizer
     private var selectionSpeechCompletion: (() -> Void)?
@@ -58,20 +58,25 @@ final class VocabularySpeechCoordinator: NSObject, @preconcurrency AVSpeechSynth
         }
     }
 
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {
-        clearSelectionForSpeechStartIfNeeded()
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {
+        Task { @MainActor [weak self] in
+            self?.clearSelectionForSpeechStartIfNeeded()
+        }
     }
 
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        if let completion = selectionSpeechCompletion {
-            selectionSpeechCompletion = nil
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        Task { @MainActor [weak self] in
+            guard let self, let completion = self.selectionSpeechCompletion else { return }
+            self.selectionSpeechCompletion = nil
             completion()
         }
     }
 
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
-        shouldClearSelectionOnSpeechStart = false
-        selectionSpeechCompletion = nil
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        Task { @MainActor [weak self] in
+            self?.shouldClearSelectionOnSpeechStart = false
+            self?.selectionSpeechCompletion = nil
+        }
     }
 
     private func speakSingleText(

@@ -35,6 +35,16 @@ extension ReaderWindowController {
         embeddingState.embeddingClient
     }
 
+    var embeddingBackfillTask: Task<Void, Never>? {
+        get { embeddingState.embeddingBackfillTask }
+        set { embeddingState.embeddingBackfillTask = newValue }
+    }
+
+    var embeddingQueryTask: Task<Void, Never>? {
+        get { embeddingState.embeddingQueryTask }
+        set { embeddingState.embeddingQueryTask = newValue }
+    }
+
     var isPreparingPDFEmbeddings: Bool {
         get { embeddingState.isPreparingPDFEmbeddings }
         set { embeddingState.isPreparingPDFEmbeddings = newValue }

@@ -71,12 +71,13 @@ extension WebDocumentLoader {
         } catch {
             NSLog("LeafReader EPUB: failed to write rendered HTML at %@ (error=%@)", htmlFileURL.path, error.localizedDescription)
         }
+        let plainTextChapterURLs = chapterURLs
         return WebReadableDocument(
             html: html,
             htmlFileURL: FileManager.default.fileExists(atPath: htmlFileURL.path) ? htmlFileURL : nil,
             baseURL: opfDirectory,
             plainText: "",
-            plainTextLoader: { epubPlainText(from: chapterURLs) },
+            plainTextLoader: { epubPlainText(from: plainTextChapterURLs) },
             coverImageURL: epubCoverImageURL(opfXML: opfXML, manifestItems: package.manifestItems, opfDirectory: opfDirectory, epubRootURL: directory),
             tocItems: epubTOCItems(opfXML: opfXML, manifest: package.manifest, opfDirectory: opfDirectory, epubRootURL: directory),
             diagnostics: diagnostics
