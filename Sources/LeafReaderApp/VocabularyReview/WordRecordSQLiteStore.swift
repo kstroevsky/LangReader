@@ -79,7 +79,10 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
                 rollbackTransaction()
                 return false
             }
-            commitTransaction()
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return false
+            }
             return true
         }
     }
@@ -96,7 +99,10 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
                 rollbackTransaction()
                 return false
             }
-            commitTransaction()
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return false
+            }
             return true
         }
     }
@@ -116,7 +122,10 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
                 rollbackTransaction()
                 return false
             }
-            commitTransaction()
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return false
+            }
             return true
         }
     }
@@ -150,7 +159,14 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
     func saveWebRecords(documentID: String, records: [StoredWebWordRecord]) -> Bool {
         locked {
             guard beginTransaction() else { return false }
-            _ = execute(sql: "DELETE FROM web_word_records WHERE document_id = ?", bindings: [documentID], operation: "delete existing web records")
+            guard execute(
+                sql: "DELETE FROM web_word_records WHERE document_id = ?",
+                bindings: [documentID],
+                operation: "delete existing web records"
+            ) else {
+                rollbackTransaction()
+                return false
+            }
 
             var didFail = false
             for record in records {
@@ -163,15 +179,38 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
                 rollbackTransaction()
                 return false
             }
-            commitTransaction()
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return false
+            }
             return true
         }
     }
 
     @discardableResult
     func upsertWebRecord(documentID: String, record: StoredWebWordRecord) -> Bool {
-        locked {
-            insertWebRecord(documentID: documentID, record: record)
+        upsertWebRecords(documentID: documentID, records: [record])
+    }
+
+    /// A vocabulary group may have several web occurrences.  It is persisted
+    /// as one logical change so a failed write cannot leave half the group with
+    /// an old answer and half with a new one.
+    @discardableResult
+    func upsertWebRecords(documentID: String, records: [StoredWebWordRecord]) -> Bool {
+        guard !records.isEmpty else { return true }
+        return locked {
+            guard beginTransaction() else { return false }
+            for record in records {
+                guard insertWebRecord(documentID: documentID, record: record) else {
+                    rollbackTransaction()
+                    return false
+                }
+            }
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return false
+            }
+            return true
         }
     }
 
@@ -247,7 +286,10 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
                     return false
                 }
             }
-            commitTransaction()
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return false
+            }
             return true
         }
     }
@@ -499,7 +541,10 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
                 regrouped += 1
             }
 
-            commitTransaction()
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return 0
+            }
             return regrouped
         }
     }
@@ -652,7 +697,7 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
         executeRaw("BEGIN IMMEDIATE TRANSACTION", operation: "begin transaction")
     }
 
-    private func commitTransaction() {
+    private func commitTransaction() -> Bool {
         executeRaw("COMMIT", operation: "commit transaction")
     }
 
@@ -906,7 +951,10 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             rollbackTransaction()
             return
         }
-        commitTransaction()
+        guard commitTransaction() else {
+            rollbackTransaction()
+            return
+        }
     }
 
     private func insertWebRecord(
@@ -947,7 +995,10 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             rollbackTransaction()
             return false
         }
-        commitTransaction()
+        guard commitTransaction() else {
+            rollbackTransaction()
+            return false
+        }
         return true
     }
 

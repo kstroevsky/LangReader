@@ -59,7 +59,10 @@ package final class PersonalVocabularyProfileStore: @unchecked Sendable {
                 rollbackTransaction()
                 return false
             }
-            commitTransaction()
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return false
+            }
             return true
         }
     }
@@ -81,7 +84,10 @@ package final class PersonalVocabularyProfileStore: @unchecked Sendable {
                 rollbackTransaction()
                 return false
             }
-            commitTransaction()
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return false
+            }
             return true
         }
     }
@@ -167,7 +173,10 @@ package final class PersonalVocabularyProfileStore: @unchecked Sendable {
                 return
             }
         }
-        commitTransaction()
+        guard commitTransaction() else {
+            rollbackTransaction()
+            return
+        }
     }
 
     private func upsertExposure(lemma: String, documentID: String, count: Int, date: Date) -> Bool {
@@ -450,7 +459,7 @@ package final class PersonalVocabularyProfileStore: @unchecked Sendable {
         executeRaw("BEGIN IMMEDIATE TRANSACTION", operation: "begin transaction")
     }
 
-    private func commitTransaction() {
+    private func commitTransaction() -> Bool {
         executeRaw("COMMIT", operation: "commit transaction")
     }
 

@@ -2,25 +2,25 @@ import Cocoa
 import PDFKit
 import LeafReaderCore
 
-private struct PDFVocabularyPageSnapshot {
+private struct PDFVocabularyPageSnapshot: Sendable {
     let pageIndex: Int
     let text: String
 }
 
-private struct PDFVocabularyPageMatch {
+private struct PDFVocabularyPageMatch: Sendable {
     let pageIndex: Int
     let text: String
     let occurrence: VocabularyTextOccurrence
 }
 
-private struct PDFVocabularyLemmaGroup {
+private struct PDFVocabularyLemmaGroup: Sendable {
     let key: String
     let word: String
     let lemma: String
     let vocabularyID: String
 }
 
-private struct PDFVocabularyGroupedPageMatch {
+private struct PDFVocabularyGroupedPageMatch: Sendable {
     let groupKey: String
     let pageMatch: PDFVocabularyPageMatch
 }
@@ -79,13 +79,14 @@ extension ReaderWindowController {
     private func backfillGermanLemmaOccurrences(_ groups: [PDFVocabularyLemmaGroup]) {
         guard currentDocumentKind == .pdf,
               !groups.isEmpty,
-              let document = pdfView.document else { return }
+              let documentID = currentFileMD5,
+              pdfView.document != nil else { return }
 
         let searchID = UUID()
         let language = vocabularyDocumentLanguage
         vocabularyState.occurrenceSearchID = searchID
-        collectPDFVocabularyPageSnapshots(document: document, searchID: searchID) { [weak self, weak document] snapshots in
-            DispatchQueue.global(qos: .utility).async { [weak self, weak document] in
+        collectPDFVocabularyPageSnapshots(documentID: documentID, searchID: searchID) { [weak self] snapshots in
+            DispatchQueue.global(qos: .utility).async { [weak self] in
                 let lemmasByKey = Dictionary(uniqueKeysWithValues: groups.map { ($0.key, $0.lemma) })
                 let matches = snapshots.flatMap { snapshot in
                     GermanLemmaOccurrenceMatcher.matches(
@@ -107,9 +108,9 @@ extension ReaderWindowController {
                 }
                 DispatchQueue.main.async {
                     guard let self,
-                          let document,
                           self.vocabularyState.occurrenceSearchID == searchID,
-                          self.pdfView.document === document else { return }
+                          self.currentFileMD5 == documentID,
+                          let document = self.pdfView.document else { return }
                     self.finishBackfillingGermanLemmaOccurrences(
                         groups: groups,
                         matches: matches,
@@ -167,7 +168,7 @@ extension ReaderWindowController {
 
     func saveCurrentPDFVocabularySelection() {
         guard currentDocumentKind == .pdf,
-              let document = pdfView.document,
+              pdfView.document != nil,
               let selection = pdfView.currentSelection else {
             NSSound.beep()
             return
@@ -191,14 +192,15 @@ extension ReaderWindowController {
         }
 
         let searchID = UUID()
+        guard let documentID = currentFileMD5 else { return }
         vocabularyState.occurrenceSearchID = searchID
         selectionActionToolbar.showSaveInProgress()
         recordPersonalVocabularyQuery(word)
 
         let saveStartedAt = Date()
-        collectPDFVocabularyPageSnapshots(document: document, searchID: searchID) { [weak self, weak document] snapshots in
+        collectPDFVocabularyPageSnapshots(documentID: documentID, searchID: searchID) { [weak self] snapshots in
             let snapshotsReadyAt = Date()
-            DispatchQueue.global(qos: .userInitiated).async { [weak self, weak document] in
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 let perPage = GermanLemmaOccurrenceMatcher.matches(
                     lemma: lemma,
                     selectedForm: word,
@@ -223,9 +225,9 @@ extension ReaderWindowController {
                 }
                 DispatchQueue.main.async {
                     guard let self,
-                          let document,
                           self.vocabularyState.occurrenceSearchID == searchID,
-                          self.pdfView.document === document else {
+                          self.currentFileMD5 == documentID,
+                          let document = self.pdfView.document else {
                         return
                     }
                     let persistStartedAt = Date()
@@ -250,14 +252,15 @@ extension ReaderWindowController {
     }
 
     private func collectPDFVocabularyPageSnapshots(
-        document: PDFDocument,
+        documentID: String,
         searchID: UUID,
         pageIndex: Int = 0,
         snapshots: [PDFVocabularyPageSnapshot] = [],
         completion: @escaping ([PDFVocabularyPageSnapshot]) -> Void
     ) {
         guard vocabularyState.occurrenceSearchID == searchID,
-              pdfView.document === document else {
+              currentFileMD5 == documentID,
+              let document = pdfView.document else {
             return
         }
 
@@ -272,10 +275,10 @@ extension ReaderWindowController {
             completion(collected)
             return
         }
-        DispatchQueue.main.async { [weak self, weak document] in
-            guard let self, let document else { return }
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
             self.collectPDFVocabularyPageSnapshots(
-                document: document,
+                documentID: documentID,
                 searchID: searchID,
                 pageIndex: nextPageIndex,
                 snapshots: collected,

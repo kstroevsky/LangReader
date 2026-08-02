@@ -1,6 +1,6 @@
 import Foundation
 
-package struct VocabularyTextOccurrence: Equatable {
+package struct VocabularyTextOccurrence: Equatable, Sendable {
     package let range: NSRange
     package let matchedText: String
 }

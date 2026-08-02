@@ -2,7 +2,7 @@ import Foundation
 import NaturalLanguage
 import LeafReaderCore
 
-struct StoredWebWordRecord: Codable {
+struct StoredWebWordRecord: Codable, Sendable {
     let id: String
     var vocabularyID: String? = nil
     let word: String
@@ -134,7 +134,12 @@ struct WebWordRecordStore {
 
     @discardableResult
     func upsert(_ record: StoredWebWordRecord) -> Bool {
-        let didSave = WordRecordSQLiteStore.shared.upsertWebRecord(documentID: documentID, record: record)
+        upsert([record])
+    }
+
+    @discardableResult
+    func upsert(_ records: [StoredWebWordRecord]) -> Bool {
+        let didSave = WordRecordSQLiteStore.shared.upsertWebRecords(documentID: documentID, records: records)
         if didSave {
             defaults.set(true, forKey: migrationKey)
         }

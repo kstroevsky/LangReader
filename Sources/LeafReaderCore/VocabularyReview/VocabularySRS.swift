@@ -1,6 +1,6 @@
 import Foundation
 
-package struct VocabularySRSState: Codable {
+package struct VocabularySRSState: Codable, Sendable {
     package var easeFactor: Double
     package var intervalDays: Int
     package var repetition: Int

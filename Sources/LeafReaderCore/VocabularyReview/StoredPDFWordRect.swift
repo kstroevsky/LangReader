@@ -1,7 +1,7 @@
 import CoreGraphics
 import Foundation
 
-package struct StoredPDFWordRect: Codable, Equatable {
+package struct StoredPDFWordRect: Codable, Equatable, Sendable {
     package let x: CGFloat
     package let y: CGFloat
     package let width: CGFloat
