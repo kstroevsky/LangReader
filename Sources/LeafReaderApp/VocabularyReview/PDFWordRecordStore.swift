@@ -1,6 +1,7 @@
 import Cocoa
+import LeafReaderCore
 
-struct StoredPDFWordRecord: Codable {
+struct StoredPDFWordRecord: Codable, Sendable {
     let id: String
     var vocabularyID: String? = nil
     var word: String

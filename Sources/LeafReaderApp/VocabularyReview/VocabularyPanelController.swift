@@ -1,9 +1,17 @@
 import Cocoa
+import LeafReaderCore
 
+@MainActor
 final class VocabularyPanelController {
     weak var owner: ReaderWindowController?
     private(set) weak var panel: NSWindow?
     private let reloadTask = DebouncedTask(delay: 0.04)
+    /// State behind the SwiftUI header. Held here so the summary and the stats
+    /// are updated by assignment rather than by searching the view tree for a
+    /// label with a matching identifier.
+    let headerModel = VocabularyTrainerHeaderModel()
+    /// State behind the SwiftUI word list.
+    let listModel = VocabularyWordListModel()
     private var activationObserver: NSObjectProtocol?
 
     init(owner: ReaderWindowController) {
@@ -11,8 +19,10 @@ final class VocabularyPanelController {
     }
 
     deinit {
-        reloadTask.cancel()
-        removeActivationObserver()
+        MainActor.assumeIsolated {
+            reloadTask.cancel()
+            removeActivationObserver()
+        }
     }
 
     var rootView: NSView? {
@@ -52,8 +62,10 @@ final class VocabularyPanelController {
             object: NSApp,
             queue: .main
         ) { [weak self] _ in
-            guard let panel = self?.panel else { return }
-            ModalOverlayManager.shared.reactivate(panel)
+            Task { @MainActor [weak self] in
+                guard let panel = self?.panel else { return }
+                ModalOverlayManager.shared.reactivate(panel)
+            }
         }
     }
 

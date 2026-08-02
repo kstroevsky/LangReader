@@ -1,5 +1,6 @@
 import Cocoa
 import PDFKit
+import LeafReaderCore
 
 extension ReaderWindowController {
     @objc func openAISettings() {
@@ -28,6 +29,12 @@ extension ReaderWindowController {
 
     func openSettingsPanel(tab: AISettingsPanelController.SettingsTab) {
         guard let window else { return }
+        if aiSettingsPanelController?.selectVisibleTab(tab) == true {
+            return
+        }
+        // A controller whose panel was already dismissed must release its
+        // refresh timer and activation observer before a new panel takes over.
+        aiSettingsPanelController?.closeWithoutSaving()
         let controller = AISettingsPanelController()
         controller.onSaved = { [weak self] in
             self?.applySettingsChangesToReader()
@@ -90,15 +97,16 @@ extension ReaderWindowController {
                     }
                 }
             }
-            samples.append(titleLabel.stringValue)
+            samples.append(documentTitle)
             return samples.joined(separator: "\n")
         }
 
-        let webText = currentWebSelectedText.isEmpty ? currentWebPlainText : currentWebSelectedText
+        let selectedText = selectionState.webSelectedText
+        let webText = selectedText.isEmpty ? currentWebPlainText : selectedText
         if !webText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return webText
         }
-        return titleLabel.stringValue
+        return documentTitle
     }
 
     func applySettingsChangesToReader() {
@@ -112,6 +120,10 @@ extension ReaderWindowController {
     }
 
     func setAIPanelCollapsed(_ collapsed: Bool, animated: Bool) {
+        // Only the expand direction is a "panel expansion"; the synchronous
+        // setup is what this captures, not the async width animation.
+        let expandSpan = collapsed ? nil : ReaderPerformance.begin(.aiPanelExpand)
+        defer { if let expandSpan { ReaderPerformance.end(expandSpan) } }
         if collapsed == isAIPanelCollapsed {
             if !collapsed {
                 aiPanel.setTheme(ReaderTheme.selected)
@@ -268,12 +280,7 @@ extension ReaderWindowController {
     }
 
     func updateFullScreenButton() {
-        let isFullScreen = window?.styleMask.contains(.fullScreen) == true
-        fullScreenButton.title = isFullScreen ? AppText.windowed : AppText.fullScreen
-        fullScreenButton.image = NSImage(
-            systemSymbolName: isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
-            accessibilityDescription: fullScreenButton.title
-        )
+        topBarModel.isFullScreen = window?.styleMask.contains(.fullScreen) == true
     }
 
     func windowDidResize(_ notification: Notification) {

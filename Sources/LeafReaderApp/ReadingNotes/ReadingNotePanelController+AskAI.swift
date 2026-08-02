@@ -1,8 +1,9 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReadingNotePanelController {
     func installAskInputKeyMonitor() {
-        editorState.askInputKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+        askInputKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             self?.handleAskInputKeyDown(event) ?? event
         }
     }
@@ -61,7 +62,7 @@ extension ReadingNotePanelController {
             NSSound.beep()
             return
         }
-        editorState.pendingAskSelectedText = selected
+        editorModel.pendingAskSelectedText = selected
         askInputField.stringValue = ""
         aiToolbarContainer.isHidden = true
         positionAskInputNearSelection()
@@ -109,12 +110,12 @@ extension ReadingNotePanelController {
             renderMarkdownReplacement: renderMarkdownReplacement
         )
         guard !requestContext.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            statusLabel.stringValue = AppText.localized("请先选中笔记中的文字", "Select text in the note first")
+            editorModel.statusSelectionRequired()
             NSSound.beep()
             return
         }
-        removeAIPlaceholder()
-        let requestID = editorState.beginAIRequest()
+        cleanupActiveAIRequest()
+        let requestID = editorModel.beginAIRequest()
         setRunning(true, title: title)
         aiToolbarContainer.isHidden = true
         if requestContext.insertionMode.usesPlaceholder {
@@ -122,8 +123,8 @@ extension ReadingNotePanelController {
         }
         aiRunner.run(action: action, text: requestContext.text, noteContext: textView.string) { [weak self] result in
             guard let self else { return }
-            guard self.editorState.canApplyAIResult(requestID) else { return }
-            self.editorState.finishAIRequest(requestID)
+            guard self.editorModel.canApplyAIResult(requestID) else { return }
+            self.editorModel.finishAIRequest(requestID)
             self.setRunning(false, title: "")
             switch result {
             case .success(let output):
@@ -137,22 +138,22 @@ extension ReadingNotePanelController {
                 if requestContext.insertionMode.usesPlaceholder {
                     self.removeAIPlaceholder()
                 }
-                self.statusLabel.stringValue = self.userFacingError(error)
+                self.editorModel.status(self.userFacingError(error))
             }
         }
     }
 
     func runTemplatePolish(_ template: ReadingNoteTemplate, markdown: String) {
-        removeAIPlaceholder()
-        let requestID = editorState.beginAIRequest()
+        cleanupActiveAIRequest()
+        let requestID = editorModel.beginAIRequest()
         let title = AppText.localized("模板润色", "Template polish")
         let insertionMode = templateInsertionMode()
         setRunning(true, title: title)
         aiToolbarContainer.isHidden = true
         aiRunner.run(action: .polish, text: markdown, noteContext: textView.string) { [weak self] result in
             guard let self else { return }
-            guard self.editorState.canApplyAIResult(requestID) else { return }
-            self.editorState.finishAIRequest(requestID)
+            guard self.editorModel.canApplyAIResult(requestID) else { return }
+            self.editorModel.finishAIRequest(requestID)
             self.setRunning(false, title: "")
             switch result {
             case .success(let output):
@@ -162,9 +163,9 @@ extension ReadingNotePanelController {
                     return
                 }
                 self.applyAIOutput(value, insertionMode: insertionMode)
-                self.statusLabel.stringValue = template.insertionStatus
+                self.editorModel.status(template.insertionStatus)
             case .failure(let error):
-                self.statusLabel.stringValue = self.userFacingError(error)
+                self.editorModel.status(self.userFacingError(error))
             }
         }
     }
@@ -304,9 +305,9 @@ extension ReadingNotePanelController {
             NSSound.beep()
             return nil
         }
-        let selected = editorState.pendingAskSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let selected = editorModel.pendingAskSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !selected.isEmpty else {
-            statusLabel.stringValue = AppText.localized("请先选中笔记中的文字", "Select text in the note first")
+            editorModel.statusSelectionRequired()
             NSSound.beep()
             return nil
         }
@@ -321,20 +322,21 @@ extension ReadingNotePanelController {
         setAskInputVisible(false)
         askInputField.stringValue = ""
         window?.makeFirstResponder(textView)
-        removeAIPlaceholder()
-        let requestID = editorState.beginAIRequest()
+        cleanupActiveAIRequest()
+        let requestID = editorModel.beginAIRequest()
         setRunning(true, title: AppText.localized("问 AI", "Ask AI"))
         appendAIPlaceholder(title: request.question)
         if let onDocumentQuestionPrompt {
-            onDocumentQuestionPrompt(documentQuestionPromptRequest(for: request)) { [weak self] prompt in
-                DispatchQueue.main.async {
-                    guard let self else { return }
-                    guard self.editorState.canApplyAIResult(requestID) else { return }
-                    if let prompt, !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        self.runAskPrompt(prompt, request: request, requestID: requestID)
-                    } else {
-                        self.runAskFallback(request, requestID: requestID)
-                    }
+            let documentRequest = documentQuestionPromptRequest(for: request)
+            documentQuestionPromptTask = Task { [weak self] in
+                let prompt = await onDocumentQuestionPrompt(documentRequest)
+                guard let self, !Task.isCancelled,
+                      self.editorModel.canApplyAIResult(requestID) else { return }
+                self.documentQuestionPromptTask = nil
+                if let prompt, !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    self.runAskPrompt(prompt, request: request, requestID: requestID)
+                } else {
+                    self.runAskFallback(request, requestID: requestID)
                 }
             }
             return
@@ -343,7 +345,7 @@ extension ReadingNotePanelController {
     }
 
     private func showMissingModelAPIKeyPrompt() {
-        statusLabel.stringValue = AppText.localized("请先配置 API Key", "Configure API Key first")
+        editorModel.statusAPIKeyRequired()
         NSSound.beep()
         onModelSettingsRequired()
     }
@@ -377,8 +379,9 @@ extension ReadingNotePanelController {
     }
 
     private func finishAskQuestion(_ result: Result<String, Error>, request: AskRequest, requestID: UUID) {
-        guard editorState.canApplyAIResult(requestID) else { return }
-        editorState.finishAIRequest(requestID)
+        guard editorModel.canApplyAIResult(requestID) else { return }
+        documentQuestionPromptTask = nil
+        editorModel.finishAIRequest(requestID)
         setRunning(false, title: "")
         switch result {
         case .success(let output):
@@ -388,16 +391,30 @@ extension ReadingNotePanelController {
                 return
             }
             replaceAIPlaceholder(title: request.question, body: value)
-            editorState.pendingAskSelectedText = ""
+            editorModel.pendingAskSelectedText = ""
         case .failure(let error):
             removeAIPlaceholder()
-            statusLabel.stringValue = userFacingError(error)
+            editorModel.status(userFacingError(error))
         }
     }
 
-    private func setRunning(_ running: Bool, title: String) {
-        statusLabel.stringValue = running ? AppText.localized("\(title)中...", "\(title)...") : ""
+    func setRunning(_ running: Bool, title: String) {
+        editorModel.statusRunning(title, isRunning: running)
         refreshAIToolbar()
+    }
+
+    /// Every terminal path (cancel, supersession, close, an empty response, or
+    /// a failed request) comes through here before a save may observe editor
+    /// content.  The serializer has a second, defensive transient-content
+    /// filter, but normal operation removes the placeholder immediately.
+    func cleanupActiveAIRequest() {
+        documentQuestionPromptTask?.cancel()
+        documentQuestionPromptTask = nil
+        editorModel.cancelAIRequests()
+        aiRunner.cancel()
+        removeAIPlaceholder()
+        editorModel.pendingAskSelectedText = ""
+        setRunning(false, title: "")
     }
 
     private func userFacingError(_ error: Error) -> String {
@@ -408,6 +425,6 @@ extension ReadingNotePanelController {
         if usesPlaceholder {
             removeAIPlaceholder()
         }
-        statusLabel.stringValue = ReadingNoteAITextPolicy.emptyOutputMessage()
+        editorModel.status(ReadingNoteAITextPolicy.emptyOutputMessage())
     }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum SpeechRuntimeDeleter {
     typealias Runtime = SpeechRuntimeResourceManager.Runtime

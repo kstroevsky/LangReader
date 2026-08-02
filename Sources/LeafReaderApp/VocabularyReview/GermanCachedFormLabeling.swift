@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 // Bridges the persistent flexion cache to form labeling.
 //
@@ -14,7 +15,7 @@ extension GermanFormLabeler {
     /// A plain reference to `cachedLabel` cannot be used there: Swift drops
     /// default arguments when a function is passed as a value, so the store
     /// and optional context have to be bound explicitly here.
-    static let cachedFormLabelResolver: (String, String, String) -> GermanFormLabel? = {
+    static let cachedFormLabelResolver: @Sendable (String, String, String) -> GermanFormLabel? = {
         surfaceForm, lemma, context in
         cachedLabel(surfaceForm: surfaceForm, lemma: lemma, context: context)
     }
@@ -62,7 +63,7 @@ extension GermanFormLabeler {
 
     /// Resolver shaped for `VocabularyRecordProvider.records`, backed by the
     /// persistent label cache.
-    static let persistentCachedFormLabelResolver: (String, String, String) -> GermanFormLabel? = {
+    static let persistentCachedFormLabelResolver: @Sendable (String, String, String) -> GermanFormLabel? = {
         surfaceForm, lemma, context in
         persistentCachedLabel(surfaceForm: surfaceForm, lemma: lemma, context: context)
     }

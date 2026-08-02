@@ -1,6 +1,7 @@
 import Foundation
 import CryptoKit
 import PDFKit
+import LeafReaderCore
 
 struct PDFDocumentAgentEvidence {
     let pageIndex: Int
@@ -13,7 +14,9 @@ struct PDFDocumentAgentEvidence {
     }
 }
 
-final class PDFDocumentAgentIndex {
+/// Built off-main, then owned by the reader and its serial embedding workflow.
+/// Those callers never mutate an index concurrently.
+final class PDFDocumentAgentIndex: @unchecked Sendable {
     private struct Chunk {
         let id: String
         let pageIndex: Int

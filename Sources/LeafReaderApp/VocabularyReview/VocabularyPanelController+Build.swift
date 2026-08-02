@@ -1,14 +1,12 @@
 import Cocoa
+import SwiftUI
+import LeafReaderCore
 
 private struct VocabularyPanelViews {
-    let icon: NSImageView
-    let title: NSTextField
+    let header: NSView
     let filterControl: SettingsTabsView
-    let summaryLabel: NSTextField
-    let statsContainer: NSStackView
     let reviewContainer: NSView
-    let scrollView: NSScrollView
-    let stack: NSStackView
+    let listView: NSView
     let reviewPriorityPopup: NSPopUpButton
     let reviewGoalPopup: NSPopUpButton
     let exportMarkdownButton: ThemedSettingsActionButton
@@ -17,6 +15,8 @@ private struct VocabularyPanelViews {
 }
 
 extension VocabularyPanelController {
+    static let filterControlWidth: CGFloat = 360
+
     func makePanel(records: [VocabularyExportRecord]) -> NSWindow? {
         guard let owner else { return nil }
         let panel = makeWindow()
@@ -69,29 +69,22 @@ extension VocabularyPanelController {
         theme: ReaderTheme
     ) -> VocabularyPanelViews {
         let panelBackground = owner.vocabularyPanelBackgroundColor(for: theme)
-        let primaryText = owner.vocabularyPrimaryTextColor(for: theme)
-        let secondaryText = owner.vocabularySecondaryTextColor(for: theme)
 
-        let icon = makeHeaderIcon(owner: owner, theme: theme)
-        let title = makeTitleLabel(primaryText: primaryText)
         let initialFilter = owner.vocabularyReviewSession.filter
         let isListMode = owner.vocabularyReviewSession.listModeEnabled
         let filterControl = makeFilterControl(
             owner: owner,
             selectedIndex: isListMode ? segmentIndex(for: initialFilter) : 0
         )
-        let summaryLabel = makeSummaryLabel(
-            owner: owner,
-            records: records,
-            filter: initialFilter,
-            secondaryText: secondaryText
-        )
-        let statsContainer = makeStatsContainer(owner: owner, records: records, theme: theme)
-        let (scrollView, stack) = makeVocabularyList(panelBackground: panelBackground)
+        headerModel.summary = owner.vocabularySummaryText(records: records, filter: initialFilter)
+        headerModel.apply(stats: VocabularyLearningStatsCalculator.stats(records: records))
+        let header = makeHeader(theme: theme)
+        let listView = makeVocabularyList(theme: theme)
         let reviewContainer = makeReviewContainer(panelBackground: panelBackground)
-        owner.populateVocabularyStack(stack, records: records, filter: initialFilter, isDark: theme == .dark)
+        listModel.action = { [weak owner] action in owner?.handleVocabularyListAction(action) }
+        owner.populateVocabularyList(records: records, filter: initialFilter)
         owner.populateVocabularyReviewContainer(reviewContainer, records: records, filter: initialFilter, isDark: theme == .dark, autoPlayNewCard: false)
-        scrollView.isHidden = !isListMode
+        listView.isHidden = !isListMode
         reviewContainer.isHidden = isListMode
 
         let reviewPriorityPopup = owner.vocabularyReviewPriorityPopup()
@@ -121,14 +114,10 @@ extension VocabularyPanelController {
         exportCSVButton.isHidden = !isListMode
 
         return VocabularyPanelViews(
-            icon: icon,
-            title: title,
+            header: header,
             filterControl: filterControl,
-            summaryLabel: summaryLabel,
-            statsContainer: statsContainer,
             reviewContainer: reviewContainer,
-            scrollView: scrollView,
-            stack: stack,
+            listView: listView,
             reviewPriorityPopup: reviewPriorityPopup,
             reviewGoalPopup: reviewGoalPopup,
             exportMarkdownButton: exportMarkdownButton,
@@ -137,22 +126,17 @@ extension VocabularyPanelController {
         )
     }
 
-    private func makeHeaderIcon(owner: ReaderWindowController, theme: ReaderTheme) -> NSImageView {
-        let icon = NSImageView()
-        icon.image = NSImage(systemSymbolName: "text.book.closed", accessibilityDescription: nil)?
-            .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 26, weight: .semibold))
-        icon.contentTintColor = owner.vocabularyAccentColor(for: theme)
-        icon.imageScaling = .scaleNone
-        icon.translatesAutoresizingMaskIntoConstraints = false
-        return icon
-    }
-
-    private func makeTitleLabel(primaryText: NSColor) -> NSTextField {
-        let title = NSTextField(labelWithString: AppText.localized("背单词", "Vocabulary Trainer"))
-        title.font = AppFont.semibold(ofSize: 20)
-        title.textColor = primaryText
-        title.translatesAutoresizingMaskIntoConstraints = false
-        return title
+    /// One hosting view for the icon, title, summary line and stat cards.
+    private func makeHeader(theme: ReaderTheme) -> NSView {
+        let hosting = NSHostingView(rootView: VocabularyTrainerHeaderView(
+            model: headerModel,
+            theme: theme,
+            // The filter tabs sit over the header's top-right corner.
+            reservedTrailingWidth: Self.filterControlWidth + 16
+        ))
+        hosting.translatesAutoresizingMaskIntoConstraints = false
+        hosting.setAccessibilityIdentifier(VocabularyTrainerAccessibility.header)
+        return hosting
     }
 
     private func makeFilterControl(owner: ReaderWindowController, selectedIndex: Int) -> SettingsTabsView {
@@ -172,20 +156,6 @@ extension VocabularyPanelController {
         return filterControl
     }
 
-    private func makeSummaryLabel(
-        owner: ReaderWindowController,
-        records: [VocabularyExportRecord],
-        filter: VocabularyFilter,
-        secondaryText: NSColor
-    ) -> NSTextField {
-        let summaryLabel = NSTextField(labelWithString: owner.vocabularySummaryText(records: records, filter: filter))
-        summaryLabel.font = AppFont.semibold(ofSize: 13)
-        summaryLabel.textColor = secondaryText
-        summaryLabel.translatesAutoresizingMaskIntoConstraints = false
-        summaryLabel.identifier = NSUserInterfaceItemIdentifier("vocabularySummaryLabel")
-        return summaryLabel
-    }
-
     private func segmentIndex(for filter: VocabularyFilter) -> Int {
         switch filter {
         case .due: return 1
@@ -194,87 +164,16 @@ extension VocabularyPanelController {
         }
     }
 
-    private func makeStatsContainer(
-        owner: ReaderWindowController,
-        records: [VocabularyExportRecord],
-        theme: ReaderTheme
-    ) -> NSStackView {
-        let stats = VocabularyLearningStatsCalculator.stats(records: records)
-        let stack = NSStackView()
-        stack.orientation = .horizontal
-        stack.alignment = .height
-        stack.distribution = .fillEqually
-        stack.spacing = 8
-        stack.identifier = NSUserInterfaceItemIdentifier(VocabularyLearningStatsPresenter.containerIdentifier)
-        stack.translatesAutoresizingMaskIntoConstraints = false
-
-        VocabularyLearningStatsPresenter.items(for: stats)
-            .map { vocabularyStatCard(item: $0, owner: owner, theme: theme) }
-            .forEach(stack.addArrangedSubview)
-        return stack
-    }
-
-    private func vocabularyStatCard(
-        item: VocabularyLearningStatDisplayItem,
-        owner: ReaderWindowController,
-        theme: ReaderTheme
-    ) -> NSView {
-        let card = NSView()
-        card.wantsLayer = true
-        card.layer?.cornerRadius = 10
-        card.layer?.backgroundColor = owner.vocabularyCardBackgroundColor(for: theme).cgColor
-        card.layer?.borderWidth = 1
-        card.layer?.borderColor = owner.vocabularyCardBorderColor(for: theme).cgColor
-        card.translatesAutoresizingMaskIntoConstraints = false
-
-        let valueLabel = NSTextField(labelWithString: item.value)
-        valueLabel.font = AppFont.semibold(ofSize: 18)
-        valueLabel.textColor = owner.vocabularyPrimaryTextColor(for: theme)
-        valueLabel.alignment = .center
-        valueLabel.identifier = NSUserInterfaceItemIdentifier(item.valueIdentifier)
-        valueLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let titleLabel = NSTextField(labelWithString: item.title)
-        titleLabel.font = AppFont.semibold(ofSize: 11)
-        titleLabel.textColor = owner.vocabularySecondaryTextColor(for: theme)
-        titleLabel.alignment = .center
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        card.addSubview(valueLabel)
-        card.addSubview(titleLabel)
-        NSLayoutConstraint.activate([
-            valueLabel.topAnchor.constraint(equalTo: card.topAnchor, constant: 10),
-            valueLabel.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 8),
-            valueLabel.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -8),
-            titleLabel.topAnchor.constraint(equalTo: valueLabel.bottomAnchor, constant: 4),
-            titleLabel.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 8),
-            titleLabel.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -8)
-        ])
-        return card
-    }
-
-    private func makeVocabularyList(panelBackground: NSColor) -> (NSScrollView, NSStackView) {
-        let scrollView = NSScrollView()
-        scrollView.hasVerticalScroller = true
-        scrollView.autohidesScrollers = false
-        scrollView.drawsBackground = false
-        scrollView.contentView.drawsBackground = true
-        scrollView.contentView.backgroundColor = panelBackground
-        scrollView.borderType = .noBorder
-        scrollView.identifier = NSUserInterfaceItemIdentifier("vocabularyScrollView")
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-
-        let stack = NSStackView()
-        stack.wantsLayer = true
-        stack.layer?.backgroundColor = panelBackground.cgColor
-        stack.orientation = .vertical
-        stack.alignment = .width
-        stack.spacing = 10
-        stack.edgeInsets = NSEdgeInsets(top: 2, left: 0, bottom: 2, right: 0)
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        stack.identifier = NSUserInterfaceItemIdentifier("vocabularyStack")
-        scrollView.documentView = stack
-        return (scrollView, stack)
+    private func makeVocabularyList(theme: ReaderTheme) -> NSView {
+        let hosting = NSHostingView(rootView: VocabularyWordListView(model: listModel, theme: theme))
+        hosting.translatesAutoresizingMaskIntoConstraints = false
+        // Both: `findView(identifier:)` searches `NSView.identifier`, while the
+        // smoke test reads the accessibility identifier. Setting only the latter
+        // left the list permanently hidden, because the show/hide toggle could
+        // not find it.
+        hosting.identifier = NSUserInterfaceItemIdentifier("vocabularyList")
+        hosting.setAccessibilityIdentifier("vocabularyList")
+        return hosting
     }
 
     private func makeReviewContainer(panelBackground: NSColor) -> NSView {
@@ -287,56 +186,41 @@ extension VocabularyPanelController {
     }
 
     private func addPanelViews(_ views: VocabularyPanelViews, to root: NSView) {
-        [
-            views.icon,
-            views.title,
+        let panelViews = [
+            views.header,
             views.filterControl,
-            views.summaryLabel,
-            views.statsContainer,
             views.reviewContainer,
-            views.scrollView,
+            views.listView,
             views.reviewPriorityPopup,
             views.reviewGoalPopup,
             views.exportMarkdownButton,
             views.exportCSVButton,
             views.closeButton
-        ].forEach(root.addSubview)
+        ]
+        for view in panelViews {
+            root.addSubview(view)
+        }
     }
 
     private func installPanelConstraints(_ views: VocabularyPanelViews, in root: NSView) {
         NSLayoutConstraint.activate([
-            views.icon.topAnchor.constraint(equalTo: root.topAnchor, constant: 28),
-            views.icon.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 34),
-            views.icon.widthAnchor.constraint(equalToConstant: 30),
-            views.icon.heightAnchor.constraint(equalToConstant: 30),
-            views.title.leadingAnchor.constraint(equalTo: views.icon.trailingAnchor, constant: 12),
-            views.title.centerYAnchor.constraint(equalTo: views.icon.centerYAnchor),
-            views.title.trailingAnchor.constraint(lessThanOrEqualTo: views.filterControl.leadingAnchor, constant: -16),
+            views.header.topAnchor.constraint(equalTo: root.topAnchor, constant: 28),
+            views.header.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 30),
+            views.header.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -30),
             views.filterControl.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -30),
-            views.filterControl.centerYAnchor.constraint(equalTo: views.icon.centerYAnchor),
-            views.filterControl.widthAnchor.constraint(equalToConstant: 360),
+            views.filterControl.topAnchor.constraint(equalTo: root.topAnchor, constant: 28),
+            views.filterControl.widthAnchor.constraint(equalToConstant: Self.filterControlWidth),
             views.filterControl.heightAnchor.constraint(equalToConstant: 30),
-            views.summaryLabel.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 34),
-            views.summaryLabel.topAnchor.constraint(equalTo: views.icon.bottomAnchor, constant: 14),
-            views.summaryLabel.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -34),
-            views.statsContainer.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 30),
-            views.statsContainer.topAnchor.constraint(equalTo: views.summaryLabel.bottomAnchor, constant: 10),
-            views.statsContainer.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -30),
-            views.statsContainer.heightAnchor.constraint(equalToConstant: 62),
 
-            views.reviewContainer.topAnchor.constraint(equalTo: views.statsContainer.bottomAnchor, constant: 12),
+            views.reviewContainer.topAnchor.constraint(equalTo: views.header.bottomAnchor, constant: 12),
             views.reviewContainer.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 30),
             views.reviewContainer.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -30),
             views.reviewContainer.bottomAnchor.constraint(equalTo: views.closeButton.topAnchor, constant: -14),
 
-            views.scrollView.topAnchor.constraint(equalTo: views.statsContainer.bottomAnchor, constant: 12),
-            views.scrollView.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 30),
-            views.scrollView.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -30),
-            views.scrollView.bottomAnchor.constraint(equalTo: views.closeButton.topAnchor, constant: -14),
-            views.stack.topAnchor.constraint(equalTo: views.scrollView.contentView.topAnchor),
-            views.stack.leadingAnchor.constraint(equalTo: views.scrollView.contentView.leadingAnchor),
-            views.stack.trailingAnchor.constraint(equalTo: views.scrollView.contentView.trailingAnchor),
-            views.stack.widthAnchor.constraint(equalTo: views.scrollView.contentView.widthAnchor),
+            views.listView.topAnchor.constraint(equalTo: views.header.bottomAnchor, constant: 12),
+            views.listView.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 30),
+            views.listView.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -30),
+            views.listView.bottomAnchor.constraint(equalTo: views.closeButton.topAnchor, constant: -14),
 
             views.reviewPriorityPopup.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 30),
             views.reviewPriorityPopup.centerYAnchor.constraint(equalTo: views.closeButton.centerYAnchor),

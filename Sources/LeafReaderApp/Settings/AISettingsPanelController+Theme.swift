@@ -1,45 +1,9 @@
 import Cocoa
 
 extension AISettingsPanelController {
-    static var pdfBrightnessSliderMaximum: Double { PDFBrightnessPolicy.sliderMaximum }
-
-    @objc func themeChanged(_ sender: NSPopUpButton) {
-        if let rawTheme = sender.selectedItem?.representedObject as? String,
-           let theme = ReaderTheme(rawValue: rawTheme) {
-            ReaderTheme.selected = theme
-            applySettingsPanelTheme(theme)
-            onAppearanceChanged?()
-        }
-        updatePDFDimmingControlsVisibility()
-    }
-
-    @objc func pdfDimmingSliderChanged(_ sender: ThemedSettingsSlider) {
-        ReaderTheme.pdfDimmingStrength = pdfDimmingStrength(forBrightnessSliderValue: sender.doubleValue)
-        onAppearanceChanged?()
-    }
-
-    func updatePDFDimmingControlsVisibility() {
-        let rawTheme = themePopup?.selectedItem?.representedObject as? String ?? ReaderTheme.selected.rawValue
-        let shouldShow = ReaderTheme(rawValue: rawTheme) != .original
-        pdfDimmingLabel?.isHidden = !shouldShow
-        pdfDimmingSlider?.isHidden = !shouldShow
-        pdfDimmingLabelTopConstraint?.isActive = shouldShow
-        speakSelectedWordTopToDimmingConstraint?.isActive = shouldShow
-        speakSelectedWordTopToThemeConstraint?.isActive = !shouldShow
-        if shouldShow {
-            NSLayoutConstraint.deactivate(pdfDimmingCollapsedConstraints)
-        } else {
-            NSLayoutConstraint.activate(pdfDimmingCollapsedConstraints)
-        }
-    }
-
-    func pdfBrightnessSliderValue(forDimmingStrength dimmingStrength: Double) -> Double {
-        PDFBrightnessPolicy.sliderValue(forDimmingStrength: dimmingStrength)
-    }
-
-    func pdfDimmingStrength(forBrightnessSliderValue brightnessValue: Double) -> Double {
-        PDFBrightnessPolicy.dimmingStrength(forSliderValue: brightnessValue)
-    }
+    // Theme, brightness and their show/hide rules now live in
+    // `GeneralSettingsModel`, which the SwiftUI General page binds to. What
+    // remains here is the panel's own chrome styling, which is still AppKit.
 
     func applySettingsPanelTheme(_ theme: ReaderTheme) {
         panel?.appearance = theme == .dark ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
@@ -65,10 +29,6 @@ extension AISettingsPanelController {
         if let popup = view as? ThemedSettingsPopUpButton {
             popup.theme = theme
             stylePopupForCurrentTheme(popup)
-        } else if let slider = view as? ThemedSettingsSlider {
-            slider.theme = theme
-        } else if let checkbox = view as? ThemedSettingsCheckbox {
-            checkbox.theme = theme
         } else if let imageView = view as? NSImageView {
             applySettingsImageTheme(imageView, theme: theme)
         } else if let progressIndicator = view as? NSProgressIndicator {
@@ -131,9 +91,7 @@ extension AISettingsPanelController {
     }
 
     private func applySettingsButtonTheme(_ button: NSButton, theme: ReaderTheme) {
-        if let checkbox = button as? ThemedSettingsCheckbox {
-            checkbox.theme = theme
-        } else if button.identifier == Identifiers.saveButton {
+        if button.identifier == Identifiers.saveButton {
             styleSettingsActionButton(
                 button,
                 backgroundColor: settingsPrimaryActionBackgroundColor(for: theme),

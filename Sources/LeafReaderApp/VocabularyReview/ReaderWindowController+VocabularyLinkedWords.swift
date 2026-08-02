@@ -1,4 +1,5 @@
-import Cocoa
+import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     func updateStoredLinkedWordAnswer(linkID: String, question: String, answer: String) {
@@ -15,23 +16,50 @@ extension ReaderWindowController {
         if let index = storedWordRecords.firstIndex(where: { $0.id == linkID }) {
             let target = storedWordRecords[index]
             let key = VocabularyTextPolicy.canonicalVocabularyKey(target.word)
+            var proposedRecords = storedWordRecords
             var updated: [StoredPDFWordRecord] = []
-            for recordIndex in storedWordRecords.indices where
-                storedWordRecords[recordIndex].vocabularyID == target.vocabularyID
-                    || VocabularyTextPolicy.canonicalVocabularyKey(storedWordRecords[recordIndex].word) == key {
-                storedWordRecords[recordIndex].question = question
-                storedWordRecords[recordIndex].answer = trimmedAnswer
-                updated.append(storedWordRecords[recordIndex])
+            for recordIndex in proposedRecords.indices where
+                proposedRecords[recordIndex].vocabularyID == target.vocabularyID
+                    || VocabularyTextPolicy.canonicalVocabularyKey(proposedRecords[recordIndex].word) == key {
+                proposedRecords[recordIndex].question = question
+                proposedRecords[recordIndex].answer = trimmedAnswer
+                updated.append(proposedRecords[recordIndex])
             }
-            if pdfWordRecordStore?.upsert(updated) != true {
-                saveStoredWordRecords()
+            guard pdfWordRecordStore?.upsert(updated) == true else {
+                NSLog("LeafReader vocabulary: failed to persist linked PDF vocabulary group")
+                return
             }
+            storedWordRecords = proposedRecords
             return
         }
         if let index = storedWebWordRecords.firstIndex(where: { $0.id == linkID }) {
-            storedWebWordRecords[index].question = question
-            storedWebWordRecords[index].answer = trimmedAnswer
-            saveStoredWebWordRecord(storedWebWordRecords[index])
+            let target = storedWebWordRecords[index]
+            let targetKey = target.vocabularyID
+                ?? GermanLemmaResolver.groupingKey(
+                    word: target.word,
+                    lemma: target.lemma,
+                    language: vocabularyDocumentLanguage
+                )
+            var proposedRecords = storedWebWordRecords
+            var changedRecords: [StoredWebWordRecord] = []
+            for recordIndex in proposedRecords.indices {
+                let record = proposedRecords[recordIndex]
+                let recordKey = record.vocabularyID
+                    ?? GermanLemmaResolver.groupingKey(
+                        word: record.word,
+                        lemma: record.lemma,
+                        language: vocabularyDocumentLanguage
+                )
+                guard recordKey == targetKey else { continue }
+                proposedRecords[recordIndex].question = question
+                proposedRecords[recordIndex].answer = trimmedAnswer
+                changedRecords.append(proposedRecords[recordIndex])
+            }
+            guard let store = webWordRecordStore, store.upsert(changedRecords) else {
+                NSLog("LeafReader vocabulary: failed to persist linked web vocabulary group")
+                return
+            }
+            storedWebWordRecords = proposedRecords
             return
         }
 
@@ -59,7 +87,10 @@ extension ReaderWindowController {
         if let pending = pendingWebWordRecords.removeValue(forKey: linkID) {
             let record = StoredWebWordRecord(
                 id: pending.id,
+                vocabularyID: pending.vocabularyID,
                 word: pending.word,
+                lemma: pending.lemma,
+                surfaceForm: pending.surfaceForm,
                 context: pending.context,
                 occurrenceIndex: pending.occurrenceIndex,
                 scrollProgress: pending.scrollProgress,
@@ -102,10 +133,20 @@ extension ReaderWindowController {
     }
 
     func reusableWebWordRecord(for word: String) -> StoredWebWordRecord? {
-        let normalized = normalizedVocabularyKey(word)
+        let language = vocabularyDocumentLanguage
+        let key = GermanLemmaResolver.groupingKey(word: word, language: language)
         return storedWebWordRecords.first {
-            normalizedVocabularyKey($0.word) == normalized && !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key
+                && !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
+    }
+
+    func existingWebVocabularyID(for word: String, lemma: String? = nil) -> String? {
+        let language = vocabularyDocumentLanguage
+        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+        return storedWebWordRecords.first {
+            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key
+        }?.vocabularyID
     }
 
     func normalizedVocabularyKey(_ word: String) -> String {

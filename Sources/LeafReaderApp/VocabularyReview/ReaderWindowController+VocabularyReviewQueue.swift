@@ -1,4 +1,5 @@
-import Cocoa
+import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     func vocabularyRecords(_ records: [VocabularyExportRecord], matching filter: VocabularyFilter) -> [VocabularyExportRecord] {
@@ -22,8 +23,7 @@ extension ReaderWindowController {
     }
 
     func updateVocabularySummaryWithProgress(position: Int, total: Int) {
-        guard let root = vocabularyPanelController.rootView,
-              let summary = findView(identifier: "vocabularySummaryLabel", in: root) as? NSTextField else { return }
-        summary.stringValue = "\(vocabularySummaryText(records: currentVocabularyExportRecords, filter: vocabularyReviewSession.filter)) · \(position) / \(total)"
+        let text = vocabularySummaryText(records: currentVocabularyExportRecords, filter: vocabularyReviewSession.filter)
+        vocabularyPanelController.headerModel.summary = "\(text) · \(position) / \(total)"
     }
 }

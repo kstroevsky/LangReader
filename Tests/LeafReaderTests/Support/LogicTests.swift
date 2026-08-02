@@ -1,20 +1,20 @@
 import Foundation
 import CoreGraphics
+import LeafReaderCore
 
-struct TestFailure: Error, CustomStringConvertible {
-    let description: String
-}
-
-func expect(_ condition: @autoclosure () -> Bool, _ message: String) throws {
-    if !condition() {
-        throw TestFailure(description: message)
-    }
-}
-
-func expectEqual<T: Equatable>(_ lhs: T, _ rhs: T, _ message: String) throws {
-    if lhs != rhs {
-        throw TestFailure(description: "\(message). expected \(rhs), got \(lhs)")
-    }
+/// Discards an isolated defaults suite **and** the file backing it.
+///
+/// `removePersistentDomain(forName:)` alone empties the domain but leaves an
+/// empty plist in `~/Library/Preferences`, so every run of the suite left a few
+/// more behind — 1,224 of them, 4.8 MB, had accumulated on the development
+/// machine before this was noticed. Tests must not litter the user's account.
+func discardIsolatedDefaults(_ defaults: UserDefaults, suiteName: String) {
+    defaults.removePersistentDomain(forName: suiteName)
+    guard suiteName.hasPrefix("LeafReaderTests.") else { return }
+    let plist = FileManager.default
+        .homeDirectoryForCurrentUser
+        .appendingPathComponent("Library/Preferences/\(suiteName).plist")
+    try? FileManager.default.removeItem(at: plist)
 }
 
 private final class DebouncedTask {
@@ -113,7 +113,7 @@ private func testReaderSessionStorePDFAnchor() throws {
         throw TestFailure(description: "could not create isolated defaults suite")
     }
     defer {
-        defaults.removePersistentDomain(forName: suiteName)
+        discardIsolatedDefaults(defaults, suiteName: suiteName)
     }
 
     let store = ReaderSessionStore(fileMD5: "book", defaults: defaults)
@@ -137,7 +137,7 @@ private func testReaderSessionStoreFarthestProgress() throws {
         throw TestFailure(description: "could not create isolated defaults suite")
     }
     defer {
-        defaults.removePersistentDomain(forName: suiteName)
+        discardIsolatedDefaults(defaults, suiteName: suiteName)
     }
 
     let store = ReaderSessionStore(fileMD5: "book", defaults: defaults)
@@ -172,7 +172,7 @@ private func testReaderSessionStoreWebProgressBounds() throws {
         throw TestFailure(description: "could not create isolated defaults suite")
     }
     defer {
-        defaults.removePersistentDomain(forName: suiteName)
+        discardIsolatedDefaults(defaults, suiteName: suiteName)
     }
 
     let store = ReaderSessionStore(fileMD5: "book", defaults: defaults)
@@ -687,6 +687,40 @@ private func testKokoroWorkerResponseReaderBuffersPartialLines() throws {
 }
 
 private let tests: [(String, () throws -> Void)] = [
+    ("Reader search cursor query submit", ReaderSearchCursorTests.testSubmitDistinguishesNewQueryFromFindNext),
+    ("Reader search cursor wrapping", ReaderSearchCursorTests.testWrapsInBothDirections),
+    ("Reader search cursor empty results", ReaderSearchCursorTests.testEmptyResultsAreInert),
+    ("Reader search cursor result text", ReaderSearchCursorTests.testResultTextIsOneBased),
+    ("Reader search cursor web index", ReaderSearchCursorTests.testAdoptOneBasedFromWebSearch),
+    ("Reader search cursor clear", ReaderSearchCursorTests.testClearResetsEverything),
+    ("Performance recorder span timing", PerformanceRecorderTests.testSpanRecordsElapsedMilliseconds),
+    ("Performance recorder stats", PerformanceRecorderTests.testStatsAcrossSamples),
+    ("Performance recorder even median", PerformanceRecorderTests.testMedianOfEvenCountAveragesMiddlePair),
+    ("Performance recorder clamps negatives", PerformanceRecorderTests.testNegativeDurationsAreClampedToZero),
+    ("Performance recorder omits unmeasured", PerformanceRecorderTests.testUnrecordedEventsAreAbsent),
+    ("Performance report stable order", PerformanceRecorderTests.testReportRowsAreInEventOrderRegardlessOfRecordOrder),
+    ("Performance report deterministic JSON", PerformanceRecorderTests.testJSONIsDeterministicAndRounded),
+    ("Performance recorder reset", PerformanceRecorderTests.testResetDiscardsSamples),
+    ("Reader presentation default title", ReaderPresentationStateTests.testDefaultTitleIsEmpty),
+    ("Reader presentation set title", ReaderPresentationStateTests.testSetTitleIsAuthoritative),
+    ("Reader presentation PDF zoom defaults", ReaderPresentationStateTests.testPDFZoomDefaultsTo100Percent),
+    ("Reader presentation PDF zoom clamps", ReaderPresentationStateTests.testPDFZoomIsClamped),
+    ("Reader presentation clear title", ReaderPresentationStateTests.testClearResetsTitle),
+    ("Reader presentation title from URL", ReaderPresentationStateTests.testTitleForURLDropsExtension),
+    ("Reader presentation title stable", ReaderPresentationStateTests.testTitleForURLIsStableAcrossPaths),
+    ("Reader shell loading and search state", ReaderShellPresentationStateTests.testLoadingAndSearchTransitions),
+    ("Reader shell projection and document reset", ReaderShellPresentationStateTests.testProjectionAndDocumentResetStayIndependent),
+    ("Reader shell panel state", ReaderShellPresentationStateTests.testPanelStateIsIndependentFromAIData),
+    ("User backup round trip", UserDataBackupServiceTests.testRoundTripRestoresDatabasesPreferencesAndAssets),
+    ("User backup rejects tampering", UserDataBackupServiceTests.testTamperedPayloadIsRejectedBeforeMutation),
+    ("User backup restore rollback", UserDataBackupServiceTests.testFailedRestoreRollsBackEveryReplacement),
+    ("User backup empty assets contract", UserDataBackupServiceTests.testMissingDeclaredEmptyAssetsDirectoryIsRejected),
+    ("User backup cold-start recovery", UserDataBackupServiceTests.testColdStartRecoveryRollsBackInterruptedRestore),
+    ("Reader chrome state by presentation", ReaderChromeStateTests.testChromeStateByPresentation),
+    ("Reader chrome read-aloud and cover", ReaderChromeStateTests.testReadAloudAndCoverConditions),
+    ("Reader chrome toggle and kind mapping", ReaderChromeStateTests.testTogglePreferenceAndKindMapping),
+    ("Reader toolbar cluster order", ReaderToolbarItemTests.testClusterOrder),
+    ("Reader toolbar visibility follows chrome state", ReaderToolbarItemTests.testVisibilityFollowsChromeState),
     ("Vocabulary SRS", VocabularyLogicTests.testVocabularySRS),
     ("German lemma batch equals sequential", VocabularyLogicTests.testGermanLemmaBatchMatchesSequential),
     ("German lemma tagger reuse", VocabularyLogicTests.testGermanLemmaResolverTaggerReuse),
@@ -710,6 +744,14 @@ private let tests: [(String, () throws -> Void)] = [
     ("Document import batch decision", DocumentImportDecisionLogicTests.testMultipleDropsPresentTheShelf),
     ("Document session load tickets", DocumentSessionLogicTests.testLoadTicketsRejectSupersededAndUnloadedWork),
     ("Document session transition reset", DocumentSessionLogicTests.testAdoptingDocumentResetsDocumentBoundState),
+    ("Selection clears on document change", DocumentSessionLogicTests.testSelectionIsClearedWhenTheDocumentChanges),
+    ("Selection clears on unload", DocumentSessionLogicTests.testSelectionIsClearedOnUnload),
+    ("Selected text follows document kind", DocumentSessionLogicTests.testSelectedTextFollowsTheDocumentKind),
+    ("Toolbar anchor needs area", DocumentSessionLogicTests.testAToolbarAnchorNeedsArea),
+    ("Toolbar anchor clears on unload", DocumentSessionLogicTests.testTheToolbarAnchorIsClearedOnUnload),
+    ("Plain-text generation survives change", DocumentSessionLogicTests.testPlainTextGenerationSurvivesADocumentChange),
+    ("Progress restore scoped to its load", DocumentSessionLogicTests.testPendingProgressRestoreIsScopedToItsLoad),
+    ("Reading position clears with document", DocumentSessionLogicTests.testReadingPositionIsClearedWithTheDocument),
     ("Embedding defaults", AISettingsLogicTests.testEmbeddingDefaults),
     ("AI settings injected defaults model selection", AISettingsLogicTests.testAISettingsStoreInjectedDefaultsModelSelection),
     ("AI provider descriptors", AISettingsLogicTests.testAIProviderDescriptors),
@@ -760,6 +802,28 @@ private let tests: [(String, () throws -> Void)] = [
     ("Difficult sentence prompt sections", AISettingsLogicTests.testDifficultSentencePromptContainsRequiredSections),
     ("AI conversation linked history removal", AIConversationContextStoreTests.testLinkedWordHistoryRemovalKeepsSystemMessage),
     ("AI conversation context trimming", AIConversationContextStoreTests.testContextTrimsRecentMessages),
+    ("Transcript delete takes a question's answers", AITranscriptModelTests.testDeletingAQuestionTakesItsAnswers),
+    ("Transcript delete of an answer stays local", AITranscriptModelTests.testDeletingAnAnswerTakesOnlyThatAnswer),
+    ("Transcript delete skips linked word bubbles", AITranscriptModelTests.testDeleteGroupSkipsLinkedWordBubbles),
+    ("Transcript trimming keeps the streaming bubble", AITranscriptModelTests.testTrimDropsOldestConversationBubblesButKeepsTheStreamingOne),
+    ("Transcript saves only persistent conversation", AITranscriptModelTests.testOnlyPersistentConversationBubblesAreSaved),
+    ("Transcript persistence marking is idempotent", AITranscriptModelTests.testMarkPersistentReportsWhetherItChangedAnything),
+    ("Transcript content update keeps bubble kind", AITranscriptModelTests.testUpdateContentKeepsTheBubbleKind),
+    ("Transcript linked removal reports bubble ids", AITranscriptModelTests.testRemovingLinkedBubblesReportsTheirIDs),
+    ("Transcript active sources are distinct", AITranscriptModelTests.testActiveSourcesAreDistinctAndInDisplayOrder),
+    ("Transcript bubble ends focused-word state", AITranscriptModelTests.testAppendingABubbleEndsTheFocusedWordState),
+    ("Note editor commit folds text in", ReadingNoteEditorModelTests.testCommitFoldsTextIntoTheNoteAndClearsTheDirtyFlag),
+    ("Note editor word count trims", ReadingNoteEditorModelTests.testWordCountIgnoresSurroundingWhitespace),
+    ("Note editor location prefers PDF page", ReadingNoteEditorModelTests.testLocationTextPrefersThePDFPage),
+    ("Note editor favourite toggles", ReadingNoteEditorModelTests.testFavouriteTogglesTheNoteAndReportsIt),
+    ("Note editor applies newest AI result only", ReadingNoteEditorModelTests.testOnlyTheNewestAIResultMayBeApplied),
+    ("Note editor refuses late AI results", ReadingNoteEditorModelTests.testAClosingEditorRefusesLateAIResults),
+    ("Note editor replace resets state", ReadingNoteEditorModelTests.testReplacingTheNoteResetsTheEditor),
+    ("Note editor external favourite survives commit", ReadingNoteEditorModelTests.testAnExternalFavouriteSurvivesTheNextCommit),
+    ("Note editor favourite set is idempotent", ReadingNoteEditorModelTests.testSettingFavouriteIsIdempotent),
+    ("Note editor refresh after save stays clean", ReadingNoteEditorModelTests.testRefreshingTheTextAfterSavingLeavesTheNoteClean),
+    ("Note editor identical text is not an edit", ReadingNoteEditorModelTests.testReassigningTheSameTextDoesNotDirtyTheNote),
+    ("Note editor commits markdown not display text", ReadingNoteEditorModelTests.testCommitPersistsMarkdownRatherThanTheDisplayedText),
     ("ECDICT SQLite lookup", ECDICTLogicTests.testSQLiteLookupAndMarkdownAnswer),
     ("ECDICT CSV lookup", ECDICTLogicTests.testCSVLookup),
     ("ECDICT lookup key normalization", ECDICTLogicTests.testLookupKeyNormalization),
@@ -818,7 +882,39 @@ private let tests: [(String, () throws -> Void)] = [
     ("Reading note exporter fallback quote", ReadingNoteLogicTests.testReadingNoteExporterFallbackQuote),
     ("Reading note exporter HTML and scope", ReadingNoteLogicTests.testReadingNoteExporterHTMLAndScope),
     ("Reading note display title uses first markdown line", ReadingNoteLogicTests.testReadingNoteDisplayTitleUsesFirstMarkdownLine),
+    ("Occurrence groups collapse case", VocabularyOccurrenceGroupingTests.testGroupsCollapseSpellingsThatDifferOnlyByCase),
+    ("Occurrence groups keep encounter order", VocabularyOccurrenceGroupingTests.testGroupsFollowFirstEncounterOrder),
+    ("Occurrence missing surface fallback", VocabularyOccurrenceGroupingTests.testOccurrenceWithoutSurfaceFormFallsBackToTheSavedWord),
+    ("Occurrence blank surfaces skipped", VocabularyOccurrenceGroupingTests.testBlankSurfacesAreSkippedRatherThanFormingAnEmptyTab),
+    ("Occurrence counts come from occurrences", VocabularyOccurrenceGroupingTests.testCountsComeFromOccurrencesNotTheFormList),
+    ("Occurrence labels fold case, first wins", VocabularyOccurrenceGroupingTests.testLabelsMatchAcrossCaseAndTakeTheFirstOnConflict),
+    ("Occurrence no occurrences no tabs", VocabularyOccurrenceGroupingTests.testNoOccurrencesProducesNoTabs),
+    ("Reader bottom bar places every control", ReaderBottomBarItemTests.testEveryControlIsPlacedExactlyOnce),
+    ("Reader bottom bar navigation order", ReaderBottomBarItemTests.testNavigationGroupIsInReadingOrder),
+    ("Reader bottom bar panel order", ReaderBottomBarItemTests.testPanelButtonsComeAfterSettingsAndKeepTheirOrder),
+    ("Reader bottom bar transient controls", ReaderBottomBarItemTests.testOnlyAnalysisControlsAreTransient),
+    ("Reader bottom bar leading symbols", ReaderBottomBarItemTests.testOnlyPanelButtonsCarryALeadingSymbol),
+    ("Reader zoom field accepts its own format", ReaderFieldInputTests.testZoomAcceptsWhatTheFieldItselfDisplays),
+    ("Reader zoom field rejects non-zooms", ReaderFieldInputTests.testZoomRejectsInputThatWouldNotBeAZoom),
+    ("Reader zoom clamps per document kind", ReaderFieldInputTests.testZoomClampsToUsableRangesPerDocumentKind),
+    ("Reader page field parses label format", ReaderFieldInputTests.testPageNumberIsTakenFromTheLabelsOwnFormat),
+    ("Reader page index clamps to document", ReaderFieldInputTests.testPageIndexClampsToTheDocument),
+    ("Vocabulary row metadata text", VocabularyLibraryFilterTests.testRowMetadataTextPluralisesSources),
+    ("Vocabulary row answer preview", VocabularyLibraryFilterTests.testRowAnswerPreviewIsOneLineAndNeverBlank),
+    ("Vocabulary library search folding", VocabularyLibraryFilterTests.testSearchIsCaseAndDiacriticInsensitive),
+    ("Vocabulary library search fields", VocabularyLibraryFilterTests.testSearchCoversContextAndFormsNotJustTheWord),
+    ("Vocabulary library blank query", VocabularyLibraryFilterTests.testBlankQueryMatchesEverything),
+    ("Vocabulary library source filter", VocabularyLibraryFilterTests.testSourceFilterRestrictsToOneDocument),
+    ("Vocabulary library recent sort ties", VocabularyLibraryFilterTests.testRecentSortBreaksTiesAlphabetically),
+    ("Vocabulary library alphabetical sort", VocabularyLibraryFilterTests.testAlphabeticalSortIgnoresCase),
+    ("Vocabulary library selection survival", VocabularyLibraryFilterTests.testSelectionSurvivesFilteringWhenPossible),
+    ("Shelf card document kind text", ShelfCardPresenterTests.testDocumentKindText),
+    ("Shelf card progress clamping", ShelfCardPresenterTests.testProgressTextClampsToRealPercentages),
+    ("Shelf card unread vs zero progress", ShelfCardPresenterTests.testProgressTextDistinguishesUnreadFromZero),
     ("Reading note list presenter rows", ReadingNoteLogicTests.testReadingNoteListPresenterRows),
+    ("Reading note list summary text", ReadingNoteLogicTests.testReadingNoteListSummaryText),
+    ("Reading note list empty state text", ReadingNoteLogicTests.testReadingNoteListEmptyStateText),
+    ("Reading note list row resolves to note", ReadingNoteLogicTests.testReadingNoteListRowResolvesToNote),
     ("Reading note quote soft line breaks", ReadingNoteLogicTests.testReadingNoteQuoteSoftLineBreaks),
     ("Reading note PDF line gaps preserve paragraph breaks", ReadingNoteLogicTests.testReadingNotePDFLineGapsPreserveParagraphBreaks),
     ("Reading note slash command groups", ReadingNoteLogicTests.testReadingNoteSlashCommandGroups),
@@ -843,7 +939,6 @@ private let tests: [(String, () throws -> Void)] = [
     ("Reading note document image markdown", ReadingNoteLogicTests.testReadingNoteDocumentImageMarkdown),
     ("Reading note image markdown round trip with spaced file path", ReadingNoteLogicTests.testReadingNoteImageMarkdownRoundTripWithSpacedFilePath),
     ("Reading note asset store imports image to managed directory", ReadingNoteLogicTests.testReadingNoteAssetStoreImportsImageToManagedDirectory),
-    ("Reading note editor state stale AI", ReadingNoteLogicTests.testReadingNoteEditorStateRejectsStaleAIResults),
     ("Reading note AI insertion mode", ReadingNoteLogicTests.testReadingNoteAIInsertionModePlaceholderFlag),
     ("Reader AI context text cleanup", testReaderAIContextTextCleanup),
     ("Reader AI context policy", testReaderAIContextPolicy),

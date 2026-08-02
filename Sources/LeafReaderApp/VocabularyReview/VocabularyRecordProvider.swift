@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum VocabularyRecordProvider {
     /// Resolves the grammatical label for one observed surface form.
@@ -6,7 +7,7 @@ enum VocabularyRecordProvider {
     /// Injected so this provider stays independent of the dictionary cache:
     /// the app supplies the cache-backed resolver, while tests and any caller
     /// without the SQLite stack get the offline rules by default.
-    typealias FormLabelResolver = (_ surfaceForm: String, _ lemma: String, _ context: String) -> GermanFormLabel?
+    typealias FormLabelResolver = @Sendable (_ surfaceForm: String, _ lemma: String, _ context: String) -> GermanFormLabel?
 
     static let offlineFormLabelResolver: FormLabelResolver = { surfaceForm, lemma, context in
         GermanFormLabeler.label(surfaceForm: surfaceForm, lemma: lemma, context: context)
@@ -89,6 +90,17 @@ enum VocabularyRecordProvider {
                     return VocabularyExportRecord(
                         ids: [$0.id],
                         word: $0.word,
+                        lemma: $0.lemma,
+                        forms: [
+                            VocabularyForm(
+                                surface: $0.occurrenceSurfaceForm,
+                                label: memoizedLabel(
+                                    surface: $0.occurrenceSurfaceForm,
+                                    lemma: $0.lemma ?? $0.word,
+                                    context: $0.context
+                                )
+                            )
+                        ],
                         answer: $0.answer,
                         dictionaryTags: $0.dictionaryTags,
                         dictionaryFrequency: $0.dictionaryFrequency,
@@ -102,6 +114,7 @@ enum VocabularyRecordProvider {
                                 pageIndex: nil,
                                 bounds: nil,
                                 location: location,
+                                surfaceForm: $0.occurrenceSurfaceForm,
                                 context: $0.context,
                                 createdAt: $0.createdAt
                             )

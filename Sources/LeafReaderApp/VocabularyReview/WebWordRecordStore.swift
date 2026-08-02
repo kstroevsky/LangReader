@@ -1,8 +1,13 @@
 import Foundation
+import NaturalLanguage
+import LeafReaderCore
 
-struct StoredWebWordRecord: Codable {
+struct StoredWebWordRecord: Codable, Sendable {
     let id: String
+    var vocabularyID: String? = nil
     let word: String
+    var lemma: String? = nil
+    var surfaceForm: String? = nil
     let context: String
     let occurrenceIndex: Int?
     let scrollProgress: Double
@@ -12,6 +17,82 @@ struct StoredWebWordRecord: Codable {
     var dictionaryFrequency: Int? = nil
     let createdAt: Date
     var srs: VocabularySRSState?
+
+    var vocabularyGroupingText: String {
+        guard let lemma = lemma?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !lemma.isEmpty else { return word }
+        return lemma
+    }
+
+    var occurrenceSurfaceForm: String {
+        guard let surfaceForm = surfaceForm?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !surfaceForm.isEmpty else { return word }
+        return surfaceForm
+    }
+}
+
+struct WebWordRecordMetadataRepair {
+    struct Result {
+        let records: [StoredWebWordRecord]
+        let didChange: Bool
+    }
+
+    typealias LemmaResolver = @Sendable (String, NLLanguage) -> String
+
+    static func repair(
+        _ records: [StoredWebWordRecord],
+        language: NLLanguage,
+        lemmaResolver: LemmaResolver = { GermanLemmaResolver.lemma(for: $0, language: $1) }
+    ) -> Result {
+        var didChange = false
+        var enriched = records.map { record -> StoredWebWordRecord in
+            var record = record
+            let surface = record.occurrenceSurfaceForm
+            if record.surfaceForm != surface { didChange = true }
+            record.surfaceForm = surface
+            let lemma = record.lemma?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let resolvedLemma = lemma.flatMap { $0.isEmpty ? nil : $0 }
+                ?? lemmaResolver(surface, language)
+            if record.lemma != resolvedLemma { didChange = true }
+            record.lemma = resolvedLemma
+            return record
+        }
+
+        let orderedIndices = enriched.indices.sorted {
+            let lhs = enriched[$0]
+            let rhs = enriched[$1]
+            if lhs.createdAt != rhs.createdAt { return lhs.createdAt < rhs.createdAt }
+            return lhs.id < rhs.id
+        }
+        var vocabularyIDByKey: [String: String] = [:]
+        for index in orderedIndices {
+            let record = enriched[index]
+            let key = GermanLemmaResolver.groupingKey(
+                word: record.word,
+                lemma: record.lemma,
+                language: language
+            )
+            guard !key.isEmpty, vocabularyIDByKey[key] == nil,
+                  let vocabularyID = record.vocabularyID,
+                  !vocabularyID.isEmpty else { continue }
+            vocabularyIDByKey[key] = vocabularyID
+        }
+        for index in orderedIndices {
+            let record = enriched[index]
+            let key = GermanLemmaResolver.groupingKey(
+                word: record.word,
+                lemma: record.lemma,
+                language: language
+            )
+            guard !key.isEmpty else { continue }
+            let vocabularyID = vocabularyIDByKey[key] ?? record.id
+            vocabularyIDByKey[key] = vocabularyID
+            if enriched[index].vocabularyID != vocabularyID { didChange = true }
+            enriched[index].vocabularyID = vocabularyID
+        }
+
+        return Result(records: enriched, didChange: didChange)
+    }
 }
 
 struct WebWordRecordStore {
@@ -53,7 +134,12 @@ struct WebWordRecordStore {
 
     @discardableResult
     func upsert(_ record: StoredWebWordRecord) -> Bool {
-        let didSave = WordRecordSQLiteStore.shared.upsertWebRecord(documentID: documentID, record: record)
+        upsert([record])
+    }
+
+    @discardableResult
+    func upsert(_ records: [StoredWebWordRecord]) -> Bool {
+        let didSave = WordRecordSQLiteStore.shared.upsertWebRecords(documentID: documentID, records: records)
         if didSave {
             defaults.set(true, forKey: migrationKey)
         }
@@ -92,9 +178,14 @@ struct WebWordRecordStore {
     }
 
     func linkedWordBubbles(from records: [StoredWebWordRecord]) -> [AIChatPanel.LinkedWordBubble] {
-        records
+        var seenVocabulary = Set<String>()
+        return records
             .filter { !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
             .sorted { $0.createdAt < $1.createdAt }
+            .filter {
+                let key = $0.vocabularyID ?? VocabularyTextPolicy.canonicalVocabularyKey($0.vocabularyGroupingText)
+                return seenVocabulary.insert(key).inserted
+            }
             .map {
                 AIChatPanel.LinkedWordBubble(
                     id: $0.id,

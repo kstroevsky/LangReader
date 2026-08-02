@@ -1,4 +1,5 @@
-import Cocoa
+import Foundation
+import LeafReaderCore
 
 extension AIChatPanel {
     func loadSavedConversation(_ conversation: SavedAIConversation) {
@@ -35,7 +36,7 @@ extension AIChatPanel {
     }
 
     func hasConversationSourceBubble(_ source: AIConversationSourceLocation) -> Bool {
-        bubbleMetadataByID.values.contains { $0.sourceLocation == source }
+        transcript.containsSource(source)
     }
 
     @discardableResult
@@ -43,7 +44,7 @@ extension AIChatPanel {
         let matchingBubbles = conversation.bubbles.filter { $0.sourceLocation == source }
         guard !matchingBubbles.isEmpty else { return false }
 
-        let existingBubbleKeys = Set(bubbleMetadataByID.values
+        let existingBubbleKeys = Set(transcript.bubbles
             .filter { $0.sourceLocation == source }
             .map { conversationBubbleKey(role: $0.role, text: $0.text) })
         let missingBubbles = matchingBubbles.filter {

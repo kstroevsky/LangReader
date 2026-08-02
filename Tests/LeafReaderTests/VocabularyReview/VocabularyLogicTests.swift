@@ -1,5 +1,6 @@
 import Foundation
 import NaturalLanguage
+import LeafReaderCore
 
 private struct StoredWordRecord: Equatable {
     let id: String

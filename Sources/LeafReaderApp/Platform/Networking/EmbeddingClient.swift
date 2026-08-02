@@ -1,6 +1,6 @@
 import Foundation
 
-struct EmbeddingModelConfig {
+struct EmbeddingModelConfig: Sendable {
     let provider: String
     let endpoint: URL
     let model: String
@@ -14,7 +14,7 @@ struct EmbeddingModelConfig {
     }
 }
 
-final class EmbeddingClient {
+final class EmbeddingClient: Sendable {
     static func configFromCurrentAISettings() -> EmbeddingModelConfig? {
         let endpoint = AISettingsStore.embeddingEndpoint
         let endpointOption = AISettingsStore.selectedEmbeddingEndpointOption
@@ -32,11 +32,10 @@ final class EmbeddingClient {
         )
     }
 
-    func embed(texts: [String], config: EmbeddingModelConfig, completion: @escaping (Result<[[Float]], Error>) -> Void) {
+    func embed(texts: [String], config: EmbeddingModelConfig) async throws -> [[Float]] {
         let cleanedTexts = texts.map { String($0.prefix(config.maxInputCharacters)) }
         guard !cleanedTexts.isEmpty else {
-            completion(.success([]))
-            return
+            return []
         }
 
         var request = URLRequest(url: config.endpoint)
@@ -46,55 +45,33 @@ final class EmbeddingClient {
         if !config.apiKey.isEmpty {
             request.setValue("Bearer \(config.apiKey)", forHTTPHeaderField: "Authorization")
         }
-        let payload = requestPayload(texts: cleanedTexts, config: config)
+        let payload = Self.requestPayload(texts: cleanedTexts, config: config)
 
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: payload)
         } catch {
-            completion(.failure(error))
-            return
+            throw error
         }
 
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error {
-                completion(.failure(error))
-                return
-            }
-
-            if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
-                let body = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
-                completion(.failure(NSError(domain: config.provider, code: http.statusCode, userInfo: [
-                    NSLocalizedDescriptionKey: NetworkErrorFormatter.httpErrorDescription(
-                        prefix: "Embedding",
-                        statusCode: http.statusCode,
-                        body: body
-                    )
-                ])))
-                return
-            }
-
-            guard let data else {
-                completion(.failure(NSError(domain: config.provider, code: -1, userInfo: [
-                    NSLocalizedDescriptionKey: "No embedding response data"
-                ])))
-                return
-            }
-
-            do {
-                let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-                guard let embeddings = self.parseEmbeddings(from: json, expectedCount: cleanedTexts.count, config: config) else {
-                    throw NSError(domain: config.provider, code: -2, userInfo: [
-                        NSLocalizedDescriptionKey: "Unexpected embedding response"
-                    ])
-                }
-                completion(.success(embeddings))
-            } catch {
-                completion(.failure(error))
-            }
-        }.resume()
+        let (data, response) = try await URLSession.shared.data(for: request)
+        if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+            let body = String(data: data, encoding: .utf8) ?? ""
+            throw NSError(domain: config.provider, code: http.statusCode, userInfo: [
+                NSLocalizedDescriptionKey: NetworkErrorFormatter.httpErrorDescription(
+                    prefix: "Embedding", statusCode: http.statusCode, body: body
+                )
+            ])
+        }
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let embeddings = Self.parseEmbeddings(from: json, expectedCount: cleanedTexts.count, config: config) else {
+            throw NSError(domain: config.provider, code: -2, userInfo: [
+                NSLocalizedDescriptionKey: "Unexpected embedding response"
+            ])
+        }
+        return embeddings
     }
 
-    private func requestPayload(texts: [String], config: EmbeddingModelConfig) -> [String: Any] {
+    private static func requestPayload(texts: [String], config: EmbeddingModelConfig) -> [String: Any] {
         if config.endpoint.path.lowercased() == "/api/embed" {
             return [
                 "model": config.model,
@@ -112,13 +89,13 @@ final class EmbeddingClient {
         return payload
     }
 
-    private func parseEmbeddings(from json: [String: Any]?, expectedCount: Int, config: EmbeddingModelConfig) -> [[Float]]? {
+    private static func parseEmbeddings(from json: [String: Any]?, expectedCount: Int, config: EmbeddingModelConfig) -> [[Float]]? {
         if let rows = json?["data"] as? [[String: Any]] {
             let sortedRows = rows.sorted {
                 (($0["index"] as? Int) ?? 0) < (($1["index"] as? Int) ?? 0)
             }
             let embeddings = sortedRows.compactMap { row -> [Float]? in
-                normalizedFloatArray(row["embedding"])
+                Self.normalizedFloatArray(row["embedding"])
             }
             return embeddings.count == expectedCount ? embeddings : nil
         }
@@ -132,14 +109,14 @@ final class EmbeddingClient {
             return values.count == expectedCount ? values : nil
         }
 
-        if expectedCount == 1, let embedding = normalizedFloatArray(json?["embedding"]) {
+        if expectedCount == 1, let embedding = Self.normalizedFloatArray(json?["embedding"]) {
             return [embedding]
         }
 
         return nil
     }
 
-    private func normalizedFloatArray(_ value: Any?) -> [Float]? {
+    private static func normalizedFloatArray(_ value: Any?) -> [Float]? {
         if let values = value as? [Double] {
             return values.map(Float.init)
         }

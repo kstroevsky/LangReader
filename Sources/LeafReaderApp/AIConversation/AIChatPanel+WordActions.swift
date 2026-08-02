@@ -1,5 +1,6 @@
 import AVFoundation
 import Cocoa
+import LeafReaderCore
 
 extension AIChatPanel {
     func isVocabularySelection(_ text: String) -> Bool {
@@ -70,12 +71,17 @@ extension AIChatPanel {
         clearSelectedText()
         setBusy(true, text: AppText.localized("正在查德语词典...", "Looking up German dictionary..."))
 
-        GermanWiktionaryDictionary.shared.lookup(text) { [weak self] result in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                self.setBusy(false, text: "")
-                switch result {
-                case .success(let entry):
+        Task { @MainActor [weak self] in
+            let result: Result<GermanDictionaryEntry, Error>
+            do {
+                result = .success(try await GermanWiktionaryDictionary.shared.lookup(text))
+            } catch {
+                result = .failure(error)
+            }
+            guard let self else { return }
+            self.setBusy(false, text: "")
+            switch result {
+            case .success(let entry):
                     // Persist the flexion table as a side effect of the lookup
                     // the reader already asked for, so later encounters with
                     // any of that word's forms resolve offline.
@@ -107,15 +113,14 @@ extension AIChatPanel {
                     if let linkID {
                         self.onLinkedAnswerCompleted?(linkID, displayedQuestion, answer)
                     }
-                case .failure:
-                    let message = AppText.localized(
-                        "Deutsch Wiktionary 中没有找到“\(text)”的词条。",
-                        "No German Wiktionary entry was found for “\(text)”."
-                    )
-                    self.appendBubble(role: AppText.errorRole, text: message, collapsible: false)
-                    if let linkID {
-                        self.onLinkedAnswerFailed?(linkID)
-                    }
+            case .failure:
+                let message = AppText.localized(
+                    "Deutsch Wiktionary 中没有找到“\(text)”的词条。",
+                    "No German Wiktionary entry was found for “\(text)”."
+                )
+                self.appendBubble(role: AppText.errorRole, text: message, collapsible: false)
+                if let linkID {
+                    self.onLinkedAnswerFailed?(linkID)
                 }
             }
         }

@@ -1,8 +1,13 @@
 import Cocoa
 import UniformTypeIdentifiers
+import LeafReaderCore
 
 extension ReadingNotePanelController {
     @objc func undoTapped(_ sender: NSButton) {
+        performUndo()
+    }
+
+    func performUndo() {
         guard textView.undoManager?.canUndo == true else {
             NSSound.beep()
             return
@@ -12,6 +17,10 @@ extension ReadingNotePanelController {
     }
 
     @objc func redoTapped(_ sender: NSButton) {
+        performRedo()
+    }
+
+    func performRedo() {
         guard textView.undoManager?.canRedo == true else {
             NSSound.beep()
             return
@@ -91,7 +100,7 @@ extension ReadingNotePanelController {
 
     func applyTemplate(_ template: ReadingNoteTemplate) {
         guard AISettingsStore.hasAPIKeyForSelectedModel else {
-            statusLabel.stringValue = AppText.localized("请先配置 API Key", "Configure API Key first")
+            editorModel.statusAPIKeyRequired()
             NSSound.beep()
             onModelSettingsRequired()
             return

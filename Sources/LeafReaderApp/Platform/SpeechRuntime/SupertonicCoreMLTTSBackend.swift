@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 final class SupertonicCoreMLTTSBackend {
     private static let fallbackTimeout: TimeInterval = 90

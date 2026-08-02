@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReaderWindowController {
     var vocabularySpeechLanguageCode: String? {
@@ -14,7 +15,8 @@ extension ReaderWindowController {
         if currentDocumentKind == .pdf {
             documentText = pdfView.currentPage?.string ?? ""
         } else {
-            documentText = currentWebSelectedText.isEmpty ? currentWebPlainText : currentWebSelectedText
+            let selectedText = selectionState.webSelectedText
+            documentText = selectedText.isEmpty ? currentWebPlainText : selectedText
         }
         guard !documentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return nil

@@ -1,5 +1,6 @@
 import Foundation
 import NaturalLanguage
+import LeafReaderCore
 
 // T0 baseline characterization for German lemmatization.
 //

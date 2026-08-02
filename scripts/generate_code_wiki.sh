@@ -3,6 +3,9 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SOURCE_ROOT="$ROOT_DIR/Sources/LeafReaderApp"
+# The core is a separate target now, but it is still this codebase — the wiki
+# covers both roots or it stops describing the app.
+CORE_ROOT="$ROOT_DIR/Sources/LeafReaderCore"
 TEST_ROOT="$ROOT_DIR/Tests/LeafReaderTests"
 OUT_DIR="${WIKI_OUT_DIR:-$ROOT_DIR/docs/wiki}"
 OUT_FILE="$OUT_DIR/code-map.md"
@@ -11,25 +14,25 @@ TYPE_INDEX_FILE="$OUT_DIR/type-index.md"
 mkdir -p "$OUT_DIR"
 
 count_files() {
-  find "$SOURCE_ROOT" "$TEST_ROOT" "$ROOT_DIR/scripts" -type f \( -name '*.swift' -o -name '*.js' -o -name '*.sh' \) | wc -l | tr -d ' '
+  find "$SOURCE_ROOT" "$CORE_ROOT" "$TEST_ROOT" "$ROOT_DIR/scripts" -type f \( -name '*.swift' -o -name '*.js' -o -name '*.sh' \) | wc -l | tr -d ' '
 }
 
 total_lines() {
-  find "$SOURCE_ROOT" "$TEST_ROOT" "$ROOT_DIR/scripts" -type f \( -name '*.swift' -o -name '*.js' -o -name '*.sh' \) -print0 \
+  find "$SOURCE_ROOT" "$CORE_ROOT" "$TEST_ROOT" "$ROOT_DIR/scripts" -type f \( -name '*.swift' -o -name '*.js' -o -name '*.sh' \) -print0 \
     | xargs -0 wc -l \
     | tail -n 1 \
     | awk '{print $1}'
 }
 
 swift_lines() {
-  find "$SOURCE_ROOT" -name '*.swift' -print0 \
+  find "$SOURCE_ROOT" "$CORE_ROOT" -name '*.swift' -print0 \
     | xargs -0 wc -l \
     | tail -n 1 \
     | awk '{print $1}'
 }
 
 write_largest_files() {
-  find "$SOURCE_ROOT" "$TEST_ROOT" "$ROOT_DIR/scripts" -type f \( -name '*.swift' -o -name '*.js' -o -name '*.sh' \) -print0 \
+  find "$SOURCE_ROOT" "$CORE_ROOT" "$TEST_ROOT" "$ROOT_DIR/scripts" -type f \( -name '*.swift' -o -name '*.js' -o -name '*.sh' \) -print0 \
     | xargs -0 wc -l \
     | sort -nr \
     | head -n 20 \
@@ -46,7 +49,7 @@ write_matching_files() {
   local pattern="$2"
   echo "## $title"
   echo
-  find "$SOURCE_ROOT" -type f -name "$pattern" -print \
+  find "$SOURCE_ROOT" "$CORE_ROOT" -type f -name "$pattern" -print \
     | sed "s#$ROOT_DIR/##" \
     | sort \
     | awk '{ printf "- `%s`\n", $0 }'
@@ -54,7 +57,11 @@ write_matching_files() {
 }
 
 write_swift_types() {
-  rg -n "^(final class|class|struct|enum|protocol|extension) " "$SOURCE_ROOT" \
+  # The access modifier is optional so that `LeafReaderCore`'s `package` types
+  # are indexed. Without it the whole core silently disappeared from the index,
+  # which looked exactly like "the core declares nothing".
+  grep -rnE "^(package |public |open |internal )?(final class|class|struct|enum|protocol|extension) " \
+    --include='*.swift' "$SOURCE_ROOT" "$CORE_ROOT" \
     | sed "s#$ROOT_DIR/##" \
     | sort \
     | awk -F: '{ printf "| `%s` | %s | `%s` |\n", $1, $2, $3 }'

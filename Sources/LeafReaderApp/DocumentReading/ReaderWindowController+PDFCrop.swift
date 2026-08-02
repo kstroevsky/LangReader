@@ -20,13 +20,7 @@ extension ReaderWindowController {
     }
 
     func updatePDFMarginCropButton() {
-        let enabled = isPDFMarginCropEnabled()
-        cropButton?.title = enabled
-            ? AppText.localized("原边", "Original")
-            : AppText.localized("裁边", "Crop")
-        cropButton?.toolTip = enabled
-            ? AppText.localized("恢复 PDF 原始页面边距", "Restore original PDF page margins")
-            : AppText.localized("裁掉 PDF 页面外侧空白", "Crop outer PDF margins")
+        topBarModel.cropIsEnabled = isPDFMarginCropEnabled()
     }
 
     func captureOriginalPDFCropBoxes() {

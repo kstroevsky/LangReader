@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReaderWindowController {
     @objc func showRecentDocuments() {
@@ -6,6 +7,8 @@ extension ReaderWindowController {
     }
 
     func showRecentDocumentsPanel(focusPath: String?, priorityPaths: [String] = []) {
+        let openSpan = ReaderPerformance.begin(.shelfOpen)
+        defer { ReaderPerformance.end(openSpan) }
         let items = sortedRecentDocuments(priorityPaths: priorityPaths)
         guard !items.isEmpty else {
             NSSound.beep()
@@ -150,15 +153,12 @@ extension ReaderWindowController {
     private func resetEmptyDocumentChrome() {
         aiPanel.loadLinkedWordBubbles([])
         aiPanel.clearSelectedText()
-        titleLabel.stringValue = AppIdentity.displayName
+        setDocumentTitle(AppIdentity.displayName)
         coverImageView.image = nil
-        coverImageView.isHidden = true
-        pageLayoutButton.isHidden = true
-        cropButton.isHidden = true
-        relatedFormsToggle.isHidden = true
+        refreshChromeState(presentation: .empty)
         pageLabel.stringValue = AppText.noPDF
         updatePageLabelTextColor()
-        zoomField.stringValue = "100%"
+        updateZoomLabel()
         updateEmbeddingControlButtons()
         applyReaderTheme()
     }
@@ -169,14 +169,15 @@ extension ReaderWindowController {
             return
         }
         clearStoredEmbeddingControlState(documentID: documentID)
-        embeddingStoreQueue.async { [weak self] in
-            self?.pdfEmbeddingStore?.deleteDocument(documentID: documentID)
+        let store = pdfEmbeddingStore
+        embeddingStoreQueue.async {
+            store?.deleteDocument(documentID: documentID)
         }
         if currentFileMD5 == documentID {
             invalidateEmbeddingBackfill()
             invalidateDocumentAgentIndex()
-            embeddingStatusLabel.stringValue = AppText.localized("AI 分析数据：已清除当前书", "AI analysis data: current book cleared")
-            embeddingStatusLabel.isHidden = false
+            bottomBarModel.embeddingStatusText = AppText.localized("AI 分析数据：已清除当前书", "AI analysis data: current book cleared")
+            bottomBarModel.embeddingStatusVisible = true
             updateEmbeddingControlButtons()
         }
     }

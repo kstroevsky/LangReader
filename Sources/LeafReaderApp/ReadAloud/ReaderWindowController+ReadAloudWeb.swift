@@ -1,4 +1,4 @@
-import Cocoa
+import Foundation
 
 extension ReaderWindowController {
     func startWebReadAloudFromToolbar() {

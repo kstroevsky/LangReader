@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 typealias SpeechModelManifest = LocalRuntimeDownloadManifest
 
@@ -34,37 +35,36 @@ extension SpeechRuntimeResourceManager {
     }
 
     static func fetchModelManifest(
-        from manifestURL: URL = Runtime.modelManifestURL,
-        completion: @escaping (Result<SpeechModelManifest?, Error>) -> Void
-    ) {
-        let task = URLSession.shared.dataTask(with: manifestURL) { data, response, error in
-            if let error {
-                let bundledManifest = bundledModelManifest()
-                NSLog(
-                    "LeafReader speech model manifest: unavailable, using bundled manifest=%d (%@)",
-                    bundledManifest != nil,
-                    String(describing: error)
-                )
-                completion(.success(bundledManifest))
-                return
-            }
-
+        from manifestURL: URL = Runtime.modelManifestURL
+    ) async throws -> SpeechModelManifest? {
+        do {
+            let (data, response) = try await URLSession.shared.data(from: manifestURL)
             let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 200
             if statusCode == 404 {
-                completion(.success(bundledModelManifest()))
-                return
+                return bundledModelManifest()
             }
-            guard (200...299).contains(statusCode), let data else {
-                completion(.failure(NSError(
+            guard (200...299).contains(statusCode) else {
+                throw NSError(
                     domain: LocalRuntimeDownloadSupport.downloadErrorDomain,
                     code: statusCode,
                     userInfo: [NSLocalizedDescriptionKey: AppText.localized("模型校验清单下载失败，请稍后重试。", "Model checksum manifest download failed. Please try again later.")]
-                )))
-                return
+                )
             }
-
-            completion(modelManifestDecodeResult(data: data, bundledManifest: bundledModelManifest()))
+            return try decodeModelManifest(data)
+        } catch let error as DecodingError {
+            if let bundledManifest = bundledModelManifest() {
+                NSLog("LeafReader speech model manifest: invalid remote manifest, using bundled manifest (%@)", String(describing: error))
+                return bundledManifest
+            }
+            throw error
+        } catch {
+            let bundledManifest = bundledModelManifest()
+            NSLog(
+                "LeafReader speech model manifest: unavailable, using bundled manifest=%d (%@)",
+                bundledManifest != nil,
+                String(describing: error)
+            )
+            return bundledManifest
         }
-        task.resume()
     }
 }

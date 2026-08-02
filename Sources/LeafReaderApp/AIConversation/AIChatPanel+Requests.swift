@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension AIChatPanel {
     func requestAI(
@@ -37,7 +38,23 @@ extension AIChatPanel {
         }
         requestState.begin(id: requestID, assistantBody: assistantBody)
         var streamedText = ""
+        // Latency is measured where the delta arrives, before the main-queue
+        // hop, so it reflects the model/network and not UI scheduling. First
+        // delta → time-to-first-token; each later delta → inter-chunk cadence.
+        let requestStartUptime = ProcessInfo.processInfo.systemUptime
+        var firstTokenRecorded = false
+        var lastDeltaUptime = requestStartUptime
         requestState.currentStreamTask = llmAnswerProvider.answerStream(messages: messages, onDelta: { [weak self, weak assistantBody] delta in
+            if ReaderPerformance.isEnabled {
+                let deltaUptime = ProcessInfo.processInfo.systemUptime
+                if firstTokenRecorded {
+                    ReaderPerformance.record(.aiStreaming, milliseconds: (deltaUptime - lastDeltaUptime) * 1000)
+                } else {
+                    firstTokenRecorded = true
+                    ReaderPerformance.record(.aiFirstToken, milliseconds: (deltaUptime - requestStartUptime) * 1000)
+                }
+                lastDeltaUptime = deltaUptime
+            }
             DispatchQueue.main.async {
                 guard let self = self, let assistantBody = assistantBody else { return }
                 guard self.requestState.isActive(requestID) else { return }
@@ -151,8 +168,7 @@ extension AIChatPanel {
     @objc func regenerateBubble(_ sender: NSButton) {
         guard !isBusy,
               let bodyID = sender.identifier?.rawValue,
-              let metadata = bubbleMetadataByID[bodyID],
-              let request = metadata.regenerationRequest,
+              let request = transcript[bodyID]?.regenerationRequest,
               let body = textField(forBodyID: bodyID) else {
             return
         }
@@ -219,37 +235,41 @@ extension AIChatPanel {
             let status = chunks.count > 1
                 ? AppText.localized("翻译中 \(index + 1)/\(chunks.count)", "Translating \(index + 1)/\(chunks.count)")
                 : AppText.localized("翻译中", "Translating")
-            statusLabel.stringValue = status
+            chromeModel.statusText = status
             updateBubble(assistantBody, role: AppText.aiRole, text: partialTranslationText(translatedChunks, currentIndex: index), renderMarkdown: false)
 
             let prompt = AIPromptStore.translationPrompt(title: title, text: chunks[index])
-            requestState.currentDataTask = client.send(messages: [
-                ChatMessage(role: "system", content: AIPromptStore.systemPrompt()),
-                ChatMessage(role: "user", content: prompt)
-            ]) { [weak self, weak assistantBody] result in
-                DispatchQueue.main.async {
-                    guard let self, let assistantBody else { return }
-                    guard self.requestState.shouldHandleCompletion(for: requestID) else { return }
-                    if self.requestState.consumeCancellation(for: requestID) {
-                        self.finishTranslationRequest(requestID: requestID, busyText: "")
-                        return
-                    }
-                    self.requestState.currentDataTask = nil
-                    switch result {
-                    case .success(let content):
-                        translatedChunks[index] = content
-                        self.updateBubble(
-                            assistantBody,
-                            role: AppText.aiRole,
-                            text: self.partialTranslationText(translatedChunks, currentIndex: index + 1),
-                            renderMarkdown: false,
-                            notify: false
-                        )
-                        translateChunk(index + 1)
-                    case .failure(let error):
-                        self.finishTranslationRequest(requestID: requestID, busyText: "")
-                        self.updateBubble(assistantBody, role: AppText.errorRole, text: self.userFacingAIError(error), notify: false)
-                    }
+            requestState.currentDataTask = Task { @MainActor [weak self, weak assistantBody] in
+                let result: Result<String, Error>
+                do {
+                    result = .success(try await self?.client.response(messages: [
+                        ChatMessage(role: "system", content: AIPromptStore.systemPrompt()),
+                        ChatMessage(role: "user", content: prompt)
+                    ]) ?? "")
+                } catch {
+                    result = .failure(error)
+                }
+                guard let self, let assistantBody, !Task.isCancelled else { return }
+                guard self.requestState.shouldHandleCompletion(for: requestID) else { return }
+                if self.requestState.consumeCancellation(for: requestID) {
+                    self.finishTranslationRequest(requestID: requestID, busyText: "")
+                    return
+                }
+                self.requestState.currentDataTask = nil
+                switch result {
+                case .success(let content):
+                    translatedChunks[index] = content
+                    self.updateBubble(
+                        assistantBody,
+                        role: AppText.aiRole,
+                        text: self.partialTranslationText(translatedChunks, currentIndex: index + 1),
+                        renderMarkdown: false,
+                        notify: false
+                    )
+                    translateChunk(index + 1)
+                case .failure(let error):
+                    self.finishTranslationRequest(requestID: requestID, busyText: "")
+                    self.updateBubble(assistantBody, role: AppText.errorRole, text: self.userFacingAIError(error), notify: false)
                 }
             }
         }
@@ -280,21 +300,13 @@ extension AIChatPanel {
     }
 
     func setBusy(_ busy: Bool, text: String) {
+        // `isBusy` forwards into the chrome model, which drives the animated dots
+        // and the cancel button.
         isBusy = busy
-        askButton.isEnabled = !selectedText.isEmpty
-        summaryButton.isEnabled = !busy
-        translateButton.isEnabled = !busy
         inputField.isEnabled = !busy
         sendButton.isEnabled = !busy
-        statusLabel.stringValue = text
-        if busy {
-            loadingDots.isHidden = false
-            cancelRequestButton.isHidden = false
-            loadingDots.startAnimating()
-        } else {
-            loadingDots.stopAnimating()
-            loadingDots.isHidden = true
-            cancelRequestButton.isHidden = true
-        }
+        chromeModel.askEnabled = !selectedText.isEmpty
+        chromeModel.contentActionsEnabled = !busy
+        chromeModel.statusText = text
     }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     func loadSavedAIConversationIfNeeded() {
@@ -102,7 +103,7 @@ extension ReaderWindowController {
             progress: min(1, max(0, webScrollProgress)),
             selectedText: selectedText.isEmpty ? nil : selectedText,
             webContext: focusedSelection?.context.trimmingCharacters(in: .whitespacesAndNewlines),
-            occurrenceIndex: isExplicitSelection ? currentWebSelectionOccurrenceIndex : nil
+            occurrenceIndex: isExplicitSelection ? selectionState.webSelectionOccurrenceIndex : nil
         )
         if isExplicitSelection, !selectedText.isEmpty {
             addAISourceUnderline(for: source)

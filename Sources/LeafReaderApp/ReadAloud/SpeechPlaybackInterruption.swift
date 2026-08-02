@@ -1,7 +1,9 @@
 import Cocoa
 import AVFoundation
+import LeafReaderCore
 
 extension SpeechPlaybackCoordinator {
+    @MainActor
     func speakCachedPreviewInterruption(
         _ text: String,
         runtimeID: String,
@@ -10,10 +12,11 @@ extension SpeechPlaybackCoordinator {
         completion: @escaping (Bool) -> Void,
         finished: @escaping () -> Void
     ) {
+        let callbacks = SpeechInterruptionCallbacks(completion: completion, finished: finished)
         cancelScheduledIdleShutdown()
         let value = SpeechTextPolicy.normalizedReadAloudInput(text)
         guard SpeechTextPolicy.isLocalTTSCandidate(value) else {
-            completion(false)
+            callbacks.complete(false)
             return
         }
 
@@ -28,8 +31,8 @@ extension SpeechPlaybackCoordinator {
                 NSLog("LeafReader TTS preview: cache hit runtime=%@ voice=%@ speed=%@ output=%@", runtimeID, voiceID, speedID, cacheURL.path)
                 DispatchQueue.main.async {
                     guard self.activeInterruptionGenerationID == generationID else { return }
-                    completion(true)
-                    self.playInterruptionOutput(cacheURL, removeAfterPlayback: false, finished: finished)
+                    callbacks.complete(true)
+                    self.playInterruptionOutput(cacheURL, removeAfterPlayback: false, callbacks: callbacks)
                 }
                 return
             }
@@ -77,7 +80,7 @@ extension SpeechPlaybackCoordinator {
                 try? FileManager.default.removeItem(at: tempURL)
                 DispatchQueue.main.async {
                     guard self.activeInterruptionGenerationID == generationID else { return }
-                    completion(false)
+                    callbacks.complete(false)
                 }
                 return
             }
@@ -88,36 +91,38 @@ extension SpeechPlaybackCoordinator {
                 try? FileManager.default.removeItem(at: tempURL)
                 DispatchQueue.main.async {
                     guard self.activeInterruptionGenerationID == generationID else { return }
-                    completion(false)
+                    callbacks.complete(false)
                 }
                 return
             }
             NSLog("LeafReader TTS preview: generated runtime=%@ voice=%@ speed=%@ output=%@", runtimeID, voiceID, speedID, cacheURL.path)
             DispatchQueue.main.async {
                 guard self.activeInterruptionGenerationID == generationID else { return }
-                completion(true)
-                self.playInterruptionOutput(cacheURL, removeAfterPlayback: false, finished: finished)
+                callbacks.complete(true)
+                self.playInterruptionOutput(cacheURL, removeAfterPlayback: false, callbacks: callbacks)
             }
         }
     }
 
+    @MainActor
     func speakCachedVocabularyText(
         _ text: String,
         options: SynthesisOptions = .default,
         completion: @escaping (Bool) -> Void,
         finished: @escaping () -> Void
     ) {
+        let callbacks = SpeechInterruptionCallbacks(completion: completion, finished: finished)
         cancelScheduledIdleShutdown()
         let value = SpeechTextPolicy.normalizedReadAloudInput(text)
         guard SpeechTextPolicy.isLocalTTSCandidate(value) else {
-            completion(false)
+            callbacks.complete(false)
             return
         }
 
         let segment = SpeechTextPolicy.segments(for: value).joined(separator: " ")
         let synthesisRuntime = SpeechSynthesisRuntime.selected(for: segment)
         guard let runtime = synthesisRuntime.runtime else {
-            completion(false)
+            callbacks.complete(false)
             return
         }
         let voiceID = vocabularyCacheVoiceID(runtime: runtime, text: segment)
@@ -147,8 +152,8 @@ extension SpeechPlaybackCoordinator {
                 )
                 DispatchQueue.main.async {
                     guard self.activeInterruptionGenerationID == generationID else { return }
-                    completion(true)
-                    self.playInterruptionOutput(cacheEntry.url, removeAfterPlayback: false, finished: finished)
+                    callbacks.complete(true)
+                    self.playInterruptionOutput(cacheEntry.url, removeAfterPlayback: false, callbacks: callbacks)
                 }
                 return
             }
@@ -184,7 +189,7 @@ extension SpeechPlaybackCoordinator {
                 }
                 DispatchQueue.main.async {
                     guard self.activeInterruptionGenerationID == generationID else { return }
-                    completion(false)
+                    callbacks.complete(false)
                 }
                 return
             }
@@ -198,12 +203,13 @@ extension SpeechPlaybackCoordinator {
             )
             DispatchQueue.main.async {
                 guard self.activeInterruptionGenerationID == generationID else { return }
-                completion(true)
-                self.playInterruptionOutput(cacheEntry.url, removeAfterPlayback: false, finished: finished)
+                callbacks.complete(true)
+                self.playInterruptionOutput(cacheEntry.url, removeAfterPlayback: false, callbacks: callbacks)
             }
         }
     }
 
+    @MainActor
     func cancelCurrentSpeechPreview(terminateKokoroWorker: Bool = false) {
         beginInterruptionGeneration(UUID())
         guard terminateKokoroWorker else { return }
@@ -219,7 +225,7 @@ extension SpeechPlaybackCoordinator {
     func stopInterruptionPlayback() {
         interruptionWatchdogWorkItem?.cancel()
         interruptionWatchdogWorkItem = nil
-        interruptionFinishHandler = nil
+        interruptionCallbacks = nil
         interruptionPlayer?.delegate = nil
         interruptionPlayer?.stop()
         clearInterruptionPlayback()
@@ -228,13 +234,28 @@ extension SpeechPlaybackCoordinator {
     func finishInterruptionPlayback() {
         interruptionWatchdogWorkItem?.cancel()
         interruptionWatchdogWorkItem = nil
-        let handler = interruptionFinishHandler
-        interruptionFinishHandler = nil
+        let callbacks = interruptionCallbacks
+        interruptionCallbacks = nil
         clearInterruptionPlayback()
-        handler?()
+        if let callbacks {
+            if Thread.isMainThread {
+                MainActor.assumeIsolated {
+                    callbacks.finish()
+                }
+            } else {
+                Task { @MainActor in
+                    callbacks.finish()
+                }
+            }
+        }
     }
 
-    private func playInterruptionOutput(_ outputURL: URL, removeAfterPlayback: Bool = true, finished: @escaping () -> Void) {
+    @MainActor
+    private func playInterruptionOutput(
+        _ outputURL: URL,
+        removeAfterPlayback: Bool = true,
+        callbacks: SpeechInterruptionCallbacks
+    ) {
         stopInterruptionPlayback()
         let player: AVAudioPlayer
         do {
@@ -242,13 +263,13 @@ extension SpeechPlaybackCoordinator {
         } catch {
             NSLog("LeafReader SpeechPlayback: interruption AVAudioPlayer load failed (output=%@, error=%@)", outputURL.path, String(describing: error))
             try? FileManager.default.removeItem(at: outputURL)
-            finished()
+            callbacks.finish()
             return
         }
         interruptionPlayer = player
         interruptionOutputURL = outputURL
         interruptionOutputShouldRemove = removeAfterPlayback
-        interruptionFinishHandler = finished
+        interruptionCallbacks = callbacks
         player.delegate = self
         player.prepareToPlay()
         if !player.play() {
@@ -260,6 +281,7 @@ extension SpeechPlaybackCoordinator {
         }
     }
 
+    @MainActor
     private func scheduleInterruptionWatchdog(for player: AVAudioPlayer, outputURL: URL) {
         interruptionWatchdogWorkItem?.cancel()
         let timeout = max(2.0, player.duration + 1.5)
@@ -313,5 +335,27 @@ extension SpeechPlaybackCoordinator {
             return AISettingsStore.selectedKokoroSpeechVoiceID(languageHint: languageHint)
         }
         return AISettingsStore.selectedSpeechVoiceID(runtimeID: runtime.id)
+    }
+}
+
+/// Carries UI-owned callbacks across the synthesis queue without claiming that
+/// arbitrary caller closures are thread-safe. It is invoked only by main-actor
+/// playback code after background synthesis has completed.
+@MainActor
+final class SpeechInterruptionCallbacks {
+    private let completion: (Bool) -> Void
+    private let finished: () -> Void
+
+    init(completion: @escaping (Bool) -> Void, finished: @escaping () -> Void) {
+        self.completion = completion
+        self.finished = finished
+    }
+
+    func complete(_ usedLocalTTS: Bool) {
+        completion(usedLocalTTS)
+    }
+
+    func finish() {
+        finished()
     }
 }

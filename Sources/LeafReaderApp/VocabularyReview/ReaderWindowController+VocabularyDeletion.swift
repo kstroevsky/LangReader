@@ -1,18 +1,13 @@
-import Cocoa
+import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
-    @objc func markVocabularyRecordMastered(_ sender: NSButton) {
-        let ids = sender.identifier?.rawValue
-            .split(separator: "|")
-            .map(String.init)
-            .filter { !$0.isEmpty } ?? []
+    /// Removes a row's records. The row used to be yanked out of the stack view
+    /// by reaching through `sender.superview`; the list is rebuilt from the
+    /// records now, so deleting them is enough.
+    func markVocabularyRecordsMastered(ids: [String]) {
         guard !ids.isEmpty else { return }
         removeVocabularyRecords(ids: ids)
-        if let card = sender.superview,
-           let stack = card.superview as? NSStackView {
-            stack.removeArrangedSubview(card)
-            card.removeFromSuperview()
-        }
         currentVocabularyExportRecords.removeAll { record in
             !Set(record.ids).isDisjoint(with: ids)
         }

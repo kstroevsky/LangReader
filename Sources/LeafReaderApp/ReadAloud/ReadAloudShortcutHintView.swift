@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 final class ReadAloudShortcutHintView: NSView {
     private enum Metrics {

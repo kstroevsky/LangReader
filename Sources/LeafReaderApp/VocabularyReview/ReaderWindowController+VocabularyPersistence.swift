@@ -1,5 +1,6 @@
 import Cocoa
 import PDFKit
+import LeafReaderCore
 
 extension ReaderWindowController {
     func persistSelectedWordIfNeeded(_ selection: PDFSelection?, text: String, context: String? = nil) -> WordQuestionStartResult? {
@@ -77,12 +78,15 @@ extension ReaderWindowController {
             return nil
         }
         let word = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let surfaceForm = VocabularyTextPolicy.normalizedVocabularyText(word)
+        let lemma = GermanLemmaResolver.lemma(for: surfaceForm, language: vocabularyDocumentLanguage)
+        let vocabularyID = existingWebVocabularyID(for: word, lemma: lemma) ?? UUID().uuidString
         recordPersonalVocabularyQuery(word)
-        let context = sanitizedVocabularyContext(precomputedContext ?? currentWebSelectionContext)
+        let context = sanitizedVocabularyContext(precomputedContext ?? selectionState.webSelectionContext)
         if let pending = existingPendingWebWordRecord(
             word: word,
             context: context,
-            occurrenceIndex: currentWebSelectionOccurrenceIndex
+            occurrenceIndex: selectionState.webSelectionOccurrenceIndex
         ) {
             markCurrentWebSelectionAsStoredWord(id: pending.id)
             return WordQuestionStartResult(linkID: pending.id, selectedContext: nil)
@@ -91,7 +95,7 @@ extension ReaderWindowController {
             in: storedWebWordRecords,
             word: word,
             context: context,
-            occurrenceIndex: currentWebSelectionOccurrenceIndex
+            occurrenceIndex: selectionState.webSelectionOccurrenceIndex
         ) {
             markCurrentWebSelectionAsStoredWord(id: existing.id)
             return WordQuestionStartResult(linkID: existing.id, selectedContext: nil)
@@ -100,9 +104,12 @@ extension ReaderWindowController {
             let id = UUID().uuidString
             let record = StoredWebWordRecord(
                 id: id,
-                word: word,
+                vocabularyID: reusable.vocabularyID ?? vocabularyID,
+                word: reusable.word,
+                lemma: reusable.lemma ?? lemma,
+                surfaceForm: surfaceForm,
                 context: context,
-                occurrenceIndex: currentWebSelectionOccurrenceIndex,
+                occurrenceIndex: selectionState.webSelectionOccurrenceIndex,
                 scrollProgress: webScrollProgress,
                 question: reusable.question,
                 answer: reusable.answer,
@@ -121,9 +128,12 @@ extension ReaderWindowController {
         markCurrentWebSelectionAsStoredWord(id: id)
         pendingWebWordRecords[id] = PendingWebWordRecord(
             id: id,
+            vocabularyID: vocabularyID,
             word: word,
+            lemma: lemma,
+            surfaceForm: surfaceForm,
             context: context,
-            occurrenceIndex: currentWebSelectionOccurrenceIndex,
+            occurrenceIndex: selectionState.webSelectionOccurrenceIndex,
             scrollProgress: webScrollProgress,
             dictionaryTags: nil,
             dictionaryFrequency: nil,

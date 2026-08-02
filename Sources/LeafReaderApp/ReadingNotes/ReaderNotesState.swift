@@ -1,4 +1,5 @@
-import Cocoa
+import Foundation
+import LeafReaderCore
 
 struct ReaderNotesState {
     var storedReadingNotes: [ReadingNote] = []

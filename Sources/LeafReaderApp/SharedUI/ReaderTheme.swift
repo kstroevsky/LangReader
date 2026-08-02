@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension Notification.Name {
     static let readerThemeDidChange = Notification.Name("readerThemeDidChange")

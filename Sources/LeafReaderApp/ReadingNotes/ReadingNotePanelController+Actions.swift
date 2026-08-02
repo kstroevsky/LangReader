@@ -1,10 +1,18 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReadingNotePanelController {
     func save() {
-        note.markdown = markdownFromEditor()
-        note.updatedAt = Date()
-        onSave(note)
+        onSave(editorModel.commitEdits(markdown: markdownFromEditor()))
+    }
+
+    /// Applies a favourite change made outside this panel. Routed through here
+    /// rather than written onto the controller so the editor's own note is the
+    /// one that changes — and so the save carries the editor's live text instead
+    /// of the list's stale copy.
+    func setFavorite(_ isFavorite: Bool) {
+        editorModel.setFavorite(isFavorite)
+        save()
     }
 
     func commitEditorChange() {
@@ -18,37 +26,23 @@ extension ReadingNotePanelController {
     }
 
     @objc func saveTapped(_ sender: NSButton) {
-        editorState.cancelAutoSave()
+        autoSaveTask.cancel()
         save()
-        statusLabel.stringValue = AppText.localized("已保存", "Saved")
+        editorModel.statusSaved()
     }
 
     func updateWordCount() {
-        let count = textView.string.trimmingCharacters(in: .whitespacesAndNewlines).count
-        wordCountLabel.stringValue = AppText.localized("\(count) 字", "\(count) chars")
+        editorModel.syncText(textView.string)
     }
 
-    func noteLocationText() -> String {
-        if let first = note.locator.pdfFragments?.first {
-            return AppText.localized("Page \(first.pageIndex + 1)", "Page \(first.pageIndex + 1)")
-        }
-        let percent = Int((note.locator.webAnchor?.scrollProgress ?? 0) * 100)
-        return AppText.localized("网页位置 \(percent)%", "Web \(percent)%")
-    }
+    func noteLocationText() -> String { editorModel.locationText }
 
-    func createdAtText() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MM/dd HH:mm"
-        return formatter.string(from: note.createdAt)
-    }
+    func createdAtText() -> String { editorModel.createdAtText }
 
     func scheduleAutoSave() {
-        editorState.cancelAutoSave()
-        let workItem = DispatchWorkItem { [weak self] in
+        autoSaveTask.schedule { [weak self] in
             self?.save()
         }
-        editorState.autoSaveWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: workItem)
     }
 
     @objc func showNotesTapped(_ sender: NSButton) {
@@ -57,6 +51,10 @@ extension ReadingNotePanelController {
     }
 
     @objc func moreTapped(_ sender: NSButton) {
+        presentMoreMenu(in: sender, at: NSPoint(x: sender.bounds.minX, y: sender.bounds.maxY + 4))
+    }
+
+    func presentMoreMenu(in view: NSView, at point: NSPoint) {
         let menu = NSMenu()
         menu.addItem(menuItem(
             title: note.isFavorite
@@ -79,7 +77,7 @@ extension ReadingNotePanelController {
         menu.addItem(menuItem(title: AppText.localized("复制 Markdown", "Copy Markdown"), action: #selector(copyMarkdownTapped(_:))))
         menu.addItem(.separator())
         menu.addItem(menuItem(title: AppText.localized("删除笔记", "Delete Note"), action: #selector(deleteCurrentNoteTapped(_:))))
-        menu.popUp(positioning: nil, at: NSPoint(x: sender.bounds.minX, y: sender.bounds.maxY + 4), in: sender)
+        menu.popUp(positioning: nil, at: point, in: view)
     }
 
     @objc func exportCurrentNoteTapped(_ sender: NSMenuItem) {
@@ -91,15 +89,11 @@ extension ReadingNotePanelController {
         save()
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(note.markdown, forType: .string)
-        statusLabel.stringValue = AppText.localized("已复制 Markdown", "Markdown copied")
+        editorModel.statusMarkdownCopied()
     }
 
     @objc func toggleFavoriteTapped(_ sender: NSMenuItem) {
-        note.isFavorite.toggle()
-        save()
-        statusLabel.stringValue = note.isFavorite
-            ? AppText.localized("已收藏", "Favorited")
-            : AppText.localized("已取消收藏", "Favorite removed")
+        setFavorite(!note.isFavorite)
     }
 
     @objc func templateMenuItemTapped(_ sender: NSMenuItem) {
@@ -114,7 +108,7 @@ extension ReadingNotePanelController {
 
     private func closeAfterExplicitSave() {
         save()
-        editorState.savesOnClose = false
+        editorModel.savesOnClose = false
         close()
     }
 

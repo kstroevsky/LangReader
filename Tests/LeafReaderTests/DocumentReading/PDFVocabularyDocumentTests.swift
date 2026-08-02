@@ -1,5 +1,6 @@
 import Foundation
 import PDFKit
+import LeafReaderCore
 
 private func fail(_ message: String) -> Never {
     fputs("PDFVocabularyDocumentTests failed: \(message)\n", stderr)

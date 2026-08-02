@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum AIConversationContextStoreTests {
     static func testLinkedWordHistoryRemovalKeepsSystemMessage() throws {

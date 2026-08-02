@@ -1,6 +1,7 @@
 import Cocoa
 import PDFKit
 import WebKit
+import LeafReaderCore
 
 extension ReaderWindowController {
     func installKeyboardPagingMonitor() {
@@ -58,7 +59,7 @@ extension ReaderWindowController {
         pendingAISourceClickWorkItem?.cancel()
         let workItem = DispatchWorkItem { [weak self] in
             guard let self else { return }
-            let selectedText = self.currentPDFSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let selectedText = self.selectionState.pdfSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
             guard selectedText.isEmpty else { return }
             self.ensureAIConversationSourceBubbleLoaded(source)
             self.pendingAIPanelExpansionAction = { [weak self] in
@@ -87,7 +88,7 @@ extension ReaderWindowController {
     }
 
     func hideSearchOverlayIfClickingReader(_ event: NSEvent) {
-        guard !searchOverlay.isHidden else { return }
+        guard readerPresentation.isSearchVisible else { return }
 
         let pointInContent = contentArea.convert(event.locationInWindow, from: nil)
         guard contentArea.bounds.contains(pointInContent) else { return }

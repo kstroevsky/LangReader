@@ -1,5 +1,6 @@
 import Cocoa
 import PDFKit
+import LeafReaderCore
 
 extension ReaderWindowController {
     func vocabularyTextForCurrentPDFSelection(selection: PDFSelection?, fallback: String) -> String {

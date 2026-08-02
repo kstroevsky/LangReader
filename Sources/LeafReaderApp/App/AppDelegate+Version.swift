@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension AppDelegate {
     func appVersionText() -> String {

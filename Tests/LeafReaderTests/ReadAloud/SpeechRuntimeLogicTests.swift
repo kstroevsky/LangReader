@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum SpeechRuntimeLogicTests {
     static func testAISettingsStoreSpeechSelectionValidation() throws {

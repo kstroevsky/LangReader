@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 final class ReadAloudSoftHintView: NSView {
     private let iconView = NSImageView()
@@ -109,7 +110,9 @@ final class ReadAloudSoftHintView: NSView {
 
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
-        trackingAreas.forEach(removeTrackingArea)
+        for trackingArea in trackingAreas {
+            removeTrackingArea(trackingArea)
+        }
         addTrackingArea(NSTrackingArea(
             rect: bounds,
             options: [.mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect],

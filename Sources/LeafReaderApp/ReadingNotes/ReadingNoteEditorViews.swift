@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 enum ReadingNoteEditingShortcut: String {
     case selectAll = "a"

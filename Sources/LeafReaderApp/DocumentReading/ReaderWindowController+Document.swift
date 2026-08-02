@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReaderWindowController {
     @objc func openPDF() {
@@ -19,7 +20,10 @@ extension ReaderWindowController {
         guard let kind = ReaderDocumentKind.kind(for: url) else { return }
         stopReadAloudImmediately()
         SpeechPlaybackCoordinator.shared.shutdownRuntime(.kokoro)
+        activateReaderBackend(for: kind)
         let generation = documentSession.beginLoading()
+        mutateReaderPresentation { $0.resetForDocumentChange() }
+        clearSearchState()
         showDocumentLoading(for: url)
         sessionSaveTask.cancel()
         flushCurrentBookWordRecordSaves()
@@ -38,14 +42,12 @@ extension ReaderWindowController {
 
     func showDocumentLoading(for url: URL) {
         loadingLabel.stringValue = AppText.localized("正在打开 \(url.lastPathComponent)...", "Opening \(url.lastPathComponent)...")
-        loadingOverlay.isHidden = false
-        loadingIndicator.startAnimation(nil)
+        mutateReaderPresentation { $0.beginDocumentLoading() }
     }
 
     func hideDocumentLoading(generation: Int) {
         guard documentSession.acceptsLoad(generation: generation) else { return }
-        loadingIndicator.stopAnimation(nil)
-        loadingOverlay.isHidden = true
+        mutateReaderPresentation { $0.finishDocumentLoading() }
     }
 
     func showDocumentLoadingFailure(_ error: Error, generation: Int) {

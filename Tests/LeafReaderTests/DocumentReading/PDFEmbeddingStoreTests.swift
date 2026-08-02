@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 private struct TestFailure: Error, CustomStringConvertible {
     let description: String

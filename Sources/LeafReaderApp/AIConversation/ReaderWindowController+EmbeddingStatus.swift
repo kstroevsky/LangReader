@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReaderWindowController {
     func currentVectorIndexStatusText() -> String {
@@ -84,7 +85,7 @@ extension ReaderWindowController {
     }
 
     func refreshEmbeddingStatusLanguage() {
-        guard !embeddingStatusLabel.isHidden else { return }
+        guard bottomBarModel.embeddingStatusVisible else { return }
         if isPreparingPDFEmbeddings {
             if isEmbeddingBackfillPaused {
                 showPausedEmbeddingStatus()
@@ -124,26 +125,18 @@ extension ReaderWindowController {
     }
 
     func clearEmbeddingStatus() {
-        embeddingStatusLabel.stringValue = ""
-        embeddingStatusLabel.isHidden = true
+        bottomBarModel.embeddingStatusText = ""
+        bottomBarModel.embeddingStatusVisible = false
         updateEmbeddingControlButtons()
     }
 
     func showEmbeddingStatus(_ text: String) {
-        embeddingStatusLabel.stringValue = text
-        embeddingStatusLabel.isHidden = false
-        updateEmbeddingStatusTextColor()
+        bottomBarModel.embeddingStatusText = text
+        bottomBarModel.embeddingStatusVisible = true
     }
 
     func updateEmbeddingControlButtons() {
-        let showControls = isPreparingPDFEmbeddings
-        embeddingPauseButton?.isHidden = !showControls
-        embeddingCancelButton?.isHidden = !showControls
-        embeddingPauseButton?.title = isEmbeddingBackfillPaused
-            ? AppText.localized("继续", "Resume")
-            : AppText.localized("暂停", "Pause")
-        embeddingPauseButton?.toolTip = isEmbeddingBackfillPaused
-            ? AppText.localized("继续 AI 分析", "Resume AI analysis")
-            : AppText.localized("暂停 AI 分析", "Pause AI analysis")
+        bottomBarModel.embeddingControlsVisible = isPreparingPDFEmbeddings
+        bottomBarModel.embeddingPaused = isEmbeddingBackfillPaused
     }
 }

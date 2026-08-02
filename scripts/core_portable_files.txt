@@ -1,0 +1,17 @@
+Sources/LeafReaderApp/App/LaunchPerformanceTracker.swift
+Sources/LeafReaderApp/App/UpdateFailureClassifier.swift
+Sources/LeafReaderApp/Platform/Networking/NetworkConnectivityMonitor.swift
+Sources/LeafReaderApp/Platform/Networking/NetworkErrorFormatter.swift
+Sources/LeafReaderApp/ReaderShell/ReaderChromeState.swift
+Sources/LeafReaderApp/ReaderShell/ReaderProgressFormatter.swift
+Sources/LeafReaderApp/ReaderShell/ReaderSessionPolicy.swift
+Sources/LeafReaderApp/ReaderShell/ReaderToolbarItem.swift
+Sources/LeafReaderApp/ReaderShell/RecentDocumentsStore.swift
+Sources/LeafReaderApp/ReaderShell/ShelfCardPresenter.swift
+Sources/LeafReaderApp/ReadingNotes/ReadingNoteEditorModel.swift
+Sources/LeafReaderApp/ReadingNotes/ReadingNotesListModel.swift
+Sources/LeafReaderApp/Settings/AIProviderDescriptor.swift
+Sources/LeafReaderApp/SharedUI/ReaderTheme.swift
+Sources/LeafReaderApp/SharedUI/SelectionToolbarConfiguration.swift
+Sources/LeafReaderApp/SharedUI/UIAccessibilityIdentifiers.swift
+Sources/LeafReaderApp/Support/DebouncedTask.swift

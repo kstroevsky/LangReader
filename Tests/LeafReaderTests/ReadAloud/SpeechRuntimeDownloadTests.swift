@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum SpeechRuntimeDownloadTests {
     static func testSpeechRuntimeDownloadURLsUseReleaseAssets() throws {

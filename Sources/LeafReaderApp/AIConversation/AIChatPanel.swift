@@ -1,5 +1,6 @@
 import AVFoundation
 import Cocoa
+import LeafReaderCore
 
 final class ChatInputTextField: NSTextField {
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
@@ -168,19 +169,19 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
     let client = AIClient()
     let dictionaryLookupService: DictionaryLookupService = LocalDictionaryLookupService.shared
     lazy var llmAnswerProvider: StreamingAnswerProvider = LLMAnswerProvider(client: client)
-    let askButton = GradientButton(title: "", target: nil, action: nil)
-    let summaryButton = CapsuleChromeButton(title: "", target: nil, action: nil)
-    let translateButton = CapsuleChromeButton(title: "", target: nil, action: nil)
-    let exportConversationButton = CapsuleChromeButton(title: "", target: nil, action: nil)
+    /// State behind the SwiftUI header and status row.
+    let chromeModel = AIPanelChromeModel()
+    /// The header's hosting view, kept so the selection monitor can tell a click
+    /// on the header's actions from a click that should clear the selection.
+    weak var chromeHeaderView: NSView?
     let scrollView = NSScrollView()
     let transcriptStack = FlippedStackView()
-    let statusRow = NSView()
-    let statusLabel = NSTextField(labelWithString: "")
-    let cancelRequestButton = NSButton(title: "", target: nil, action: nil)
+    // The transcript and the follow-up field stay AppKit: both are
+    // selectable/editable text, which does not receive first responder inside
+    // an NSHostingView. Only the chrome above and below them is SwiftUI.
     let inputBar = ChatInputBarView()
     let inputField = ChatInputTextField(string: "")
     let sendButton = NSButton(title: "", target: nil, action: nil)
-    let loadingDots = LoadingDotsView()
     let speechSynthesizer = AVSpeechSynthesizer()
     let requestState = AIRequestState()
     var lastFailedAIRequest: FailedAIRequest?
@@ -223,7 +224,14 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
         get { conversationContext.messages }
         set { conversationContext.replaceMessages(newValue) }
     }
-    var isBusy = false
+    /// Forwarded rather than stored: the chrome model owns it, so the panel's
+    /// guards and the animated dots cannot disagree. They were two properties
+    /// written together by `setBusy`, which was correct only for as long as that
+    /// stayed the single writer.
+    var isBusy: Bool {
+        get { chromeModel.isBusy }
+        set { chromeModel.isBusy = newValue }
+    }
     var pendingStreamText = ""
     var lastStreamUpdateAt = Date.distantPast
     var isEditingFollowUp = false
@@ -238,9 +246,11 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
     var pendingTranscriptForceScroll = false
     var readerTheme: ReaderTheme = .original
     var isDarkMode = false
-    var bubbleMetadataByID: [String: BubbleMetadata] = [:]
+    /// The transcript's data: ordering, metadata and persistence all live here,
+    /// not in the stack view's arranged subviews.
+    let transcript = AITranscriptModel()
+    /// View lookup only — which box is showing a given linked word.
     var bubbleBoxByLinkID: [String: ChatBubbleView] = [:]
-    var persistentBubbleIDs: [String] = []
     var isLoadingLinkedWordBubbles = false
     var isRestoringSavedConversation = false
     var selectedLinkID: String?
@@ -252,12 +262,14 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
     }
 
     deinit {
-        if let localMouseMonitor {
-            NSEvent.removeMonitor(localMouseMonitor)
+        MainActor.assumeIsolated {
+            if let localMouseMonitor {
+                NSEvent.removeMonitor(localMouseMonitor)
+            }
+            streamUpdateWorkItem?.cancel()
+            transcriptLayoutWorkItem?.cancel()
+            requestState.cancelTasks()
         }
-        streamUpdateWorkItem?.cancel()
-        transcriptLayoutWorkItem?.cancel()
-        requestState.cancelTasks()
     }
 
     required init?(coder: NSCoder) {
@@ -279,20 +291,13 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
     func setTheme(_ theme: ReaderTheme) {
         readerTheme = theme
         isDarkMode = theme == .dark
+        chromeModel.theme = theme
         layer?.backgroundColor = panelBackgroundColor.cgColor
-        statusLabel.textColor = secondaryTextColor
         inputBar.layer?.backgroundColor = inputBackgroundColor.cgColor
         inputBar.layer?.borderWidth = theme == .original ? 0 : 1
         inputBar.layer?.borderColor = inputBorderColor.cgColor
         inputField.textColor = primaryTextColor
-        askButton.theme = theme
-        askButton.layer?.shadowColor = aiAccentColor.cgColor
-        summaryButton.theme = theme
-        translateButton.theme = theme
-        exportConversationButton.theme = theme
-        loadingDots.accentColor = aiAccentColor
         sendButton.contentTintColor = sendButtonTintColor
-        cancelRequestButton.contentTintColor = secondaryTextColor
         restyleTranscript()
     }
 }

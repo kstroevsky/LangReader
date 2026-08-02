@@ -1,4 +1,5 @@
-import Cocoa
+import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     func prepareVocabularyReviewTiming(for record: VocabularyExportRecord, autoPlay: Bool = true) {
@@ -31,7 +32,7 @@ extension ReaderWindowController {
         updateVocabularySRS(ids: record.ids, grade: grade)
     }
 
-    @objc func rememberedVocabularyCard(_ sender: NSButton) {
+    func rememberedVocabularyCard() {
         let currentRecord = currentVocabularyReviewRecord()
         scoreCurrentVocabularyCardIfNeeded(grade: 3)
         vocabularyReviewSession.contextShown = false
@@ -43,7 +44,7 @@ extension ReaderWindowController {
         scheduleVocabularyPanelReload()
     }
 
-    @objc func rememberedAfterContextVocabularyCard(_ sender: NSButton) {
+    func rememberedAfterContextVocabularyCard() {
         let currentRecord = currentVocabularyReviewRecord()
         scoreCurrentVocabularyCardIfNeeded(grade: 2)
         vocabularyReviewSession.undoSRSByID = [:]
@@ -56,7 +57,7 @@ extension ReaderWindowController {
         scheduleVocabularyPanelReload()
     }
 
-    @objc func showVocabularyContext(_ sender: NSButton) {
+    func showVocabularyContext() {
         let currentRecord = currentVocabularyReviewRecord()
         vocabularyReviewSession.contextShown = true
         vocabularyReviewSession.answerShown = false
@@ -66,7 +67,7 @@ extension ReaderWindowController {
         scheduleVocabularyPanelReload()
     }
 
-    @objc func showVocabularyAnswer(_ sender: NSButton) {
+    func showVocabularyAnswer() {
         let currentRecord = currentVocabularyReviewRecord()
         vocabularyReviewSession.contextShown = false
         vocabularyReviewSession.answerShown = true
@@ -87,11 +88,11 @@ extension ReaderWindowController {
         return visibleRecords[vocabularyReviewSession.reviewIndex]
     }
 
-    @objc func nextVocabularyReviewCard(_ sender: NSButton) {
+    func nextVocabularyReviewCard() {
         moveToNextVocabularyCard()
     }
 
-    @objc func undoVocabularyReviewScore(_ sender: NSButton) {
+    func undoVocabularyReviewScore() {
         guard !vocabularyReviewSession.undoSRSByID.isEmpty else { return }
         let currentKey = vocabularyReviewSession.cardKey
         restoreVocabularySRS(snapshot: vocabularyReviewSession.undoSRSByID)

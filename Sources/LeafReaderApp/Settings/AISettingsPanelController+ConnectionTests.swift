@@ -1,23 +1,32 @@
 import Cocoa
+import LeafReaderCore
 
 extension AISettingsPanelController {
-    @objc func testChatConnection(_ sender: NSButton) {
-        guard let panel else { return }
+    /// Saves the panel, then round-trips one message. Driven by the SwiftUI
+    /// Model page, which owns the button's disabled state.
+    func testChatConnection() {
+        guard let panel, let modelSettings else { return }
         guard saveCurrentSettings(in: panel) else { return }
-        sender.isEnabled = false
-        AIClient().send(messages: [
-            ChatMessage(role: "system", content: "Reply with OK only."),
-            ChatMessage(role: "user", content: "connection test")
-        ]) { [weak self, weak sender] result in
-            DispatchQueue.main.async {
-                sender?.isEnabled = true
-                self?.showConnectionResult(result, successMessage: AppText.localized("模型连接正常。", "Chat model connection works."))
+        modelSettings.isTestingConnection = true
+        Task { @MainActor [weak self] in
+            let result: Result<String, Error>
+            do {
+                result = .success(try await AIClient().response(messages: [
+                    ChatMessage(role: "system", content: "Reply with OK only."),
+                    ChatMessage(role: "user", content: "connection test")
+                ]))
+            } catch {
+                result = .failure(error)
             }
+            self?.modelSettings?.isTestingConnection = false
+            self?.showConnectionResult(result, successMessage: AppText.localized("模型连接正常。", "Chat model connection works."))
         }
     }
 
-    @objc func testEmbeddingConnection(_ sender: NSButton) {
-        guard let panel else { return }
+    /// Saves the panel, then embeds one probe string. Driven by the SwiftUI
+    /// AI Analysis page, which owns the button's disabled state.
+    func testEmbeddingConnection() {
+        guard let panel, let embeddingSettings else { return }
         guard saveCurrentSettings(in: panel) else { return }
         guard let config = EmbeddingClient.configFromCurrentAISettings() else {
             let result: Result<String, Error> = .failure(NSError(domain: "embedding", code: -1, userInfo: [
@@ -26,12 +35,17 @@ extension AISettingsPanelController {
             showConnectionResult(result, successMessage: "")
             return
         }
-        sender.isEnabled = false
-        EmbeddingClient().embed(texts: ["Leaf Reader connection test."], config: config) { [weak self, weak sender] result in
-            DispatchQueue.main.async {
-                sender?.isEnabled = true
-                self?.showConnectionResult(result.map { "\($0.first?.count ?? 0)" }, successMessage: AppText.localized("向量连接正常。", "Embedding connection works."))
+        embeddingSettings.isTestingConnection = true
+        Task { @MainActor [weak self] in
+            let result: Result<String, Error>
+            do {
+                let embeddings = try await EmbeddingClient().embed(texts: ["Leaf Reader connection test."], config: config)
+                result = .success("\(embeddings.first?.count ?? 0)")
+            } catch {
+                result = .failure(error)
             }
+            self?.embeddingSettings?.isTestingConnection = false
+            self?.showConnectionResult(result, successMessage: AppText.localized("向量连接正常。", "Embedding connection works."))
         }
     }
 

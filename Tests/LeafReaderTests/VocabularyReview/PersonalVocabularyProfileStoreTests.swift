@@ -1,5 +1,6 @@
 import Foundation
 import SQLite3
+import LeafReaderCore
 
 private func assert(_ condition: @autoclosure () -> Bool, _ message: String) {
     if !condition() {

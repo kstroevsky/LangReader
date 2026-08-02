@@ -1,4 +1,5 @@
-import Cocoa
+import Foundation
+import LeafReaderCore
 
 struct VocabularyRecordMutationResult {
     let didUpdatePDF: Bool
@@ -133,7 +134,14 @@ extension ReaderWindowController {
     }
 
     func loadStoredWebWordRecords() -> [StoredWebWordRecord] {
-        webWordRecordStore?.load() ?? []
+        guard let store = webWordRecordStore else { return [] }
+        let records = store.load()
+        let language = VocabularyLanguageDetector.language(forContexts: records.map(\.context))
+        let repaired = WebWordRecordMetadataRepair.repair(records, language: language)
+        if repaired.didChange {
+            store.save(repaired.records)
+        }
+        return repaired.records
     }
 
     func saveStoredWebWordRecords() {

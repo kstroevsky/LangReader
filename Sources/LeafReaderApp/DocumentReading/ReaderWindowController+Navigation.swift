@@ -1,38 +1,34 @@
 import PDFKit
+import LeafReaderCore
 
 extension ReaderWindowController {
     @objc func applyPageFromField() {
         guard currentDocumentKind == .pdf,
-              let document = pdfView.document,
-              document.pageCount > 0 else {
+              let backend = activePagedReaderBackend,
+              backend.pageCount > 0 else {
             updatePageLabel()
             window?.makeFirstResponder(currentDocumentKind == .pdf ? pdfView : webView)
             return
         }
 
-        let raw = pageLabel.stringValue
-        let pageNumberText: String
-        if let range = raw.range(of: #"\d+"#, options: .regularExpression) {
-            pageNumberText = String(raw[range])
-        } else {
-            pageNumberText = ""
-        }
-        guard let requestedPage = Int(pageNumberText) else {
+        guard let requestedPage = ReaderFieldInput.pageNumber(from: pageLabel.stringValue),
+              let targetIndex = ReaderFieldInput.pageIndex(
+                  fromTyped: requestedPage,
+                  pageCount: backend.pageCount
+              ) else {
             updatePageLabel()
             window?.makeFirstResponder(pdfView)
             return
         }
 
-        let targetIndex = min(max(requestedPage, 1), document.pageCount) - 1
-        guard let page = document.page(at: targetIndex) else {
+        guard backend.go(toPage: targetIndex), let page = pdfView.currentPage else {
             updatePageLabel()
             window?.makeFirstResponder(pdfView)
             return
         }
 
         clearAISelectionForNavigation()
-        pdfView.go(to: page)
-        lastPageIndex = targetIndex
+        documentSession.position.lastPageIndex = targetIndex
         scrollPageToTop(page)
         updatePageLabel()
         saveSession()
@@ -46,7 +42,7 @@ extension ReaderWindowController {
             scrollWebPage(direction: -1)
             return
         }
-        turnPDFPage(direction: .previous, targetPlacement: .bottom)
+        turnPDFPage(direction: .previous)
     }
 
     @objc func nextPage() {
@@ -56,7 +52,7 @@ extension ReaderWindowController {
             scrollWebPage(direction: 1)
             return
         }
-        turnPDFPage(direction: .next, targetPlacement: .top)
+        turnPDFPage(direction: .next)
     }
 
     func scrollWebPage(direction: Int) {
@@ -79,8 +75,8 @@ extension ReaderWindowController {
             """)
             return
         }
-        guard let firstPage = pdfView.document?.page(at: 0) else { return }
-        pdfView.go(to: firstPage)
+        guard activePagedReaderBackend?.go(toPage: 0) == true,
+              let firstPage = pdfView.currentPage else { return }
         scrollPageToTop(firstPage)
         updatePageLabel()
         saveSession()
@@ -92,19 +88,18 @@ extension ReaderWindowController {
         guard currentDocumentKind == .pdf else {
             let storedProgress = sessionStore.loadFarthestWebProgress()
             if let zoomPercent = storedProgress?.zoomPercent {
-                webZoomPercent = zoomPercent
-                zoomField.stringValue = "\(webZoomPercent)%"
+                documentSession.web.zoomPercent = zoomPercent
+                updateZoomLabel()
                 applyWebZoomToPage()
             }
             jumpToWebProgress(storedProgress?.scrollProgress ?? webScrollProgress, animated: true)
             return
         }
-        guard let document = pdfView.document, document.pageCount > 0 else { return }
+        guard let backend = activePagedReaderBackend, backend.pageCount > 0 else { return }
         let storedProgress = sessionStore.loadFarthestPDFProgress()
-        let targetIndex = min(max(storedProgress?.pageIndex ?? currentPageIndex() ?? 0, 0), document.pageCount - 1)
-        guard let page = document.page(at: targetIndex) else { return }
-        pdfView.go(to: page)
-        lastPageIndex = targetIndex
+        let targetIndex = min(max(storedProgress?.pageIndex ?? backend.currentPageIndex ?? 0, 0), backend.pageCount - 1)
+        guard backend.go(toPage: targetIndex), let page = pdfView.currentPage else { return }
+        documentSession.position.lastPageIndex = targetIndex
         if let storedProgress, ReaderSessionPolicy.isRestorablePDFScale(storedProgress.scale) {
             applyReadablePDFScale(storedProgress.scale)
         }
@@ -152,14 +147,10 @@ extension ReaderWindowController {
         case next
     }
 
-    private enum PDFPagePlacement {
-        case top
-        case bottom
-    }
 
-    private func turnPDFPage(direction: PDFPageDirection, targetPlacement: PDFPagePlacement) {
-        guard let document = pdfView.document, document.pageCount > 0 else { return }
-        let currentIndex = currentPDFViewportAnchor()?.pageIndex ?? currentPageIndex() ?? 0
+    private func turnPDFPage(direction: PDFPageDirection) {
+        guard let backend = activePagedReaderBackend, backend.pageCount > 0 else { return }
+        let currentIndex = currentPDFViewportAnchor()?.pageIndex ?? backend.currentPageIndex ?? 0
         let targetIndex: Int
         switch direction {
         case .previous:
@@ -168,37 +159,33 @@ extension ReaderWindowController {
             targetIndex = currentIndex + 1
         }
         guard targetIndex >= 0,
-              targetIndex < document.pageCount,
-              let page = document.page(at: targetIndex) else {
+              targetIndex < backend.pageCount,
+              backend.go(toPage: targetIndex),
+              let page = pdfView.currentPage else {
             updatePageLabel()
             saveSession()
             return
         }
-        scrollPage(page, to: targetPlacement)
-        lastPageIndex = targetIndex
+        scrollPageToTop(page)
+        documentSession.position.lastPageIndex = targetIndex
         updatePageLabel()
         saveSession()
     }
 
+    /// Scrolls so the top of `page` sits at the top of the viewport.
+    ///
+    /// Both Prev and Next land here: a page turn shows the start of the page it
+    /// lands on, in either direction. `PDFDestination` places the point it is
+    /// given at the top of the visible area, so the page's top edge
+    /// (`bounds.maxY` in PDF space, where y grows upward) is exactly that point.
     func scrollPageToTop(_ page: PDFPage) {
-        scrollPage(page, to: .top)
-    }
-
-    private func scrollPage(_ page: PDFPage, to placement: PDFPagePlacement) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self,
                   self.pdfView.document?.index(for: page) != NSNotFound else {
                 return
             }
             let bounds = page.bounds(for: self.pdfView.displayBox)
-            let destinationY: CGFloat
-            switch placement {
-            case .top:
-                destinationY = bounds.maxY
-            case .bottom:
-                destinationY = bounds.minY
-            }
-            let destination = PDFDestination(page: page, at: NSPoint(x: bounds.minX, y: destinationY))
+            let destination = PDFDestination(page: page, at: NSPoint(x: bounds.minX, y: bounds.maxY))
             self.pdfView.go(to: destination)
             self.updatePageLabel()
         }
@@ -216,12 +203,12 @@ extension ReaderWindowController {
         markReaderInteraction()
         hideSelectionToolbar()
         let newPageIndex = currentPageIndex()
-        guard newPageIndex != lastPageIndex else {
+        guard newPageIndex != documentSession.position.lastPageIndex else {
             updatePageLabel()
             saveSession()
             return
         }
-        lastPageIndex = newPageIndex
+        documentSession.position.lastPageIndex = newPageIndex
         updatePageLabel()
         saveSession()
         if !isReadAloudActive {

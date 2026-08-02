@@ -3,13 +3,17 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP_SOURCE_ROOT="$ROOT_DIR/Sources/LeafReaderApp"
+# The shipping build compiles the core first as a separate Swift module and
+# static library, then compiles and links the app against that module. This is
+# the same boundary enforced by SwiftPM and `check_core_portable.sh`.
+CORE_SOURCE_ROOT="$ROOT_DIR/Sources/LeafReaderCore"
 APP_RESOURCE_ROOT="$APP_SOURCE_ROOT/Resources"
 APP_METADATA_ROOT="$APP_SOURCE_ROOT/App"
 APP_NAME="Leaf Vocabulary"
 APP_PATH="$ROOT_DIR/$APP_NAME.app"
 SPARKLE_HOME="${SPARKLE_HOME:-/opt/homebrew/Caskroom/sparkle/2.9.2}"
 APP_SIGN_IDENTITY="${APP_SIGN_IDENTITY:--}"
-MACOS_DEPLOYMENT_TARGET="${MACOS_DEPLOYMENT_TARGET:-12.0}"
+MACOS_DEPLOYMENT_TARGET="${MACOS_DEPLOYMENT_TARGET:-14.0}"
 ARCHS="${ARCHS:-arm64}"
 BUILD_CONFIGURATION="${BUILD_CONFIGURATION:-debug}"
 REQUIRE_BUNDLED_SPEECH_RUNTIMES="${REQUIRE_BUNDLED_SPEECH_RUNTIMES:-0}"
@@ -321,6 +325,12 @@ if [[ "${#APP_SWIFT_SOURCES[@]}" -eq 0 ]]; then
   echo "No Swift app sources found under $APP_SOURCE_ROOT" >&2
   exit 1
 fi
+if ! find "$CORE_SOURCE_ROOT" -type f -name '*.swift' -print -quit | grep -q .; then
+  echo "No Swift core sources found under $CORE_SOURCE_ROOT" >&2
+  exit 1
+fi
+CORE_BUILD_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/leafreader-core-build.XXXXXX")"
+trap 'rm -rf "$CORE_BUILD_ROOT"' EXIT
 if [[ ! -f "$APP_SOURCE_ROOT/App/main.swift" ]]; then
   echo "App entry point not found at $APP_SOURCE_ROOT/App/main.swift" >&2
   exit 1
@@ -328,9 +338,19 @@ fi
 TEMP_BINARIES=()
 for ARCH in "${BUILD_ARCHS[@]}"; do
   ARCH_BINARY="$APP_PATH/Contents/MacOS/$APP_NAME-$ARCH"
+  ARCH_TRIPLE="$ARCH-apple-macos$MACOS_DEPLOYMENT_TARGET"
+  # Per architecture, because a .swiftmodule records the triple it was built for.
+  CORE_BUILD_DIR="$CORE_BUILD_ROOT/$ARCH"
+  "$ROOT_DIR/scripts/build_core_module.sh" "$CORE_BUILD_DIR" "$ARCH_TRIPLE" \
+    "${SWIFT_BUILD_FLAGS[@]}"
   swiftc "${APP_SWIFT_SOURCES[@]}" \
     "${SWIFT_BUILD_FLAGS[@]}" \
-    -target "$ARCH-apple-macos$MACOS_DEPLOYMENT_TARGET" \
+    -swift-version 6 \
+    -target "$ARCH_TRIPLE" \
+    -package-name LeafReader \
+    -I "$CORE_BUILD_DIR" \
+    -L "$CORE_BUILD_DIR" \
+    -lLeafReaderCore \
     -F "$SPARKLE_HOME" \
     -o "$ARCH_BINARY" \
     -framework Cocoa \
@@ -394,9 +414,12 @@ else
 fi
 
 if [[ "$APP_SIGN_IDENTITY" == "-" ]]; then
-  codesign --force --sign - "$APP_PATH"
+  # Sparkle 2.9.4 ships nested XPC services.  Seal the enclosing app after
+  # signing those services so the outer CodeResources manifest cannot retain
+  # the framework's pre-copy signature.
+  codesign --force --deep --sign - "$APP_PATH"
 else
-  codesign --force --options runtime --timestamp --sign "$APP_SIGN_IDENTITY" "$APP_PATH"
+  codesign --force --deep --options runtime --timestamp --sign "$APP_SIGN_IDENTITY" "$APP_PATH"
 fi
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 

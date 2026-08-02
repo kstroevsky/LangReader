@@ -1,5 +1,6 @@
 import Cocoa
 import PDFKit
+import LeafReaderCore
 
 private struct SpeechProgressPayload {
     let text: String
@@ -48,7 +49,10 @@ extension ReaderWindowController {
         }
 
         if readAloudOriginalTitle == nil {
-            readAloudOriginalTitle = titleLabel.stringValue
+            // Snapshot the model, not the label: the label is what this progress
+            // display is about to overwrite, so reading it back risks saving
+            // stale progress text as the "original".
+            readAloudOriginalTitle = documentTitle
             readAloudOriginalToolTip = titleLabel.toolTip
         }
 
@@ -199,7 +203,7 @@ extension ReaderWindowController {
         let destination = PDFDestination(page: page, at: NSPoint(x: bounds.minX, y: bounds.maxY))
         pdfView.go(to: destination)
         readAloudPageLockedAtTopIndex = pageIndex
-        lastPageIndex = pageIndex
+        documentSession.position.lastPageIndex = pageIndex
         updatePageLabel()
         saveSession()
     }

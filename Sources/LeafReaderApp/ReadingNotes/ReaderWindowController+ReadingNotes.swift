@@ -1,5 +1,6 @@
 import Cocoa
 import PDFKit
+import LeafReaderCore
 
 extension ReaderWindowController {
     private static let readingNoteAnnotationPrefix = "leaf-note"
@@ -93,13 +94,13 @@ extension ReaderWindowController {
             self?.exportSingleReadingNoteMarkdown(note)
         } onDeleteNote: { [weak self] note in
             self?.deleteReadingNoteWithConfirmation(note)
-        } onDocumentQuestionPrompt: { [weak self] request, completion in
-            self?.documentAgentPrompt(
+        } onDocumentQuestionPrompt: { [weak self] request in
+            guard let self else { return nil }
+            return await self.documentAgentPrompt(
                 question: request.question,
                 questionSubject: request.questionSubject,
                 context: request.context,
-                showsEvidenceBubbles: false,
-                completion: completion
+                showsEvidenceBubbles: false
             )
         } onModelSettingsRequired: { [weak self] in
             self?.openModelSettings()
@@ -113,6 +114,8 @@ extension ReaderWindowController {
     }
 
     func presentReadingNotesListPanel() {
+        let openSpan = ReaderPerformance.begin(.notesOpen)
+        defer { ReaderPerformance.end(openSpan) }
         let controller = readingNotesPanelController ?? ReadingNotesPanelController()
         readingNotesPanelController = controller
         controller.onOpenNote = { [weak self] note in
@@ -215,11 +218,18 @@ extension ReaderWindowController {
     }
 
     func toggleReadingNoteFavorite(_ note: ReadingNote) {
+        // An open panel owns this note's text, so it performs the change and
+        // saves. Writing `updated` straight to the store here would persist the
+        // list's copy of `markdown`, which is stale whenever the editor has
+        // unsaved edits.
+        if let controller = readingNotePanelControllers[note.id] {
+            controller.setFavorite(!note.isFavorite)
+            return
+        }
         var updated = note
         updated.isFavorite.toggle()
         updated.updatedAt = Date()
         saveReadingNote(updated)
-        readingNotePanelControllers[note.id]?.note = updated
     }
 
     func deleteReadingNoteWithConfirmation(_ note: ReadingNote) {
@@ -277,8 +287,8 @@ extension ReaderWindowController {
         }
         let anchor = ReadingNote.WebAnchor(
             selectedText: quote,
-            context: currentWebSelectionContext,
-            occurrenceIndex: currentWebSelectionOccurrenceIndex,
+            context: selectionState.webSelectionContext,
+            occurrenceIndex: selectionState.webSelectionOccurrenceIndex,
             scrollProgress: webScrollProgress
         )
         return ReadingNote.Locator(pdfFragments: nil, webAnchor: anchor)
@@ -343,7 +353,7 @@ extension ReaderWindowController {
             completion?()
             return
         }
-        let payload = storedReadingNotes.compactMap(webHighlightPayload(for:))
+        let payload = storedReadingNotes.compactMap { webHighlightPayload(for: $0) }
         guard !payload.isEmpty,
               let data = try? JSONSerialization.data(withJSONObject: payload),
               let json = String(data: data, encoding: .utf8) else {

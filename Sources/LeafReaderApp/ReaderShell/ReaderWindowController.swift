@@ -4,6 +4,7 @@ import CryptoKit
 import PDFKit
 import UniformTypeIdentifiers
 import WebKit
+import LeafReaderCore
 
 final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFViewDelegate, NSTextFieldDelegate, WKScriptMessageHandler, WKNavigationDelegate {
     struct PendingPDFWordRecord {
@@ -20,7 +21,10 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
 
     struct PendingWebWordRecord {
         let id: String
+        let vocabularyID: String
         let word: String
+        let lemma: String
+        let surfaceForm: String
         let context: String
         let occurrenceIndex: Int?
         let scrollProgress: Double
@@ -44,7 +48,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     static let preferredAIWidthDefaultsKey = "preferredAIWidth"
     static let pdfTwoPageModeDefaultsKey = "pdfTwoPageMode"
     static let pdfMarginCropDefaultsKey = "pdfMarginCrop"
-    static let fileMD5CacheDefaultsKey = "fileMD5Cache"
+    nonisolated static let fileMD5CacheDefaultsKey = "fileMD5Cache"
     static let embeddingControlStateDefaultsKey = "embeddingControlState"
     static let minimumReadablePDFScale: CGFloat = 1.0
     static let capsuleButtonIdentifier = NSUserInterfaceItemIdentifier("leafReaderCapsuleButton")
@@ -52,6 +56,11 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
 
     var pdfView: ReaderPDFView!
     var webView: ReaderWebView!
+    lazy var pdfReaderAdapter = PDFKitReaderAdapter(view: pdfView)
+    lazy var webReaderAdapter = WebKitReaderAdapter(view: webView)
+    /// The active native rendering adapter. It is selected only when a Document
+    /// Session begins loading and consumed through the reader backend seam.
+    var activeReaderBackend: (any ReaderContentBackend)?
     let contentArea = NSView()
     let pdfContainer = ClippingView()
     let pdfDimOverlay = PassthroughOverlayView()
@@ -73,35 +82,23 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     let searchOverlay = SearchOverlayView()
     let selectionActionToolbar = SelectionActionToolbar()
     var selectionActionToolbarWindow: NSWindow?
-    var fullScreenButton: NSButton!
-    var coverButton: NSButton!
-    var tocButton: NSButton!
-    var recentButton: NSButton!
-    var notesButton: NSButton!
-    var vocabularyLibraryButton: NSButton!
-    var vocabularyButton: NSButton!
-    var farthestPositionButton: NSButton!
-    var prevButton: NSButton!
-    var nextButton: NSButton!
-    var readAloudButton: NSButton!
-    var readAloudStopButton: NSButton!
-    var pageLayoutButton: NSButton!
-    var cropButton: NSButton!
-    var relatedFormsToggle: NSView!
-    var relatedFormsSwitch: NSSwitch!
+    /// Last chrome state applied; the source of truth for what is on screen.
+    var chromeState: ReaderChromeState = .empty
+    var readerPresentation = ReaderShellPresentationState()
+    let topBarModel = ReaderTopBarModel()
+    let bottomBarModel = ReaderBottomBarModel()
     var searchButton: NSButton!
     var searchUnderlineButton: SearchUnderlineButton!
-    let embeddingStatusLabel = NSTextField(labelWithString: "")
-    var embeddingPauseButton: NSButton!
-    var embeddingCancelButton: NSButton!
     weak var toolbarView: NSView?
     weak var bottomBarView: NSView?
     weak var zoomGroupView: NSView?
     var documentSession = DocumentSession()
     var documentPresentationState = DocumentPresentationState()
+    /// Hits for the current PDF query. The web path keeps its hits in the page,
+    /// so only the PDF side stores them here.
     var searchResults: [PDFSelection] = []
-    var searchResultIndex = 0
-    var lastSearchQuery = ""
+    /// Which hit is selected and how the query changed — shared by both paths.
+    var searchCursor = ReaderSearchCursor()
     var embeddingState = ReaderEmbeddingState()
     var aiState = ReaderAIState()
     let sessionSaveTask = DebouncedTask(delay: ReaderSessionPolicy.lastPositionSaveDelay)
@@ -118,7 +115,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var readingNotesPanelController: ReadingNotesPanelController?
     var vocabularyPanelController: VocabularyPanelController!
     var vocabularyLibraryWindowController: VocabularyLibraryWindowController!
-    let vocabularyLibraryBuildCache = VocabularyLibraryBuildCache()
+    nonisolated let vocabularyLibraryBuildCache = VocabularyLibraryBuildCache()
     lazy var selectionToolbarCoordinator = SelectionToolbarCoordinator(owner: self)
     let vocabularyReviewSession = VocabularyReviewSession()
     var aiHandleLeadingConstraint: NSLayoutConstraint!
@@ -127,6 +124,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
 
     override init(window: NSWindow?) {
         super.init(window: window)
+        readerPresentation.preferredAIWidth = Self.loadPreferredAIWidth()
         vocabularyPanelController = VocabularyPanelController(owner: self)
         vocabularyLibraryWindowController = VocabularyLibraryWindowController(owner: self)
     }
@@ -164,26 +162,31 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     }
 
     deinit {
-        if let localEventMonitor {
-            NSEvent.removeMonitor(localEventMonitor)
+        // NSWindowController and every resource below are main-thread objects.
+        // Swift 6 treats deinit as nonisolated, so state the AppKit lifetime
+        // invariant explicitly while tearing them down.
+        MainActor.assumeIsolated {
+            if let localEventMonitor {
+                NSEvent.removeMonitor(localEventMonitor)
+            }
+            sessionSaveTask.cancel()
+            aiConversationSaveTask.cancel()
+            preferredAIWidthSaveTask.cancel()
+            windowResizeLayoutTask.cancel()
+            aiPanelResizeLayoutTask.cancel()
+            pendingAISourceClickWorkItem?.cancel()
+            cancelDocumentAgentPrompt()
+            pdfWordRecordsSaveTask.cancel()
+            webWordRecordsSaveTask.cancel()
+            vocabularyPanelController.close()
+            vocabularyLibraryWindowController.close()
+            webView?.configuration.userContentController.removeScriptMessageHandler(forName: "selectionChanged")
+            webView?.configuration.userContentController.removeScriptMessageHandler(forName: "scrollChanged")
+            webView?.configuration.userContentController.removeScriptMessageHandler(forName: "webWordClicked")
+            webView?.configuration.userContentController.removeScriptMessageHandler(forName: "webNoteClicked")
+            webView?.configuration.userContentController.removeScriptMessageHandler(forName: "webAISourceClicked")
+            NotificationCenter.default.removeObserver(self)
         }
-        sessionSaveTask.cancel()
-        aiConversationSaveTask.cancel()
-        preferredAIWidthSaveTask.cancel()
-        windowResizeLayoutTask.cancel()
-        aiPanelResizeLayoutTask.cancel()
-        pendingAISourceClickWorkItem?.cancel()
-        retrievalQueryTask?.cancel()
-        pdfWordRecordsSaveTask.cancel()
-        webWordRecordsSaveTask.cancel()
-        vocabularyPanelController.close()
-        vocabularyLibraryWindowController.close()
-        webView?.configuration.userContentController.removeScriptMessageHandler(forName: "selectionChanged")
-        webView?.configuration.userContentController.removeScriptMessageHandler(forName: "scrollChanged")
-        webView?.configuration.userContentController.removeScriptMessageHandler(forName: "webWordClicked")
-        webView?.configuration.userContentController.removeScriptMessageHandler(forName: "webNoteClicked")
-        webView?.configuration.userContentController.removeScriptMessageHandler(forName: "webAISourceClicked")
-        NotificationCenter.default.removeObserver(self)
     }
 
     override func keyDown(with event: NSEvent) {

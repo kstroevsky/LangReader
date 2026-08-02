@@ -1,12 +1,13 @@
 import Cocoa
 import PDFKit
+import LeafReaderCore
 
 extension ReaderWindowController {
     func ensureDocumentAgentIndex() {
         guard pdfAgentIndex == nil else { return }
         if currentDocumentKind == .pdf {
             guard let document = pdfView.document else { return }
-            pdfAgentIndex = PDFDocumentAgentIndex(document: document, title: titleLabel.stringValue)
+            pdfAgentIndex = PDFDocumentAgentIndex(document: document, title: documentTitle)
             return
         }
         guard !currentWebPlainText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
@@ -26,7 +27,7 @@ extension ReaderWindowController {
         isBuildingDocumentAgentIndex = true
         let generation = documentAgentIndexGeneration
         let kind = currentDocumentKind
-        let title = titleLabel.stringValue
+        let title = documentTitle
 
         if kind == .pdf {
             guard let url = currentFileURL else {
@@ -37,7 +38,7 @@ extension ReaderWindowController {
                 autoreleasepool {
                     let document = PDFDocument(url: url)
                     let index = document.map { PDFDocumentAgentIndex(document: $0, title: title) }
-                    DispatchQueue.main.async {
+                    Task { @MainActor [weak self] in
                         self?.finishDocumentAgentIndexBuild(index, generation: generation)
                     }
                 }
@@ -52,7 +53,7 @@ extension ReaderWindowController {
         }
         DispatchQueue.global(qos: .utility).async { [weak self] in
             let index = PDFDocumentAgentIndex(text: text)
-            DispatchQueue.main.async {
+            Task { @MainActor [weak self] in
                 self?.finishDocumentAgentIndexBuild(index, generation: generation)
             }
         }

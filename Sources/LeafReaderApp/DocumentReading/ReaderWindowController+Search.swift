@@ -4,21 +4,22 @@ import WebKit
 
 extension ReaderWindowController {
     @objc func showSearchOverlay() {
-        searchOverlay.isHidden = false
+        mutateReaderPresentation { $0.showSearch() }
         window?.makeFirstResponder(searchOverlay.searchField)
     }
 
     func hideSearchOverlay() {
-        searchOverlay.isHidden = true
+        mutateReaderPresentation { $0.hideSearch() }
         window?.makeFirstResponder(currentDocumentKind == .pdf ? pdfView : webView)
     }
 
     func performSearch(_ rawQuery: String) {
         let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        mutateReaderPresentation { $0.setSearchQuery(query) }
         guard !query.isEmpty else {
             clearSearchState()
             clearPDFSelectionState()
-            pdfView.clearSelection()
+            activeReaderBackend?.clearSelection()
             clearWebSearchSelection()
             clearSearchSelectionForAI()
             return
@@ -32,12 +33,12 @@ extension ReaderWindowController {
             return
         }
 
-        if query != lastSearchQuery {
+        switch searchCursor.submit(query: query) {
+        case .needsSearch:
             searchResults = document.findString(query, withOptions: [.caseInsensitive, .diacriticInsensitive])
-            searchResultIndex = 0
-            lastSearchQuery = query
-        } else if !searchResults.isEmpty {
-            searchResultIndex = (searchResultIndex + 1) % searchResults.count
+            searchCursor.setTotal(searchResults.count)
+        case .advance:
+            searchCursor.advance()
         }
 
         showCurrentSearchResult()
@@ -45,34 +46,33 @@ extension ReaderWindowController {
 
     func clearSearchState() {
         searchResults.removeAll()
-        searchResultIndex = 0
-        lastSearchQuery = ""
+        searchCursor.clear()
         searchOverlay.setResultText("")
     }
 
     func goToPreviousSearchResult() {
         guard currentDocumentKind == .pdf else {
-            performWebSearch(searchOverlay.searchField.stringValue, backwards: true)
+            performWebSearch(readerPresentation.searchQuery, backwards: true)
             return
         }
         guard !searchResults.isEmpty else {
-            performSearch(searchOverlay.searchField.stringValue)
+            performSearch(readerPresentation.searchQuery)
             return
         }
-        searchResultIndex = (searchResultIndex - 1 + searchResults.count) % searchResults.count
+        searchCursor.retreat()
         showCurrentSearchResult()
     }
 
     func goToNextSearchResult() {
         guard currentDocumentKind == .pdf else {
-            performWebSearch(searchOverlay.searchField.stringValue, backwards: false)
+            performWebSearch(readerPresentation.searchQuery, backwards: false)
             return
         }
         guard !searchResults.isEmpty else {
-            performSearch(searchOverlay.searchField.stringValue)
+            performSearch(readerPresentation.searchQuery)
             return
         }
-        searchResultIndex = (searchResultIndex + 1) % searchResults.count
+        searchCursor.advance()
         showCurrentSearchResult()
     }
 
@@ -80,21 +80,21 @@ extension ReaderWindowController {
         guard !searchResults.isEmpty else {
             searchOverlay.setResultText("0 / 0")
             clearPDFSelectionState()
-            pdfView.clearSelection()
+            activeReaderBackend?.clearSelection()
             clearSearchSelectionForAI()
             return
         }
 
-        let selection = searchResults[searchResultIndex]
+        let selection = searchResults[min(searchCursor.index, searchResults.count - 1)]
         beginSuppressingSearchSelectionForAI()
         pdfView.setCurrentSelection(selection, animate: true)
         let pageIndex = goToVisibleSearchSelection(selection)
         if let pageIndex {
-            lastPageIndex = pageIndex
+            documentSession.position.lastPageIndex = pageIndex
         }
         updatePageLabel()
         saveSession()
-        searchOverlay.setResultText("\(searchResultIndex + 1) / \(searchResults.count)")
+        searchOverlay.setResultText(searchCursor.resultText)
         clearSearchSelectionForAI()
     }
 
@@ -113,7 +113,7 @@ extension ReaderWindowController {
 
         pdfView.go(to: page)
         let pageBounds = page.bounds(for: pdfView.displayBox)
-        let overlayClearance = searchOverlay.isHidden ? CGFloat(64) : CGFloat(150)
+        let overlayClearance = readerPresentation.projection.searchOverlayClearance
         let yOffset = overlayClearance / max(pdfView.scaleFactor, 0.1)
         let destinationY = min(pageBounds.maxY, selectionBounds.maxY + yOffset)
         let destination = PDFDestination(
@@ -126,6 +126,7 @@ extension ReaderWindowController {
 
     func performWebSearch(_ rawQuery: String, backwards: Bool) {
         let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        mutateReaderPresentation { $0.setSearchQuery(query) }
         guard !query.isEmpty else {
             clearSearchState()
             clearWebSearchSelection()
@@ -135,8 +136,7 @@ extension ReaderWindowController {
 
         beginSuppressingSearchSelectionForAI()
         let escapedQuery = jsStringLiteral(query)
-        let reset = query != lastSearchQuery
-        lastSearchQuery = query
+        let reset = searchCursor.submit(query: query) == .needsSearch
         let script = """
         (() => {
           const query = \(escapedQuery);
@@ -151,8 +151,8 @@ extension ReaderWindowController {
             let payload = result as? [String: Any]
             let index = payload?["index"] as? Int ?? 0
             let total = payload?["total"] as? Int ?? 0
-            self?.searchResultIndex = max(0, index - 1)
-            self?.searchOverlay.setResultText(total > 0 ? "\(index) / \(total)" : "0 / 0")
+            self?.searchCursor.adoptOneBased(index: index, total: total)
+            self?.searchOverlay.setResultText(self?.searchCursor.resultText ?? "0 / 0")
             self?.clearSearchSelectionForAI()
         }
     }
@@ -163,10 +163,7 @@ extension ReaderWindowController {
 
     func clearSearchSelectionForAI() {
         clearPDFSelectionState()
-        currentWebSelectedText = ""
-        currentWebSelectionContext = ""
-        currentWebSelectionOccurrenceIndex = nil
-        currentWebSelectionRect = nil
+        clearWebSelectionState()
         aiPanel.clearSelectedText()
         hideSelectionToolbar()
     }

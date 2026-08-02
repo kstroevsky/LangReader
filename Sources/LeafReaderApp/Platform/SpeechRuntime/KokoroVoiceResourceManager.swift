@@ -1,11 +1,39 @@
 import Foundation
 
+private final class KokoroInstalledVoiceCache: @unchecked Sendable {
+    private let lock = NSLock()
+    private var keys = Set<String>()
+
+    func contains(_ key: String) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return keys.contains(key)
+    }
+
+    func insert(_ key: String) {
+        lock.lock()
+        keys.insert(key)
+        lock.unlock()
+    }
+
+    func remove(_ key: String) {
+        lock.lock()
+        keys.remove(key)
+        lock.unlock()
+    }
+
+    func removeAll() {
+        lock.lock()
+        keys.removeAll()
+        lock.unlock()
+    }
+}
+
 enum KokoroVoiceResourceManager {
     private static let voiceEmbeddingCount = 510
     private static let voiceEmbeddingWidth = 256
     private static let expectedVoiceBinSize = voiceEmbeddingCount * voiceEmbeddingWidth * MemoryLayout<Float>.size
-    private static let cacheLock = NSLock()
-    private static var knownInstalledVoiceKeys = Set<String>()
+    private static let installedVoiceCache = KokoroInstalledVoiceCache()
 
     static func ensureInstalled(voiceID: String, variant: String) -> Bool {
         guard let location = voiceLocation(voiceID: voiceID, variant: variant) else {
@@ -47,9 +75,7 @@ enum KokoroVoiceResourceManager {
     }
 
     static func invalidateInstalledVoiceCache() {
-        cacheLock.lock()
-        knownInstalledVoiceKeys.removeAll()
-        cacheLock.unlock()
+        installedVoiceCache.removeAll()
     }
 
     static func installedVoiceCacheKey(voiceID: String, variant: String, destination: URL) -> String {
@@ -57,21 +83,15 @@ enum KokoroVoiceResourceManager {
     }
 
     private static func isKnownInstalledVoice(_ key: String) -> Bool {
-        cacheLock.lock()
-        defer { cacheLock.unlock() }
-        return knownInstalledVoiceKeys.contains(key)
+        installedVoiceCache.contains(key)
     }
 
     private static func rememberInstalledVoice(_ key: String) {
-        cacheLock.lock()
-        knownInstalledVoiceKeys.insert(key)
-        cacheLock.unlock()
+        installedVoiceCache.insert(key)
     }
 
     private static func forgetInstalledVoice(_ key: String) {
-        cacheLock.lock()
-        knownInstalledVoiceKeys.remove(key)
-        cacheLock.unlock()
+        installedVoiceCache.remove(key)
     }
 
     private enum VoiceLocation {

@@ -1,5 +1,7 @@
 import Cocoa
+import LeafReaderCore
 
+@MainActor
 final class SelectionToolbarCoordinator {
     private unowned let owner: ReaderWindowController
 
@@ -10,7 +12,7 @@ final class SelectionToolbarCoordinator {
     func show(
         near sourceRect: NSRect,
         text: String,
-        preferredEdge: ReaderWindowController.SelectionToolbarEdge
+        preferredEdge: SelectionToolbarEdge
     ) {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             owner.hideSelectionToolbar()
@@ -26,7 +28,7 @@ final class SelectionToolbarCoordinator {
     private func toolbarFrame(
         near sourceRect: NSRect,
         size: CGSize,
-        preferredEdge: ReaderWindowController.SelectionToolbarEdge
+        preferredEdge: SelectionToolbarEdge
     ) -> NSRect {
         let readerFrame = owner.pdfContainer.frame
         let minimumX = readerFrame.minX + 12

@@ -1,5 +1,7 @@
 import Foundation
+import LeafReaderCore
 
+@MainActor
 final class AITextActionRunner {
     enum Action {
         case explain
@@ -11,7 +13,7 @@ final class AITextActionRunner {
     }
 
     private let client = AIClient()
-    private var task: URLSessionDataTask?
+    private var task: Task<Void, Never>?
     private var runID: UUID?
 
     var isRunning: Bool {
@@ -24,7 +26,7 @@ final class AITextActionRunner {
         runID = nil
     }
 
-    func run(action: Action, text: String, noteContext: String = "", completion: @escaping (Result<String, Error>) -> Void) {
+    func run(action: Action, text: String, noteContext: String = "", completion: @escaping @MainActor @Sendable (Result<String, Error>) -> Void) {
         cancel()
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
@@ -37,21 +39,14 @@ final class AITextActionRunner {
         ]
         let currentRunID = UUID()
         runID = currentRunID
-        task = client.send(messages: messages) { [weak self] result in
-            DispatchQueue.main.async {
-                guard self?.runID == currentRunID else { return }
-                self?.task = nil
-                self?.runID = nil
-                completion(result)
-            }
-        }
+        run(messages: messages, runID: currentRunID, completion: completion)
     }
 
     func runQuestion(
         question: String,
         selectedText: String,
         systemPrompt: String = AIPromptStore.systemPrompt(),
-        completion: @escaping (Result<String, Error>) -> Void
+        completion: @escaping @MainActor @Sendable (Result<String, Error>) -> Void
     ) {
         cancel()
         let trimmedQuestion = question.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -66,20 +61,13 @@ final class AITextActionRunner {
         ]
         let currentRunID = UUID()
         runID = currentRunID
-        task = client.send(messages: messages) { [weak self] result in
-            DispatchQueue.main.async {
-                guard self?.runID == currentRunID else { return }
-                self?.task = nil
-                self?.runID = nil
-                completion(result)
-            }
-        }
+        run(messages: messages, runID: currentRunID, completion: completion)
     }
 
     func runPrompt(
         _ prompt: String,
         systemPrompt: String = AIPromptStore.systemPrompt(),
-        completion: @escaping (Result<String, Error>) -> Void
+        completion: @escaping @MainActor @Sendable (Result<String, Error>) -> Void
     ) {
         cancel()
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -93,13 +81,25 @@ final class AITextActionRunner {
         ]
         let currentRunID = UUID()
         runID = currentRunID
-        task = client.send(messages: messages) { [weak self] result in
-            DispatchQueue.main.async {
-                guard self?.runID == currentRunID else { return }
-                self?.task = nil
-                self?.runID = nil
-                completion(result)
+        run(messages: messages, runID: currentRunID, completion: completion)
+    }
+
+    private func run(
+        messages: [ChatMessage],
+        runID: UUID,
+        completion: @escaping @MainActor @Sendable (Result<String, Error>) -> Void
+    ) {
+        task = Task { [weak self] in
+            let result: Result<String, Error>
+            do {
+                result = .success(try await self?.client.response(messages: messages) ?? "")
+            } catch {
+                result = .failure(error)
             }
+            guard !Task.isCancelled, self?.runID == runID else { return }
+            self?.task = nil
+            self?.runID = nil
+            completion(result)
         }
     }
 

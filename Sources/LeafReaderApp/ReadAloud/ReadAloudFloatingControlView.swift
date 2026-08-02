@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 final class ReadAloudFloatingControlButton: NSButton {
     override var acceptsFirstResponder: Bool { false }

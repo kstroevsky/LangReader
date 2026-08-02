@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 @main
 struct GermanDictionaryLiveLookupTestRunner {

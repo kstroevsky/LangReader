@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum SpeechRuntimeResourceManager {
     private static let downloadCoordinator = LocalRuntimeDownloadCoordinator<LocalRuntimeDownloadKey>(
@@ -58,15 +59,15 @@ enum SpeechRuntimeResourceManager {
     static func download(_ runtime: Runtime, completion: @escaping (Result<Void, Error>) -> Void) {
         guard let downloadID = downloadCoordinator.begin(downloadKey(for: runtime), completion: completion) else { return }
         let plan = runtime.localRuntimeDownloadPlan
-        fetchModelManifest(from: plan.manifestURL ?? Runtime.modelManifestURL) { manifestResult in
-            guard isCurrentDownload(runtime, downloadID: downloadID) else { return }
-            switch manifestResult {
-            case .success(let manifest):
+        Task { @MainActor in
+            do {
+                let manifest = try await fetchModelManifest(from: plan.manifestURL ?? Runtime.modelManifestURL)
+                guard isCurrentDownload(runtime, downloadID: downloadID) else { return }
                 let expectedAsset = manifest?.asset(named: plan.expectedAssetName)
                 download(runtime, downloadID: downloadID, plan: plan, expectedAsset: expectedAsset, retryingWithoutResume: false) { result in
                     finishDownload(runtime, downloadID: downloadID, result: result)
                 }
-            case .failure(let error):
+            } catch {
                 finishDownload(runtime, downloadID: downloadID, result: .failure(error))
             }
         }
@@ -148,7 +149,7 @@ enum SpeechRuntimeResourceManager {
                     guard isCurrentDownload(runtime, downloadID: downloadID) else { return }
                     try installer.installDownloadedArchive(partialURL, asset: expectedAsset)
                     LocalRuntimeDownloadSupport.removePartialDownload(for: plan)
-                    DispatchQueue.main.async { completion(.success(())) }
+                    completion(.success(()))
                 case .failure(let error):
                     recoverDownloadFailure(
                         error,
@@ -223,7 +224,7 @@ enum SpeechRuntimeResourceManager {
             if removePartial {
                 LocalRuntimeDownloadSupport.removePartialDownload(for: plan)
             }
-            DispatchQueue.main.async { completion(.failure(error)) }
+            completion(.failure(error))
         }
     }
 

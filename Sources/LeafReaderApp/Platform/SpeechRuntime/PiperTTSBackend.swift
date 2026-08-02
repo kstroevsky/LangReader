@@ -1,7 +1,10 @@
 import Darwin
 import Foundation
+import LeafReaderCore
 
-final class PiperTTSBackend {
+/// Worker and synthesis state is serialized by `workerStateLock`; the only
+/// independently delivered stderr callback writes through `coreMLFallbackLock`.
+final class PiperTTSBackend: @unchecked Sendable {
     private let executableEnvironmentKey = "LEAFREADER_PIPER_CLI"
     private let voiceEnvironmentKey = "LEAFREADER_PIPER_VOICE"
     private let modelEnvironmentKey = "LEAFREADER_PIPER_MODEL"

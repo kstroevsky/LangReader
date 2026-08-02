@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReadingNotePanelController {
     func appendAISection(title: String, body: String) {
@@ -17,7 +18,7 @@ extension ReadingNotePanelController {
         rendered.append(aiPlaceholderAttributedString(text: placeholderText))
         rendered.append(NSAttributedString(string: "\n"))
         textView.textStorage?.setAttributedString(rendered)
-        editorState.aiPlaceholderDisplayText = "\(title)\n\n\u{fffc}\(placeholderText)"
+        editorModel.aiPlaceholderDisplayText = "\(title)\n\n\u{fffc}\(placeholderText)"
         textView.scrollToEndOfDocument(nil)
         refreshEditorDerivedState()
     }
@@ -33,20 +34,20 @@ extension ReadingNotePanelController {
         }
         replaceText(in: range, with: replacement)
         textView.scrollToEndOfDocument(nil)
-        editorState.aiPlaceholderDisplayText = nil
+        editorModel.aiPlaceholderDisplayText = nil
     }
 
     func removeAIPlaceholder() {
         guard let range = aiPlaceholderRange() else {
-            editorState.aiPlaceholderDisplayText = nil
+            editorModel.aiPlaceholderDisplayText = nil
             return
         }
         replaceText(in: expandedPlaceholderRemovalRange(range), with: "")
-        editorState.aiPlaceholderDisplayText = nil
+        editorModel.aiPlaceholderDisplayText = nil
     }
 
     private func aiPlaceholderRange() -> NSRange? {
-        guard let display = editorState.aiPlaceholderDisplayText else { return nil }
+        guard let display = editorModel.aiPlaceholderDisplayText else { return nil }
         let range = (textView.string as NSString).range(of: display)
         return range.location == NSNotFound ? nil : range
     }
@@ -78,9 +79,15 @@ extension ReadingNotePanelController {
             string: text,
             attributes: [
                 .font: NSFont.systemFont(ofSize: Metrics.editorFontSize),
-                .foregroundColor: ReadingNoteTheme.secondaryText(ReaderTheme.selected)
+                .foregroundColor: ReadingNoteTheme.secondaryText(ReaderTheme.selected),
+                .readingNoteTransientAIPlaceholder: true
             ]
         ))
+        output.addAttribute(
+            .readingNoteTransientAIPlaceholder,
+            value: true,
+            range: NSRange(location: 0, length: output.length)
+        )
         return output
     }
 }

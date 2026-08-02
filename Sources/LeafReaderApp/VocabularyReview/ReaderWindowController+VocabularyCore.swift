@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReaderWindowController {
     @objc func changeVocabularyTab(_ sender: NSSegmentedControl) {
@@ -22,7 +23,7 @@ extension ReaderWindowController {
 
     func showVocabularyReviewMode(in root: NSView, autoPlay: Bool) {
         findView(identifier: "vocabularyReviewContainer", in: root)?.isHidden = false
-        findView(identifier: "vocabularyScrollView", in: root)?.isHidden = true
+        findView(identifier: "vocabularyList", in: root)?.isHidden = true
         findView(identifier: "vocabularyReviewPriorityPopup", in: root)?.isHidden = false
         findView(identifier: "vocabularyReviewGoalPopup", in: root)?.isHidden = false
         findView(identifier: "vocabularyExportMarkdownButton", in: root)?.isHidden = true
@@ -36,7 +37,7 @@ extension ReaderWindowController {
     func showVocabularyListMode(in root: NSView) {
         vocabularyReviewSession.listModeEnabled = true
         findView(identifier: "vocabularyReviewContainer", in: root)?.isHidden = true
-        findView(identifier: "vocabularyScrollView", in: root)?.isHidden = false
+        findView(identifier: "vocabularyList", in: root)?.isHidden = false
         findView(identifier: "vocabularyReviewPriorityPopup", in: root)?.isHidden = true
         findView(identifier: "vocabularyReviewGoalPopup", in: root)?.isHidden = true
         findView(identifier: "vocabularyExportMarkdownButton", in: root)?.isHidden = false
@@ -44,13 +45,11 @@ extension ReaderWindowController {
     }
 
     func refreshVocabularyListContent(in root: NSView, filter: VocabularyFilter) {
-        let isDark = ReaderTheme.selected == .dark
-        if let stack = findView(identifier: "vocabularyStack", in: root) as? NSStackView {
-            populateVocabularyStack(stack, records: currentVocabularyExportRecords, filter: filter, isDark: isDark)
-        }
-        if let summary = findView(identifier: "vocabularySummaryLabel", in: root) as? NSTextField {
-            summary.stringValue = vocabularySummaryText(records: currentVocabularyExportRecords, filter: filter)
-        }
+        populateVocabularyList(records: currentVocabularyExportRecords, filter: filter)
+        vocabularyPanelController.headerModel.summary = vocabularySummaryText(
+            records: currentVocabularyExportRecords,
+            filter: filter
+        )
     }
 
     func vocabularyFilter(forSegment selectedSegment: Int) -> VocabularyFilter {

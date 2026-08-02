@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 /// One inflected form as persisted in the flexion cache.
 ///
@@ -37,7 +38,7 @@ struct StoredGermanFlexionMatch: Equatable {
 /// table fetched once keeps working offline and across relaunches — the point
 /// of the dictionary tier is that difficult forms stay resolved without
 /// requiring the network again.
-struct GermanFlexionStore {
+struct GermanFlexionStore: Sendable {
     static let shared = GermanFlexionStore()
 
     private let store: WordRecordSQLiteStore

@@ -1,7 +1,13 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReaderWindowController {
     @objc func showVocabularyLibrary() {
+        // Measures only the synchronous window present — the click-to-paint cost.
+        // The background scan is deliberately not on this path (see below), so it
+        // is not part of this number.
+        let openSpan = ReaderPerformance.begin(.vocabularyLibraryOpen)
+        defer { ReaderPerformance.end(openSpan) }
         // Open the window immediately; the library scan (SQLite loads + form
         // labeling across every recent document) can take a second or two and
         // must not block the click. Records arrive via `apply(records:)`.
@@ -88,7 +94,7 @@ extension ReaderWindowController {
 
     /// Background-safe: uses the pre-snapshotted current-document records rather
     /// than reaching back into PDFKit, so it can run off the main thread.
-    func makeVocabularyLibraryRecords(
+    nonisolated func makeVocabularyLibraryRecords(
         currentPath: String?,
         currentRecords: [VocabularyExportRecord]
     ) -> [VocabularyLibraryRecord] {
@@ -103,12 +109,21 @@ extension ReaderWindowController {
                 records = currentRecords
             } else {
                 let pdfRecords = PDFWordRecordStore(fileMD5: documentID).load()
-                let webRecords = WebWordRecordStore(fileMD5: documentID).load()
+                let webStore = WebWordRecordStore(fileMD5: documentID)
+                let loadedWebRecords = webStore.load()
                 // This document is not the open one, so its language has to come
                 // from the contexts saved with its own words.
                 let otherLanguage = VocabularyLanguageDetector.language(
-                    forContexts: pdfRecords.compactMap(\.context) + webRecords.map(\.context)
+                    forContexts: pdfRecords.compactMap(\.context) + loadedWebRecords.map(\.context)
                 )
+                let repairedWeb = WebWordRecordMetadataRepair.repair(
+                    loadedWebRecords,
+                    language: otherLanguage
+                )
+                let webRecords = repairedWeb.records
+                if repairedWeb.didChange {
+                    webStore.save(webRecords)
+                }
                 let fingerprint = VocabularyLibraryBuildCache.fingerprint(
                     pdf: pdfRecords,
                     web: webRecords,

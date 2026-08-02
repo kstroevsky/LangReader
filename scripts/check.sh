@@ -29,8 +29,23 @@ echo "==> Checking wiki"
 echo "==> Checking UI theme coverage"
 ./scripts/check_ui_theme.sh
 
-echo "==> Running tests"
+echo "==> Checking core portability"
+./scripts/check_core_portable.sh
+
+echo "==> Checking Reader native-view access seam"
+bash ./scripts/check_reader_native_access.sh
+
+echo "==> Building with strict Swift 6 warnings"
+swift build -Xswiftc -warnings-as-errors
+
+echo "==> Running strict Swift 6 tests"
+swift test -Xswiftc -warnings-as-errors
+
+echo "==> Running regression harness"
 ./scripts/run_tests.sh
+
+echo "==> Testing performance-capture validator"
+bash ./scripts/test_perf_capture_validator.sh
 
 if [[ "$RUN_BUILD" -eq 1 ]]; then
   echo "==> Building docs site"
@@ -43,6 +58,27 @@ if [[ "$RUN_BUILD" -eq 1 ]]; then
 
   echo "==> Checking app bundle"
   ./Tests/LeafReaderTests/ReadAloud/PiperRuntimeBundleTests.sh "Leaf Vocabulary.app"
+
+  # Opt-in: it drives the real app, so it needs a logged-in GUI session and
+  # Accessibility permission, and it takes over the screen while it runs.
+  if [[ "${LEAFVOCAB_UI_SMOKE:-0}" == "1" ]]; then
+    echo "==> Running UI smoke test"
+    set +e
+    ./scripts/check_ui_smoke.sh
+    ui_smoke_status=$?
+    set -e
+    # 3 is the only code that means "skipped"; the script proves the app is still
+    # running before it uses it. 2 is an infrastructure failure — a missing build,
+    # a failed launch, a crash — and used to be reported here as a skip, which let
+    # the whole suite pass on an app that never started.
+    if [[ "$ui_smoke_status" -eq 3 ]]; then
+      echo "    skipped: the app's accessibility tree was unreadable (grant Accessibility permission)"
+    elif [[ "$ui_smoke_status" -ne 0 ]]; then
+      exit "$ui_smoke_status"
+    fi
+  else
+    echo "==> Skipping UI smoke test (set LEAFVOCAB_UI_SMOKE=1 to run)"
+  fi
 else
   echo "==> Skipping app build"
 fi

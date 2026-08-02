@@ -1,5 +1,45 @@
 import Darwin
 import Foundation
+import LeafReaderCore
+
+private final class PiperWorkerOutputState: @unchecked Sendable {
+    let semaphore = DispatchSemaphore(value: 0)
+
+    private let lock = NSLock()
+    private var matchedLine: String?
+    private var didComplete = false
+
+    func consume(_ data: Data, backend: PiperTTSBackend) {
+        var shouldSignal = false
+        lock.lock()
+        if !didComplete {
+            if data.isEmpty {
+                didComplete = true
+                shouldSignal = true
+            } else {
+                backend.workerOutputBuffer.append(data)
+                if let line = backend.nextBufferedWorkerOutputLineLocked() {
+                    matchedLine = line
+                    didComplete = true
+                    shouldSignal = true
+                }
+            }
+        }
+        lock.unlock()
+        if shouldSignal {
+            semaphore.signal()
+        }
+    }
+
+    func finish(timedOut: Bool) -> String? {
+        lock.lock()
+        defer { lock.unlock() }
+        if timedOut {
+            didComplete = true
+        }
+        return matchedLine
+    }
+}
 
 extension PiperTTSBackend {
     func cancelWorkerIdleShutdown() {
@@ -179,40 +219,16 @@ extension PiperTTSBackend {
             return line
         }
 
-        let semaphore = DispatchSemaphore(value: 0)
-        let lock = NSLock()
-        var matchedLine: String?
-        var didComplete = false
+        let state = PiperWorkerOutputState()
 
         handle.readabilityHandler = { [weak self] readableHandle in
             guard let self else { return }
-            let data = readableHandle.availableData
-            lock.lock()
-            defer { lock.unlock() }
-            guard !didComplete else { return }
-            guard !data.isEmpty else {
-                didComplete = true
-                semaphore.signal()
-                return
-            }
-
-            self.workerOutputBuffer.append(data)
-            if let line = self.nextBufferedWorkerOutputLineLocked() {
-                matchedLine = line
-                didComplete = true
-                semaphore.signal()
-            }
+            state.consume(readableHandle.availableData, backend: self)
         }
 
-        let waitResult = semaphore.wait(timeout: .now() + timeout)
+        let waitResult = state.semaphore.wait(timeout: .now() + timeout)
         handle.readabilityHandler = nil
-
-        lock.lock()
-        defer { lock.unlock() }
-        if waitResult == .timedOut {
-            didComplete = true
-        }
-        return matchedLine
+        return state.finish(timedOut: waitResult == .timedOut)
     }
 
     func nextBufferedWorkerOutputLine() -> String? {

@@ -1,4 +1,6 @@
 import Cocoa
+import SwiftUI
+import LeafReaderCore
 
 final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NSTextViewDelegate {
     typealias Metrics = ReadingNotePanelMetrics
@@ -21,22 +23,32 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
     let askInputContainer = NSView()
     let askInputField = ReadingNoteAskTextField(string: "")
     let askSendButton = NSButton(title: "", target: nil, action: nil)
-    let statusLabel = NSTextField(labelWithString: "")
-    let wordCountLabel = NSTextField(labelWithString: "")
     let rootView = NSView()
-    let titleIconView = NSImageView()
-    let metadataView = NSView()
     let editorContainer = NSView()
-    var topIconButtons: [NSButton] = []
+    var editorChromeHostingView: NSHostingView<ReadingNoteEditorChromeView>?
+    var editorActionToolbarHostingView: NSHostingView<ReadingNoteEditorToolbarView>?
+    var editorStatusHostingView: NSHostingView<ReadingNoteEditorStatusView>?
+    var editorWordCountHostingView: NSHostingView<ReadingNoteEditorWordCountView>?
     var aiActionButtons: [NSButton] {
         [explainButton, translateButton, summarizeButton, polishButton, difficultSentenceButton, askButton]
     }
-    let editorState = ReadingNoteEditorState()
+    /// Everything about the note that is not the text view itself.
+    let editorModel: ReadingNoteEditorModel
+    /// The two handles that cannot leave AppKit: a key monitor and the
+    /// auto-save timer.
+    var askInputKeyMonitor: Any?
+    let autoSaveTask = DebouncedTask(delay: 0.8)
     weak var scrollView: NSScrollView?
     var isAskInputVisible: Bool {
         !askInputContainer.isHidden
     }
-    var note: ReadingNote
+    /// The note being edited. `editorModel` owns it; this is a read-only
+    /// projection so the controller cannot hold a second copy that drifts.
+    /// It used to be a stored property assigned alongside the model, and the two
+    /// silently diverged: favouriting from the notes list wrote here, `save()`
+    /// persisted `editorModel`'s copy, and the flag was lost on the next
+    /// keystroke.
+    var note: ReadingNote { editorModel.note }
     let onSave: (ReadingNote) -> Void
     private let onClose: (String) -> Void
     let onShowNotes: () -> Void
@@ -44,6 +56,10 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
     let onDeleteNote: (ReadingNote) -> Void
     let onDocumentQuestionPrompt: DocumentQuestionPromptHandler?
     let onModelSettingsRequired: () -> Void
+    /// Unlike `AITextActionRunner` this task covers retrieval of a
+    /// document-aware prompt.  It belongs to this editor only, so closing one
+    /// note never invalidates another note's request.
+    var documentQuestionPromptTask: Task<Void, Never>?
 
     init(
         note: ReadingNote,
@@ -55,7 +71,7 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
         onDocumentQuestionPrompt: DocumentQuestionPromptHandler? = nil,
         onModelSettingsRequired: @escaping () -> Void = {}
     ) {
-        self.note = note
+        self.editorModel = ReadingNoteEditorModel(note: note)
         self.onSave = onSave
         self.onClose = onClose
         self.onShowNotes = onShowNotes
@@ -95,10 +111,12 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
     }
 
     deinit {
-        if let askInputKeyMonitor = editorState.askInputKeyMonitor {
-            NSEvent.removeMonitor(askInputKeyMonitor)
+        MainActor.assumeIsolated {
+            if let askInputKeyMonitor {
+                NSEvent.removeMonitor(askInputKeyMonitor)
+            }
+            NotificationCenter.default.removeObserver(self)
         }
-        NotificationCenter.default.removeObserver(self)
     }
 
     func show(relativeTo parent: NSWindow?) {
@@ -115,14 +133,13 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
     }
 
     func windowWillClose(_ notification: Notification) {
-        editorState.isClosing = true
-        editorState.cancelAIRequests()
-        aiRunner.cancel()
+        editorModel.isClosing = true
+        cleanupActiveAIRequest()
         if let window {
             window.parent?.removeChildWindow(window)
         }
-        editorState.cancelAutoSave()
-        if editorState.savesOnClose {
+        autoSaveTask.cancel()
+        if editorModel.savesOnClose {
             save()
         }
         onClose(note.id)
@@ -134,13 +151,16 @@ final class ReadingNotePanelController: NSWindowController, NSWindowDelegate, NS
     }
 
     func textDidChange(_ notification: Notification) {
+        // The one place a real edit enters the model. Everything else that pushes
+        // text in (word count, post-render refresh) must not mark the note dirty.
+        editorModel.userDidEdit(textView.string)
         scheduleAutoSave()
         refreshEditorDerivedState()
     }
 
     func closeWithoutSaving() {
-        editorState.cancelAutoSave()
-        editorState.savesOnClose = false
+        autoSaveTask.cancel()
+        editorModel.savesOnClose = false
         close()
     }
 

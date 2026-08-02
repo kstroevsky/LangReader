@@ -1,7 +1,10 @@
 import Foundation
 import SQLite3
+import LeafReaderCore
 
-final class WordRecordSQLiteStore {
+/// SQLite access is serialized by `lock`; the handle and lazy row mappers are
+/// never used outside that critical section after initialization.
+final class WordRecordSQLiteStore: @unchecked Sendable {
     static let shared = WordRecordSQLiteStore(databaseURL: defaultDatabaseURL())
 
     private let lock = NSLock()
@@ -76,7 +79,10 @@ final class WordRecordSQLiteStore {
                 rollbackTransaction()
                 return false
             }
-            commitTransaction()
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return false
+            }
             return true
         }
     }
@@ -93,7 +99,10 @@ final class WordRecordSQLiteStore {
                 rollbackTransaction()
                 return false
             }
-            commitTransaction()
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return false
+            }
             return true
         }
     }
@@ -113,7 +122,10 @@ final class WordRecordSQLiteStore {
                 rollbackTransaction()
                 return false
             }
-            commitTransaction()
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return false
+            }
             return true
         }
     }
@@ -147,7 +159,14 @@ final class WordRecordSQLiteStore {
     func saveWebRecords(documentID: String, records: [StoredWebWordRecord]) -> Bool {
         locked {
             guard beginTransaction() else { return false }
-            _ = execute(sql: "DELETE FROM web_word_records WHERE document_id = ?", bindings: [documentID], operation: "delete existing web records")
+            guard execute(
+                sql: "DELETE FROM web_word_records WHERE document_id = ?",
+                bindings: [documentID],
+                operation: "delete existing web records"
+            ) else {
+                rollbackTransaction()
+                return false
+            }
 
             var didFail = false
             for record in records {
@@ -160,15 +179,38 @@ final class WordRecordSQLiteStore {
                 rollbackTransaction()
                 return false
             }
-            commitTransaction()
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return false
+            }
             return true
         }
     }
 
     @discardableResult
     func upsertWebRecord(documentID: String, record: StoredWebWordRecord) -> Bool {
-        locked {
-            insertWebRecord(documentID: documentID, record: record)
+        upsertWebRecords(documentID: documentID, records: [record])
+    }
+
+    /// A vocabulary group may have several web occurrences.  It is persisted
+    /// as one logical change so a failed write cannot leave half the group with
+    /// an old answer and half with a new one.
+    @discardableResult
+    func upsertWebRecords(documentID: String, records: [StoredWebWordRecord]) -> Bool {
+        guard !records.isEmpty else { return true }
+        return locked {
+            guard beginTransaction() else { return false }
+            for record in records {
+                guard insertWebRecord(documentID: documentID, record: record) else {
+                    rollbackTransaction()
+                    return false
+                }
+            }
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return false
+            }
+            return true
         }
     }
 
@@ -244,7 +286,10 @@ final class WordRecordSQLiteStore {
                     return false
                 }
             }
-            commitTransaction()
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return false
+            }
             return true
         }
     }
@@ -496,7 +541,10 @@ final class WordRecordSQLiteStore {
                 regrouped += 1
             }
 
-            commitTransaction()
+            guard commitTransaction() else {
+                rollbackTransaction()
+                return 0
+            }
             return regrouped
         }
     }
@@ -562,7 +610,10 @@ final class WordRecordSQLiteStore {
         CREATE TABLE IF NOT EXISTS web_word_records (
             document_id TEXT NOT NULL,
             id TEXT NOT NULL,
+            vocabulary_id TEXT,
             word TEXT NOT NULL,
+            lemma TEXT,
+            surface_form TEXT,
             context TEXT NOT NULL,
             occurrence_index INTEGER,
             scroll_progress REAL NOT NULL,
@@ -612,6 +663,9 @@ final class WordRecordSQLiteStore {
 
     private func migrateColumns() {
         ensureColumn(table: "web_word_records", name: "occurrence_index", definition: "INTEGER")
+        ensureColumn(table: "web_word_records", name: "vocabulary_id", definition: "TEXT")
+        ensureColumn(table: "web_word_records", name: "lemma", definition: "TEXT")
+        ensureColumn(table: "web_word_records", name: "surface_form", definition: "TEXT")
         ensureColumn(table: "pdf_word_records", name: "dictionary_tags", definition: "TEXT")
         ensureColumn(table: "web_word_records", name: "dictionary_tags", definition: "TEXT")
         ensureColumn(table: "pdf_word_records", name: "dictionary_frequency", definition: "INTEGER")
@@ -643,7 +697,7 @@ final class WordRecordSQLiteStore {
         executeRaw("BEGIN IMMEDIATE TRANSACTION", operation: "begin transaction")
     }
 
-    private func commitTransaction() {
+    private func commitTransaction() -> Bool {
         executeRaw("COMMIT", operation: "commit transaction")
     }
 
@@ -897,7 +951,10 @@ final class WordRecordSQLiteStore {
             rollbackTransaction()
             return
         }
-        commitTransaction()
+        guard commitTransaction() else {
+            rollbackTransaction()
+            return
+        }
     }
 
     private func insertWebRecord(
@@ -938,7 +995,10 @@ final class WordRecordSQLiteStore {
             rollbackTransaction()
             return false
         }
-        commitTransaction()
+        guard commitTransaction() else {
+            rollbackTransaction()
+            return false
+        }
         return true
     }
 

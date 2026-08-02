@@ -1,8 +1,12 @@
 import Cocoa
 import PDFKit
+import LeafReaderCore
 
 extension ReaderWindowController {
     func loadPDF(_ url: URL, generation: Int? = nil) {
+        let openSpan = ReaderPerformance.begin(.pdfOpen)
+        let firstPageSpan = ReaderPerformance.begin(.firstPageDisplay)
+        defer { ReaderPerformance.end(openSpan) }
         guard let document = PDFDocument(url: url) else {
             if let generation {
                 showDocumentLoadingFailure(
@@ -32,15 +36,16 @@ extension ReaderWindowController {
         restoreReadingNoteAnnotations()
         aiPanel.loadLinkedWordBubbles(pdfWordRecordStore?.linkedWordBubbles(from: storedWordRecords) ?? [])
         loadSavedAIConversationIfNeeded()
-        titleLabel.stringValue = url.deletingPathExtension().lastPathComponent
+        setDocumentTitle(ReaderPresentationState.documentTitle(for: url))
         applyDocumentDiagnostics([], fileName: url.lastPathComponent)
         updateCoverThumbnail(from: document)
-        pageLayoutButton.isHidden = false
-        cropButton.isHidden = false
-        relatedFormsToggle.isHidden = false
-        relatedFormsSwitch.state = showsRelatedWordForms ? .on : .off
+        refreshChromeState(presentation: .pdf)
         updatePDFMarginCropButton()
         applyPDFPageLayout(animated: false)
+        // Page geometry is set; the first page is now laid out for display. The
+        // PDFView still rasterises tiles asynchronously, so this is the
+        // synchronous "ready to show" point, not the last pixel.
+        ReaderPerformance.end(firstPageSpan)
 
         if !didRegisterSelectionObserver {
             didRegisterSelectionObserver = true
@@ -48,7 +53,8 @@ extension ReaderWindowController {
         }
 
         restoreBookProgressOrGoHome()
-        lastPageIndex = currentPageIndex()
+        documentSession.position.lastPageIndex = currentPageIndex()
+        syncPDFZoomPercentFromNative()
         applyReaderTheme()
         updatePageLabel()
         updateZoomLabel()
@@ -79,6 +85,11 @@ extension ReaderWindowController {
     }
 
     func applyLoadedWebDocument(_ document: WebReadableDocument, url: URL, kind: ReaderDocumentKind, generation: Int) {
+        // The on-main cost of presenting an already-parsed document — the part
+        // that blocks the UI. Background parsing in `loadWebDocument` is I/O and
+        // measured separately if needed.
+        let openSpan = ReaderPerformance.begin(.webOpen)
+        defer { ReaderPerformance.end(openSpan) }
         closeReadingNotePanelsForDocumentTransition()
         activateDocumentSession(url: url, kind: kind)
         pdfView.isHidden = true
@@ -98,19 +109,16 @@ extension ReaderWindowController {
         aiPanel.loadLinkedWordBubbles(webWordRecordStore?.linkedWordBubbles(from: storedWebWordRecords) ?? [])
         loadSavedAIConversationIfNeeded()
         aiPanel.setSelectedText("")
-        titleLabel.stringValue = url.deletingPathExtension().lastPathComponent
+        setDocumentTitle(ReaderPresentationState.documentTitle(for: url))
         applyDocumentDiagnostics(document.diagnostics, fileName: url.lastPathComponent)
         if let coverImageURL = document.coverImageURL, let image = NSImage(contentsOf: coverImageURL) {
             coverImageView.image = image
         } else {
             coverImageView.image = NSImage(systemSymbolName: kind == .epub ? "book.closed" : "doc.text", accessibilityDescription: nil)
         }
-        coverImageView.isHidden = false
-        pageLayoutButton.isHidden = true
-        cropButton.isHidden = true
-        relatedFormsToggle.isHidden = true
+        refreshChromeState(presentation: .web)
         updateWebProgressLabel(0)
-        zoomField.stringValue = "100%"
+        updateZoomLabel()
         if let htmlFileURL = document.htmlFileURL {
             webView.loadFileURL(htmlFileURL, allowingReadAccessTo: document.baseURL)
         } else {
@@ -158,7 +166,7 @@ extension ReaderWindowController {
         NSLog("LeafReader EPUB diagnostics for %@: %@", fileName, diagnostics.joined(separator: " | "))
     }
 
-    func scheduleWebPlainTextLoad(_ loader: (() -> String)?, generation: Int) {
+    func scheduleWebPlainTextLoad(_ loader: (@Sendable () -> String)?, generation: Int) {
         guard let loader else { return }
         let documentID = currentFileMD5
         DispatchQueue.global(qos: .utility).async { [weak self] in
@@ -176,14 +184,14 @@ extension ReaderWindowController {
         }
     }
 
+    /// Sets the cover image only. Whether the cover is shown is decided by
+    /// `ReaderChromeState`, which the caller applies afterwards — keeping every
+    /// visibility rule in one place.
     func updateCoverThumbnail(from document: PDFDocument) {
         guard let firstPage = document.page(at: 0) else {
             coverImageView.image = nil
-            coverImageView.isHidden = true
             return
         }
-
         coverImageView.image = firstPage.thumbnail(of: CGSize(width: 56, height: 76), for: .cropBox)
-        coverImageView.isHidden = false
     }
 }

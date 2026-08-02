@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum AISettingsLogicTests {
     static func testEmbeddingDefaults() throws {

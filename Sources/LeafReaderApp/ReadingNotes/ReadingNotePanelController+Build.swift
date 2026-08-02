@@ -1,4 +1,6 @@
 import Cocoa
+import SwiftUI
+import LeafReaderCore
 
 extension ReadingNotePanelController {
     func buildContent(in panel: NSPanel) {
@@ -12,52 +14,47 @@ extension ReadingNotePanelController {
             configureAIButton($0)
             aiToolbar.addArrangedSubview($0)
         }
-        statusLabel.font = NSFont.systemFont(ofSize: 12)
-        statusLabel.lineBreakMode = .byTruncatingTail
-        statusLabel.translatesAutoresizingMaskIntoConstraints = false
-        wordCountLabel.font = AppFont.semibold(ofSize: 12)
-        wordCountLabel.alignment = .right
-        wordCountLabel.translatesAutoresizingMaskIntoConstraints = false
-
         let scrollView = buildEditorScrollView()
         configureEditorTextView(in: scrollView)
 
-        let titleStack = buildTitleStack()
-        let topActions = buildTopActions()
-        let metadata = buildMetadataStack()
+        let editorChrome = NSHostingView(rootView: makeEditorChromeView(theme: ReaderTheme.selected))
+        editorChrome.translatesAutoresizingMaskIntoConstraints = false
+        editorChromeHostingView = editorChrome
+
+        let editorActions = NSHostingView(rootView: makeEditorActionToolbarView(theme: ReaderTheme.selected))
+        editorActions.translatesAutoresizingMaskIntoConstraints = false
+        editorActionToolbarHostingView = editorActions
+
+        let editorStatus = NSHostingView(rootView: makeEditorStatusView(theme: ReaderTheme.selected))
+        editorStatus.translatesAutoresizingMaskIntoConstraints = false
+        editorStatusHostingView = editorStatus
+
+        let editorWordCount = NSHostingView(rootView: ReadingNoteEditorWordCountView(model: editorModel, theme: ReaderTheme.selected))
+        editorWordCount.translatesAutoresizingMaskIntoConstraints = false
+        editorWordCountHostingView = editorWordCount
 
         editorContainer.wantsLayer = true
         editorContainer.translatesAutoresizingMaskIntoConstraints = false
         let editorToolbar = buildEditorToolbar()
         editorContainer.addSubview(scrollView)
         editorContainer.addSubview(editorToolbar)
-        editorContainer.addSubview(wordCountLabel)
+        editorContainer.addSubview(editorActions)
+        editorContainer.addSubview(editorWordCount)
 
-        rootView.addSubview(titleStack)
-        rootView.addSubview(topActions)
-        rootView.addSubview(metadataView)
+        rootView.addSubview(editorChrome)
         rootView.addSubview(editorContainer)
-        rootView.addSubview(statusLabel)
+        rootView.addSubview(editorStatus)
         rootView.addSubview(aiToolbarContainer)
         rootView.addSubview(askInputContainer)
         NSLayoutConstraint.activate([
-            titleStack.topAnchor.constraint(equalTo: rootView.topAnchor, constant: 24),
-            titleStack.centerXAnchor.constraint(equalTo: rootView.centerXAnchor),
-            topActions.topAnchor.constraint(equalTo: rootView.topAnchor, constant: 18),
-            topActions.trailingAnchor.constraint(equalTo: metadataView.trailingAnchor),
+            editorChrome.topAnchor.constraint(equalTo: rootView.topAnchor),
+            editorChrome.leadingAnchor.constraint(equalTo: rootView.leadingAnchor),
+            editorChrome.trailingAnchor.constraint(equalTo: rootView.trailingAnchor),
+            editorChrome.heightAnchor.constraint(equalToConstant: Metrics.chromeHeaderHeight),
 
-            metadataView.topAnchor.constraint(equalTo: rootView.topAnchor, constant: 74),
-            metadataView.leadingAnchor.constraint(equalTo: rootView.leadingAnchor, constant: Metrics.panelOuterMargin),
-            metadataView.trailingAnchor.constraint(equalTo: rootView.trailingAnchor, constant: -Metrics.panelOuterMargin),
-            metadataView.heightAnchor.constraint(equalToConstant: Metrics.metadataHeight),
-            metadata.stack.leadingAnchor.constraint(equalTo: metadataView.leadingAnchor, constant: Metrics.metadataHorizontalInset),
-            metadata.stack.trailingAnchor.constraint(equalTo: metadataView.trailingAnchor, constant: -Metrics.metadataHorizontalInset),
-            metadata.stack.centerYAnchor.constraint(equalTo: metadataView.centerYAnchor),
-            metadata.bookItem.widthAnchor.constraint(lessThanOrEqualTo: metadata.stack.widthAnchor, multiplier: 0.3),
-
-            editorContainer.topAnchor.constraint(equalTo: metadataView.bottomAnchor, constant: 10),
-            editorContainer.leadingAnchor.constraint(equalTo: metadataView.leadingAnchor),
-            editorContainer.trailingAnchor.constraint(equalTo: metadataView.trailingAnchor),
+            editorContainer.topAnchor.constraint(equalTo: editorChrome.bottomAnchor, constant: 10),
+            editorContainer.leadingAnchor.constraint(equalTo: rootView.leadingAnchor, constant: Metrics.panelOuterMargin),
+            editorContainer.trailingAnchor.constraint(equalTo: rootView.trailingAnchor, constant: -Metrics.panelOuterMargin),
             editorContainer.bottomAnchor.constraint(equalTo: rootView.bottomAnchor, constant: -42),
 
             scrollView.topAnchor.constraint(equalTo: editorContainer.topAnchor),
@@ -68,13 +65,18 @@ extension ReadingNotePanelController {
             editorToolbar.trailingAnchor.constraint(equalTo: editorContainer.trailingAnchor),
             editorToolbar.bottomAnchor.constraint(equalTo: editorContainer.bottomAnchor),
             editorToolbar.heightAnchor.constraint(equalToConstant: Metrics.editorToolbarHeight),
-            statusLabel.leadingAnchor.constraint(equalTo: metadataView.leadingAnchor, constant: 6),
-            statusLabel.trailingAnchor.constraint(equalTo: metadataView.trailingAnchor, constant: -6),
-            statusLabel.bottomAnchor.constraint(equalTo: rootView.bottomAnchor, constant: -9),
-            statusLabel.heightAnchor.constraint(equalToConstant: 16),
-            wordCountLabel.trailingAnchor.constraint(equalTo: editorContainer.trailingAnchor, constant: -20),
-            wordCountLabel.centerYAnchor.constraint(equalTo: editorToolbar.centerYAnchor),
-            wordCountLabel.widthAnchor.constraint(equalToConstant: 52)
+            editorActions.leadingAnchor.constraint(equalTo: editorContainer.leadingAnchor, constant: 10),
+            editorActions.centerYAnchor.constraint(equalTo: editorToolbar.centerYAnchor),
+            editorActions.widthAnchor.constraint(equalToConstant: 126),
+            editorActions.heightAnchor.constraint(equalToConstant: 32),
+            editorStatus.leadingAnchor.constraint(equalTo: editorContainer.leadingAnchor, constant: 6),
+            editorStatus.trailingAnchor.constraint(equalTo: editorContainer.trailingAnchor, constant: -6),
+            editorStatus.bottomAnchor.constraint(equalTo: rootView.bottomAnchor, constant: -9),
+            editorStatus.heightAnchor.constraint(equalToConstant: 16),
+            editorWordCount.trailingAnchor.constraint(equalTo: editorContainer.trailingAnchor, constant: -20),
+            editorWordCount.centerYAnchor.constraint(equalTo: editorToolbar.centerYAnchor),
+            editorWordCount.widthAnchor.constraint(equalToConstant: 52),
+            editorWordCount.heightAnchor.constraint(equalToConstant: 20)
         ])
         updateWordCount()
         DispatchQueue.main.async { [weak self] in
@@ -101,92 +103,7 @@ extension ReadingNotePanelController {
         return scrollView
     }
 
-    private func buildTitleStack() -> NSStackView {
-        let title = NSTextField(labelWithString: AppText.localized("阅读笔记", "Reading Note"))
-        title.font = AppFont.semibold(ofSize: 19)
-        title.alignment = .center
-        title.translatesAutoresizingMaskIntoConstraints = false
-        titleIconView.image = NSImage(systemSymbolName: "pencil.and.list.clipboard", accessibilityDescription: nil)
-        titleIconView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 16, weight: .semibold)
-        titleIconView.translatesAutoresizingMaskIntoConstraints = false
-        titleIconView.widthAnchor.constraint(equalToConstant: 20).isActive = true
-        titleIconView.heightAnchor.constraint(equalToConstant: 20).isActive = true
-
-        let stack = NSStackView(views: [titleIconView, title])
-        stack.orientation = .horizontal
-        stack.alignment = .centerY
-        stack.spacing = 8
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        return stack
-    }
-
-    private func buildTopActions() -> NSStackView {
-        let listButton = iconButton(
-            symbol: "sidebar.right",
-            action: #selector(showNotesTapped(_:)),
-            pointSize: Metrics.topIconPointSize
-        )
-        let moreButton = iconButton(
-            symbol: "ellipsis.curlybraces",
-            action: #selector(moreTapped(_:)),
-            pointSize: Metrics.topIconPointSize
-        )
-        topIconButtons = [listButton, moreButton]
-
-        let stack = NSStackView(views: [listButton, moreButton])
-        stack.orientation = .horizontal
-        stack.alignment = .centerY
-        stack.spacing = 8
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        return stack
-    }
-
-    private func buildMetadataStack() -> (stack: NSStackView, bookItem: NSView) {
-        metadataView.wantsLayer = true
-        metadataView.translatesAutoresizingMaskIntoConstraints = false
-        let bookMeta = metadataItem(title: AppText.localized("书籍", "Book"), value: note.documentTitle)
-        let locationMeta = metadataItem(title: AppText.localized("位置", "Location"), value: noteLocationText())
-        let createdMeta = metadataItem(title: AppText.localized("创建时间", "Created"), value: createdAtText())
-        let stack = NSStackView(views: [bookMeta, locationMeta, createdMeta])
-        stack.orientation = .horizontal
-        stack.alignment = .centerY
-        stack.distribution = .fill
-        stack.spacing = 18
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        metadataView.addSubview(stack)
-        return (stack, bookMeta)
-    }
-
-    private func metadataItem(title: String, value: String) -> NSStackView {
-        let titleLabel = NSTextField(labelWithString: title)
-        titleLabel.font = AppFont.semibold(ofSize: Metrics.metadataFontSize)
-        titleLabel.lineBreakMode = .byTruncatingTail
-        titleLabel.maximumNumberOfLines = 1
-        titleLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
-        titleLabel.setContentHuggingPriority(.required, for: .horizontal)
-
-        let valueLabel = NSTextField(labelWithString: value)
-        valueLabel.font = AppFont.semibold(ofSize: Metrics.metadataFontSize)
-        valueLabel.lineBreakMode = .byTruncatingTail
-        valueLabel.maximumNumberOfLines = 1
-        valueLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        valueLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
-
-        let stack = NSStackView(views: [titleLabel, valueLabel])
-        stack.orientation = .horizontal
-        stack.alignment = .centerY
-        stack.spacing = 6
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        stack.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        stack.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        return stack
-    }
-
     private func buildEditorToolbar() -> NSStackView {
-        let save = iconButton(symbol: "square.and.arrow.down", action: #selector(saveTapped(_:)))
-        save.toolTip = AppText.localized("保存当前阅读笔记", "Save this reading note")
-        let undo = iconButton(symbol: "arrow.uturn.backward", action: #selector(undoTapped(_:)))
-        let redo = iconButton(symbol: "arrow.uturn.forward", action: #selector(redoTapped(_:)))
         let bold = textButton(title: "B", action: #selector(boldTapped(_:)))
         let italic = textButton(title: "I", action: #selector(italicTapped(_:)))
         italic.font = NSFontManager.shared.convert(AppFont.semibold(ofSize: 16), toHaveTrait: .italicFontMask)
@@ -195,12 +112,12 @@ extension ReadingNotePanelController {
         let template = iconButton(symbol: "doc.plaintext", action: #selector(templateTapped(_:)))
         template.toolTip = AppText.localized("插入阅读笔记模板", "Insert reading note template")
         let image = iconButton(symbol: "photo", action: #selector(imageTapped(_:)))
-        let buttons = [save, undo, redo, toolbarSeparator(), bold, italic, list, check, template, image]
+        let buttons = [toolbarSeparator(), bold, italic, list, check, template, image]
         let stack = NSStackView(views: buttons)
         stack.orientation = .horizontal
         stack.alignment = .centerY
         stack.spacing = 14
-        stack.edgeInsets = NSEdgeInsets(top: 0, left: 24, bottom: 0, right: 86)
+        stack.edgeInsets = NSEdgeInsets(top: 0, left: 150, bottom: 0, right: 86)
         stack.translatesAutoresizingMaskIntoConstraints = false
         return stack
     }

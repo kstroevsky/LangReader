@@ -1,0 +1,25 @@
+name: Architecture
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  core-tests:
+    runs-on: macos-15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify pinned toolchain
+        run: |
+          sw_vers
+          xcodebuild -version
+          swift --version
+      - name: Run LeafReaderCore target tests
+        run: swift test --filter LeafReaderCoreTests
+      - name: Enforce the portable core boundary
+        run: ./scripts/check_core_portable.sh

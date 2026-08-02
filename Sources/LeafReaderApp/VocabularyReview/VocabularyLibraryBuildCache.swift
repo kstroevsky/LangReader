@@ -1,5 +1,6 @@
 import Foundation
 import NaturalLanguage
+import LeafReaderCore
 
 /// Per-session cache of built export records, keyed by document.
 ///
@@ -13,7 +14,9 @@ import NaturalLanguage
 /// anything that affects the built output changes. `VocabularyLibraryBuildCache`
 /// itself never decides freshness; it only compares fingerprints the caller
 /// supplies.
-final class VocabularyLibraryBuildCache {
+/// Thread-safe through `lock`; callers intentionally share this cache between
+/// the main actor and background library rebuilds.
+final class VocabularyLibraryBuildCache: @unchecked Sendable {
     private let lock = NSLock()
     private var entries: [String: (fingerprint: Int, records: [VocabularyExportRecord])] = [:]
 
@@ -89,6 +92,9 @@ final class VocabularyLibraryBuildCache {
             hasher.combine(record.id)
             hasher.combine(record.createdAt)
             hasher.combine(record.word)
+            hasher.combine(record.vocabularyID)
+            hasher.combine(record.lemma)
+            hasher.combine(record.surfaceForm)
             hasher.combine(record.answer)
             hasher.combine(record.context)
             hasher.combine(record.dictionaryTags)

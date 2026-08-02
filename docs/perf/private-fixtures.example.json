@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    {
+      "format": "pdf",
+      "alias": "representative-large-pdf",
+      "path": "/absolute/private/path/to/representative.pdf"
+    },
+    {
+      "format": "epub",
+      "alias": "representative-epub",
+      "path": "/absolute/private/path/to/representative.epub"
+    },
+    {
+      "format": "docx",
+      "alias": "representative-docx",
+      "path": "/absolute/private/path/to/representative.docx"
+    }
+  ],
+  "datasets": {
+    "ai_conversation_messages": 100,
+    "notes": 100,
+    "vocabulary_records": 1000
+  }
+}

@@ -88,7 +88,10 @@ check_version_status() {
 }
 
 check_retired_paths() {
-  if rg -n 'mac-app/|\./tests/run\.sh' "$WIKI_DIR" --glob '*.md' >&2; then
+  # This used `rg`, which is not installed as a binary on every machine that
+  # builds the project. A missing command exits 127, so the `if` was false and
+  # this check quietly passed no matter what the wiki said.
+  if grep -rnE 'mac-app/|\./tests/run\.sh' --include='*.md' "$WIKI_DIR" >&2; then
     fail "wiki still references the retired flat source tree or test command"
   fi
 }

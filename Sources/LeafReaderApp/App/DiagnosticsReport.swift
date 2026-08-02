@@ -1,5 +1,6 @@
 import Foundation
 import Sparkle
+import LeafReaderCore
 
 struct DiagnosticRow {
     let title: String
@@ -7,6 +8,7 @@ struct DiagnosticRow {
     let isOK: Bool
 }
 
+@MainActor
 enum DiagnosticsReport {
     static func rows(
         updater: SPUUpdater?,

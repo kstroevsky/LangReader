@@ -1,6 +1,7 @@
 import Cocoa
 import PDFKit
 import WebKit
+import LeafReaderCore
 
 extension ReaderWindowController {
     func currentFocusedSelectionForAI() -> ReaderFocusedSelection? {
@@ -16,13 +17,13 @@ extension ReaderWindowController {
         guard !normalizedSelection.isEmpty else { return "" }
 
         guard currentDocumentKind == .pdf else {
-            if !currentWebSelectionContext.isEmpty {
+            if !selectionState.webSelectionContext.isEmpty {
                 return ReaderAIContextBuilder.selectedTextContext(
                     selectedText: normalizedSelection,
-                    sourceText: currentWebSelectionContext,
+                    sourceText: selectionState.webSelectionContext,
                     radius: 40
                 )
-                    ?? currentWebSelectionContext
+                    ?? selectionState.webSelectionContext
             }
             return ReaderAIContextBuilder.selectedTextContext(
                 selectedText: normalizedSelection,
@@ -136,9 +137,9 @@ extension ReaderWindowController {
 
     func explicitReaderSelectedTextForAI() -> String {
         if currentDocumentKind == .pdf {
-            return currentPDFSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
+            return selectionState.pdfSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        return currentWebSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return selectionState.webSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func currentReadAloudSelectionTextForAI() -> String {
@@ -185,7 +186,7 @@ extension ReaderWindowController {
         let parts = (lower...upper).compactMap { index -> String? in
             guard index != currentIndex,
                   let page = document.page(at: index) else { return nil }
-            let text = ReaderAIContextBuilder.pdfPageTranslationText(document: document, page: page, title: titleLabel.stringValue)
+            let text = ReaderAIContextBuilder.pdfPageTranslationText(document: document, page: page, title: documentTitle)
             let normalized = ReaderAIContextBuilder.normalizeReaderTextPreservingParagraphs(text)
             guard !normalized.isEmpty else { return nil }
             return "[Page \(index + 1)]\n\(ReaderAIContextPolicy.prefix(normalized, limit: ReaderAIContextPolicy.nearbyPageExcerptLimit))"
@@ -217,7 +218,7 @@ extension ReaderWindowController {
         return ReaderAIContextBuilder.pdfPageTranslationText(
             document: document,
             page: page,
-            title: titleLabel.stringValue
+            title: documentTitle
         )
     }
 }

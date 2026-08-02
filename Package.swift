@@ -1,4 +1,4 @@
-// swift-tools-version: 5.10
+// swift-tools-version: 6.0
 
 import Foundation
 import PackageDescription
@@ -16,14 +16,31 @@ let sparkleHome = sparkleCandidates.first {
 let package = Package(
     name: "LeafReader",
     platforms: [
-        .macOS(.v12)
+        .macOS(.v14)
     ],
     products: [
         .executable(name: "LeafReaderApp", targets: ["LeafReaderApp"])
     ],
     targets: [
+        // The platform-neutral core. It links no UI framework, so anything that
+        // reaches for AppKit, PDFKit or WebKit fails here rather than in review.
+        //
+        // The shipping build compiles the core as a real, separate module too:
+        // `scripts/build_app.sh` builds it via `scripts/build_core_module.sh`
+        // (Swift 6, `-package-name LeafReader`) and links the app against it, so
+        // the boundary the compiler enforces here is the same one the app binary
+        // is built on — not just a check. This SwiftPM manifest is what
+        // `swift build` and the portability check use; the two stay in step.
+        .target(
+            name: "LeafReaderCore",
+            path: "Sources/LeafReaderCore",
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
+            ]
+        ),
         .executableTarget(
             name: "LeafReaderApp",
+            dependencies: ["LeafReaderCore"],
             path: "Sources/LeafReaderApp",
             exclude: [
                 "App/Assets",
@@ -31,7 +48,8 @@ let package = Package(
                 "Resources"
             ],
             swiftSettings: [
-                .unsafeFlags(["-F", sparkleHome])
+                .unsafeFlags(["-F", sparkleHome]),
+                .swiftLanguageMode(.v6)
             ],
             linkerSettings: [
                 .linkedFramework("AVFoundation"),
@@ -47,6 +65,39 @@ let package = Package(
                     "-framework", "Sparkle",
                     "-Xlinker", "-rpath",
                     "-Xlinker", "@executable_path/../Frameworks"
+                ])
+            ]
+        ),
+        .testTarget(
+            name: "LeafReaderCoreTests",
+            dependencies: ["LeafReaderCore"],
+            path: "Tests/LeafReaderCoreTests",
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
+            ],
+            linkerSettings: [
+                .linkedLibrary("sqlite3")
+            ]
+        ),
+        // App-target tests exercise the AppKit/SwiftUI ownership seam.  Core
+        // tests intentionally cannot import these types.
+        .testTarget(
+            name: "LeafReaderAppTests",
+            dependencies: ["LeafReaderApp", "LeafReaderCore"],
+            path: "Tests/LeafReaderAppTests",
+            swiftSettings: [
+                .unsafeFlags(["-F", sparkleHome]),
+                .swiftLanguageMode(.v6)
+            ],
+            linkerSettings: [
+                .linkedFramework("Cocoa"),
+                .linkedFramework("PDFKit"),
+                .linkedFramework("WebKit"),
+                .unsafeFlags([
+                    "-F", sparkleHome,
+                    "-framework", "Sparkle",
+                    "-Xlinker", "-rpath",
+                    "-Xlinker", sparkleHome
                 ])
             ]
         )

@@ -1,10 +1,11 @@
-import Cocoa
+import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     func crossLingualRetrievalQueryIfNeeded(
         question: String,
         currentPageText: String,
-        generation: Int,
+        requestID: UUID,
         completion: @escaping (String?) -> Void
     ) {
         guard questionLooksMostlyChinese(question),
@@ -26,23 +27,22 @@ extension ReaderWindowController {
         Chinese question:
         \(question)
         """
-        retrievalQueryTask?.cancel()
-        retrievalQueryTask = retrievalQueryClient.send(messages: [
-            ChatMessage(role: "system", content: "You create concise English search queries."),
-            ChatMessage(role: "user", content: prompt)
-        ]) { [weak self] result in
-            DispatchQueue.main.async {
-                guard let self, generation == self.documentPromptGeneration else { return }
-                self.retrievalQueryTask = nil
-                if case .success(let text) = result {
-                    let cleaned = text
-                        .replacingOccurrences(of: #"^[\"“”']+|[\"“”']+$"#, with: "", options: .regularExpression)
-                        .trimmingCharacters(in: .whitespacesAndNewlines)
-                    completion(cleaned.isEmpty ? nil : String(cleaned.prefix(240)))
-                    return
-                }
+        aiState.retrievalQueryTasks.removeValue(forKey: requestID)?.cancel()
+        aiState.retrievalQueryTasks[requestID] = Task { [weak self] in
+            let response = try? await self?.retrievalQueryClient.response(messages: [
+                ChatMessage(role: "system", content: "You create concise English search queries."),
+                ChatMessage(role: "user", content: prompt)
+            ])
+            guard let self, !Task.isCancelled, self.isDocumentAgentPromptActive(requestID) else { return }
+            self.aiState.retrievalQueryTasks[requestID] = nil
+            guard let text = response else {
                 completion(nil)
+                return
             }
+            let cleaned = text
+                .replacingOccurrences(of: #"^[\"“”']+|[\"“”']+$"#, with: "", options: .regularExpression)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            completion(cleaned.isEmpty ? nil : String(cleaned.prefix(240)))
         }
     }
 

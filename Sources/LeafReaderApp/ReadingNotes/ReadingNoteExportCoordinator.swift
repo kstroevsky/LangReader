@@ -1,5 +1,7 @@
 import Cocoa
+import LeafReaderCore
 
+@MainActor
 final class ReadingNoteExportCoordinator {
     struct Request {
         let format: ReadingNoteExporter.Format
@@ -112,7 +114,7 @@ final class ReadingNoteExportCoordinator {
     }
 
     private static func formatOptions() -> [ExportPanelSupport.FormatOption] {
-        ReadingNoteExporter.Format.allCases.map(formatOption)
+        ReadingNoteExporter.Format.allCases.map { formatOption(for: $0) }
     }
 
     private static func formatOption(for format: ReadingNoteExporter.Format) -> ExportPanelSupport.FormatOption {

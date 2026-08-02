@@ -1,4 +1,5 @@
-import Cocoa
+import Foundation
+import LeafReaderCore
 
 extension AIChatPanel {
     func appendNotice(_ text: String) {
@@ -93,17 +94,16 @@ extension AIChatPanel {
         if let onDocumentQuestionPrompt {
             setBusy(true, text: AppText.thinking)
             let request = DocumentQuestionPromptRequest(question: question, context: context)
-            onDocumentQuestionPrompt(request) { [weak self] prompt in
-                DispatchQueue.main.async {
-                    guard let self else { return }
-                    self.setBusy(false, text: "")
-                    if let prompt {
-                        self.appendMessage(ChatMessage(role: "user", content: prompt))
-                        self.requestAI()
-                        return
-                    }
-                    self.enqueueCurrentReadingFollowUp(question: question, context: context)
+            Task { @MainActor [weak self] in
+                let prompt = await onDocumentQuestionPrompt(request)
+                guard let self else { return }
+                self.setBusy(false, text: "")
+                if let prompt {
+                    self.appendMessage(ChatMessage(role: "user", content: prompt))
+                    self.requestAI()
+                    return
                 }
+                self.enqueueCurrentReadingFollowUp(question: question, context: context)
             }
             return
         }

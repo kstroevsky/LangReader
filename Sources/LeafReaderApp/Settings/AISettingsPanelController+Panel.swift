@@ -1,6 +1,19 @@
 import Cocoa
+import LeafReaderCore
 
 extension AISettingsPanelController {
+    /// Selects a tab in the panel that is already on screen. Settings menu
+    /// actions can arrive while the user is editing another tab; creating a
+    /// second modal panel in that case leaves several activation observers
+    /// competing to become key and can surface the wrong page.
+    @discardableResult
+    func selectVisibleTab(_ tab: SettingsTab) -> Bool {
+        guard let panel, panel.isVisible else { return false }
+        settingsTabChanged(index: tab.rawValue)
+        ModalOverlayManager.shared.reactivate(panel)
+        return true
+    }
+
     func showPanel(_ panel: NSWindow, attachedTo parent: NSWindow) {
         ModalOverlayManager.shared.present(panel, attachedTo: parent)
     }
@@ -12,7 +25,9 @@ extension AISettingsPanelController {
             object: NSApp,
             queue: .main
         ) { [weak self] _ in
-            self?.reactivatePanelIfNeeded()
+            Task { @MainActor [weak self] in
+                self?.reactivatePanelIfNeeded()
+            }
         }
     }
 
@@ -35,55 +50,16 @@ extension AISettingsPanelController {
     }
 
     func saveCurrentSettings(in panel: NSWindow) -> Bool {
-        guard let modelPopup, let keyField = secureKeyField else { return false }
-        let modelID = modelPopup.selectedItem?.representedObject as? String ?? AISettingsStore.selectedModel.id
-        let customEndpoint = customEndpointField?.stringValue ?? ""
-        let customModelName = customModelField?.stringValue ?? ""
-        if modelID == AISettingsStore.customModelID, let error = AISettingsStore.customValidationError(endpoint: customEndpoint, modelName: customModelName) {
-            showValidationAlert(message: error, in: panel)
-            return false
+        // Migrated pages own their own settings: validate them all before
+        // committing any, so a rejected page cannot leave a half-saved panel.
+        let pages = settingsPages
+        for page in pages {
+            if let error = page.validationError() {
+                showValidationAlert(message: error, in: panel)
+                return false
+            }
         }
-        if modelID == AISettingsStore.ollamaModelID, let error = AISettingsStore.ollamaValidationError(modelName: customModelName) {
-            showValidationAlert(message: error, in: panel)
-            return false
-        }
-        if modelID == AISettingsStore.localOpenAIModelID, let error = AISettingsStore.localOpenAIValidationError(endpoint: customEndpoint, modelName: customModelName) {
-            showValidationAlert(message: error, in: panel)
-            return false
-        }
-
-        if let rawLanguage = languagePopup?.selectedItem?.representedObject as? String,
-           let language = AppText.Language(rawValue: rawLanguage) {
-            AppText.selectedLanguage = language
-        }
-        if let rawTheme = themePopup?.selectedItem?.representedObject as? String,
-           let theme = ReaderTheme(rawValue: rawTheme) {
-            ReaderTheme.selected = theme
-        }
-        if let pdfDimmingSlider {
-            ReaderTheme.pdfDimmingStrength = pdfDimmingStrength(forBrightnessSliderValue: pdfDimmingSlider.doubleValue)
-        }
-        AISettingsStore.save(
-            modelID: modelID,
-            apiKey: keyField.stringValue,
-            customEndpoint: customEndpoint,
-            customModelName: customModelName
-        )
-        let embeddingEndpoint = selectedEmbeddingEndpointForSave()?.endpoint ?? (embeddingEndpointField?.stringValue ?? "")
-        AISettingsStore.saveEmbedding(
-            endpoint: embeddingEndpoint,
-            modelName: embeddingModelField?.stringValue ?? "",
-            apiKey: embeddingKeyField?.stringValue ?? "",
-            optionID: embeddingProviderPopup?.selectedItem?.representedObject as? String
-        )
-        AISettingsStore.saveSpeakSelectedWordEnabled(speakSelectedWordCheckbox?.state == .on)
-        AISettingsStore.saveAIConversationEnabled(saveAIConversationCheckbox?.state == .on)
-        AISettingsStore.saveAutoEmbeddingIndexEnabled(autoEmbeddingIndexCheckbox?.state == .on)
-        saveSelectedSpeechSettings(
-            runtimeID: speechRuntimePopup?.selectedItem?.representedObject as? String,
-            voiceID: speechVoicePopup?.selectedItem?.representedObject as? String,
-            speedID: speechSpeedPopup?.selectedItem?.representedObject as? String
-        )
+        pages.forEach { $0.commit() }
         return true
     }
 
@@ -103,7 +79,7 @@ extension AISettingsPanelController {
         embeddingPage?.isHidden = index != 2
         speechPage?.isHidden = index != 3
         cachePage?.isHidden = index != 4
-        currentIndexStatusLabel?.stringValue = currentVectorIndexStatus?() ?? AppText.noPDF
+        cacheSettings?.refresh(currentBookStatus: currentVectorIndexStatus?() ?? AppText.noPDF)
         if index == 4 {
             refreshVectorCacheStatus()
         }

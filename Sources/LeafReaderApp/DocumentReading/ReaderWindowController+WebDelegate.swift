@@ -90,7 +90,7 @@ extension ReaderWindowController {
             }
         }
         applyWebZoomToPage()
-        zoomField.stringValue = "\(webZoomPercent)%"
+        updateZoomLabel()
         applyPendingWebProgressRestoreIfReady()
         completePendingVocabularyLibraryNavigationIfNeeded()
     }

@@ -1,43 +1,43 @@
 import Cocoa
+import SwiftUI
+import LeafReaderCore
 
+/// The window shell around the Reading Notes list.
+///
+/// The list itself is SwiftUI (`ReadingNotesListView`); what stays here is the
+/// part SwiftUI does not own — a borderless panel, where it sits relative to
+/// the reader window, and keeping the model's theme in step with the app's.
+@MainActor
 final class ReadingNotesPanelController: NSObject {
     private enum Metrics {
         static let panelSize = NSSize(width: 560, height: 420)
-        static let outerMargin: CGFloat = 28
-        static let headerTop: CGFloat = 34
-        static let headerLeading: CGFloat = 34
-        static let headerIconSize: CGFloat = 30
-        static let actionButtonWidth: CGFloat = 88
-        static let actionButtonHeight: CGFloat = 32
-        static let searchHeight: CGFloat = 32
+        static let cornerRadius: CGFloat = 16
+        static let screenInset: CGFloat = 12
     }
 
-    private enum ActionButtonRole {
-        case primary
-        case secondary
+    var onOpenNote: ((ReadingNote) -> Void)? {
+        didSet { model.onOpenNote = onOpenNote }
     }
-
-    var onOpenNote: ((ReadingNote) -> Void)?
-    var onDeleteNote: ((ReadingNote) -> Void)?
-    var onToggleFavorite: ((ReadingNote) -> Void)?
-    var onExport: (() -> Void)?
+    var onDeleteNote: ((ReadingNote) -> Void)? {
+        didSet { model.onDeleteNote = onDeleteNote }
+    }
+    var onToggleFavorite: ((ReadingNote) -> Void)? {
+        didSet { model.onToggleFavorite = onToggleFavorite }
+    }
+    var onExport: (() -> Void)? {
+        didSet { model.onExport = onExport }
+    }
     var onClose: (() -> Void)?
 
     private(set) var panel: NSWindow?
-    private let rootView = NSView()
-    private let iconView = NSImageView()
-    private let titleLabel = NSTextField(labelWithString: AppText.localized("阅读笔记", "Reading Notes"))
-    private let searchField = NSSearchField()
-    private let stack = ReadingNotesStackView()
-    private let summaryLabel = NSTextField(labelWithString: "")
-    private var exportButton: NSButton?
-    private var closeButton: NSButton?
-    private var notes: [ReadingNote] = []
-    private var rows: [ReadingNoteListRowViewModel] = []
-    private var searchQuery = ""
+    private let model = ReadingNotesListModel()
 
     override init() {
         super.init()
+        model.onClose = { [weak self] in
+            guard let self else { return }
+            self.close(attachedTo: self.panel?.parent)
+        }
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(readerThemeDidChange(_:)),
@@ -51,35 +51,26 @@ final class ReadingNotesPanelController: NSObject {
     }
 
     func show(notes: [ReadingNote], parent: NSWindow?) {
-        updateData(notes)
+        model.update(notes: notes)
+        model.theme = ReaderTheme.selected
         if panel == nil {
             panel = buildPanel()
         }
-        resetPanelSize()
-        applyTheme(ReaderTheme.selected)
-        refreshContent()
         guard let panel else { return }
+        panel.setContentSize(Metrics.panelSize)
+        applyAppearance(ReaderTheme.selected)
         center(panel, relativeTo: parent)
         panel.orderFrontRegardless()
         panel.makeKeyAndOrderFront(nil)
-        focusSearchField()
-    }
-
-    private func focusSearchField() {
-        DispatchQueue.main.async { [weak self, weak panel] in
-            guard let self, let panel else { return }
-            panel.makeFirstResponder(self.searchField)
-        }
     }
 
     func update(notes: [ReadingNote]) {
-        updateData(notes)
-        refreshContent()
+        model.update(notes: notes)
     }
 
     func refreshTheme() {
-        applyTheme(ReaderTheme.selected)
-        refreshContent()
+        model.theme = ReaderTheme.selected
+        applyAppearance(ReaderTheme.selected)
     }
 
     func close(attachedTo parent: NSWindow?) {
@@ -101,30 +92,17 @@ final class ReadingNotesPanelController: NSObject {
         panel.isOpaque = false
         panel.hasShadow = true
         panel.isReleasedWhenClosed = false
-        configureRootView(for: panel)
 
-        iconView.image = NSImage(systemSymbolName: "note.text", accessibilityDescription: nil)?
-            .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 26, weight: .semibold))
-        iconView.translatesAutoresizingMaskIntoConstraints = false
-
-        titleLabel.font = AppFont.semibold(ofSize: 20)
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        summaryLabel.font = AppFont.semibold(ofSize: 13)
-        summaryLabel.translatesAutoresizingMaskIntoConstraints = false
-        configureSearchField()
-
-        let scrollView = buildScrollView()
-        let exportButton = actionButton(title: AppText.localized("导出笔记", "Export Notes"), action: #selector(exportTapped(_:)))
-        let closeButton = actionButton(title: AppText.close, action: #selector(closeTapped(_:)))
-        self.exportButton = exportButton
-        self.closeButton = closeButton
-
-        for view in [iconView, titleLabel, searchField, summaryLabel, scrollView, exportButton, closeButton] {
-            rootView.addSubview(view)
-        }
-        installConstraints(scrollView: scrollView, exportButton: exportButton, closeButton: closeButton)
-        applyTheme(ReaderTheme.selected)
+        // The hosting view is clipped to the panel's rounded corners; the panel
+        // is borderless, so nothing else would round them.
+        let hosting = NSHostingView(rootView: ReadingNotesListView(model: model))
+        hosting.wantsLayer = true
+        hosting.layer?.cornerRadius = Metrics.cornerRadius
+        hosting.layer?.borderWidth = 1
+        hosting.layer?.masksToBounds = true
+        hosting.frame = NSRect(origin: .zero, size: Metrics.panelSize)
+        hosting.autoresizingMask = [.width, .height]
+        panel.contentView = hosting
         return panel
     }
 
@@ -138,223 +116,38 @@ final class ReadingNotesPanelController: NSObject {
             x: parentFrame.midX - panel.frame.width / 2,
             y: parentFrame.midY - panel.frame.height / 2
         )
-        panel.setFrameOrigin(clampedOrigin(origin, panelSize: panel.frame.size, visibleFrame: parent.screen?.visibleFrame))
+        panel.setFrameOrigin(
+            clampedOrigin(origin, panelSize: panel.frame.size, visibleFrame: parent.screen?.visibleFrame)
+        )
     }
 
     private func clampedOrigin(_ origin: NSPoint, panelSize: NSSize, visibleFrame: NSRect?) -> NSPoint {
         guard let visibleFrame else { return origin }
-        let minX = visibleFrame.minX + 12
-        let maxX = visibleFrame.maxX - panelSize.width - 12
-        let minY = visibleFrame.minY + 12
-        let maxY = visibleFrame.maxY - panelSize.height - 12
+        let inset = Metrics.screenInset
+        let minX = visibleFrame.minX + inset
+        let maxX = visibleFrame.maxX - panelSize.width - inset
+        let minY = visibleFrame.minY + inset
+        let maxY = visibleFrame.maxY - panelSize.height - inset
         return NSPoint(
             x: min(max(origin.x, minX), maxX),
             y: min(max(origin.y, minY), maxY)
         )
     }
 
-    private func resetPanelSize() {
+    private func applyAppearance(_ theme: ReaderTheme) {
         guard let panel else { return }
-        panel.setContentSize(Metrics.panelSize)
-        rootView.frame = NSRect(origin: .zero, size: panel.contentRect(forFrameRect: panel.frame).size)
-    }
-
-    private func configureRootView(for panel: NSPanel) {
-        rootView.wantsLayer = true
-        rootView.layer?.cornerRadius = 16
-        rootView.layer?.borderWidth = 1
-        rootView.frame = NSRect(origin: .zero, size: panel.contentRect(forFrameRect: panel.frame).size)
-        rootView.autoresizingMask = [.width, .height]
-        panel.contentView = rootView
-    }
-
-    private func buildScrollView() -> NSScrollView {
-        let scrollView = NSScrollView()
-        scrollView.hasVerticalScroller = true
-        scrollView.autohidesScrollers = false
-        scrollView.drawsBackground = false
-        scrollView.borderType = .noBorder
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-
-        stack.orientation = .vertical
-        stack.alignment = .width
-        stack.spacing = 10
-        stack.edgeInsets = NSEdgeInsets(top: 2, left: 0, bottom: 2, right: 12)
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.documentView = stack
-        return scrollView
-    }
-
-    private func installConstraints(scrollView: NSScrollView, exportButton: NSButton, closeButton: NSButton) {
-        NSLayoutConstraint.activate([
-            iconView.topAnchor.constraint(equalTo: rootView.topAnchor, constant: Metrics.headerTop),
-            iconView.leadingAnchor.constraint(equalTo: rootView.leadingAnchor, constant: Metrics.headerLeading),
-            iconView.widthAnchor.constraint(equalToConstant: Metrics.headerIconSize),
-            iconView.heightAnchor.constraint(equalToConstant: Metrics.headerIconSize),
-            titleLabel.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 12),
-            titleLabel.centerYAnchor.constraint(equalTo: iconView.centerYAnchor),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: exportButton.leadingAnchor, constant: -18),
-            searchField.leadingAnchor.constraint(equalTo: rootView.leadingAnchor, constant: Metrics.headerLeading),
-            searchField.topAnchor.constraint(equalTo: iconView.bottomAnchor, constant: 14),
-            searchField.trailingAnchor.constraint(equalTo: rootView.trailingAnchor, constant: -Metrics.headerLeading),
-            searchField.heightAnchor.constraint(equalToConstant: Metrics.searchHeight),
-            summaryLabel.leadingAnchor.constraint(equalTo: searchField.leadingAnchor),
-            summaryLabel.topAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 10),
-            summaryLabel.trailingAnchor.constraint(equalTo: rootView.trailingAnchor, constant: -Metrics.headerLeading),
-            scrollView.topAnchor.constraint(equalTo: summaryLabel.bottomAnchor, constant: 12),
-            scrollView.leadingAnchor.constraint(equalTo: rootView.leadingAnchor, constant: Metrics.outerMargin),
-            scrollView.trailingAnchor.constraint(equalTo: rootView.trailingAnchor, constant: -Metrics.outerMargin),
-            scrollView.bottomAnchor.constraint(equalTo: rootView.bottomAnchor, constant: -Metrics.outerMargin),
-            stack.topAnchor.constraint(equalTo: scrollView.contentView.topAnchor),
-            stack.leadingAnchor.constraint(equalTo: scrollView.contentView.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: scrollView.contentView.trailingAnchor),
-            stack.widthAnchor.constraint(equalTo: scrollView.contentView.widthAnchor),
-            closeButton.topAnchor.constraint(equalTo: rootView.topAnchor, constant: Metrics.headerTop - 2),
-            closeButton.trailingAnchor.constraint(equalTo: rootView.trailingAnchor, constant: -Metrics.headerLeading),
-            closeButton.widthAnchor.constraint(equalToConstant: Metrics.actionButtonWidth),
-            closeButton.heightAnchor.constraint(equalToConstant: Metrics.actionButtonHeight),
-            exportButton.topAnchor.constraint(equalTo: closeButton.topAnchor),
-            exportButton.trailingAnchor.constraint(equalTo: closeButton.leadingAnchor, constant: -12),
-            exportButton.widthAnchor.constraint(equalToConstant: Metrics.actionButtonWidth),
-            exportButton.heightAnchor.constraint(equalToConstant: Metrics.actionButtonHeight)
-        ])
-    }
-
-    private func refreshContent() {
-        for view in stack.arrangedSubviews {
-            stack.removeArrangedSubview(view)
-            view.removeFromSuperview()
-        }
-        summaryLabel.stringValue = summaryText()
-        guard !rows.isEmpty else {
-            stack.addArrangedSubview(emptyStateLabel())
-            return
-        }
-        for rowViewModel in rows {
-            let row = noteRow(rowViewModel)
-            stack.addArrangedSubview(row)
-            row.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        }
-    }
-
-    private func noteRow(_ rowViewModel: ReadingNoteListRowViewModel) -> NSView {
-        let row = ReadingNoteRowView(rowViewModel: rowViewModel, theme: ReaderTheme.selected)
-        row.onOpen = { [weak self] in
-            self?.noteAction(rowViewModel.id, handler: self?.onOpenNote)
-        }
-        row.onToggleFavorite = { [weak self] in
-            self?.noteAction(rowViewModel.id, handler: self?.onToggleFavorite)
-        }
-        row.onDelete = { [weak self] in
-            self?.noteAction(rowViewModel.id, handler: self?.onDeleteNote)
-        }
-        return row
-    }
-
-    private func actionButton(title: String, action: Selector) -> NSButton {
-        let button = NSButton(title: title, target: self, action: action)
-        button.isBordered = false
-        button.wantsLayer = true
-        button.layer?.cornerRadius = 8
-        button.font = AppFont.semibold(ofSize: 14)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }
-
-    private func emptyStateLabel() -> NSTextField {
-        let text = searchQuery.isEmpty
-            ? AppText.localized("当前书还没有阅读笔记。", "No reading notes for this book yet.")
-            : AppText.localized("没有匹配的阅读笔记。", "No matching reading notes.")
-        let empty = NSTextField(labelWithString: text)
-        empty.font = NSFont.systemFont(ofSize: 15)
-        empty.textColor = ReadingNoteTheme.secondaryText(ReaderTheme.selected)
-        return empty
-    }
-
-    @objc private func exportTapped(_ sender: NSButton) {
-        onExport?()
-    }
-
-    private func noteAction(_ id: String, handler: ((ReadingNote) -> Void)?) {
-        guard let note = notes.first(where: { $0.id == id }) else { return }
-        handler?(note)
-    }
-
-    @objc private func closeTapped(_ sender: NSButton) {
-        close(attachedTo: panel?.parent)
+        panel.appearance = theme == .dark
+            ? NSAppearance(named: .darkAqua)
+            : NSAppearance(named: .aqua)
+        panel.contentView?.layer?.borderColor = ReadingNoteTheme.panelBorder(theme).cgColor
     }
 
     @objc private func readerThemeDidChange(_ notification: Notification) {
-        applyTheme(ReaderTheme.selected)
-        refreshContent()
+        refreshTheme()
     }
-
-    private func applyTheme(_ theme: ReaderTheme) {
-        guard panel != nil else { return }
-        panel?.appearance = theme == .dark ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
-        rootView.layer?.backgroundColor = ReadingNoteTheme.panelBackground(theme).cgColor
-        rootView.layer?.borderColor = ReadingNoteTheme.panelBorder(theme).cgColor
-        iconView.contentTintColor = ReadingNoteTheme.accent(theme)
-        titleLabel.textColor = ReadingNoteTheme.primaryText(theme)
-        searchField.textColor = ReadingNoteTheme.primaryText(theme)
-        summaryLabel.textColor = ReadingNoteTheme.secondaryText(theme)
-        styleActionButton(exportButton, role: .primary, theme: theme)
-        styleActionButton(closeButton, role: .secondary, theme: theme)
-    }
-
-    private func styleActionButton(_ button: NSButton?, role: ActionButtonRole, theme: ReaderTheme) {
-        guard let button else { return }
-        switch role {
-        case .primary:
-            button.layer?.backgroundColor = ReadingNoteTheme.accent(theme).cgColor
-            button.contentTintColor = theme == .dark ? ReadingNoteTheme.primaryText(theme) : .white
-        case .secondary:
-            button.layer?.backgroundColor = ReadingNoteTheme.secondaryButtonBackground(theme).cgColor
-            button.contentTintColor = ReadingNoteTheme.primaryText(theme)
-        }
-    }
-
-    private func updateData(_ notes: [ReadingNote]) {
-        self.notes = ReadingNoteListPresenter.sortedNotes(notes)
-        applySearchQuery(searchQuery)
-    }
-
-    private func configureSearchField() {
-        searchField.placeholderString = AppText.localized("搜索笔记", "Search notes")
-        searchField.font = AppFont.semibold(ofSize: 13)
-        searchField.target = self
-        searchField.action = #selector(searchChanged(_:))
-        searchField.sendsSearchStringImmediately = true
-        searchField.sendsWholeSearchString = false
-        searchField.translatesAutoresizingMaskIntoConstraints = false
-    }
-
-    private func applySearchQuery(_ query: String) {
-        searchQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        rows = ReadingNoteListPresenter.rows(for: notes, query: searchQuery)
-    }
-
-    private func summaryText() -> String {
-        guard !searchQuery.isEmpty else {
-            return ReadingNoteListPresenter.summaryText(noteCount: rows.count)
-        }
-        return AppText.localized(
-            "找到 \(rows.count) / \(notes.count) 条笔记",
-            "\(rows.count) of \(notes.count) note(s)"
-        )
-    }
-
-    @objc private func searchChanged(_ sender: NSSearchField) {
-        applySearchQuery(sender.stringValue)
-        refreshContent()
-    }
-
 }
 
-private final class ReadingNotesStackView: NSStackView {
-    override var isFlipped: Bool { true }
-}
-
+@MainActor
 private final class ReadingNotesPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }

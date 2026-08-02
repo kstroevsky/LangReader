@@ -1,5 +1,6 @@
 import Cocoa
 import PDFKit
+import LeafReaderCore
 
 extension ReaderWindowController {
     func schedulePDFTOCBuild(for url: URL, displayBox: PDFDisplayBox) {
@@ -34,7 +35,15 @@ extension ReaderWindowController {
             menuItem.representedObject = index
             menu.addItem(menuItem)
         }
-        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: tocButton.bounds.height + 4), in: tocButton)
+        // The TOC button is SwiftUI now; anchor the menu to the bar at the
+        // frame the view reported (SwiftUI y-down -> AppKit y-up), falling back
+        // to the bar's leading edge before the view has reported a frame.
+        guard let bar = bottomBarView else { NSSound.beep(); return }
+        let f = bottomBarModel.tocButtonFrame
+        let point = f == .zero
+            ? NSPoint(x: 24, y: bar.bounds.height)
+            : NSPoint(x: f.minX, y: bar.bounds.height - f.minY)
+        menu.popUp(positioning: nil, at: point, in: bar)
     }
 
     @objc func selectTableOfContentsItem(_ sender: NSMenuItem) {
@@ -56,7 +65,7 @@ extension ReaderWindowController {
         clearAISelectionForNavigation()
         let destination = PDFDestination(page: page, at: tocDestination.point)
         pdfView.go(to: destination)
-        lastPageIndex = tocDestination.pageIndex
+        documentSession.position.lastPageIndex = tocDestination.pageIndex
         updatePageLabel()
         saveSession()
     }

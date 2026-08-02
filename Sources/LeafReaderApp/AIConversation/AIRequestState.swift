@@ -3,7 +3,7 @@ import Cocoa
 final class AIRequestState {
     private(set) var activeID: UUID?
     var currentStreamTask: Task<Void, Never>?
-    var currentDataTask: URLSessionDataTask?
+    var currentDataTask: Task<Void, Never>?
     private var cancelledID: UUID?
     weak var assistantBody: NSTextField?
 

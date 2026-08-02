@@ -1,23 +1,26 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReaderWindowController {
     func applyCachedEmbeddingsIfPossible(completion: (() -> Void)? = nil) {
+        let completionBox = completion.map(EmbeddingCompletion.init)
         guard let documentID = currentFileMD5,
               let index = pdfAgentIndex,
               let config = EmbeddingClient.configFromCurrentAISettings() else {
-            completion?()
+            completionBox?.call()
             return
         }
         index.prepareForEmbeddingCacheModel(config.cacheModelID)
         let chunks = index.indexableChunks
         guard !chunks.isEmpty else {
-            completion?()
+            completionBox?.call()
             return
         }
         let chunkIDs = chunks.map(\.id)
+        let store = pdfEmbeddingStore
         embeddingStoreQueue.async { [weak self] in
-            guard let self, let store = self.pdfEmbeddingStore else {
-                DispatchQueue.main.async { completion?() }
+            guard let self, let store else {
+                DispatchQueue.main.async { completionBox?.call() }
                 return
             }
             let cached = store.embeddings(documentID: documentID, model: config.cacheModelID, chunkIDs: chunkIDs)
@@ -25,14 +28,14 @@ extension ReaderWindowController {
                 guard let self,
                       self.currentFileMD5 == documentID,
                       EmbeddingClient.configFromCurrentAISettings()?.cacheModelID == config.cacheModelID else {
-                    completion?()
+                    completionBox?.call()
                     return
                 }
                 self.pdfAgentIndex?.applyEmbeddings(cached, modelID: config.cacheModelID)
                 if !cached.isEmpty, let progress = self.pdfAgentIndex?.embeddingCoverage {
                     self.updateEmbeddingStatusForCoverage(isComplete: progress.embedded >= progress.total)
                 }
-                completion?()
+                completionBox?.call()
             }
         }
     }
@@ -123,20 +126,27 @@ extension ReaderWindowController {
         }
 
         updateEmbeddingStatus(chunks: missing)
-        embeddingClient.embed(texts: missing.map(\.text), config: config) { [weak self] result in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                guard generation == self.embeddingBackfillGeneration,
-                      self.currentFileMD5 == documentID else {
-                    self.stopEmbeddingBackfill()
-                    self.notifyEmbeddingReady(afterFirstBatch, includePending: true)
-                    self.clearEmbeddingStatus()
-                    self.updateEmbeddingControlButtons()
-                    return
-                }
+        embeddingBackfillTask?.cancel()
+        embeddingBackfillTask = Task { [weak self] in
+            let result: Result<[[Float]], Error>
+            do {
+                result = .success(try await self?.embeddingClient.embed(texts: missing.map(\.text), config: config) ?? [])
+            } catch {
+                result = .failure(error)
+            }
+            guard let self, !Task.isCancelled else { return }
+            self.embeddingBackfillTask = nil
+            guard generation == self.embeddingBackfillGeneration,
+                  self.currentFileMD5 == documentID else {
+                self.stopEmbeddingBackfill()
+                self.notifyEmbeddingReady(afterFirstBatch, includePending: true)
+                self.clearEmbeddingStatus()
+                self.updateEmbeddingControlButtons()
+                return
+            }
 
-                switch result {
-                case .success(let embeddings):
+            switch result {
+            case .success(let embeddings):
                     var mapped: [String: [Float]] = [:]
                     for (chunk, embedding) in zip(missing, embeddings) {
                         mapped[chunk.id] = embedding
@@ -148,8 +158,9 @@ extension ReaderWindowController {
                     self.notifyEmbeddingReady(afterFirstBatch, includePending: notifyPendingAfterBatch && !shouldDeferPendingCallbacks)
                     self.updateEmbeddingStatusForCoverage(isComplete: false)
                     let shouldNotifyPendingAfterNextBatch = shouldDeferPendingCallbacks
+                    let store = self.pdfEmbeddingStore
                     self.embeddingStoreQueue.async { [weak self] in
-                        self?.pdfEmbeddingStore?.save(documentID: documentID, model: config.cacheModelID, chunks: missing, embeddings: embeddings)
+                        store?.save(documentID: documentID, model: config.cacheModelID, chunks: missing, embeddings: embeddings)
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
                             self?.continuePDFEmbeddingBackfill(
                                 documentID: documentID,
@@ -161,13 +172,12 @@ extension ReaderWindowController {
                             )
                         }
                     }
-                case .failure:
-                    self.stopEmbeddingBackfill()
-                    self.embeddingBackfillNeedsRetry = true
-                    self.notifyEmbeddingReady(afterFirstBatch, includePending: true)
-                    self.showEmbeddingStatus(AppText.localized("AI 分析数据：失败，可重试", "AI analysis data: failed, retry available"))
-                    self.updateEmbeddingControlButtons()
-                }
+            case .failure:
+                self.stopEmbeddingBackfill()
+                self.embeddingBackfillNeedsRetry = true
+                self.notifyEmbeddingReady(afterFirstBatch, includePending: true)
+                self.showEmbeddingStatus(AppText.localized("AI 分析数据：失败，可重试", "AI analysis data: failed, retry available"))
+                self.updateEmbeddingControlButtons()
             }
         }
     }
@@ -179,5 +189,21 @@ extension ReaderWindowController {
         if let completion {
             pendingEmbeddingReadyCallbacks.append(completion)
         }
+    }
+}
+
+/// A UI callback may cross the SQLite queue only as main-actor-owned state.
+/// The queue never invokes the caller closure itself; it merely schedules this
+/// handle back to the main actor.
+@MainActor
+private final class EmbeddingCompletion {
+    private let action: () -> Void
+
+    init(_ action: @escaping () -> Void) {
+        self.action = action
+    }
+
+    func call() {
+        action()
     }
 }

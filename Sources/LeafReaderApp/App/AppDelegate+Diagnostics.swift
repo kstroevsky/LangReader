@@ -1,4 +1,4 @@
-import Cocoa
+import Foundation
 
 extension AppDelegate {
     @objc func showDiagnostics(_ sender: Any?) {

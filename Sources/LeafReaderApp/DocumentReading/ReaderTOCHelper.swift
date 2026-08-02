@@ -1,5 +1,6 @@
 import Foundation
 import PDFKit
+import LeafReaderCore
 
 struct ReaderTOCHelper {
     struct PDFTOCDestination {

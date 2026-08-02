@@ -33,7 +33,7 @@ Leaf Reader 是一个原生 macOS 文档阅读器，支持 PDF、EPUB 和 DOCX�
 
 ### 系统要求
 
-- macOS 12.0 Monterey 或更高版本。
+- macOS 14.0 Sonoma 或更高版本。
 - 阅读器支持 Apple Silicon 和 Intel Mac；本地 TTS runtime 当前仅支持 Apple Silicon。
 - AI 功能需要用户自行配置模型服务和 API Key；普通阅读不需要。
 - Piper 本地朗读支持 Apple Silicon Mac 上的 macOS 12.0 Monterey 或更高版本。
@@ -216,7 +216,7 @@ Website: <https://leafreader.space/>
 
 ### System Requirements
 
-- macOS 12.0 Monterey or later.
+- macOS 14.0 Sonoma or later.
 - The reader supports Apple Silicon and Intel Mac; local TTS runtimes currently require Apple Silicon.
 - An API key is optional and only needed for AI features.
 - Piper local speech supports macOS 12.0 Monterey or later on Apple Silicon Macs.
@@ -431,7 +431,7 @@ Third-party speech models and runtimes remain copyrighted by their respective pr
 
 ### Requirements
 
-- macOS 12.0 Monterey or later.
+- macOS 14.0 Sonoma or later.
 - Swift toolchain with Cocoa, PDFKit, WebKit, and CryptoKit frameworks.
 - Sparkle for release builds.
 

@@ -1,5 +1,6 @@
 import Cocoa
 import PDFKit
+import LeafReaderCore
 
 extension ReaderWindowController {
     enum SelectionToolbarAction {
@@ -17,9 +18,9 @@ extension ReaderWindowController {
 
     func selectedReaderTextForToolbar() -> String {
         if currentDocumentKind == .pdf {
-            return currentPDFSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
+            return selectionState.pdfSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        return currentWebSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return selectionState.webSelectedText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func showSelectionToolbarForPDFSelection(_ selection: PDFSelection, text: String) {
@@ -38,14 +39,19 @@ extension ReaderWindowController {
     }
 
     func showSelectionToolbarForWebSelection(rect: NSRect?, text: String) {
-        guard let rect, rect.width > 0, rect.height > 0 else {
+        // The "is this anchor usable?" rule lives on the presentation type so it
+        // is stated once and can be tested without a window.
+        let presentation = ReaderSelectionPresentation(anchorRect: rect, preferredEdge: .below)
+        guard presentation.canAnchorToolbar, let rect = presentation.anchorRect else {
             hideSelectionToolbar()
             return
         }
-        showSelectionToolbar(near: rect, text: text, preferredEdge: .below)
+        showSelectionToolbar(near: rect, text: text, preferredEdge: presentation.preferredEdge)
     }
 
     func showSelectionToolbar(near sourceRect: NSRect, text: String, preferredEdge: SelectionToolbarEdge = .above) {
+        let toolbarSpan = ReaderPerformance.begin(.selectionToolbar)
+        defer { ReaderPerformance.end(toolbarSpan) }
         selectionToolbarCoordinator.show(near: sourceRect, text: text, preferredEdge: preferredEdge)
     }
 
@@ -129,7 +135,10 @@ extension ReaderWindowController {
             showSelectionToolbarForPDFSelection(selection, text: text)
             return
         }
-        showSelectionToolbarForWebSelection(rect: currentWebSelectionRect, text: text)
+        showSelectionToolbarForWebSelection(
+            rect: documentSession.selectionPresentation.anchorRect,
+            text: text
+        )
     }
 
     private func shouldShowSelectionSpeakAction(for text: String) -> Bool {
@@ -183,8 +192,4 @@ extension ReaderWindowController {
         return toolbarWindow
     }
 
-    enum SelectionToolbarEdge {
-        case above
-        case below
-    }
 }

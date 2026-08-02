@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     func backfillDictionaryAnswerAsync(vocabularyID: String?, word: String) {
@@ -6,33 +7,31 @@ extension ReaderWindowController {
         guard VocabularyTextPolicy.isSingleEnglishWord(query) else { return }
         let localLemma = GermanLemmaResolver.lemma(for: query, language: vocabularyDocumentLanguage)
 
-        DispatchQueue.global(qos: .utility).async { [weak self] in
+        Task { [weak self] in
             if let localAnswer = LocalDictionaryLookupService.shared.dictionaryAnswer(for: query, context: "") {
-                DispatchQueue.main.async {
-                    self?.applyDictionaryAnswer(
-                        localAnswer.markdown,
-                        metadata: localAnswer.metadata,
-                        vocabularyID: vocabularyID,
-                        word: query,
-                        lemma: localLemma
-                    )
-                }
+                guard !Task.isCancelled else { return }
+                self?.applyDictionaryAnswer(
+                    localAnswer.markdown,
+                    metadata: localAnswer.metadata,
+                    vocabularyID: vocabularyID,
+                    word: query,
+                    lemma: localLemma
+                )
                 return
             }
 
             guard NetworkConnectivityMonitor.shared.isOnline else { return }
-            GermanWiktionaryDictionary.shared.lookup(query) { [weak self] result in
-                guard case .success(let entry) = result else { return }
-                DispatchQueue.main.async {
-                    self?.applyDictionaryAnswer(
-                        entry.markdown,
-                        metadata: entry.metadata,
-                        vocabularyID: vocabularyID,
-                        word: query,
-                        lemma: entry.lemma
-                    )
-                }
+            guard let entry = try? await GermanWiktionaryDictionary.shared.lookup(query),
+                  !Task.isCancelled else {
+                return
             }
+            self?.applyDictionaryAnswer(
+                entry.markdown,
+                metadata: entry.metadata,
+                vocabularyID: vocabularyID,
+                word: query,
+                lemma: entry.lemma
+            )
         }
     }
 

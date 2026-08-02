@@ -1,5 +1,6 @@
 import Cocoa
 import PDFKit
+import LeafReaderCore
 
 struct ReaderReadAloudState {
     var originalTitle: String?

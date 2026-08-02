@@ -1,9 +1,39 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReaderWindowController {
+    /// The one place chrome visibility is applied. Callers describe the reader's
+    /// situation with a `ReaderChromeState`; nothing else may set `isHidden` on
+    /// these controls, so a new control is wired here once instead of at every
+    /// load path.
+    func applyChromeState(_ state: ReaderChromeState) {
+        chromeState = state
+        topBarModel.showsCover = state.showsCover
+        topBarModel.showsPageLayoutButton = state.showsPageLayoutButton
+        topBarModel.showsCropButton = state.showsCropButton
+        topBarModel.showsRelatedFormsToggle = state.showsRelatedFormsToggle
+        topBarModel.showsReadAloudStopButton = state.showsReadAloudStopButton
+        if state.showsRelatedFormsToggle {
+            topBarModel.relatedFormsOn = state.relatedFormsToggleIsOn
+        }
+    }
+
+    /// Recomputes the chrome for the document now on screen. Used by the load
+    /// paths and by anything that changes a condition the chrome depends on.
+    func refreshChromeState(presentation: ReaderChromeState.Presentation? = nil) {
+        let resolved = presentation ?? chromeState.presentation
+        applyChromeState(
+            .make(
+                presentation: resolved,
+                isReadAloudActive: isReadAloudActive,
+                showsRelatedWordForms: showsRelatedWordForms,
+                hasCoverImage: coverImageView.image != nil
+            )
+        )
+    }
+
     func configureLoadingOverlay() {
         loadingOverlay.translatesAutoresizingMaskIntoConstraints = false
-        loadingOverlay.isHidden = true
         loadingOverlay.wantsLayer = true
         loadingOverlay.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.86).cgColor
 
@@ -20,6 +50,7 @@ extension ReaderWindowController {
 
         loadingOverlay.addSubview(loadingIndicator)
         loadingOverlay.addSubview(loadingLabel)
+        renderReaderShellPresentation()
     }
 
     func iconButton(symbol: String, action: Selector) -> NSButton {
@@ -38,27 +69,6 @@ extension ReaderWindowController {
         return button
     }
 
-    func capsuleButton(title: String, symbol: String, action: Selector, showsLeadingSymbol: Bool = false) -> NSButton {
-        let button = CapsuleChromeButton(title: title, target: self, action: action)
-        button.identifier = Self.capsuleButtonIdentifier
-        button.controlSize = .regular
-        button.font = AppFont.semibold(ofSize: 13)
-        button.theme = ReaderTheme.selected
-        if showsLeadingSymbol {
-            setCapsuleButtonSymbol(symbol, on: button, accessibilityDescription: title)
-        }
-        return button
-    }
-
-    func setCapsuleButtonSymbol(_ symbol: String, on button: NSButton, accessibilityDescription: String) {
-        if let capsule = button as? CapsuleChromeButton {
-            capsule.leadingSymbolName = symbol
-            capsule.leadingSymbolDescription = accessibilityDescription
-        } else {
-            setSystemImage(symbol, on: button, accessibilityDescription: accessibilityDescription)
-        }
-    }
-
     func setSystemImage(_ symbol: String, on button: NSButton, accessibilityDescription: String? = nil) {
         button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: accessibilityDescription)
         if button.image == nil, button.title.isEmpty {
@@ -75,33 +85,20 @@ extension ReaderWindowController {
 
     func refreshLanguageUI() {
         (NSApp.delegate as? AppDelegate)?.refreshMainMenu()
+        bottomBarModel.languageToken += 1
+        topBarModel.languageToken += 1
         aiPanel.refreshLanguage()
-        fullScreenButton.title = window?.styleMask.contains(.fullScreen) == true ? AppText.windowed : AppText.fullScreen
-        coverButton.title = AppText.cover
-        tocButton.title = AppText.localized("目录", "TOC")
-        recentButton.title = AppText.localized("书架", "Shelf")
-        notesButton.title = AppText.localized("笔记", "Notes")
-        vocabularyButton.title = AppText.localized("背单词", "Vocab")
-        prevButton.title = AppText.prev
-        nextButton.title = AppText.next
-        farthestPositionButton.title = AppText.localized("上次位置", "Last")
+        // The top and bottom bars are SwiftUI and re-render from the language
+        // tokens above; the stateful button titles refresh via their updaters.
         selectionActionToolbar.refreshLanguage()
         selectionActionToolbar.applyTheme(ReaderTheme.selected)
         refreshEmbeddingStatusLanguage()
         updatePDFPageLayoutButton()
         updatePDFMarginCropButton()
-        for button in [coverButton, tocButton, recentButton, notesButton, vocabularyButton, prevButton, nextButton, farthestPositionButton, pageLayoutButton, cropButton] {
-            if let capsule = button as? CapsuleChromeButton {
-                capsule.theme = ReaderTheme.selected
-            }
-        }
+        updateFullScreenButton()
         if pdfView.document == nil {
             pageLabel.stringValue = AppText.noPDF
             updatePageLabelTextColor()
         }
-        fullScreenButton.image = NSImage(
-            systemSymbolName: window?.styleMask.contains(.fullScreen) == true ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
-            accessibilityDescription: fullScreenButton.title
-        )
     }
 }

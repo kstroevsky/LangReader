@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReaderWindowController {
     func findView(identifier: String, in view: NSView) -> NSView? {

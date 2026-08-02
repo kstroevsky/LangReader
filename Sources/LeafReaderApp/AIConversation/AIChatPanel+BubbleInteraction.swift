@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension AIChatPanel {
     @objc func toggleCollapsedBubble(_ recognizer: NSClickGestureRecognizer) {
@@ -24,7 +25,7 @@ extension AIChatPanel {
     @objc func selectConversationSourceBubble(_ recognizer: NSClickGestureRecognizer) {
         guard let box = bubbleBox(for: recognizer),
               let bodyID = box.identifier?.rawValue,
-              let sourceLocation = bubbleMetadataByID[bodyID]?.sourceLocation else {
+              let sourceLocation = transcript[bodyID]?.sourceLocation else {
             return
         }
         onConversationBubbleSelected?(sourceLocation)
@@ -94,9 +95,11 @@ extension AIChatPanel {
             ? [AppText.userRole, AppText.aiRole]
             : [AppText.aiRole, AppText.userRole]
         for role in preferredRoles {
-            if let bodyID = bubbleMetadataByID.first(where: { _, metadata in
-                metadata.role == role && metadata.sourceLocation == source
-            })?.key,
+            // Display order, not dictionary order: the first matching bubble
+            // on screen is the one to scroll to.
+            if let bodyID = transcript.bubbles.first(where: {
+                $0.role == role && $0.sourceLocation == source
+            })?.id,
                let box = bubbleBox(containingBodyID: bodyID) {
                 setContentVisible(true)
                 DispatchQueue.main.async { [weak self, weak box] in

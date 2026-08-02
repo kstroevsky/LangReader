@@ -1,6 +1,8 @@
 import Cocoa
 import Sparkle
+import LeafReaderCore
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     static let updateWindowOpenRetryLimit = 20
     static let updateWindowOpenRetryDelay: TimeInterval = 0.15
@@ -15,10 +17,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var manualUpdateProbeHandledResult = false
     weak var manualUpdateSender: AnyObject?
     var pendingOpenFileURLs: [URL] = []
+    private var backupCoordinator: UserDataBackupCoordinator?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         LaunchPerformanceTracker.shared.mark("didFinishLaunching")
+        do {
+            if let configuration = UserDataBackupConfiguration.production() {
+                let coordinator = UserDataBackupCoordinator(configuration: configuration)
+                try coordinator.recoverBeforePersistenceActivation()
+                backupCoordinator = coordinator
+            }
+        } catch {
+            let alert = NSAlert(error: error)
+            alert.messageText = AppText.localized("需要恢复用户数据", "User-data recovery is required")
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .critical
+            alert.runModal()
+            NSApp.terminate(nil)
+            return
+        }
         controller = ReaderWindowController()
+        backupCoordinator?.markPersistenceActive()
         LaunchPerformanceTracker.shared.mark("windowController")
         installMainMenu()
         LaunchPerformanceTracker.shared.mark("menu")
@@ -34,6 +53,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        ReaderPerformance.writeBaselineIfRequested(
+            launch: LaunchPerformanceTracker.shared.snapshot()
+        )
         SpeechPlaybackCoordinator.shared.shutdownForTermination()
     }
 
@@ -43,7 +65,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ sender: NSApplication, openFiles filenames: [String]) {
-        filenames.map { URL(fileURLWithPath: $0) }.forEach(openFileURLWhenReady)
+        for filename in filenames {
+            openFileURLWhenReady(URL(fileURLWithPath: filename))
+        }
         sender.reply(toOpenOrPrint: .success)
     }
 

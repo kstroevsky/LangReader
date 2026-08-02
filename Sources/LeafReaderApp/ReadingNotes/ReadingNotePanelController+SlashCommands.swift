@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReadingNotePanelController {
     func showSlashCommandMenu() {

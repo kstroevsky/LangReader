@@ -36,7 +36,7 @@ extension ReaderWindowController {
             at: NSPoint(x: bounds.minX, y: bounds.maxY + 80)
         )
         pdfView.go(to: destination)
-        lastPageIndex = record.pageIndex
+        documentSession.position.lastPageIndex = record.pageIndex
         updatePageLabel()
         saveSession()
     }

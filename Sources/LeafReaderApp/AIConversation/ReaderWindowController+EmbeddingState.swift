@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     var pdfAgentIndex: PDFDocumentAgentIndex? {
@@ -32,6 +33,16 @@ extension ReaderWindowController {
 
     var embeddingClient: EmbeddingClient {
         embeddingState.embeddingClient
+    }
+
+    var embeddingBackfillTask: Task<Void, Never>? {
+        get { embeddingState.embeddingBackfillTask }
+        set { embeddingState.embeddingBackfillTask = newValue }
+    }
+
+    var embeddingQueryTask: Task<Void, Never>? {
+        get { embeddingState.embeddingQueryTask }
+        set { embeddingState.embeddingQueryTask = newValue }
     }
 
     var isPreparingPDFEmbeddings: Bool {

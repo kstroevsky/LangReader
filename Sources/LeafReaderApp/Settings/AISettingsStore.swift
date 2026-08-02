@@ -1,7 +1,11 @@
-import Cocoa
 import Foundation
+import LeafReaderCore
 
 enum AISettingsStore {
+    private struct DefaultsBox: @unchecked Sendable {
+        let value: UserDefaults
+    }
+
     enum SpeechLanguageHint {
         case english
         case chinese
@@ -22,14 +26,13 @@ enum AISettingsStore {
     static let autoEmbeddingIndexEnabledKey = "autoEmbeddingIndexEnabled"
     static let speakSelectedWordEnabledKey = "speakSelectedWordEnabled"
     static let saveAIConversationEnabledKey = "saveAIConversationEnabled"
-    static var defaults: UserDefaults = .standard
+    @TaskLocal private static var scopedDefaults: DefaultsBox?
+    private static let standardDefaults = DefaultsBox(value: .standard)
+    static var defaults: UserDefaults { (scopedDefaults ?? standardDefaults).value }
     private static let fallbackCustomEndpoint = URL(string: "https://api.openai.com/v1/chat/completions")!
 
     static func withDefaults<T>(_ defaults: UserDefaults, perform work: () throws -> T) rethrows -> T {
-        let previousDefaults = self.defaults
-        self.defaults = defaults
-        defer { self.defaults = previousDefaults }
-        return try work()
+        try $scopedDefaults.withValue(DefaultsBox(value: defaults), operation: work)
     }
 
     static var models: [AIModelConfig] {

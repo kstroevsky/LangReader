@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum SpeechRuntimeArchiveValidator {
     typealias Runtime = SpeechRuntimeResourceManager.Runtime

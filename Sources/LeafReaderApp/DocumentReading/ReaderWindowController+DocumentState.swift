@@ -1,4 +1,5 @@
 import Cocoa
+import LeafReaderCore
 
 extension ReaderWindowController {
     var currentFileURL: URL? {
@@ -30,43 +31,54 @@ extension ReaderWindowController {
         get { documentSession.documentLoadGeneration }
     }
 
-    var currentPDFSelectedText: String {
-        get { documentSession.currentPDFSelectedText }
-        set { documentSession.currentPDFSelectedText = newValue }
+    /// The reader's semantic selection. Feature code reads this focused model
+    /// directly; native PDF/Web selection remains owned by the active adapter.
+    var selectionState: ReaderSelectionState {
+        get { documentSession.selection }
+        set { documentSession.selection = newValue }
     }
 
     var currentWebPlainText: String {
-        get { documentSession.currentWebPlainText }
-        set { documentSession.currentWebPlainText = newValue }
+        get { documentSession.web.plainText }
+        set { documentSession.web.plainText = newValue }
     }
 
     var webPlainTextGeneration: Int {
-        get { documentSession.webPlainTextGeneration }
+        get { documentSession.web.plainTextGeneration }
     }
 
-    var currentWebSelectedText: String {
-        get { documentSession.currentWebSelectedText }
-        set { documentSession.currentWebSelectedText = newValue }
+    var pendingWebProgressRestore: ReaderWebPresentation.PendingProgressRestore? {
+        get { documentSession.web.pendingProgressRestore }
+        set { documentSession.web.pendingProgressRestore = newValue }
     }
 
-    var currentWebSelectionContext: String {
-        get { documentSession.currentWebSelectionContext }
-        set { documentSession.currentWebSelectionContext = newValue }
+    /// The logical document title. Read this — not `titleLabel.stringValue` —
+    /// wherever the title is wanted as *data* (AI context, embedding, read-aloud),
+    /// because the label is transiently overwritten with read-aloud progress.
+    /// `setDocumentTitle(_:)` is the only writer; it keeps the label in step.
+    var documentTitle: String {
+        documentSession.presentation.documentTitle
     }
 
-    var currentWebSelectionOccurrenceIndex: Int? {
-        get { documentSession.currentWebSelectionOccurrenceIndex }
-        set { documentSession.currentWebSelectionOccurrenceIndex = newValue }
+    func setDocumentTitle(_ title: String) {
+        documentSession.presentation.setDocumentTitle(title)
+        titleLabel.stringValue = title
     }
 
-    var currentWebSelectionRect: NSRect? {
-        get { documentSession.currentWebSelectionRect }
-        set { documentSession.currentWebSelectionRect = newValue }
+    /// The editable zoom field reflects this model value. PDFKit remains the
+    /// rendering adapter; it reports its scale through
+    /// `syncPDFZoomPercentFromNative()` after a native change.
+    var pdfZoomPercent: Int {
+        documentSession.presentation.pdfZoomPercent
     }
 
-    var pendingWebProgressRestore: (generation: Int, progress: Double, zoomPercent: Int?)? {
-        get { documentSession.pendingWebProgressRestore }
-        set { documentSession.pendingWebProgressRestore = newValue }
+    func setPDFZoomPercent(_ percent: Int) {
+        documentSession.presentation.setPDFZoomPercent(percent)
+    }
+
+    func syncPDFZoomPercentFromNative() {
+        guard currentDocumentKind == .pdf, let percent = activeReaderBackend?.zoomPercent else { return }
+        setPDFZoomPercent(percent)
     }
 
     var currentDocumentDiagnostics: [String] {
@@ -89,14 +101,9 @@ extension ReaderWindowController {
         set { documentPresentationState.pdfTOCGeneration = newValue }
     }
 
-    var webZoomPercent: Int {
-        get { documentSession.webZoomPercent }
-        set { documentSession.webZoomPercent = newValue }
-    }
-
     var webScrollProgress: Double {
-        get { documentSession.webScrollProgress }
-        set { documentSession.webScrollProgress = newValue }
+        get { documentSession.web.scrollProgress }
+        set { documentSession.web.scrollProgress = newValue }
     }
 
     var originalPDFCropBoxes: [Int: CGRect] {
@@ -105,23 +112,18 @@ extension ReaderWindowController {
     }
 
     var lastWebProgressSave: Date {
-        get { documentSession.lastWebProgressSave }
-        set { documentSession.lastWebProgressSave = newValue }
-    }
-
-    var lastPageIndex: Int? {
-        get { documentSession.lastPageIndex }
-        set { documentSession.lastPageIndex = newValue }
+        get { documentSession.web.lastProgressSave }
+        set { documentSession.web.lastProgressSave = newValue }
     }
 
     var lastPersonalVocabularyPDFPageIndex: Int? {
-        get { documentSession.lastPersonalVocabularyPDFPageIndex }
-        set { documentSession.lastPersonalVocabularyPDFPageIndex = newValue }
+        get { documentSession.position.lastPersonalVocabularyPDFPageIndex }
+        set { documentSession.position.lastPersonalVocabularyPDFPageIndex = newValue }
     }
 
     var lastPersonalVocabularyWebProgressBucket: Int? {
-        get { documentSession.lastPersonalVocabularyWebProgressBucket }
-        set { documentSession.lastPersonalVocabularyWebProgressBucket = newValue }
+        get { documentSession.position.lastPersonalVocabularyWebProgressBucket }
+        set { documentSession.position.lastPersonalVocabularyWebProgressBucket = newValue }
     }
 
     var isRestoringSession: Bool {
@@ -130,6 +132,8 @@ extension ReaderWindowController {
     }
 
     func clearPDFSelectionState() {
-        currentPDFSelectedText = ""
+        var selection = selectionState
+        selection.pdfSelectedText = ""
+        selectionState = selection
     }
 }

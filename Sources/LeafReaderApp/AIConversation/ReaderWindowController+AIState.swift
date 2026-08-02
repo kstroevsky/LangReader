@@ -1,4 +1,5 @@
-import Cocoa
+import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     var retrievalQueryClient: AIClient {
@@ -50,16 +51,6 @@ extension ReaderWindowController {
         set { aiState.pendingConversationToSave = newValue }
     }
 
-    var documentPromptGeneration: Int {
-        get { aiState.documentPromptGeneration }
-        set { aiState.documentPromptGeneration = newValue }
-    }
-
-    var retrievalQueryTask: URLSessionDataTask? {
-        get { aiState.retrievalQueryTask }
-        set { aiState.retrievalQueryTask = newValue }
-    }
-
     var aiConversationSaveTask: DebouncedTask {
         aiState.conversationSaveTask
     }
@@ -87,12 +78,12 @@ extension ReaderWindowController {
     }
 
     var isAIPanelCollapsed: Bool {
-        get { aiState.isPanelCollapsed }
-        set { aiState.isPanelCollapsed = newValue }
+        get { readerPresentation.isAIPanelCollapsed }
+        set { readerPresentation.isAIPanelCollapsed = newValue }
     }
 
     var preferredAIWidth: CGFloat {
-        get { aiState.preferredWidth }
-        set { aiState.preferredWidth = newValue }
+        get { readerPresentation.preferredAIWidth }
+        set { readerPresentation.preferredAIWidth = newValue }
     }
 }

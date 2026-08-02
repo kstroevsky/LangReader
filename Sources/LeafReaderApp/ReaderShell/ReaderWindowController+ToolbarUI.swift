@@ -1,107 +1,105 @@
 import Cocoa
+import SwiftUI
+import LeafReaderCore
 
 extension ReaderWindowController {
     func configureToolbarViews() -> ReaderToolbarSetup {
         let toolbar = readerBarView()
-        let zoomOut = plainButton(title: "-", action: #selector(ReaderWindowController.zoomOut))
-        let zoomIn = plainButton(title: "+", action: #selector(ReaderWindowController.zoomIn))
-        let leftDivider = divider()
-        let rightDivider = divider()
-        let zoomGroup = NSView()
-
         toolbarView = toolbar
+        topBarModel.theme = ReaderTheme.selected
         configureTitleControls()
-        configureReadAloudControl()
-        configureZoomControls(zoomGroup: zoomGroup, zoomOut: zoomOut, zoomIn: zoomIn, leftDivider: leftDivider, rightDivider: rightDivider)
+        let zoomGroup = configureZoomControls()
         configurePageAndSearchControls()
-        configureTopRightControls()
-        configureRelatedFormsToggle()
+        wireTopBarModel()
 
-        for view in [titleLabel, readAloudButton!, readAloudStopButton!, coverImageView, zoomGroup, pageLabel, searchUnderlineButton!, searchButton!, relatedFormsToggle!, pageLayoutButton!, cropButton!, fullScreenButton!] {
+        let hosting = NSHostingView(rootView: ReaderTopBarView(
+            model: topBarModel,
+            title: titleLabel,
+            cover: coverImageView
+        ))
+        hosting.translatesAutoresizingMaskIntoConstraints = false
+        // Ignore the window's safe area. In a windowed window the top safe area
+        // is the title-bar strip, and without this the hosting view centres its
+        // controls *below* it — leaving the SwiftUI buttons ~17 px lower than the
+        // AppKit zoom/page/search controls (which centre in the true toolbar).
+        // Fullscreen has no title bar, which is why only windowed drifted.
+        hosting.safeAreaRegions = []
+        // A findable container so the smoke test can reach the nested SwiftUI
+        // buttons without walking the reader's huge PDF accessibility tree.
+        toolbar.setAccessibilityIdentifier(ReaderTopBarView.accessibilityIdentifier)
+        toolbar.addSubview(hosting)
+
+        // The centre cluster — the editable zoom group, editable page field and
+        // search controls — stays AppKit and is layered on top of the hosting
+        // view. Editable NSTextFields do not receive first responder for editing
+        // inside an NSHostingView, so they cannot be bridged. Positioned by the
+        // constraints in `installReaderLayoutConstraints`.
+        for view in [zoomGroup, pageLabel, searchUnderlineButton, searchButton] as [NSView] {
             view.translatesAutoresizingMaskIntoConstraints = false
             toolbar.addSubview(view)
         }
 
-        return ReaderToolbarSetup(
-            toolbar: toolbar,
-            zoomOut: zoomOut,
-            zoomIn: zoomIn,
-            leftDivider: leftDivider,
-            rightDivider: rightDivider,
-            zoomGroup: zoomGroup
-        )
+        // Seed the stateful native buttons from current state.
+        updatePDFPageLayoutButton()
+        updatePDFMarginCropButton()
+        updateFullScreenButton()
+
+        return ReaderToolbarSetup(toolbar: toolbar, hosting: hosting)
+    }
+
+    private func wireTopBarModel() {
+        topBarModel.action = { [weak self] button in
+            guard let self else { return }
+            switch button {
+            case .readAloud: self.toggleReadAloudFromToolbar()
+            case .readAloudStop: self.stopReadAloudFromToolbarAction()
+            case .pageLayout: self.togglePDFPageLayout()
+            case .crop: self.togglePDFMarginCrop()
+            case .fullScreen: self.toggleFullScreen()
+            }
+        }
+        topBarModel.onRelatedFormsChanged = { [weak self] on in
+            guard let self else { return }
+            self.showsRelatedWordForms = on
+            self.restoreStoredWordAnnotations()
+        }
     }
 
     func configureBottomBarViews() -> ReaderBottomBarSetup {
         let bottomBar = readerBarView()
-        let settingsButton = iconButton(symbol: "gearshape", action: #selector(openAISettings))
-        settingsButton.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: AppText.settings)?
-            .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 19, weight: .regular))
-        let navigationStack = NSStackView()
-
         bottomBarView = bottomBar
-        recentButton = capsuleButton(
-            title: AppText.localized("书架", "Shelf"),
-            symbol: "books.vertical",
-            action: #selector(showRecentDocuments),
-            showsLeadingSymbol: true
-        )
-        vocabularyLibraryButton = capsuleButton(
-            title: AppText.localized("生词", "Words"),
-            symbol: "text.word.spacing",
-            action: #selector(showVocabularyLibrary),
-            showsLeadingSymbol: true
-        )
-        vocabularyLibraryButton.toolTip = AppText.localized("打开所有文档中的生词", "Open saved words from all documents")
-        notesButton = capsuleButton(
-            title: AppText.localized("笔记", "Notes"),
-            symbol: "note.text",
-            action: #selector(showReadingNotesPanel(_:)),
-            showsLeadingSymbol: true
-        )
-        vocabularyButton = capsuleButton(
-            title: AppText.localized("背单词", "Review"),
-            symbol: "text.book.closed",
-            action: #selector(showVocabularyBook),
-            showsLeadingSymbol: true
-        )
-        vocabularyButton.toolTip = AppText.localized("复习当前文档中的单词", "Review words from the current document")
-        farthestPositionButton = capsuleButton(title: AppText.localized("上次位置", "Last"), symbol: "arrow.turn.down.right", action: #selector(goToFarthestReadingPosition))
-        farthestPositionButton.toolTip = AppText.localized("跳到本书阅读过的最远位置", "Jump to the farthest read position in this book")
-        tocButton = capsuleButton(title: AppText.localized("目录", "TOC"), symbol: "list.bullet", action: #selector(showTableOfContents))
-        coverButton = capsuleButton(title: AppText.cover, symbol: "book.closed", action: #selector(goToCover))
-        prevButton = capsuleButton(title: AppText.prev, symbol: "chevron.left", action: #selector(prevPage))
-        nextButton = capsuleButton(title: AppText.next, symbol: "chevron.right", action: #selector(nextPage))
-        embeddingPauseButton = capsuleButton(title: AppText.localized("暂停", "Pause"), symbol: "pause.fill", action: #selector(toggleEmbeddingBackfillPaused))
-        embeddingPauseButton.toolTip = AppText.localized("暂停/继续 AI 分析", "Pause/resume AI analysis")
-        embeddingCancelButton = capsuleButton(title: AppText.localized("取消", "Cancel"), symbol: "xmark", action: #selector(cancelEmbeddingBackfill))
-        embeddingCancelButton.toolTip = AppText.localized("取消本次 AI 分析任务", "Cancel this AI analysis task")
+        bottomBarModel.theme = ReaderTheme.selected
+        wireBottomBarModel()
+        let hosting = NSHostingView(rootView: ReaderBottomBarView(model: bottomBarModel))
+        hosting.translatesAutoresizingMaskIntoConstraints = false
+        // Same safe-area guard as the top bar (see there): centre in the true
+        // bar bounds, not inside any window safe-area inset.
+        hosting.safeAreaRegions = []
+        // A findable container so the smoke test can reach the nested SwiftUI
+        // buttons without walking the reader's huge PDF accessibility tree.
+        bottomBar.setAccessibilityIdentifier("readerBottomBar")
+        bottomBar.addSubview(hosting)
+        return ReaderBottomBarSetup(bottomBar: bottomBar, hosting: hosting)
+    }
 
-        embeddingStatusLabel.font = AppFont.semibold(ofSize: 12)
-        embeddingStatusLabel.alignment = .right
-        embeddingStatusLabel.lineBreakMode = .byTruncatingMiddle
-        embeddingStatusLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        embeddingStatusLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        updateEmbeddingStatusTextColor()
-        embeddingStatusLabel.isHidden = true
-        embeddingPauseButton.isHidden = true
-        embeddingCancelButton.isHidden = true
-
-        navigationStack.orientation = .horizontal
-        navigationStack.alignment = .centerY
-        navigationStack.distribution = .fill
-        navigationStack.spacing = ReaderUILayout.navigationStackSpacing
-        for button in [tocButton!, coverButton!, prevButton!, nextButton!, farthestPositionButton!] {
-            button.translatesAutoresizingMaskIntoConstraints = false
-            navigationStack.addArrangedSubview(button)
+    private func wireBottomBarModel() {
+        bottomBarModel.action = { [weak self] id in
+            guard let self else { return }
+            switch id {
+            case .settings: self.openAISettings()
+            case .shelf: self.showRecentDocuments()
+            case .words: self.showVocabularyLibrary()
+            case .notes: self.showReadingNotesPanel(nil)
+            case .review: self.showVocabularyBook()
+            case .toc: self.showTableOfContents()
+            case .cover: self.goToCover()
+            case .previousPage: self.prevPage()
+            case .nextPage: self.nextPage()
+            case .farthestPosition: self.goToFarthestReadingPosition()
+            case .embeddingPause: self.toggleEmbeddingBackfillPaused()
+            case .embeddingCancel: self.cancelEmbeddingBackfill()
+            }
         }
-
-        for view in [settingsButton, recentButton!, vocabularyLibraryButton!, notesButton!, vocabularyButton!, navigationStack, embeddingStatusLabel, embeddingPauseButton!, embeddingCancelButton!] {
-            view.translatesAutoresizingMaskIntoConstraints = false
-            bottomBar.addSubview(view)
-        }
-
-        return ReaderBottomBarSetup(bottomBar: bottomBar, settingsButton: settingsButton, navigationStack: navigationStack)
     }
 
     func configureTitleControls() {
@@ -119,16 +117,26 @@ extension ReaderWindowController {
         coverImageView.layer?.borderWidth = 1
         coverImageView.layer?.cornerRadius = 3
         coverImageView.layer?.masksToBounds = true
-        coverImageView.isHidden = true
+        // Presence in the toolbar is governed by the SwiftUI `if model.showsCover`
+        // now, not by `isHidden`, so the bridged view must stay unhidden.
+        coverImageView.isHidden = false
     }
 
-    func configureZoomControls(zoomGroup: NSView, zoomOut: NSButton, zoomIn: NSButton, leftDivider: NSView, rightDivider: NSView) {
+    @discardableResult
+    func configureZoomControls() -> NSView {
+        let zoomGroup = NSView()
         zoomGroupView = zoomGroup
+        zoomGroup.translatesAutoresizingMaskIntoConstraints = false
         zoomGroup.wantsLayer = true
         zoomGroup.layer?.backgroundColor = controlBackgroundColor(for: ReaderTheme.selected).cgColor
         zoomGroup.layer?.borderColor = controlBorderColor(for: ReaderTheme.selected).cgColor
         zoomGroup.layer?.borderWidth = 1
         zoomGroup.layer?.cornerRadius = 7
+
+        let zoomOut = plainButton(title: "-", action: #selector(ReaderWindowController.zoomOut))
+        let zoomIn = plainButton(title: "+", action: #selector(ReaderWindowController.zoomIn))
+        let leftDivider = divider()
+        let rightDivider = divider()
 
         zoomField.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .regular)
         zoomField.alignment = .center
@@ -145,24 +153,35 @@ extension ReaderWindowController {
             view.translatesAutoresizingMaskIntoConstraints = false
             zoomGroup.addSubview(view)
         }
-    }
 
-    func configureReadAloudControl() {
-        readAloudButton = capsuleButton(
-            title: AppText.localized("朗读", "Read"),
-            symbol: "speaker.wave.2",
-            action: #selector(toggleReadAloudFromToolbar),
-            showsLeadingSymbol: true
-        )
-        readAloudButton.toolTip = AppText.localized("从当前屏幕顶部开始朗读", "Read from the top of the current screen")
-        readAloudStopButton = capsuleButton(
-            title: AppText.localized("停止", "Stop"),
-            symbol: "stop.fill",
-            action: #selector(stopReadAloudFromToolbarAction),
-            showsLeadingSymbol: true
-        )
-        readAloudStopButton.toolTip = AppText.localized("停止朗读", "Stop reading")
-        readAloudStopButton.isHidden = true
+        // The zoom group is now self-contained — its own size plus its internal
+        // layout — so it bridges into the SwiftUI toolbar as one unit, keeping
+        // the editable field's delegate wiring and the ± buttons intact.
+        NSLayoutConstraint.activate([
+            zoomGroup.widthAnchor.constraint(equalToConstant: ReaderUILayout.zoomGroupSize.width),
+            zoomGroup.heightAnchor.constraint(equalToConstant: ReaderUILayout.zoomGroupSize.height),
+
+            zoomOut.leadingAnchor.constraint(equalTo: zoomGroup.leadingAnchor),
+            zoomOut.topAnchor.constraint(equalTo: zoomGroup.topAnchor),
+            zoomOut.bottomAnchor.constraint(equalTo: zoomGroup.bottomAnchor),
+            zoomOut.widthAnchor.constraint(equalToConstant: ReaderUILayout.zoomButtonWidth),
+            leftDivider.leadingAnchor.constraint(equalTo: zoomOut.trailingAnchor),
+            leftDivider.topAnchor.constraint(equalTo: zoomGroup.topAnchor),
+            leftDivider.bottomAnchor.constraint(equalTo: zoomGroup.bottomAnchor),
+            leftDivider.widthAnchor.constraint(equalToConstant: ReaderUILayout.zoomDividerWidth),
+            zoomField.leadingAnchor.constraint(equalTo: leftDivider.trailingAnchor),
+            zoomField.centerYAnchor.constraint(equalTo: zoomGroup.centerYAnchor),
+            zoomField.widthAnchor.constraint(equalToConstant: ReaderUILayout.zoomFieldWidth),
+            rightDivider.leadingAnchor.constraint(equalTo: zoomField.trailingAnchor),
+            rightDivider.topAnchor.constraint(equalTo: zoomGroup.topAnchor),
+            rightDivider.bottomAnchor.constraint(equalTo: zoomGroup.bottomAnchor),
+            rightDivider.widthAnchor.constraint(equalToConstant: ReaderUILayout.zoomDividerWidth),
+            zoomIn.leadingAnchor.constraint(equalTo: rightDivider.trailingAnchor),
+            zoomIn.topAnchor.constraint(equalTo: zoomGroup.topAnchor),
+            zoomIn.bottomAnchor.constraint(equalTo: zoomGroup.bottomAnchor),
+            zoomIn.trailingAnchor.constraint(equalTo: zoomGroup.trailingAnchor)
+        ])
+        return zoomGroup
     }
 
     func configurePageAndSearchControls() {
@@ -184,55 +203,6 @@ extension ReaderWindowController {
         searchUnderlineButton.theme = ReaderTheme.selected
         searchButton = iconButton(symbol: "magnifyingglass", action: #selector(showSearchOverlay))
         searchButton.toolTip = AppText.localized("搜索文档", "Search document")
-    }
-
-    func configureTopRightControls() {
-        fullScreenButton = capsuleButton(title: AppText.fullScreen, symbol: "arrow.up.left.and.arrow.down.right", action: #selector(toggleFullScreen))
-        pageLayoutButton = capsuleButton(title: "", symbol: "rectangle.split.2x1", action: #selector(togglePDFPageLayout))
-        pageLayoutButton.toolTip = AppText.localized("切换单页/双页浏览", "Toggle single/two-page view")
-        cropButton = capsuleButton(title: "", symbol: "crop", action: #selector(togglePDFMarginCrop))
-        cropButton.toolTip = AppText.localized("裁掉 PDF 页面外侧空白", "Crop outer PDF margins")
-        updatePDFPageLayoutButton()
-        updatePDFMarginCropButton()
-    }
-
-    func configureRelatedFormsToggle() {
-        let container = NSView()
-        let icon = NSImageView()
-        icon.image = NSImage(systemSymbolName: "highlighter", accessibilityDescription: nil)?
-            .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 13, weight: .regular))
-        icon.contentTintColor = ReaderTheme.selected.secondaryTextColor
-        icon.imageScaling = .scaleProportionallyDown
-
-        let toggle = NSSwitch()
-        toggle.controlSize = .mini
-        toggle.state = showsRelatedWordForms ? .on : .off
-        toggle.target = self
-        toggle.action = #selector(toggleRelatedWordForms(_:))
-
-        let tip = AppText.localized("显示相关词形的蓝色标注", "Show blue markings for related word forms")
-        toggle.toolTip = tip
-        icon.toolTip = tip
-        container.toolTip = tip
-
-        for view in [icon, toggle] {
-            view.translatesAutoresizingMaskIntoConstraints = false
-            container.addSubview(view)
-        }
-        NSLayoutConstraint.activate([
-            icon.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            icon.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            icon.widthAnchor.constraint(equalToConstant: 16),
-            icon.heightAnchor.constraint(equalToConstant: 16),
-            toggle.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 5),
-            toggle.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            toggle.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            toggle.topAnchor.constraint(greaterThanOrEqualTo: container.topAnchor),
-            toggle.bottomAnchor.constraint(lessThanOrEqualTo: container.bottomAnchor)
-        ])
-
-        relatedFormsToggle = container
-        relatedFormsSwitch = toggle
     }
 
     func readerBarView() -> NSView {

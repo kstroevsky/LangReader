@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 enum EPUBLogicTests {
     static func testReaderEntityDecoding() throws {

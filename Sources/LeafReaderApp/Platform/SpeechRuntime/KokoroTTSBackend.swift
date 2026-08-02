@@ -1,4 +1,49 @@
 import Foundation
+import LeafReaderCore
+
+/// FileHandle invokes its readability handler on a concurrent executor. Keep
+/// the incremental parser and completion flag behind one lock so the closure
+/// captures a stable Sendable reference instead of mutable local variables.
+private final class KokoroWorkerResponseState: @unchecked Sendable {
+    let semaphore = DispatchSemaphore(value: 0)
+
+    private let lock = NSLock()
+    private var reader: KokoroWorkerResponseReader
+    private var matchedResponse: KokoroWorkerResponse?
+    private var didComplete = false
+
+    init(requestID: String) {
+        reader = KokoroWorkerResponseReader(requestID: requestID)
+    }
+
+    func consume(_ data: Data) {
+        var shouldSignal = false
+        lock.lock()
+        if !didComplete {
+            if data.isEmpty {
+                didComplete = true
+                shouldSignal = true
+            } else if let response = reader.append(data) {
+                matchedResponse = response
+                didComplete = true
+                shouldSignal = true
+            }
+        }
+        lock.unlock()
+        if shouldSignal {
+            semaphore.signal()
+        }
+    }
+
+    func finish(timedOut: Bool) -> KokoroWorkerResponse? {
+        lock.lock()
+        defer { lock.unlock() }
+        if timedOut {
+            didComplete = true
+        }
+        return matchedResponse
+    }
+}
 
 final class KokoroTTSBackend {
     private static let responseTimeout: TimeInterval = 45
@@ -270,39 +315,15 @@ final class KokoroTTSBackend {
         from handle: FileHandle,
         timeout: TimeInterval
     ) -> KokoroWorkerResponse? {
-        let semaphore = DispatchSemaphore(value: 0)
-        let lock = NSLock()
-        var reader = KokoroWorkerResponseReader(requestID: requestID)
-        var matchedResponse: KokoroWorkerResponse?
-        var didComplete = false
+        let state = KokoroWorkerResponseState(requestID: requestID)
 
         handle.readabilityHandler = { readableHandle in
-            let data = readableHandle.availableData
-            lock.lock()
-            defer { lock.unlock() }
-            guard !didComplete else { return }
-            guard !data.isEmpty else {
-                didComplete = true
-                semaphore.signal()
-                return
-            }
-
-            if let response = reader.append(data) {
-                matchedResponse = response
-                didComplete = true
-                semaphore.signal()
-            }
+            state.consume(readableHandle.availableData)
         }
 
-        let waitResult = semaphore.wait(timeout: .now() + timeout)
+        let waitResult = state.semaphore.wait(timeout: .now() + timeout)
         handle.readabilityHandler = nil
-
-        lock.lock()
-        defer { lock.unlock() }
-        if waitResult == .timedOut {
-            didComplete = true
-        }
-        return matchedResponse
+        return state.finish(timedOut: waitResult == .timedOut)
     }
 
     private static func synthesizeWithCLI(

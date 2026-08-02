@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     func vocabularyAnswerBody(_ answer: String, word: String) -> String {
