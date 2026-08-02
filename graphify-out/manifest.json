@@ -1,0 +1,2227 @@
+{
+  "LeafReaderApp/AIConversation/AIChatPanel+Actions.swift": {
+    "mtime": 1785683283.9074428,
+    "ast_hash": "fb3f3b9803e8d845be6f2899a0bde05c",
+    "semantic_hash": "fb3f3b9803e8d845be6f2899a0bde05c"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+AnswerProviders.swift": {
+    "mtime": 1785683283.9078975,
+    "ast_hash": "55ea8609e0d3d7b149db8aab9a09bcb7",
+    "semantic_hash": "55ea8609e0d3d7b149db8aab9a09bcb7"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+BubbleInteraction.swift": {
+    "mtime": 1785683283.9082596,
+    "ast_hash": "b99036c2db3d679bb66388963b1dc43f",
+    "semantic_hash": "b99036c2db3d679bb66388963b1dc43f"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+BubblePersistence.swift": {
+    "mtime": 1785683283.9085526,
+    "ast_hash": "67b3d3df74d4136eef52844fa8f1232c",
+    "semantic_hash": "67b3d3df74d4136eef52844fa8f1232c"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+BubbleStreaming.swift": {
+    "mtime": 1785683283.908992,
+    "ast_hash": "b3fc057bb9415f4eb48f79683e90719d",
+    "semantic_hash": "b3fc057bb9415f4eb48f79683e90719d"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+BubbleStyling.swift": {
+    "mtime": 1785683283.9094653,
+    "ast_hash": "6ea6e3b37c2e575e758013f677e767c0",
+    "semantic_hash": "6ea6e3b37c2e575e758013f677e767c0"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+Bubbles.swift": {
+    "mtime": 1785683283.9100642,
+    "ast_hash": "833f078def6bec44b545361224cc8ea3",
+    "semantic_hash": "833f078def6bec44b545361224cc8ea3"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+ContentActions.swift": {
+    "mtime": 1785683283.9103198,
+    "ast_hash": "6c4b59f7b2e32e5a052ea184f9779327",
+    "semantic_hash": "6c4b59f7b2e32e5a052ea184f9779327"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+Conversation.swift": {
+    "mtime": 1785683283.9105332,
+    "ast_hash": "3d1a96dd63f7ba771777d768cf5973b4",
+    "semantic_hash": "3d1a96dd63f7ba771777d768cf5973b4"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+Export.swift": {
+    "mtime": 1785683283.9107506,
+    "ast_hash": "2612b60a4644ff4122ebc408872999e4",
+    "semantic_hash": "2612b60a4644ff4122ebc408872999e4"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+LinkedWords.swift": {
+    "mtime": 1785683283.9109855,
+    "ast_hash": "db437b76c880bbac26adc01ea586c84d",
+    "semantic_hash": "db437b76c880bbac26adc01ea586c84d"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+Models.swift": {
+    "mtime": 1785683283.9112558,
+    "ast_hash": "687164e186ed81fa2db99ca990f263cd",
+    "semantic_hash": "687164e186ed81fa2db99ca990f263cd"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+RequestFailure.swift": {
+    "mtime": 1785683283.9115627,
+    "ast_hash": "a7aa07e16dd0b31dc6a72711c5ae3483",
+    "semantic_hash": "a7aa07e16dd0b31dc6a72711c5ae3483"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+Requests.swift": {
+    "mtime": 1785683283.912187,
+    "ast_hash": "6efe7443d6aa04989865379b830d4f2d",
+    "semantic_hash": "6efe7443d6aa04989865379b830d4f2d"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+Selection.swift": {
+    "mtime": 1785683283.912731,
+    "ast_hash": "8f83dc535f9a9aeaa669cca7f332d866",
+    "semantic_hash": "8f83dc535f9a9aeaa669cca7f332d866"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+UI.swift": {
+    "mtime": 1785683283.9130993,
+    "ast_hash": "36fb6ab05c00cff243353a4665e5e557",
+    "semantic_hash": "36fb6ab05c00cff243353a4665e5e557"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+WordActions.swift": {
+    "mtime": 1785683283.9134493,
+    "ast_hash": "cf4f334720f502b5ed29feec25c337ca",
+    "semantic_hash": "cf4f334720f502b5ed29feec25c337ca"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel+WordFocus.swift": {
+    "mtime": 1785683283.9138947,
+    "ast_hash": "63b3af81d64c505050a2a35e27932af5",
+    "semantic_hash": "63b3af81d64c505050a2a35e27932af5"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanel.swift": {
+    "mtime": 1785683283.9144578,
+    "ast_hash": "e129c540865b4e834552ca4e298f1bb1",
+    "semantic_hash": "e129c540865b4e834552ca4e298f1bb1"
+  },
+  "LeafReaderApp/AIConversation/AIChatPanelViews.swift": {
+    "mtime": 1785683283.9148536,
+    "ast_hash": "33c490cff583cf9ba7f2f1eb4f1684a5",
+    "semantic_hash": "33c490cff583cf9ba7f2f1eb4f1684a5"
+  },
+  "LeafReaderApp/AIConversation/AIChatRequestBuilder.swift": {
+    "mtime": 1785683283.9151006,
+    "ast_hash": "5b8157251962a7879234f84ee026c41d",
+    "semantic_hash": "5b8157251962a7879234f84ee026c41d"
+  },
+  "LeafReaderApp/AIConversation/AIPanelChromeView.swift": {
+    "mtime": 1785683283.9155836,
+    "ast_hash": "0f1d2cf5aa313718af6c6a645d794d68",
+    "semantic_hash": "0f1d2cf5aa313718af6c6a645d794d68"
+  },
+  "LeafReaderApp/AIConversation/AIRequestState.swift": {
+    "mtime": 1785683283.9158702,
+    "ast_hash": "a5e8cf5f43a610e755a1091829027284",
+    "semantic_hash": "a5e8cf5f43a610e755a1091829027284"
+  },
+  "LeafReaderApp/AIConversation/AITextActionRunner.swift": {
+    "mtime": 1785683283.9162593,
+    "ast_hash": "a24185ae1b524b4906b73d0da5ff626b",
+    "semantic_hash": "a24185ae1b524b4906b73d0da5ff626b"
+  },
+  "LeafReaderApp/AIConversation/AITranscriptModel.swift": {
+    "mtime": 1785683283.9166121,
+    "ast_hash": "c218c278df118442617e97894388e148",
+    "semantic_hash": "c218c278df118442617e97894388e148"
+  },
+  "LeafReaderApp/AIConversation/LLMAnswerProvider.swift": {
+    "mtime": 1785683283.917101,
+    "ast_hash": "58142a1ccbeca770f2067334fba49c54",
+    "semantic_hash": "58142a1ccbeca770f2067334fba49c54"
+  },
+  "LeafReaderApp/AIConversation/PDFDocumentAgentIndex.swift": {
+    "mtime": 1785683283.9176443,
+    "ast_hash": "cfe662de0f7f6e29c51fb7ee7655e2f6",
+    "semantic_hash": "cfe662de0f7f6e29c51fb7ee7655e2f6"
+  },
+  "LeafReaderApp/AIConversation/ReaderAIContextBuilder+PDF.swift": {
+    "mtime": 1785683283.9180822,
+    "ast_hash": "039ee25ec1ef40eaf883434a87c1a4ab",
+    "semantic_hash": "039ee25ec1ef40eaf883434a87c1a4ab"
+  },
+  "LeafReaderApp/AIConversation/ReaderAIState.swift": {
+    "mtime": 1785683283.918443,
+    "ast_hash": "943e153dce7028a2ebaaaf905dfaa5c3",
+    "semantic_hash": "943e153dce7028a2ebaaaf905dfaa5c3"
+  },
+  "LeafReaderApp/AIConversation/ReaderEmbeddingState.swift": {
+    "mtime": 1785683283.918834,
+    "ast_hash": "b9f80c61199a85d3464aefa111175e62",
+    "semantic_hash": "b9f80c61199a85d3464aefa111175e62"
+  },
+  "LeafReaderApp/AIConversation/ReaderWindowController+AI.swift": {
+    "mtime": 1785683283.9197187,
+    "ast_hash": "2e91aaf7107323f36babccb5df9d29a0",
+    "semantic_hash": "2e91aaf7107323f36babccb5df9d29a0"
+  },
+  "LeafReaderApp/AIConversation/ReaderWindowController+AIContext.swift": {
+    "mtime": 1785683283.9205475,
+    "ast_hash": "913989ec953e80efe9be27d90f962f7d",
+    "semantic_hash": "913989ec953e80efe9be27d90f962f7d"
+  },
+  "LeafReaderApp/AIConversation/ReaderWindowController+AIConversation.swift": {
+    "mtime": 1785683283.9210825,
+    "ast_hash": "d9c8e6e48b6fbf016097de44b2b82dc7",
+    "semantic_hash": "d9c8e6e48b6fbf016097de44b2b82dc7"
+  },
+  "LeafReaderApp/AIConversation/ReaderWindowController+AIPanelCallbacks.swift": {
+    "mtime": 1785683283.9213338,
+    "ast_hash": "31c24774bbf61f354b3fc61bc59d3d3c",
+    "semantic_hash": "31c24774bbf61f354b3fc61bc59d3d3c"
+  },
+  "LeafReaderApp/AIConversation/ReaderWindowController+AIRetrieval.swift": {
+    "mtime": 1785683283.92157,
+    "ast_hash": "bc27a4ffb60e6c27d2e59ae4169a990e",
+    "semantic_hash": "bc27a4ffb60e6c27d2e59ae4169a990e"
+  },
+  "LeafReaderApp/AIConversation/ReaderWindowController+AISourceAnnotations.swift": {
+    "mtime": 1785683283.9221597,
+    "ast_hash": "7f8242c183de732c822c6a6df461de6a",
+    "semantic_hash": "7f8242c183de732c822c6a6df461de6a"
+  },
+  "LeafReaderApp/AIConversation/ReaderWindowController+AIState.swift": {
+    "mtime": 1785683283.9225037,
+    "ast_hash": "d5649e4f3d206cadbbbde20bf5c264d9",
+    "semantic_hash": "d5649e4f3d206cadbbbde20bf5c264d9"
+  },
+  "LeafReaderApp/AIConversation/ReaderWindowController+Embedding.swift": {
+    "mtime": 1785683283.9228027,
+    "ast_hash": "ff42e51d84106ea0c01c665c07ff7d64",
+    "semantic_hash": "ff42e51d84106ea0c01c665c07ff7d64"
+  },
+  "LeafReaderApp/AIConversation/ReaderWindowController+EmbeddingActions.swift": {
+    "mtime": 1785683283.9232202,
+    "ast_hash": "0588e70a1c459f2c4785b9765238e114",
+    "semantic_hash": "0588e70a1c459f2c4785b9765238e114"
+  },
+  "LeafReaderApp/AIConversation/ReaderWindowController+EmbeddingBackfill.swift": {
+    "mtime": 1785683283.923749,
+    "ast_hash": "b5be882c20b2ee632b1c724b3274d07a",
+    "semantic_hash": "b5be882c20b2ee632b1c724b3274d07a"
+  },
+  "LeafReaderApp/AIConversation/ReaderWindowController+EmbeddingLifecycle.swift": {
+    "mtime": 1785683283.9240322,
+    "ast_hash": "3a5b23b04473f1c58952eeaea63e66b4",
+    "semantic_hash": "3a5b23b04473f1c58952eeaea63e66b4"
+  },
+  "LeafReaderApp/AIConversation/ReaderWindowController+EmbeddingQuery.swift": {
+    "mtime": 1785683283.9243274,
+    "ast_hash": "fa169113f778d276d91ce5cac0753b70",
+    "semantic_hash": "fa169113f778d276d91ce5cac0753b70"
+  },
+  "LeafReaderApp/AIConversation/ReaderWindowController+EmbeddingState.swift": {
+    "mtime": 1785683283.9248335,
+    "ast_hash": "3a6ddcc1a6eff44dc475d58cf5d0aabb",
+    "semantic_hash": "3a6ddcc1a6eff44dc475d58cf5d0aabb"
+  },
+  "LeafReaderApp/AIConversation/ReaderWindowController+EmbeddingStatus.swift": {
+    "mtime": 1785683283.9254653,
+    "ast_hash": "f75d3874b0eed2a081bc6104819a175e",
+    "semantic_hash": "f75d3874b0eed2a081bc6104819a175e"
+  },
+  "LeafReaderApp/AIConversation/RequestAvailabilityPolicy.swift": {
+    "mtime": 1784471197.1585464,
+    "ast_hash": "b2fd2866ee432f3ca4880abee304e694",
+    "semantic_hash": "b2fd2866ee432f3ca4880abee304e694"
+  },
+  "LeafReaderApp/App/AppDelegate+About.swift": {
+    "mtime": 1785683283.925926,
+    "ast_hash": "58a19159b40205770d89e4f6de7443cf",
+    "semantic_hash": "58a19159b40205770d89e4f6de7443cf"
+  },
+  "LeafReaderApp/App/AppDelegate+Diagnostics.swift": {
+    "mtime": 1785683283.9298353,
+    "ast_hash": "02073761852fcb3eea6470ed23fdf8ef",
+    "semantic_hash": "02073761852fcb3eea6470ed23fdf8ef"
+  },
+  "LeafReaderApp/App/AppDelegate+Help.swift": {
+    "mtime": 1784471197.159042,
+    "ast_hash": "2abf9c14abf67ae1f344d8edfcbd46e1",
+    "semantic_hash": "2abf9c14abf67ae1f344d8edfcbd46e1"
+  },
+  "LeafReaderApp/App/AppDelegate+Menu.swift": {
+    "mtime": 1785683283.9308152,
+    "ast_hash": "6e3c9fcaea763e578343b11b490d0f32",
+    "semantic_hash": "6e3c9fcaea763e578343b11b490d0f32"
+  },
+  "LeafReaderApp/App/AppDelegate+Updates.swift": {
+    "mtime": 1785683283.9313776,
+    "ast_hash": "aea9fd60e43cbbb124fd442d080e15c5",
+    "semantic_hash": "aea9fd60e43cbbb124fd442d080e15c5"
+  },
+  "LeafReaderApp/App/AppDelegate+Version.swift": {
+    "mtime": 1785683283.931734,
+    "ast_hash": "931e6b87262c1ca0f6767366d29f6ef1",
+    "semantic_hash": "931e6b87262c1ca0f6767366d29f6ef1"
+  },
+  "LeafReaderApp/App/AppDelegate.swift": {
+    "mtime": 1785683283.9321086,
+    "ast_hash": "e0c86eab75c6472ac4491599a9ebabc4",
+    "semantic_hash": "e0c86eab75c6472ac4491599a9ebabc4"
+  },
+  "LeafReaderApp/App/DiagnosticsPanelController.swift": {
+    "mtime": 1785683283.9324923,
+    "ast_hash": "bb61ab510da0bb17e270029afb766876",
+    "semantic_hash": "bb61ab510da0bb17e270029afb766876"
+  },
+  "LeafReaderApp/App/DiagnosticsPanelTheme.swift": {
+    "mtime": 1784471197.1683257,
+    "ast_hash": "219c6e1924dcab3f5da5a8aee318a057",
+    "semantic_hash": "219c6e1924dcab3f5da5a8aee318a057"
+  },
+  "LeafReaderApp/App/DiagnosticsReport.swift": {
+    "mtime": 1785683283.932842,
+    "ast_hash": "19b3783e08ec8a7a4f069e83545669d4",
+    "semantic_hash": "19b3783e08ec8a7a4f069e83545669d4"
+  },
+  "LeafReaderApp/App/LaunchPerformanceTracker.swift": {
+    "mtime": 1785683283.9335694,
+    "ast_hash": "793486c6bb4c85e3d91cfd4aa8b0f069",
+    "semantic_hash": "793486c6bb4c85e3d91cfd4aa8b0f069"
+  },
+  "LeafReaderApp/App/ReaderPerformance.swift": {
+    "mtime": 1785683283.9338245,
+    "ast_hash": "7619c00937a5432baf30675117fc9165",
+    "semantic_hash": "7619c00937a5432baf30675117fc9165"
+  },
+  "LeafReaderApp/App/UpdateFailureClassifier.swift": {
+    "mtime": 1784471197.1687021,
+    "ast_hash": "42e76fc7451dcfac90e2290bc93efab6",
+    "semantic_hash": "42e76fc7451dcfac90e2290bc93efab6"
+  },
+  "LeafReaderApp/App/main.swift": {
+    "mtime": 1784471197.168784,
+    "ast_hash": "c0bf7aaa5f981e09ad1c6395f6848b87",
+    "semantic_hash": "c0bf7aaa5f981e09ad1c6395f6848b87"
+  },
+  "LeafReaderApp/DocumentReading/DocumentOpenPanelConfiguration.swift": {
+    "mtime": 1785683283.9341662,
+    "ast_hash": "b7235e56c59977f9abe23d87b18f3eda",
+    "semantic_hash": "b7235e56c59977f9abe23d87b18f3eda"
+  },
+  "LeafReaderApp/DocumentReading/DocumentPresentationState.swift": {
+    "mtime": 1785683283.934427,
+    "ast_hash": "1563bb456d2d0bf434f6565a5fda3c31",
+    "semantic_hash": "1563bb456d2d0bf434f6565a5fda3c31"
+  },
+  "LeafReaderApp/DocumentReading/DocumentSession.swift": {
+    "mtime": 1785683283.9347339,
+    "ast_hash": "e42d42181e09e7c1fc3959940dc7377c",
+    "semantic_hash": "e42d42181e09e7c1fc3959940dc7377c"
+  },
+  "LeafReaderApp/DocumentReading/PDFPageLayoutPolicy.swift": {
+    "mtime": 1784642173.6233149,
+    "ast_hash": "ab4dca310fa6d8375f179306534e6636",
+    "semantic_hash": "ab4dca310fa6d8375f179306534e6636"
+  },
+  "LeafReaderApp/DocumentReading/PDFReaderView.swift": {
+    "mtime": 1785683283.9366906,
+    "ast_hash": "8d81f7006529136da44d4cf599da959d",
+    "semantic_hash": "8d81f7006529136da44d4cf599da959d"
+  },
+  "LeafReaderApp/DocumentReading/ReaderBackendAdapters.swift": {
+    "mtime": 1785683283.9370468,
+    "ast_hash": "dccea6a6d2fe7b8624deee34f14a57f9",
+    "semantic_hash": "dccea6a6d2fe7b8624deee34f14a57f9"
+  },
+  "LeafReaderApp/DocumentReading/ReaderDropContentView.swift": {
+    "mtime": 1784471197.1709912,
+    "ast_hash": "c50ffd17bc62bfbd28b85ef43b285a06",
+    "semantic_hash": "c50ffd17bc62bfbd28b85ef43b285a06"
+  },
+  "LeafReaderApp/DocumentReading/ReaderFileDrop.swift": {
+    "mtime": 1785683283.937364,
+    "ast_hash": "cbb49b6ef491fff29b51e35a5e63eb1d",
+    "semantic_hash": "cbb49b6ef491fff29b51e35a5e63eb1d"
+  },
+  "LeafReaderApp/DocumentReading/ReaderTOCHelper.swift": {
+    "mtime": 1785683283.9390094,
+    "ast_hash": "bf0e4697a7aaf82d97f558ba0626ba67",
+    "semantic_hash": "bf0e4697a7aaf82d97f558ba0626ba67"
+  },
+  "LeafReaderApp/DocumentReading/ReaderWebView.swift": {
+    "mtime": 1784471197.171301,
+    "ast_hash": "20c1ec82d38039d79285ad3710405774",
+    "semantic_hash": "20c1ec82d38039d79285ad3710405774"
+  },
+  "LeafReaderApp/DocumentReading/ReaderWindowController+Backend.swift": {
+    "mtime": 1785683283.939731,
+    "ast_hash": "82b3a190200371b2352376ea5bf4d68c",
+    "semantic_hash": "82b3a190200371b2352376ea5bf4d68c"
+  },
+  "LeafReaderApp/DocumentReading/ReaderWindowController+Document.swift": {
+    "mtime": 1785683283.9400978,
+    "ast_hash": "65df7d59c18ab88889a49381eeea381d",
+    "semantic_hash": "65df7d59c18ab88889a49381eeea381d"
+  },
+  "LeafReaderApp/DocumentReading/ReaderWindowController+DocumentLoading.swift": {
+    "mtime": 1785683283.9405575,
+    "ast_hash": "55289175b7faf0bf4b2b0a8d1c286a4e",
+    "semantic_hash": "55289175b7faf0bf4b2b0a8d1c286a4e"
+  },
+  "LeafReaderApp/DocumentReading/ReaderWindowController+DocumentState.swift": {
+    "mtime": 1785683283.9412546,
+    "ast_hash": "d05d9e988daba040d8384c200881a7f5",
+    "semantic_hash": "d05d9e988daba040d8384c200881a7f5"
+  },
+  "LeafReaderApp/DocumentReading/ReaderWindowController+DocumentTOC.swift": {
+    "mtime": 1785683283.9417884,
+    "ast_hash": "ac7f0218c549e3e1dfe599f44dd2ffa4",
+    "semantic_hash": "ac7f0218c549e3e1dfe599f44dd2ffa4"
+  },
+  "LeafReaderApp/DocumentReading/ReaderWindowController+Navigation.swift": {
+    "mtime": 1785683283.9422197,
+    "ast_hash": "8642900945e2543d0369f7fb902d8bc7",
+    "semantic_hash": "8642900945e2543d0369f7fb902d8bc7"
+  },
+  "LeafReaderApp/DocumentReading/ReaderWindowController+PDFCrop.swift": {
+    "mtime": 1785683283.9428637,
+    "ast_hash": "307745db94b167e31671f88e9efa067d",
+    "semantic_hash": "307745db94b167e31671f88e9efa067d"
+  },
+  "LeafReaderApp/DocumentReading/ReaderWindowController+PDFPageLayout.swift": {
+    "mtime": 1785683283.9485233,
+    "ast_hash": "96c676fe537489b2c9d47aa8e6306709",
+    "semantic_hash": "96c676fe537489b2c9d47aa8e6306709"
+  },
+  "LeafReaderApp/DocumentReading/ReaderWindowController+Search.swift": {
+    "mtime": 1785683283.94942,
+    "ast_hash": "b22a95fb2e91c0dbfd728f9490bcda49",
+    "semantic_hash": "b22a95fb2e91c0dbfd728f9490bcda49"
+  },
+  "LeafReaderApp/DocumentReading/ReaderWindowController+WebDelegate.swift": {
+    "mtime": 1785683283.9518607,
+    "ast_hash": "522b81bbebbc1f0c3416a749fddb6fa3",
+    "semantic_hash": "522b81bbebbc1f0c3416a749fddb6fa3"
+  },
+  "LeafReaderApp/DocumentReading/ReaderWindowController+WebScript.swift": {
+    "mtime": 1784471197.1724555,
+    "ast_hash": "9cd3f0898c4676ae24a948123ea9be95",
+    "semantic_hash": "9cd3f0898c4676ae24a948123ea9be95"
+  },
+  "LeafReaderApp/DocumentReading/ReaderWindowController+Zoom.swift": {
+    "mtime": 1785683283.9522913,
+    "ast_hash": "a48eba63c2f3f65daba7d945fd930bd5",
+    "semantic_hash": "a48eba63c2f3f65daba7d945fd930bd5"
+  },
+  "LeafReaderApp/Platform/Networking/AIClient.swift": {
+    "mtime": 1785683283.9529128,
+    "ast_hash": "a0447f0d8148c2dcc6293874ff395bbf",
+    "semantic_hash": "a0447f0d8148c2dcc6293874ff395bbf"
+  },
+  "LeafReaderApp/Platform/Networking/EmbeddingClient.swift": {
+    "mtime": 1785683283.9533155,
+    "ast_hash": "ce4a51403540f18a8969a271c730aaee",
+    "semantic_hash": "ce4a51403540f18a8969a271c730aaee"
+  },
+  "LeafReaderApp/Platform/Networking/NetworkConnectivityMonitor.swift": {
+    "mtime": 1785683283.9535613,
+    "ast_hash": "c9d036839bbdbcad07279fa90d221029",
+    "semantic_hash": "c9d036839bbdbcad07279fa90d221029"
+  },
+  "LeafReaderApp/Platform/Networking/NetworkErrorFormatter.swift": {
+    "mtime": 1784471197.1730673,
+    "ast_hash": "8012dcfc63ace42c232f47789ad9f670",
+    "semantic_hash": "8012dcfc63ace42c232f47789ad9f670"
+  },
+  "LeafReaderApp/Platform/Persistence/LocalEncryptedStore.swift": {
+    "mtime": 1784471197.1731868,
+    "ast_hash": "062c0078d39bbce0110b21bda4811a3d",
+    "semantic_hash": "062c0078d39bbce0110b21bda4811a3d"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/KokoroTTSBackend.swift": {
+    "mtime": 1785683283.953915,
+    "ast_hash": "aad68e50a0627f37bd17004057a5f851",
+    "semantic_hash": "aad68e50a0627f37bd17004057a5f851"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/KokoroVoiceResourceManager.swift": {
+    "mtime": 1785683283.9563663,
+    "ast_hash": "df48eda2fb4f419ccf462487265fb16f",
+    "semantic_hash": "df48eda2fb4f419ccf462487265fb16f"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/PiperTTSBackend+WorkerSupport.swift": {
+    "mtime": 1785683283.956681,
+    "ast_hash": "e3f170dcf0359f1cc94d53021980de8c",
+    "semantic_hash": "e3f170dcf0359f1cc94d53021980de8c"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/PiperTTSBackend.swift": {
+    "mtime": 1785683283.95694,
+    "ast_hash": "559c72b7db3e60329d99ea4088f74ef8",
+    "semantic_hash": "559c72b7db3e60329d99ea4088f74ef8"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimeArchiveValidator.swift": {
+    "mtime": 1785683283.9573169,
+    "ast_hash": "748bae740f6408cef0ccb4ae880c9066",
+    "semantic_hash": "748bae740f6408cef0ccb4ae880c9066"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimeAvailability.swift": {
+    "mtime": 1785683283.9577644,
+    "ast_hash": "d05a396b0b11b678cf5568766b896836",
+    "semantic_hash": "d05a396b0b11b678cf5568766b896836"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimeCacheStrategy.swift": {
+    "mtime": 1785683283.958108,
+    "ast_hash": "f34aae0372c7312d919ce44e753b6336",
+    "semantic_hash": "f34aae0372c7312d919ce44e753b6336"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimeCatalog.swift": {
+    "mtime": 1785683283.9583914,
+    "ast_hash": "6b2f043e7bb885f4ae340f4d9164b9ab",
+    "semantic_hash": "6b2f043e7bb885f4ae340f4d9164b9ab"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimeDeleter.swift": {
+    "mtime": 1785683283.9585783,
+    "ast_hash": "288ba6f1b8bd6b092ba6b55672dd3608",
+    "semantic_hash": "288ba6f1b8bd6b092ba6b55672dd3608"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimeDownloadFailureStore.swift": {
+    "mtime": 1785683283.9589322,
+    "ast_hash": "89219739376da105adc9f39dfc9990de",
+    "semantic_hash": "89219739376da105adc9f39dfc9990de"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimeInferenceFailureStore.swift": {
+    "mtime": 1785683283.9592447,
+    "ast_hash": "e0b6807ba65beef9e0e785fb804332b7",
+    "semantic_hash": "e0b6807ba65beef9e0e785fb804332b7"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimeInstallHelpers.swift": {
+    "mtime": 1784471197.1753676,
+    "ast_hash": "f2518113a99531a29214b0f89c04870c",
+    "semantic_hash": "f2518113a99531a29214b0f89c04870c"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimeInstaller.swift": {
+    "mtime": 1785683283.9596624,
+    "ast_hash": "23b2b85e73e48594ca2b78457d9a01b1",
+    "semantic_hash": "23b2b85e73e48594ca2b78457d9a01b1"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimeManifestFetcher.swift": {
+    "mtime": 1785683283.9598715,
+    "ast_hash": "a4742d0ed2588d938006a32b85bdabb9",
+    "semantic_hash": "a4742d0ed2588d938006a32b85bdabb9"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimeModel.swift": {
+    "mtime": 1785683283.960256,
+    "ast_hash": "979fd264eb3e6f3b1f86528ffae52181",
+    "semantic_hash": "979fd264eb3e6f3b1f86528ffae52181"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimePathChecks.swift": {
+    "mtime": 1784471197.1757448,
+    "ast_hash": "3dcc2a9480b748cd0e1b44731f104aee",
+    "semantic_hash": "3dcc2a9480b748cd0e1b44731f104aee"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimeResourceManager.swift": {
+    "mtime": 1785683283.9604719,
+    "ast_hash": "5b7076bd1e55b281d713be11cc4e9cf4",
+    "semantic_hash": "5b7076bd1e55b281d713be11cc4e9cf4"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SpeechRuntimeStatus.swift": {
+    "mtime": 1785683283.960723,
+    "ast_hash": "18ae09dc9948ddb22a2cd4b556f3d1a2",
+    "semantic_hash": "18ae09dc9948ddb22a2cd4b556f3d1a2"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SpeechVoiceCatalog.swift": {
+    "mtime": 1785683283.9610126,
+    "ast_hash": "d72395e32c269daaddd0868863a661fa",
+    "semantic_hash": "d72395e32c269daaddd0868863a661fa"
+  },
+  "LeafReaderApp/Platform/SpeechRuntime/SupertonicCoreMLTTSBackend.swift": {
+    "mtime": 1785683283.9615057,
+    "ast_hash": "c13c08e1ead23d4f881e0a58174f90d5",
+    "semantic_hash": "c13c08e1ead23d4f881e0a58174f90d5"
+  },
+  "LeafReaderApp/ReadAloud/PDFReadAloudBatchBuilder.swift": {
+    "mtime": 1785683283.9619212,
+    "ast_hash": "1a89870e7cea7260329d3f18db39de34",
+    "semantic_hash": "1a89870e7cea7260329d3f18db39de34"
+  },
+  "LeafReaderApp/ReadAloud/ReadAloudFloatingControlView.swift": {
+    "mtime": 1785683283.9624515,
+    "ast_hash": "bc320cdb0fe2f37b76375c383103a7f2",
+    "semantic_hash": "bc320cdb0fe2f37b76375c383103a7f2"
+  },
+  "LeafReaderApp/ReadAloud/ReadAloudShortcutHintView.swift": {
+    "mtime": 1785683283.962858,
+    "ast_hash": "007db9710eb8df86dd7a7594496b92c8",
+    "semantic_hash": "007db9710eb8df86dd7a7594496b92c8"
+  },
+  "LeafReaderApp/ReadAloud/ReadAloudSoftHintView.swift": {
+    "mtime": 1785683283.9631636,
+    "ast_hash": "134eb14ea22f207ddd65f02aac464da8",
+    "semantic_hash": "134eb14ea22f207ddd65f02aac464da8"
+  },
+  "LeafReaderApp/ReadAloud/ReaderReadAloudState.swift": {
+    "mtime": 1785683283.9635818,
+    "ast_hash": "e2b7efd2023f8e90fdf77162c36857ec",
+    "semantic_hash": "e2b7efd2023f8e90fdf77162c36857ec"
+  },
+  "LeafReaderApp/ReadAloud/ReaderWindowController+ReadAloud.swift": {
+    "mtime": 1785683283.9639142,
+    "ast_hash": "1a46ea1803ab3a606fcdfbf002226a5d",
+    "semantic_hash": "1a46ea1803ab3a606fcdfbf002226a5d"
+  },
+  "LeafReaderApp/ReadAloud/ReaderWindowController+ReadAloudAITracking.swift": {
+    "mtime": 1785683283.9642706,
+    "ast_hash": "5bd08e80a98514d6a3724ae4718d343a",
+    "semantic_hash": "5bd08e80a98514d6a3724ae4718d343a"
+  },
+  "LeafReaderApp/ReadAloud/ReaderWindowController+ReadAloudAppleFallback.swift": {
+    "mtime": 1784471197.1777992,
+    "ast_hash": "b3dbe98b0dcac4c290003268c10618f8",
+    "semantic_hash": "b3dbe98b0dcac4c290003268c10618f8"
+  },
+  "LeafReaderApp/ReadAloud/ReaderWindowController+ReadAloudFloatingControl.swift": {
+    "mtime": 1785683283.9649377,
+    "ast_hash": "9ee7cefd22b884c054e47dece80584a2",
+    "semantic_hash": "9ee7cefd22b884c054e47dece80584a2"
+  },
+  "LeafReaderApp/ReadAloud/ReaderWindowController+ReadAloudPDF.swift": {
+    "mtime": 1785683283.9657245,
+    "ast_hash": "273b8fcd75d3c18433c940690fcc9bbd",
+    "semantic_hash": "273b8fcd75d3c18433c940690fcc9bbd"
+  },
+  "LeafReaderApp/ReadAloud/ReaderWindowController+ReadAloudProgress.swift": {
+    "mtime": 1785683283.966419,
+    "ast_hash": "561e6b952adacd6c7a6936725b27065a",
+    "semantic_hash": "561e6b952adacd6c7a6936725b27065a"
+  },
+  "LeafReaderApp/ReadAloud/ReaderWindowController+ReadAloudRuntime.swift": {
+    "mtime": 1785683283.9670029,
+    "ast_hash": "96b49dbb90276c26f71e8b767172be89",
+    "semantic_hash": "96b49dbb90276c26f71e8b767172be89"
+  },
+  "LeafReaderApp/ReadAloud/ReaderWindowController+ReadAloudSoftHint.swift": {
+    "mtime": 1784471197.1787398,
+    "ast_hash": "28fcb45df7917afa9e5150961a02d150",
+    "semantic_hash": "28fcb45df7917afa9e5150961a02d150"
+  },
+  "LeafReaderApp/ReadAloud/ReaderWindowController+ReadAloudState.swift": {
+    "mtime": 1785683283.9675183,
+    "ast_hash": "69ec2abc954ea4f1944da38237a9be57",
+    "semantic_hash": "69ec2abc954ea4f1944da38237a9be57"
+  },
+  "LeafReaderApp/ReadAloud/ReaderWindowController+ReadAloudWeb.swift": {
+    "mtime": 1785683283.968733,
+    "ast_hash": "cd9a689870a22651eb187a4a4851c654",
+    "semantic_hash": "cd9a689870a22651eb187a4a4851c654"
+  },
+  "LeafReaderApp/ReadAloud/SpeechPlaybackCoordinator+AudioDelegate.swift": {
+    "mtime": 1784471197.1790066,
+    "ast_hash": "b7abf51aa02dd7469af481b8a62d8136",
+    "semantic_hash": "b7abf51aa02dd7469af481b8a62d8136"
+  },
+  "LeafReaderApp/ReadAloud/SpeechPlaybackCoordinator+Controls.swift": {
+    "mtime": 1785683283.9689715,
+    "ast_hash": "e4f9b5b1539eb82065ef3a7af2870d50",
+    "semantic_hash": "e4f9b5b1539eb82065ef3a7af2870d50"
+  },
+  "LeafReaderApp/ReadAloud/SpeechPlaybackCoordinator+Generation.swift": {
+    "mtime": 1785683283.9693325,
+    "ast_hash": "bd023f87f2c3d7e6e4caa4045422d7d9",
+    "semantic_hash": "bd023f87f2c3d7e6e4caa4045422d7d9"
+  },
+  "LeafReaderApp/ReadAloud/SpeechPlaybackCoordinator+Models.swift": {
+    "mtime": 1784471197.1792796,
+    "ast_hash": "b9b64170b5c1527b968a639078f67502",
+    "semantic_hash": "b9b64170b5c1527b968a639078f67502"
+  },
+  "LeafReaderApp/ReadAloud/SpeechPlaybackCoordinator+Notifications.swift": {
+    "mtime": 1785683283.9697592,
+    "ast_hash": "3279e00524bf1ae52d3072ba24887c97",
+    "semantic_hash": "3279e00524bf1ae52d3072ba24887c97"
+  },
+  "LeafReaderApp/ReadAloud/SpeechPlaybackCoordinator+PlaybackCache.swift": {
+    "mtime": 1784471197.1794636,
+    "ast_hash": "fb142150e314b818c0586fe1ee118a70",
+    "semantic_hash": "fb142150e314b818c0586fe1ee118a70"
+  },
+  "LeafReaderApp/ReadAloud/SpeechPlaybackCoordinator+Synthesis.swift": {
+    "mtime": 1785683283.9700272,
+    "ast_hash": "82a0e9438738e2eed04c7ac84b3342d0",
+    "semantic_hash": "82a0e9438738e2eed04c7ac84b3342d0"
+  },
+  "LeafReaderApp/ReadAloud/SpeechPlaybackCoordinator.swift": {
+    "mtime": 1785683283.970316,
+    "ast_hash": "da4541a49313b6699f83537d9a4eadbc",
+    "semantic_hash": "da4541a49313b6699f83537d9a4eadbc"
+  },
+  "LeafReaderApp/ReadAloud/SpeechPlaybackInterruption.swift": {
+    "mtime": 1785683283.9707966,
+    "ast_hash": "0e5cb2512229da5aaa8d963dc3c14824",
+    "semantic_hash": "0e5cb2512229da5aaa8d963dc3c14824"
+  },
+  "LeafReaderApp/ReadAloud/SpeechPlaybackSegment.swift": {
+    "mtime": 1784471197.1800356,
+    "ast_hash": "b70ac719016367779db22c20dd0c02e8",
+    "semantic_hash": "b70ac719016367779db22c20dd0c02e8"
+  },
+  "LeafReaderApp/ReadAloud/SpeechSynthesisRuntime.swift": {
+    "mtime": 1785683283.9711468,
+    "ast_hash": "1551fce0ff03e93ed5b696669a7df02e",
+    "semantic_hash": "1551fce0ff03e93ed5b696669a7df02e"
+  },
+  "LeafReaderApp/ReadAloud/WebReadAloudBatchParser.swift": {
+    "mtime": 1784471197.1807604,
+    "ast_hash": "648e40a96b9e994ab6882fec29323975",
+    "semantic_hash": "648e40a96b9e994ab6882fec29323975"
+  },
+  "LeafReaderApp/ReaderShell/ReaderBottomBarView.swift": {
+    "mtime": 1785683283.9715712,
+    "ast_hash": "e36f3f385201da57a889dbfff6e30bb0",
+    "semantic_hash": "e36f3f385201da57a889dbfff6e30bb0"
+  },
+  "LeafReaderApp/ReaderShell/ReaderChromeState.swift": {
+    "mtime": 1785683283.9719021,
+    "ast_hash": "8336644dc65572f4f01a9c0efb3275bc",
+    "semantic_hash": "8336644dc65572f4f01a9c0efb3275bc"
+  },
+  "LeafReaderApp/ReaderShell/ReaderProgressFormatter.swift": {
+    "mtime": 1784471197.1809502,
+    "ast_hash": "399ed2b384ddce4776372e40b73bb3a8",
+    "semantic_hash": "399ed2b384ddce4776372e40b73bb3a8"
+  },
+  "LeafReaderApp/ReaderShell/ReaderSessionPolicy.swift": {
+    "mtime": 1785683283.9724162,
+    "ast_hash": "0c8e2c27e759da4821c4b2d0b6ccb22a",
+    "semantic_hash": "0c8e2c27e759da4821c4b2d0b6ccb22a"
+  },
+  "LeafReaderApp/ReaderShell/ReaderSessionStore.swift": {
+    "mtime": 1784471197.1811318,
+    "ast_hash": "be35c83cb8931faa9d70640ce589ffa2",
+    "semantic_hash": "be35c83cb8931faa9d70640ce589ffa2"
+  },
+  "LeafReaderApp/ReaderShell/ReaderShellPresentationState.swift": {
+    "mtime": 1785683283.972628,
+    "ast_hash": "c95971b8883b485bb029b3682493f0bd",
+    "semantic_hash": "c95971b8883b485bb029b3682493f0bd"
+  },
+  "LeafReaderApp/ReaderShell/ReaderToolbarItem.swift": {
+    "mtime": 1785683283.972996,
+    "ast_hash": "2e4ff57f9b8540e4c908231642063bfc",
+    "semantic_hash": "2e4ff57f9b8540e4c908231642063bfc"
+  },
+  "LeafReaderApp/ReaderShell/ReaderTopBarView.swift": {
+    "mtime": 1785683283.9736764,
+    "ast_hash": "1a731a437223d3ffbdfce8f36bfcff94",
+    "semantic_hash": "1a731a437223d3ffbdfce8f36bfcff94"
+  },
+  "LeafReaderApp/ReaderShell/ReaderWindow.swift": {
+    "mtime": 1784471197.1812031,
+    "ast_hash": "0093579d673a75d6661d0ac4e5e72110",
+    "semantic_hash": "0093579d673a75d6661d0ac4e5e72110"
+  },
+  "LeafReaderApp/ReaderShell/ReaderWindowController+ChromeUI.swift": {
+    "mtime": 1785683283.9741364,
+    "ast_hash": "7cc64f6339a1c73d1f24cb17339d4626",
+    "semantic_hash": "7cc64f6339a1c73d1f24cb17339d4626"
+  },
+  "LeafReaderApp/ReaderShell/ReaderWindowController+DocumentShelf.swift": {
+    "mtime": 1785683283.9745615,
+    "ast_hash": "489950de1492dd9182412d3b284269d0",
+    "semantic_hash": "489950de1492dd9182412d3b284269d0"
+  },
+  "LeafReaderApp/ReaderShell/ReaderWindowController+Input.swift": {
+    "mtime": 1785683283.9751165,
+    "ast_hash": "74e6c0008318d6d764a7e33642938690",
+    "semantic_hash": "74e6c0008318d6d764a7e33642938690"
+  },
+  "LeafReaderApp/ReaderShell/ReaderWindowController+Panel.swift": {
+    "mtime": 1785683283.9758325,
+    "ast_hash": "3d31b07b17ea6b3d95ebca4aaeeaca6e",
+    "semantic_hash": "3d31b07b17ea6b3d95ebca4aaeeaca6e"
+  },
+  "LeafReaderApp/ReaderShell/ReaderWindowController+Presentation.swift": {
+    "mtime": 1785683283.9762022,
+    "ast_hash": "ac49a642dff72295885a36207d5ea24f",
+    "semantic_hash": "ac49a642dff72295885a36207d5ea24f"
+  },
+  "LeafReaderApp/ReaderShell/ReaderWindowController+SelectionState.swift": {
+    "mtime": 1785683283.976628,
+    "ast_hash": "ac29902e79f97d71f55b6d595e34d42b",
+    "semantic_hash": "ac29902e79f97d71f55b6d595e34d42b"
+  },
+  "LeafReaderApp/ReaderShell/ReaderWindowController+SelectionToolbar.swift": {
+    "mtime": 1785683283.9771438,
+    "ast_hash": "9c64c0a43397a5a2f04f9c3f0fc8073d",
+    "semantic_hash": "9c64c0a43397a5a2f04f9c3f0fc8073d"
+  },
+  "LeafReaderApp/ReaderShell/ReaderWindowController+Session.swift": {
+    "mtime": 1785683283.9798906,
+    "ast_hash": "98bbe11ca7f6440a92523ad59286ca7a",
+    "semantic_hash": "98bbe11ca7f6440a92523ad59286ca7a"
+  },
+  "LeafReaderApp/ReaderShell/ReaderWindowController+Theme.swift": {
+    "mtime": 1785683283.9802678,
+    "ast_hash": "cff96fca88792f86dd04c3204211353e",
+    "semantic_hash": "cff96fca88792f86dd04c3204211353e"
+  },
+  "LeafReaderApp/ReaderShell/ReaderWindowController+ToolbarUI.swift": {
+    "mtime": 1785683283.9806232,
+    "ast_hash": "5d4025640246e0df070e1b2fe02ea792",
+    "semantic_hash": "5d4025640246e0df070e1b2fe02ea792"
+  },
+  "LeafReaderApp/ReaderShell/ReaderWindowController+UI.swift": {
+    "mtime": 1785683283.98091,
+    "ast_hash": "3694ed5c79db5338dc3d894f1eb11439",
+    "semantic_hash": "3694ed5c79db5338dc3d894f1eb11439"
+  },
+  "LeafReaderApp/ReaderShell/ReaderWindowController+UILayout.swift": {
+    "mtime": 1785683283.9812243,
+    "ast_hash": "72dcf007e9a471be55d48b6e04499e7d",
+    "semantic_hash": "72dcf007e9a471be55d48b6e04499e7d"
+  },
+  "LeafReaderApp/ReaderShell/ReaderWindowController.swift": {
+    "mtime": 1785683283.981569,
+    "ast_hash": "7f55052cdb16d52d609701a3ee26cff7",
+    "semantic_hash": "7f55052cdb16d52d609701a3ee26cff7"
+  },
+  "LeafReaderApp/ReaderShell/RecentDocumentsDropContentView.swift": {
+    "mtime": 1784471197.1831403,
+    "ast_hash": "2a0f3d04f1032cf3a319dbd2606b338e",
+    "semantic_hash": "2a0f3d04f1032cf3a319dbd2606b338e"
+  },
+  "LeafReaderApp/ReaderShell/RecentDocumentsPanelController+Actions.swift": {
+    "mtime": 1785683283.9819975,
+    "ast_hash": "2dd65189d438bcf82577d4f68d3fb913",
+    "semantic_hash": "2dd65189d438bcf82577d4f68d3fb913"
+  },
+  "LeafReaderApp/ReaderShell/RecentDocumentsPanelController.swift": {
+    "mtime": 1785683283.982357,
+    "ast_hash": "f6cc6e6714715f27a340aa4a0b144129",
+    "semantic_hash": "f6cc6e6714715f27a340aa4a0b144129"
+  },
+  "LeafReaderApp/ReaderShell/RecentDocumentsStore.swift": {
+    "mtime": 1785683283.9826882,
+    "ast_hash": "72917d818ebaae4e8f6956f85dcd77ba",
+    "semantic_hash": "72917d818ebaae4e8f6956f85dcd77ba"
+  },
+  "LeafReaderApp/ReaderShell/ShelfCardPresenter.swift": {
+    "mtime": 1785683283.98289,
+    "ast_hash": "08af6d78e7e01e8a2cc8d43e8b47d0f4",
+    "semantic_hash": "08af6d78e7e01e8a2cc8d43e8b47d0f4"
+  },
+  "LeafReaderApp/ReaderShell/ShelfColorTokens.swift": {
+    "mtime": 1785683283.9832356,
+    "ast_hash": "18a96a033fa0df967e35f8e4c4520f98",
+    "semantic_hash": "18a96a033fa0df967e35f8e4c4520f98"
+  },
+  "LeafReaderApp/ReaderShell/ShelfCoverLoader.swift": {
+    "mtime": 1785683283.983493,
+    "ast_hash": "9ab80e1bdf6896d3b16fa2d43029f1f7",
+    "semantic_hash": "9ab80e1bdf6896d3b16fa2d43029f1f7"
+  },
+  "LeafReaderApp/ReaderShell/ShelfModel.swift": {
+    "mtime": 1785683283.9838722,
+    "ast_hash": "db76f77dad2796b4d9f0aada76496d5c",
+    "semantic_hash": "db76f77dad2796b4d9f0aada76496d5c"
+  },
+  "LeafReaderApp/ReaderShell/ShelfView.swift": {
+    "mtime": 1785683283.9841468,
+    "ast_hash": "2b99e35d4e58dc3572f2ccbc68d36f16",
+    "semantic_hash": "2b99e35d4e58dc3572f2ccbc68d36f16"
+  },
+  "LeafReaderApp/ReadingNotes/ReaderNotesState.swift": {
+    "mtime": 1785683283.984592,
+    "ast_hash": "33d33e70f58051abac9356656a3ea00b",
+    "semantic_hash": "33d33e70f58051abac9356656a3ea00b"
+  },
+  "LeafReaderApp/ReadingNotes/ReaderWindowController+NotesState.swift": {
+    "mtime": 1785683283.9849582,
+    "ast_hash": "ae88a31ae72a7f32fd012f0e678f0638",
+    "semantic_hash": "ae88a31ae72a7f32fd012f0e678f0638"
+  },
+  "LeafReaderApp/ReadingNotes/ReaderWindowController+ReadingNotes.swift": {
+    "mtime": 1785683283.9853501,
+    "ast_hash": "bc6d14e9caba0d30334b58046185fba2",
+    "semantic_hash": "bc6d14e9caba0d30334b58046185fba2"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNoteColorTokens.swift": {
+    "mtime": 1785683283.985736,
+    "ast_hash": "a83bf70c4272e9010a9123235d70ef13",
+    "semantic_hash": "a83bf70c4272e9010a9123235d70ef13"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNoteDocumentCodec.swift": {
+    "mtime": 1784471197.1852655,
+    "ast_hash": "7ce08efc1f4cb634933fca260d36c605",
+    "semantic_hash": "7ce08efc1f4cb634933fca260d36c605"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNoteEditorChromeView.swift": {
+    "mtime": 1785683283.9859712,
+    "ast_hash": "3e28a803f212a527d41e91fcc0ca11ba",
+    "semantic_hash": "3e28a803f212a527d41e91fcc0ca11ba"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNoteEditorModel.swift": {
+    "mtime": 1785683283.9864335,
+    "ast_hash": "77ef18a00992f10ea19880a7f01b6493",
+    "semantic_hash": "77ef18a00992f10ea19880a7f01b6493"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNoteEditorRenderer.swift": {
+    "mtime": 1784471197.1854224,
+    "ast_hash": "8ea9caef5f2b93dbc1c6348832e59ca0",
+    "semantic_hash": "8ea9caef5f2b93dbc1c6348832e59ca0"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNoteEditorViews.swift": {
+    "mtime": 1785683283.986775,
+    "ast_hash": "5b68ba9a20541fa92dd5fa6a6a44acd3",
+    "semantic_hash": "5b68ba9a20541fa92dd5fa6a6a44acd3"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNoteExportCoordinator.swift": {
+    "mtime": 1785683283.9871426,
+    "ast_hash": "485555864c5d6c83ff35abf9a9f087ac",
+    "semantic_hash": "485555864c5d6c83ff35abf9a9f087ac"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNoteInlineStylePolicy.swift": {
+    "mtime": 1784471197.1858706,
+    "ast_hash": "f385a5e2ff9cf63fefa65012c1e12021",
+    "semantic_hash": "f385a5e2ff9cf63fefa65012c1e12021"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNoteMarkdownSerializer.swift": {
+    "mtime": 1785683283.9875813,
+    "ast_hash": "86b6a2e0ce0be20c8dfc08d86f85f796",
+    "semantic_hash": "86b6a2e0ce0be20c8dfc08d86f85f796"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotePDFExporter.swift": {
+    "mtime": 1785683283.9878542,
+    "ast_hash": "ca5ebe3021f2e7d501310bc859accb60",
+    "semantic_hash": "ca5ebe3021f2e7d501310bc859accb60"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotePanelController+AIPlaceholders.swift": {
+    "mtime": 1785683283.9881282,
+    "ast_hash": "cc992c48594ce63915c07f92b33d335d",
+    "semantic_hash": "cc992c48594ce63915c07f92b33d335d"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotePanelController+Actions.swift": {
+    "mtime": 1785683283.988393,
+    "ast_hash": "b4a531af5ef315eeb1bb675bf44634a7",
+    "semantic_hash": "b4a531af5ef315eeb1bb675bf44634a7"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotePanelController+AskAI.swift": {
+    "mtime": 1785683283.988684,
+    "ast_hash": "dc1f84cc3185ece660286bb30a849293",
+    "semantic_hash": "dc1f84cc3185ece660286bb30a849293"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotePanelController+Build.swift": {
+    "mtime": 1785683283.9893703,
+    "ast_hash": "668fa62be5ebb54a1cd00e45f863a52f",
+    "semantic_hash": "668fa62be5ebb54a1cd00e45f863a52f"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotePanelController+Chrome.swift": {
+    "mtime": 1785683283.9911618,
+    "ast_hash": "ab088fe3ae8753a92109dcc5465a41f2",
+    "semantic_hash": "ab088fe3ae8753a92109dcc5465a41f2"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotePanelController+Editor.swift": {
+    "mtime": 1784471197.1872556,
+    "ast_hash": "289cfa6e7c815a6b084644e95043bb3c",
+    "semantic_hash": "289cfa6e7c815a6b084644e95043bb3c"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotePanelController+Formatting.swift": {
+    "mtime": 1785683283.991499,
+    "ast_hash": "1722ca39a3835c659b8735d7cd2ca014",
+    "semantic_hash": "1722ca39a3835c659b8735d7cd2ca014"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotePanelController+Markdown.swift": {
+    "mtime": 1785683283.9918294,
+    "ast_hash": "70a24c87aac5f211d157cb83fdd8df42",
+    "semantic_hash": "70a24c87aac5f211d157cb83fdd8df42"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotePanelController+SlashCommands.swift": {
+    "mtime": 1785683283.992183,
+    "ast_hash": "0ce6c471dc86b42fd3d7dabd952ce3e6",
+    "semantic_hash": "0ce6c471dc86b42fd3d7dabd952ce3e6"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotePanelController+Theme.swift": {
+    "mtime": 1785683283.9924371,
+    "ast_hash": "4a959078bbd5df757454e00b1d9472c8",
+    "semantic_hash": "4a959078bbd5df757454e00b1d9472c8"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotePanelController.swift": {
+    "mtime": 1785683283.9928339,
+    "ast_hash": "bd4681d24e67d4e2cc198aa9d20f04c8",
+    "semantic_hash": "bd4681d24e67d4e2cc198aa9d20f04c8"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotePanelMetrics.swift": {
+    "mtime": 1785683283.9932961,
+    "ast_hash": "a8bc48eb8d9e3d8bb6a7086fbf95427c",
+    "semantic_hash": "a8bc48eb8d9e3d8bb6a7086fbf95427c"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNoteTheme.swift": {
+    "mtime": 1784471197.1892161,
+    "ast_hash": "ccb5caa565e4c6e0da40cb80309937da",
+    "semantic_hash": "ccb5caa565e4c6e0da40cb80309937da"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotesListModel.swift": {
+    "mtime": 1785683283.995155,
+    "ast_hash": "261069b04a2606d317d7700e09b06116",
+    "semantic_hash": "261069b04a2606d317d7700e09b06116"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotesListView.swift": {
+    "mtime": 1785683283.9954453,
+    "ast_hash": "fe5964ca824d27db6ebaadd1ff29bfcb",
+    "semantic_hash": "fe5964ca824d27db6ebaadd1ff29bfcb"
+  },
+  "LeafReaderApp/ReadingNotes/ReadingNotesPanelController.swift": {
+    "mtime": 1785683283.9956374,
+    "ast_hash": "64493c2d916c2495fe32acb3a8cd87dc",
+    "semantic_hash": "64493c2d916c2495fe32acb3a8cd87dc"
+  },
+  "LeafReaderApp/Resources/AIPrompts.json": {
+    "mtime": 1784471197.1897042,
+    "ast_hash": "5a01ec88195e334ad5c9a1ff8e8bbad1",
+    "semantic_hash": "5a01ec88195e334ad5c9a1ff8e8bbad1"
+  },
+  "LeafReaderApp/Resources/reader-web-marks.js": {
+    "mtime": 1784471197.2288415,
+    "ast_hash": "51242923f75bde7b054c6cd80f9ee62e",
+    "semantic_hash": "51242923f75bde7b054c6cd80f9ee62e"
+  },
+  "LeafReaderApp/Resources/reader-web-search.js": {
+    "mtime": 1784471197.229086,
+    "ast_hash": "f58f709ff341f1222499242521fa0fcc",
+    "semantic_hash": "f58f709ff341f1222499242521fa0fcc"
+  },
+  "LeafReaderApp/Resources/reader-web-text.js": {
+    "mtime": 1784471197.2293158,
+    "ast_hash": "c12fea635063981a29abf8d72d82cf40",
+    "semantic_hash": "c12fea635063981a29abf8d72d82cf40"
+  },
+  "LeafReaderApp/Resources/reader-web.js": {
+    "mtime": 1784471197.2295592,
+    "ast_hash": "08f8bc74e2c0d77d3f2fb8c93727475f",
+    "semantic_hash": "08f8bc74e2c0d77d3f2fb8c93727475f"
+  },
+  "LeafReaderApp/Resources/speech-models-manifest.json": {
+    "mtime": 1784471197.229743,
+    "ast_hash": "23f23552c27a4aafe7d65e2d0f3459e4",
+    "semantic_hash": "23f23552c27a4aafe7d65e2d0f3459e4"
+  },
+  "LeafReaderApp/Settings/AIModelConfig.swift": {
+    "mtime": 1785683283.995904,
+    "ast_hash": "31e6166edb4d6a003b8cb44a040eed10",
+    "semantic_hash": "31e6166edb4d6a003b8cb44a040eed10"
+  },
+  "LeafReaderApp/Settings/AIProviderDescriptor.swift": {
+    "mtime": 1785683283.9978588,
+    "ast_hash": "b0ea362dda10ed51a26680513b98ab49",
+    "semantic_hash": "b0ea362dda10ed51a26680513b98ab49"
+  },
+  "LeafReaderApp/Settings/AISettingsPanelController+Build.swift": {
+    "mtime": 1785683283.9981518,
+    "ast_hash": "aeac29ceea7d97684b6650eab501f44d",
+    "semantic_hash": "aeac29ceea7d97684b6650eab501f44d"
+  },
+  "LeafReaderApp/Settings/AISettingsPanelController+Cache.swift": {
+    "mtime": 1785683283.998364,
+    "ast_hash": "06a23b57d07a48c0156f7d6360269692",
+    "semantic_hash": "06a23b57d07a48c0156f7d6360269692"
+  },
+  "LeafReaderApp/Settings/AISettingsPanelController+ConnectionTests.swift": {
+    "mtime": 1785683284.00088,
+    "ast_hash": "a3d659ed5a39adf5516f27bb93a70d57",
+    "semantic_hash": "a3d659ed5a39adf5516f27bb93a70d57"
+  },
+  "LeafReaderApp/Settings/AISettingsPanelController+General.swift": {
+    "mtime": 1785683284.0013006,
+    "ast_hash": "ee1dedb966ce6a892647d41863fe6258",
+    "semantic_hash": "ee1dedb966ce6a892647d41863fe6258"
+  },
+  "LeafReaderApp/Settings/AISettingsPanelController+Layout.swift": {
+    "mtime": 1784667274.068569,
+    "ast_hash": "e54cbfb409b3fd18209632063272c2a7",
+    "semantic_hash": "e54cbfb409b3fd18209632063272c2a7"
+  },
+  "LeafReaderApp/Settings/AISettingsPanelController+Model.swift": {
+    "mtime": 1785683284.0019798,
+    "ast_hash": "5c27ab2ac25d4855a15ba306812a22ff",
+    "semantic_hash": "5c27ab2ac25d4855a15ba306812a22ff"
+  },
+  "LeafReaderApp/Settings/AISettingsPanelController+Pages.swift": {
+    "mtime": 1785683284.0023012,
+    "ast_hash": "3bec0427925628a506b7767e0bf1383e",
+    "semantic_hash": "3bec0427925628a506b7767e0bf1383e"
+  },
+  "LeafReaderApp/Settings/AISettingsPanelController+Panel.swift": {
+    "mtime": 1785683284.0027723,
+    "ast_hash": "b441615686caa0c916169bb8942af270",
+    "semantic_hash": "b441615686caa0c916169bb8942af270"
+  },
+  "LeafReaderApp/Settings/AISettingsPanelController+Speech.swift": {
+    "mtime": 1785683284.0031602,
+    "ast_hash": "2feaeba6a3dc1dc76be24c8ceecc4d78",
+    "semantic_hash": "2feaeba6a3dc1dc76be24c8ceecc4d78"
+  },
+  "LeafReaderApp/Settings/AISettingsPanelController+Theme.swift": {
+    "mtime": 1785683284.003699,
+    "ast_hash": "56e3ecf15d1e4243957688b35b2bed17",
+    "semantic_hash": "56e3ecf15d1e4243957688b35b2bed17"
+  },
+  "LeafReaderApp/Settings/AISettingsPanelController+UIFactory.swift": {
+    "mtime": 1785683284.0042012,
+    "ast_hash": "e11855e2a1fa76540fef65a1a7a05cd0",
+    "semantic_hash": "e11855e2a1fa76540fef65a1a7a05cd0"
+  },
+  "LeafReaderApp/Settings/AISettingsPanelController+Validation.swift": {
+    "mtime": 1785683284.004511,
+    "ast_hash": "7632f919a0a599788d263c2689e209b6",
+    "semantic_hash": "7632f919a0a599788d263c2689e209b6"
+  },
+  "LeafReaderApp/Settings/AISettingsPanelController.swift": {
+    "mtime": 1785683284.0047176,
+    "ast_hash": "c32567653ec9f60e0fdcbaaada507566",
+    "semantic_hash": "c32567653ec9f60e0fdcbaaada507566"
+  },
+  "LeafReaderApp/Settings/AISettingsPanelViews.swift": {
+    "mtime": 1785683284.0049057,
+    "ast_hash": "eb11698f0047e58baf919bf7f9e701a9",
+    "semantic_hash": "eb11698f0047e58baf919bf7f9e701a9"
+  },
+  "LeafReaderApp/Settings/AISettingsStore+Embedding.swift": {
+    "mtime": 1785683284.0051248,
+    "ast_hash": "c4cb393fb755fc27c3e9706023e2f506",
+    "semantic_hash": "c4cb393fb755fc27c3e9706023e2f506"
+  },
+  "LeafReaderApp/Settings/AISettingsStore+Speech.swift": {
+    "mtime": 1785683284.005386,
+    "ast_hash": "2bafa86e220626f13adccb07cbb4583d",
+    "semantic_hash": "2bafa86e220626f13adccb07cbb4583d"
+  },
+  "LeafReaderApp/Settings/AISettingsStore.swift": {
+    "mtime": 1785683284.0058644,
+    "ast_hash": "9a85a0cae6452b263cee3a0644d087c4",
+    "semantic_hash": "9a85a0cae6452b263cee3a0644d087c4"
+  },
+  "LeafReaderApp/Settings/CacheSettingsModel.swift": {
+    "mtime": 1785683284.0061197,
+    "ast_hash": "2db1a9ad1d6f7b7e6baa48257fcbaa9e",
+    "semantic_hash": "2db1a9ad1d6f7b7e6baa48257fcbaa9e"
+  },
+  "LeafReaderApp/Settings/CacheSettingsView.swift": {
+    "mtime": 1785683284.0063071,
+    "ast_hash": "a04478e9c75ad5e5ce8c193100c3d9f1",
+    "semantic_hash": "a04478e9c75ad5e5ce8c193100c3d9f1"
+  },
+  "LeafReaderApp/Settings/EmbeddingSettingsModel.swift": {
+    "mtime": 1785683284.0064886,
+    "ast_hash": "08e1531bacc580c20c20f1cef8d45dff",
+    "semantic_hash": "08e1531bacc580c20c20f1cef8d45dff"
+  },
+  "LeafReaderApp/Settings/EmbeddingSettingsView.swift": {
+    "mtime": 1785683284.0066705,
+    "ast_hash": "edb27557039a0effffe0dc8bbd52a56d",
+    "semantic_hash": "edb27557039a0effffe0dc8bbd52a56d"
+  },
+  "LeafReaderApp/Settings/GeneralSettingsModel.swift": {
+    "mtime": 1785683284.0071084,
+    "ast_hash": "38cb4d8c56c679cbd14a416d4878165c",
+    "semantic_hash": "38cb4d8c56c679cbd14a416d4878165c"
+  },
+  "LeafReaderApp/Settings/GeneralSettingsView.swift": {
+    "mtime": 1785683284.0073214,
+    "ast_hash": "c66e5b53cfa617e5d10f31987d5e28c5",
+    "semantic_hash": "c66e5b53cfa617e5d10f31987d5e28c5"
+  },
+  "LeafReaderApp/Settings/ModelSettingsModel.swift": {
+    "mtime": 1785683284.0075204,
+    "ast_hash": "4f141e39fef4f0816e1c557025a28a7f",
+    "semantic_hash": "4f141e39fef4f0816e1c557025a28a7f"
+  },
+  "LeafReaderApp/Settings/ModelSettingsView.swift": {
+    "mtime": 1785683284.0079165,
+    "ast_hash": "50ec563cbd7446b2e5b050314998d219",
+    "semantic_hash": "50ec563cbd7446b2e5b050314998d219"
+  },
+  "LeafReaderApp/Settings/SettingsControls.swift": {
+    "mtime": 1784667274.068859,
+    "ast_hash": "039791a2503403e60169597ecd7297b3",
+    "semantic_hash": "039791a2503403e60169597ecd7297b3"
+  },
+  "LeafReaderApp/Settings/SettingsPageComponents.swift": {
+    "mtime": 1785683284.0083158,
+    "ast_hash": "2979e8e9962ff00f08b63f6812876b66",
+    "semantic_hash": "2979e8e9962ff00f08b63f6812876b66"
+  },
+  "LeafReaderApp/Settings/SettingsTabsView.swift": {
+    "mtime": 1784667274.068879,
+    "ast_hash": "c7c0304ac2262671a523150b6cc5116c",
+    "semantic_hash": "c7c0304ac2262671a523150b6cc5116c"
+  },
+  "LeafReaderApp/Settings/SpeechSettingsModel.swift": {
+    "mtime": 1785683284.0085545,
+    "ast_hash": "aab8dbdefa02e4f8836c881220bddff5",
+    "semantic_hash": "aab8dbdefa02e4f8836c881220bddff5"
+  },
+  "LeafReaderApp/Settings/SpeechSettingsView.swift": {
+    "mtime": 1785683284.0087762,
+    "ast_hash": "6f8a9315a1ff3a0756300d03ae469c5f",
+    "semantic_hash": "6f8a9315a1ff3a0756300d03ae469c5f"
+  },
+  "LeafReaderApp/Settings/ThemedSettingsActionButton.swift": {
+    "mtime": 1784667274.068899,
+    "ast_hash": "b0a13a1e1dcb9782faebe21e4b9be406",
+    "semantic_hash": "b0a13a1e1dcb9782faebe21e4b9be406"
+  },
+  "LeafReaderApp/Settings/ThemedSettingsPopUpButton.swift": {
+    "mtime": 1784667274.06894,
+    "ast_hash": "db0cbee7f66ac32ba63ed7e11449ce8a",
+    "semantic_hash": "db0cbee7f66ac32ba63ed7e11449ce8a"
+  },
+  "LeafReaderApp/SharedUI/AppFont.swift": {
+    "mtime": 1784471197.2340426,
+    "ast_hash": "f6e45704ec1d545517fdc978eb271e3c",
+    "semantic_hash": "f6e45704ec1d545517fdc978eb271e3c"
+  },
+  "LeafReaderApp/SharedUI/ChromeCapsuleButton.swift": {
+    "mtime": 1785683284.0090861,
+    "ast_hash": "e609577f3b1aa2a57a8f1575c128b668",
+    "semantic_hash": "e609577f3b1aa2a57a8f1575c128b668"
+  },
+  "LeafReaderApp/SharedUI/ExportPanelSupport.swift": {
+    "mtime": 1785683284.0094957,
+    "ast_hash": "a897424fb6eafeb6722c5cec6b802e86",
+    "semantic_hash": "a897424fb6eafeb6722c5cec6b802e86"
+  },
+  "LeafReaderApp/SharedUI/LeafAlertStyle.swift": {
+    "mtime": 1784471197.2343094,
+    "ast_hash": "9631ed8208c46422d56e43497859eb7f",
+    "semantic_hash": "9631ed8208c46422d56e43497859eb7f"
+  },
+  "LeafReaderApp/SharedUI/MarkdownBlockParser.swift": {
+    "mtime": 1785683284.010084,
+    "ast_hash": "60c4e50e920bdf197e290b534458aab5",
+    "semantic_hash": "60c4e50e920bdf197e290b534458aab5"
+  },
+  "LeafReaderApp/SharedUI/MarkdownInlineParser.swift": {
+    "mtime": 1784471197.2346768,
+    "ast_hash": "9b1d20a5160011e17d362d1f75ef4fad",
+    "semantic_hash": "9b1d20a5160011e17d362d1f75ef4fad"
+  },
+  "LeafReaderApp/SharedUI/MarkdownRenderer.swift": {
+    "mtime": 1784471197.2348897,
+    "ast_hash": "6c1c49b2d3aaf8ef1314a3f977c3af17",
+    "semantic_hash": "6c1c49b2d3aaf8ef1314a3f977c3af17"
+  },
+  "LeafReaderApp/SharedUI/ModalOverlayManager.swift": {
+    "mtime": 1785683284.0103781,
+    "ast_hash": "5c9b6606243be1288be7f4fbd8c441b1",
+    "semantic_hash": "5c9b6606243be1288be7f4fbd8c441b1"
+  },
+  "LeafReaderApp/SharedUI/PlatformImage.swift": {
+    "mtime": 1785683284.0108159,
+    "ast_hash": "6cdceff71456b13c2fe46561d1b58a15",
+    "semantic_hash": "6cdceff71456b13c2fe46561d1b58a15"
+  },
+  "LeafReaderApp/SharedUI/ReaderChromeViews.swift": {
+    "mtime": 1785683284.0114267,
+    "ast_hash": "66cd2d80d5db89b3f0510f5563869629",
+    "semantic_hash": "66cd2d80d5db89b3f0510f5563869629"
+  },
+  "LeafReaderApp/SharedUI/ReaderDesignTokens.swift": {
+    "mtime": 1785683284.0119653,
+    "ast_hash": "870ca916afd8cb7db21710729ec85675",
+    "semantic_hash": "870ca916afd8cb7db21710729ec85675"
+  },
+  "LeafReaderApp/SharedUI/ReaderTheme+Palette.swift": {
+    "mtime": 1784471197.2355251,
+    "ast_hash": "9f7cce96b0b0d6fb4a02e90d1539f94f",
+    "semantic_hash": "9f7cce96b0b0d6fb4a02e90d1539f94f"
+  },
+  "LeafReaderApp/SharedUI/ReaderTheme.swift": {
+    "mtime": 1785683284.012286,
+    "ast_hash": "faf7e1c402c50efebd8206825ec0e118",
+    "semantic_hash": "faf7e1c402c50efebd8206825ec0e118"
+  },
+  "LeafReaderApp/SharedUI/ReaderWebThemeCSS.swift": {
+    "mtime": 1785683284.0127459,
+    "ast_hash": "9e502f3e44ab30adddfa6af477a5c190",
+    "semantic_hash": "9e502f3e44ab30adddfa6af477a5c190"
+  },
+  "LeafReaderApp/SharedUI/ReaderWindowSupportViews.swift": {
+    "mtime": 1784471197.235782,
+    "ast_hash": "38a570d1025c8cc3cd2b0afe8b4547d4",
+    "semantic_hash": "38a570d1025c8cc3cd2b0afe8b4547d4"
+  },
+  "LeafReaderApp/SharedUI/SearchOverlayView.swift": {
+    "mtime": 1785683284.0131316,
+    "ast_hash": "f0faba0003bc4bdb989dda8180c073ac",
+    "semantic_hash": "f0faba0003bc4bdb989dda8180c073ac"
+  },
+  "LeafReaderApp/SharedUI/SelectionActionToolbar.swift": {
+    "mtime": 1785683284.0137315,
+    "ast_hash": "748e4081805f9d76e5bd6d65ad3f3931",
+    "semantic_hash": "748e4081805f9d76e5bd6d65ad3f3931"
+  },
+  "LeafReaderApp/SharedUI/SelectionToolbarConfiguration.swift": {
+    "mtime": 1785683284.014104,
+    "ast_hash": "660b02ab64c67f2fc199ddb5bd1faae4",
+    "semantic_hash": "660b02ab64c67f2fc199ddb5bd1faae4"
+  },
+  "LeafReaderApp/SharedUI/SelectionToolbarCoordinator.swift": {
+    "mtime": 1785683284.0143244,
+    "ast_hash": "782250fc135d09afb25289e2c4df88fd",
+    "semantic_hash": "782250fc135d09afb25289e2c4df88fd"
+  },
+  "LeafReaderApp/SharedUI/TemplateSymbolImage.swift": {
+    "mtime": 1784471197.2368212,
+    "ast_hash": "303d82be75bb9a4c9e0d95fe52f4f6d9",
+    "semantic_hash": "303d82be75bb9a4c9e0d95fe52f4f6d9"
+  },
+  "LeafReaderApp/SharedUI/TextEditingCommands.swift": {
+    "mtime": 1784471197.2370608,
+    "ast_hash": "e9749b3a5067065faa7f1c89fbc70a75",
+    "semantic_hash": "e9749b3a5067065faa7f1c89fbc70a75"
+  },
+  "LeafReaderApp/SharedUI/UIAccessibilityIdentifiers.swift": {
+    "mtime": 1785683284.014569,
+    "ast_hash": "071ef311ad736a62ee96b7b7dfbb57e9",
+    "semantic_hash": "071ef311ad736a62ee96b7b7dfbb57e9"
+  },
+  "LeafReaderApp/Support/DebouncedTask.swift": {
+    "mtime": 1784471197.2374332,
+    "ast_hash": "e8dab91d9db8a99142a1c522b49bd289",
+    "semantic_hash": "e8dab91d9db8a99142a1c522b49bd289"
+  },
+  "LeafReaderApp/VocabularyReview/GermanCachedFormLabeling.swift": {
+    "mtime": 1785683284.0149956,
+    "ast_hash": "a2c38dd4283108902ccd147e04fb98a6",
+    "semantic_hash": "a2c38dd4283108902ccd147e04fb98a6"
+  },
+  "LeafReaderApp/VocabularyReview/GermanFlexionStore.swift": {
+    "mtime": 1785683284.0154266,
+    "ast_hash": "0f619b8f6e17ade956e66264cc2866c9",
+    "semantic_hash": "0f619b8f6e17ade956e66264cc2866c9"
+  },
+  "LeafReaderApp/VocabularyReview/PDFWordRecordStore.swift": {
+    "mtime": 1785683284.0166364,
+    "ast_hash": "4e35a67154c8a75e1fdc9ac85c94074d",
+    "semantic_hash": "4e35a67154c8a75e1fdc9ac85c94074d"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderVocabularyState.swift": {
+    "mtime": 1785683284.017782,
+    "ast_hash": "f0232a67e66e4579fcc4a5ab8b74a4af",
+    "semantic_hash": "f0232a67e66e4579fcc4a5ab8b74a4af"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+PersonalVocabulary.swift": {
+    "mtime": 1785683284.0189226,
+    "ast_hash": "f399e33d8e77a152a384c6fbcbdc078f",
+    "semantic_hash": "f399e33d8e77a152a384c6fbcbdc078f"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+Vocabulary.swift": {
+    "mtime": 1785683284.0192344,
+    "ast_hash": "aaf2e0d174f425752246bf6c1fa3878e",
+    "semantic_hash": "aaf2e0d174f425752246bf6c1fa3878e"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyAnswerFormatting.swift": {
+    "mtime": 1785683284.0196383,
+    "ast_hash": "6337b5b7383d23ad8f5bc5c7e8b2f1b3",
+    "semantic_hash": "6337b5b7383d23ad8f5bc5c7e8b2f1b3"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyCards.swift": {
+    "mtime": 1785683284.0198808,
+    "ast_hash": "41cc5a23a973e8e61e1fdb81ef90b488",
+    "semantic_hash": "41cc5a23a973e8e61e1fdb81ef90b488"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyClearing.swift": {
+    "mtime": 1784642173.636495,
+    "ast_hash": "2e9ca95b4b16c632ad1c8cb21aad8076",
+    "semantic_hash": "2e9ca95b4b16c632ad1c8cb21aad8076"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyCore.swift": {
+    "mtime": 1785683284.0202334,
+    "ast_hash": "588869a52625ca3e9e2e6ce84004041e",
+    "semantic_hash": "588869a52625ca3e9e2e6ce84004041e"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyDefinitionBackfill.swift": {
+    "mtime": 1785683284.0205243,
+    "ast_hash": "2d9796ad751cbbd90dd8dc8f4e890bc0",
+    "semantic_hash": "2d9796ad751cbbd90dd8dc8f4e890bc0"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyDeletion.swift": {
+    "mtime": 1785683284.0209494,
+    "ast_hash": "9047187b27e6d77e33016140cbb9998b",
+    "semantic_hash": "9047187b27e6d77e33016140cbb9998b"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyDictionaryMetadata.swift": {
+    "mtime": 1785683284.0213919,
+    "ast_hash": "d36a56dd2172f5021bc7192f0e98d789",
+    "semantic_hash": "d36a56dd2172f5021bc7192f0e98d789"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyFrequency.swift": {
+    "mtime": 1784471197.2412543,
+    "ast_hash": "d3fe12070ab07850929d58b8523bed67",
+    "semantic_hash": "d3fe12070ab07850929d58b8523bed67"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyHighlights.swift": {
+    "mtime": 1785683284.0220335,
+    "ast_hash": "e30a53568a5ea5f2e00728aa2b2d9e17",
+    "semantic_hash": "e30a53568a5ea5f2e00728aa2b2d9e17"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyLibrary.swift": {
+    "mtime": 1785683284.022594,
+    "ast_hash": "00c98f4d1e913d5a6bb0ee1797e8b532",
+    "semantic_hash": "00c98f4d1e913d5a6bb0ee1797e8b532"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyLinkedWords.swift": {
+    "mtime": 1785683284.0231094,
+    "ast_hash": "a38588427cc62c0934eb22aa4fe40b8b",
+    "semantic_hash": "a38588427cc62c0934eb22aa4fe40b8b"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyListExport.swift": {
+    "mtime": 1785683284.023431,
+    "ast_hash": "6a96c530a8cbf1afa10e1cc8195e7164",
+    "semantic_hash": "6a96c530a8cbf1afa10e1cc8195e7164"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyListPagination.swift": {
+    "mtime": 1785683284.0236788,
+    "ast_hash": "5ff72647e8bfd149a07b776b2d9b23f6",
+    "semantic_hash": "5ff72647e8bfd149a07b776b2d9b23f6"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyMetadataBackfill.swift": {
+    "mtime": 1785683284.0240142,
+    "ast_hash": "87ac23207bd4630363b4b4eb9553840f",
+    "semantic_hash": "87ac23207bd4630363b4b4eb9553840f"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyNavigation.swift": {
+    "mtime": 1785683284.024405,
+    "ast_hash": "af0fbc4b68229f4aa002d06c5675d8b9",
+    "semantic_hash": "af0fbc4b68229f4aa002d06c5675d8b9"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyPanelActions.swift": {
+    "mtime": 1785683284.0248108,
+    "ast_hash": "a2139b912a7fe5e1714856ef64dbaf3c",
+    "semantic_hash": "a2139b912a7fe5e1714856ef64dbaf3c"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyPersistence.swift": {
+    "mtime": 1785683284.0252955,
+    "ast_hash": "ea0b3dcaeb3d822a8902a62db3601981",
+    "semantic_hash": "ea0b3dcaeb3d822a8902a62db3601981"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyReviewQueue.swift": {
+    "mtime": 1785683284.025665,
+    "ast_hash": "8f3e89388fa9e54c6611a2020de2e5ae",
+    "semantic_hash": "8f3e89388fa9e54c6611a2020de2e5ae"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyReviewSRS.swift": {
+    "mtime": 1785683284.0258613,
+    "ast_hash": "eab714ce9158831408b8131fd4988051",
+    "semantic_hash": "eab714ce9158831408b8131fd4988051"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyReviewUI.swift": {
+    "mtime": 1785683284.0261576,
+    "ast_hash": "b081b193bdef3e2a773f363c2d33c4b1",
+    "semantic_hash": "b081b193bdef3e2a773f363c2d33c4b1"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularySaving.swift": {
+    "mtime": 1785683284.0266256,
+    "ast_hash": "d016bab9632340cf10dc4495cb524736",
+    "semantic_hash": "d016bab9632340cf10dc4495cb524736"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularySelectionBounds.swift": {
+    "mtime": 1785683284.0270424,
+    "ast_hash": "ee7ce0aa5201afee6028791c9a7765a7",
+    "semantic_hash": "ee7ce0aa5201afee6028791c9a7765a7"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularySpeech.swift": {
+    "mtime": 1785683284.027408,
+    "ast_hash": "3b7d4e7e2f8cf55c9b249d58236ac2c6",
+    "semantic_hash": "3b7d4e7e2f8cf55c9b249d58236ac2c6"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyState.swift": {
+    "mtime": 1785683284.027624,
+    "ast_hash": "7b7cb3a43d6bd9ec2373b7fe2d499f27",
+    "semantic_hash": "7b7cb3a43d6bd9ec2373b7fe2d499f27"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyStorage.swift": {
+    "mtime": 1785683284.0280938,
+    "ast_hash": "cb6477394191ed0abd284ca768f8f980",
+    "semantic_hash": "cb6477394191ed0abd284ca768f8f980"
+  },
+  "LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyTrainer.swift": {
+    "mtime": 1785683284.02829,
+    "ast_hash": "5b8e6ca2bb8e1805749f072eec2853e9",
+    "semantic_hash": "5b8e6ca2bb8e1805749f072eec2853e9"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyCachedFormLabeling.swift": {
+    "mtime": 1785683284.0286393,
+    "ast_hash": "e620346c8734ff8455c916f09459a2c7",
+    "semantic_hash": "e620346c8734ff8455c916f09459a2c7"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyContextProvider.swift": {
+    "mtime": 1785683284.0289812,
+    "ast_hash": "03616ed07e780f18ec1956fb3a75de3d",
+    "semantic_hash": "03616ed07e780f18ec1956fb3a75de3d"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyDetailView.swift": {
+    "mtime": 1785683284.0292082,
+    "ast_hash": "92418b9c57f7a7b1fc4658d10ea3cda8",
+    "semantic_hash": "92418b9c57f7a7b1fc4658d10ea3cda8"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyDictionaryMetadataService.swift": {
+    "mtime": 1785683284.029405,
+    "ast_hash": "d465fc2ec531aae01a22b679db5794cb",
+    "semantic_hash": "d465fc2ec531aae01a22b679db5794cb"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyFrequencyBackfillService.swift": {
+    "mtime": 1785683284.0297897,
+    "ast_hash": "213a6ac28dc3e109b2dd8c0b3b710551",
+    "semantic_hash": "213a6ac28dc3e109b2dd8c0b3b710551"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyLibraryBuildCache.swift": {
+    "mtime": 1785683284.0300577,
+    "ast_hash": "9829bd9f4a8792b1772cf9b78ee964dd",
+    "semantic_hash": "9829bd9f4a8792b1772cf9b78ee964dd"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyLibraryListView.swift": {
+    "mtime": 1785683284.0303807,
+    "ast_hash": "b28d90fae8241aef2c8969967ed598c9",
+    "semantic_hash": "b28d90fae8241aef2c8969967ed598c9"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyLibraryWindowController.swift": {
+    "mtime": 1785683284.0307872,
+    "ast_hash": "ed12449a59333c78233e2250ea02fb41",
+    "semantic_hash": "ed12449a59333c78233e2250ea02fb41"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyListColorTokens.swift": {
+    "mtime": 1785683284.0311012,
+    "ast_hash": "dae71b5ab421819dc87e28f77139f97f",
+    "semantic_hash": "dae71b5ab421819dc87e28f77139f97f"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyPanelController+Build.swift": {
+    "mtime": 1785683284.0314436,
+    "ast_hash": "3ae86dd028d08b906b65f3b2333939e5",
+    "semantic_hash": "3ae86dd028d08b906b65f3b2333939e5"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyPanelController.swift": {
+    "mtime": 1785683284.0317464,
+    "ast_hash": "316ee31aa9b47f2eccda5d253713c1d5",
+    "semantic_hash": "316ee31aa9b47f2eccda5d253713c1d5"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyRecordProvider.swift": {
+    "mtime": 1785683284.0320692,
+    "ast_hash": "147e291498587daf7af13a866e266026",
+    "semantic_hash": "147e291498587daf7af13a866e266026"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyReviewCardModel.swift": {
+    "mtime": 1785683284.0323405,
+    "ast_hash": "53c83457b1a51494fe45db09c5ae2fce",
+    "semantic_hash": "53c83457b1a51494fe45db09c5ae2fce"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyReviewCardView.swift": {
+    "mtime": 1785683284.0326512,
+    "ast_hash": "cf97f864f224495119b650d1d1035956",
+    "semantic_hash": "cf97f864f224495119b650d1d1035956"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyReviewScoringService.swift": {
+    "mtime": 1785683284.0330267,
+    "ast_hash": "1ac6220962306cfd291633b79a23f9cf",
+    "semantic_hash": "1ac6220962306cfd291633b79a23f9cf"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularySpeechCoordinator.swift": {
+    "mtime": 1785683284.0334568,
+    "ast_hash": "32c08c3f1d9983f919e864193fbf4d42",
+    "semantic_hash": "32c08c3f1d9983f919e864193fbf4d42"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyTrainerHeaderModel.swift": {
+    "mtime": 1785683284.033909,
+    "ast_hash": "73f43d8af52f9ac2c2131f96a3d227d2",
+    "semantic_hash": "73f43d8af52f9ac2c2131f96a3d227d2"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyTrainerHeaderView.swift": {
+    "mtime": 1785683284.0346684,
+    "ast_hash": "11895f5a062eb8f78778bbfc90cc814a",
+    "semantic_hash": "11895f5a062eb8f78778bbfc90cc814a"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyWordListModel.swift": {
+    "mtime": 1785683284.0348928,
+    "ast_hash": "8fccae0d7bb9e51226c96c7c937aacef",
+    "semantic_hash": "8fccae0d7bb9e51226c96c7c937aacef"
+  },
+  "LeafReaderApp/VocabularyReview/VocabularyWordListView.swift": {
+    "mtime": 1785683284.035074,
+    "ast_hash": "fd71681e5e720e803bc232fa9614492a",
+    "semantic_hash": "fd71681e5e720e803bc232fa9614492a"
+  },
+  "LeafReaderApp/VocabularyReview/WebWordRecordStore.swift": {
+    "mtime": 1785683284.035494,
+    "ast_hash": "1ff6f75644d37e092121e5f09be99d47",
+    "semantic_hash": "1ff6f75644d37e092121e5f09be99d47"
+  },
+  "LeafReaderApp/VocabularyReview/WordRecordSQLiteRowMapper.swift": {
+    "mtime": 1785683284.0360663,
+    "ast_hash": "b213cf47064e5df73d0c11ed8831261c",
+    "semantic_hash": "b213cf47064e5df73d0c11ed8831261c"
+  },
+  "LeafReaderApp/VocabularyReview/WordRecordSQLiteStore.swift": {
+    "mtime": 1785683284.0365493,
+    "ast_hash": "81d175e92884af6b94b4729fa795934b",
+    "semantic_hash": "81d175e92884af6b94b4729fa795934b"
+  },
+  "LeafReaderCore/AIConversation/AIConversationContextStore.swift": {
+    "mtime": 1785683284.0374117,
+    "ast_hash": "325cca2629d4d71d5c7009e867b66dc2",
+    "semantic_hash": "325cca2629d4d71d5c7009e867b66dc2"
+  },
+  "LeafReaderCore/AIConversation/AIConversationMarkdownExporter.swift": {
+    "mtime": 1785683284.0377128,
+    "ast_hash": "f9c956e024805e90fa42e72743ba1cee",
+    "semantic_hash": "f9c956e024805e90fa42e72743ba1cee"
+  },
+  "LeafReaderCore/AIConversation/AIConversationStore.swift": {
+    "mtime": 1785683284.038169,
+    "ast_hash": "41bb1b3bcdf63e94f74910dc97e923b4",
+    "semantic_hash": "41bb1b3bcdf63e94f74910dc97e923b4"
+  },
+  "LeafReaderCore/AIConversation/AIPromptStore.swift": {
+    "mtime": 1785683284.0386906,
+    "ast_hash": "b9bcb2bc37a5ecda362d59ec5a22d6e5",
+    "semantic_hash": "b9bcb2bc37a5ecda362d59ec5a22d6e5"
+  },
+  "LeafReaderCore/AIConversation/AIRequestErrorText.swift": {
+    "mtime": 1785683284.0388443,
+    "ast_hash": "884829a911b86c7d34e8fc238d28e1d5",
+    "semantic_hash": "884829a911b86c7d34e8fc238d28e1d5"
+  },
+  "LeafReaderCore/AIConversation/AIResponseParser.swift": {
+    "mtime": 1785683284.0389814,
+    "ast_hash": "2b9b177c9c55799cd8d456daddd2c150",
+    "semantic_hash": "2b9b177c9c55799cd8d456daddd2c150"
+  },
+  "LeafReaderCore/AIConversation/AIResponseTextFormatter.swift": {
+    "mtime": 1785683284.0391095,
+    "ast_hash": "c7da12c2d197ee4cf8fafcd23651cf94",
+    "semantic_hash": "c7da12c2d197ee4cf8fafcd23651cf94"
+  },
+  "LeafReaderCore/AIConversation/AnswerProvider.swift": {
+    "mtime": 1785683284.0392394,
+    "ast_hash": "98cceb37d0977f1e627946e7404cae44",
+    "semantic_hash": "98cceb37d0977f1e627946e7404cae44"
+  },
+  "LeafReaderCore/AIConversation/DocumentQuestionPromptRequest.swift": {
+    "mtime": 1785683284.0394683,
+    "ast_hash": "05c98b3d2883d1c0aad32919a035b7af",
+    "semantic_hash": "05c98b3d2883d1c0aad32919a035b7af"
+  },
+  "LeafReaderCore/AIConversation/EmbeddingActionPolicy.swift": {
+    "mtime": 1785683284.0396018,
+    "ast_hash": "9428492c71b63be579d0b4c30dfe3948",
+    "semantic_hash": "9428492c71b63be579d0b4c30dfe3948"
+  },
+  "LeafReaderCore/AIConversation/EmbeddingWarmupPolicy.swift": {
+    "mtime": 1785683284.0398407,
+    "ast_hash": "d42be39c90b86776a77cbaa439502237",
+    "semantic_hash": "d42be39c90b86776a77cbaa439502237"
+  },
+  "LeafReaderCore/AIConversation/PDFEmbeddingStore.swift": {
+    "mtime": 1785683284.0402129,
+    "ast_hash": "95e1f24fe04171b4e440dde102c623ce",
+    "semantic_hash": "95e1f24fe04171b4e440dde102c623ce"
+  },
+  "LeafReaderCore/AIConversation/ReaderAIContextBuilder.swift": {
+    "mtime": 1785683284.0404098,
+    "ast_hash": "36aae773fb2f0cd54d7ed15c8eb23fc4",
+    "semantic_hash": "36aae773fb2f0cd54d7ed15c8eb23fc4"
+  },
+  "LeafReaderCore/AIConversation/ReaderAIContextPolicy.swift": {
+    "mtime": 1785683284.0405436,
+    "ast_hash": "a240dbe9188039ae2409a93d7f781c19",
+    "semantic_hash": "a240dbe9188039ae2409a93d7f781c19"
+  },
+  "LeafReaderCore/AIConversation/ReaderAIContextResolver.swift": {
+    "mtime": 1785683284.040674,
+    "ast_hash": "67b8e82052175843cd6b529e646ed6e6",
+    "semantic_hash": "67b8e82052175843cd6b529e646ed6e6"
+  },
+  "LeafReaderCore/AIConversation/ReaderAISourceMatcher.swift": {
+    "mtime": 1785683284.0410018,
+    "ast_hash": "7827c9f1efed62abbbcf10b495d011b8",
+    "semantic_hash": "7827c9f1efed62abbbcf10b495d011b8"
+  },
+  "LeafReaderCore/AIConversation/ReaderQueryCapability.swift": {
+    "mtime": 1785683284.0411336,
+    "ast_hash": "38ac27ae313e64b277019469f92b3de6",
+    "semantic_hash": "38ac27ae313e64b277019469f92b3de6"
+  },
+  "LeafReaderCore/AIConversation/ReadingContextSnapshot.swift": {
+    "mtime": 1785683284.0413756,
+    "ast_hash": "475acb7e58d981b4d18d3e13f3d007a4",
+    "semantic_hash": "475acb7e58d981b4d18d3e13f3d007a4"
+  },
+  "LeafReaderCore/AIConversation/WordQuestionRequest.swift": {
+    "mtime": 1785683284.0415134,
+    "ast_hash": "537c7c4d8257869d5e4bbb458e553cbe",
+    "semantic_hash": "537c7c4d8257869d5e4bbb458e553cbe"
+  },
+  "LeafReaderCore/App/AppIdentity.swift": {
+    "mtime": 1785683284.0418496,
+    "ast_hash": "6b2190815ddfdc68db435112a9719986",
+    "semantic_hash": "6b2190815ddfdc68db435112a9719986"
+  },
+  "LeafReaderCore/App/AppText.swift": {
+    "mtime": 1785683284.0420842,
+    "ast_hash": "f5c5cd30842e3537eb3dd043e8a9b5b7",
+    "semantic_hash": "f5c5cd30842e3537eb3dd043e8a9b5b7"
+  },
+  "LeafReaderCore/DocumentReading/DocumentIdentity.swift": {
+    "mtime": 1785683284.0424545,
+    "ast_hash": "6451d84dd2aa163be89a963fbff840bf",
+    "semantic_hash": "6451d84dd2aa163be89a963fbff840bf"
+  },
+  "LeafReaderCore/DocumentReading/DocumentImportDecision.swift": {
+    "mtime": 1785683284.0427022,
+    "ast_hash": "c1703d40bb675eae7a2ff101da38558b",
+    "semantic_hash": "c1703d40bb675eae7a2ff101da38558b"
+  },
+  "LeafReaderCore/DocumentReading/DocumentLoading+Archive.swift": {
+    "mtime": 1785683284.0429893,
+    "ast_hash": "830aad45d1a66172db049731194334d5",
+    "semantic_hash": "830aad45d1a66172db049731194334d5"
+  },
+  "LeafReaderCore/DocumentReading/DocumentLoading+DOCX.swift": {
+    "mtime": 1785683284.0440133,
+    "ast_hash": "7f45557e1da4a621e75eda9d853c46e6",
+    "semantic_hash": "7f45557e1da4a621e75eda9d853c46e6"
+  },
+  "LeafReaderCore/DocumentReading/DocumentLoading+EPUB.swift": {
+    "mtime": 1785683284.044293,
+    "ast_hash": "353b70daf4a4a63d2a232080f2b4720a",
+    "semantic_hash": "353b70daf4a4a63d2a232080f2b4720a"
+  },
+  "LeafReaderCore/DocumentReading/DocumentLoading+HTML.swift": {
+    "mtime": 1785683284.0449767,
+    "ast_hash": "3d8d0d5fbf230357a5d97bad946a2b80",
+    "semantic_hash": "3d8d0d5fbf230357a5d97bad946a2b80"
+  },
+  "LeafReaderCore/DocumentReading/DocumentLoading.swift": {
+    "mtime": 1785683284.0452156,
+    "ast_hash": "14f655d8b7f3eea632fa524d156c6bd6",
+    "semantic_hash": "14f655d8b7f3eea632fa524d156c6bd6"
+  },
+  "LeafReaderCore/DocumentReading/EPUBHTMLSanitizer.swift": {
+    "mtime": 1785683284.0453653,
+    "ast_hash": "4cc8dc96959944080bd70cb9e58b9942",
+    "semantic_hash": "4cc8dc96959944080bd70cb9e58b9942"
+  },
+  "LeafReaderCore/DocumentReading/EPUBPackageParser.swift": {
+    "mtime": 1785683284.0455146,
+    "ast_hash": "9b87de23fb0d4a7606f9e899d6236dac",
+    "semantic_hash": "9b87de23fb0d4a7606f9e899d6236dac"
+  },
+  "LeafReaderCore/DocumentReading/EPUBPathResolver.swift": {
+    "mtime": 1785683284.0456722,
+    "ast_hash": "802f5eb718a0e4e050f0c3ca91b8d38f",
+    "semantic_hash": "802f5eb718a0e4e050f0c3ca91b8d38f"
+  },
+  "LeafReaderCore/DocumentReading/EPUBTextDecoder.swift": {
+    "mtime": 1785683284.0458272,
+    "ast_hash": "2e8cec8026e896769a1e9df9df67f45f",
+    "semantic_hash": "2e8cec8026e896769a1e9df9df67f45f"
+  },
+  "LeafReaderCore/DocumentReading/PDFBrightnessPolicy.swift": {
+    "mtime": 1785683284.0459576,
+    "ast_hash": "2ddd1b0d2549c78fd8c941ff0e834d77",
+    "semantic_hash": "2ddd1b0d2549c78fd8c941ff0e834d77"
+  },
+  "LeafReaderCore/DocumentReading/ReaderBottomBarItem.swift": {
+    "mtime": 1785683284.0460947,
+    "ast_hash": "1724ea81712ca4d8fcfa3b81a2491c36",
+    "semantic_hash": "1724ea81712ca4d8fcfa3b81a2491c36"
+  },
+  "LeafReaderCore/DocumentReading/ReaderDocumentKind.swift": {
+    "mtime": 1785683284.046241,
+    "ast_hash": "e505f2b41903d3ac7ce87fe4f8308b49",
+    "semantic_hash": "e505f2b41903d3ac7ce87fe4f8308b49"
+  },
+  "LeafReaderCore/DocumentReading/ReaderFieldInput.swift": {
+    "mtime": 1785683284.0465317,
+    "ast_hash": "ad9c47f87743e2ce8e34d2ef213c7f6b",
+    "semantic_hash": "ad9c47f87743e2ce8e34d2ef213c7f6b"
+  },
+  "LeafReaderCore/DocumentReading/ReaderPresentationState.swift": {
+    "mtime": 1785683284.0468755,
+    "ast_hash": "d0d308a9f13e99eef66b16914d1f73d5",
+    "semantic_hash": "d0d308a9f13e99eef66b16914d1f73d5"
+  },
+  "LeafReaderCore/DocumentReading/ReaderSearchCursor.swift": {
+    "mtime": 1785683284.0471528,
+    "ast_hash": "4b0308053a45b0f0561173de27d2bc6c",
+    "semantic_hash": "4b0308053a45b0f0561173de27d2bc6c"
+  },
+  "LeafReaderCore/DocumentReading/ReaderSelectionPresentation.swift": {
+    "mtime": 1785683284.0472946,
+    "ast_hash": "feea846f1b3908777362fe283144cfad",
+    "semantic_hash": "feea846f1b3908777362fe283144cfad"
+  },
+  "LeafReaderCore/DocumentReading/ReaderSelectionState.swift": {
+    "mtime": 1785683284.0474403,
+    "ast_hash": "88f20dd876c45358019d602d225f7cf4",
+    "semantic_hash": "88f20dd876c45358019d602d225f7cf4"
+  },
+  "LeafReaderCore/DocumentReading/ReaderWebPresentation.swift": {
+    "mtime": 1785683284.0475824,
+    "ast_hash": "9b358525fbd8024fb42669504a1143fb",
+    "semantic_hash": "9b358525fbd8024fb42669504a1143fb"
+  },
+  "LeafReaderCore/Performance/PerformanceEvent.swift": {
+    "mtime": 1785683284.0479512,
+    "ast_hash": "d0a751641ba7d020ba6baaeb689cf264",
+    "semantic_hash": "d0a751641ba7d020ba6baaeb689cf264"
+  },
+  "LeafReaderCore/Performance/PerformanceRecorder.swift": {
+    "mtime": 1785683284.0482683,
+    "ast_hash": "f1fa9ca2276d859d6080d0e17f2dd499",
+    "semantic_hash": "f1fa9ca2276d859d6080d0e17f2dd499"
+  },
+  "LeafReaderCore/Performance/PerformanceReport.swift": {
+    "mtime": 1785683284.0484931,
+    "ast_hash": "a77ab3ff47d342a2ada0f3db38491498",
+    "semantic_hash": "a77ab3ff47d342a2ada0f3db38491498"
+  },
+  "LeafReaderCore/Platform/Persistence/SQLiteSchemaMigrator.swift": {
+    "mtime": 1785683284.0487785,
+    "ast_hash": "80de4c73f2237cbe61fa5eb45da0d391",
+    "semantic_hash": "80de4c73f2237cbe61fa5eb45da0d391"
+  },
+  "LeafReaderCore/Platform/Persistence/UserDataBackupCoordinator.swift": {
+    "mtime": 1785683284.0489979,
+    "ast_hash": "d8b5421131a61be71144aafa6516643b",
+    "semantic_hash": "d8b5421131a61be71144aafa6516643b"
+  },
+  "LeafReaderCore/Platform/Persistence/UserDataBackupService.swift": {
+    "mtime": 1785683284.049308,
+    "ast_hash": "e4c0a37f3737b7f09458a223fff6a737",
+    "semantic_hash": "e4c0a37f3737b7f09458a223fff6a737"
+  },
+  "LeafReaderCore/Platform/SpeechRuntime/KokoroWorkerResponseReader.swift": {
+    "mtime": 1785683284.0495288,
+    "ast_hash": "a417f9c8d68a2657b948df01a9cbd7bc",
+    "semantic_hash": "a417f9c8d68a2657b948df01a9cbd7bc"
+  },
+  "LeafReaderCore/Platform/SpeechRuntime/LocalRuntime.swift": {
+    "mtime": 1785683284.0498037,
+    "ast_hash": "b95360b8c1569be7ed7d30b0c8c03199",
+    "semantic_hash": "b95360b8c1569be7ed7d30b0c8c03199"
+  },
+  "LeafReaderCore/Platform/SpeechRuntime/LocalRuntimeDownloadCoordinator.swift": {
+    "mtime": 1785683284.050015,
+    "ast_hash": "3cb0a6af17ccde8c851f76a6a3576329",
+    "semantic_hash": "3cb0a6af17ccde8c851f76a6a3576329"
+  },
+  "LeafReaderCore/Platform/SpeechRuntime/LocalRuntimeDownloadManifest.swift": {
+    "mtime": 1785683284.050229,
+    "ast_hash": "d82fa7042d9cd0146c66d546564afddf",
+    "semantic_hash": "d82fa7042d9cd0146c66d546564afddf"
+  },
+  "LeafReaderCore/Platform/SpeechRuntime/LocalRuntimeDownloadSupport.swift": {
+    "mtime": 1785683284.0507002,
+    "ast_hash": "c3a10c5ef7d3bc16f8babef28b8fea3e",
+    "semantic_hash": "c3a10c5ef7d3bc16f8babef28b8fea3e"
+  },
+  "LeafReaderCore/Platform/SpeechRuntime/LocalRuntimeDownloader.swift": {
+    "mtime": 1785683284.0509236,
+    "ast_hash": "f0ad735b359fa1a2938c6bdbd39a75cb",
+    "semantic_hash": "f0ad735b359fa1a2938c6bdbd39a75cb"
+  },
+  "LeafReaderCore/Platform/SpeechRuntime/LocalRuntimeInstallCoordinator.swift": {
+    "mtime": 1785683284.0511239,
+    "ast_hash": "dbc79f058a002c47cee03945e5c885c5",
+    "semantic_hash": "dbc79f058a002c47cee03945e5c885c5"
+  },
+  "LeafReaderCore/Platform/SpeechRuntime/LocalRuntimeInstaller.swift": {
+    "mtime": 1785683284.0512648,
+    "ast_hash": "89fc8031e41c61c39d63b64f5abe36ab",
+    "semantic_hash": "89fc8031e41c61c39d63b64f5abe36ab"
+  },
+  "LeafReaderCore/Platform/SpeechRuntime/SpeechRuntimeCacheInstallTransaction.swift": {
+    "mtime": 1785683284.0514197,
+    "ast_hash": "15b7a9232c9fd7f28be973c85726773c",
+    "semantic_hash": "15b7a9232c9fd7f28be973c85726773c"
+  },
+  "LeafReaderCore/Platform/SpeechRuntime/SpeechSynthesisError.swift": {
+    "mtime": 1785683284.0516825,
+    "ast_hash": "af10caaf2d87d7caa44d9be9664b50f4",
+    "semantic_hash": "af10caaf2d87d7caa44d9be9664b50f4"
+  },
+  "LeafReaderCore/Platform/SpeechRuntime/TTSWaveFile.swift": {
+    "mtime": 1785683284.051807,
+    "ast_hash": "8536ffd89b29c50fd94e81bf2d5892f2",
+    "semantic_hash": "8536ffd89b29c50fd94e81bf2d5892f2"
+  },
+  "LeafReaderCore/ReadAloud/PDFReadAloudChromeFilter.swift": {
+    "mtime": 1785683284.0519774,
+    "ast_hash": "d6665128e5ac91aff680c175f6750521",
+    "semantic_hash": "d6665128e5ac91aff680c175f6750521"
+  },
+  "LeafReaderCore/ReadAloud/PDFReadAloudSegmentMatcher.swift": {
+    "mtime": 1785683284.0521898,
+    "ast_hash": "adb95f4fd26603d1327d66cf8270c803",
+    "semantic_hash": "adb95f4fd26603d1327d66cf8270c803"
+  },
+  "LeafReaderCore/ReadAloud/ReadAloudAdvanceMode.swift": {
+    "mtime": 1785683284.0524125,
+    "ast_hash": "57a114afef68e8d5508ad701ce16c014",
+    "semantic_hash": "57a114afef68e8d5508ad701ce16c014"
+  },
+  "LeafReaderCore/ReadAloud/ReadAloudManualAdvanceKeyPolicy.swift": {
+    "mtime": 1785683284.0531418,
+    "ast_hash": "39dea2d66af38d3504b250b5e381794a",
+    "semantic_hash": "39dea2d66af38d3504b250b5e381794a"
+  },
+  "LeafReaderCore/ReadAloud/ReadAloudPlaybackPhase.swift": {
+    "mtime": 1785683284.0532641,
+    "ast_hash": "1a88bbca9983903dbdd4f07cda2b7313",
+    "semantic_hash": "1a88bbca9983903dbdd4f07cda2b7313"
+  },
+  "LeafReaderCore/ReadAloud/ReadAloudTextMatcher.swift": {
+    "mtime": 1785683284.053451,
+    "ast_hash": "55694f741cbec8979258883322ad999e",
+    "semantic_hash": "55694f741cbec8979258883322ad999e"
+  },
+  "LeafReaderCore/ReadAloud/SpeechSentenceBoundary.swift": {
+    "mtime": 1785683284.0535963,
+    "ast_hash": "370e75f65cf14f0687b5dae094467167",
+    "semantic_hash": "370e75f65cf14f0687b5dae094467167"
+  },
+  "LeafReaderCore/ReadAloud/SpeechTextNormalization.swift": {
+    "mtime": 1785683284.053739,
+    "ast_hash": "87c08101b2a401b9aa4848cba9bf21b3",
+    "semantic_hash": "87c08101b2a401b9aa4848cba9bf21b3"
+  },
+  "LeafReaderCore/ReadAloud/SpeechTextPolicy.swift": {
+    "mtime": 1785683284.0538833,
+    "ast_hash": "a503e7e7193a66517d26a7bc0fc51d56",
+    "semantic_hash": "a503e7e7193a66517d26a7bc0fc51d56"
+  },
+  "LeafReaderCore/ReadAloud/SpeechUtteranceFactory.swift": {
+    "mtime": 1785683284.054131,
+    "ast_hash": "bf88273d942a3040dcd46550234fc84a",
+    "semantic_hash": "bf88273d942a3040dcd46550234fc84a"
+  },
+  "LeafReaderCore/ReadAloud/TTSPreviewCache.swift": {
+    "mtime": 1785683284.0542715,
+    "ast_hash": "19d60b211088b20c11fe910ed440a0f5",
+    "semantic_hash": "19d60b211088b20c11fe910ed440a0f5"
+  },
+  "LeafReaderCore/ReaderShell/ReaderFocusedSelection.swift": {
+    "mtime": 1785683284.054573,
+    "ast_hash": "8efeea120eec973e27dcef6a2efbd9d8",
+    "semantic_hash": "8efeea120eec973e27dcef6a2efbd9d8"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNote.swift": {
+    "mtime": 1785683284.0547447,
+    "ast_hash": "c7f35cc8ef0481b9e64dc4755f6a9b8d",
+    "semantic_hash": "c7f35cc8ef0481b9e64dc4755f6a9b8d"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNoteAIInsertionMode.swift": {
+    "mtime": 1785683284.0549629,
+    "ast_hash": "eabab663a403ac9e5f00f32db6d7b8e1",
+    "semantic_hash": "eabab663a403ac9e5f00f32db6d7b8e1"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNoteAIMarkdownImageProtector.swift": {
+    "mtime": 1785683284.0551832,
+    "ast_hash": "d8296a474abc4090cb109f5c6cf6eb60",
+    "semantic_hash": "d8296a474abc4090cb109f5c6cf6eb60"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNoteAITextPolicy.swift": {
+    "mtime": 1785683284.0553217,
+    "ast_hash": "3c3f5a1d0e34869b8498d6ff1c4353aa",
+    "semantic_hash": "3c3f5a1d0e34869b8498d6ff1c4353aa"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNoteAssetStore.swift": {
+    "mtime": 1785683284.055466,
+    "ast_hash": "810f44d57c1162e0aa03aefc99c9b0ae",
+    "semantic_hash": "810f44d57c1162e0aa03aefc99c9b0ae"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNoteExporter.swift": {
+    "mtime": 1785683284.0556302,
+    "ast_hash": "05d9719a7e89d74fb2a171a3cf0366ea",
+    "semantic_hash": "05d9719a7e89d74fb2a171a3cf0366ea"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNoteLinePrefixPolicy.swift": {
+    "mtime": 1785683284.055876,
+    "ast_hash": "5304630a35fe13588a1492f963e0f2e6",
+    "semantic_hash": "5304630a35fe13588a1492f963e0f2e6"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNoteListPresenter.swift": {
+    "mtime": 1785683284.0561147,
+    "ast_hash": "e87ebb2e39ace403777cd6ad97d77b1d",
+    "semantic_hash": "e87ebb2e39ace403777cd6ad97d77b1d"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNoteMarkdownInputPolicy.swift": {
+    "mtime": 1785683284.056427,
+    "ast_hash": "96a879186fbc72a45b5f6017b46c176a",
+    "semantic_hash": "96a879186fbc72a45b5f6017b46c176a"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNoteMarkdownRenderRangePolicy.swift": {
+    "mtime": 1785683284.056631,
+    "ast_hash": "c85d1c6586f5cb3f27ba4a6f4c7f88ca",
+    "semantic_hash": "c85d1c6586f5cb3f27ba4a6f4c7f88ca"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNoteSlashCommand.swift": {
+    "mtime": 1785683284.0568461,
+    "ast_hash": "acce3a732436e4676d05ca6e22c89222",
+    "semantic_hash": "acce3a732436e4676d05ca6e22c89222"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNoteSlashRangePolicy.swift": {
+    "mtime": 1785683284.0570693,
+    "ast_hash": "869bb0d6c845290b0a1f06d08f83f146",
+    "semantic_hash": "869bb0d6c845290b0a1f06d08f83f146"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNoteStore.swift": {
+    "mtime": 1785683284.0573483,
+    "ast_hash": "396a20f6152797d6759bd251462dccdb",
+    "semantic_hash": "396a20f6152797d6759bd251462dccdb"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNoteTemplate.swift": {
+    "mtime": 1785683284.0575948,
+    "ast_hash": "94a5734665291fe208ee2ce03e4681b3",
+    "semantic_hash": "94a5734665291fe208ee2ce03e4681b3"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNoteTextPolicy.swift": {
+    "mtime": 1785683284.0579677,
+    "ast_hash": "b20adbd2b6d1b400a774746d18817892",
+    "semantic_hash": "b20adbd2b6d1b400a774746d18817892"
+  },
+  "LeafReaderCore/ReadingNotes/ReadingNoteTextReplacementPolicy.swift": {
+    "mtime": 1785683284.058216,
+    "ast_hash": "64158cf5cdc73bef3d26c1ced44d0a02",
+    "semantic_hash": "64158cf5cdc73bef3d26c1ced44d0a02"
+  },
+  "LeafReaderCore/SharedUI/MarkdownHTMLExporter.swift": {
+    "mtime": 1785683284.058525,
+    "ast_hash": "252192557d79e680f84a21c0d34d45ff",
+    "semantic_hash": "252192557d79e680f84a21c0d34d45ff"
+  },
+  "LeafReaderCore/Support/ProcessRunner.swift": {
+    "mtime": 1785683284.0588267,
+    "ast_hash": "a75804551eb634237fad9ff0c4dfa9b5",
+    "semantic_hash": "a75804551eb634237fad9ff0c4dfa9b5"
+  },
+  "LeafReaderCore/VocabularyReview/DictionaryLookupService.swift": {
+    "mtime": 1785683284.0592246,
+    "ast_hash": "d2d1158fbfa213efecec89765c8c1f81",
+    "semantic_hash": "d2d1158fbfa213efecec89765c8c1f81"
+  },
+  "LeafReaderCore/VocabularyReview/ECDICTDictionary.swift": {
+    "mtime": 1785683284.0597384,
+    "ast_hash": "f92e03fb91876b7893b93a0597047a31",
+    "semantic_hash": "f92e03fb91876b7893b93a0597047a31"
+  },
+  "LeafReaderCore/VocabularyReview/EnglishFormLabeler.swift": {
+    "mtime": 1785683284.0600934,
+    "ast_hash": "2d6834bd443f71d6391d70218227cbdb",
+    "semantic_hash": "2d6834bd443f71d6391d70218227cbdb"
+  },
+  "LeafReaderCore/VocabularyReview/GermanFlexionLabeling.swift": {
+    "mtime": 1785683284.0603173,
+    "ast_hash": "365c6798c6657049e2a7c82c62ca7fd2",
+    "semantic_hash": "365c6798c6657049e2a7c82c62ca7fd2"
+  },
+  "LeafReaderCore/VocabularyReview/GermanFormLabeler.swift": {
+    "mtime": 1785683284.0606127,
+    "ast_hash": "96453394e6125eefbae5ffdad56c9ca6",
+    "semantic_hash": "96453394e6125eefbae5ffdad56c9ca6"
+  },
+  "LeafReaderCore/VocabularyReview/GermanLabelCacheGeneration.swift": {
+    "mtime": 1785683284.0608306,
+    "ast_hash": "9cb45f6be35d45303511619232bbcb1f",
+    "semantic_hash": "9cb45f6be35d45303511619232bbcb1f"
+  },
+  "LeafReaderCore/VocabularyReview/GermanLemmaResolver.swift": {
+    "mtime": 1785683284.0610828,
+    "ast_hash": "0302755c36e5b51b2c70d21293d320d3",
+    "semantic_hash": "0302755c36e5b51b2c70d21293d320d3"
+  },
+  "LeafReaderCore/VocabularyReview/GermanWiktionaryDictionary.swift": {
+    "mtime": 1785683284.0616171,
+    "ast_hash": "5e4c3bf6d3d1b7b0529f90167b35c6ca",
+    "semantic_hash": "5e4c3bf6d3d1b7b0529f90167b35c6ca"
+  },
+  "LeafReaderCore/VocabularyReview/PersonalVocabularyProfile.swift": {
+    "mtime": 1785683284.0619543,
+    "ast_hash": "1dec7e33fb8a21543097a2549b564965",
+    "semantic_hash": "1dec7e33fb8a21543097a2549b564965"
+  },
+  "LeafReaderCore/VocabularyReview/PersonalVocabularyProfileStore.swift": {
+    "mtime": 1785683284.062215,
+    "ast_hash": "fdca0a2433fde0576f5666edd1588889",
+    "semantic_hash": "fdca0a2433fde0576f5666edd1588889"
+  },
+  "LeafReaderCore/VocabularyReview/StoredPDFWordRect.swift": {
+    "mtime": 1785683284.0625622,
+    "ast_hash": "0060e8eeacf76babce2e8eef15c1c502",
+    "semantic_hash": "0060e8eeacf76babce2e8eef15c1c502"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyAnswerFormatter.swift": {
+    "mtime": 1785683284.0627663,
+    "ast_hash": "aa1f18df36964c683c76831a47c1c1f9",
+    "semantic_hash": "aa1f18df36964c683c76831a47c1c1f9"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyAnswerSanitizer.swift": {
+    "mtime": 1785683284.0630183,
+    "ast_hash": "0f4d1b83f89ce552411d722eb22a03d9",
+    "semantic_hash": "0f4d1b83f89ce552411d722eb22a03d9"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyAudioCache.swift": {
+    "mtime": 1785683284.0643358,
+    "ast_hash": "ea21cf5a1e4fe9281ce008d5947c1f9e",
+    "semantic_hash": "ea21cf5a1e4fe9281ce008d5947c1f9e"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyDailyGoalPolicy.swift": {
+    "mtime": 1785683284.0645826,
+    "ast_hash": "9b3d30e825a4ab7fdc4be55544db4cb4",
+    "semantic_hash": "9b3d30e825a4ab7fdc4be55544db4cb4"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyExportRecord.swift": {
+    "mtime": 1785683284.064846,
+    "ast_hash": "05a76d30b79633e4a3997c8ac5f3c709",
+    "semantic_hash": "05a76d30b79633e4a3997c8ac5f3c709"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyExporter.swift": {
+    "mtime": 1785683284.065371,
+    "ast_hash": "d8c780229d3eecf060e00021116736f1",
+    "semantic_hash": "d8c780229d3eecf060e00021116736f1"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyFormLabeling.swift": {
+    "mtime": 1785683284.0655046,
+    "ast_hash": "86664adc2213bd8b1eb77cd7ffe57df6",
+    "semantic_hash": "86664adc2213bd8b1eb77cd7ffe57df6"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyLanguageDetector.swift": {
+    "mtime": 1785683284.0657597,
+    "ast_hash": "973f2b40f705f80213bbb5dd9ccdf47d",
+    "semantic_hash": "973f2b40f705f80213bbb5dd9ccdf47d"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyLearningStats.swift": {
+    "mtime": 1785683284.0659165,
+    "ast_hash": "46502ae37ddeb7a51e932940af87d94e",
+    "semantic_hash": "46502ae37ddeb7a51e932940af87d94e"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyLibraryFilter.swift": {
+    "mtime": 1785683284.0660696,
+    "ast_hash": "c3f691238eef6777192da70088f22455",
+    "semantic_hash": "c3f691238eef6777192da70088f22455"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyLibraryModels.swift": {
+    "mtime": 1785683284.0663347,
+    "ast_hash": "8a6f111d33d34afa7aa0c9e259ebbe7e",
+    "semantic_hash": "8a6f111d33d34afa7aa0c9e259ebbe7e"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyLibraryRowPresenter.swift": {
+    "mtime": 1785683284.0664692,
+    "ast_hash": "a36d292ab5796a712482af420db54fe4",
+    "semantic_hash": "a36d292ab5796a712482af420db54fe4"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyOccurrenceGrouping.swift": {
+    "mtime": 1785683284.066609,
+    "ast_hash": "6500c6efbb4b774f10b6c998390f9f33",
+    "semantic_hash": "6500c6efbb4b774f10b6c998390f9f33"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyOccurrenceMatcher.swift": {
+    "mtime": 1785683284.0668275,
+    "ast_hash": "d9928895ef26681ecd959818d1e1b0b0",
+    "semantic_hash": "d9928895ef26681ecd959818d1e1b0b0"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyRecordDeletionPlanner.swift": {
+    "mtime": 1785683284.0669627,
+    "ast_hash": "eabc1ce31f9fa20fce1896d5b3ade149",
+    "semantic_hash": "eabc1ce31f9fa20fce1896d5b3ade149"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyReviewCardSelector.swift": {
+    "mtime": 1785683284.0672688,
+    "ast_hash": "aa4eca5e00995c4669c72f6d78d6b6bd",
+    "semantic_hash": "aa4eca5e00995c4669c72f6d78d6b6bd"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyReviewDisplayRecordLoader.swift": {
+    "mtime": 1785683284.0673964,
+    "ast_hash": "43c4782504b249bd0f2c1dce405920ca",
+    "semantic_hash": "43c4782504b249bd0f2c1dce405920ca"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyReviewModels.swift": {
+    "mtime": 1785683284.067657,
+    "ast_hash": "6e1bf64da5741ad3e042befd2f01b17f",
+    "semantic_hash": "6e1bf64da5741ad3e042befd2f01b17f"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyReviewPreferences.swift": {
+    "mtime": 1785683284.0678654,
+    "ast_hash": "cc4710fed9b8b2750a7b3d3acdcd86c1",
+    "semantic_hash": "cc4710fed9b8b2750a7b3d3acdcd86c1"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyReviewQueueBuilder.swift": {
+    "mtime": 1785683284.0681028,
+    "ast_hash": "bd666b9c586aa2bd3a9ed3741161a6ec",
+    "semantic_hash": "bd666b9c586aa2bd3a9ed3741161a6ec"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyReviewSession.swift": {
+    "mtime": 1785683284.068352,
+    "ast_hash": "9028e47aebcad4b0377a71cea9bec324",
+    "semantic_hash": "9028e47aebcad4b0377a71cea9bec324"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularySRS.swift": {
+    "mtime": 1785683284.068567,
+    "ast_hash": "c98a980acd62f53815d96e5ca1d6bde3",
+    "semantic_hash": "c98a980acd62f53815d96e5ca1d6bde3"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyTagFormatter.swift": {
+    "mtime": 1785683284.0686874,
+    "ast_hash": "bd2808d426fa51faeeccc27d245c9f38",
+    "semantic_hash": "bd2808d426fa51faeeccc27d245c9f38"
+  },
+  "LeafReaderCore/VocabularyReview/VocabularyTextPolicy.swift": {
+    "mtime": 1785683284.0691617,
+    "ast_hash": "065f2ee4545e503a3a80874fc4539d90",
+    "semantic_hash": "065f2ee4545e503a3a80874fc4539d90"
+  },
+  "LeafReaderApp/App/Assets/AppIcon.iconset/icon_128x128.png": {
+    "mtime": 1784471197.1621215,
+    "ast_hash": "e8cf950def14108c21708979137ac792",
+    "semantic_hash": "e8cf950def14108c21708979137ac792"
+  },
+  "LeafReaderApp/App/Assets/AppIcon.iconset/icon_128x128@2x.png": {
+    "mtime": 1784471197.1622775,
+    "ast_hash": "c397729d1cb11e060d13bad0339b2b75",
+    "semantic_hash": "c397729d1cb11e060d13bad0339b2b75"
+  },
+  "LeafReaderApp/App/Assets/AppIcon.iconset/icon_16x16.png": {
+    "mtime": 1784471197.1623695,
+    "ast_hash": "1a05ae066a68b6ed2829b03fa5b68083",
+    "semantic_hash": "1a05ae066a68b6ed2829b03fa5b68083"
+  },
+  "LeafReaderApp/App/Assets/AppIcon.iconset/icon_16x16@2x.png": {
+    "mtime": 1784471197.1624482,
+    "ast_hash": "5c1f08e739b78ceb0b99b073c3616876",
+    "semantic_hash": "5c1f08e739b78ceb0b99b073c3616876"
+  },
+  "LeafReaderApp/App/Assets/AppIcon.iconset/icon_256x256.png": {
+    "mtime": 1784471197.1625748,
+    "ast_hash": "c397729d1cb11e060d13bad0339b2b75",
+    "semantic_hash": "c397729d1cb11e060d13bad0339b2b75"
+  },
+  "LeafReaderApp/App/Assets/AppIcon.iconset/icon_256x256@2x.png": {
+    "mtime": 1784471197.1630154,
+    "ast_hash": "c22520abe3330be32e5996c14db149b8",
+    "semantic_hash": "c22520abe3330be32e5996c14db149b8"
+  },
+  "LeafReaderApp/App/Assets/AppIcon.iconset/icon_32x32.png": {
+    "mtime": 1784471197.1631467,
+    "ast_hash": "5c1f08e739b78ceb0b99b073c3616876",
+    "semantic_hash": "5c1f08e739b78ceb0b99b073c3616876"
+  },
+  "LeafReaderApp/App/Assets/AppIcon.iconset/icon_32x32@2x.png": {
+    "mtime": 1784471197.163241,
+    "ast_hash": "189912ba9ad11c2c64519df43a59e778",
+    "semantic_hash": "189912ba9ad11c2c64519df43a59e778"
+  },
+  "LeafReaderApp/App/Assets/AppIcon.iconset/icon_512x512.png": {
+    "mtime": 1784471197.1635373,
+    "ast_hash": "c22520abe3330be32e5996c14db149b8",
+    "semantic_hash": "c22520abe3330be32e5996c14db149b8"
+  },
+  "LeafReaderApp/App/Assets/AppIcon.iconset/icon_512x512@2x.png": {
+    "mtime": 1784471197.1648154,
+    "ast_hash": "ee5d230dba7c8e80297f68eef2175ece",
+    "semantic_hash": "ee5d230dba7c8e80297f68eef2175ece"
+  },
+  "LeafReaderApp/App/Assets/AppIconSource.png": {
+    "mtime": 1784471197.1659522,
+    "ast_hash": "ee5d230dba7c8e80297f68eef2175ece",
+    "semantic_hash": "ee5d230dba7c8e80297f68eef2175ece"
+  }
+}
