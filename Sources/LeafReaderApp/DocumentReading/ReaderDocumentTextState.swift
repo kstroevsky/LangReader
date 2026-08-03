@@ -10,6 +10,21 @@ struct PDFDocumentTextSnapshot: Sendable {
     }
 }
 
+struct PDFVocabularyPriorityIndexResult: Sendable {
+    let pageIndexes: [Int]
+    let pageTexts: [String]
+    let totalPageCount: Int
+    let index: VocabularyDocumentLemmaIndex
+
+    var seed: VocabularyDocumentLemmaIndexSeed {
+        VocabularyDocumentLemmaIndexSeed(pageIndexes: pageIndexes, index: index)
+    }
+
+    var preloadedPageTexts: [Int: String] {
+        Dictionary(uniqueKeysWithValues: zip(pageIndexes, pageTexts))
+    }
+}
+
 final class PDFDocumentTextCancellationToken: @unchecked Sendable {
     private let lock = NSLock()
     private var cancelled = false
@@ -41,4 +56,6 @@ struct ReaderDocumentTextState {
     var vocabularyIndexCancellationToken: PDFDocumentTextCancellationToken?
     var vocabularyIndexBuildStartedAt: TimeInterval?
     var pendingVocabularyIndexCallbacks: [(PDFDocumentTextSnapshot?, VocabularyDocumentLemmaIndex?) -> Void] = []
+
+    var vocabularyPriorityCancellationToken: PDFDocumentTextCancellationToken?
 }

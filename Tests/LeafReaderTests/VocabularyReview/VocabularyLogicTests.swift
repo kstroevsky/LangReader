@@ -370,6 +370,41 @@ enum VocabularyLogicTests {
             isCancelled: { true }
         )
         try expect(cancelled == nil, "a cancelled index build should return no partial index")
+
+        let priorityPageIndexes = VocabularyIndexPriorityPlanner.pageIndexes(
+            pageCount: pages.count,
+            currentPageIndex: 2,
+            visiblePageIndexes: [2, 3, 3, -1, pages.count],
+            neighborRadius: 1
+        )
+        try expectEqual(
+            priorityPageIndexes,
+            [2, 3, 1, 4],
+            "the priority plan should be current-first, unique, bounded, and deterministic"
+        )
+        let priorityTexts = priorityPageIndexes.map { pages[$0] }
+        guard let priorityIndex = VocabularyDocumentLemmaIndex(texts: priorityTexts, language: .german),
+              let seededIndex = VocabularyDocumentLemmaIndex(
+                texts: pages,
+                language: .german,
+                seed: VocabularyDocumentLemmaIndexSeed(
+                    pageIndexes: priorityPageIndexes,
+                    index: priorityIndex
+                )
+              ) else {
+            try expect(false, "a reusable visible-first slice should seed the complete index")
+            return
+        }
+        try expectEqual(
+            seededIndex.reusedPageCount,
+            priorityPageIndexes.count,
+            "the complete index should reuse every compatible priority page"
+        )
+        try expectEqual(
+            seededIndex.matches(lemma: "gehen", selectedForm: "gegangen"),
+            index.matches(lemma: "gehen", selectedForm: "gegangen"),
+            "seeding must not change whole-document query semantics"
+        )
     }
 
     /// The reusable-tagger overload must return exactly what the allocating one

@@ -5,6 +5,7 @@ import LeafReaderCore
 
 extension ReaderWindowController {
     func ensurePDFDocumentTextSnapshot(
+        preloadedPageTexts: [Int: String] = [:],
         completion: @escaping (PDFDocumentTextSnapshot?) -> Void
     ) {
         guard currentDocumentKind == .pdf,
@@ -31,11 +32,12 @@ extension ReaderWindowController {
             let snapshot: PDFDocumentTextSnapshot? = autoreleasepool {
                 guard !token.isCancelled,
                       let document = PDFDocument(url: url) else { return nil }
-                var pageTexts: [String] = []
-                pageTexts.reserveCapacity(document.pageCount)
+                var pageTexts = [String](repeating: "", count: document.pageCount)
                 for pageIndex in 0..<document.pageCount {
                     guard !token.isCancelled else { return nil }
-                    pageTexts.append(document.page(at: pageIndex)?.string ?? "")
+                    pageTexts[pageIndex] = preloadedPageTexts[pageIndex]
+                        ?? document.page(at: pageIndex)?.string
+                        ?? ""
                 }
                 return PDFDocumentTextSnapshot(documentID: documentID, pageTexts: pageTexts)
             }
@@ -67,6 +69,8 @@ extension ReaderWindowController {
 
     func ensurePDFVocabularyIndex(
         language: NLLanguage,
+        seed: VocabularyDocumentLemmaIndexSeed? = nil,
+        preloadedPageTexts: [Int: String] = [:],
         completion: @escaping (PDFDocumentTextSnapshot?, VocabularyDocumentLemmaIndex?) -> Void
     ) {
         let languageCode = language.rawValue
@@ -80,7 +84,7 @@ extension ReaderWindowController {
         documentTextState.pendingVocabularyIndexCallbacks.append(completion)
         guard !documentTextState.isBuildingVocabularyIndex else { return }
         documentTextState.isBuildingVocabularyIndex = true
-        ensurePDFDocumentTextSnapshot { [weak self] snapshot in
+        ensurePDFDocumentTextSnapshot(preloadedPageTexts: preloadedPageTexts) { [weak self] snapshot in
             guard let self, let snapshot else {
                 self?.finishPDFVocabularyIndex(nil, snapshot: nil, languageCode: languageCode, generation: self?.documentTextState.generation ?? -1)
                 return
@@ -94,6 +98,7 @@ extension ReaderWindowController {
                     texts: snapshot.pageTexts,
                     language: language,
                     maximumWorkerCount: 4,
+                    seed: seed,
                     isCancelled: { token.isCancelled }
                 )
                 Task { @MainActor [weak self] in
@@ -131,9 +136,101 @@ extension ReaderWindowController {
         callbacks.forEach { $0(snapshot, index) }
     }
 
+    /// Builds only the current/visible page slice at interactive priority. The
+    /// result is explicitly partial and can later seed the complete index, so
+    /// the early NLP work is reused instead of repeated.
+    func buildPDFVocabularyPriorityIndex(
+        language: NLLanguage,
+        pageIndexes: [Int],
+        preloadedPageTexts: [Int: String] = [:],
+        completion: @escaping @MainActor @Sendable (PDFVocabularyPriorityIndexResult?) -> Void
+    ) {
+        guard currentDocumentKind == .pdf,
+              let documentID = currentFileMD5,
+              let url = currentFileURL,
+              let document = pdfView.document else {
+            completion(nil)
+            return
+        }
+        if documentTextState.vocabularyIndex != nil,
+           documentTextState.vocabularyIndexLanguageCode == language.rawValue {
+            completion(nil)
+            return
+        }
+
+        let totalPageCount = document.pageCount
+        var seen = Set<Int>()
+        let boundedPageIndexes = pageIndexes.filter {
+            $0 >= 0 && $0 < totalPageCount && seen.insert($0).inserted
+        }
+        guard !boundedPageIndexes.isEmpty else {
+            completion(nil)
+            return
+        }
+
+        documentTextState.vocabularyPriorityCancellationToken?.cancel()
+        let token = PDFDocumentTextCancellationToken()
+        documentTextState.vocabularyPriorityCancellationToken = token
+        let generation = documentTextState.generation
+        let cachedSnapshot = documentTextState.snapshot
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let result: PDFVocabularyPriorityIndexResult? = autoreleasepool {
+                guard !token.isCancelled else { return nil }
+                let pageTexts: [String]
+                if let cachedSnapshot,
+                   cachedSnapshot.documentID == documentID,
+                   cachedSnapshot.pageTexts.count == totalPageCount {
+                    pageTexts = boundedPageIndexes.map { cachedSnapshot.pageTexts[$0] }
+                } else if boundedPageIndexes.allSatisfy({ preloadedPageTexts[$0] != nil }) {
+                    pageTexts = boundedPageIndexes.compactMap { preloadedPageTexts[$0] }
+                } else {
+                    guard let backgroundDocument = PDFDocument(url: url),
+                          backgroundDocument.pageCount == totalPageCount else { return nil }
+                    var extracted: [String] = []
+                    extracted.reserveCapacity(boundedPageIndexes.count)
+                    for pageIndex in boundedPageIndexes {
+                        guard !token.isCancelled else { return nil }
+                        extracted.append(
+                            preloadedPageTexts[pageIndex]
+                                ?? backgroundDocument.page(at: pageIndex)?.string
+                                ?? ""
+                        )
+                    }
+                    pageTexts = extracted
+                }
+                guard let index = VocabularyDocumentLemmaIndex(
+                    texts: pageTexts,
+                    language: language,
+                    maximumWorkerCount: 2,
+                    isCancelled: { token.isCancelled }
+                ) else { return nil }
+                return PDFVocabularyPriorityIndexResult(
+                    pageIndexes: boundedPageIndexes,
+                    pageTexts: pageTexts,
+                    totalPageCount: totalPageCount,
+                    index: index
+                )
+            }
+            Task { @MainActor [weak self] in
+                guard let self,
+                      generation == self.documentTextState.generation,
+                      self.currentFileMD5 == documentID,
+                      self.documentTextState.vocabularyPriorityCancellationToken === token else { return }
+                self.documentTextState.vocabularyPriorityCancellationToken = nil
+                completion(result)
+            }
+        }
+    }
+
+    func cancelPDFVocabularyPriorityIndexBuild() {
+        documentTextState.vocabularyPriorityCancellationToken?.cancel()
+        documentTextState.vocabularyPriorityCancellationToken = nil
+    }
+
     func invalidateDocumentTextState() {
         documentTextState.snapshotCancellationToken?.cancel()
         documentTextState.vocabularyIndexCancellationToken?.cancel()
+        documentTextState.vocabularyPriorityCancellationToken?.cancel()
         documentTextState.generation += 1
         documentTextState.snapshot = nil
         documentTextState.isBuildingSnapshot = false
@@ -146,5 +243,6 @@ extension ReaderWindowController {
         documentTextState.vocabularyIndexCancellationToken = nil
         documentTextState.vocabularyIndexBuildStartedAt = nil
         documentTextState.pendingVocabularyIndexCallbacks.removeAll()
+        documentTextState.vocabularyPriorityCancellationToken = nil
     }
 }

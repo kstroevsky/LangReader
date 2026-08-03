@@ -1,4 +1,5 @@
 import Cocoa
+import NaturalLanguage
 import PDFKit
 import LeafReaderCore
 
@@ -250,7 +251,7 @@ extension ReaderWindowController {
     func saveCurrentPDFVocabularySelection() {
         let acknowledgementStartedAt = ProcessInfo.processInfo.systemUptime
         guard currentDocumentKind == .pdf,
-              pdfView.document != nil,
+              let document = pdfView.document,
               let selection = pdfView.currentSelection else {
             NSSound.beep()
             return
@@ -268,7 +269,23 @@ extension ReaderWindowController {
             return
         }
 
-        guard let selectedRecord = storedPDFVocabularyRecord(selection: selection, word: word, lemma: lemma, surfaceForm: word) else {
+        guard let selectedPage = selection.pages.first else {
+            NSSound.beep()
+            return
+        }
+        let selectedPageIndex = document.index(for: selectedPage)
+        guard selectedPageIndex != NSNotFound else {
+            NSSound.beep()
+            return
+        }
+        let selectedPageText = selectedPage.string ?? ""
+        guard let selectedRecord = storedPDFVocabularyRecord(
+            selection: selection,
+            word: word,
+            lemma: lemma,
+            surfaceForm: word,
+            sourceText: selectedPageText
+        ) else {
             NSSound.beep()
             return
         }
@@ -285,7 +302,7 @@ extension ReaderWindowController {
         addStoredWordAnnotation(selectedRecord, refineBounds: false)
         refreshVocabularyPanelAfterLocalSave()
         backfillDictionaryAnswerAsync(vocabularyID: selectedRecord.vocabularyID, word: word)
-        selectionActionToolbar.showSaveResult(found: 1, inserted: 1)
+        selectionActionToolbar.showSaveProgress(found: 1, indexedPages: 0, totalPages: document.pageCount)
         ReaderPerformance.record(
             .vocabularySaveAcknowledgement,
             milliseconds: (ProcessInfo.processInfo.systemUptime - acknowledgementStartedAt) * 1000
@@ -294,8 +311,108 @@ extension ReaderWindowController {
 
         let searchID = UUID()
         vocabularyState.occurrenceSearchID = searchID
-        let saveStartedAt = Date()
-        ensurePDFVocabularyIndex(language: language) { [weak self] snapshot, index in
+        beginPDFVocabularyOccurrenceDiscovery(
+            word: word,
+            lemma: lemma,
+            language: language,
+            selectedRecord: selectedRecord,
+            selectedPageIndex: selectedPageIndex,
+            selectedPageText: selectedPageText,
+            documentID: documentID,
+            totalPageCount: document.pageCount,
+            searchID: searchID,
+            saveStartedAt: Date()
+        )
+    }
+
+    private func beginPDFVocabularyOccurrenceDiscovery(
+        word: String,
+        lemma: String,
+        language: NLLanguage,
+        selectedRecord: StoredPDFWordRecord,
+        selectedPageIndex: Int,
+        selectedPageText: String,
+        documentID: String,
+        totalPageCount: Int,
+        searchID: UUID,
+        saveStartedAt: Date
+    ) {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let exactFound = max(
+                1,
+                VocabularyOccurrenceMatcher.matches(query: word, in: selectedPageText).count
+            )
+            DispatchQueue.main.async {
+                guard let self,
+                      self.vocabularyState.occurrenceSearchID == searchID,
+                      self.currentFileMD5 == documentID else { return }
+                self.selectionActionToolbar.showExactSaveProgress(
+                    found: exactFound,
+                    totalPages: totalPageCount
+                )
+                let priorityPageIndexes = VocabularyIndexPriorityPlanner.pageIndexes(
+                    pageCount: totalPageCount,
+                    currentPageIndex: selectedPageIndex,
+                    visiblePageIndexes: [],
+                    neighborRadius: 0
+                )
+                self.buildPDFVocabularyPriorityIndex(
+                    language: language,
+                    pageIndexes: priorityPageIndexes,
+                    preloadedPageTexts: [selectedPageIndex: selectedPageText]
+                ) { [weak self] priorityResult in
+                    self?.continuePDFVocabularyOccurrenceDiscovery(
+                        priorityResult: priorityResult,
+                        word: word,
+                        lemma: lemma,
+                        language: language,
+                        selectedRecord: selectedRecord,
+                        documentID: documentID,
+                        searchID: searchID,
+                        saveStartedAt: saveStartedAt
+                    )
+                }
+            }
+        }
+    }
+
+    private func continuePDFVocabularyOccurrenceDiscovery(
+        priorityResult: PDFVocabularyPriorityIndexResult?,
+        word: String,
+        lemma: String,
+        language: NLLanguage,
+        selectedRecord: StoredPDFWordRecord,
+        documentID: String,
+        searchID: UUID,
+        saveStartedAt: Date
+    ) {
+        guard vocabularyState.occurrenceSearchID == searchID,
+              currentFileMD5 == documentID else { return }
+        if let priorityResult {
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                let found = max(
+                    1,
+                    priorityResult.index
+                        .matches(lemma: lemma, selectedForm: word)
+                        .reduce(into: 0) { $0 += $1.count }
+                )
+                DispatchQueue.main.async {
+                    guard let self,
+                          self.vocabularyState.occurrenceSearchID == searchID,
+                          self.currentFileMD5 == documentID else { return }
+                    self.selectionActionToolbar.showSaveProgress(
+                        found: found,
+                        indexedPages: priorityResult.pageIndexes.count,
+                        totalPages: priorityResult.totalPageCount
+                    )
+                }
+            }
+        }
+        ensurePDFVocabularyIndex(
+            language: language,
+            seed: priorityResult?.seed,
+            preloadedPageTexts: priorityResult?.preloadedPageTexts ?? [:]
+        ) { [weak self] snapshot, index in
             guard let self,
                   self.vocabularyState.occurrenceSearchID == searchID,
                   self.currentFileMD5 == documentID else { return }
@@ -309,10 +426,11 @@ extension ReaderWindowController {
                 let scanFinishedAt = Date()
                 let queryMilliseconds = scanFinishedAt.timeIntervalSince(snapshotsReadyAt) * 1000
                 NSLog(
-                    "LeafVocabulary save timing: snapshots=%.0fms scan=%.0fms pages=%d",
+                    "LeafVocabulary save timing: snapshots=%.0fms scan=%.0fms pages=%d reused=%d",
                     snapshotsReadyAt.timeIntervalSince(saveStartedAt) * 1000,
                     scanFinishedAt.timeIntervalSince(snapshotsReadyAt) * 1000,
-                    snapshot.pageTexts.count
+                    snapshot.pageTexts.count,
+                    index.reusedPageCount
                 )
                 let matches = perPage.enumerated().flatMap { pageIndex, occurrences in
                     occurrences.map {
@@ -549,6 +667,8 @@ extension ReaderWindowController {
         }
         guard !ids.isEmpty else { return false }
 
+        vocabularyState.occurrenceSearchID = nil
+        cancelPDFVocabularyPriorityIndexBuild()
         removeVocabularyRecords(ids: ids)
         refreshVocabularyPanelAfterLocalSave()
         selectionActionToolbar.showRemoveResult(removed: ids.count)
