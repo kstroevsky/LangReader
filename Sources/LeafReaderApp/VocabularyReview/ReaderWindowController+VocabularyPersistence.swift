@@ -21,8 +21,19 @@ extension ReaderWindowController {
         guard bounds.width > 0, bounds.height > 0 else { return nil }
 
         let pageIndex = document.index(for: page)
+        let textAnchor = PDFTextQuoteAnchorBuilder.make(
+            pageIndex: pageIndex,
+            selection: selection,
+            page: page,
+            sourceText: page.string ?? ""
+        )
         recordPersonalVocabularyQuery(word)
-        if let existing = pdfWordRecordStore?.existingRecord(in: storedWordRecords, pageIndex: pageIndex, bounds: bounds) {
+        if let existing = pdfWordRecordStore?.existingRecord(
+            in: storedWordRecords,
+            pageIndex: pageIndex,
+            bounds: bounds,
+            textAnchor: textAnchor
+        ) {
             clearPDFSelectionState()
             pdfView.clearSelection()
             return WordQuestionStartResult(linkID: existing.id, selectedContext: nil)
@@ -35,6 +46,7 @@ extension ReaderWindowController {
                 word: word,
                 pageIndex: pageIndex,
                 bounds: StoredPDFWordRect(bounds),
+                textAnchor: textAnchor,
                 context: context,
                 question: reusable.question,
                 answer: reusable.answer,
@@ -60,6 +72,7 @@ extension ReaderWindowController {
             word: word,
             pageIndex: pageIndex,
             bounds: StoredPDFWordRect(bounds),
+            textAnchor: textAnchor,
             context: context,
             dictionaryTags: nil,
             dictionaryFrequency: nil,

@@ -1,4 +1,5 @@
 import Cocoa
+import PDFKit
 import LeafReaderCore
 
 struct StoredPDFWordRecord: Codable, Sendable {
@@ -9,6 +10,7 @@ struct StoredPDFWordRecord: Codable, Sendable {
     var surfaceForm: String? = nil
     let pageIndex: Int
     let bounds: StoredPDFWordRect
+    var textAnchor: TextQuoteAnchor? = nil
     var context: String?
     var question: String
     var answer: String
@@ -38,17 +40,54 @@ struct StoredPDFWordRecord: Codable, Sendable {
     }
 }
 
+enum PDFTextQuoteAnchorBuilder {
+    static func make(
+        pageIndex: Int,
+        selection: PDFSelection,
+        page: PDFPage,
+        sourceText: String
+    ) -> TextQuoteAnchor? {
+        let rangeCount = selection.numberOfTextRanges(on: page)
+        guard rangeCount > 0 else { return nil }
+        var combinedRange = selection.range(at: 0, on: page)
+        guard combinedRange.location != NSNotFound else { return nil }
+        if rangeCount > 1 {
+            for index in 1..<rangeCount {
+                let range = selection.range(at: index, on: page)
+                guard range.location != NSNotFound else { continue }
+                combinedRange = NSUnionRange(combinedRange, range)
+            }
+        }
+        return make(pageIndex: pageIndex, sourceRange: combinedRange, sourceText: sourceText)
+    }
+
+    static func make(pageIndex: Int, sourceRange: NSRange, sourceText: String) -> TextQuoteAnchor? {
+        TextQuoteAnchor(unitOrdinal: pageIndex, sourceRange: sourceRange, sourceText: sourceText)
+    }
+}
+
 struct PDFWordRecordStore {
+    private static let metadataRepairVersion = 1
     private let defaults: UserDefaults
     private let documentID: String
     private let storageKey: String
     private let migrationKey: String
+    private let metadataRepairKey: String
 
     init(fileMD5: String, defaults: UserDefaults = .standard) {
         self.defaults = defaults
         documentID = fileMD5
         storageKey = "bookSession.\(fileMD5).wordRecords"
         migrationKey = "\(storageKey).sqliteMigrated"
+        metadataRepairKey = "\(storageKey).metadataRepairVersion"
+    }
+
+    var needsMetadataRepair: Bool {
+        defaults.integer(forKey: metadataRepairKey) < Self.metadataRepairVersion
+    }
+
+    func markMetadataRepairCompleted() {
+        defaults.set(Self.metadataRepairVersion, forKey: metadataRepairKey)
     }
 
     func load() -> [StoredPDFWordRecord] {
@@ -69,10 +108,13 @@ struct PDFWordRecordStore {
         return legacyRecords
     }
 
-    func save(_ records: [StoredPDFWordRecord]) {
-        if WordRecordSQLiteStore.shared.savePDFRecords(documentID: documentID, records: records) {
+    @discardableResult
+    func save(_ records: [StoredPDFWordRecord]) -> Bool {
+        let didSave = WordRecordSQLiteStore.shared.savePDFRecords(documentID: documentID, records: records)
+        if didSave {
             defaults.set(true, forKey: migrationKey)
         }
+        return didSave
     }
 
     @discardableResult
@@ -118,7 +160,25 @@ struct PDFWordRecordStore {
         "\(pageIndex):\(Int(bounds.origin.x.rounded())):\(Int(bounds.origin.y.rounded())):\(Int(bounds.width.rounded())):\(Int(bounds.height.rounded()))"
     }
 
-    func existingRecord(in records: [StoredPDFWordRecord], pageIndex: Int, bounds: CGRect) -> StoredPDFWordRecord? {
+    func recordKey(record: StoredPDFWordRecord) -> String {
+        if let anchor = record.textAnchor {
+            return "text:\(anchor.unitOrdinal):\(anchor.sourceStart):\(anchor.sourceLength)"
+        }
+        return recordKey(pageIndex: record.pageIndex, bounds: record.bounds.cgRect)
+    }
+
+    func existingRecord(
+        in records: [StoredPDFWordRecord],
+        pageIndex: Int,
+        bounds: CGRect,
+        textAnchor: TextQuoteAnchor? = nil
+    ) -> StoredPDFWordRecord? {
+        if let textAnchor {
+            let semanticKey = "text:\(textAnchor.unitOrdinal):\(textAnchor.sourceStart):\(textAnchor.sourceLength)"
+            if let record = records.first(where: { recordKey(record: $0) == semanticKey }) {
+                return record
+            }
+        }
         let key = recordKey(pageIndex: pageIndex, bounds: bounds)
         return records.first { record in
             recordKey(pageIndex: record.pageIndex, bounds: record.bounds.cgRect) == key

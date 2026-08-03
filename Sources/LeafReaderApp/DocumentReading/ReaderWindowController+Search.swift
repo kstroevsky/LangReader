@@ -35,8 +35,8 @@ extension ReaderWindowController {
 
         switch searchCursor.submit(query: query) {
         case .needsSearch:
-            searchResults = document.findString(query, withOptions: [.caseInsensitive, .diacriticInsensitive])
-            searchCursor.setTotal(searchResults.count)
+            beginPDFSearch(query, document: document)
+            return
         case .advance:
             searchCursor.advance()
         }
@@ -45,9 +45,76 @@ extension ReaderWindowController {
     }
 
     func clearSearchState() {
+        activePDFSearchDocument?.cancelFindString()
+        activePDFSearchDocument = nil
+        activePDFSearchQuery = ""
+        activePDFSearchStartedAt = nil
         searchResults.removeAll()
         searchCursor.clear()
         searchOverlay.setResultText("")
+    }
+
+    private func beginPDFSearch(_ query: String, document: PDFDocument) {
+        if !didRegisterPDFSearchObservers {
+            didRegisterPDFSearchObservers = true
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(pdfDocumentDidFindMatch(_:)),
+                name: .PDFDocumentDidFindMatch,
+                object: nil
+            )
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(pdfDocumentDidEndFind(_:)),
+                name: .PDFDocumentDidEndFind,
+                object: nil
+            )
+        }
+        activePDFSearchDocument?.cancelFindString()
+        activePDFSearchDocument = document
+        activePDFSearchQuery = query
+        activePDFSearchStartedAt = ProcessInfo.processInfo.systemUptime
+        searchResults.removeAll(keepingCapacity: true)
+        searchCursor.setTotal(0)
+        searchOverlay.setResultText("0 / …")
+        document.beginFindString(query, withOptions: [.caseInsensitive, .diacriticInsensitive])
+    }
+
+    @objc private func pdfDocumentDidFindMatch(_ notification: Notification) {
+        guard let document = notification.object as? PDFDocument,
+              document === activePDFSearchDocument,
+              document === pdfView.document,
+              activePDFSearchQuery == searchCursor.query,
+              let selection = notification.userInfo?[PDFDocumentFoundSelectionKey] as? PDFSelection else { return }
+        let shouldShowFirstResult = searchResults.isEmpty
+        searchResults.append(selection)
+        searchCursor.adoptOneBased(index: searchCursor.index + 1, total: searchResults.count)
+        if shouldShowFirstResult {
+            showCurrentSearchResult()
+        } else {
+            searchOverlay.setResultText(searchCursor.resultText)
+        }
+    }
+
+    @objc private func pdfDocumentDidEndFind(_ notification: Notification) {
+        guard let document = notification.object as? PDFDocument,
+              document === activePDFSearchDocument,
+              document === pdfView.document,
+              activePDFSearchQuery == searchCursor.query,
+              !document.isFinding else { return }
+        if let startedAt = activePDFSearchStartedAt {
+            ReaderPerformance.record(
+                .pdfSearch,
+                milliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1000
+            )
+            activePDFSearchStartedAt = nil
+        }
+        searchCursor.adoptOneBased(index: searchCursor.index + 1, total: searchResults.count)
+        if searchResults.isEmpty {
+            showCurrentSearchResult()
+        } else {
+            searchOverlay.setResultText(searchCursor.resultText)
+        }
     }
 
     func goToPreviousSearchResult() {

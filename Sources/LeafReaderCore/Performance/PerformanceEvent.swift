@@ -13,13 +13,32 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
     case launch
     case mainWindow
     case pdfOpen
+    case webDocumentPreparation
+    case epubPreparation
+    case docxPreparation
     case webOpen
+    case webContentReady
+    case epubContentReady
+    case docxContentReady
     case firstPageDisplay
     case shelfOpen
     case notesOpen
     case vocabularyLibraryOpen
     case aiPanelExpand
     case selectionToolbar
+    case pdfTextSnapshot
+    case pdfTextSnapshotCacheLoad
+    case vocabularyIndexBuild
+    case vocabularySaveAcknowledgement
+    case vocabularyOccurrenceQuery
+    case vocabularyOccurrencePersistence
+    case vocabularyRecordLoad
+    case vocabularyRecordRepair
+    case vocabularyDatabaseWrite
+    case visibleHighlightMaterialization
+    case webHighlightRestore
+    case webSourceNavigation
+    case pdfSearch
     case aiFirstToken
     case aiStreaming
     case themeSwitch
@@ -31,13 +50,32 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
         case .launch: return "App launch"
         case .mainWindow: return "Main window"
         case .pdfOpen: return "PDF open"
+        case .webDocumentPreparation: return "EPUB/DOCX preparation"
+        case .epubPreparation: return "EPUB preparation"
+        case .docxPreparation: return "DOCX preparation"
         case .webOpen: return "EPUB/DOCX open"
+        case .webContentReady: return "EPUB/DOCX content ready"
+        case .epubContentReady: return "EPUB content ready"
+        case .docxContentReady: return "DOCX content ready"
         case .firstPageDisplay: return "First page display"
         case .shelfOpen: return "Shelf open"
         case .notesOpen: return "Notes open"
         case .vocabularyLibraryOpen: return "Vocabulary Library open"
         case .aiPanelExpand: return "AI panel expansion"
         case .selectionToolbar: return "Selection toolbar"
+        case .pdfTextSnapshot: return "PDF text snapshot"
+        case .pdfTextSnapshotCacheLoad: return "PDF text snapshot cache load"
+        case .vocabularyIndexBuild: return "Vocabulary index build"
+        case .vocabularySaveAcknowledgement: return "Vocabulary save acknowledgement"
+        case .vocabularyOccurrenceQuery: return "Vocabulary occurrence query"
+        case .vocabularyOccurrencePersistence: return "Vocabulary occurrence persistence"
+        case .vocabularyRecordLoad: return "Vocabulary record load"
+        case .vocabularyRecordRepair: return "Vocabulary record repair"
+        case .vocabularyDatabaseWrite: return "Vocabulary database write"
+        case .visibleHighlightMaterialization: return "Visible highlight materialization"
+        case .webHighlightRestore: return "Web highlight restoration"
+        case .webSourceNavigation: return "Web source navigation"
+        case .pdfSearch: return "PDF search"
         case .aiFirstToken: return "AI first token"
         case .aiStreaming: return "AI streaming (per chunk)"
         case .themeSwitch: return "Theme switch"

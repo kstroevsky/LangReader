@@ -13,6 +13,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
         let word: String
         let pageIndex: Int
         let bounds: StoredPDFWordRect
+        let textAnchor: TextQuoteAnchor?
         let context: String
         var dictionaryTags: String?
         var dictionaryFrequency: Int?
@@ -99,6 +100,13 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var searchResults: [PDFSelection] = []
     /// Which hit is selected and how the query changed — shared by both paths.
     var searchCursor = ReaderSearchCursor()
+    var activePDFSearchDocument: PDFDocument?
+    var activePDFSearchQuery = ""
+    var activePDFSearchStartedAt: TimeInterval?
+    var didRegisterPDFSearchObservers = false
+    var pdfVocabularyAnnotationRestoreGeneration = 0
+    var pdfNoteAnnotationRestoreGeneration = 0
+    var documentTextState = ReaderDocumentTextState()
     var embeddingState = ReaderEmbeddingState()
     var aiState = ReaderAIState()
     let sessionSaveTask = DebouncedTask(delay: ReaderSessionPolicy.lastPositionSaveDelay)

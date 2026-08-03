@@ -5,6 +5,7 @@ struct ReaderEmbeddingState {
     var pdfAgentIndex: PDFDocumentAgentIndex?
     var isBuildingDocumentAgentIndex = false
     var documentAgentIndexGeneration = 0
+    var webSourceNavigationGeneration = 0
     var pendingDocumentAgentIndexCallbacks: [() -> Void] = []
     var pdfEmbeddingStore = PDFEmbeddingStore()
     let embeddingStoreQueue = DispatchQueue(label: "com.linlu.leafreader.embedding-store", qos: .utility)

@@ -5,6 +5,7 @@ validator="$root/scripts/validate_perf_capture.swift"
 fixtures="$root/scripts/perf_validator_fixtures"
 
 swift "$validator" synthetic "$fixtures/valid-synthetic.json"
+swift "$validator" documents "$fixtures/valid-documents.json"
 for fixture in invalid.json missing-event.json undersampled.json; do
   if swift "$validator" synthetic "$fixtures/$fixture"; then
     echo "validator unexpectedly accepted $fixture" >&2

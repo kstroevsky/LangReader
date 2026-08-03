@@ -37,20 +37,28 @@ extension ReaderWindowController {
         pdfView.setNeedsDisplay(pdfView.bounds)
     }
 
-    func restoreSavedAISourceUnderlines(from loadedConversation: SavedAIConversation? = nil) {
+    func restoreSavedAISourceUnderlines(
+        from loadedConversation: SavedAIConversation? = nil,
+        completion: (() -> Void)? = nil
+    ) {
         guard AISettingsStore.saveAIConversationEnabled else {
+            completion?()
             return
         }
         let conversation = loadedConversation ?? loadedAIConversation ?? aiConversationStore?.load() ?? .empty
         loadedAIConversation = conversation
         if currentDocumentKind != .pdf {
-            restoreWebAISourceUnderlines(for: conversation.bubbles.compactMap(\.sourceLocation))
+            restoreWebAISourceUnderlines(
+                for: conversation.bubbles.compactMap(\.sourceLocation),
+                completion: completion
+            )
             return
         }
         for bubble in conversation.bubbles {
             guard let source = bubble.sourceLocation else { continue }
             addAISourceUnderline(for: source)
         }
+        completion?()
     }
 
     func clearAISourceUnderlines() {
@@ -134,7 +142,10 @@ extension ReaderWindowController {
         webView.evaluateJavaScript("window.leafReaderAddAISourceUnderlineForSelection && window.leafReaderAddAISourceUnderlineForSelection(\(jsStringLiteral(key)));")
     }
 
-    func restoreWebAISourceUnderlines(for sources: [AIConversationSourceLocation]) {
+    func restoreWebAISourceUnderlines(
+        for sources: [AIConversationSourceLocation],
+        completion: (() -> Void)? = nil
+    ) {
         webAISourceLocationsByKey.removeAll()
         let payload = sources.compactMap { source -> [String: Any]? in
             guard source.kind == .webProgress,
@@ -155,9 +166,15 @@ extension ReaderWindowController {
         }
         guard let data = try? JSONSerialization.data(withJSONObject: payload),
               let json = String(data: data, encoding: .utf8) else {
+            completion?()
             return
         }
-        webView.evaluateJavaScript("window.leafReaderRestoreAISourceUnderlines && window.leafReaderRestoreAISourceUnderlines(\(json));")
+        webView.evaluateJavaScript(
+            "window.leafReaderRestoreAISourceUnderlines && window.leafReaderRestoreAISourceUnderlines(\(json));"
+        ) { [weak self] result, _ in
+            self?.logWebHighlightRestoreStats(category: "ai-sources", result: result)
+            completion?()
+        }
     }
 
     func clearWebAISourceUnderlines() {

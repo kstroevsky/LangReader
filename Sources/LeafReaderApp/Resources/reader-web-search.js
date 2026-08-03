@@ -1,7 +1,13 @@
 (() => {
   const root = typeof globalThis !== 'undefined' ? globalThis : this;
 
-  const makeSearchAPI = ({ installReaderOverlayStyle, leafReaderFindSearchSpans }) => {
+  const makeSearchAPI = ({
+    installReaderOverlayStyle,
+    leafReaderFindSearchSpans,
+    normalizedText,
+    normalizedIndexForRoot,
+    rangeFromNormalizedSpan
+  }) => {
     let searchQuery = '';
     let searchIndex = -1;
     let searchRanges = [];
@@ -17,8 +23,21 @@
     };
 
     const findSearchRanges = (query) => {
-      const needle = String(query || '').toLowerCase();
+      const needle = normalizedText
+        ? normalizedText(query)
+        : String(query || '').toLowerCase();
       if (!needle) return [];
+      if (normalizedIndexForRoot && rangeFromNormalizedSpan) {
+        const index = normalizedIndexForRoot(document.body);
+        const matches = [];
+        let start = index.text.indexOf(needle);
+        while (start >= 0) {
+          const range = rangeFromNormalizedSpan(index, start, needle.length);
+          if (range) matches.push(range);
+          start = index.text.indexOf(needle, start + Math.max(1, needle.length));
+        }
+        return matches;
+      }
       const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
         acceptNode(node) {
           const parent = node.parentElement;

@@ -32,8 +32,6 @@ extension ReaderWindowController {
         storedWordRecords = loadStoredWordRecords()
         storedWebWordRecords.removeAll()
         loadReadingNotesForCurrentDocument()
-        restoreStoredWordAnnotations()
-        restoreReadingNoteAnnotations()
         aiPanel.loadLinkedWordBubbles(pdfWordRecordStore?.linkedWordBubbles(from: storedWordRecords) ?? [])
         loadSavedAIConversationIfNeeded()
         setDocumentTitle(ReaderPresentationState.documentTitle(for: url))
@@ -46,6 +44,14 @@ extension ReaderWindowController {
         // PDFView still rasterises tiles asynchronously, so this is the
         // synchronous "ready to show" point, not the last pixel.
         ReaderPerformance.end(firstPageSpan)
+        let annotationDocumentID = currentFileMD5
+        DispatchQueue.main.async { [weak self] in
+            guard let self,
+                  self.currentDocumentKind == .pdf,
+                  self.currentFileMD5 == annotationDocumentID else { return }
+            self.restoreStoredWordAnnotationsIncrementally(documentID: annotationDocumentID)
+            self.restoreReadingNoteAnnotationsIncrementally(documentID: annotationDocumentID)
+        }
 
         if !didRegisterSelectionObserver {
             didRegisterSelectionObserver = true
@@ -69,12 +75,25 @@ extension ReaderWindowController {
     }
 
     func loadWebDocument(_ url: URL, kind: ReaderDocumentKind, generation: Int) {
+        let contentReadyStartedAt = ProcessInfo.processInfo.systemUptime
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             do {
                 let document = try WebDocumentLoader.load(url: url)
+                let preparationMilliseconds = (ProcessInfo.processInfo.systemUptime - contentReadyStartedAt) * 1000
                 DispatchQueue.main.async {
                     guard let self, self.documentSession.acceptsLoad(generation: generation) else { return }
-                    self.applyLoadedWebDocument(document, url: url, kind: kind, generation: generation)
+                    ReaderPerformance.record(.webDocumentPreparation, milliseconds: preparationMilliseconds)
+                    ReaderPerformance.record(
+                        kind == .epub ? .epubPreparation : .docxPreparation,
+                        milliseconds: preparationMilliseconds
+                    )
+                    self.applyLoadedWebDocument(
+                        document,
+                        url: url,
+                        kind: kind,
+                        generation: generation,
+                        contentReadyStartedAt: contentReadyStartedAt
+                    )
                 }
             } catch {
                 DispatchQueue.main.async {
@@ -84,7 +103,13 @@ extension ReaderWindowController {
         }
     }
 
-    func applyLoadedWebDocument(_ document: WebReadableDocument, url: URL, kind: ReaderDocumentKind, generation: Int) {
+    func applyLoadedWebDocument(
+        _ document: WebReadableDocument,
+        url: URL,
+        kind: ReaderDocumentKind,
+        generation: Int,
+        contentReadyStartedAt: TimeInterval
+    ) {
         // The on-main cost of presenting an already-parsed document — the part
         // that blocks the UI. Background parsing in `loadWebDocument` is I/O and
         // measured separately if needed.
@@ -92,6 +117,8 @@ extension ReaderWindowController {
         defer { ReaderPerformance.end(openSpan) }
         closeReadingNotePanelsForDocumentTransition()
         activateDocumentSession(url: url, kind: kind)
+        documentPresentationState.webContentReadyStartedAt = contentReadyStartedAt
+        documentPresentationState.webContentReadyDocumentKind = kind
         pdfView.isHidden = true
         pdfDimOverlay.isHidden = true
         webView.isHidden = false
@@ -138,11 +165,14 @@ extension ReaderWindowController {
     func activateDocumentSession(url: URL, kind: ReaderDocumentKind) {
         documentSession.adopt(url: url, kind: kind, documentID: fileMD5(for: url))
         documentPresentationState.resetForDocumentChange()
+        invalidateDocumentTextState()
         aiConversationStore = currentFileMD5.map { AIConversationStore(fileMD5: $0) }
         loadedAIConversation = nil
         invalidateDocumentAgentIndex()
         pendingPDFWordRecords.removeAll()
         pendingWebWordRecords.removeAll()
+        vocabularyState.renderedPDFWordAnnotations.removeAll()
+        vocabularyState.resolvedPDFWordBounds.removeAll()
         storedReadingNotes.removeAll()
         readingNotePanelControllers.removeAll()
         lastPersonalVocabularyPDFPageIndex = nil

@@ -211,6 +211,35 @@ final class SelectionActionToolbar: NSView {
         saveButton.applyTheme(ReaderTheme.selected)
     }
 
+    /// Keeps the durable save removable while making it explicit that the
+    /// occurrence count covers only an indexed page subset.
+    func showSaveProgress(found: Int, indexedPages: Int, totalPages: Int) {
+        vocabularySaveActionIsSaved = true
+        updateVocabularySaveActionPresentation()
+        if indexedPages > 0 {
+            saveButton.toolTip = AppText.localized(
+                "已保存所选单词；至少找到 \(found) 处。已搜索 \(indexedPages)/\(totalPages) 页，仍在查找",
+                "Saved the selection; found at least \(found) occurrences on \(indexedPages) of \(totalPages) pages and still finding"
+            )
+        } else {
+            saveButton.toolTip = AppText.localized(
+                "已保存所选单词；正在查找当前 PDF 中的全部位置",
+                "Saved the selection; finding every occurrence in this PDF"
+            )
+        }
+        saveButton.applyTheme(ReaderTheme.selected)
+    }
+
+    func showExactSaveProgress(found: Int, totalPages: Int) {
+        vocabularySaveActionIsSaved = true
+        updateVocabularySaveActionPresentation()
+        saveButton.toolTip = AppText.localized(
+            "已保存所选单词；当前页至少找到 \(found) 个完全匹配。正在查找相关词形和其余 \(max(0, totalPages - 1)) 页",
+            "Saved the selection; found at least \(found) exact matches on this page. Finding related forms and the remaining \(max(0, totalPages - 1)) pages"
+        )
+        saveButton.applyTheme(ReaderTheme.selected)
+    }
+
     func showRemoveResult(removed: Int) {
         vocabularySaveActionIsSaved = false
         updateVocabularySaveActionPresentation()

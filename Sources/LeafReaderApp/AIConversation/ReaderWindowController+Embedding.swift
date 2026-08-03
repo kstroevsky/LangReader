@@ -3,17 +3,6 @@ import PDFKit
 import LeafReaderCore
 
 extension ReaderWindowController {
-    func ensureDocumentAgentIndex() {
-        guard pdfAgentIndex == nil else { return }
-        if currentDocumentKind == .pdf {
-            guard let document = pdfView.document else { return }
-            pdfAgentIndex = PDFDocumentAgentIndex(document: document, title: documentTitle)
-            return
-        }
-        guard !currentWebPlainText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        pdfAgentIndex = PDFDocumentAgentIndex(text: currentWebPlainText)
-    }
-
     func ensureDocumentAgentIndexAsync(completion: (() -> Void)? = nil) {
         if pdfAgentIndex != nil {
             completion?()
@@ -30,14 +19,13 @@ extension ReaderWindowController {
         let title = documentTitle
 
         if kind == .pdf {
-            guard let url = currentFileURL else {
-                finishDocumentAgentIndexBuild(nil, generation: generation)
-                return
-            }
-            DispatchQueue.global(qos: .utility).async { [weak self] in
-                autoreleasepool {
-                    let document = PDFDocument(url: url)
-                    let index = document.map { PDFDocumentAgentIndex(document: $0, title: title) }
+            ensurePDFDocumentTextSnapshot { [weak self] snapshot in
+                guard let self, let snapshot else {
+                    self?.finishDocumentAgentIndexBuild(nil, generation: generation)
+                    return
+                }
+                DispatchQueue.global(qos: .utility).async { [weak self] in
+                    let index = PDFDocumentAgentIndex(pageTexts: snapshot.pageTexts, title: title)
                     Task { @MainActor [weak self] in
                         self?.finishDocumentAgentIndexBuild(index, generation: generation)
                     }

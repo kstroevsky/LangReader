@@ -321,6 +321,92 @@ enum VocabularyLogicTests {
         )
     }
 
+    static func testVocabularyDocumentLemmaIndexMatchesLegacyScanner() throws {
+        let pages = [
+            "Er ist gestern nach Hause gegangen. Wir gehen heute wieder.",
+            "Sie ging langsam; ein gegan-\ngener Weg war lang.",
+            "Für den Er-\nfolg folgen wir dem Plan. Das Gehen fällt leicht.",
+            "Die E-Mail und die E-\nMail kamen an.",
+            ""
+        ]
+        guard let index = VocabularyDocumentLemmaIndex(texts: pages, language: .german) else {
+            try expect(false, "a non-cancelled document should produce a lemma index")
+            return
+        }
+        try expectEqual(index.pageCount, pages.count, "the index must preserve empty pages and page positions")
+
+        for (lemma, selected) in [
+            ("gehen", "gegangen"),
+            ("gehen", "ging"),
+            ("E-Mail", "E-Mail")
+        ] {
+            let expected = GermanLemmaOccurrenceMatcher.matches(
+                lemma: lemma,
+                selectedForm: selected,
+                inTexts: pages,
+                language: .german
+            )
+            try expectEqual(
+                index.matches(lemma: lemma, selectedForm: selected),
+                expected,
+                "the reusable index must preserve legacy matches for '\(selected)'"
+            )
+        }
+
+        let groups = ["gehen": "gehen", "e-mail": "E-Mail"]
+        let indexedGroups = index.matches(lemmasByKey: groups)
+        let expectedGroups = pages.map {
+            GermanLemmaOccurrenceMatcher.matches(lemmasByKey: groups, in: $0, language: .german)
+        }
+        try expectEqual(
+            indexedGroups,
+            expectedGroups,
+            "grouped backfill queries must agree page-for-page with the legacy matcher"
+        )
+
+        let cancelled = VocabularyDocumentLemmaIndex(
+            texts: pages,
+            language: .german,
+            isCancelled: { true }
+        )
+        try expect(cancelled == nil, "a cancelled index build should return no partial index")
+
+        let priorityPageIndexes = VocabularyIndexPriorityPlanner.pageIndexes(
+            pageCount: pages.count,
+            currentPageIndex: 2,
+            visiblePageIndexes: [2, 3, 3, -1, pages.count],
+            neighborRadius: 1
+        )
+        try expectEqual(
+            priorityPageIndexes,
+            [2, 3, 1, 4],
+            "the priority plan should be current-first, unique, bounded, and deterministic"
+        )
+        let priorityTexts = priorityPageIndexes.map { pages[$0] }
+        guard let priorityIndex = VocabularyDocumentLemmaIndex(texts: priorityTexts, language: .german),
+              let seededIndex = VocabularyDocumentLemmaIndex(
+                texts: pages,
+                language: .german,
+                seed: VocabularyDocumentLemmaIndexSeed(
+                    pageIndexes: priorityPageIndexes,
+                    index: priorityIndex
+                )
+              ) else {
+            try expect(false, "a reusable visible-first slice should seed the complete index")
+            return
+        }
+        try expectEqual(
+            seededIndex.reusedPageCount,
+            priorityPageIndexes.count,
+            "the complete index should reuse every compatible priority page"
+        )
+        try expectEqual(
+            seededIndex.matches(lemma: "gehen", selectedForm: "gegangen"),
+            index.matches(lemma: "gehen", selectedForm: "gegangen"),
+            "seeding must not change whole-document query semantics"
+        )
+    }
+
     /// The reusable-tagger overload must return exactly what the allocating one
     /// does, including when the same tagger is reused across many words.
     static func testGermanLemmaResolverTaggerReuse() throws {

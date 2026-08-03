@@ -92,8 +92,10 @@ extension ReaderWindowController {
            let page = pdfView.document?.page(at: pageIndex) {
             let matchingIDs = storedWordRecords
                 .filter {
-                    $0.pageIndex == pageIndex
-                        && pdfBounds.insetBy(dx: -4, dy: -4).intersects(displayBounds(for: $0, page: page).insetBy(dx: -4, dy: -4))
+                    guard $0.pageIndex == pageIndex,
+                          let wordBounds = displayBounds(for: $0, page: page) else { return false }
+                    return pdfBounds.insetBy(dx: -4, dy: -4)
+                        .intersects(wordBounds.insetBy(dx: -4, dy: -4))
                 }
                 .map(\.id)
             for id in matchingIDs {

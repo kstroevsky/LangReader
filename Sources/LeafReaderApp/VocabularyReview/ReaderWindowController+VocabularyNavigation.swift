@@ -26,11 +26,11 @@ extension ReaderWindowController {
 
     func jumpToStoredPDFWord(linkID: String) {
         guard let record = storedWordRecords.first(where: { $0.id == linkID }),
-              let page = pdfView.document?.page(at: record.pageIndex) else {
+              let page = pdfView.document?.page(at: record.pageIndex),
+              let bounds = displayBounds(for: record, page: page) else {
             return
         }
         setAIPanelCollapsed(false, animated: true)
-        let bounds = displayBounds(for: record, page: page)
         let destination = PDFDestination(
             page: page,
             at: NSPoint(x: bounds.minX, y: bounds.maxY + 80)

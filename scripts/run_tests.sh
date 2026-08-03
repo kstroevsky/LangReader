@@ -63,6 +63,7 @@ excluded_logic_app_source() {
     LLMAnswerProvider.swift|\
     ModalOverlayManager.swift|\
     PDFDocumentAgentIndex.swift|\
+    PDFDocumentTextSnapshotCache.swift|\
     PDFEmbeddingStore.swift|\
     GermanFlexionStore.swift|\
     GermanCachedFormLabeling.swift|\
@@ -173,6 +174,7 @@ LOGIC_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderChromeStateTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderToolbarItemTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderBottomBarItemTests.swift"
+  "$TEST_SOURCE_ROOT/DocumentReading/DOCXLogicTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/EPUBLogicTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/DocumentImportDecisionLogicTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/DocumentSessionLogicTests.swift"
@@ -204,6 +206,7 @@ node --check "$APP_SOURCE_ROOT/Resources/reader-web-search.js"
 node --check "$APP_SOURCE_ROOT/Resources/reader-web-marks.js"
 node --check "$APP_SOURCE_ROOT/Resources/reader-web.js"
 node "$TEST_SOURCE_ROOT/DocumentReading/ReaderWebScriptTests.js"
+node "$TEST_SOURCE_ROOT/DocumentReading/ReaderWebMarksTests.js"
 "$TEST_SOURCE_ROOT/Performance/PrivatePerformanceCaptureTests.sh"
 
 collect_logic_app_sources
@@ -211,6 +214,7 @@ collect_logic_app_sources
 run_swift_test /tmp/leafreader-sqlite-word-tests \
   "${SQLITE_WORD_TEST_SOURCES[@]}" \
   -framework Cocoa \
+  -framework PDFKit \
   -lsqlite3
 
 run_swift_test /tmp/leafreader-personal-vocabulary-tests \
@@ -269,7 +273,8 @@ run_swift_test /tmp/leafreader-logic-tests \
   -lsqlite3
 
 if [[ -n "${LEAFREADER_TEST_PDF_WITH_ANSWERS:-}" && -n "${LEAFREADER_TEST_PDF_WITHOUT_ANSWERS:-}" ]]; then
-  swiftc \
+  swiftc "${CORE_MODULE_FLAGS[@]}" \
+    -parse-as-library \
     "$TEST_SOURCE_ROOT/DocumentReading/PDFVocabularyDocumentTests.swift" \
     -framework PDFKit \
     -o /tmp/leafreader-pdf-vocabulary-document-tests

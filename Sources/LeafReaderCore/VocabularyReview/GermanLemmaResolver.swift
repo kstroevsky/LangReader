@@ -110,7 +110,8 @@ package enum GermanLemmaOccurrenceMatcher {
         // Stripe the pages across workers rather than dispatching one job per
         // page: each worker then builds a single tagger and reuses it, and
         // striping keeps the load even when page lengths vary widely.
-        let workerCount = min(texts.count, max(1, ProcessInfo.processInfo.activeProcessorCount))
+        let availableWorkers = max(1, ProcessInfo.processInfo.activeProcessorCount - 1)
+        let workerCount = min(texts.count, min(4, availableWorkers))
         DispatchQueue.concurrentPerform(iterations: workerCount) { worker in
             let tagger = NLTagger(tagSchemes: [.lemma])
             // A second tagger: the first is mid-enumeration when the

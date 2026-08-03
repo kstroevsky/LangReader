@@ -13,6 +13,8 @@
       .leaf-reader-tts-underline { background: rgba(143, 199, 125, .32); border-radius: 2px; -webkit-user-select: text; user-select: text; }
       .leaf-reader-linked-word { background: transparent; border-radius: 2px; cursor: pointer; text-decoration-line: underline; text-decoration-style: solid; text-decoration-color: var(--leaf-reader-ai-source-underline, rgba(0, 122, 255, .72)); text-decoration-thickness: 3px; text-underline-offset: .16em; }
       .leaf-reader-note-highlight { background: var(--leaf-reader-note-highlight-background, rgba(145, 202, 255, .34)); border-radius: 3px; cursor: pointer; }
+      ::highlight(leaf-reader-linked-word) { background: transparent; text-decoration-line: underline; text-decoration-style: solid; text-decoration-color: var(--leaf-reader-ai-source-underline, rgba(0, 122, 255, .72)); text-decoration-thickness: 3px; text-underline-offset: .16em; }
+      ::highlight(leaf-reader-note-highlight) { background: var(--leaf-reader-note-highlight-background, rgba(145, 202, 255, .34)); color: inherit; }
       ::highlight(leaf-reader-search) { background: rgba(255, 221, 87, .52); color: inherit; }
       ::highlight(leaf-reader-search-current) { background: rgba(255, 149, 0, .72); color: inherit; }
     `;
@@ -24,7 +26,7 @@
     if (char === '\u201C' || char === '\u201D') return ['"'];
     if (/[\u2010-\u2015]/.test(char)) return ['-'];
     if (char === '\u2026') return ['.', '.', '.'];
-    return [char.toLowerCase()];
+    return char.toLowerCase().normalize('NFD').split('');
   };
   const normalizedText = (value) => {
     let output = '';
@@ -68,41 +70,102 @@
     }
     return matches;
   };
+  const normalizedIndexCache = new WeakMap();
+  const invalidateNormalizedIndex = (rootNode) => {
+    if (rootNode) normalizedIndexCache.delete(rootNode);
+  };
   const normalizedIndexForRoot = (root) => {
+    const cached = normalizedIndexCache.get(root);
+    if (cached) return cached;
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    const positions = [];
+    const mappingRuns = [];
     let normalized = '';
     let previousWasSpace = true;
+    const appendMappedText = (value, node, sourceOffset, sourceLength) => {
+      for (const unit of String(value)) {
+        const normalizedOffset = normalized.length;
+        normalized += unit;
+        const last = mappingRuns[mappingRuns.length - 1];
+        if (last && last.node === node && last.sourceLength === sourceLength) {
+          const runLength = last.end - last.start;
+          const sourceStep = sourceOffset - last.sourceStart;
+          if (runLength === 1) {
+            last.sourceStep = sourceStep;
+            last.end += unit.length;
+            continue;
+          }
+          const expectedOffset = last.sourceStart + (runLength * last.sourceStep);
+          if (sourceOffset === expectedOffset) {
+            last.end += unit.length;
+            continue;
+          }
+        }
+        mappingRuns.push({
+          start: normalizedOffset,
+          end: normalizedOffset + unit.length,
+          node,
+          sourceStart: sourceOffset,
+          sourceStep: 0,
+          sourceLength
+        });
+      }
+    };
     let node;
     while ((node = walker.nextNode())) {
       const raw = node.nodeValue || '';
-      for (let i = 0; i < raw.length; i++) {
-        const char = raw[i];
+      for (let sourceOffset = 0; sourceOffset < raw.length;) {
+        const codePoint = raw.codePointAt(sourceOffset);
+        const char = String.fromCodePoint(codePoint);
+        const sourceLength = char.length;
         if (/\s/.test(char)) {
           if (!previousWasSpace) {
-            normalized += ' ';
-            positions.push({ node, offset: i });
+            appendMappedText(' ', node, sourceOffset, sourceLength);
             previousWasSpace = true;
           }
         } else {
           for (const part of canonicalTextParts(char)) {
-            normalized += part;
-            positions.push({ node, offset: i });
+            appendMappedText(part, node, sourceOffset, sourceLength);
             previousWasSpace = false;
           }
         }
+        sourceOffset += sourceLength;
       }
     }
     const leadingSpaces = normalized.length - normalized.trimStart().length;
-    return { text: normalized.trim(), positions, leadingSpaces };
+    const index = {
+      text: normalized.trim(),
+      mappingRuns,
+      leadingSpaces
+    };
+    normalizedIndexCache.set(root, index);
+    return index;
+  };
+  const positionForNormalizedOffset = (index, offset) => {
+    let low = 0;
+    let high = index.mappingRuns.length - 1;
+    while (low <= high) {
+      const middle = (low + high) >> 1;
+      const run = index.mappingRuns[middle];
+      if (offset < run.start) high = middle - 1;
+      else if (offset >= run.end) low = middle + 1;
+      else {
+        const sourceOffset = run.sourceStart + ((offset - run.start) * run.sourceStep);
+        return {
+          node: run.node,
+          offset: sourceOffset,
+          endOffset: sourceOffset + run.sourceLength
+        };
+      }
+    }
+    return null;
   };
   const rangeFromNormalizedSpan = (index, startIndex, length) => {
-    const start = index.positions[index.leadingSpaces + startIndex];
-    const end = index.positions[index.leadingSpaces + startIndex + length - 1];
+    const start = positionForNormalizedOffset(index, index.leadingSpaces + startIndex);
+    const end = positionForNormalizedOffset(index, index.leadingSpaces + startIndex + length - 1);
     if (!start || !end) return null;
     const range = document.createRange();
     range.setStart(start.node, start.offset);
-    range.setEnd(end.node, end.offset + 1);
+    range.setEnd(end.node, end.endOffset);
     return range;
   };
   const rangeForNormalizedText = (root, target, occurrenceIndex = 0) => {
@@ -130,15 +193,15 @@
     const contextNeedle = normalizedContext.slice(0, Math.min(160, normalizedContext.length));
     const contextIndex = source.indexOf(contextNeedle);
     if (contextIndex < 0) return null;
-    const contextEnd = Math.min(source.length, contextIndex + normalizedContext.length);
-    const contextSource = source.slice(contextIndex, contextEnd);
-    let wordIndexInContext = contextSource.indexOf(normalizedWord);
-    if (wordIndexInContext < 0) {
-      wordIndexInContext = source.indexOf(normalizedWord, contextIndex);
-      if (wordIndexInContext < 0 || wordIndexInContext >= contextEnd) return null;
-      return rangeFromNormalizedSpan(index, wordIndexInContext, normalizedWord.length);
+    const targetOccurrence = Math.max(0, Number(occurrenceIndex || 0));
+    let wordIndex = -1;
+    let searchFrom = 0;
+    for (let seen = 0; seen <= targetOccurrence; seen += 1) {
+      wordIndex = source.indexOf(normalizedWord, searchFrom);
+      if (wordIndex < 0) return null;
+      searchFrom = wordIndex + Math.max(1, normalizedWord.length);
     }
-    return rangeFromNormalizedSpan(index, contextIndex + wordIndexInContext, normalizedWord.length);
+    return rangeFromNormalizedSpan(index, wordIndex, normalizedWord.length);
   };
   const leafReaderWordCount = (value) => String(value || '').split(/[^A-Za-z0-9]+/).filter(Boolean).length;
   const leafReaderHasCJK = (value) => /[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/.test(String(value || ''));
@@ -291,17 +354,23 @@
   }
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   const unwrapSpans = (selector) => {
+    let removed = 0;
     document.querySelectorAll(selector).forEach((span) => {
       const parent = span.parentNode;
       if (!parent) return;
       while (span.firstChild) parent.insertBefore(span.firstChild, span);
       parent.removeChild(span);
       parent.normalize();
+      removed += 1;
     });
+    return removed;
   };
   const leafReaderSearchAPI = window.LeafReaderWebSearch.makeSearchAPI({
     installReaderOverlayStyle,
-    leafReaderFindSearchSpans
+    leafReaderFindSearchSpans,
+    normalizedText,
+    normalizedIndexForRoot,
+    rangeFromNormalizedSpan
   });
   window.leafReaderClearSearchHighlights = leafReaderSearchAPI.clearSearchHighlights;
   window.leafReaderSearch = leafReaderSearchAPI.search;
@@ -379,10 +448,16 @@
     normalizedText,
     wrapRangeTextNodes,
     findTextRange: window.leafReaderFindTextRange,
-    unwrapSpans
+    rangeForWordInContext,
+    rangeForNormalizedText,
+    unwrapSpans,
+    invalidateTextIndex: invalidateNormalizedIndex
   });
   const leafReaderAISourceKeyForRanges = leafReaderMarksAPI.aiSourceKeyForRanges;
   const leafReaderLinkedWordIDsForRanges = leafReaderMarksAPI.linkedWordIDsForRanges;
+  const leafReaderAISourceKeyAtPoint = leafReaderMarksAPI.aiSourceKeyAtPoint;
+  const leafReaderLinkedWordIDAtPoint = leafReaderMarksAPI.linkedWordIDAtPoint;
+  const leafReaderNoteIDAtPoint = leafReaderMarksAPI.noteIDAtPoint;
   window.leafReaderClearAISourceUnderlines = leafReaderMarksAPI.clearAISourceUnderlines;
   window.leafReaderAddAISourceUnderlineForSelection = leafReaderMarksAPI.addAISourceUnderlineForSelection;
   window.leafReaderRestoreAISourceUnderlines = leafReaderMarksAPI.restoreAISourceUnderlines;
@@ -732,6 +807,13 @@
     window.webkit.messageHandlers.selectionChanged.postMessage({ text: "", context: "" });
   });
   document.addEventListener("click", (event) => {
+    const highlightedAISourceKey = leafReaderAISourceKeyAtPoint(event.clientX, event.clientY);
+    if (highlightedAISourceKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      window.webkit.messageHandlers.webAISourceClicked.postMessage(String(highlightedAISourceKey));
+      return;
+    }
     const aiSource = event.target?.closest?.('span.leaf-reader-ai-source-underline');
     if (aiSource) {
       event.preventDefault();
@@ -746,11 +828,25 @@
       window.leafReaderJumpToHref(link.dataset.leafHref || '');
       return;
     }
+    const highlightedWordID = leafReaderLinkedWordIDAtPoint(event.clientX, event.clientY);
+    if (highlightedWordID) {
+      event.preventDefault();
+      event.stopPropagation();
+      window.webkit.messageHandlers.webWordClicked.postMessage(String(highlightedWordID));
+      return;
+    }
     const target = event.target?.closest?.('span.leaf-reader-linked-word');
     if (target) {
       event.preventDefault();
       event.stopPropagation();
       window.webkit.messageHandlers.webWordClicked.postMessage(String(target.dataset.leafWordId || ''));
+      return;
+    }
+    const highlightedNoteID = leafReaderNoteIDAtPoint(event.clientX, event.clientY);
+    if (highlightedNoteID) {
+      event.preventDefault();
+      event.stopPropagation();
+      window.webkit.messageHandlers.webNoteClicked.postMessage(String(highlightedNoteID));
       return;
     }
     const note = event.target?.closest?.('span.leaf-reader-note-highlight');

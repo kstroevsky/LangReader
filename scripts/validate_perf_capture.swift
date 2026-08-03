@@ -15,7 +15,7 @@ enum ValidationError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .usage:
-            return "usage: validate_perf_capture.swift <synthetic|private> <report.json> [--not-before unix-seconds]"
+            return "usage: validate_perf_capture.swift <synthetic|documents|private> <report.json> [--not-before unix-seconds]"
         case .invalid(let message):
             return "Invalid performance capture: \(message)"
         }
@@ -31,7 +31,7 @@ func require(_ counts: [String: Int], _ event: String, atLeast expected: Int) th
 
 do {
     guard CommandLine.arguments.count == 3 || CommandLine.arguments.count == 5,
-          let mode = ["synthetic", "private"].first(where: { $0 == CommandLine.arguments[1] }) else {
+          let mode = ["synthetic", "documents", "private"].first(where: { $0 == CommandLine.arguments[1] }) else {
         throw ValidationError.usage
     }
     let url = URL(fileURLWithPath: CommandLine.arguments[2])
@@ -63,9 +63,19 @@ do {
     case "synthetic":
         try require(counts, "pdfOpen", atLeast: 4)
         try require(counts, "firstPageDisplay", atLeast: 4)
+    case "documents":
+        try require(counts, "pdfOpen", atLeast: 2)
+        try require(counts, "webDocumentPreparation", atLeast: 4)
+        try require(counts, "epubPreparation", atLeast: 2)
+        try require(counts, "docxPreparation", atLeast: 2)
+        try require(counts, "webOpen", atLeast: 4)
+        try require(counts, "webContentReady", atLeast: 4)
+        try require(counts, "epubContentReady", atLeast: 2)
+        try require(counts, "docxContentReady", atLeast: 2)
     case "private":
         try require(counts, "pdfOpen", atLeast: 2)
         try require(counts, "webOpen", atLeast: 4)
+        try require(counts, "webContentReady", atLeast: 4)
         for event in ["shelfOpen", "notesOpen", "vocabularyLibraryOpen", "aiPanelExpand", "selectionToolbar", "aiFirstToken", "aiStreaming", "themeSwitch"] {
             try require(counts, event, atLeast: 1)
         }

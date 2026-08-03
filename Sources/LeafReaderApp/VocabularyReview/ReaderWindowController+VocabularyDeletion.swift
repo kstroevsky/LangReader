@@ -39,6 +39,9 @@ extension ReaderWindowController {
             }
             if !removedRecords.isEmpty {
                 storedWordRecords.removeAll { idSet.contains($0.id) }
+                for id in idSet {
+                    vocabularyState.resolvedPDFWordBounds.removeValue(forKey: id)
+                }
                 highlightedSelectionKeys.removeAll()
                 restoreStoredWordAnnotations()
             }

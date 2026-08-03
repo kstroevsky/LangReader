@@ -202,6 +202,11 @@ private func testReaderProgressFormatter() throws {
     try expectEqual(ReaderProgressFormatter.webProgressPercent(-0.2), 0, "web progress should clamp low")
     try expectEqual(ReaderProgressFormatter.webProgressPercent(0.126), 13, "web progress should round")
     try expectEqual(ReaderProgressFormatter.webProgressPercent(1.4), 100, "web progress should clamp high")
+    try expectEqual(ReaderProgressFormatter.webSectionProgress(index: 0, locationCount: 5), 0.0, "first web section should map to the start")
+    try expectEqual(ReaderProgressFormatter.webSectionProgress(index: 2, locationCount: 5), 0.5, "middle web section should map proportionally")
+    try expectEqual(ReaderProgressFormatter.webSectionProgress(index: 99, locationCount: 5), 1.0, "web section progress should clamp high")
+    try expectEqual(ReaderProgressFormatter.webSectionProgress(index: -1, locationCount: 5), 0.0, "web section progress should clamp low")
+    try expectEqual(ReaderProgressFormatter.webSectionProgress(index: 4, locationCount: 0), 0.0, "empty web indexes should map safely to the start")
 }
 
 private func testReaderAIContextTextCleanup() throws {
@@ -723,6 +728,7 @@ private let tests: [(String, () throws -> Void)] = [
     ("Reader toolbar visibility follows chrome state", ReaderToolbarItemTests.testVisibilityFollowsChromeState),
     ("Vocabulary SRS", VocabularyLogicTests.testVocabularySRS),
     ("German lemma batch equals sequential", VocabularyLogicTests.testGermanLemmaBatchMatchesSequential),
+    ("Vocabulary document lemma index equals legacy scanner", VocabularyLogicTests.testVocabularyDocumentLemmaIndexMatchesLegacyScanner),
     ("German lemma tagger reuse", VocabularyLogicTests.testGermanLemmaResolverTaggerReuse),
     ("German lemma line-wrap fragment not false match", VocabularyLogicTests.testGermanLemmaLineWrapFragmentIsNotAFalseMatch),
     ("German noun not grouped with verb homograph", VocabularyLogicTests.testGermanNounNotGroupedWithVerbHomograph),
@@ -858,6 +864,8 @@ private let tests: [(String, () throws -> Void)] = [
     ("Embedding key isolation", AISettingsLogicTests.testEmbeddingKeyIsolation),
     ("Embedding legacy key migration", AISettingsLogicTests.testEmbeddingLegacyKeyMigration),
     ("Embedding warmup idle policy", testEmbeddingWarmupIdlePolicy),
+    ("DOCX top-level block order", DOCXLogicTests.testTopLevelBlocksPreserveDocumentOrder),
+    ("DOCX rendered plain-text order", DOCXLogicTests.testRenderedContentReusesPlainTextInDocumentOrder),
     ("Reader entity decoding", EPUBLogicTests.testReaderEntityDecoding),
     ("EPUB text decoding", EPUBLogicTests.testEPUBTextDecoding),
     ("EPUB spine linear parsing", EPUBLogicTests.testEPUBSpineLinearParsing),
