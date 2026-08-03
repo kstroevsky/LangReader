@@ -150,6 +150,7 @@ extension ReaderWindowController {
         invalidateDocumentAgentIndex()
         pendingPDFWordRecords.removeAll()
         pendingWebWordRecords.removeAll()
+        vocabularyState.renderedPDFWordAnnotations.removeAll()
         storedReadingNotes.removeAll()
         readingNotePanelControllers.removeAll()
         lastPersonalVocabularyPDFPageIndex = nil

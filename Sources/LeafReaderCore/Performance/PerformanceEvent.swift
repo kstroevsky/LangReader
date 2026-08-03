@@ -25,6 +25,7 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
     case vocabularySaveAcknowledgement
     case vocabularyOccurrenceQuery
     case vocabularyOccurrencePersistence
+    case visibleHighlightMaterialization
     case pdfSearch
     case aiFirstToken
     case aiStreaming
@@ -49,6 +50,7 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
         case .vocabularySaveAcknowledgement: return "Vocabulary save acknowledgement"
         case .vocabularyOccurrenceQuery: return "Vocabulary occurrence query"
         case .vocabularyOccurrencePersistence: return "Vocabulary occurrence persistence"
+        case .visibleHighlightMaterialization: return "Visible highlight materialization"
         case .pdfSearch: return "PDF search"
         case .aiFirstToken: return "AI first token"
         case .aiStreaming: return "AI streaming (per chunk)"
