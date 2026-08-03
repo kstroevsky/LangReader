@@ -2,11 +2,6 @@ import Cocoa
 import PDFKit
 import LeafReaderCore
 
-private struct PDFVocabularyPageSnapshot: Sendable {
-    let pageIndex: Int
-    let text: String
-}
-
 private struct PDFVocabularyPageMatch: Sendable {
     let pageIndex: Int
     let text: String
@@ -23,6 +18,66 @@ private struct PDFVocabularyLemmaGroup: Sendable {
 private struct PDFVocabularyGroupedPageMatch: Sendable {
     let groupKey: String
     let pageMatch: PDFVocabularyPageMatch
+}
+
+private final class PDFVocabularySaveMaterialization {
+    let word: String
+    let lemma: String
+    let selectedRecord: StoredPDFWordRecord
+    let matches: [PDFVocabularyPageMatch]
+    let documentID: String
+    let document: PDFDocument
+    let startedAt: Date
+    let startedUptime: TimeInterval
+    var nextMatchIndex = 0
+    var knownKeys: Set<String>
+    var foundKeys: Set<String> = []
+    var newRecords: [StoredPDFWordRecord] = []
+
+    init(
+        word: String,
+        lemma: String,
+        selectedRecord: StoredPDFWordRecord,
+        matches: [PDFVocabularyPageMatch],
+        documentID: String,
+        document: PDFDocument,
+        knownKeys: Set<String>,
+        startedAt: Date
+    ) {
+        self.word = word
+        self.lemma = lemma
+        self.selectedRecord = selectedRecord
+        self.matches = matches
+        self.documentID = documentID
+        self.document = document
+        self.knownKeys = knownKeys
+        self.startedAt = startedAt
+        startedUptime = ProcessInfo.processInfo.systemUptime
+    }
+}
+
+private final class PDFVocabularyBackfillMaterialization {
+    let groupsByKey: [String: PDFVocabularyLemmaGroup]
+    let matches: [PDFVocabularyGroupedPageMatch]
+    let documentID: String
+    let document: PDFDocument
+    var nextMatchIndex = 0
+    var knownKeys: Set<String>
+    var newRecords: [StoredPDFWordRecord] = []
+
+    init(
+        groupsByKey: [String: PDFVocabularyLemmaGroup],
+        matches: [PDFVocabularyGroupedPageMatch],
+        documentID: String,
+        document: PDFDocument,
+        knownKeys: Set<String>
+    ) {
+        self.groupsByKey = groupsByKey
+        self.matches = matches
+        self.documentID = documentID
+        self.document = document
+        self.knownKeys = knownKeys
+    }
 }
 
 extension ReaderWindowController {
@@ -85,21 +140,25 @@ extension ReaderWindowController {
         let searchID = UUID()
         let language = vocabularyDocumentLanguage
         vocabularyState.occurrenceSearchID = searchID
-        collectPDFVocabularyPageSnapshots(documentID: documentID, searchID: searchID) { [weak self] snapshots in
+        ensurePDFVocabularyIndex(language: language) { [weak self] snapshot, index in
+            guard let self,
+                  self.vocabularyState.occurrenceSearchID == searchID,
+                  self.currentFileMD5 == documentID else { return }
+            guard let snapshot, let index else {
+                self.vocabularyState.occurrenceSearchID = nil
+                return
+            }
             DispatchQueue.global(qos: .utility).async { [weak self] in
                 let lemmasByKey = Dictionary(uniqueKeysWithValues: groups.map { ($0.key, $0.lemma) })
-                let matches = snapshots.flatMap { snapshot in
-                    GermanLemmaOccurrenceMatcher.matches(
-                        lemmasByKey: lemmasByKey,
-                        in: snapshot.text,
-                        language: language
-                    ).flatMap { groupKey, occurrences in
+                let groupedMatches = index.matches(lemmasByKey: lemmasByKey)
+                let matches = groupedMatches.enumerated().flatMap { pageIndex, groups in
+                    groups.flatMap { groupKey, occurrences in
                         occurrences.map {
                             PDFVocabularyGroupedPageMatch(
                                 groupKey: groupKey,
                                 pageMatch: PDFVocabularyPageMatch(
-                                    pageIndex: snapshot.pageIndex,
-                                    text: snapshot.text,
+                                    pageIndex: pageIndex,
+                                    text: snapshot.pageTexts[pageIndex],
                                     occurrence: $0
                                 )
                             )
@@ -127,46 +186,69 @@ extension ReaderWindowController {
         document: PDFDocument
     ) {
         vocabularyState.occurrenceSearchID = nil
-        guard let store = pdfWordRecordStore else { return }
+        guard let store = pdfWordRecordStore,
+              let documentID = currentFileMD5 else { return }
         let groupsByKey = Dictionary(uniqueKeysWithValues: groups.map { ($0.key, $0) })
-        var knownKeys = Set(storedWordRecords.map {
+        let knownKeys = Set(storedWordRecords.map {
             store.recordKey(pageIndex: $0.pageIndex, bounds: $0.bounds.cgRect)
         })
-        var newRecords: [StoredPDFWordRecord] = []
+        continueBackfillingPDFVocabularyOccurrences(PDFVocabularyBackfillMaterialization(
+            groupsByKey: groupsByKey,
+            matches: matches,
+            documentID: documentID,
+            document: document,
+            knownKeys: knownKeys
+        ))
+    }
 
-        for match in matches {
-            guard let group = groupsByKey[match.groupKey],
-                  let page = document.page(at: match.pageMatch.pageIndex),
-                  let selection = page.selection(for: match.pageMatch.occurrence.range) else { continue }
-            let matchedText = VocabularyTextPolicy.normalizedOccurrenceText(
-                match.pageMatch.occurrence.matchedText,
-                matching: group.word
-            )
-            guard let record = storedPDFVocabularyRecord(
-                selection: selection,
-                word: group.word,
-                lemma: group.lemma,
-                surfaceForm: matchedText,
-                vocabularyID: group.vocabularyID,
-                sourceText: match.pageMatch.text,
-                matchedText: matchedText,
-                sourceRange: match.pageMatch.occurrence.range
-            ) else { continue }
-            let locationKey = store.recordKey(pageIndex: record.pageIndex, bounds: record.bounds.cgRect)
-            guard knownKeys.insert(locationKey).inserted else { continue }
-            newRecords.append(record)
+    private func continueBackfillingPDFVocabularyOccurrences(
+        _ state: PDFVocabularyBackfillMaterialization
+    ) {
+        guard currentDocumentKind == .pdf,
+              currentFileMD5 == state.documentID,
+              pdfView.document === state.document,
+              let store = pdfWordRecordStore else { return }
+        let endIndex = min(state.nextMatchIndex + 12, state.matches.count)
+        if state.nextMatchIndex < endIndex {
+            for match in state.matches[state.nextMatchIndex..<endIndex] {
+                guard let group = state.groupsByKey[match.groupKey],
+                      let page = state.document.page(at: match.pageMatch.pageIndex),
+                      let selection = page.selection(for: match.pageMatch.occurrence.range) else { continue }
+                let matchedText = VocabularyTextPolicy.normalizedOccurrenceText(
+                    match.pageMatch.occurrence.matchedText,
+                    matching: group.word
+                )
+                guard let record = storedPDFVocabularyRecord(
+                    selection: selection,
+                    word: group.word,
+                    lemma: group.lemma,
+                    surfaceForm: matchedText,
+                    vocabularyID: group.vocabularyID,
+                    sourceText: match.pageMatch.text,
+                    matchedText: matchedText,
+                    sourceRange: match.pageMatch.occurrence.range
+                ) else { continue }
+                let key = store.recordKey(pageIndex: record.pageIndex, bounds: record.bounds.cgRect)
+                guard state.knownKeys.insert(key).inserted else { continue }
+                state.newRecords.append(record)
+            }
+            state.nextMatchIndex = endIndex
         }
-
-        guard !newRecords.isEmpty,
-              store.upsert(newRecords) else { return }
-        storedWordRecords.append(contentsOf: newRecords)
-        for record in newRecords {
-            addStoredWordAnnotation(record)
+        guard state.nextMatchIndex >= state.matches.count else {
+            DispatchQueue.main.async { [weak self] in
+                self?.continueBackfillingPDFVocabularyOccurrences(state)
+            }
+            return
         }
+        guard !state.newRecords.isEmpty,
+              store.upsert(state.newRecords) else { return }
+        storedWordRecords.append(contentsOf: state.newRecords)
+        addStoredWordAnnotations(state.newRecords, refineBounds: false)
         refreshVocabularyPanelAfterLocalSave()
     }
 
     func saveCurrentPDFVocabularySelection() {
+        let acknowledgementStartedAt = ProcessInfo.processInfo.systemUptime
         guard currentDocumentKind == .pdf,
               pdfView.document != nil,
               let selection = pdfView.currentSelection else {
@@ -191,34 +273,52 @@ extension ReaderWindowController {
             return
         }
 
-        let searchID = UUID()
-        guard let documentID = currentFileMD5 else { return }
-        vocabularyState.occurrenceSearchID = searchID
-        selectionActionToolbar.showSaveInProgress()
+        guard let documentID = currentFileMD5,
+              let store = pdfWordRecordStore,
+              store.upsert(selectedRecord) else {
+            selectionActionToolbar.showSaveFailure()
+            NSSound.beep()
+            return
+        }
+
+        storedWordRecords.append(selectedRecord)
+        addStoredWordAnnotation(selectedRecord, refineBounds: false)
+        refreshVocabularyPanelAfterLocalSave()
+        backfillDictionaryAnswerAsync(vocabularyID: selectedRecord.vocabularyID, word: word)
+        selectionActionToolbar.showSaveResult(found: 1, inserted: 1)
+        ReaderPerformance.record(
+            .vocabularySaveAcknowledgement,
+            milliseconds: (ProcessInfo.processInfo.systemUptime - acknowledgementStartedAt) * 1000
+        )
         recordPersonalVocabularyQuery(word)
 
+        let searchID = UUID()
+        vocabularyState.occurrenceSearchID = searchID
         let saveStartedAt = Date()
-        collectPDFVocabularyPageSnapshots(documentID: documentID, searchID: searchID) { [weak self] snapshots in
+        ensurePDFVocabularyIndex(language: language) { [weak self] snapshot, index in
+            guard let self,
+                  self.vocabularyState.occurrenceSearchID == searchID,
+                  self.currentFileMD5 == documentID else { return }
+            guard let snapshot, let index else {
+                self.vocabularyState.occurrenceSearchID = nil
+                return
+            }
             let snapshotsReadyAt = Date()
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                let perPage = GermanLemmaOccurrenceMatcher.matches(
-                    lemma: lemma,
-                    selectedForm: word,
-                    inTexts: snapshots.map(\.text),
-                    language: language
-                )
+                let perPage = index.matches(lemma: lemma, selectedForm: word)
                 let scanFinishedAt = Date()
+                let queryMilliseconds = scanFinishedAt.timeIntervalSince(snapshotsReadyAt) * 1000
                 NSLog(
                     "LeafVocabulary save timing: snapshots=%.0fms scan=%.0fms pages=%d",
                     snapshotsReadyAt.timeIntervalSince(saveStartedAt) * 1000,
                     scanFinishedAt.timeIntervalSince(snapshotsReadyAt) * 1000,
-                    snapshots.count
+                    snapshot.pageTexts.count
                 )
-                let matches = zip(snapshots, perPage).flatMap { snapshot, occurrences in
+                let matches = perPage.enumerated().flatMap { pageIndex, occurrences in
                     occurrences.map {
                         PDFVocabularyPageMatch(
-                            pageIndex: snapshot.pageIndex,
-                            text: snapshot.text,
+                            pageIndex: pageIndex,
+                            text: snapshot.pageTexts[pageIndex],
                             occurrence: $0
                         )
                     }
@@ -230,60 +330,18 @@ extension ReaderWindowController {
                           let document = self.pdfView.document else {
                         return
                     }
-                    let persistStartedAt = Date()
-                    defer {
-                        NSLog(
-                            "LeafVocabulary save timing: persist=%.0fms total=%.0fms matches=%d",
-                            Date().timeIntervalSince(persistStartedAt) * 1000,
-                            Date().timeIntervalSince(saveStartedAt) * 1000,
-                            matches.count
-                        )
-                    }
+                    ReaderPerformance.record(.vocabularyOccurrenceQuery, milliseconds: queryMilliseconds)
                     self.finishSavingAllPDFVocabularyOccurrences(
                         word: word,
                         lemma: lemma,
                         selectedRecord: selectedRecord,
                         matches: matches,
-                        document: document
+                        document: document,
+                        documentID: documentID,
+                        saveStartedAt: saveStartedAt
                     )
                 }
             }
-        }
-    }
-
-    private func collectPDFVocabularyPageSnapshots(
-        documentID: String,
-        searchID: UUID,
-        pageIndex: Int = 0,
-        snapshots: [PDFVocabularyPageSnapshot] = [],
-        completion: @escaping ([PDFVocabularyPageSnapshot]) -> Void
-    ) {
-        guard vocabularyState.occurrenceSearchID == searchID,
-              currentFileMD5 == documentID,
-              let document = pdfView.document else {
-            return
-        }
-
-        var collected = snapshots
-        let nextPageIndex = min(pageIndex + 12, document.pageCount)
-        for index in pageIndex..<nextPageIndex {
-            guard let text = document.page(at: index)?.string, !text.isEmpty else { continue }
-            collected.append(PDFVocabularyPageSnapshot(pageIndex: index, text: text))
-        }
-
-        guard nextPageIndex < document.pageCount else {
-            completion(collected)
-            return
-        }
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            self.collectPDFVocabularyPageSnapshots(
-                documentID: documentID,
-                searchID: searchID,
-                pageIndex: nextPageIndex,
-                snapshots: collected,
-                completion: completion
-            )
         }
     }
 
@@ -292,61 +350,101 @@ extension ReaderWindowController {
         lemma: String,
         selectedRecord: StoredPDFWordRecord,
         matches: [PDFVocabularyPageMatch],
-        document: PDFDocument
+        document: PDFDocument,
+        documentID: String,
+        saveStartedAt: Date
     ) {
         vocabularyState.occurrenceSearchID = nil
         guard let store = pdfWordRecordStore else {
-            selectionActionToolbar.showSaveFailure()
-            NSSound.beep()
+            // The selected occurrence was already committed before discovery
+            // began. A cancelled document transition must not turn that durable
+            // save into a visible failure.
             return
         }
 
-        var knownKeys = Set(storedWordRecords.map {
+        let knownKeys = Set(storedWordRecords.map {
             store.recordKey(pageIndex: $0.pageIndex, bounds: $0.bounds.cgRect)
         })
-        var foundKeys = Set<String>()
-        var newRecords: [StoredPDFWordRecord] = []
+        continueSavingPDFVocabularyOccurrences(PDFVocabularySaveMaterialization(
+            word: word,
+            lemma: lemma,
+            selectedRecord: selectedRecord,
+            matches: matches,
+            documentID: documentID,
+            document: document,
+            knownKeys: knownKeys,
+            startedAt: saveStartedAt
+        ))
+    }
+
+    private func continueSavingPDFVocabularyOccurrences(_ state: PDFVocabularySaveMaterialization) {
+        guard currentDocumentKind == .pdf,
+              currentFileMD5 == state.documentID,
+              pdfView.document === state.document,
+              let store = pdfWordRecordStore else { return }
 
         func appendIfNeeded(_ record: StoredPDFWordRecord) {
             let key = store.recordKey(pageIndex: record.pageIndex, bounds: record.bounds.cgRect)
-            guard !foundKeys.contains(key) else { return }
-            foundKeys.insert(key)
-            guard !knownKeys.contains(key) else { return }
-            knownKeys.insert(key)
-            newRecords.append(record)
+            guard state.foundKeys.insert(key).inserted else { return }
+            guard state.knownKeys.insert(key).inserted else { return }
+            state.newRecords.append(record)
         }
 
-        for match in matches {
-            guard let page = document.page(at: match.pageIndex),
-                  let selection = page.selection(for: match.occurrence.range),
-                  let record = storedPDFVocabularyRecord(
+        let endIndex = min(state.nextMatchIndex + 12, state.matches.count)
+        if state.nextMatchIndex < endIndex {
+            for match in state.matches[state.nextMatchIndex..<endIndex] {
+                guard let page = state.document.page(at: match.pageIndex),
+                      let selection = page.selection(for: match.occurrence.range) else { continue }
+                let matchedText = VocabularyTextPolicy.normalizedOccurrenceText(
+                    match.occurrence.matchedText,
+                    matching: state.word
+                )
+                guard let record = storedPDFVocabularyRecord(
                     selection: selection,
-                    word: word,
-                    lemma: lemma,
-                    surfaceForm: VocabularyTextPolicy.normalizedOccurrenceText(match.occurrence.matchedText, matching: word),
-                    vocabularyID: selectedRecord.vocabularyID,
+                    word: state.word,
+                    lemma: state.lemma,
+                    surfaceForm: matchedText,
+                    vocabularyID: state.selectedRecord.vocabularyID,
                     sourceText: match.text,
-                    matchedText: VocabularyTextPolicy.normalizedOccurrenceText(match.occurrence.matchedText, matching: word),
+                    matchedText: matchedText,
                     sourceRange: match.occurrence.range
-                  ) else {
-                continue
+                ) else { continue }
+                appendIfNeeded(record)
             }
-            appendIfNeeded(record)
+            state.nextMatchIndex = endIndex
         }
-        appendIfNeeded(selectedRecord)
 
-        guard store.upsert(newRecords) else {
-            selectionActionToolbar.showSaveFailure()
-            NSSound.beep()
+        guard state.nextMatchIndex >= state.matches.count else {
+            DispatchQueue.main.async { [weak self] in
+                self?.continueSavingPDFVocabularyOccurrences(state)
+            }
             return
         }
-        storedWordRecords.append(contentsOf: newRecords)
-        for record in newRecords {
-            addStoredWordAnnotation(record)
+
+        appendIfNeeded(state.selectedRecord)
+        defer {
+            let persistenceMilliseconds = (ProcessInfo.processInfo.systemUptime - state.startedUptime) * 1000
+            ReaderPerformance.record(.vocabularyOccurrencePersistence, milliseconds: persistenceMilliseconds)
+            NSLog(
+                "LeafVocabulary save timing: persist=%.0fms total=%.0fms matches=%d",
+                persistenceMilliseconds,
+                Date().timeIntervalSince(state.startedAt) * 1000,
+                state.matches.count
+            )
         }
+        guard state.newRecords.isEmpty || store.upsert(state.newRecords) else {
+            // Keep the immediate selected-word acknowledgement. Discovery is
+            // additive and can be retried by a later backfill.
+            selectionActionToolbar.showSaveResult(found: 1, inserted: 1)
+            return
+        }
+        storedWordRecords.append(contentsOf: state.newRecords)
+        addStoredWordAnnotations(state.newRecords, refineBounds: false)
         refreshVocabularyPanelAfterLocalSave()
-        backfillDictionaryAnswerAsync(vocabularyID: selectedRecord.vocabularyID, word: word)
-        selectionActionToolbar.showSaveResult(found: foundKeys.count, inserted: newRecords.count)
+        selectionActionToolbar.showSaveResult(
+            found: state.foundKeys.count,
+            inserted: state.newRecords.count + 1
+        )
     }
 
     private func storedPDFVocabularyRecord(
