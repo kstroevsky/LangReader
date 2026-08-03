@@ -1,0 +1,1 @@
+{"events":[{"event":"launch","count":1},{"event":"mainWindow","count":1},{"event":"pdfOpen","count":2},{"event":"webDocumentPreparation","count":4},{"event":"webOpen","count":4},{"event":"webContentReady","count":4}]}

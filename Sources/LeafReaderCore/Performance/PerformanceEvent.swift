@@ -13,6 +13,7 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
     case launch
     case mainWindow
     case pdfOpen
+    case webDocumentPreparation
     case webOpen
     case webContentReady
     case firstPageDisplay
@@ -45,6 +46,7 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
         case .launch: return "App launch"
         case .mainWindow: return "Main window"
         case .pdfOpen: return "PDF open"
+        case .webDocumentPreparation: return "EPUB/DOCX preparation"
         case .webOpen: return "EPUB/DOCX open"
         case .webContentReady: return "EPUB/DOCX content ready"
         case .firstPageDisplay: return "First page display"

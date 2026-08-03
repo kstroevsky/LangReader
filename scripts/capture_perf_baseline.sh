@@ -12,6 +12,7 @@
 # a path-free metadata sidecar next to the aggregate report.
 #
 #   scripts/capture_perf_baseline.sh <fixtures-dir> [<out-basepath>]
+#   scripts/capture_perf_baseline.sh --document-fixtures <pdf> <epub> <docx> [<out-basepath>]
 #   scripts/capture_perf_baseline.sh --private-manifest <manifest.json> [<out-basepath>]
 #
 # <fixtures-dir> must contain small.pdf and large.pdf (see make_perf_fixtures.swift).
@@ -27,14 +28,33 @@ export CLANG_MODULE_CACHE_PATH="${CLANG_MODULE_CACHE_PATH:-/private/tmp/leafread
 
 if [[ $# -lt 1 ]]; then
   echo "usage: $0 <fixtures-dir> [<out-basepath>]" >&2
+  echo "       $0 --document-fixtures <pdf> <epub> <docx> [<out-basepath>]" >&2
   echo "       $0 --private-manifest <manifest.json> [<out-basepath>]" >&2
   exit 2
 fi
 
 PRIVATE_MODE=0
+DOCUMENT_MODE=0
 FIXTURE_FILES=()
 PRIVATE_MANIFEST=""
-if [[ "$1" == "--private-manifest" ]]; then
+if [[ "$1" == "--document-fixtures" ]]; then
+  if [[ $# -lt 4 ]]; then
+    echo "--document-fixtures requires PDF, EPUB, and DOCX paths" >&2
+    exit 2
+  fi
+  DOCUMENT_MODE=1
+  FIXTURE_FILES=("$2" "$3" "$4")
+  EXPECTED_EXTENSIONS=(pdf epub docx)
+  for index in 0 1 2; do
+    fixture="${FIXTURE_FILES[$index]}"
+    expected_extension="${EXPECTED_EXTENSIONS[$index]}"
+    if [[ ! -f "$fixture" || "${fixture##*.}" != "$expected_extension" ]]; then
+      echo "Document fixture $fixture must be a readable .$expected_extension file" >&2
+      exit 2
+    fi
+  done
+  OUT_BASE="${5:-/tmp/leafreader-document-baseline}"
+elif [[ "$1" == "--private-manifest" ]]; then
   if [[ $# -lt 2 ]]; then
     echo "--private-manifest requires a manifest path" >&2
     exit 2
@@ -107,7 +127,11 @@ open_fixture() {
   local file="$1"
   echo "==> Opening $(basename "$file")"
   /usr/bin/open -a "$ROOT_DIR/$APP_NAME.app" "$file"
-  sleep 3
+  if [[ "$DOCUMENT_MODE" == "1" ]]; then
+    sleep "${LEAFREADER_PERF_OPEN_WAIT:-8}"
+  else
+    sleep 3
+  fi
   if ! app_is_running; then
     echo "Performance capture app exited while opening $file." >&2
     exit 1
@@ -144,6 +168,8 @@ wait_gone
 if [[ -f "$RUN_BASE.txt" && -f "$RUN_BASE.json" ]]; then
   if [[ "$PRIVATE_MODE" == "1" ]]; then
     swift "$VALIDATOR" private "$RUN_BASE.json" --not-before "$RUN_STARTED"
+  elif [[ "$DOCUMENT_MODE" == "1" ]]; then
+    swift "$VALIDATOR" documents "$RUN_BASE.json" --not-before "$RUN_STARTED"
   else
     swift "$VALIDATOR" synthetic "$RUN_BASE.json" --not-before "$RUN_STARTED"
   fi

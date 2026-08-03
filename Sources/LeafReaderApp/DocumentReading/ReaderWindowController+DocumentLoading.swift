@@ -75,12 +75,21 @@ extension ReaderWindowController {
     }
 
     func loadWebDocument(_ url: URL, kind: ReaderDocumentKind, generation: Int) {
+        let contentReadyStartedAt = ProcessInfo.processInfo.systemUptime
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             do {
                 let document = try WebDocumentLoader.load(url: url)
+                let preparationMilliseconds = (ProcessInfo.processInfo.systemUptime - contentReadyStartedAt) * 1000
                 DispatchQueue.main.async {
                     guard let self, self.documentSession.acceptsLoad(generation: generation) else { return }
-                    self.applyLoadedWebDocument(document, url: url, kind: kind, generation: generation)
+                    ReaderPerformance.record(.webDocumentPreparation, milliseconds: preparationMilliseconds)
+                    self.applyLoadedWebDocument(
+                        document,
+                        url: url,
+                        kind: kind,
+                        generation: generation,
+                        contentReadyStartedAt: contentReadyStartedAt
+                    )
                 }
             } catch {
                 DispatchQueue.main.async {
@@ -90,7 +99,13 @@ extension ReaderWindowController {
         }
     }
 
-    func applyLoadedWebDocument(_ document: WebReadableDocument, url: URL, kind: ReaderDocumentKind, generation: Int) {
+    func applyLoadedWebDocument(
+        _ document: WebReadableDocument,
+        url: URL,
+        kind: ReaderDocumentKind,
+        generation: Int,
+        contentReadyStartedAt: TimeInterval
+    ) {
         // The on-main cost of presenting an already-parsed document — the part
         // that blocks the UI. Background parsing in `loadWebDocument` is I/O and
         // measured separately if needed.
@@ -98,7 +113,7 @@ extension ReaderWindowController {
         defer { ReaderPerformance.end(openSpan) }
         closeReadingNotePanelsForDocumentTransition()
         activateDocumentSession(url: url, kind: kind)
-        documentPresentationState.webContentReadyStartedAt = ProcessInfo.processInfo.systemUptime
+        documentPresentationState.webContentReadyStartedAt = contentReadyStartedAt
         pdfView.isHidden = true
         pdfDimOverlay.isHidden = true
         webView.isHidden = false
