@@ -83,6 +83,10 @@ extension ReaderWindowController {
                 DispatchQueue.main.async {
                     guard let self, self.documentSession.acceptsLoad(generation: generation) else { return }
                     ReaderPerformance.record(.webDocumentPreparation, milliseconds: preparationMilliseconds)
+                    ReaderPerformance.record(
+                        kind == .epub ? .epubPreparation : .docxPreparation,
+                        milliseconds: preparationMilliseconds
+                    )
                     self.applyLoadedWebDocument(
                         document,
                         url: url,
@@ -114,6 +118,7 @@ extension ReaderWindowController {
         closeReadingNotePanelsForDocumentTransition()
         activateDocumentSession(url: url, kind: kind)
         documentPresentationState.webContentReadyStartedAt = contentReadyStartedAt
+        documentPresentationState.webContentReadyDocumentKind = kind
         pdfView.isHidden = true
         pdfDimOverlay.isHidden = true
         webView.isHidden = false

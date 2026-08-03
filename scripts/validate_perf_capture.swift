@@ -66,8 +66,12 @@ do {
     case "documents":
         try require(counts, "pdfOpen", atLeast: 2)
         try require(counts, "webDocumentPreparation", atLeast: 4)
+        try require(counts, "epubPreparation", atLeast: 2)
+        try require(counts, "docxPreparation", atLeast: 2)
         try require(counts, "webOpen", atLeast: 4)
         try require(counts, "webContentReady", atLeast: 4)
+        try require(counts, "epubContentReady", atLeast: 2)
+        try require(counts, "docxContentReady", atLeast: 2)
     case "private":
         try require(counts, "pdfOpen", atLeast: 2)
         try require(counts, "webOpen", atLeast: 4)

@@ -93,11 +93,19 @@ extension ReaderWindowController {
                     guard let self else { return }
                     ReaderPerformance.end(highlightRestoreSpan)
                     if let startedAt = self.documentPresentationState.webContentReadyStartedAt {
+                        let contentReadyMilliseconds = (ProcessInfo.processInfo.systemUptime - startedAt) * 1000
                         ReaderPerformance.record(
                             .webContentReady,
-                            milliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1000
+                            milliseconds: contentReadyMilliseconds
                         )
+                        if let kind = self.documentPresentationState.webContentReadyDocumentKind {
+                            ReaderPerformance.record(
+                                kind == .epub ? .epubContentReady : .docxContentReady,
+                                milliseconds: contentReadyMilliseconds
+                            )
+                        }
                         self.documentPresentationState.webContentReadyStartedAt = nil
+                        self.documentPresentationState.webContentReadyDocumentKind = nil
                     }
                 }
             }
