@@ -18,4 +18,5 @@ struct ReaderVocabularyState {
     var expandedOccurrenceKeys: Set<String> = []
     var pendingLibraryOccurrence: VocabularyLibraryOccurrence?
     var renderedPDFWordAnnotations: [(page: PDFPage, annotation: PDFAnnotation)] = []
+    var resolvedPDFWordBounds: [String: CGRect] = [:]
 }

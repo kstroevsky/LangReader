@@ -32,6 +32,7 @@ private final class PDFVocabularySaveMaterialization {
     let startedUptime: TimeInterval
     var nextMatchIndex = 0
     var knownKeys: Set<String>
+    let legacyGeometryPageIndexes: Set<Int>
     var foundKeys: Set<String> = []
     var newRecords: [StoredPDFWordRecord] = []
 
@@ -43,6 +44,7 @@ private final class PDFVocabularySaveMaterialization {
         documentID: String,
         document: PDFDocument,
         knownKeys: Set<String>,
+        legacyGeometryPageIndexes: Set<Int>,
         startedAt: Date
     ) {
         self.word = word
@@ -52,6 +54,7 @@ private final class PDFVocabularySaveMaterialization {
         self.documentID = documentID
         self.document = document
         self.knownKeys = knownKeys
+        self.legacyGeometryPageIndexes = legacyGeometryPageIndexes
         self.startedAt = startedAt
         startedUptime = ProcessInfo.processInfo.systemUptime
     }
@@ -64,6 +67,7 @@ private final class PDFVocabularyBackfillMaterialization {
     let document: PDFDocument
     var nextMatchIndex = 0
     var knownKeys: Set<String>
+    let legacyGeometryPageIndexes: Set<Int>
     var newRecords: [StoredPDFWordRecord] = []
 
     init(
@@ -71,13 +75,15 @@ private final class PDFVocabularyBackfillMaterialization {
         matches: [PDFVocabularyGroupedPageMatch],
         documentID: String,
         document: PDFDocument,
-        knownKeys: Set<String>
+        knownKeys: Set<String>,
+        legacyGeometryPageIndexes: Set<Int>
     ) {
         self.groupsByKey = groupsByKey
         self.matches = matches
         self.documentID = documentID
         self.document = document
         self.knownKeys = knownKeys
+        self.legacyGeometryPageIndexes = legacyGeometryPageIndexes
     }
 }
 
@@ -190,15 +196,17 @@ extension ReaderWindowController {
         guard let store = pdfWordRecordStore,
               let documentID = currentFileMD5 else { return }
         let groupsByKey = Dictionary(uniqueKeysWithValues: groups.map { ($0.key, $0) })
-        let knownKeys = Set(storedWordRecords.map {
-            store.recordKey(pageIndex: $0.pageIndex, bounds: $0.bounds.cgRect)
+        let knownKeys = Set(storedWordRecords.map(store.recordKey(record:)))
+        let legacyGeometryPageIndexes = Set(storedWordRecords.compactMap {
+            $0.textAnchor == nil ? $0.pageIndex : nil
         })
         continueBackfillingPDFVocabularyOccurrences(PDFVocabularyBackfillMaterialization(
             groupsByKey: groupsByKey,
             matches: matches,
             documentID: documentID,
             document: document,
-            knownKeys: knownKeys
+            knownKeys: knownKeys,
+            legacyGeometryPageIndexes: legacyGeometryPageIndexes
         ))
     }
 
@@ -212,24 +220,36 @@ extension ReaderWindowController {
         let endIndex = min(state.nextMatchIndex + 12, state.matches.count)
         if state.nextMatchIndex < endIndex {
             for match in state.matches[state.nextMatchIndex..<endIndex] {
-                guard let group = state.groupsByKey[match.groupKey],
-                      let page = state.document.page(at: match.pageMatch.pageIndex),
-                      let selection = page.selection(for: match.pageMatch.occurrence.range) else { continue }
+                guard let group = state.groupsByKey[match.groupKey] else { continue }
                 let matchedText = VocabularyTextPolicy.normalizedOccurrenceText(
                     match.pageMatch.occurrence.matchedText,
                     matching: group.word
                 )
-                guard let record = storedPDFVocabularyRecord(
-                    selection: selection,
-                    word: group.word,
-                    lemma: group.lemma,
-                    surfaceForm: matchedText,
-                    vocabularyID: group.vocabularyID,
-                    sourceText: match.pageMatch.text,
-                    matchedText: matchedText,
-                    sourceRange: match.pageMatch.occurrence.range
-                ) else { continue }
-                let key = store.recordKey(pageIndex: record.pageIndex, bounds: record.bounds.cgRect)
+                let record: StoredPDFWordRecord?
+                if state.legacyGeometryPageIndexes.contains(match.pageMatch.pageIndex),
+                   let page = state.document.page(at: match.pageMatch.pageIndex),
+                   let selection = page.selection(for: match.pageMatch.occurrence.range) {
+                    record = storedPDFVocabularyRecord(
+                        selection: selection,
+                        word: group.word,
+                        lemma: group.lemma,
+                        surfaceForm: matchedText,
+                        vocabularyID: group.vocabularyID,
+                        sourceText: match.pageMatch.text,
+                        matchedText: matchedText,
+                        sourceRange: match.pageMatch.occurrence.range
+                    )
+                } else {
+                    record = semanticPDFVocabularyRecord(
+                        pageMatch: match.pageMatch,
+                        word: group.word,
+                        lemma: group.lemma,
+                        surfaceForm: matchedText,
+                        vocabularyID: group.vocabularyID
+                    )
+                }
+                guard let record else { continue }
+                let key = store.recordKey(record: record)
                 guard state.knownKeys.insert(key).inserted else { continue }
                 state.newRecords.append(record)
             }
@@ -480,8 +500,9 @@ extension ReaderWindowController {
             return
         }
 
-        let knownKeys = Set(storedWordRecords.map {
-            store.recordKey(pageIndex: $0.pageIndex, bounds: $0.bounds.cgRect)
+        let knownKeys = Set(storedWordRecords.map(store.recordKey(record:)))
+        let legacyGeometryPageIndexes = Set(storedWordRecords.compactMap {
+            $0.textAnchor == nil ? $0.pageIndex : nil
         })
         continueSavingPDFVocabularyOccurrences(PDFVocabularySaveMaterialization(
             word: word,
@@ -491,6 +512,7 @@ extension ReaderWindowController {
             documentID: documentID,
             document: document,
             knownKeys: knownKeys,
+            legacyGeometryPageIndexes: legacyGeometryPageIndexes,
             startedAt: saveStartedAt
         ))
     }
@@ -502,7 +524,7 @@ extension ReaderWindowController {
               let store = pdfWordRecordStore else { return }
 
         func appendIfNeeded(_ record: StoredPDFWordRecord) {
-            let key = store.recordKey(pageIndex: record.pageIndex, bounds: record.bounds.cgRect)
+            let key = store.recordKey(record: record)
             guard state.foundKeys.insert(key).inserted else { return }
             guard state.knownKeys.insert(key).inserted else { return }
             state.newRecords.append(record)
@@ -511,22 +533,34 @@ extension ReaderWindowController {
         let endIndex = min(state.nextMatchIndex + 12, state.matches.count)
         if state.nextMatchIndex < endIndex {
             for match in state.matches[state.nextMatchIndex..<endIndex] {
-                guard let page = state.document.page(at: match.pageIndex),
-                      let selection = page.selection(for: match.occurrence.range) else { continue }
                 let matchedText = VocabularyTextPolicy.normalizedOccurrenceText(
                     match.occurrence.matchedText,
                     matching: state.word
                 )
-                guard let record = storedPDFVocabularyRecord(
-                    selection: selection,
-                    word: state.word,
-                    lemma: state.lemma,
-                    surfaceForm: matchedText,
-                    vocabularyID: state.selectedRecord.vocabularyID,
-                    sourceText: match.text,
-                    matchedText: matchedText,
-                    sourceRange: match.occurrence.range
-                ) else { continue }
+                let record: StoredPDFWordRecord?
+                if state.legacyGeometryPageIndexes.contains(match.pageIndex),
+                   let page = state.document.page(at: match.pageIndex),
+                   let selection = page.selection(for: match.occurrence.range) {
+                    record = storedPDFVocabularyRecord(
+                        selection: selection,
+                        word: state.word,
+                        lemma: state.lemma,
+                        surfaceForm: matchedText,
+                        vocabularyID: state.selectedRecord.vocabularyID,
+                        sourceText: match.text,
+                        matchedText: matchedText,
+                        sourceRange: match.occurrence.range
+                    )
+                } else {
+                    record = semanticPDFVocabularyRecord(
+                        pageMatch: match,
+                        word: state.word,
+                        lemma: state.lemma,
+                        surfaceForm: matchedText,
+                        vocabularyID: state.selectedRecord.vocabularyID
+                    )
+                }
+                guard let record else { continue }
                 appendIfNeeded(record)
             }
             state.nextMatchIndex = endIndex
@@ -625,6 +659,48 @@ extension ReaderWindowController {
             surfaceForm: VocabularyTextPolicy.normalizedOccurrenceText(surfaceForm ?? word, matching: word),
             pageIndex: pageIndex,
             bounds: StoredPDFWordRect(bounds),
+            textAnchor: textAnchor,
+            context: context,
+            question: "",
+            answer: "",
+            dictionaryTags: nil,
+            dictionaryFrequency: nil,
+            createdAt: createdAt,
+            srs: VocabularySRSState.initial(createdAt: createdAt)
+        )
+    }
+
+    /// Persists an offscreen occurrence from its canonical page text and UTF-16
+    /// range. Geometry is a viewport cache and is resolved only when this page
+    /// becomes visible or the user navigates directly to the occurrence.
+    private func semanticPDFVocabularyRecord(
+        pageMatch: PDFVocabularyPageMatch,
+        word: String,
+        lemma: String,
+        surfaceForm: String,
+        vocabularyID: String?
+    ) -> StoredPDFWordRecord? {
+        guard let textAnchor = PDFTextQuoteAnchorBuilder.make(
+            pageIndex: pageMatch.pageIndex,
+            sourceRange: pageMatch.occurrence.range,
+            sourceText: pageMatch.text
+        ) else { return nil }
+        let context = ReaderAIContextBuilder.selectedTextContext(
+            occurrenceRange: pageMatch.occurrence.range,
+            sourceText: pageMatch.text,
+            radius: 24
+        ).map {
+            normalizedPDFVocabularyContext(ReaderAIContextBuilder.trimLeadingContextQuotes($0))
+        } ?? ""
+        let createdAt = Date()
+        return StoredPDFWordRecord(
+            id: UUID().uuidString,
+            vocabularyID: vocabularyID ?? existingPDFVocabularyID(for: word, lemma: lemma) ?? UUID().uuidString,
+            word: VocabularyTextPolicy.normalizedVocabularyText(word),
+            lemma: lemma,
+            surfaceForm: VocabularyTextPolicy.normalizedOccurrenceText(surfaceForm, matching: word),
+            pageIndex: pageMatch.pageIndex,
+            bounds: StoredPDFWordRect(.zero),
             textAnchor: textAnchor,
             context: context,
             question: "",

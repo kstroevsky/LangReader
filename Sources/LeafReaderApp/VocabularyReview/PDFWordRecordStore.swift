@@ -146,7 +146,25 @@ struct PDFWordRecordStore {
         "\(pageIndex):\(Int(bounds.origin.x.rounded())):\(Int(bounds.origin.y.rounded())):\(Int(bounds.width.rounded())):\(Int(bounds.height.rounded()))"
     }
 
-    func existingRecord(in records: [StoredPDFWordRecord], pageIndex: Int, bounds: CGRect) -> StoredPDFWordRecord? {
+    func recordKey(record: StoredPDFWordRecord) -> String {
+        if let anchor = record.textAnchor {
+            return "text:\(anchor.unitOrdinal):\(anchor.sourceStart):\(anchor.sourceLength)"
+        }
+        return recordKey(pageIndex: record.pageIndex, bounds: record.bounds.cgRect)
+    }
+
+    func existingRecord(
+        in records: [StoredPDFWordRecord],
+        pageIndex: Int,
+        bounds: CGRect,
+        textAnchor: TextQuoteAnchor? = nil
+    ) -> StoredPDFWordRecord? {
+        if let textAnchor {
+            let semanticKey = "text:\(textAnchor.unitOrdinal):\(textAnchor.sourceStart):\(textAnchor.sourceLength)"
+            if let record = records.first(where: { recordKey(record: $0) == semanticKey }) {
+                return record
+            }
+        }
         let key = recordKey(pageIndex: pageIndex, bounds: bounds)
         return records.first { record in
             recordKey(pageIndex: record.pageIndex, bounds: record.bounds.cgRect) == key

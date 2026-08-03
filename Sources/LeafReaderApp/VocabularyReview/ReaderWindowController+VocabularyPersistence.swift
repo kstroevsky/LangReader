@@ -28,7 +28,12 @@ extension ReaderWindowController {
             sourceText: page.string ?? ""
         )
         recordPersonalVocabularyQuery(word)
-        if let existing = pdfWordRecordStore?.existingRecord(in: storedWordRecords, pageIndex: pageIndex, bounds: bounds) {
+        if let existing = pdfWordRecordStore?.existingRecord(
+            in: storedWordRecords,
+            pageIndex: pageIndex,
+            bounds: bounds,
+            textAnchor: textAnchor
+        ) {
             clearPDFSelectionState()
             pdfView.clearSelection()
             return WordQuestionStartResult(linkID: existing.id, selectedContext: nil)

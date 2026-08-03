@@ -58,6 +58,9 @@ struct PDFVocabularyDocumentTestRunner {
                 ), anchor.exactQuote == match.occurrence.matchedText else {
                     fail("semantic anchor should retain the exact German PDF quote")
                 }
+                guard anchor.resolvedRange(in: sourceText) == match.occurrence.range else {
+                    fail("semantic anchor should resolve the original German PDF occurrence")
+                }
                 let bounds = selection.bounds(for: page)
                 guard bounds.width > 0, bounds.height > 0 else {
                     fail("PDFKit occurrence bounds must be navigable")

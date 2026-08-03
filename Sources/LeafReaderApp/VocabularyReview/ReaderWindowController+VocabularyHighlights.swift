@@ -36,13 +36,17 @@ extension ReaderWindowController {
     }
 
     func addStoredWordAnnotation(_ record: StoredPDFWordRecord, refineBounds: Bool = true) {
+        guard let page = pdfView.document?.page(at: record.pageIndex),
+              let bounds = refineBounds || !hasUsableStoredBounds(record.bounds.cgRect)
+                ? displayBounds(for: record, page: page)
+                : record.bounds.cgRect else { return }
         addPDFVocabularyAnnotation(
             id: record.id,
             pageIndex: record.pageIndex,
-            storedBounds: record.bounds.cgRect,
+            storedBounds: bounds,
             word: record.occurrenceSurfaceForm,
             isSavedForm: record.matchesSavedSurfaceForm,
-            refineBounds: refineBounds,
+            refineBounds: false,
             invalidateDisplay: true
         )
     }
@@ -54,13 +58,17 @@ extension ReaderWindowController {
         guard !records.isEmpty, !visiblePageIndexes.isEmpty else { return }
         var didAddAnnotation = false
         for record in records where visiblePageIndexes.contains(record.pageIndex) {
+            guard let page = pdfView.document?.page(at: record.pageIndex),
+                  let bounds = refineBounds || !hasUsableStoredBounds(record.bounds.cgRect)
+                    ? displayBounds(for: record, page: page)
+                    : record.bounds.cgRect else { continue }
             didAddAnnotation = addPDFVocabularyAnnotation(
                 id: record.id,
                 pageIndex: record.pageIndex,
-                storedBounds: record.bounds.cgRect,
+                storedBounds: bounds,
                 word: record.occurrenceSurfaceForm,
                 isSavedForm: record.matchesSavedSurfaceForm,
-                refineBounds: refineBounds,
+                refineBounds: false,
                 invalidateDisplay: false
             ) || didAddAnnotation
         }
@@ -149,8 +157,39 @@ extension ReaderWindowController {
         ) ?? storedBounds
     }
 
-    func displayBounds(for record: StoredPDFWordRecord, page: PDFPage) -> CGRect {
-        displayBounds(bounds: record.bounds.cgRect, word: record.occurrenceSurfaceForm, page: page)
+    func displayBounds(for record: StoredPDFWordRecord, page: PDFPage) -> CGRect? {
+        if let cached = vocabularyState.resolvedPDFWordBounds[record.id] {
+            return cached
+        }
+
+        let resolved: CGRect?
+        if let anchor = record.textAnchor,
+           anchor.unitOrdinal == record.pageIndex,
+           let pageText = page.string,
+           let anchorRange = anchor.resolvedRange(in: pageText),
+           let selection = page.selection(for: anchorRange) {
+            let rawBounds = selection.bounds(for: page).insetBy(dx: -1.5, dy: -1)
+            resolved = hasUsableStoredBounds(rawBounds)
+                ? displayBounds(bounds: rawBounds, word: record.occurrenceSurfaceForm, page: page)
+                : nil
+        } else if hasUsableStoredBounds(record.bounds.cgRect) {
+            resolved = displayBounds(
+                bounds: record.bounds.cgRect,
+                word: record.occurrenceSurfaceForm,
+                page: page
+            )
+        } else {
+            resolved = nil
+        }
+
+        if let resolved {
+            vocabularyState.resolvedPDFWordBounds[record.id] = resolved
+        }
+        return resolved
+    }
+
+    private func hasUsableStoredBounds(_ bounds: CGRect) -> Bool {
+        bounds.width > 0 && bounds.height > 0
     }
 
     func refreshStoredWordAnnotationAppearance() {

@@ -128,6 +128,27 @@ struct SQLiteWordRecordStoreTestRunner {
             locationStore.existingRecord(in: [batchBlank], pageIndex: 5, bounds: sameLocation) == nil,
             "same bounds on different pages should remain separate occurrences"
         )
+        let unresolvedSemantic = pdfRecord(
+            id: "semantic-unresolved",
+            word: "alpha",
+            answer: "",
+            createdAt: 1,
+            textAnchor: anchor,
+            bounds: .zero
+        )
+        assert(
+            locationStore.recordKey(record: unresolvedSemantic) == "text:4:6:5",
+            "semantic occurrence identity should not depend on resolved geometry"
+        )
+        assert(
+            locationStore.existingRecord(
+                in: [unresolvedSemantic],
+                pageIndex: 4,
+                bounds: sameLocation,
+                textAnchor: anchor
+            )?.id == unresolvedSemantic.id,
+            "semantic selection deduplication should work before geometry is resolved"
+        )
 
         assert(store.upsertPDFRecord(documentID: documentID, record: first), "PDF upsert should succeed")
         assert(store.upsertPDFRecord(documentID: otherDocumentID, record: other), "PDF upsert for another document should succeed")
@@ -163,6 +184,15 @@ struct SQLiteWordRecordStoreTestRunner {
         )
         let semanticOccurrences = store.loadPDFRecords(documentID: semanticDocumentID)
         assert(semanticOccurrences.map(\.id) == ["semantic-second"], "one semantic anchor should remain one occurrence after geometry changes")
+
+        let unresolvedDocumentID = "sqlite-unresolved-semantic-doc"
+        assert(
+            store.upsertPDFRecord(documentID: unresolvedDocumentID, record: unresolvedSemantic),
+            "an offscreen semantic occurrence should persist without geometry"
+        )
+        let loadedUnresolved = store.loadPDFRecords(documentID: unresolvedDocumentID)
+        assert(loadedUnresolved.first?.bounds.cgRect == .zero, "unresolved geometry should round-trip as a lazy cache sentinel")
+        assert(loadedUnresolved.first?.textAnchor == anchor, "the semantic anchor should remain authoritative without bounds")
 
         assert(
             store.upsertPDFRecords(documentID: documentID, records: [batchBlank, batchSecond]),
