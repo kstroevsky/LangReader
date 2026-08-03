@@ -270,7 +270,7 @@ run_swift_test /tmp/leafreader-logic-tests \
   -lsqlite3
 
 if [[ -n "${LEAFREADER_TEST_PDF_WITH_ANSWERS:-}" && -n "${LEAFREADER_TEST_PDF_WITHOUT_ANSWERS:-}" ]]; then
-  swiftc \
+  swiftc "${CORE_MODULE_FLAGS[@]}" \
     -parse-as-library \
     "$TEST_SOURCE_ROOT/DocumentReading/PDFVocabularyDocumentTests.swift" \
     -framework PDFKit \
