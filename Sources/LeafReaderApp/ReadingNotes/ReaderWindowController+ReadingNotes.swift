@@ -399,7 +399,8 @@ extension ReaderWindowController {
             completion?()
             return
         }
-        webView.evaluateJavaScript("window.leafReaderRestoreNoteHighlights && window.leafReaderRestoreNoteHighlights(\(json));") { _, _ in
+        webView.evaluateJavaScript("window.leafReaderRestoreNoteHighlights && window.leafReaderRestoreNoteHighlights(\(json));") { [weak self] result, _ in
+            self?.logWebHighlightRestoreStats(category: "notes", result: result)
             completion?()
         }
     }

@@ -239,9 +239,28 @@ extension ReaderWindowController {
             completion?()
             return
         }
-        webView.evaluateJavaScript("window.leafReaderRestoreWordHighlights(\(json));") { _, _ in
+        webView.evaluateJavaScript("window.leafReaderRestoreWordHighlights(\(json));") { [weak self] result, _ in
+            self?.logWebHighlightRestoreStats(category: "vocabulary", result: result)
             completion?()
         }
+    }
+
+    func logWebHighlightRestoreStats(category: String, result: Any?) {
+        guard ReaderPerformance.isEnabled,
+              let stats = result as? [String: Any] else { return }
+        func integer(_ key: String) -> Int {
+            (stats[key] as? NSNumber)?.intValue ?? 0
+        }
+        NSLog(
+            "LeafReader web highlight restore: category=%@ strategy=%@ records=%d ranges=%d blocks=%d patterns=%d fallbacks=%d",
+            category,
+            stats["strategy"] as? String ?? "unknown",
+            integer("records"),
+            integer("ranges"),
+            integer("blocks"),
+            integer("patterns"),
+            integer("fallbacks")
+        )
     }
 
     func markCurrentWebSelectionAsStoredWord(id: String) {

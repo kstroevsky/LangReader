@@ -171,7 +171,8 @@ extension ReaderWindowController {
         }
         webView.evaluateJavaScript(
             "window.leafReaderRestoreAISourceUnderlines && window.leafReaderRestoreAISourceUnderlines(\(json));"
-        ) { _, _ in
+        ) { [weak self] result, _ in
+            self?.logWebHighlightRestoreStats(category: "ai-sources", result: result)
             completion?()
         }
     }

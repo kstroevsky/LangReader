@@ -354,13 +354,16 @@
   }
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   const unwrapSpans = (selector) => {
+    let removed = 0;
     document.querySelectorAll(selector).forEach((span) => {
       const parent = span.parentNode;
       if (!parent) return;
       while (span.firstChild) parent.insertBefore(span.firstChild, span);
       parent.removeChild(span);
       parent.normalize();
+      removed += 1;
     });
+    return removed;
   };
   const leafReaderSearchAPI = window.LeafReaderWebSearch.makeSearchAPI({
     installReaderOverlayStyle,
@@ -445,6 +448,8 @@
     normalizedText,
     wrapRangeTextNodes,
     findTextRange: window.leafReaderFindTextRange,
+    rangeForWordInContext,
+    rangeForNormalizedText,
     unwrapSpans,
     invalidateTextIndex: invalidateNormalizedIndex
   });
