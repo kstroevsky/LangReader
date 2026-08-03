@@ -21,6 +21,7 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
     case aiPanelExpand
     case selectionToolbar
     case pdfTextSnapshot
+    case pdfTextSnapshotCacheLoad
     case vocabularyIndexBuild
     case vocabularySaveAcknowledgement
     case vocabularyOccurrenceQuery
@@ -46,6 +47,7 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
         case .aiPanelExpand: return "AI panel expansion"
         case .selectionToolbar: return "Selection toolbar"
         case .pdfTextSnapshot: return "PDF text snapshot"
+        case .pdfTextSnapshotCacheLoad: return "PDF text snapshot cache load"
         case .vocabularyIndexBuild: return "Vocabulary index build"
         case .vocabularySaveAcknowledgement: return "Vocabulary save acknowledgement"
         case .vocabularyOccurrenceQuery: return "Vocabulary occurrence query"

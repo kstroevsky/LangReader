@@ -10,7 +10,8 @@ extension ReaderWindowController {
     ) {
         guard currentDocumentKind == .pdf,
               let documentID = currentFileMD5,
-              let url = currentFileURL else {
+              let url = currentFileURL,
+              let expectedPageCount = pdfView.document?.pageCount else {
             completion(nil)
             return
         }
@@ -29,7 +30,12 @@ extension ReaderWindowController {
         documentTextState.snapshotCancellationToken = token
         documentTextState.snapshotBuildStartedAt = ProcessInfo.processInfo.systemUptime
         DispatchQueue.global(qos: .utility).async { [weak self] in
-            let snapshot: PDFDocumentTextSnapshot? = autoreleasepool {
+            let cache = PDFDocumentTextSnapshotCache()
+            let cachedSnapshot = token.isCancelled ? nil : cache.load(
+                documentID: documentID,
+                expectedPageCount: expectedPageCount
+            )
+            let resolvedSnapshot: PDFDocumentTextSnapshot? = cachedSnapshot ?? autoreleasepool {
                 guard !token.isCancelled,
                       let document = PDFDocument(url: url) else { return nil }
                 var pageTexts = [String](repeating: "", count: document.pageCount)
@@ -41,15 +47,25 @@ extension ReaderWindowController {
                 }
                 return PDFDocumentTextSnapshot(documentID: documentID, pageTexts: pageTexts)
             }
+            let snapshot = token.isCancelled ? nil : resolvedSnapshot
+            let didUseCache = cachedSnapshot != nil && snapshot != nil
+            if cachedSnapshot == nil, !token.isCancelled, let snapshot {
+                cache.save(snapshot)
+            }
             Task { @MainActor [weak self] in
-                self?.finishPDFDocumentTextSnapshot(snapshot, generation: generation)
+                self?.finishPDFDocumentTextSnapshot(
+                    snapshot,
+                    generation: generation,
+                    cacheHit: didUseCache
+                )
             }
         }
     }
 
     private func finishPDFDocumentTextSnapshot(
         _ snapshot: PDFDocumentTextSnapshot?,
-        generation: Int
+        generation: Int,
+        cacheHit: Bool
     ) {
         guard generation == documentTextState.generation else { return }
         documentTextState.snapshot = snapshot
@@ -57,7 +73,7 @@ extension ReaderWindowController {
         documentTextState.snapshotCancellationToken = nil
         if let startedAt = documentTextState.snapshotBuildStartedAt {
             ReaderPerformance.record(
-                .pdfTextSnapshot,
+                cacheHit ? .pdfTextSnapshotCacheLoad : .pdfTextSnapshot,
                 milliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1000
             )
         }

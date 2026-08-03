@@ -63,6 +63,7 @@ excluded_logic_app_source() {
     LLMAnswerProvider.swift|\
     ModalOverlayManager.swift|\
     PDFDocumentAgentIndex.swift|\
+    PDFDocumentTextSnapshotCache.swift|\
     PDFEmbeddingStore.swift|\
     GermanFlexionStore.swift|\
     GermanCachedFormLabeling.swift|\
