@@ -30,18 +30,7 @@ extension ReaderWindowController {
         guard !storedWebWordRecords.isEmpty else { return }
         storedWebWordRecords.removeAll()
         saveStoredWebWordRecords()
-        let script = """
-        (() => {
-          document.querySelectorAll('span.leaf-reader-linked-word').forEach((span) => {
-            const parent = span.parentNode;
-            if (!parent) return;
-            while (span.firstChild) parent.insertBefore(span.firstChild, span);
-            parent.removeChild(span);
-            parent.normalize();
-          });
-        })();
-        """
-        webView.evaluateJavaScript(script)
+        webView.evaluateJavaScript("window.leafReaderRestoreWordHighlights && window.leafReaderRestoreWordHighlights([]);")
     }
 
     func storedWordID(at event: NSEvent) -> String? {

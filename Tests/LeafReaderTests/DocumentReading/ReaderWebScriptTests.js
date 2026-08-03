@@ -46,6 +46,9 @@ const second = textNode('Atreides returns');
 const root = { textNodes: [first, second] };
 const normalized = web.normalizedIndexForRoot(root);
 assert.strictEqual(normalized.text, 'duke paul atreides returns');
+assert.strictEqual(normalized.nodeRuns.length, 2);
+assert(normalized.offsets instanceof Uint32Array, 'DOM offsets should use compact typed storage');
+assert.strictEqual(web.normalizedIndexForRoot(root), normalized, 'the normalized DOM index should be reused');
 
 const phraseRange = web.rangeForNormalizedText(root, 'Paul Atreides');
 assert.strictEqual(phraseRange.startContainer, first);
@@ -58,6 +61,9 @@ assert.strictEqual(wordRange.startContainer, second);
 assert.strictEqual(wordRange.startOffset, 0);
 assert.strictEqual(wordRange.endContainer, second);
 assert.strictEqual(wordRange.endOffset, 8);
+
+web.invalidateNormalizedIndex(root);
+assert.notStrictEqual(web.normalizedIndexForRoot(root), normalized, 'explicit invalidation should rebuild the DOM index');
 
 const quoteNode = textNode('I\u2019ve had advantages that you\u2019ve had.');
 const quoteRange = web.rangeForNormalizedText({ textNodes: [quoteNode] }, "you've had");
