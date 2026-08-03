@@ -24,13 +24,16 @@ private func pdfRecord(
     word: String,
     answer: String,
     createdAt: TimeInterval,
+    textAnchor: TextQuoteAnchor? = nil,
+    bounds: CGRect = CGRect(x: 10, y: 20, width: 30, height: 12),
     srs: VocabularySRSState? = nil
 ) -> StoredPDFWordRecord {
     StoredPDFWordRecord(
         id: id,
         word: word,
         pageIndex: 4,
-        bounds: StoredPDFWordRect(CGRect(x: 10, y: 20, width: 30, height: 12)),
+        bounds: StoredPDFWordRect(bounds),
+        textAnchor: textAnchor,
         context: "pdf context",
         question: "What is \(word)?",
         answer: answer,
@@ -87,8 +90,16 @@ struct SQLiteWordRecordStoreTestRunner {
 
         do {
         let store = WordRecordSQLiteStore(databaseURL: dbURL)
-        let first = pdfRecord(id: "pdf-a", word: "alpha", answer: "one", createdAt: 1, srs: srs)
-        let updated = pdfRecord(id: "pdf-a", word: "alpha", answer: "updated", createdAt: 2, srs: srs)
+        let anchor = TextQuoteAnchor(
+            unitOrdinal: 4,
+            sourceRange: NSRange(location: 6, length: 5),
+            sourceText: "Start alpha end"
+        )
+        assert(anchor?.exactQuote == "alpha", "semantic anchors should retain the exact quote")
+        assert(anchor?.prefix == "Start ", "semantic anchors should retain bounded prefix context")
+        assert(anchor?.suffix == " end", "semantic anchors should retain bounded suffix context")
+        let first = pdfRecord(id: "pdf-a", word: "alpha", answer: "one", createdAt: 1, textAnchor: anchor, srs: srs)
+        let updated = pdfRecord(id: "pdf-a", word: "alpha", answer: "updated", createdAt: 2, textAnchor: anchor, srs: srs)
         let second = pdfRecord(id: "pdf-b", word: "beta", answer: "two", createdAt: 3)
         let other = pdfRecord(id: "pdf-other", word: "other", answer: "other", createdAt: 4)
         let batchBlank = pdfRecord(id: "pdf-c", word: "übersende", answer: "", createdAt: 5)
@@ -126,8 +137,32 @@ struct SQLiteWordRecordStoreTestRunner {
         let loadedPDF = store.loadPDFRecords(documentID: documentID)
         assert(loadedPDF.map(\.id) == ["pdf-a", "pdf-b"], "PDF records should load ordered records for one document only")
         assert(loadedPDF.first?.answer == "updated", "PDF upsert should replace existing rows")
+        assert(loadedPDF.first?.textAnchor == anchor, "PDF semantic text anchors should round-trip through production SQLite store")
         assert(loadedPDF.first?.srs?.reviewCount == 2, "PDF SRS state should round-trip through production SQLite store")
         assert(store.loadPDFRecords(documentID: otherDocumentID).map(\.id) == ["pdf-other"], "PDF records should stay scoped by document")
+
+        let semanticDocumentID = "sqlite-semantic-location-doc"
+        let movedOccurrence = pdfRecord(
+            id: "semantic-first",
+            word: "alpha",
+            answer: "one",
+            createdAt: 1,
+            textAnchor: anchor
+        )
+        let relaidOccurrence = pdfRecord(
+            id: "semantic-second",
+            word: "alpha",
+            answer: "one",
+            createdAt: 2,
+            textAnchor: anchor,
+            bounds: CGRect(x: 180, y: 420, width: 70, height: 18)
+        )
+        assert(
+            store.upsertPDFRecords(documentID: semanticDocumentID, records: [movedOccurrence, relaidOccurrence]),
+            "semantic occurrence upsert should succeed across changed geometry"
+        )
+        let semanticOccurrences = store.loadPDFRecords(documentID: semanticDocumentID)
+        assert(semanticOccurrences.map(\.id) == ["semantic-second"], "one semantic anchor should remain one occurrence after geometry changes")
 
         assert(
             store.upsertPDFRecords(documentID: documentID, records: [batchBlank, batchSecond]),

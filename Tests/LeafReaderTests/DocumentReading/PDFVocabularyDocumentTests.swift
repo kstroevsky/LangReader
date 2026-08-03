@@ -47,8 +47,16 @@ struct PDFVocabularyDocumentTestRunner {
 
             for match in matches {
                 guard let page = document.page(at: match.pageIndex),
+                      let sourceText = page.string,
                       let selection = page.selection(for: match.occurrence.range) else {
                     fail("PDFKit could not reconstruct an occurrence selection")
+                }
+                guard let anchor = TextQuoteAnchor(
+                    unitOrdinal: match.pageIndex,
+                    sourceRange: match.occurrence.range,
+                    sourceText: sourceText
+                ), anchor.exactQuote == match.occurrence.matchedText else {
+                    fail("semantic anchor should retain the exact German PDF quote")
                 }
                 let bounds = selection.bounds(for: page)
                 guard bounds.width > 0, bounds.height > 0 else {

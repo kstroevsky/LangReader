@@ -13,6 +13,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
         let word: String
         let pageIndex: Int
         let bounds: StoredPDFWordRect
+        let textAnchor: TextQuoteAnchor?
         let context: String
         var dictionaryTags: String?
         var dictionaryFrequency: Int?

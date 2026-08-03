@@ -211,6 +211,7 @@ collect_logic_app_sources
 run_swift_test /tmp/leafreader-sqlite-word-tests \
   "${SQLITE_WORD_TEST_SOURCES[@]}" \
   -framework Cocoa \
+  -framework PDFKit \
   -lsqlite3
 
 run_swift_test /tmp/leafreader-personal-vocabulary-tests \
@@ -270,6 +271,7 @@ run_swift_test /tmp/leafreader-logic-tests \
 
 if [[ -n "${LEAFREADER_TEST_PDF_WITH_ANSWERS:-}" && -n "${LEAFREADER_TEST_PDF_WITHOUT_ANSWERS:-}" ]]; then
   swiftc \
+    -parse-as-library \
     "$TEST_SOURCE_ROOT/DocumentReading/PDFVocabularyDocumentTests.swift" \
     -framework PDFKit \
     -o /tmp/leafreader-pdf-vocabulary-document-tests

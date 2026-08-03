@@ -470,6 +470,19 @@ extension ReaderWindowController {
         guard bounds.width > 0, bounds.height > 0 else { return nil }
 
         let contextSource = sourceText ?? page.string ?? ""
+        let pageIndex = document.index(for: page)
+        let textAnchor = sourceRange.flatMap {
+            PDFTextQuoteAnchorBuilder.make(
+                pageIndex: pageIndex,
+                sourceRange: $0,
+                sourceText: contextSource
+            )
+        } ?? PDFTextQuoteAnchorBuilder.make(
+            pageIndex: pageIndex,
+            selection: selection,
+            page: page,
+            sourceText: contextSource
+        )
         let selectedText = matchedText ?? selection.string ?? word
         let exactContext = sourceRange.flatMap {
             ReaderAIContextBuilder.selectedTextContext(
@@ -492,8 +505,9 @@ extension ReaderWindowController {
             word: VocabularyTextPolicy.normalizedVocabularyText(word),
             lemma: lemma,
             surfaceForm: VocabularyTextPolicy.normalizedOccurrenceText(surfaceForm ?? word, matching: word),
-            pageIndex: document.index(for: page),
+            pageIndex: pageIndex,
             bounds: StoredPDFWordRect(bounds),
+            textAnchor: textAnchor,
             context: context,
             question: "",
             answer: "",

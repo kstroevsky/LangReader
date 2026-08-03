@@ -1,4 +1,5 @@
 import Cocoa
+import PDFKit
 import LeafReaderCore
 
 struct StoredPDFWordRecord: Codable, Sendable {
@@ -9,6 +10,7 @@ struct StoredPDFWordRecord: Codable, Sendable {
     var surfaceForm: String? = nil
     let pageIndex: Int
     let bounds: StoredPDFWordRect
+    var textAnchor: TextQuoteAnchor? = nil
     var context: String?
     var question: String
     var answer: String
@@ -35,6 +37,32 @@ struct StoredPDFWordRecord: Codable, Sendable {
     var matchesSavedSurfaceForm: Bool {
         VocabularyTextPolicy.canonicalVocabularyKey(occurrenceSurfaceForm)
             == VocabularyTextPolicy.canonicalVocabularyKey(word)
+    }
+}
+
+enum PDFTextQuoteAnchorBuilder {
+    static func make(
+        pageIndex: Int,
+        selection: PDFSelection,
+        page: PDFPage,
+        sourceText: String
+    ) -> TextQuoteAnchor? {
+        let rangeCount = selection.numberOfTextRanges(on: page)
+        guard rangeCount > 0 else { return nil }
+        var combinedRange = selection.range(at: 0, on: page)
+        guard combinedRange.location != NSNotFound else { return nil }
+        if rangeCount > 1 {
+            for index in 1..<rangeCount {
+                let range = selection.range(at: index, on: page)
+                guard range.location != NSNotFound else { continue }
+                combinedRange = NSUnionRange(combinedRange, range)
+            }
+        }
+        return make(pageIndex: pageIndex, sourceRange: combinedRange, sourceText: sourceText)
+    }
+
+    static func make(pageIndex: Int, sourceRange: NSRange, sourceText: String) -> TextQuoteAnchor? {
+        TextQuoteAnchor(unitOrdinal: pageIndex, sourceRange: sourceRange, sourceText: sourceText)
     }
 }
 
