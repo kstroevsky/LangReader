@@ -17,6 +17,11 @@ extension ReaderWindowController {
         set { embeddingState.documentAgentIndexGeneration = newValue }
     }
 
+    var webSourceNavigationGeneration: Int {
+        get { embeddingState.webSourceNavigationGeneration }
+        set { embeddingState.webSourceNavigationGeneration = newValue }
+    }
+
     var pendingDocumentAgentIndexCallbacks: [() -> Void] {
         get { embeddingState.pendingDocumentAgentIndexCallbacks }
         set { embeddingState.pendingDocumentAgentIndexCallbacks = newValue }

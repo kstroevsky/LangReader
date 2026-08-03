@@ -128,10 +128,27 @@ extension ReaderWindowController {
     }
 
     func jumpToWebDocumentSection(index: Int) {
-        ensureDocumentAgentIndex()
-        let count = max(1, pdfAgentIndex?.locationCount ?? 1)
-        let progress = count <= 1 ? 0 : Double(min(max(index, 0), count - 1)) / Double(count - 1)
-        jumpToWebProgress(progress, animated: true)
+        webSourceNavigationGeneration += 1
+        let navigationGeneration = webSourceNavigationGeneration
+        let loadGeneration = documentSession.documentLoadGeneration
+        let documentID = currentFileMD5
+        let startedAt = ProcessInfo.processInfo.systemUptime
+        ensureDocumentAgentIndexAsync { [weak self] in
+            guard let self,
+                  self.webSourceNavigationGeneration == navigationGeneration,
+                  self.documentSession.acceptsLoad(generation: loadGeneration),
+                  self.currentDocumentKind != .pdf,
+                  self.currentFileMD5 == documentID else { return }
+            let progress = ReaderProgressFormatter.webSectionProgress(
+                index: index,
+                locationCount: self.pdfAgentIndex?.locationCount ?? 0
+            )
+            self.jumpToWebProgress(progress, animated: true)
+            ReaderPerformance.record(
+                .webSourceNavigation,
+                milliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1000
+            )
+        }
     }
 
 

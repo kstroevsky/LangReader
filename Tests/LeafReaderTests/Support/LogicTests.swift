@@ -202,6 +202,11 @@ private func testReaderProgressFormatter() throws {
     try expectEqual(ReaderProgressFormatter.webProgressPercent(-0.2), 0, "web progress should clamp low")
     try expectEqual(ReaderProgressFormatter.webProgressPercent(0.126), 13, "web progress should round")
     try expectEqual(ReaderProgressFormatter.webProgressPercent(1.4), 100, "web progress should clamp high")
+    try expectEqual(ReaderProgressFormatter.webSectionProgress(index: 0, locationCount: 5), 0.0, "first web section should map to the start")
+    try expectEqual(ReaderProgressFormatter.webSectionProgress(index: 2, locationCount: 5), 0.5, "middle web section should map proportionally")
+    try expectEqual(ReaderProgressFormatter.webSectionProgress(index: 99, locationCount: 5), 1.0, "web section progress should clamp high")
+    try expectEqual(ReaderProgressFormatter.webSectionProgress(index: -1, locationCount: 5), 0.0, "web section progress should clamp low")
+    try expectEqual(ReaderProgressFormatter.webSectionProgress(index: 4, locationCount: 0), 0.0, "empty web indexes should map safely to the start")
 }
 
 private func testReaderAIContextTextCleanup() throws {
