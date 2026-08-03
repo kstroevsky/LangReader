@@ -83,10 +83,23 @@ extension ReaderWindowController {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         guard currentDocumentKind != .pdf else { return }
+        let highlightRestoreSpan = ReaderPerformance.begin(.webHighlightRestore)
         applyWebReaderTheme()
         restoreStoredWebWordHighlights { [weak self] in
-            self?.restoreWebReadingNoteHighlights {
-                self?.restoreSavedAISourceUnderlines()
+            guard let self else { return }
+            self.restoreWebReadingNoteHighlights { [weak self] in
+                guard let self else { return }
+                self.restoreSavedAISourceUnderlines { [weak self] in
+                    guard let self else { return }
+                    ReaderPerformance.end(highlightRestoreSpan)
+                    if let startedAt = self.documentPresentationState.webContentReadyStartedAt {
+                        ReaderPerformance.record(
+                            .webContentReady,
+                            milliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1000
+                        )
+                        self.documentPresentationState.webContentReadyStartedAt = nil
+                    }
+                }
             }
         }
         applyWebZoomToPage()

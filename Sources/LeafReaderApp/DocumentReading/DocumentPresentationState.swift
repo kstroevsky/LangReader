@@ -11,6 +11,7 @@ struct DocumentPresentationState {
     var pdfTOCDestinations: [String: ReaderTOCHelper.PDFTOCDestination] = [:]
     var pdfTOCGeneration = 0
     var originalPDFCropBoxes: [Int: CGRect] = [:]
+    var webContentReadyStartedAt: TimeInterval?
 
     mutating func resetForDocumentChange() {
         currentDocumentDiagnostics = []
@@ -18,5 +19,6 @@ struct DocumentPresentationState {
         pdfTOCDestinations = [:]
         pdfTOCGeneration += 1
         originalPDFCropBoxes = [:]
+        webContentReadyStartedAt = nil
     }
 }

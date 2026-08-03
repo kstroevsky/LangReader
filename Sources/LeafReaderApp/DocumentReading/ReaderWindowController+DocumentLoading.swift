@@ -98,6 +98,7 @@ extension ReaderWindowController {
         defer { ReaderPerformance.end(openSpan) }
         closeReadingNotePanelsForDocumentTransition()
         activateDocumentSession(url: url, kind: kind)
+        documentPresentationState.webContentReadyStartedAt = ProcessInfo.processInfo.systemUptime
         pdfView.isHidden = true
         pdfDimOverlay.isHidden = true
         webView.isHidden = false

@@ -66,6 +66,7 @@ do {
     case "private":
         try require(counts, "pdfOpen", atLeast: 2)
         try require(counts, "webOpen", atLeast: 4)
+        try require(counts, "webContentReady", atLeast: 4)
         for event in ["shelfOpen", "notesOpen", "vocabularyLibraryOpen", "aiPanelExpand", "selectionToolbar", "aiFirstToken", "aiStreaming", "themeSwitch"] {
             try require(counts, event, atLeast: 1)
         }

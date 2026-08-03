@@ -13,7 +13,11 @@ struct VocabularyRecordMutationResult {
 extension ReaderWindowController {
     func loadStoredWordRecords() -> [StoredPDFWordRecord] {
         guard let store = pdfWordRecordStore else { return [] }
-        let records = store.load()
+        let records = ReaderPerformance.measure(.vocabularyRecordLoad) {
+            store.load()
+        }
+        let repairSpan = ReaderPerformance.begin(.vocabularyRecordRepair)
+        defer { ReaderPerformance.end(repairSpan) }
         var repairedWords: [String: String] = [:]
         for record in records {
             guard let candidate = VocabularyTextPolicy.dehyphenatedPDFLayoutCandidate(word: record.word, context: record.context),
@@ -116,7 +120,9 @@ extension ReaderWindowController {
 
         guard didRepair || !staleIDs.isEmpty else { return cleanedRecords }
 
-        store.save(cleanedRecords)
+        ReaderPerformance.measure(.vocabularyDatabaseWrite) {
+            store.save(cleanedRecords)
+        }
         DispatchQueue.main.async { [weak self] in
             self?.backfillStoredGermanLemmaOccurrences()
         }
@@ -128,18 +134,27 @@ extension ReaderWindowController {
     }
 
     func saveStoredWordRecord(_ record: StoredPDFWordRecord) {
-        if pdfWordRecordStore?.upsert(record) != true {
+        let didSave = ReaderPerformance.measure(.vocabularyDatabaseWrite) {
+            pdfWordRecordStore?.upsert(record) == true
+        }
+        if !didSave {
             saveStoredWordRecords()
         }
     }
 
     func loadStoredWebWordRecords() -> [StoredWebWordRecord] {
         guard let store = webWordRecordStore else { return [] }
-        let records = store.load()
+        let records = ReaderPerformance.measure(.vocabularyRecordLoad) {
+            store.load()
+        }
+        let repairSpan = ReaderPerformance.begin(.vocabularyRecordRepair)
+        defer { ReaderPerformance.end(repairSpan) }
         let language = VocabularyLanguageDetector.language(forContexts: records.map(\.context))
         let repaired = WebWordRecordMetadataRepair.repair(records, language: language)
         if repaired.didChange {
-            store.save(repaired.records)
+            ReaderPerformance.measure(.vocabularyDatabaseWrite) {
+                store.save(repaired.records)
+            }
         }
         return repaired.records
     }
@@ -149,7 +164,10 @@ extension ReaderWindowController {
     }
 
     func saveStoredWebWordRecord(_ record: StoredWebWordRecord) {
-        if webWordRecordStore?.upsert(record) != true {
+        let didSave = ReaderPerformance.measure(.vocabularyDatabaseWrite) {
+            webWordRecordStore?.upsert(record) == true
+        }
+        if !didSave {
             saveStoredWebWordRecords()
         }
     }
@@ -209,12 +227,16 @@ extension ReaderWindowController {
 
     func flushStoredWordRecordsSave() {
         pdfWordRecordsSaveTask.cancel()
-        pdfWordRecordStore?.save(storedWordRecords)
+        ReaderPerformance.measure(.vocabularyDatabaseWrite) {
+            pdfWordRecordStore?.save(storedWordRecords)
+        }
     }
 
     func flushStoredWebWordRecordsSave() {
         webWordRecordsSaveTask.cancel()
-        webWordRecordStore?.save(storedWebWordRecords)
+        ReaderPerformance.measure(.vocabularyDatabaseWrite) {
+            webWordRecordStore?.save(storedWebWordRecords)
+        }
     }
 
     func flushCurrentBookWordRecordSaves() {

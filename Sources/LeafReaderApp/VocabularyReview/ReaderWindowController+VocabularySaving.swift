@@ -584,7 +584,10 @@ extension ReaderWindowController {
                 state.matches.count
             )
         }
-        guard state.newRecords.isEmpty || store.upsert(state.newRecords) else {
+        let didPersist = ReaderPerformance.measure(.vocabularyDatabaseWrite) {
+            state.newRecords.isEmpty || store.upsert(state.newRecords)
+        }
+        guard didPersist else {
             // Keep the immediate selected-word acknowledgement. Discovery is
             // additive and can be retried by a later backfill.
             selectionActionToolbar.showSaveResult(found: 1, inserted: 1)
