@@ -31,11 +31,19 @@ final class PDFDocumentAgentIndex: @unchecked Sendable {
     private var chunks: [Chunk]
     private(set) var embeddingCacheModelID: String?
 
-    init(document: PDFDocument, title: String) {
+    convenience init(document: PDFDocument, title: String) {
+        let pageTexts = (0..<document.pageCount).map { document.page(at: $0)?.string ?? "" }
+        self.init(pageTexts: pageTexts, title: title)
+    }
+
+    init(pageTexts: [String], title: String) {
         var builtChunks: [Chunk] = []
-        for pageIndex in 0..<document.pageCount {
-            guard let page = document.page(at: pageIndex) else { continue }
-            let pageText = ReaderAIContextBuilder.pdfPageTranslationText(document: document, page: page, title: title)
+        for pageIndex in pageTexts.indices {
+            let pageText = ReaderAIContextBuilder.pdfPageTranslationText(
+                pageTexts: pageTexts,
+                pageIndex: pageIndex,
+                title: title
+            )
             builtChunks.append(contentsOf: Self.chunks(from: pageText, pageIndex: pageIndex))
         }
         chunks = builtChunks

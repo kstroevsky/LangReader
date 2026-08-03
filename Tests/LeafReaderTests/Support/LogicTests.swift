@@ -723,6 +723,7 @@ private let tests: [(String, () throws -> Void)] = [
     ("Reader toolbar visibility follows chrome state", ReaderToolbarItemTests.testVisibilityFollowsChromeState),
     ("Vocabulary SRS", VocabularyLogicTests.testVocabularySRS),
     ("German lemma batch equals sequential", VocabularyLogicTests.testGermanLemmaBatchMatchesSequential),
+    ("Vocabulary document lemma index equals legacy scanner", VocabularyLogicTests.testVocabularyDocumentLemmaIndexMatchesLegacyScanner),
     ("German lemma tagger reuse", VocabularyLogicTests.testGermanLemmaResolverTaggerReuse),
     ("German lemma line-wrap fragment not false match", VocabularyLogicTests.testGermanLemmaLineWrapFragmentIsNotAFalseMatch),
     ("German noun not grouped with verb homograph", VocabularyLogicTests.testGermanNounNotGroupedWithVerbHomograph),

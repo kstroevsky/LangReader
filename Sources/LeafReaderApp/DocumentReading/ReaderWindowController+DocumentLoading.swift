@@ -32,8 +32,6 @@ extension ReaderWindowController {
         storedWordRecords = loadStoredWordRecords()
         storedWebWordRecords.removeAll()
         loadReadingNotesForCurrentDocument()
-        restoreStoredWordAnnotations()
-        restoreReadingNoteAnnotations()
         aiPanel.loadLinkedWordBubbles(pdfWordRecordStore?.linkedWordBubbles(from: storedWordRecords) ?? [])
         loadSavedAIConversationIfNeeded()
         setDocumentTitle(ReaderPresentationState.documentTitle(for: url))
@@ -46,6 +44,14 @@ extension ReaderWindowController {
         // PDFView still rasterises tiles asynchronously, so this is the
         // synchronous "ready to show" point, not the last pixel.
         ReaderPerformance.end(firstPageSpan)
+        let annotationDocumentID = currentFileMD5
+        DispatchQueue.main.async { [weak self] in
+            guard let self,
+                  self.currentDocumentKind == .pdf,
+                  self.currentFileMD5 == annotationDocumentID else { return }
+            self.restoreStoredWordAnnotationsIncrementally(documentID: annotationDocumentID)
+            self.restoreReadingNoteAnnotationsIncrementally(documentID: annotationDocumentID)
+        }
 
         if !didRegisterSelectionObserver {
             didRegisterSelectionObserver = true
@@ -138,6 +144,7 @@ extension ReaderWindowController {
     func activateDocumentSession(url: URL, kind: ReaderDocumentKind) {
         documentSession.adopt(url: url, kind: kind, documentID: fileMD5(for: url))
         documentPresentationState.resetForDocumentChange()
+        invalidateDocumentTextState()
         aiConversationStore = currentFileMD5.map { AIConversationStore(fileMD5: $0) }
         loadedAIConversation = nil
         invalidateDocumentAgentIndex()

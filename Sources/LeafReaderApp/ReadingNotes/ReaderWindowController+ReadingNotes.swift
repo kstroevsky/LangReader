@@ -25,11 +25,48 @@ extension ReaderWindowController {
 
     func restoreReadingNoteAnnotations() {
         guard currentDocumentKind == .pdf else { return }
+        pdfNoteAnnotationRestoreGeneration += 1
         clearReadingNoteAnnotations()
         for note in storedReadingNotes {
-            addReadingNoteAnnotation(note)
+            addReadingNoteAnnotation(note, invalidateDisplay: false)
         }
         pdfView.setNeedsDisplay(pdfView.bounds)
+    }
+
+    func restoreReadingNoteAnnotationsIncrementally(documentID: String?) {
+        guard currentDocumentKind == .pdf else { return }
+        pdfNoteAnnotationRestoreGeneration += 1
+        let generation = pdfNoteAnnotationRestoreGeneration
+        clearReadingNoteAnnotations()
+        restoreReadingNoteAnnotationBatch(
+            documentID: documentID,
+            generation: generation,
+            startIndex: 0
+        )
+    }
+
+    private func restoreReadingNoteAnnotationBatch(
+        documentID: String?,
+        generation: Int,
+        startIndex: Int
+    ) {
+        guard currentDocumentKind == .pdf,
+              currentFileMD5 == documentID,
+              pdfNoteAnnotationRestoreGeneration == generation else { return }
+        let endIndex = min(startIndex + 64, storedReadingNotes.count)
+        guard startIndex < endIndex else { return }
+        for note in storedReadingNotes[startIndex..<endIndex] {
+            addReadingNoteAnnotation(note, invalidateDisplay: false)
+        }
+        pdfView.setNeedsDisplay(pdfView.bounds)
+        guard endIndex < storedReadingNotes.count else { return }
+        DispatchQueue.main.async { [weak self] in
+            self?.restoreReadingNoteAnnotationBatch(
+                documentID: documentID,
+                generation: generation,
+                startIndex: endIndex
+            )
+        }
     }
 
     func createReadingNoteFromCurrentSelection(text: String) {
@@ -294,7 +331,7 @@ extension ReaderWindowController {
         return ReadingNote.Locator(pdfFragments: nil, webAnchor: anchor)
     }
 
-    private func addReadingNoteAnnotation(_ note: ReadingNote) {
+    private func addReadingNoteAnnotation(_ note: ReadingNote, invalidateDisplay: Bool = true) {
         guard currentDocumentKind == .pdf,
               let fragments = note.locator.pdfFragments,
               !fragments.isEmpty else {
@@ -314,7 +351,9 @@ extension ReaderWindowController {
             annotation.contents = key
             page.addAnnotation(annotation)
         }
-        pdfView.setNeedsDisplay(pdfView.bounds)
+        if invalidateDisplay {
+            pdfView.setNeedsDisplay(pdfView.bounds)
+        }
     }
 
     private func removeReadingNoteAnnotation(id: String) {

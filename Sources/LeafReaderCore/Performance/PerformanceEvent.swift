@@ -20,6 +20,12 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
     case vocabularyLibraryOpen
     case aiPanelExpand
     case selectionToolbar
+    case pdfTextSnapshot
+    case vocabularyIndexBuild
+    case vocabularySaveAcknowledgement
+    case vocabularyOccurrenceQuery
+    case vocabularyOccurrencePersistence
+    case pdfSearch
     case aiFirstToken
     case aiStreaming
     case themeSwitch
@@ -38,6 +44,12 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
         case .vocabularyLibraryOpen: return "Vocabulary Library open"
         case .aiPanelExpand: return "AI panel expansion"
         case .selectionToolbar: return "Selection toolbar"
+        case .pdfTextSnapshot: return "PDF text snapshot"
+        case .vocabularyIndexBuild: return "Vocabulary index build"
+        case .vocabularySaveAcknowledgement: return "Vocabulary save acknowledgement"
+        case .vocabularyOccurrenceQuery: return "Vocabulary occurrence query"
+        case .vocabularyOccurrencePersistence: return "Vocabulary occurrence persistence"
+        case .pdfSearch: return "PDF search"
         case .aiFirstToken: return "AI first token"
         case .aiStreaming: return "AI streaming (per chunk)"
         case .themeSwitch: return "Theme switch"

@@ -321,6 +321,57 @@ enum VocabularyLogicTests {
         )
     }
 
+    static func testVocabularyDocumentLemmaIndexMatchesLegacyScanner() throws {
+        let pages = [
+            "Er ist gestern nach Hause gegangen. Wir gehen heute wieder.",
+            "Sie ging langsam; ein gegan-\ngener Weg war lang.",
+            "Für den Er-\nfolg folgen wir dem Plan. Das Gehen fällt leicht.",
+            "Die E-Mail und die E-\nMail kamen an.",
+            ""
+        ]
+        guard let index = VocabularyDocumentLemmaIndex(texts: pages, language: .german) else {
+            try expect(false, "a non-cancelled document should produce a lemma index")
+            return
+        }
+        try expectEqual(index.pageCount, pages.count, "the index must preserve empty pages and page positions")
+
+        for (lemma, selected) in [
+            ("gehen", "gegangen"),
+            ("gehen", "ging"),
+            ("E-Mail", "E-Mail")
+        ] {
+            let expected = GermanLemmaOccurrenceMatcher.matches(
+                lemma: lemma,
+                selectedForm: selected,
+                inTexts: pages,
+                language: .german
+            )
+            try expectEqual(
+                index.matches(lemma: lemma, selectedForm: selected),
+                expected,
+                "the reusable index must preserve legacy matches for '\(selected)'"
+            )
+        }
+
+        let groups = ["gehen": "gehen", "e-mail": "E-Mail"]
+        let indexedGroups = index.matches(lemmasByKey: groups)
+        let expectedGroups = pages.map {
+            GermanLemmaOccurrenceMatcher.matches(lemmasByKey: groups, in: $0, language: .german)
+        }
+        try expectEqual(
+            indexedGroups,
+            expectedGroups,
+            "grouped backfill queries must agree page-for-page with the legacy matcher"
+        )
+
+        let cancelled = VocabularyDocumentLemmaIndex(
+            texts: pages,
+            language: .german,
+            isCancelled: { true }
+        )
+        try expect(cancelled == nil, "a cancelled index build should return no partial index")
+    }
+
     /// The reusable-tagger overload must return exactly what the allocating one
     /// does, including when the same tagger is reused across many words.
     static func testGermanLemmaResolverTaggerReuse() throws {
