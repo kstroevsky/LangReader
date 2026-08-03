@@ -35,6 +35,7 @@ const textNode = (value) => ({ nodeValue: value });
 
 assert.strictEqual(web.normalizedText('  Hello\nWORLD\t '), 'hello world');
 assert.strictEqual(web.normalizedText('I\u2019ve seen high\u2014bouncing lover\u2026'), "i've seen high-bouncing lover...");
+assert.strictEqual(web.normalizedText('Caf\u00E9'), web.normalizedText('Cafe\u0301'));
 assert.strictEqual(web.occurrenceIndexInText('Alpha beta alpha beta', 'alpha', 'Alpha beta '), 1);
 assert.deepStrictEqual(web.leafReaderFindSearchSpans('Alpha beta alpha', 'alpha'), [
   { start: 0, end: 5 },
@@ -46,8 +47,8 @@ const second = textNode('Atreides returns');
 const root = { textNodes: [first, second] };
 const normalized = web.normalizedIndexForRoot(root);
 assert.strictEqual(normalized.text, 'duke paul atreides returns');
-assert.strictEqual(normalized.nodeRuns.length, 2);
-assert(normalized.offsets instanceof Uint32Array, 'DOM offsets should use compact typed storage');
+assert(normalized.mappingRuns.length < normalized.text.length, 'DOM offsets should be retained as compressed mapping runs');
+assert.strictEqual(normalized.offsets, undefined, 'the index should not retain one offset per normalized character');
 assert.strictEqual(web.normalizedIndexForRoot(root), normalized, 'the normalized DOM index should be reused');
 
 const phraseRange = web.rangeForNormalizedText(root, 'Paul Atreides');
@@ -72,6 +73,32 @@ const repeatedRange = web.rangeForWordInContext(
 assert.strictEqual(repeatedRange.startContainer, repeatedNode);
 assert.strictEqual(repeatedRange.startOffset, 11);
 assert.strictEqual(repeatedRange.endOffset, 16);
+
+const composedNode = textNode('Caf\u00E9 noir');
+const composedRange = web.rangeForNormalizedText({ textNodes: [composedNode] }, 'Cafe\u0301');
+assert.strictEqual(composedRange.startOffset, 0);
+assert.strictEqual(composedRange.endOffset, 4);
+
+const decomposedNode = textNode('Cafe\u0301 noir');
+const decomposedRange = web.rangeForNormalizedText({ textNodes: [decomposedNode] }, 'Caf\u00E9');
+assert.strictEqual(decomposedRange.startOffset, 0);
+assert.strictEqual(decomposedRange.endOffset, 5);
+
+const nestedAccentStart = textNode('Ca');
+const nestedAccentEnd = textNode('f\u00E9 noir');
+const nestedAccentRange = web.rangeForNormalizedText(
+  { textNodes: [nestedAccentStart, nestedAccentEnd] },
+  'Cafe\u0301'
+);
+assert.strictEqual(nestedAccentRange.startContainer, nestedAccentStart);
+assert.strictEqual(nestedAccentRange.startOffset, 0);
+assert.strictEqual(nestedAccentRange.endContainer, nestedAccentEnd);
+assert.strictEqual(nestedAccentRange.endOffset, 2);
+
+const emojiNode = textNode('A\u{1F600}B');
+const emojiRange = web.rangeForNormalizedText({ textNodes: [emojiNode] }, '\u{1F600}');
+assert.strictEqual(emojiRange.startOffset, 1);
+assert.strictEqual(emojiRange.endOffset, 3);
 
 web.invalidateNormalizedIndex(root);
 assert.notStrictEqual(web.normalizedIndexForRoot(root), normalized, 'explicit invalidation should rebuild the DOM index');

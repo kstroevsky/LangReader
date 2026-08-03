@@ -6,7 +6,7 @@
     if (char === '\u201C' || char === '\u201D') return ['"'];
     if (/[\u2010-\u2015]/.test(char)) return ['-'];
     if (char === '\u2026') return ['.', '.', '.'];
-    return [char.toLowerCase()];
+    return char.toLowerCase().normalize('NFD').split('');
   };
   const normalizedText = (value) => {
     let output = '';
@@ -58,39 +58,63 @@
     const cached = normalizedIndexCache.get(rootNode);
     if (cached) return cached;
     const walker = document.createTreeWalker(rootNode, NodeFilter.SHOW_TEXT);
-    const nodeRuns = [];
-    const offsets = [];
+    const mappingRuns = [];
     let normalized = '';
     let previousWasSpace = true;
+    const appendMappedText = (value, node, sourceOffset, sourceLength) => {
+      for (const unit of String(value)) {
+        const normalizedOffset = normalized.length;
+        normalized += unit;
+        const last = mappingRuns[mappingRuns.length - 1];
+        if (last && last.node === node && last.sourceLength === sourceLength) {
+          const runLength = last.end - last.start;
+          const sourceStep = sourceOffset - last.sourceStart;
+          if (runLength === 1) {
+            last.sourceStep = sourceStep;
+            last.end += unit.length;
+            continue;
+          }
+          const expectedOffset = last.sourceStart + (runLength * last.sourceStep);
+          if (sourceOffset === expectedOffset) {
+            last.end += unit.length;
+            continue;
+          }
+        }
+        mappingRuns.push({
+          start: normalizedOffset,
+          end: normalizedOffset + unit.length,
+          node,
+          sourceStart: sourceOffset,
+          sourceStep: 0,
+          sourceLength
+        });
+      }
+    };
     let node;
     while ((node = walker.nextNode())) {
       const raw = node.nodeValue || '';
-      const runStart = normalized.length;
-      for (let i = 0; i < raw.length; i++) {
-        const char = raw[i];
+      for (let sourceOffset = 0; sourceOffset < raw.length;) {
+        const codePoint = raw.codePointAt(sourceOffset);
+        const char = String.fromCodePoint(codePoint);
+        const sourceLength = char.length;
         if (/\s/.test(char)) {
           if (!previousWasSpace) {
-            normalized += ' ';
-            offsets.push(i);
+            appendMappedText(' ', node, sourceOffset, sourceLength);
             previousWasSpace = true;
           }
         } else {
           for (const part of canonicalTextParts(char)) {
-            normalized += part;
-            offsets.push(i);
+            appendMappedText(part, node, sourceOffset, sourceLength);
             previousWasSpace = false;
           }
         }
-      }
-      if (normalized.length > runStart) {
-        nodeRuns.push({ start: runStart, end: normalized.length, node });
+        sourceOffset += sourceLength;
       }
     }
     const leadingSpaces = normalized.length - normalized.trimStart().length;
     const index = {
       text: normalized.trim(),
-      nodeRuns,
-      offsets: Uint32Array.from(offsets),
+      mappingRuns,
       leadingSpaces
     };
     normalizedIndexCache.set(rootNode, index);
@@ -98,13 +122,20 @@
   };
   const positionForNormalizedOffset = (index, offset) => {
     let low = 0;
-    let high = index.nodeRuns.length - 1;
+    let high = index.mappingRuns.length - 1;
     while (low <= high) {
       const middle = (low + high) >> 1;
-      const run = index.nodeRuns[middle];
+      const run = index.mappingRuns[middle];
       if (offset < run.start) high = middle - 1;
       else if (offset >= run.end) low = middle + 1;
-      else return { node: run.node, offset: index.offsets[offset] };
+      else {
+        const sourceOffset = run.sourceStart + ((offset - run.start) * run.sourceStep);
+        return {
+          node: run.node,
+          offset: sourceOffset,
+          endOffset: sourceOffset + run.sourceLength
+        };
+      }
     }
     return null;
   };
@@ -114,7 +145,7 @@
     if (!start || !end) return null;
     const range = document.createRange();
     range.setStart(start.node, start.offset);
-    range.setEnd(end.node, end.offset + 1);
+    range.setEnd(end.node, end.endOffset);
     return range;
   };
   const rangeForNormalizedText = (rootNode, target, occurrenceIndex = 0) => {
