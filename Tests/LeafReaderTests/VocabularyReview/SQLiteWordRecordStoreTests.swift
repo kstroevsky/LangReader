@@ -119,6 +119,17 @@ struct SQLiteWordRecordStoreTestRunner {
             try? FileManager.default.removeItem(at: plist)
         }
         let locationStore = PDFWordRecordStore(fileMD5: documentID, defaults: defaults)
+        let webLocationStore = WebWordRecordStore(fileMD5: documentID, defaults: defaults)
+        assert(locationStore.needsMetadataRepair, "PDF metadata repair should run once for an unversioned document")
+        assert(webLocationStore.needsMetadataRepair, "web metadata repair should run once for an unversioned document")
+        locationStore.markMetadataRepairCompleted()
+        webLocationStore.markMetadataRepairCompleted()
+        assert(!locationStore.needsMetadataRepair, "PDF metadata repair should be skipped after its version is recorded")
+        assert(!webLocationStore.needsMetadataRepair, "web metadata repair should be skipped after its version is recorded")
+        assert(
+            PDFWordRecordStore(fileMD5: otherDocumentID, defaults: defaults).needsMetadataRepair,
+            "metadata repair versions should remain document-scoped"
+        )
         let sameLocation = CGRect(x: 10.2, y: 20.2, width: 30.2, height: 12.2)
         assert(
             locationStore.existingRecord(in: [batchBlank], pageIndex: 4, bounds: sameLocation)?.id == batchBlank.id,

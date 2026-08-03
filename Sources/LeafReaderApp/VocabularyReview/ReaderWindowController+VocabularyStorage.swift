@@ -16,6 +16,7 @@ extension ReaderWindowController {
         let records = ReaderPerformance.measure(.vocabularyRecordLoad) {
             store.load()
         }
+        guard store.needsMetadataRepair else { return records }
         let repairSpan = ReaderPerformance.begin(.vocabularyRecordRepair)
         defer { ReaderPerformance.end(repairSpan) }
         var repairedWords: [String: String] = [:]
@@ -118,11 +119,16 @@ extension ReaderWindowController {
             NSLog("LeafVocabulary: pruned %d mis-filed occurrence(s) on load", staleIDs.count)
         }
 
-        guard didRepair || !staleIDs.isEmpty else { return cleanedRecords }
+        guard didRepair || !staleIDs.isEmpty else {
+            store.markMetadataRepairCompleted()
+            return cleanedRecords
+        }
 
-        ReaderPerformance.measure(.vocabularyDatabaseWrite) {
+        let didSave = ReaderPerformance.measure(.vocabularyDatabaseWrite) {
             store.save(cleanedRecords)
         }
+        guard didSave else { return cleanedRecords }
+        store.markMetadataRepairCompleted()
         DispatchQueue.main.async { [weak self] in
             self?.backfillStoredGermanLemmaOccurrences()
         }
@@ -147,14 +153,20 @@ extension ReaderWindowController {
         let records = ReaderPerformance.measure(.vocabularyRecordLoad) {
             store.load()
         }
+        guard store.needsMetadataRepair else { return records }
         let repairSpan = ReaderPerformance.begin(.vocabularyRecordRepair)
         defer { ReaderPerformance.end(repairSpan) }
         let language = VocabularyLanguageDetector.language(forContexts: records.map(\.context))
         let repaired = WebWordRecordMetadataRepair.repair(records, language: language)
         if repaired.didChange {
-            ReaderPerformance.measure(.vocabularyDatabaseWrite) {
+            let didSave = ReaderPerformance.measure(.vocabularyDatabaseWrite) {
                 store.save(repaired.records)
             }
+            if didSave {
+                store.markMetadataRepairCompleted()
+            }
+        } else {
+            store.markMetadataRepairCompleted()
         }
         return repaired.records
     }
@@ -215,25 +227,31 @@ extension ReaderWindowController {
 
     func scheduleStoredWordRecordsSave() {
         pdfWordRecordsSaveTask.schedule { [weak self] in
-            self?.flushStoredWordRecordsSave()
+            self?.persistStoredWordRecordsSnapshot()
         }
     }
 
     func scheduleStoredWebWordRecordsSave() {
         webWordRecordsSaveTask.schedule { [weak self] in
-            self?.flushStoredWebWordRecordsSave()
+            self?.persistStoredWebWordRecordsSnapshot()
         }
     }
 
     func flushStoredWordRecordsSave() {
-        pdfWordRecordsSaveTask.cancel()
+        pdfWordRecordsSaveTask.flush()
+    }
+
+    func flushStoredWebWordRecordsSave() {
+        webWordRecordsSaveTask.flush()
+    }
+
+    private func persistStoredWordRecordsSnapshot() {
         ReaderPerformance.measure(.vocabularyDatabaseWrite) {
             pdfWordRecordStore?.save(storedWordRecords)
         }
     }
 
-    func flushStoredWebWordRecordsSave() {
-        webWordRecordsSaveTask.cancel()
+    private func persistStoredWebWordRecordsSnapshot() {
         ReaderPerformance.measure(.vocabularyDatabaseWrite) {
             webWordRecordStore?.save(storedWebWordRecords)
         }

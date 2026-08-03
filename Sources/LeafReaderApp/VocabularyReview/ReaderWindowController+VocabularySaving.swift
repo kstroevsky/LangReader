@@ -3,6 +3,13 @@ import NaturalLanguage
 import PDFKit
 import LeafReaderCore
 
+private enum VocabularyOccurrencePersistence {
+    static let queue = DispatchQueue(
+        label: "com.linlu.leafreader.vocabulary-occurrence-persistence",
+        qos: .utility
+    )
+}
+
 private struct PDFVocabularyPageMatch: Sendable {
     let pageIndex: Int
     let text: String
@@ -574,32 +581,55 @@ extension ReaderWindowController {
         }
 
         appendIfNeeded(state.selectedRecord)
-        defer {
-            let persistenceMilliseconds = (ProcessInfo.processInfo.systemUptime - state.startedUptime) * 1000
-            ReaderPerformance.record(.vocabularyOccurrencePersistence, milliseconds: persistenceMilliseconds)
-            NSLog(
-                "LeafVocabulary save timing: persist=%.0fms total=%.0fms matches=%d",
-                persistenceMilliseconds,
-                Date().timeIntervalSince(state.startedAt) * 1000,
-                state.matches.count
+        let records = state.newRecords
+        let foundCount = state.foundKeys.count
+        let matchCount = state.matches.count
+        let startedAt = state.startedAt
+        let startedUptime = state.startedUptime
+        let documentID = state.documentID
+        let documentIdentity = ObjectIdentifier(state.document)
+        let loadGeneration = documentSession.documentLoadGeneration
+        // Preserve submission order with any exceptional full-snapshot retry.
+        // In the common case there is no pending retry and this is a no-op.
+        flushStoredWordRecordsSave()
+        VocabularyOccurrencePersistence.queue.async { [weak self] in
+            let writeStartedAt = ProcessInfo.processInfo.systemUptime
+            let didPersist = records.isEmpty || WordRecordSQLiteStore.shared.upsertPDFRecords(
+                documentID: documentID,
+                records: records
             )
+            let writeMilliseconds = (ProcessInfo.processInfo.systemUptime - writeStartedAt) * 1000
+            DispatchQueue.main.async {
+                ReaderPerformance.record(.vocabularyDatabaseWrite, milliseconds: writeMilliseconds)
+                let persistenceMilliseconds = (ProcessInfo.processInfo.systemUptime - startedUptime) * 1000
+                ReaderPerformance.record(.vocabularyOccurrencePersistence, milliseconds: persistenceMilliseconds)
+                NSLog(
+                    "LeafVocabulary save timing: persist=%.0fms total=%.0fms matches=%d",
+                    persistenceMilliseconds,
+                    Date().timeIntervalSince(startedAt) * 1000,
+                    matchCount
+                )
+                guard let self,
+                      self.documentSession.acceptsLoad(generation: loadGeneration),
+                      self.currentDocumentKind == .pdf,
+                      self.currentFileMD5 == documentID,
+                      let currentDocument = self.pdfView.document,
+                      ObjectIdentifier(currentDocument) == documentIdentity else { return }
+                guard didPersist else {
+                    // Keep the immediate selected-word acknowledgement. Discovery is
+                    // additive and can be retried by a later backfill.
+                    self.selectionActionToolbar.showSaveResult(found: 1, inserted: 1)
+                    return
+                }
+                self.storedWordRecords.append(contentsOf: records)
+                self.addStoredWordAnnotations(records, refineBounds: false)
+                self.refreshVocabularyPanelAfterLocalSave()
+                self.selectionActionToolbar.showSaveResult(
+                    found: foundCount,
+                    inserted: records.count + 1
+                )
+            }
         }
-        let didPersist = ReaderPerformance.measure(.vocabularyDatabaseWrite) {
-            state.newRecords.isEmpty || store.upsert(state.newRecords)
-        }
-        guard didPersist else {
-            // Keep the immediate selected-word acknowledgement. Discovery is
-            // additive and can be retried by a later backfill.
-            selectionActionToolbar.showSaveResult(found: 1, inserted: 1)
-            return
-        }
-        storedWordRecords.append(contentsOf: state.newRecords)
-        addStoredWordAnnotations(state.newRecords, refineBounds: false)
-        refreshVocabularyPanelAfterLocalSave()
-        selectionActionToolbar.showSaveResult(
-            found: state.foundKeys.count,
-            inserted: state.newRecords.count + 1
-        )
     }
 
     private func storedPDFVocabularyRecord(
