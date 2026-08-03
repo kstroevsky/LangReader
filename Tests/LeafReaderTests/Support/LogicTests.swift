@@ -864,6 +864,7 @@ private let tests: [(String, () throws -> Void)] = [
     ("Embedding key isolation", AISettingsLogicTests.testEmbeddingKeyIsolation),
     ("Embedding legacy key migration", AISettingsLogicTests.testEmbeddingLegacyKeyMigration),
     ("Embedding warmup idle policy", testEmbeddingWarmupIdlePolicy),
+    ("DOCX top-level block order", DOCXLogicTests.testTopLevelBlocksPreserveDocumentOrder),
     ("Reader entity decoding", EPUBLogicTests.testReaderEntityDecoding),
     ("EPUB text decoding", EPUBLogicTests.testEPUBTextDecoding),
     ("EPUB spine linear parsing", EPUBLogicTests.testEPUBSpineLinearParsing),

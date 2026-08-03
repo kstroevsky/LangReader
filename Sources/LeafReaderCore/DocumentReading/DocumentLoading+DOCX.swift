@@ -107,24 +107,8 @@ extension WebDocumentLoader {
     }
 
     package static func docxTopLevelBlocks(from body: String) -> [String] {
-        let nsBody = body as NSString
-        var blocks: [String] = []
-        var cursor = 0
-        while cursor < nsBody.length {
-            let remaining = NSRange(location: cursor, length: nsBody.length - cursor)
-            let pRange = nsBody.range(of: "<w:p", options: [], range: remaining)
-            let tblRange = nsBody.range(of: "<w:tbl", options: [], range: remaining)
-            let candidates = [pRange, tblRange].filter { $0.location != NSNotFound }
-            guard let start = candidates.min(by: { $0.location < $1.location }) else { break }
-            let isTable = nsBody.substring(with: NSRange(location: start.location, length: min(6, nsBody.length - start.location))).hasPrefix("<w:tbl")
-            let closeTag = isTable ? "</w:tbl>" : "</w:p>"
-            let closeRange = nsBody.range(of: closeTag, options: [], range: NSRange(location: start.location, length: nsBody.length - start.location))
-            guard closeRange.location != NSNotFound else { break }
-            let end = closeRange.location + closeRange.length
-            blocks.append(nsBody.substring(with: NSRange(location: start.location, length: end - start.location)))
-            cursor = end
-        }
-        return blocks
+        regexMatches(#"<w:p\b[\s\S]*?</w:p>|<w:tbl\b[\s\S]*?</w:tbl>"#, in: body)
+            .compactMap(\.first)
     }
 
     package static func docxTableHTML(from table: String, directory: URL, relationships: [String: String]) -> String {
