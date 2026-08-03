@@ -162,15 +162,15 @@
     const contextNeedle = normalizedContext.slice(0, Math.min(160, normalizedContext.length));
     const contextIndex = source.indexOf(contextNeedle);
     if (contextIndex < 0) return null;
-    const contextEnd = Math.min(source.length, contextIndex + normalizedContext.length);
-    const contextSource = source.slice(contextIndex, contextEnd);
-    let wordIndexInContext = contextSource.indexOf(normalizedWord);
-    if (wordIndexInContext < 0) {
-      wordIndexInContext = source.indexOf(normalizedWord, contextIndex);
-      if (wordIndexInContext < 0 || wordIndexInContext >= contextEnd) return null;
-      return rangeFromNormalizedSpan(index, wordIndexInContext, normalizedWord.length);
+    const targetOccurrence = Math.max(0, Number(occurrenceIndex || 0));
+    let wordIndex = -1;
+    let searchFrom = 0;
+    for (let seen = 0; seen <= targetOccurrence; seen += 1) {
+      wordIndex = source.indexOf(normalizedWord, searchFrom);
+      if (wordIndex < 0) return null;
+      searchFrom = wordIndex + Math.max(1, normalizedWord.length);
     }
-    return rangeFromNormalizedSpan(index, contextIndex + wordIndexInContext, normalizedWord.length);
+    return rangeFromNormalizedSpan(index, wordIndex, normalizedWord.length);
   };
   const leafReaderWordCount = (value) => String(value || '').split(/[^A-Za-z0-9]+/).filter(Boolean).length;
   const leafReaderHasCJK = (value) => /[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/.test(String(value || ''));

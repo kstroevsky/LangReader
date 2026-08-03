@@ -62,6 +62,17 @@ assert.strictEqual(wordRange.startOffset, 0);
 assert.strictEqual(wordRange.endContainer, second);
 assert.strictEqual(wordRange.endOffset, 8);
 
+const repeatedNode = textNode('Alpha beta alpha beta');
+const repeatedRange = web.rangeForWordInContext(
+  { textNodes: [repeatedNode] },
+  'alpha',
+  'Alpha beta alpha beta',
+  1
+);
+assert.strictEqual(repeatedRange.startContainer, repeatedNode);
+assert.strictEqual(repeatedRange.startOffset, 11);
+assert.strictEqual(repeatedRange.endOffset, 16);
+
 web.invalidateNormalizedIndex(root);
 assert.notStrictEqual(web.normalizedIndexForRoot(root), normalized, 'explicit invalidation should rebuild the DOM index');
 
