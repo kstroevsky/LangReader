@@ -31,10 +31,16 @@ extension ReaderWindowController {
         documentTextState.snapshotBuildStartedAt = ProcessInfo.processInfo.systemUptime
         DispatchQueue.global(qos: .utility).async { [weak self] in
             let cache = PDFDocumentTextSnapshotCache()
-            let cachedSnapshot = token.isCancelled ? nil : cache.load(
-                documentID: documentID,
-                expectedPageCount: expectedPageCount
-            )
+            let contentFingerprint = token.isCancelled
+                ? nil
+                : DocumentContentFingerprint.sha256(for: url)
+            let cachedSnapshot = contentFingerprint.flatMap {
+                token.isCancelled ? nil : cache.load(
+                    documentID: documentID,
+                    contentFingerprint: $0,
+                    expectedPageCount: expectedPageCount
+                )
+            }
             let resolvedSnapshot: PDFDocumentTextSnapshot? = cachedSnapshot ?? autoreleasepool {
                 guard !token.isCancelled,
                       let document = PDFDocument(url: url) else { return nil }
@@ -49,8 +55,11 @@ extension ReaderWindowController {
             }
             let snapshot = token.isCancelled ? nil : resolvedSnapshot
             let didUseCache = cachedSnapshot != nil && snapshot != nil
-            if cachedSnapshot == nil, !token.isCancelled, let snapshot {
-                cache.save(snapshot)
+            if cachedSnapshot == nil,
+               !token.isCancelled,
+               let snapshot,
+               let contentFingerprint {
+                cache.save(snapshot, contentFingerprint: contentFingerprint)
             }
             Task { @MainActor [weak self] in
                 self?.finishPDFDocumentTextSnapshot(

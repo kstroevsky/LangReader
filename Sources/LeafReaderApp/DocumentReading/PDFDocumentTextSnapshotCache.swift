@@ -6,13 +6,14 @@ import LeafReaderCore
 /// document identity, page count, parser contract, and OS runtime must all
 /// match before cached offsets can seed vocabulary work.
 struct PDFDocumentTextSnapshotCache: Sendable {
-    private static let parserVersion = 1
+    private static let parserVersion = 2
     private static let defaultMaximumBytes: Int64 = 256 * 1_024 * 1_024
 
     private struct Payload: Codable {
         let parserVersion: Int
         let runtimeVersion: String
         let documentID: String
+        let contentFingerprint: String
         let pageTexts: [String]
     }
 
@@ -27,7 +28,11 @@ struct PDFDocumentTextSnapshotCache: Sendable {
         self.maximumBytes = max(0, maximumBytes)
     }
 
-    func load(documentID: String, expectedPageCount: Int) -> PDFDocumentTextSnapshot? {
+    func load(
+        documentID: String,
+        contentFingerprint: String,
+        expectedPageCount: Int
+    ) -> PDFDocumentTextSnapshot? {
         guard expectedPageCount >= 0,
               let cacheURL = cacheURL(documentID: documentID),
               let data = try? Data(contentsOf: cacheURL, options: .mappedIfSafe),
@@ -35,17 +40,19 @@ struct PDFDocumentTextSnapshotCache: Sendable {
               payload.parserVersion == Self.parserVersion,
               payload.runtimeVersion == Self.runtimeVersion,
               payload.documentID == documentID,
+              payload.contentFingerprint == contentFingerprint,
               payload.pageTexts.count == expectedPageCount else { return nil }
         return PDFDocumentTextSnapshot(documentID: documentID, pageTexts: payload.pageTexts)
     }
 
-    func save(_ snapshot: PDFDocumentTextSnapshot) {
+    func save(_ snapshot: PDFDocumentTextSnapshot, contentFingerprint: String) {
         guard let directoryURL,
               let cacheURL = cacheURL(documentID: snapshot.documentID) else { return }
         let payload = Payload(
             parserVersion: Self.parserVersion,
             runtimeVersion: Self.runtimeVersion,
             documentID: snapshot.documentID,
+            contentFingerprint: contentFingerprint,
             pageTexts: snapshot.pageTexts
         )
         let encoder = PropertyListEncoder()
