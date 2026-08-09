@@ -169,22 +169,24 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let lemma = VocabularyTextPolicy.normalizedVocabularyText(rawLemma)
         let selected = VocabularyTextPolicy.normalizedVocabularyText(selectedForm)
         guard VocabularyTextPolicy.isSingleEnglishWord(lemma),
-              VocabularyTextPolicy.isSingleEnglishWord(selected) else {
+              VocabularyTextPolicy.isSingleEnglishWord(selected),
+              Self.canUseTokenPostings(selected) else {
             return pages.map { VocabularyOccurrenceMatcher.matches(query: selectedForm, in: $0.text) }
         }
 
         let lemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(lemma)
         let exactLemmaKey = Self.exactSurfaceKey(lemma)
-        let compiled = VocabularyOccurrenceMatcher.compile(query: selected)
+        let exactSelectedKey = Self.exactSurfaceKey(selected)
         return pages.map { page in
-            var occurrences = compiled.map { VocabularyOccurrenceMatcher.matches(compiled: $0, in: page.text) } ?? []
-            var seenRanges = Set(occurrences.map(Self.rangeKey))
+            var occurrences: [VocabularyTextOccurrence] = []
+            var seenRanges = Set<String>()
 
             func append(_ occurrence: VocabularyTextOccurrence) {
                 guard seenRanges.insert(Self.rangeKey(occurrence)).inserted else { return }
                 occurrences.append(occurrence)
             }
 
+            page.occurrencesByExactSurface[exactSelectedKey]?.forEach(append)
             page.occurrencesByLemmaKey[lemmaKey]?.forEach(append)
             page.occurrencesByExactSurface[exactLemmaKey]?.forEach(append)
             for lineWrap in page.lineWraps {
@@ -272,7 +274,12 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         lemmaMemo: inout [String: String]
     ) -> Page {
         guard !text.isEmpty else {
-            return Page(text: text, occurrencesByLemmaKey: [:], occurrencesByExactSurface: [:], lineWraps: [])
+            return Page(
+                text: text,
+                occurrencesByLemmaKey: [:],
+                occurrencesByExactSurface: [:],
+                lineWraps: []
+            )
         }
 
         let nsText = text as NSString
@@ -339,6 +346,15 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
 
     private static func exactSurfaceKey(_ value: String) -> String {
         VocabularyTextPolicy.normalizedVocabularyText(value).precomposedStringWithCanonicalMapping
+    }
+
+    /// Natural Language can split punctuation-bearing selections such as
+    /// `E-Mail` differently from the vocabulary matcher. Keep those on the
+    /// exact regex fallback; plain alphabetic tokens are safe posting keys.
+    private static func canUseTokenPostings(_ value: String) -> Bool {
+        !value.unicodeScalars.isEmpty && value.unicodeScalars.allSatisfy {
+            CharacterSet.letters.contains($0) || CharacterSet.nonBaseCharacters.contains($0)
+        }
     }
 
     private static func rangeKey(_ occurrence: VocabularyTextOccurrence) -> String {

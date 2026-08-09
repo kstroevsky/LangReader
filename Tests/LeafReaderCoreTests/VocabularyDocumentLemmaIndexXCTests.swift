@@ -70,4 +70,29 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         XCTAssertEqual(result["alias"]?.count, 2)
         XCTAssertEqual(result.keys.sorted(), ["alias", "gehen"])
     }
+
+    func testSingleTokenPostingsPreserveLegacyScannerResults() throws {
+        let pages = [
+            "Er ist gegangen. Wir gehen heute. Das Gehen fällt leicht.",
+            "Sie ging langsam; ein gegan-\ngener Weg war lang.",
+            "Die E-Mail und die E-\nMail kamen an."
+        ]
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(texts: pages, language: .german))
+
+        for (lemma, selectedForm) in [
+            ("gehen", "gegangen"),
+            ("gehen", "ging"),
+            ("E-Mail", "E-Mail")
+        ] {
+            XCTAssertEqual(
+                index.matches(lemma: lemma, selectedForm: selectedForm),
+                GermanLemmaOccurrenceMatcher.matches(
+                    lemma: lemma,
+                    selectedForm: selectedForm,
+                    inTexts: pages,
+                    language: .german
+                )
+            )
+        }
+    }
 }

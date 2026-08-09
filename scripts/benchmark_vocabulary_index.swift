@@ -48,5 +48,15 @@ struct VocabularyIndexBenchmark {
             }
             print("lookup,\(iteration),\(matches),\(elapsedMS)")
         }
+
+        for (label, lemma) in [("common", vocabulary[0]), ("missing", "nichtvorhanden")] {
+            for iteration in 0..<iterations {
+                let startedAt = ProcessInfo.processInfo.systemUptime
+                let matches = index.matches(lemma: lemma, selectedForm: lemma)
+                    .reduce(into: 0) { $0 += $1.count }
+                let elapsedMS = (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
+                print("single-\(label),\(iteration),\(matches),\(elapsedMS)")
+            }
+        }
     }
 }
