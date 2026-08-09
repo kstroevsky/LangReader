@@ -202,27 +202,38 @@ extension ReaderWindowController {
         updatePDF: (inout StoredPDFWordRecord) -> Bool,
         updateWeb: (inout StoredWebWordRecord) -> Bool
     ) -> VocabularyRecordMutationResult {
-        var didUpdatePDF = false
+        var updatedPDFRecords: [StoredPDFWordRecord] = []
         for index in storedWordRecords.indices where ids.contains(storedWordRecords[index].id) {
             guard updatePDF(&storedWordRecords[index]) else { continue }
-            saveStoredWordRecord(storedWordRecords[index])
-            didUpdatePDF = true
+            updatedPDFRecords.append(storedWordRecords[index])
         }
-        if didUpdatePDF {
-            saveStoredWordRecords()
+        if !updatedPDFRecords.isEmpty {
+            let didSave = ReaderPerformance.measure(.vocabularyDatabaseWrite) {
+                pdfWordRecordStore?.upsert(updatedPDFRecords) == true
+            }
+            if !didSave {
+                saveStoredWordRecords()
+            }
         }
 
-        var didUpdateWeb = false
+        var updatedWebRecords: [StoredWebWordRecord] = []
         for index in storedWebWordRecords.indices where ids.contains(storedWebWordRecords[index].id) {
             guard updateWeb(&storedWebWordRecords[index]) else { continue }
-            saveStoredWebWordRecord(storedWebWordRecords[index])
-            didUpdateWeb = true
+            updatedWebRecords.append(storedWebWordRecords[index])
         }
-        if didUpdateWeb {
-            saveStoredWebWordRecords()
+        if !updatedWebRecords.isEmpty {
+            let didSave = ReaderPerformance.measure(.vocabularyDatabaseWrite) {
+                webWordRecordStore?.upsert(updatedWebRecords) == true
+            }
+            if !didSave {
+                saveStoredWebWordRecords()
+            }
         }
 
-        return VocabularyRecordMutationResult(didUpdatePDF: didUpdatePDF, didUpdateWeb: didUpdateWeb)
+        return VocabularyRecordMutationResult(
+            didUpdatePDF: !updatedPDFRecords.isEmpty,
+            didUpdateWeb: !updatedWebRecords.isEmpty
+        )
     }
 
     func scheduleStoredWordRecordsSave() {
