@@ -113,6 +113,8 @@ if [[ ! -x "$APP_BINARY" ]]; then
   exit 2
 fi
 mkdir -p "$(dirname "$OUT_BASE")"
+OUT_DIRECTORY="$(cd "$(dirname "$OUT_BASE")" && pwd)"
+OUT_BASE="$OUT_DIRECTORY/$(basename "$OUT_BASE")"
 RUN_DIRECTORY="$(mktemp -d "$(dirname "$OUT_BASE")/.perf-capture.XXXXXX")"
 RUN_STARTED="$(date +%s)"
 PERFORMANCE_ENVIRONMENT_INSTALLED=0
