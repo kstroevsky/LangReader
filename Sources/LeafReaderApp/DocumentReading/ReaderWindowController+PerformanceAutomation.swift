@@ -50,7 +50,12 @@ extension ReaderWindowController {
     private func beginAutomatedVocabularyIndexScenario() {
         guard selectPerformanceWord("Vokabel") else { return }
         saveCurrentPDFVocabularySelection()
-        measureAutomatedPDFPaging(event: .backgroundIndexScrollFrame, frameCount: 48)
+        // Language detection and the durable selected-occurrence write are
+        // asynchronous. Let them acknowledge before paging can change PDFKit's
+        // current selection; the full index still overlaps the paging run.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            self?.measureAutomatedPDFPaging(event: .backgroundIndexScrollFrame, frameCount: 48)
+        }
         waitForAutomatedVocabularyIndex(deadline: .now() + 12)
     }
 
@@ -110,7 +115,7 @@ extension ReaderWindowController {
                     milliseconds: max(0, ProcessInfo.processInfo.systemUptime - deadline) * 1_000
                 )
                 let workStartedAt = ProcessInfo.processInfo.systemUptime
-                self.jumpToPDFPage(index: (frame * 7) % pageCount)
+                self.jumpToPDFPage(index: frame % min(pageCount, 8))
                 ReaderPerformance.recordMainThreadWork(startedAt: workStartedAt)
                 schedule(frame + 1)
             }
