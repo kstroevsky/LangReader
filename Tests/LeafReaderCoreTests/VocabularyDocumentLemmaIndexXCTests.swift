@@ -95,4 +95,19 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
             )
         }
     }
+
+    func testGroupedLookupReturnsNoPartialResultAfterCancellation() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: Array(repeating: "Wir gehen heute.", count: 20),
+            language: .german
+        ))
+        var checks = 0
+        let result = index.matches(lemmasByKey: ["gehen": "gehen"]) {
+            checks += 1
+            return checks > 3
+        }
+
+        XCTAssertNil(result)
+        XCTAssertLessThanOrEqual(checks, 4)
+    }
 }

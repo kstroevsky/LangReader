@@ -208,13 +208,26 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     /// Returns one grouped result dictionary per input page, preserving page
     /// positions for callers that need to create PDF selections afterwards.
     package func matches(lemmasByKey: [String: String]) -> [[String: [VocabularyTextOccurrence]]] {
+        matches(lemmasByKey: lemmasByKey, isCancelled: { false }) ?? []
+    }
+
+    /// Cancellable form used by document-scoped background restoration. A nil
+    /// result is unambiguously incomplete and must never be persisted.
+    package func matches(
+        lemmasByKey: [String: String],
+        isCancelled: () -> Bool
+    ) -> [[String: [VocabularyTextOccurrence]]]? {
+        guard !isCancelled() else { return nil }
         guard !lemmasByKey.isEmpty else { return pages.map { _ in [:] } }
         let exactSurfaceByGroupKey = lemmasByKey.mapValues(Self.exactSurfaceKey)
         var groupKeysByExactSurface: [String: [String]] = [:]
         for (groupKey, exactSurface) in exactSurfaceByGroupKey {
             groupKeysByExactSurface[exactSurface, default: []].append(groupKey)
         }
-        return pages.map { page in
+        var pageResults: [[String: [VocabularyTextOccurrence]]] = []
+        pageResults.reserveCapacity(pages.count)
+        for page in pages {
+            guard !isCancelled() else { return nil }
             var result: [String: [VocabularyTextOccurrence]] = [:]
             var seen: [String: Set<String>] = [:]
 
@@ -250,6 +263,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                 }
             }
             for lineWrap in page.lineWraps {
+                guard !isCancelled() else { return nil }
                 for (candidate, key) in [
                     (lineWrap.dehyphenated, lineWrap.dehyphenatedLemmaKey),
                     (lineWrap.hyphenated, lineWrap.hyphenatedLemmaKey)
@@ -262,8 +276,9 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                     }
                 }
             }
-            return result.mapValues(Self.sorted)
+            pageResults.append(result.mapValues(Self.sorted))
         }
+        return pageResults
     }
 
     private static func buildPage(
