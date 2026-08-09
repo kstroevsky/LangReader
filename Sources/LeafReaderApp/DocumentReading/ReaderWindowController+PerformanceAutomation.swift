@@ -127,6 +127,7 @@ extension ReaderWindowController {
                     milliseconds: max(0, ProcessInfo.processInfo.systemUptime - deadline) * 1_000
                 )
                 let workStartedAt = ProcessInfo.processInfo.systemUptime
+                self.markReaderInteraction()
                 self.jumpToPDFPage(index: frame % min(pageCount, 8))
                 ReaderPerformance.recordMainThreadWork(startedAt: workStartedAt)
                 schedule(frame + 1)

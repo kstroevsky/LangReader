@@ -28,6 +28,7 @@ struct PDFVocabularyPriorityIndexResult: Sendable {
 final class PDFDocumentTextCancellationToken: @unchecked Sendable {
     private let lock = NSLock()
     private var cancelled = false
+    private var deferredUntil: TimeInterval = 0
 
     func cancel() {
         lock.lock()
@@ -39,6 +40,29 @@ final class PDFDocumentTextCancellationToken: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         return cancelled
+    }
+
+    func deferWork(for duration: TimeInterval) {
+        guard duration > 0 else { return }
+        let deadline = ProcessInfo.processInfo.systemUptime + duration
+        lock.lock()
+        deferredUntil = max(deferredUntil, deadline)
+        lock.unlock()
+    }
+
+    /// Returns `true` when cancelled. Background work calls this at bounded
+    /// checkpoints so reader input wins without spinning or blocking the main
+    /// thread. Cancellation latency remains bounded by the 50ms sleep slice.
+    func waitUntilRunnableOrCancelled() -> Bool {
+        while true {
+            lock.lock()
+            let shouldCancel = cancelled
+            let delay = deferredUntil - ProcessInfo.processInfo.systemUptime
+            lock.unlock()
+            if shouldCancel { return true }
+            if delay <= 0 { return false }
+            Thread.sleep(forTimeInterval: min(delay, 0.05))
+        }
     }
 }
 

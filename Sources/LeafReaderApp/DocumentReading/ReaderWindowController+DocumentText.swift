@@ -46,7 +46,7 @@ extension ReaderWindowController {
                       let document = PDFDocument(url: url) else { return nil }
                 var pageTexts = [String](repeating: "", count: document.pageCount)
                 for pageIndex in 0..<document.pageCount {
-                    guard !token.isCancelled else { return nil }
+                    guard !token.waitUntilRunnableOrCancelled() else { return nil }
                     pageTexts[pageIndex] = preloadedPageTexts[pageIndex]
                         ?? document.page(at: pageIndex)?.string
                         ?? ""
@@ -124,7 +124,7 @@ extension ReaderWindowController {
                     language: language,
                     maximumWorkerCount: 4,
                     seed: seed,
-                    isCancelled: { token.isCancelled }
+                    isCancelled: { token.waitUntilRunnableOrCancelled() }
                 )
                 Task { @MainActor [weak self] in
                     self?.finishPDFVocabularyIndex(
