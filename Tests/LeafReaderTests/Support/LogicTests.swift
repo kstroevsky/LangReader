@@ -705,6 +705,7 @@ private let tests: [(String, () throws -> Void)] = [
     ("Performance recorder omits unmeasured", PerformanceRecorderTests.testUnrecordedEventsAreAbsent),
     ("Performance report stable order", PerformanceRecorderTests.testReportRowsAreInEventOrderRegardlessOfRecordOrder),
     ("Performance report deterministic JSON", PerformanceRecorderTests.testJSONIsDeterministicAndRounded),
+    ("Performance report metadata JSON", PerformanceRecorderTests.testJSONMetadataIsDeterministicAndEscaped),
     ("Performance recorder reset", PerformanceRecorderTests.testResetDiscardsSamples),
     ("Reader presentation default title", ReaderPresentationStateTests.testDefaultTitleIsEmpty),
     ("Reader presentation set title", ReaderPresentationStateTests.testSetTitleIsAuthoritative),

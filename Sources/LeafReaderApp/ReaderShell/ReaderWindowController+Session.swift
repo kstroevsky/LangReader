@@ -367,6 +367,9 @@ extension ReaderWindowController {
     }
 
     func scheduleSessionRestoreAfterInitialPaint() {
+        if ProcessInfo.processInfo.environment["LEAFVOCAB_PERF_DISABLE_SESSION_RESTORE"] == "1" {
+            return
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + ReaderSessionPolicy.initialRestoreDelay) { [weak self] in
             guard let self, self.currentFileURL == nil else { return }
             self.restoreSession()

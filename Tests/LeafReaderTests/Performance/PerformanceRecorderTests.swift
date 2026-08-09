@@ -55,6 +55,9 @@ enum PerformanceRecorderTests {
         }
         let row = try unwrap(recorder.report().rows.first, "expected at least one row")
         try expectEqual(row.count, 3, "three samples")
+        for (actual, expected) in zip(row.samplesMS, [10.0, 20.0, 60.0]) {
+            try expectClose(actual, expected, "raw samples retain observation order")
+        }
         try expectClose(row.minMS, 10, "min is the smallest sample")
         try expectClose(row.maxMS, 60, "max is the largest sample")
         try expectClose(row.medianMS, 20, "median of 10/20/60 is the middle value")
@@ -105,6 +108,21 @@ enum PerformanceRecorderTests {
         try expect(json.contains("\"event\": \"launch\""), "JSON keys the row by the stable raw value")
         try expect(json.contains("\"count\": 2"), "JSON reports the sample count")
         try expect(json.contains("\"median_ms\": 250.0"), "JSON rounds to one decimal for stable diffs")
+        try expect(json.contains("\"samples_ms\": [250.1, 249.9]"), "JSON preserves rounded raw samples in observation order")
+        try expect(json.contains("\"schema_version\": 2"), "JSON declares the raw-sample schema")
+    }
+
+    static func testJSONMetadataIsDeterministicAndEscaped() throws {
+        let recorder = PerformanceRecorder()
+        recorder.record(.launch, milliseconds: 1)
+        let json = recorder.report().json(metadata: [
+            "source_revision": "abc123",
+            "phase": "cold\nrun"
+        ])
+        let phaseRange = try unwrap(json.range(of: "\"phase\""), "phase metadata should exist")
+        let revisionRange = try unwrap(json.range(of: "\"source_revision\""), "revision metadata should exist")
+        try expect(phaseRange.lowerBound < revisionRange.lowerBound, "metadata keys are serialized in stable order")
+        try expect(json.contains("cold\\nrun"), "metadata values are JSON escaped")
     }
 
     static func testResetDiscardsSamples() throws {
