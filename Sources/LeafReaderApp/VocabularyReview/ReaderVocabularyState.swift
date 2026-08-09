@@ -15,6 +15,7 @@ struct ReaderVocabularyState {
     var webWordRecordStore: WebWordRecordStore?
     var currentExportRecords: [VocabularyExportRecord] = []
     var occurrenceSearchID: UUID?
+    var occurrenceSearchCancellationToken: PDFDocumentTextCancellationToken?
     var expandedOccurrenceKeys: Set<String> = []
     var pendingLibraryOccurrence: VocabularyLibraryOccurrence?
     var renderedPDFWordAnnotations: [(page: PDFPage, annotation: PDFAnnotation)] = []

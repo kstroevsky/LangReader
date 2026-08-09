@@ -244,6 +244,9 @@ extension ReaderWindowController {
     }
 
     func invalidateDocumentTextState() {
+        vocabularyState.occurrenceSearchCancellationToken?.cancel()
+        vocabularyState.occurrenceSearchCancellationToken = nil
+        vocabularyState.occurrenceSearchID = nil
         documentTextState.snapshotCancellationToken?.cancel()
         documentTextState.vocabularyIndexCancellationToken?.cancel()
         documentTextState.vocabularyPriorityCancellationToken?.cancel()

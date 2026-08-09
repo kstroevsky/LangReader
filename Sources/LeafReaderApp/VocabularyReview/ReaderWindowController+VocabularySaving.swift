@@ -152,19 +152,27 @@ extension ReaderWindowController {
               pdfView.document != nil else { return }
 
         let searchID = UUID()
+        vocabularyState.occurrenceSearchCancellationToken?.cancel()
+        let cancellationToken = PDFDocumentTextCancellationToken()
         let language = vocabularyDocumentLanguage
         vocabularyState.occurrenceSearchID = searchID
+        vocabularyState.occurrenceSearchCancellationToken = cancellationToken
         ensurePDFVocabularyIndex(language: language) { [weak self] snapshot, index in
             guard let self,
                   self.vocabularyState.occurrenceSearchID == searchID,
+                  self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
                   self.currentFileMD5 == documentID else { return }
             guard let snapshot, let index else {
                 self.vocabularyState.occurrenceSearchID = nil
+                self.vocabularyState.occurrenceSearchCancellationToken = nil
                 return
             }
             DispatchQueue.global(qos: .utility).async { [weak self] in
                 let lemmasByKey = Dictionary(uniqueKeysWithValues: groups.map { ($0.key, $0.lemma) })
-                let groupedMatches = index.matches(lemmasByKey: lemmasByKey)
+                guard let groupedMatches = index.matches(
+                    lemmasByKey: lemmasByKey,
+                    isCancelled: { cancellationToken.isCancelled }
+                ) else { return }
                 let matches = groupedMatches.enumerated().flatMap { pageIndex, groups in
                     groups.flatMap { groupKey, occurrences in
                         occurrences.map {
@@ -182,6 +190,7 @@ extension ReaderWindowController {
                 DispatchQueue.main.async {
                     guard let self,
                           self.vocabularyState.occurrenceSearchID == searchID,
+                          self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
                           self.currentFileMD5 == documentID,
                           let document = self.pdfView.document else { return }
                     self.finishBackfillingGermanLemmaOccurrences(
@@ -200,6 +209,7 @@ extension ReaderWindowController {
         document: PDFDocument
     ) {
         vocabularyState.occurrenceSearchID = nil
+        vocabularyState.occurrenceSearchCancellationToken = nil
         guard let store = pdfWordRecordStore,
               let documentID = currentFileMD5 else { return }
         let groupsByKey = Dictionary(uniqueKeysWithValues: groups.map { ($0.key, $0) })
@@ -337,7 +347,10 @@ extension ReaderWindowController {
         recordPersonalVocabularyQuery(word)
 
         let searchID = UUID()
+        vocabularyState.occurrenceSearchCancellationToken?.cancel()
+        let cancellationToken = PDFDocumentTextCancellationToken()
         vocabularyState.occurrenceSearchID = searchID
+        vocabularyState.occurrenceSearchCancellationToken = cancellationToken
         beginPDFVocabularyOccurrenceDiscovery(
             word: word,
             lemma: lemma,
@@ -348,6 +361,7 @@ extension ReaderWindowController {
             documentID: documentID,
             totalPageCount: document.pageCount,
             searchID: searchID,
+            cancellationToken: cancellationToken,
             saveStartedAt: Date()
         )
     }
@@ -362,6 +376,7 @@ extension ReaderWindowController {
         documentID: String,
         totalPageCount: Int,
         searchID: UUID,
+        cancellationToken: PDFDocumentTextCancellationToken,
         saveStartedAt: Date
     ) {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -372,6 +387,7 @@ extension ReaderWindowController {
             DispatchQueue.main.async {
                 guard let self,
                       self.vocabularyState.occurrenceSearchID == searchID,
+                      self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
                       self.currentFileMD5 == documentID else { return }
                 self.selectionActionToolbar.showExactSaveProgress(
                     found: exactFound,
@@ -396,6 +412,7 @@ extension ReaderWindowController {
                         selectedRecord: selectedRecord,
                         documentID: documentID,
                         searchID: searchID,
+                        cancellationToken: cancellationToken,
                         saveStartedAt: saveStartedAt
                     )
                 }
@@ -411,9 +428,11 @@ extension ReaderWindowController {
         selectedRecord: StoredPDFWordRecord,
         documentID: String,
         searchID: UUID,
+        cancellationToken: PDFDocumentTextCancellationToken,
         saveStartedAt: Date
     ) {
         guard vocabularyState.occurrenceSearchID == searchID,
+              vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
               currentFileMD5 == documentID else { return }
         if let priorityResult {
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -426,6 +445,7 @@ extension ReaderWindowController {
                 DispatchQueue.main.async {
                     guard let self,
                           self.vocabularyState.occurrenceSearchID == searchID,
+                          self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
                           self.currentFileMD5 == documentID else { return }
                     self.selectionActionToolbar.showSaveProgress(
                         found: found,
@@ -442,9 +462,11 @@ extension ReaderWindowController {
         ) { [weak self] snapshot, index in
             guard let self,
                   self.vocabularyState.occurrenceSearchID == searchID,
+                  self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
                   self.currentFileMD5 == documentID else { return }
             guard let snapshot, let index else {
                 self.vocabularyState.occurrenceSearchID = nil
+                self.vocabularyState.occurrenceSearchCancellationToken = nil
                 return
             }
             let snapshotsReadyAt = Date()
@@ -471,6 +493,7 @@ extension ReaderWindowController {
                 DispatchQueue.main.async {
                     guard let self,
                           self.vocabularyState.occurrenceSearchID == searchID,
+                          self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
                           self.currentFileMD5 == documentID,
                           let document = self.pdfView.document else {
                         return
@@ -500,6 +523,7 @@ extension ReaderWindowController {
         saveStartedAt: Date
     ) {
         vocabularyState.occurrenceSearchID = nil
+        vocabularyState.occurrenceSearchCancellationToken = nil
         guard let store = pdfWordRecordStore else {
             // The selected occurrence was already committed before discovery
             // began. A cancelled document transition must not turn that durable
@@ -777,6 +801,8 @@ extension ReaderWindowController {
         guard !ids.isEmpty else { return false }
 
         vocabularyState.occurrenceSearchID = nil
+        vocabularyState.occurrenceSearchCancellationToken?.cancel()
+        vocabularyState.occurrenceSearchCancellationToken = nil
         cancelPDFVocabularyPriorityIndexBuild()
         removeVocabularyRecords(ids: ids)
         refreshVocabularyPanelAfterLocalSave()
