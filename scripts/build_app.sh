@@ -3,15 +3,26 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP_SOURCE_ROOT="$ROOT_DIR/Sources/LeafReaderApp"
-# The shipping build compiles the core first as a separate Swift module and
-# static library, then compiles and links the app against that module. This is
-# the same boundary enforced by SwiftPM and `check_core_portable.sh`.
-CORE_SOURCE_ROOT="$ROOT_DIR/Sources/LeafReaderCore"
 APP_RESOURCE_ROOT="$APP_SOURCE_ROOT/Resources"
 APP_METADATA_ROOT="$APP_SOURCE_ROOT/App"
 APP_NAME="Leaf Vocabulary"
 APP_PATH="$ROOT_DIR/$APP_NAME.app"
-SPARKLE_HOME="${SPARKLE_HOME:-/opt/homebrew/Caskroom/sparkle/2.9.2}"
+
+discover_sparkle_home() {
+  local cask_root="/opt/homebrew/Caskroom/sparkle"
+  local candidate
+  local latest=""
+
+  [[ -d "$cask_root" ]] || return 0
+  while IFS= read -r candidate; do
+    if [[ -d "$candidate/Sparkle.framework" ]]; then
+      latest="$candidate"
+    fi
+  done < <(find "$cask_root" -mindepth 1 -maxdepth 1 -type d -print | LC_ALL=C sort -V)
+  printf '%s' "$latest"
+}
+
+SPARKLE_HOME="${SPARKLE_HOME:-$(discover_sparkle_home)}"
 APP_SIGN_IDENTITY="${APP_SIGN_IDENTITY:--}"
 MACOS_DEPLOYMENT_TARGET="${MACOS_DEPLOYMENT_TARGET:-14.0}"
 ARCHS="${ARCHS:-arm64}"
@@ -83,14 +94,7 @@ for ARCH in "${BUILD_ARCHS[@]}"; do
   esac
 done
 case "$BUILD_CONFIGURATION" in
-  debug)
-    # Line-table debug info remains fully useful for breakpoints and stack traces,
-    # while avoiding a Command Line Tools linker failure when Swift tries to attach
-    # the full .swiftmodule AST to this large, directly-compiled executable.
-    SWIFT_BUILD_FLAGS=(-Onone -gline-tables-only)
-    ;;
-  release)
-    SWIFT_BUILD_FLAGS=(-O)
+  debug|release)
     ;;
   *)
     echo "Unsupported build configuration: $BUILD_CONFIGURATION" >&2
@@ -100,6 +104,7 @@ case "$BUILD_CONFIGURATION" in
 esac
 echo "Building configuration: $BUILD_CONFIGURATION"
 echo "Building architectures: ${BUILD_ARCHS[*]}"
+echo "Compiler backend: SwiftPM (persistent .build cache)"
 
 ESPEAK_BUNDLED_DICTS=(en_dict)
 PIPER_ESPEAK_LANG_DIRS=(gmw)
@@ -224,9 +229,18 @@ runtime_supports_supertonic() {
   return "$result"
 }
 
-if [[ ! -d "$SPARKLE_HOME/Sparkle.framework" ]]; then
-  echo "Sparkle.framework not found at $SPARKLE_HOME" >&2
+if [[ -z "$SPARKLE_HOME" || ! -d "$SPARKLE_HOME/Sparkle.framework" ]]; then
+  if [[ -n "$SPARKLE_HOME" ]]; then
+    echo "Sparkle.framework not found at $SPARKLE_HOME" >&2
+  else
+    echo "Sparkle.framework was not found in the Homebrew Caskroom." >&2
+  fi
   echo "Install Sparkle with: brew install --cask sparkle" >&2
+  exit 1
+fi
+if [[ "$SPARKLE_HOME/Sparkle.framework" == "$APP_PATH/Contents/Frameworks/Sparkle.framework" ]]; then
+  echo "Sparkle source cannot be the framework inside the output app bundle." >&2
+  echo "Install Sparkle with Homebrew or set SPARKLE_HOME to a separate framework directory." >&2
   exit 1
 fi
 
@@ -317,20 +331,6 @@ xattr -cr "$APP_PATH"
 xattr -crs "$APP_PATH"
 
 BINARY_PATH="$APP_PATH/Contents/MacOS/$APP_NAME"
-APP_SWIFT_SOURCES=()
-while IFS= read -r source; do
-  APP_SWIFT_SOURCES+=("$source")
-done < <(find "$APP_SOURCE_ROOT" -type f -name '*.swift' -print | LC_ALL=C sort)
-if [[ "${#APP_SWIFT_SOURCES[@]}" -eq 0 ]]; then
-  echo "No Swift app sources found under $APP_SOURCE_ROOT" >&2
-  exit 1
-fi
-if ! find "$CORE_SOURCE_ROOT" -type f -name '*.swift' -print -quit | grep -q .; then
-  echo "No Swift core sources found under $CORE_SOURCE_ROOT" >&2
-  exit 1
-fi
-CORE_BUILD_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/leafreader-core-build.XXXXXX")"
-trap 'rm -rf "$CORE_BUILD_ROOT"' EXIT
 if [[ ! -f "$APP_SOURCE_ROOT/App/main.swift" ]]; then
   echo "App entry point not found at $APP_SOURCE_ROOT/App/main.swift" >&2
   exit 1
@@ -338,32 +338,23 @@ fi
 TEMP_BINARIES=()
 for ARCH in "${BUILD_ARCHS[@]}"; do
   ARCH_BINARY="$APP_PATH/Contents/MacOS/$APP_NAME-$ARCH"
-  ARCH_TRIPLE="$ARCH-apple-macos$MACOS_DEPLOYMENT_TARGET"
-  # Per architecture, because a .swiftmodule records the triple it was built for.
-  CORE_BUILD_DIR="$CORE_BUILD_ROOT/$ARCH"
-  "$ROOT_DIR/scripts/build_core_module.sh" "$CORE_BUILD_DIR" "$ARCH_TRIPLE" \
-    "${SWIFT_BUILD_FLAGS[@]}"
-  swiftc "${APP_SWIFT_SOURCES[@]}" \
-    "${SWIFT_BUILD_FLAGS[@]}" \
-    -swift-version 6 \
-    -target "$ARCH_TRIPLE" \
-    -package-name LeafReader \
-    -I "$CORE_BUILD_DIR" \
-    -L "$CORE_BUILD_DIR" \
-    -lLeafReaderCore \
-    -F "$SPARKLE_HOME" \
-    -o "$ARCH_BINARY" \
-    -framework Cocoa \
-    -framework PDFKit \
-    -framework WebKit \
-    -framework CryptoKit \
-    -framework AVFoundation \
-    -framework Network \
-    -framework NaturalLanguage \
-    -framework Sparkle \
-    -lsqlite3 \
-    -Xlinker -rpath \
-    -Xlinker @executable_path/../Frameworks
+  ARCH_TRIPLE="$ARCH-apple-macosx$MACOS_DEPLOYMENT_TARGET"
+  SWIFTPM_ARGS=(
+    --package-path "$ROOT_DIR"
+    --configuration "$BUILD_CONFIGURATION"
+    --product LeafReaderApp
+    --triple "$ARCH_TRIPLE"
+  )
+  SWIFTPM_BIN_DIR="$(
+    SPARKLE_HOME="$SPARKLE_HOME" swift build "${SWIFTPM_ARGS[@]}" --show-bin-path
+  )"
+  SPARKLE_HOME="$SPARKLE_HOME" swift build "${SWIFTPM_ARGS[@]}"
+  SWIFTPM_BINARY="$SWIFTPM_BIN_DIR/LeafReaderApp"
+  if [[ ! -x "$SWIFTPM_BINARY" ]]; then
+    echo "SwiftPM product not found at $SWIFTPM_BINARY" >&2
+    exit 1
+  fi
+  cp "$SWIFTPM_BINARY" "$ARCH_BINARY"
   TEMP_BINARIES+=("$ARCH_BINARY")
 done
 

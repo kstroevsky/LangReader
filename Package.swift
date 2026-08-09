@@ -4,11 +4,13 @@ import Foundation
 import PackageDescription
 
 let repositoryRoot = FileManager.default.currentDirectoryPath
-let sparkleCandidates = [
-    ProcessInfo.processInfo.environment["SPARKLE_HOME"],
-    "/opt/homebrew/Caskroom/sparkle/2.9.2",
-    "\(repositoryRoot)/Leaf Vocabulary.app/Contents/Frameworks"
-].compactMap { $0 }
+let sparkleCaskRoot = "/opt/homebrew/Caskroom/sparkle"
+let sparkleCaskHomes = (try? FileManager.default.contentsOfDirectory(atPath: sparkleCaskRoot))?
+    .sorted { $0.compare($1, options: .numeric) == .orderedDescending }
+    .map { "\(sparkleCaskRoot)/\($0)" } ?? []
+let sparkleCandidates = [ProcessInfo.processInfo.environment["SPARKLE_HOME"]].compactMap { $0 }
+    + sparkleCaskHomes
+    + ["\(repositoryRoot)/Leaf Vocabulary.app/Contents/Frameworks"]
 let sparkleHome = sparkleCandidates.first {
     FileManager.default.fileExists(atPath: "\($0)/Sparkle.framework")
 } ?? sparkleCandidates[0]
@@ -25,12 +27,10 @@ let package = Package(
         // The platform-neutral core. It links no UI framework, so anything that
         // reaches for AppKit, PDFKit or WebKit fails here rather than in review.
         //
-        // The shipping build compiles the core as a real, separate module too:
-        // `scripts/build_app.sh` builds it via `scripts/build_core_module.sh`
-        // (Swift 6, `-package-name LeafReader`) and links the app against it, so
-        // the boundary the compiler enforces here is the same one the app binary
-        // is built on — not just a check. This SwiftPM manifest is what
-        // `swift build` and the portability check use; the two stay in step.
+        // `scripts/build_app.sh` delegates compilation to this package and copies
+        // the resulting product into the signed app bundle. That keeps this real
+        // module boundary in shipping builds while reusing SwiftPM's persistent
+        // incremental products instead of compiling every source from scratch.
         .target(
             name: "LeafReaderCore",
             path: "Sources/LeafReaderCore",
