@@ -95,6 +95,11 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     weak var zoomGroupView: NSView?
     var documentSession = DocumentSession()
     var documentPresentationState = DocumentPresentationState()
+    var activeVisibleDocumentLoadStartedAt: TimeInterval?
+    var activeVisibleDocumentLoadKind: ReaderDocumentKind?
+    var activeVisibleDocumentLoadIsSessionRestore = false
+    var pendingPDFCoverThumbnailRequest: (url: URL, documentID: String?)?
+    var pendingPDFTOCBuildRequest: (url: URL, displayBox: PDFDisplayBox)?
     /// Hits for the current PDF query. The web path keeps its hits in the page,
     /// so only the PDF side stores them here.
     var searchResults: [PDFSelection] = []

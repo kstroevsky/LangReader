@@ -16,6 +16,7 @@ extension ReaderWindowController {
         let records = ReaderPerformance.measure(.vocabularyRecordLoad) {
             store.load()
         }
+        updatePDFVocabularyDocumentLanguage(from: records)
         guard store.needsMetadataRepair else { return records }
         let repairSpan = ReaderPerformance.begin(.vocabularyRecordRepair)
         defer { ReaderPerformance.end(repairSpan) }

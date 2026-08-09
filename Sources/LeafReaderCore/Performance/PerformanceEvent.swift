@@ -21,6 +21,12 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
     case epubContentReady
     case docxContentReady
     case firstPageDisplay
+    case pdfCoverThumbnail
+    case documentVisibleReady
+    case pdfVisibleReady
+    case epubVisibleReady
+    case docxVisibleReady
+    case restoredDocumentVisibleReady
     case shelfOpen
     case notesOpen
     case vocabularyLibraryOpen
@@ -34,6 +40,7 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
     case vocabularyOccurrencePersistence
     case vocabularyRecordLoad
     case vocabularyRecordRepair
+    case vocabularyLanguageDetection
     case vocabularyDatabaseWrite
     case visibleHighlightMaterialization
     case webHighlightRestore
@@ -58,6 +65,12 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
         case .epubContentReady: return "EPUB content ready"
         case .docxContentReady: return "DOCX content ready"
         case .firstPageDisplay: return "First page display"
+        case .pdfCoverThumbnail: return "PDF cover thumbnail"
+        case .documentVisibleReady: return "Document visibly ready"
+        case .pdfVisibleReady: return "PDF visibly ready"
+        case .epubVisibleReady: return "EPUB visibly ready"
+        case .docxVisibleReady: return "DOCX visibly ready"
+        case .restoredDocumentVisibleReady: return "Restored document visibly ready"
         case .shelfOpen: return "Shelf open"
         case .notesOpen: return "Notes open"
         case .vocabularyLibraryOpen: return "Vocabulary Library open"
@@ -71,6 +84,7 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
         case .vocabularyOccurrencePersistence: return "Vocabulary occurrence persistence"
         case .vocabularyRecordLoad: return "Vocabulary record load"
         case .vocabularyRecordRepair: return "Vocabulary record repair"
+        case .vocabularyLanguageDetection: return "Vocabulary language detection"
         case .vocabularyDatabaseWrite: return "Vocabulary database write"
         case .visibleHighlightMaterialization: return "Visible highlight materialization"
         case .webHighlightRestore: return "Web highlight restoration"

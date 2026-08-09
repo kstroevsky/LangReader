@@ -115,6 +115,22 @@ extension ReaderWindowController {
         )
     }
 
+    /// Establishes the PDF vocabulary language without re-extracting a spread
+    /// of pages during every open. Stored contexts are already in memory and
+    /// are the strongest cheap sample; a document with no saved words falls
+    /// back to one visible/first page. Whole-document text extraction belongs
+    /// to the reusable snapshot/index pipeline, not the first-page path.
+    func updatePDFVocabularyDocumentLanguage(from records: [StoredPDFWordRecord]) {
+        vocabularyDocumentLanguage = ReaderPerformance.measure(.vocabularyLanguageDetection) {
+            let contexts = records.compactMap(\.context)
+            if contexts.contains(where: { $0.count >= 40 }) {
+                return VocabularyLanguageDetector.language(forContexts: contexts)
+            }
+            let page = pdfView.currentPage ?? pdfView.document?.page(at: 0)
+            return VocabularyLanguageDetector.language(forSample: page?.string ?? "")
+        }
+    }
+
     func backfillStoredGermanLemmaOccurrences() {
         var seenKeys = Set<String>()
         let groups = storedWordRecords

@@ -48,7 +48,7 @@ final class LaunchPerformanceTracker: @unchecked Sendable {
         return finishedSnapshot
     }
 
-    private func elapsedMilliseconds(now: TimeInterval) -> Int {
+    func elapsedMilliseconds(now: TimeInterval = ProcessInfo.processInfo.systemUptime) -> Int {
         max(0, Int(((now - startTime) * 1000).rounded()))
     }
 }

@@ -107,6 +107,7 @@ extension ReaderWindowController {
                         self.documentPresentationState.webContentReadyStartedAt = nil
                         self.documentPresentationState.webContentReadyDocumentKind = nil
                     }
+                    self.recordVisibleDocumentReadyIfNeeded()
                 }
             }
         }
