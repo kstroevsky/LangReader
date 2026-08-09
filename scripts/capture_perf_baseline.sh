@@ -165,7 +165,10 @@ open_fixture() {
   echo "==> Opening $(basename "$file")"
   /usr/bin/open -a "$ROOT_DIR/$APP_NAME.app" "$file"
   if [[ "$INTERACTION_MODE" == "1" ]]; then
-    sleep "${LEAFREADER_PERF_INTERACTION_WAIT:-30}"
+    # Cold PDF extraction plus bounded NaturalLanguage indexing may legitimately
+    # take more than 30 seconds on a thermally loaded machine. The automation
+    # still gates the user-visible interactions independently of completion.
+    sleep "${LEAFREADER_PERF_INTERACTION_WAIT:-60}"
   elif [[ "$DOCUMENT_MODE" == "1" || "$MATRIX_MODE" == "1" ]]; then
     sleep "${LEAFREADER_PERF_OPEN_WAIT:-8}"
   else

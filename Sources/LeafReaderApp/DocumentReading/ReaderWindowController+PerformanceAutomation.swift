@@ -24,6 +24,7 @@ extension ReaderWindowController {
     }
 
     private func runPDFPerformanceAutomation() {
+        removeStalePerformanceVocabularyRecords()
         performanceAutomationOriginalPDFRecordIDs = Set(storedWordRecords.map(\.id))
 
         performSearch("Vokabel")
@@ -66,28 +67,61 @@ extension ReaderWindowController {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
                 self?.measureAutomatedPDFPaging(event: .backgroundIndexScrollFrame, frameCount: 48)
             }
-            self.waitForAutomatedVocabularyIndex(deadline: .now() + 12)
+            self.waitForAutomatedVocabularyIndex(deadline: .now() + 55)
         }
     }
 
     private func waitForAutomatedVocabularyIndex(deadline: DispatchTime) {
         guard currentDocumentKind == .pdf else { return }
         if documentTextState.vocabularyIndex != nil {
-            if selectPerformanceWord("Sprache") {
-                saveCurrentPDFVocabularySelection()
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-                self?.cleanupAutomatedVocabularyRecords()
-            }
+            waitForAutomatedVocabularyPersistence(deadline: .now() + 10)
             return
         }
         guard DispatchTime.now() < deadline else {
+            cancelAutomatedVocabularyPersistence()
             cleanupAutomatedVocabularyRecords()
             return
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             self?.waitForAutomatedVocabularyIndex(deadline: deadline)
         }
+    }
+
+    private func waitForAutomatedVocabularyPersistence(deadline: DispatchTime) {
+        guard currentDocumentKind == .pdf else { return }
+        if vocabularyState.occurrenceSearchID == nil {
+            cleanupAutomatedVocabularyRecords()
+            return
+        }
+        guard DispatchTime.now() < deadline else {
+            cancelAutomatedVocabularyPersistence()
+            cleanupAutomatedVocabularyRecords()
+            return
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.waitForAutomatedVocabularyPersistence(deadline: deadline)
+        }
+    }
+
+    private func cancelAutomatedVocabularyPersistence() {
+        vocabularyState.occurrenceSearchCancellationToken?.cancel()
+        vocabularyState.occurrenceSearchID = nil
+        vocabularyState.occurrenceSearchCancellationToken = nil
+    }
+
+    private func removeStalePerformanceVocabularyRecords() {
+        guard let store = pdfWordRecordStore else { return }
+        let performanceKeys = Set(["Vokabel", "Sprache"].map {
+            VocabularyTextPolicy.canonicalVocabularyKey($0)
+        })
+        let staleIDs = storedWordRecords.compactMap { record in
+            performanceKeys.contains(VocabularyTextPolicy.canonicalVocabularyKey(record.word))
+                ? record.id
+                : nil
+        }
+        guard !staleIDs.isEmpty, store.delete(ids: staleIDs) else { return }
+        let staleIDSet = Set(staleIDs)
+        storedWordRecords.removeAll { staleIDSet.contains($0.id) }
     }
 
     private func selectPerformanceWord(_ word: String) -> Bool {
