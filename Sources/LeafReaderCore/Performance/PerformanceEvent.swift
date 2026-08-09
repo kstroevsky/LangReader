@@ -46,6 +46,15 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
     case webHighlightRestore
     case webSourceNavigation
     case pdfSearch
+    case searchAcknowledgement
+    case searchFirstVisibleResult
+    case searchCancellationResponse
+    case searchResultNavigation
+    case pdfZoomHighlightUpdate
+    case webFontHighlightUpdate
+    case mainThreadUninterruptedWork
+    case idleScrollFrame
+    case backgroundIndexScrollFrame
     case aiFirstToken
     case aiStreaming
     case themeSwitch
@@ -90,6 +99,15 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
         case .webHighlightRestore: return "Web highlight restoration"
         case .webSourceNavigation: return "Web source navigation"
         case .pdfSearch: return "PDF search"
+        case .searchAcknowledgement: return "Search acknowledgement"
+        case .searchFirstVisibleResult: return "Search first visible result"
+        case .searchCancellationResponse: return "Search cancellation response"
+        case .searchResultNavigation: return "Search result navigation"
+        case .pdfZoomHighlightUpdate: return "PDF zoom highlight update"
+        case .webFontHighlightUpdate: return "Web font highlight update"
+        case .mainThreadUninterruptedWork: return "Main-thread uninterrupted work"
+        case .idleScrollFrame: return "Idle scroll frame delay"
+        case .backgroundIndexScrollFrame: return "Background-index scroll frame delay"
         case .aiFirstToken: return "AI first token"
         case .aiStreaming: return "AI streaming (per chunk)"
         case .themeSwitch: return "Theme switch"

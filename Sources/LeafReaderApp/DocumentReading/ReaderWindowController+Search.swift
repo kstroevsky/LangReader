@@ -14,6 +14,14 @@ extension ReaderWindowController {
     }
 
     func performSearch(_ rawQuery: String) {
+        let acknowledgementStartedAt = ProcessInfo.processInfo.systemUptime
+        defer {
+            ReaderPerformance.record(
+                .searchAcknowledgement,
+                milliseconds: (ProcessInfo.processInfo.systemUptime - acknowledgementStartedAt) * 1_000
+            )
+            ReaderPerformance.recordMainThreadWork(startedAt: acknowledgementStartedAt)
+        }
         let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         mutateReaderPresentation { $0.setSearchQuery(query) }
         guard !query.isEmpty else {
@@ -45,10 +53,19 @@ extension ReaderWindowController {
     }
 
     func clearSearchState() {
-        activePDFSearchDocument?.cancelFindString()
+        if let activePDFSearchDocument {
+            let startedAt = ProcessInfo.processInfo.systemUptime
+            activePDFSearchDocument.cancelFindString()
+            ReaderPerformance.record(
+                .searchCancellationResponse,
+                milliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
+            )
+        }
         activePDFSearchDocument = nil
         activePDFSearchQuery = ""
         activePDFSearchStartedAt = nil
+        activePDFSearchFirstResultStartedAt = nil
+        webSearchGeneration += 1
         searchResults.removeAll()
         searchCursor.clear()
         searchOverlay.setResultText("")
@@ -70,10 +87,18 @@ extension ReaderWindowController {
                 object: nil
             )
         }
-        activePDFSearchDocument?.cancelFindString()
+        if let activePDFSearchDocument {
+            let startedAt = ProcessInfo.processInfo.systemUptime
+            activePDFSearchDocument.cancelFindString()
+            ReaderPerformance.record(
+                .searchCancellationResponse,
+                milliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
+            )
+        }
         activePDFSearchDocument = document
         activePDFSearchQuery = query
         activePDFSearchStartedAt = ProcessInfo.processInfo.systemUptime
+        activePDFSearchFirstResultStartedAt = activePDFSearchStartedAt
         searchResults.removeAll(keepingCapacity: true)
         searchCursor.setTotal(0)
         searchOverlay.setResultText("0 / …")
@@ -91,6 +116,13 @@ extension ReaderWindowController {
         searchCursor.adoptOneBased(index: searchCursor.index + 1, total: searchResults.count)
         if shouldShowFirstResult {
             showCurrentSearchResult()
+            if let startedAt = activePDFSearchFirstResultStartedAt {
+                ReaderPerformance.record(
+                    .searchFirstVisibleResult,
+                    milliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
+                )
+                activePDFSearchFirstResultStartedAt = nil
+            }
         } else {
             searchOverlay.setResultText(searchCursor.resultText)
         }
@@ -144,6 +176,14 @@ extension ReaderWindowController {
     }
 
     func showCurrentSearchResult() {
+        let navigationStartedAt = ProcessInfo.processInfo.systemUptime
+        defer {
+            ReaderPerformance.record(
+                .searchResultNavigation,
+                milliseconds: (ProcessInfo.processInfo.systemUptime - navigationStartedAt) * 1_000
+            )
+            ReaderPerformance.recordMainThreadWork(startedAt: navigationStartedAt)
+        }
         guard !searchResults.isEmpty else {
             searchOverlay.setResultText("0 / 0")
             clearPDFSelectionState()
@@ -192,6 +232,7 @@ extension ReaderWindowController {
     }
 
     func performWebSearch(_ rawQuery: String, backwards: Bool) {
+        let searchStartedAt = ProcessInfo.processInfo.systemUptime
         let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         mutateReaderPresentation { $0.setSearchQuery(query) }
         guard !query.isEmpty else {
@@ -204,6 +245,8 @@ extension ReaderWindowController {
         beginSuppressingSearchSelectionForAI()
         let escapedQuery = jsStringLiteral(query)
         let reset = searchCursor.submit(query: query) == .needsSearch
+        webSearchGeneration += 1
+        let generation = webSearchGeneration
         let script = """
         (() => {
           const query = \(escapedQuery);
@@ -215,12 +258,17 @@ extension ReaderWindowController {
         })();
         """
         webView.evaluateJavaScript(script) { [weak self] result, _ in
+            guard let self, self.webSearchGeneration == generation else { return }
             let payload = result as? [String: Any]
             let index = payload?["index"] as? Int ?? 0
             let total = payload?["total"] as? Int ?? 0
-            self?.searchCursor.adoptOneBased(index: index, total: total)
-            self?.searchOverlay.setResultText(self?.searchCursor.resultText ?? "0 / 0")
-            self?.clearSearchSelectionForAI()
+            self.searchCursor.adoptOneBased(index: index, total: total)
+            self.searchOverlay.setResultText(self.searchCursor.resultText)
+            self.clearSearchSelectionForAI()
+            ReaderPerformance.record(
+                reset ? .searchFirstVisibleResult : .searchResultNavigation,
+                milliseconds: (ProcessInfo.processInfo.systemUptime - searchStartedAt) * 1_000
+            )
         }
     }
 

@@ -87,6 +87,7 @@ extension ReaderWindowController {
             startPendingPDFTOCBuildIfNeeded()
             startPendingPDFCoverThumbnailIfNeeded()
         }
+        schedulePerformanceAutomationIfNeeded(for: kind)
     }
 
     func showDocumentLoadingFailure(_ error: Error, generation: Int) {

@@ -108,6 +108,10 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var activePDFSearchDocument: PDFDocument?
     var activePDFSearchQuery = ""
     var activePDFSearchStartedAt: TimeInterval?
+    var activePDFSearchFirstResultStartedAt: TimeInterval?
+    var webSearchGeneration = 0
+    var performanceAutomationKinds = Set<ReaderDocumentKind>()
+    var performanceAutomationOriginalPDFRecordIDs = Set<String>()
     var didRegisterPDFSearchObservers = false
     var pdfVocabularyAnnotationRestoreGeneration = 0
     var pdfNoteAnnotationRestoreGeneration = 0
