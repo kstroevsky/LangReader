@@ -48,6 +48,13 @@ extension ReaderWindowController {
     }
 
     private func beginAutomatedVocabularyIndexScenario() {
+        let suppressionDelay = suppressSearchSelectionForAIUntil.timeIntervalSinceNow
+        if suppressionDelay > 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + suppressionDelay + 0.05) { [weak self] in
+                self?.beginAutomatedVocabularyIndexScenario()
+            }
+            return
+        }
         guard selectPerformanceWord("Vokabel") else { return }
         // PDFKit posts selection-state changes asynchronously. Let the reader
         // observe the programmatic selection before invoking the real Save
