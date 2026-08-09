@@ -90,6 +90,7 @@ extension ReaderWindowController {
             let range = (text as NSString).range(of: word)
             guard range.location != NSNotFound, let selection = page.selection(for: range) else { continue }
             pdfView.setCurrentSelection(selection, animate: false)
+            selectionChanged()
             return true
         }
         return false
