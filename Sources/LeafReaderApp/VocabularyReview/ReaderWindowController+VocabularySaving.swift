@@ -487,13 +487,15 @@ extension ReaderWindowController {
             }
             let snapshotsReadyAt = Date()
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                let queryStartedAt = Date()
                 let perPage = index.matches(lemma: lemma, selectedForm: word)
                 let scanFinishedAt = Date()
-                let queryMilliseconds = scanFinishedAt.timeIntervalSince(snapshotsReadyAt) * 1000
+                let queryMilliseconds = scanFinishedAt.timeIntervalSince(queryStartedAt) * 1000
                 NSLog(
-                    "LeafVocabulary save timing: snapshots=%.0fms scan=%.0fms pages=%d reused=%d",
+                    "LeafVocabulary save timing: snapshots=%.0fms queue=%.0fms scan=%.0fms pages=%d reused=%d",
                     snapshotsReadyAt.timeIntervalSince(saveStartedAt) * 1000,
-                    scanFinishedAt.timeIntervalSince(snapshotsReadyAt) * 1000,
+                    queryStartedAt.timeIntervalSince(snapshotsReadyAt) * 1000,
+                    queryMilliseconds,
                     snapshot.pageTexts.count,
                     index.reusedPageCount
                 )

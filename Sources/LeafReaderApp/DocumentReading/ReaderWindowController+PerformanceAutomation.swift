@@ -108,10 +108,16 @@ extension ReaderWindowController {
         frameCount: Int,
         completion: (() -> Void)? = nil
     ) {
-        guard frameCount > 0, let pageCount = pdfView.document?.pageCount, pageCount > 0 else {
+        guard frameCount > 0,
+              pdfView.document?.pageCount ?? 0 > 0,
+              let documentView = pdfView.documentView,
+              let scrollView = documentView.enclosingScrollView else {
             completion?()
             return
         }
+        let clipView = scrollView.contentView
+        let startingOrigin = clipView.bounds.origin
+        let maximumY = max(0, documentView.bounds.height - clipView.bounds.height)
         let interval: TimeInterval = 1.0 / 30.0
         let start = ProcessInfo.processInfo.systemUptime
         func schedule(_ frame: Int) {
@@ -128,7 +134,14 @@ extension ReaderWindowController {
                 )
                 let workStartedAt = ProcessInfo.processInfo.systemUptime
                 self.markReaderInteraction()
-                self.jumpToPDFPage(index: frame % min(pageCount, 8))
+                // Drive the same clip view that receives ordinary trackpad
+                // scrolling. Page navigation triggers a much larger PDFKit
+                // relayout/tile lifecycle and is a different interaction.
+                let step = CGFloat(frame % 24) * 32
+                let direction: CGFloat = (frame / 24).isMultiple(of: 2) ? 1 : -1
+                let targetY = min(maximumY, max(0, startingOrigin.y + direction * step))
+                clipView.scroll(to: CGPoint(x: startingOrigin.x, y: targetY))
+                scrollView.reflectScrolledClipView(clipView)
                 ReaderPerformance.recordMainThreadWork(startedAt: workStartedAt)
                 schedule(frame + 1)
             }
