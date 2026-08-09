@@ -59,6 +59,16 @@ package enum VocabularyIndexPriorityPlanner {
 /// also supports phrases and PDF line-break spelling variants, but the costly
 /// linguistic pass is reused by every save and backfill.
 package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
+    private struct OccurrenceRangeKey: Hashable {
+        let location: Int
+        let length: Int
+
+        init(_ occurrence: VocabularyTextOccurrence) {
+            location = occurrence.range.location
+            length = occurrence.range.length
+        }
+    }
+
     private struct LineWrap: Sendable {
         let occurrence: VocabularyTextOccurrence
         let dehyphenated: String
@@ -178,17 +188,18 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let exactLemmaKey = Self.exactSurfaceKey(lemma)
         let exactSelectedKey = Self.exactSurfaceKey(selected)
         return pages.map { page in
-            var occurrences: [VocabularyTextOccurrence] = []
-            var seenRanges = Set<String>()
-
-            func append(_ occurrence: VocabularyTextOccurrence) {
-                guard seenRanges.insert(Self.rangeKey(occurrence)).inserted else { return }
-                occurrences.append(occurrence)
+            // Posting lists are already emitted in source order. Merge them
+            // directly instead of allocating a string key for every range and
+            // sorting the same common-word results again on every save.
+            var occurrences = page.occurrencesByLemmaKey[lemmaKey] ?? []
+            if let selectedOccurrences = page.occurrencesByExactSurface[exactSelectedKey] {
+                occurrences = Self.mergeSortedUnique(occurrences, selectedOccurrences)
             }
-
-            page.occurrencesByExactSurface[exactSelectedKey]?.forEach(append)
-            page.occurrencesByLemmaKey[lemmaKey]?.forEach(append)
-            page.occurrencesByExactSurface[exactLemmaKey]?.forEach(append)
+            if exactLemmaKey != exactSelectedKey,
+               let lemmaOccurrences = page.occurrencesByExactSurface[exactLemmaKey] {
+                occurrences = Self.mergeSortedUnique(occurrences, lemmaOccurrences)
+            }
+            var matchingLineWraps: [VocabularyTextOccurrence] = []
             for lineWrap in page.lineWraps {
                 let normalized = VocabularyTextPolicy.normalizedOccurrenceText(
                     lineWrap.occurrence.matchedText,
@@ -199,9 +210,9 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                     : lineWrap.dehyphenatedLemmaKey
                 guard matchKey == lemmaKey
                         || VocabularyTextPolicy.surfaceMatchesLemmaExactly(normalized, lemma) else { continue }
-                append(lineWrap.occurrence)
+                matchingLineWraps.append(lineWrap.occurrence)
             }
-            return Self.sorted(occurrences)
+            return Self.mergeSortedUnique(occurrences, matchingLineWraps)
         }
     }
 
@@ -229,11 +240,11 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         for page in pages {
             guard !isCancelled() else { return nil }
             var result: [String: [VocabularyTextOccurrence]] = [:]
-            var seen: [String: Set<String>] = [:]
+            var seen: [String: Set<OccurrenceRangeKey>] = [:]
 
             func append(_ occurrence: VocabularyTextOccurrence, key: String) {
                 guard lemmasByKey[key] != nil,
-                      seen[key, default: []].insert(Self.rangeKey(occurrence)).inserted else { return }
+                      seen[key, default: []].insert(OccurrenceRangeKey(occurrence)).inserted else { return }
                 result[key, default: []].append(occurrence)
             }
 
@@ -372,8 +383,37 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         }
     }
 
-    private static func rangeKey(_ occurrence: VocabularyTextOccurrence) -> String {
-        "\(occurrence.range.location):\(occurrence.range.length)"
+    private static func mergeSortedUnique(
+        _ lhs: [VocabularyTextOccurrence],
+        _ rhs: [VocabularyTextOccurrence]
+    ) -> [VocabularyTextOccurrence] {
+        guard !lhs.isEmpty else { return rhs }
+        guard !rhs.isEmpty else { return lhs }
+        var merged: [VocabularyTextOccurrence] = []
+        merged.reserveCapacity(lhs.count + rhs.count)
+        var leftIndex = 0
+        var rightIndex = 0
+
+        while leftIndex < lhs.count, rightIndex < rhs.count {
+            let left = lhs[leftIndex]
+            let right = rhs[rightIndex]
+            if left.range.location < right.range.location
+                || (left.range.location == right.range.location && left.range.length < right.range.length) {
+                merged.append(left)
+                leftIndex += 1
+            } else if right.range.location < left.range.location
+                || (right.range.location == left.range.location && right.range.length < left.range.length) {
+                merged.append(right)
+                rightIndex += 1
+            } else {
+                merged.append(left)
+                leftIndex += 1
+                rightIndex += 1
+            }
+        }
+        if leftIndex < lhs.count { merged.append(contentsOf: lhs[leftIndex...]) }
+        if rightIndex < rhs.count { merged.append(contentsOf: rhs[rightIndex...]) }
+        return merged
     }
 
     private static func sorted(_ occurrences: [VocabularyTextOccurrence]) -> [VocabularyTextOccurrence] {
