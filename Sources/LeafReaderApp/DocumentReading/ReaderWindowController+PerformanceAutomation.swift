@@ -33,6 +33,10 @@ extension ReaderWindowController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
             guard let self, self.currentDocumentKind == .pdf else { return }
             for _ in 0..<8 { self.goToNextSearchResult() }
+            // The paging baseline must not overlap the intentionally common
+            // PDFKit search, which can continue streaming results for seconds.
+            // Cancellation is itself one of the measured interaction paths.
+            self.clearSearchState()
             self.zoomIn()
             self.zoomOut()
             self.measureAutomatedPDFPaging(

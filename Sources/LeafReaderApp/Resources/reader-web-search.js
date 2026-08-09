@@ -27,7 +27,13 @@
         ? normalizedText(query)
         : String(query || '').toLowerCase();
       if (!needle) return [];
-      if (normalizedIndexForRoot && rangeFromNormalizedSpan) {
+      // Most interactive Find queries are simple letters/numbers. Walking text
+      // nodes for those preserves literal offsets and avoids constructing the
+      // whole-document normalization map before the first result can appear.
+      // Queries whose normalization can change offsets retain the canonical
+      // mapping path below.
+      const canUseLiteralOffsets = /^[a-z0-9 ]+$/.test(needle);
+      if (!canUseLiteralOffsets && normalizedIndexForRoot && rangeFromNormalizedSpan) {
         const index = normalizedIndexForRoot(document.body);
         const matches = [];
         let start = index.text.indexOf(needle);

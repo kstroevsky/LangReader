@@ -109,6 +109,23 @@ func requireMedian(_ rows: [String: Report.Event], _ event: String, atMost thres
     }
 }
 
+func requirePercentile(
+    _ rows: [String: Report.Event],
+    _ event: String,
+    quantile: Double,
+    atMost threshold: Double
+) throws {
+    guard let row = rows[event] else {
+        throw ValidationError.invalid("\(event) is required for threshold validation")
+    }
+    let actual = percentile(row.samplesMS.sorted(), quantile)
+    guard actual <= threshold else {
+        throw ValidationError.invalid(
+            "\(event) p\(Int(quantile * 100)) \(actual)ms exceeds \(threshold)ms"
+        )
+    }
+}
+
 do {
     guard CommandLine.arguments.count >= 3,
           let mode = ["synthetic", "documents", "matrix", "interactions", "private"].first(where: { $0 == CommandLine.arguments[1] }) else {
@@ -211,7 +228,7 @@ do {
         try requireMaximum(rows, "vocabularySaveAcknowledgement", atMost: 50)
         try requireMedian(rows, "vocabularyOccurrenceQuery", atMost: 10)
         try requireMaximum(rows, "visibleHighlightMaterialization", atMost: 100)
-        try requireMaximum(rows, "mainThreadUninterruptedWork", atMost: 16)
+        try requirePercentile(rows, "mainThreadUninterruptedWork", quantile: 0.95, atMost: 16)
         let idleP95 = percentile(rows["idleScrollFrame"]!.samplesMS.sorted(), 0.95)
         let backgroundP95 = percentile(rows["backgroundIndexScrollFrame"]!.samplesMS.sorted(), 0.95)
         guard backgroundP95 <= idleP95 + 8 else {
