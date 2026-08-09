@@ -52,12 +52,35 @@ extension ReaderWindowController {
     }
 
     func addStoredWordAnnotations(_ records: [StoredPDFWordRecord], refineBounds: Bool = true) {
-        let materializationSpan = ReaderPerformance.begin(.visibleHighlightMaterialization)
-        defer { ReaderPerformance.end(materializationSpan) }
         let visiblePageIndexes = visiblePDFPageIndexes()
         guard !records.isEmpty, !visiblePageIndexes.isEmpty else { return }
+        let visibleRecords = records.filter { visiblePageIndexes.contains($0.pageIndex) }
+        guard !visibleRecords.isEmpty else { return }
+        addStoredWordAnnotationBatch(
+            visibleRecords,
+            startingAt: 0,
+            refineBounds: refineBounds,
+            generation: pdfVocabularyAnnotationRestoreGeneration,
+            documentID: currentFileMD5
+        )
+    }
+
+    private func addStoredWordAnnotationBatch(
+        _ records: [StoredPDFWordRecord],
+        startingAt startIndex: Int,
+        refineBounds: Bool,
+        generation: Int,
+        documentID: String?
+    ) {
+        guard generation == pdfVocabularyAnnotationRestoreGeneration,
+              currentDocumentKind == .pdf,
+              currentFileMD5 == documentID else { return }
+        let materializationSpan = ReaderPerformance.begin(.visibleHighlightMaterialization)
+        defer { ReaderPerformance.end(materializationSpan) }
+        let endIndex = min(startIndex + 8, records.count)
+        let visiblePageIndexes = visiblePDFPageIndexes()
         var didAddAnnotation = false
-        for record in records where visiblePageIndexes.contains(record.pageIndex) {
+        for record in records[startIndex..<endIndex] where visiblePageIndexes.contains(record.pageIndex) {
             guard let page = pdfView.document?.page(at: record.pageIndex),
                   let bounds = refineBounds || !hasUsableStoredBounds(record.bounds.cgRect)
                     ? displayBounds(for: record, page: page)
@@ -74,6 +97,16 @@ extension ReaderWindowController {
         }
         if didAddAnnotation {
             pdfView.setNeedsDisplay(pdfView.bounds)
+        }
+        guard endIndex < records.count else { return }
+        DispatchQueue.main.async { [weak self] in
+            self?.addStoredWordAnnotationBatch(
+                records,
+                startingAt: endIndex,
+                refineBounds: refineBounds,
+                generation: generation,
+                documentID: documentID
+            )
         }
     }
 
@@ -168,10 +201,10 @@ extension ReaderWindowController {
            let pageText = page.string,
            let anchorRange = anchor.resolvedRange(in: pageText),
            let selection = page.selection(for: anchorRange) {
-            let rawBounds = selection.bounds(for: page).insetBy(dx: -1.5, dy: -1)
-            resolved = hasUsableStoredBounds(rawBounds)
-                ? displayBounds(bounds: rawBounds, word: record.occurrenceSurfaceForm, page: page)
-                : nil
+            // The semantic anchor already identifies the exact occurrence.
+            // Re-running a page-wide regex search for every visible record was
+            // quadratic for common words; tighten only this exact selection.
+            resolved = exactPDFSelectionBounds(selection, page: page)
         } else if hasUsableStoredBounds(record.bounds.cgRect) {
             resolved = displayBounds(
                 bounds: record.bounds.cgRect,
