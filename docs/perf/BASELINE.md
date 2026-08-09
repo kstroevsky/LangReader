@@ -69,6 +69,12 @@ re-run to tighten it.
 
 All values are milliseconds.
 
+`First page display` is a historical synchronous-layout seam, not an
+end-to-end usability metric: PDFKit can still be rasterising tiles and the
+reader can still be dismissing its loading state afterwards. New captures must
+use `PDF visibly ready` / `Document visibly ready` for user-perceived opening
+and retain `First page display` only as a diagnostic substage.
+
 ### Fixtures
 
 * **small.pdf** — 2 pages, ~0.5 MB. The fast path (`PDF open` ≈ 32 ms).
