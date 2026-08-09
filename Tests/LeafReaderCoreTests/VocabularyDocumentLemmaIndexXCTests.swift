@@ -53,4 +53,21 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
             isCancelled: { true }
         ))
     }
+
+    func testGroupedLookupIgnoresLargeIrrelevantVocabularyWithoutLosingAliases() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: ["Wir gehen heute. Sie gehen morgen."],
+            language: .german
+        ))
+        var groups = Dictionary(uniqueKeysWithValues: (0..<2_000).map {
+            ("missing-\($0)", "missing-\($0)")
+        })
+        groups["gehen"] = "gehen"
+        groups["alias"] = "gehen"
+
+        let result = try XCTUnwrap(index.matches(lemmasByKey: groups).first)
+        XCTAssertEqual(result["gehen"]?.count, 2)
+        XCTAssertEqual(result["alias"]?.count, 2)
+        XCTAssertEqual(result.keys.sorted(), ["alias", "gehen"])
+    }
 }

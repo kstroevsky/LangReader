@@ -207,6 +207,11 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     /// positions for callers that need to create PDF selections afterwards.
     package func matches(lemmasByKey: [String: String]) -> [[String: [VocabularyTextOccurrence]]] {
         guard !lemmasByKey.isEmpty else { return pages.map { _ in [:] } }
+        let exactSurfaceByGroupKey = lemmasByKey.mapValues(Self.exactSurfaceKey)
+        var groupKeysByExactSurface: [String: [String]] = [:]
+        for (groupKey, exactSurface) in exactSurfaceByGroupKey {
+            groupKeysByExactSurface[exactSurface, default: []].append(groupKey)
+        }
         return pages.map { page in
             var result: [String: [VocabularyTextOccurrence]] = [:]
             var seen: [String: Set<String>] = [:]
@@ -217,11 +222,28 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                 result[key, default: []].append(occurrence)
             }
 
-            for key in lemmasByKey.keys {
-                page.occurrencesByLemmaKey[key]?.forEach { append($0, key: key) }
-                if let lemma = lemmasByKey[key] {
-                    page.occurrencesByExactSurface[Self.exactSurfaceKey(lemma)]?.forEach {
-                        append($0, key: key)
+            if lemmasByKey.count <= page.occurrencesByLemmaKey.count {
+                for key in lemmasByKey.keys {
+                    page.occurrencesByLemmaKey[key]?.forEach { append($0, key: key) }
+                }
+            } else {
+                for (key, occurrences) in page.occurrencesByLemmaKey where lemmasByKey[key] != nil {
+                    occurrences.forEach { append($0, key: key) }
+                }
+            }
+
+            if groupKeysByExactSurface.count <= page.occurrencesByExactSurface.count {
+                for (exactSurface, groupKeys) in groupKeysByExactSurface {
+                    guard let occurrences = page.occurrencesByExactSurface[exactSurface] else { continue }
+                    for key in groupKeys {
+                        occurrences.forEach { append($0, key: key) }
+                    }
+                }
+            } else {
+                for (exactSurface, occurrences) in page.occurrencesByExactSurface {
+                    guard let groupKeys = groupKeysByExactSurface[exactSurface] else { continue }
+                    for key in groupKeys {
+                        occurrences.forEach { append($0, key: key) }
                     }
                 }
             }
