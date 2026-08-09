@@ -1,4 +1,4 @@
-# Performance baseline (Phase 0.3)
+# Performance baseline (Phase 0.4)
 
 The plan gates every high-frequency UI migration on a before/after measurement
 (principle 7). This is the "before". A migration of a surface listed here is not
@@ -9,8 +9,9 @@ done until its number is at least as good as this file records.
 Instrumentation is a thin layer over a platform-neutral recorder:
 
 * `LeafReaderCore/Performance/` — `PerformanceRecorder` collects timing samples
-  and `PerformanceReport` summarises them (min / median / mean / max) and
-  serialises deterministically. Unit-tested; no AppKit.
+  and `PerformanceReport` retains them in observation order, summarises them
+  (min / median / mean / max), and serialises schema-v2 JSON deterministically.
+  Unit-tested; no AppKit.
 * `LeafReaderApp/App/ReaderPerformance.swift` — the app facade. It adds an
   `os_signpost` interval per measurement (so the same runs profile in
   Instruments) and is a **no-op unless `LEAFVOCAB_PERF=1`**, so instrumentation
@@ -25,13 +26,37 @@ report to `LEAFVOCAB_PERF_OUT`.
 
 ```sh
 swift scripts/make_perf_fixtures.swift /tmp/leaf-perf-fixtures   # small.pdf, large.pdf
-SPARKLE_HOME="…/Frameworks" ./scripts/build_app.sh
+SPARKLE_HOME="…/Frameworks" ./scripts/build_app.sh --release
 ./scripts/capture_perf_baseline.sh /tmp/leaf-perf-fixtures docs/perf/baseline
 ```
 
 The capture script drives the real bundle through Apple Events, so `loadPDF`
-runs exactly as it does for a user. `docs/perf/baseline.json` is the committed
-machine-readable copy; diff it after a change.
+runs exactly as it does for a user. Cold and warm paths are separate process
+phases and separate artifacts (`*.cold.json` and `*.warm.json`). Each JSON row
+contains `samples_ms`; metadata identifies the Release binary hash, source
+revision, phase, OS, architecture, fixture-set digest, and run ID. The validator
+recomputes every aggregate from the raw samples and rejects stale, mixed-phase,
+undersampled, or non-visible captures.
+
+The non-DOCX format and interaction gates are:
+
+```sh
+./scripts/capture_perf_baseline.sh --matrix-fixtures \
+  clean-300.pdf complex.pdf ocr.pdf normal.epub large.epub \
+  docs/perf/non-docx-matrix
+
+./scripts/capture_perf_baseline.sh --interaction-fixtures \
+  clean-300.pdf normal.epub \
+  docs/perf/non-docx-interaction
+```
+
+The matrix requires three visibly ready PDFs and two visibly ready EPUBs in
+each phase. The interaction gate covers query acknowledgement, first visible
+result, cancellation, repeated navigation, save acknowledgement, indexed
+occurrence lookup, visible highlights, zoom/font updates, main-thread p95, and
+idle-versus-background-index paging delay. `scripts/profile_running_app.sh`
+adds an Instruments Time Profiler or Animation Hitches trace plus a 10 Hz
+CPU/RSS series without changing the JSON acceptance run.
 
 For the representative gate, copy `private-fixtures.example.json` to the
 gitignored `private-fixtures.json`, replace the three paths, and record the
@@ -53,7 +78,7 @@ theme switching. It writes the aggregate report and a separate
 aliases, formats, byte counts, and dataset counts — never source paths or file
 names. The private manifest and documents must not be committed.
 
-## What this run captured
+## Historical synthetic reference
 
 Captured 2026-07-27 on Apple Silicon, Command Line Tools toolchain, debug build.
 Small sample counts — this is a v1 reference, not a statistical distribution;
@@ -84,7 +109,7 @@ and retain `First page display` only as a diagnostic substage.
 * **large vocabulary database** — the machine's real `word-records.sqlite3`
   (~0.4 MB) backs the Vocabulary Library timing when that surface is exercised.
 
-## Instrumented but not captured here
+## Additional opt-in surfaces
 
 These surfaces have `begin`/`end` calls in place, so they appear in the report
 the moment they are exercised with `LEAFVOCAB_PERF=1` — they are simply not in

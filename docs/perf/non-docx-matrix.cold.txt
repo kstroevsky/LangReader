@@ -1,0 +1,19 @@
+surface                        n      min   median     mean      max
+App launch                     1  109.0ms  109.0ms  109.0ms  109.0ms
+Main window                    1  108.0ms  108.0ms  108.0ms  108.0ms
+PDF open                       3   88.0ms   93.4ms  105.3ms  134.6ms
+EPUB/DOCX preparation          2  198.0ms  429.3ms  429.3ms  660.5ms
+EPUB preparation               2  198.0ms  429.3ms  429.3ms  660.5ms
+EPUB/DOCX open                 2   11.6ms   21.5ms   21.5ms   31.4ms
+EPUB/DOCX content ready        2  381.1ms  545.6ms  545.6ms  710.1ms
+EPUB content ready             2  381.1ms  545.6ms  545.6ms  710.1ms
+First page display             3   23.7ms   76.8ms   75.4ms  125.6ms
+PDF cover thumbnail            3    6.5ms    6.7ms   17.6ms   39.5ms
+Document visibly ready         5  119.3ms  267.3ms  321.3ms  716.0ms
+PDF visibly ready              3  119.3ms  119.6ms  168.7ms  267.3ms
+EPUB visibly ready             2  384.5ms  550.2ms  550.2ms  716.0ms
+Vocabulary record load         5    0.0ms    0.1ms    0.1ms    0.1ms
+Vocabulary record repair       5    0.2ms    0.2ms    0.2ms    0.3ms
+Vocabulary language detection  3    4.8ms   28.3ms   27.1ms   48.1ms
+Web highlight restoration      2    0.2ms    0.2ms    0.2ms    0.2ms
+Theme switch                   6    3.0ms    5.7ms    5.6ms    9.3ms

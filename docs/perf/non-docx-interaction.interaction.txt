@@ -1,0 +1,37 @@
+surface                               n        min     median       mean        max
+App launch                            1    154.0ms    154.0ms    154.0ms    154.0ms
+Main window                           1    153.0ms    153.0ms    153.0ms    153.0ms
+PDF open                              1    403.8ms    403.8ms    403.8ms    403.8ms
+EPUB/DOCX preparation                 1    199.6ms    199.6ms    199.6ms    199.6ms
+EPUB preparation                      1    199.6ms    199.6ms    199.6ms    199.6ms
+EPUB/DOCX open                        1     52.3ms     52.3ms     52.3ms     52.3ms
+EPUB/DOCX content ready               1    498.7ms    498.7ms    498.7ms    498.7ms
+EPUB content ready                    1    498.7ms    498.7ms    498.7ms    498.7ms
+First page display                    1    365.1ms    365.1ms    365.1ms    365.1ms
+PDF cover thumbnail                   1     89.9ms     89.9ms     89.9ms     89.9ms
+Document visibly ready                2    502.3ms    690.7ms    690.7ms    879.0ms
+PDF visibly ready                     1    879.0ms    879.0ms    879.0ms    879.0ms
+EPUB visibly ready                    1    502.3ms    502.3ms    502.3ms    502.3ms
+Selection toolbar                     2      9.8ms     97.4ms     97.4ms    185.0ms
+PDF text snapshot                     1  15847.2ms  15847.2ms  15847.2ms  15847.2ms
+Vocabulary index build                1   7421.7ms   7421.7ms   7421.7ms   7421.7ms
+Vocabulary save acknowledgement       1     42.0ms     42.0ms     42.0ms     42.0ms
+Vocabulary occurrence query           1      1.3ms      1.3ms      1.3ms      1.3ms
+Vocabulary occurrence persistence     1  21956.5ms  21956.5ms  21956.5ms  21956.5ms
+Vocabulary record load                2      0.1ms      0.2ms      0.2ms      0.2ms
+Vocabulary record repair              2      0.4ms      0.5ms      0.5ms      0.6ms
+Vocabulary language detection         1     93.7ms     93.7ms     93.7ms     93.7ms
+Vocabulary database write             1   1666.2ms   1666.2ms   1666.2ms   1666.2ms
+Visible highlight materialization    19      0.5ms      1.2ms      1.2ms      1.7ms
+Web highlight restoration             1      0.2ms      0.2ms      0.2ms      0.2ms
+PDF search                            1    370.2ms    370.2ms    370.2ms    370.2ms
+Search acknowledgement                4      0.2ms      0.5ms      0.6ms      1.1ms
+Search first visible result           3      6.0ms      6.4ms      8.1ms     12.0ms
+Search cancellation response          2      0.0ms      0.0ms      0.0ms      0.0ms
+Search result navigation             11      1.8ms      2.1ms      2.9ms      8.2ms
+PDF zoom highlight update             2      2.0ms      2.2ms      2.2ms      2.3ms
+Web font highlight update             2      0.0ms      0.1ms      0.1ms      0.2ms
+Main-thread uninterrupted work       90      0.0ms      0.2ms      0.8ms      4.2ms
+Idle scroll frame delay              24      0.1ms      1.7ms      1.4ms      3.4ms
+Background-index scroll frame delay  48      0.1ms      1.5ms      1.4ms      7.0ms
+Theme switch                          3      3.9ms     13.1ms     10.8ms     15.4ms

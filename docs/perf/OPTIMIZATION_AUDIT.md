@@ -1,94 +1,186 @@
 # Performance optimization audit
 
-Audited on 2026-08-09 against the re-audited optimization plan. The retention
-rule for code changes was unchanged output plus a repeatable improvement above
-normal run-to-run noise. Optimizations that add architectural cost without a
-measured interaction-path benefit remain deferred.
+Final non-DOCX acceptance audit: 2026-08-09. DOCX was expressly excluded from
+this pass. No DOCX result is used to claim completion below.
 
-## Corrective re-audit
+The central diagnosis from the initial plan was correct: user-visible cost came
+from repeated extraction/NLP and eager conversion of semantic matches into
+native visual objects, not from scanning a book-sized cached string. The final
+implementation therefore caches canonical text, builds reusable postings,
+persists semantic anchors, and materializes visual ranges only where needed.
 
-The first version of this audit overstated the reader-opening result. Its
-`launch` event ended when the empty reader window appeared, and
-`firstPageDisplay` ended when PDF geometry was assigned even though PDF tiles,
-loading-overlay dismissal, transcript layout, and decoration restoration were
-still outstanding. Those events did not measure the user's "document is
-visibly usable" boundary. A slower user-visible open could therefore pass the
-old gate, which is what happened.
+## Acceptance result
 
-The corrected gate records `documentVisibleReady` plus one format-specific
-visible-ready event. Session restoration also records
-`restoredDocumentVisibleReady` from process start. The original chrome is an
-explicit UI contract: the signed Release build was checked against the supplied
-screenshot and exposed all 18 required top/bottom controls.
+The non-DOCX scope is complete against the initial plan and the later corrective
+audit. The signed Release binary at source revision `33ff1c4` passed:
 
-## Implemented plan coverage
+- cold and warm format matrices using a clean 300-page PDF, complex-layout PDF,
+  OCR PDF, normal EPUB, and a real 61 MB EPUB;
+- an interaction matrix covering search acknowledgement/result/cancellation,
+  repeated navigation, save acknowledgement, occurrence lookup, visible
+  highlight application, zoom/font changes, main-thread stalls, and scrolling
+  while indexing;
+- an Instruments Time Profiler capture and an Animation Hitches capture;
+- strict deep code-signature verification; and
+- a live UI-contract check on the supplied 207-page German PDF.
 
-| Plan item | Current implementation | Status |
+The exact Release executable SHA-256 was
+`151a19f687023ed9c77532c55092661b924a6c93993e39e4ec9ac367d4a60044`.
+
+## Initial-plan coverage
+
+| Initial proposal | Resolution | Evidence/status |
 | --- | --- | --- |
-| Stage-level evidence | `PerformanceEvent`, `ReaderPerformance`, signposts, deterministic JSON/text capture, and private fixture validation cover open, actual visible readiness, restored-document readiness, text snapshots, index build, save acknowledgement, occurrence query/persistence, database writes, visible highlights, web restoration, and search. | Implemented |
-| Cache canonical text | PDF page text is cached in memory and across sessions; EPUB/DOCX source text is extracted once and reused by the web presentation. | Implemented |
-| Avoid repeated NLP | `VocabularyDocumentLemmaIndex` is built once per document/language, bounded to four workers, seeded by the visible/current page slice, and reused by later saves and backfill. | Implemented |
-| Cache regex/query work | Vocabulary queries compile once per scan; the EPUB sanitizer reuses compiled expressions; simple indexed tokens use postings instead of regex rescans. | Implemented |
-| Cancellation/generation safety | PDF text/index builds, visible-first work, PDFKit search, web loading, and grouped posting scans are cancellable or generation-guarded. Replacing a vocabulary scan or changing document cancels the old work; cancelled grouped scans return no partial result. | Implemented |
-| Batch database writes | Occurrence persistence and bulk metadata/SRS mutations use one transactional upsert per batch, with the existing full-snapshot retry only on failure. | Implemented |
-| Batch invalidations | PDF annotations are added for visible pages and one display invalidation is issued per batch. Web marks update one CSS Highlight collection per category. | Implemented |
-| Occurrence disambiguation | Stored web occurrence indexes are applied during restoration; semantic PDF anchors use unit ordinal, UTF-16 range, quote, prefix, and suffix. | Implemented |
-| Visible-only geometry | Offscreen PDF occurrences persist semantic positions with zero geometry. PDF selections/bounds and annotations are resolved only for visible pages or explicit navigation. | Implemented |
-| Async PDF Find | PDFKit `beginFindString` streams results, supports replacement/cancellation, and rejects stale notifications. | Implemented |
-| Release measurement | Representative PDF/EPUB/DOCX captures and subsystem benchmarks are run against optimized builds rather than inferred from Debug code shape. | Implemented |
-| In-memory index | Per-page canonical text, token ranges, exact surfaces, lemma postings, and line-wrap postings answer single and batch occurrence queries. | Implemented |
-| Semantic lookup vs rendering | The selected occurrence is durably saved and acknowledged before whole-document discovery; visible work is prioritized and offscreen materialization is deferred. | Implemented |
-| CSS Custom Highlights | Vocabulary, notes, AI sources, and search use CSS Custom Highlights without DOM mutation when supported, with a tested legacy fallback. | Implemented |
-| Sparse web mappings | DOM normalization uses compressed mapping runs and a shared block index rather than one object per normalized character. | Implemented |
+| 1. Persistent positional index | Measurement-gated, as the revised plan required | Deferred: warm indexed lemma lookup is 1.3 ms. Persisting postings would add migrations, tokenizer/parser versioning, storage, and invalidation without a measured interaction benefit. |
+| 2. Do not extract/lemmatize unchanged text twice | Implemented | PDF canonical page text has memory and disk caches; each open document/language owns one reusable `VocabularyDocumentLemmaIndex`. Indexing runs once, visible-first, with bounded background completion. |
+| 3. Do not assume raw substring search is the bottleneck | Implemented and verified | Search, indexing, persistence, database work, and visual materialization are independently timed. Web literal search uses a lightweight text-node scan rather than building the full normalized mapping. |
+| 4. Aho-Corasick for fixed batch matching | Correctly not generalized | The current postings-based batch restore is already fast. No measured multi-pattern workload justifies another engine. |
+| 5. FTS5 as candidate retrieval | Measurement-gated | Deferred: async PDFKit literal search and cached/postings lookup meet every interaction gate. FTS5 would still need LangReader's semantic verifier. |
+| 6. Suffix array/FM-index | Rejected | Disproportionate to one open book and the measured query latency. |
+| 7. Q-gram recovery | Recovery-tier only | Exact position/quote/context resolution is implemented. No stale/OCR anchor corpus currently demonstrates a need for approximate recovery. |
+| 8. Semantic positions, not geometry, as identity | Implemented | PDF records persist page/unit ordinal, UTF-16 range, quote, prefix, and suffix. Geometry remains viewport/layout-derived state. |
+| 9. Materialize PDF selections only when needed | Implemented | Offscreen matches retain semantic positions. The selected match resolves directly; visible-page selections and annotations are applied incrementally in batches of eight. |
+| 10. PDF page-overlay renderer | Prototyped by measurement, then deferred | Current visible highlight materialization is 0.5–1.7 ms and produced zero Animation Hitches. An overlay rewrite cannot presently deliver a material gain. |
+| 11. Asynchronous PDF Find | Implemented | `beginFindString` streams results, supports replacement/cancellation, and rejects stale notifications. |
+| 12. CSS Custom Highlights | Implemented | Vocabulary, note, AI-source, and search highlights use non-mutating highlight collections with tested fallback behavior. Search first paints the current result and materializes the remainder in batches. |
+| 13. Replace per-character web mappings | Implemented | Normalized DOM positions use compressed text runs and sparse correction data; simple literal search bypasses the full mapping entirely. |
+| 14. EPUB virtualization | Measurement-gated | Deferred: the real 61 MB EPUB is visibly ready in 716.0 ms cold and 387.8 ms warm at worst. The interaction trace does not justify the navigation/selection complexity of virtualization. |
+| 15. Structured cancellation | Implemented | PDF text/index work, visible-first work, PDFKit search, web loading, and grouped scans are cancellable or generation-guarded. |
+| 16. Isolated index ownership without per-token actor hops | Implemented in equivalent form | Workers build local page buffers and merge bounded batches into document-owned state; CPU work is not serialized one token at a time. |
+| 17. Bounded parallelism | Implemented | NLP/index work is capped at four workers and yields to current reader input. Profiling confirms CPU work is off the main thread. |
+| 18. Visible-first indexing | Implemented | Current/visible PDF units are prioritized. Whole-book completion remains explicitly separate from visible readiness and interaction acknowledgement. |
+| 19. Do not persist visual occurrences unnecessarily | Implemented within existing product semantics | Durable records contain semantic anchors; native selections, DOM ranges, and geometry are derived lazily. Transactional batch upserts remove per-record write amplification. |
 
-Sentence-boundary postings were not added to the vocabulary index: no current
-query consumes them, while context extraction already uses bounded canonical
-ranges. Adding unused postings would increase build time and retained memory
-without improving a measured scenario.
+The plan's Phase 0–4 work is therefore implemented. Phase 5 was explicitly
+conditional on measurements; the measurements reject it for now. Sentence
+boundaries were also deliberately omitted because no current query consumes
+them and bounded canonical ranges already supply context.
 
-## Retained experiments
+## Corrective work found during the audit
 
-All measurements below preserve output counts/content. Timings are milliseconds
-on the same Apple Silicon development machine; individual samples are retained
-because thermal and filesystem state make a single aggregate misleading.
+The first performance report was not sufficient. It ended PDF readiness after
+geometry assignment rather than visible usability, had no raw samples or
+cold/warm separation, and its automated “scroll” scenario used page jumps. The
+following corrections are now part of the repository:
 
-| Experiment | Before | After | Result |
-| --- | ---: | ---: | --- |
-| Real German DOCX core load after sanitizer regex caching | pooled median 4,066.6 | pooled median 2,650.3 | Retained; every paired block was faster and output stayed at 782,265 HTML bytes, 511,340 text characters, 87 TOC items, 0 diagnostics. |
-| Same-content 61 MB EPUB sanitizer guard | 211.3 / 133.0 | 203.6 / 133.3 | Retained; no regression and identical 60,559 HTML bytes, 7 TOC items, 0 diagnostics. |
-| Update 2,000 vocabulary occurrences | 971.9–1,054.5 | 135.8–141.9 | Retained; one transaction is about 86% faster than one transaction per record. |
-| Restore 2,000 lemma groups across 300 pages (90,000 results) | 2,607.0–9,448.3 | 213.2–347.1 | Retained; adaptive postings intersection and precomputed exact-surface keys remove per-page work proportional to the full saved vocabulary. |
-| Common single-token lookup across 300 pages (721 results) | 54.4–61.3 | 2.4–3.0 | Retained; meets the plan's <10 ms median target. Punctuation-bearing tokens such as `E-Mail` retain the exact regex fallback. |
-| Real 207-page German PDF open, delivered pre-fix Release vs corrected Release | PDF open 166.0–169.1; first-page setup 143.7–144.7 | PDF open 89.5–92.1; first-page setup 74.2–76.5 | Retained; balanced forward/reverse runs reduce both synchronous seams by about 46–49%. Corrected visible-ready median is 153.8–156.4. |
+- schema-v2 reports retain every raw sample plus source revision, Release
+  binary hash, phase, OS/architecture, fixture-set digest, and run ID;
+- the validator recomputes aggregates and rejects mixed, stale, undersampled,
+  non-Release, or non-visible captures;
+- cold and warm phases use separate processes and artifacts;
+- cache identity includes a streaming content SHA-256, with a regression test
+  for same path, byte count, and modification time but changed content;
+- the interaction script performs real clip-view scrolling;
+- automation is gated by `LEAFVOCAB_PERF_AUTOMATION=1` and normal launches keep
+  the original UI and behavior;
+- background snapshot/index work is deferred for 250 ms after reader input;
+- common posting lists are merged in order without a string-key set and final
+  resort; and
+- exact PDF semantic anchors resolve directly rather than rescanning a page for
+  every stored occurrence.
 
-The reproducible subsystem commands are:
+Those last two fixes reduced a live common-word query from 15.3 ms to 1.3 ms
+and visible highlight materialization from 362.8 ms to 1.7 ms.
 
-```sh
-./scripts/benchmark_vocabulary_storage.sh 2000 3
-./scripts/benchmark_vocabulary_index.sh 300 2000 5
-```
+## Accepted measurements
 
-The corrected representative capture measured PDF visible-ready at 165.5 ms
-median, EPUB preparation/visible-ready at 158.7/393.1 ms, and DOCX
-preparation/visible-ready at 1,885.6/2,089.8 ms. These values are the accepted
-Release shipping capture; the earlier first-page value must not be presented as
-an end-to-end readiness result.
+All times are milliseconds. Raw samples, not just aggregates, are committed in
+the linked JSON artifacts.
 
-## Deliberately deferred proposals
+### Cold/warm format matrix
 
-| Proposal | Evidence-based decision |
+| Phase and event | Minimum | Median | Maximum |
+| --- | ---: | ---: | ---: |
+| Cold PDF open (3 fixtures) | 88.0 | 93.4 | 134.6 |
+| Cold PDF visible-ready | 119.3 | 119.6 | 267.3 |
+| Cold EPUB preparation (2 fixtures) | 198.0 | 429.3 | 660.5 |
+| Cold EPUB visible-ready | 384.5 | 550.2 | 716.0 |
+| Warm PDF open (3 fixtures) | 77.2 | 91.2 | 133.1 |
+| Warm PDF visible-ready | 107.6 | 120.0 | 273.2 |
+| Warm EPUB preparation (2 fixtures) | 140.5 | 163.2 | 185.9 |
+| Warm EPUB visible-ready | 196.4 | 292.1 | 387.8 |
+
+Artifacts:
+`non-docx-matrix.cold.json`, `non-docx-matrix.cold.txt`,
+`non-docx-matrix.warm.json`, and `non-docx-matrix.warm.txt`.
+
+### Interaction matrix
+
+| Gate | Accepted result | Target |
+| --- | ---: | ---: |
+| Search acknowledgement, maximum | 1.1 | <16 |
+| First visible search result, maximum | 12.0 | <50 |
+| Search cancellation, maximum | 0.0 | <50 |
+| Save acknowledgement | 42.0 | <50 |
+| Indexed occurrence lookup | 1.3 | <10 median |
+| Visible highlight materialization | 0.5–1.7 | <100 |
+| Search navigation, maximum | 8.2 | interactive |
+| PDF zoom update, maximum | 2.3 | interactive |
+| Theme switch, maximum | 15.4 | interactive |
+| Main-thread uninterrupted work, maximum | 4.2 | not routinely >16 |
+| Idle scroll delay, median/maximum | 1.7 / 3.4 | reference |
+| Background-index scroll delay, median/maximum | 1.5 / 7.0 | no detectable degradation |
+
+The complete artifact is `non-docx-interaction.interaction.json`, with a
+human-readable companion `.txt` file. It also records snapshot/index/database
+background completion separately so those totals cannot be confused with
+interaction latency.
+
+### Instruments and resource evidence
+
+The corrected Time Profiler run sampled 291 points at 10 Hz: peak resident
+memory was 243,328 KB, mean process CPU was 97.01%, and peak CPU was 214.4%.
+Hot stacks were bounded background `NaturalLanguage`/CoreNLP work inside
+`VocabularyDocumentLemmaIndex`, not the main-thread interaction path.
+
+The Animation Hitches trace covered 30.45 seconds of the exercised interaction
+window and exported zero hitch rows. During the first 30 seconds, peak resident
+memory was 304,528 KB and mean CPU was 111.63%; CPU fell after indexing
+completed. The committed resource series and exported summary are:
+
+- `non-docx-time-profile-resources.csv`
+- `non-docx-animation-hitches-resources.csv`
+- `non-docx-animation-hitches-summary.xml`
+
+The full `.trace` bundles remain machine-local because they are large binary
+Instruments artifacts; the raw resource time series and hitch export are
+committed for review.
+
+## UI preservation
+
+The signed Release app was opened with `Alle Information от 14.07.26.pdf` and
+its live accessibility tree contained every screenshot-contract control:
+cover/title, related forms, Read, zoom out/value/in, page navigation, search,
+Two-up, Crop, settings, Shelf, Words, Review, Notes, and TOC. The AI assistant
+panel and its collapse control also remained present. No performance automation
+runs in an ordinary launch.
+
+## Deferred work and re-entry thresholds
+
+These are not missing implementation tasks; each is a measurement-triggered
+option from the original plan.
+
+| Option | Revisit only when |
 | --- | --- |
-| Persistent token/postings database | Defer. Saves acknowledge immediately, the in-memory common lookup is 2.4–3.0 ms, and persistence would add parser/tokenizer versioning, invalidation, migration, and storage cost. Revisit only if warm-session index build or scrolling traces regress. |
-| FTS5/trigram document index | Defer. It is useful for candidate retrieval, but PDFKit Find is already asynchronous and exact vocabulary lookup is below target. It would not be the semantic source of truth without a verifier. |
-| PDF page overlay renderer | Defer. Visible annotation materialization is at or below 0.1 ms; replacing the renderer cannot produce a material user-visible gain at current scale. |
-| EPUB/DOCX virtualization | Defer. EPUB is visibly ready in about 0.39 s. DOCX preparation is about 1.89 s of its 2.09 s visible-ready time, so archive/XML preparation remains the bottleneck; virtualization would add navigation, selection, and anchor complexity without attacking the measured stage. |
-| Q-gram/edit-distance anchor recovery | Defer as a recovery tier. Current versioned sources first resolve stored UTF-16 position, then exact quote plus prefix/suffix context. No stale-source failure corpus justifies fuzzy recovery yet. |
-| Suffix array/FM-index | Reject for current requirements. Postings and exact fallback cover the measured workloads with substantially lower complexity. |
-| Persist every visual occurrence/geometry | Reject as identity. Semantic positions remain durable; geometry is a viewport cache materialized lazily. |
+| Persistent postings / FTS5 / trigram | indexed query median exceeds 10 ms, warm rebuild delays interaction, or general Find has a demonstrated corpus failure |
+| PDF overlay renderer | visible highlight materialization exceeds 100 ms, annotations cause hitches, or export semantics require a separate layer |
+| EPUB chapter virtualization | a representative EPUB exceeds the visible-ready budget, WebKit memory is unbounded, or scrolling/layout profiles show the monolithic DOM as the bottleneck |
+| Q-gram/edit-distance recovery | a versioned stale/OCR anchor corpus shows unacceptable exact quote/context failures |
+| Aho-Corasick | a measured fixed multi-pattern rebuild beats postings poorly enough to matter to users |
+| Suffix/FM index | no current re-entry condition; not appropriate at this corpus size |
 
-## Verification notes
+## Verification
 
-- `swift test`: 28 tests passed.
-- `scripts/run_tests.sh`: web, highlight, performance-capture, SQLite, personal-vocabulary, embedding, regression, theme, update-classification, reader chrome, and all German morphology/dictionary groups passed. The runner stops at the pre-existing environment-sensitive French `parler` lemma assertion because NaturalLanguage returned no inflected-form group. No corrective performance change touches that assertion.
-- The shipping `--release` build completed with `-O`, ad-hoc signing, strict deep signature verification, and Sparkle framework validation. Optional locally installed TTS runtimes were absent and reported as non-fatal warnings.
-- The signed app opened the supplied German PDF, EPUB, and DOCX twice, and the document-capture validator accepted the resulting JSON. The exact Release executable was then launched directly and its live accessibility tree contained 18/18 screenshot-contract controls. Balanced PDF comparisons used immutable binaries in forward and reverse order; build-time samples were discarded.
+- `swift test`: 32/32 passed on the final source revision after packaging.
+- Focused vocabulary-index and PDF/web reader tests pass after the final query
+  and highlight changes.
+- The web reader search suite and positive/negative performance-validator suites
+  pass.
+- `scripts/run_tests.sh` passes the performance, reader, web, database, German
+  morphology, theme, and UI-contract groups; it still stops at the pre-existing
+  environment-sensitive French `parler` assertion where NaturalLanguage returns
+  no inflected-form group.
+- The Release app is ad-hoc signed and passes `codesign --verify --deep --strict`.
+
+The reproducible commands and fixture requirements are documented in
+`docs/perf/BASELINE.md`.
