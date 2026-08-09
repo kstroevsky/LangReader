@@ -97,6 +97,7 @@ extension ReaderWindowController {
     }
 
     func configureTitleControls() {
+        titleLabel.setAccessibilityIdentifier("topBar.title")
         titleLabel.font = AppFont.semibold(ofSize: 15)
         titleLabel.textColor = ReaderTheme.selected.primaryTextColor
         titleLabel.lineBreakMode = .byTruncatingTail
@@ -105,6 +106,7 @@ extension ReaderWindowController {
         titleLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
 
         coverImageView.imageScaling = .scaleProportionallyUpOrDown
+        coverImageView.setAccessibilityIdentifier("topBar.cover")
         coverImageView.wantsLayer = true
         coverImageView.layer?.backgroundColor = controlBackgroundColor(for: ReaderTheme.selected).cgColor
         coverImageView.layer?.borderColor = controlBorderColor(for: ReaderTheme.selected).cgColor
@@ -129,10 +131,13 @@ extension ReaderWindowController {
 
         let zoomOut = plainButton(title: "-", action: #selector(ReaderWindowController.zoomOut))
         let zoomIn = plainButton(title: "+", action: #selector(ReaderWindowController.zoomIn))
+        zoomOut.setAccessibilityIdentifier("topBar.zoomOut")
+        zoomIn.setAccessibilityIdentifier("topBar.zoomIn")
         let leftDivider = divider()
         let rightDivider = divider()
 
         zoomField.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .regular)
+        zoomField.setAccessibilityIdentifier("topBar.zoom")
         zoomField.alignment = .center
         zoomField.isBordered = false
         zoomField.drawsBackground = false
@@ -200,9 +205,11 @@ extension ReaderWindowController {
         updatePageLabelTextColor()
 
         searchUnderlineButton = SearchUnderlineButton(title: "", target: self, action: #selector(showSearchOverlay))
+        searchUnderlineButton.setAccessibilityIdentifier("topBar.searchUnderline")
         searchUnderlineButton.toolTip = AppText.localized("搜索文档", "Search document")
         searchUnderlineButton.theme = ReaderTheme.selected
         searchButton = iconButton(symbol: "magnifyingglass", action: #selector(showSearchOverlay))
+        searchButton.setAccessibilityIdentifier("topBar.search")
         searchButton.toolTip = AppText.localized("搜索文档", "Search document")
     }
 
