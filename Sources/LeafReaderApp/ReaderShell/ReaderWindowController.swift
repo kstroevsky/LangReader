@@ -94,6 +94,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     weak var bottomBarView: NSView?
     weak var zoomGroupView: NSView?
     var documentSession = DocumentSession()
+    var activeWebDocumentLoadCancellationToken: DocumentLoadCancellationToken?
     var documentPresentationState = DocumentPresentationState()
     var activeVisibleDocumentLoadStartedAt: TimeInterval?
     var activeVisibleDocumentLoadKind: ReaderDocumentKind?
@@ -187,6 +188,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
                 NSEvent.removeMonitor(localEventMonitor)
             }
             sessionSaveTask.cancel()
+            activeWebDocumentLoadCancellationToken?.cancel()
             aiConversationSaveTask.cancel()
             preferredAIWidthSaveTask.cancel()
             windowResizeLayoutTask.cancel()

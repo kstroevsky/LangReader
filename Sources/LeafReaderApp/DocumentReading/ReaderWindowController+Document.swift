@@ -18,6 +18,8 @@ extension ReaderWindowController {
 
     func loadDocument(_ url: URL) {
         guard let kind = ReaderDocumentKind.kind(for: url) else { return }
+        activeWebDocumentLoadCancellationToken?.cancel()
+        activeWebDocumentLoadCancellationToken = nil
         activeVisibleDocumentLoadStartedAt = ProcessInfo.processInfo.systemUptime
         activeVisibleDocumentLoadKind = kind
         activeVisibleDocumentLoadIsSessionRestore = isRestoringSession

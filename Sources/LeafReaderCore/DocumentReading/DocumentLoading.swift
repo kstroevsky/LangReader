@@ -1,5 +1,30 @@
 import Foundation
 
+package final class DocumentLoadCancellationToken: @unchecked Sendable {
+    private let lock = NSLock()
+    private var cancelled = false
+
+    package init() {}
+
+    package var isCancelled: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return cancelled
+    }
+
+    package func cancel() {
+        lock.lock()
+        cancelled = true
+        lock.unlock()
+    }
+
+    package func checkCancellation() throws {
+        if isCancelled {
+            throw CancellationError()
+        }
+    }
+}
+
 package struct WebReadableDocument {
     package let html: String
     package let htmlFileURL: URL?
@@ -76,12 +101,15 @@ package final class RegexCache: @unchecked Sendable {
 package enum WebDocumentLoader {
     package static let regexCache = RegexCache()
 
-    package static func load(url: URL) throws -> WebReadableDocument {
+    package static func load(
+        url: URL,
+        cancellationToken: DocumentLoadCancellationToken? = nil
+    ) throws -> WebReadableDocument {
         switch ReaderDocumentKind.kind(for: url) {
         case .epub:
             return try loadEPUB(url: url)
         case .docx:
-            return try loadDOCX(url: url)
+            return try loadDOCX(url: url, cancellationToken: cancellationToken)
         default:
             throw NSError(domain: "LeafReader", code: -1, userInfo: [
                 NSLocalizedDescriptionKey: "Unsupported document type"

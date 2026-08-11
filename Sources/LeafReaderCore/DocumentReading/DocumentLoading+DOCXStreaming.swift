@@ -32,7 +32,12 @@ private func docxParseError(_ parser: XMLParser, document: String) -> Error {
 }
 
 private final class DOCXRelationshipXMLParser: NSObject, XMLParserDelegate {
+    private let cancellationToken: DocumentLoadCancellationToken?
     private(set) var relationships: [String: String] = [:]
+
+    init(cancellationToken: DocumentLoadCancellationToken?) {
+        self.cancellationToken = cancellationToken
+    }
 
     func parser(
         _ parser: XMLParser,
@@ -41,6 +46,10 @@ private final class DOCXRelationshipXMLParser: NSObject, XMLParserDelegate {
         qualifiedName qName: String?,
         attributes attributeDict: [String: String] = [:]
     ) {
+        if cancellationToken?.isCancelled == true {
+            parser.abortParsing()
+            return
+        }
         guard elementName == "Relationship",
               let id = docxAttribute("Id", in: attributeDict),
               let target = docxAttribute("Target", in: attributeDict) else { return }
@@ -71,6 +80,7 @@ private final class DOCXDocumentXMLParser: NSObject, XMLParserDelegate {
     private let directory: URL
     private let relationships: [String: String]
     private let mediaReferenceStyle: DOCXMediaReferenceStyle
+    private let cancellationToken: DocumentLoadCancellationToken?
 
     private var output: [String] = ["<main class=\"docx-document\">"]
     private var plainText: [String] = []
@@ -91,15 +101,18 @@ private final class DOCXDocumentXMLParser: NSObject, XMLParserDelegate {
     private var renderedTableDepths: Set<Int> = []
     private var listOpen = false
     private var headingIndex = 0
+    private var cancellationProbeCountdown = 256
 
     init(
         directory: URL,
         relationships: [String: String],
-        mediaReferenceStyle: DOCXMediaReferenceStyle
+        mediaReferenceStyle: DOCXMediaReferenceStyle,
+        cancellationToken: DocumentLoadCancellationToken?
     ) {
         self.directory = directory
         self.relationships = relationships
         self.mediaReferenceStyle = mediaReferenceStyle
+        self.cancellationToken = cancellationToken
     }
 
     func result() -> DOCXStreamingResult {
@@ -113,6 +126,10 @@ private final class DOCXDocumentXMLParser: NSObject, XMLParserDelegate {
         qualifiedName qName: String?,
         attributes attributeDict: [String: String] = [:]
     ) {
+        if shouldAbortParsing() {
+            parser.abortParsing()
+            return
+        }
         if namespaceURI == DOCXXMLNamespace.wordProcessing, elementName == "body" {
             isInsideBody = true
             return
@@ -195,6 +212,10 @@ private final class DOCXDocumentXMLParser: NSObject, XMLParserDelegate {
     }
 
     func parser(_ parser: XMLParser, foundCharacters string: String) {
+        if shouldAbortParsing() {
+            parser.abortParsing()
+            return
+        }
         guard isCollectingText else { return }
         textBuffer.append(string)
     }
@@ -402,22 +423,36 @@ private final class DOCXDocumentXMLParser: NSObject, XMLParserDelegate {
         }
         return result
     }
+
+    private func shouldAbortParsing() -> Bool {
+        cancellationProbeCountdown -= 1
+        guard cancellationProbeCountdown <= 0 else { return false }
+        cancellationProbeCountdown = 256
+        return cancellationToken?.isCancelled == true
+    }
 }
 
 extension WebDocumentLoader {
-    package static func docxStreamingRelationships(from url: URL) throws -> [String: String] {
+    package static func docxStreamingRelationships(
+        from url: URL,
+        cancellationToken: DocumentLoadCancellationToken? = nil
+    ) throws -> [String: String] {
+        try cancellationToken?.checkCancellation()
         guard FileManager.default.fileExists(atPath: url.path) else { return [:] }
         guard let parser = XMLParser(contentsOf: url) else {
             throw NSError(domain: "LeafReader", code: -2, userInfo: [
                 NSLocalizedDescriptionKey: "Unable to read DOCX relationships"
             ])
         }
-        let delegate = DOCXRelationshipXMLParser()
+        let delegate = DOCXRelationshipXMLParser(cancellationToken: cancellationToken)
         parser.delegate = delegate
         parser.shouldProcessNamespaces = true
         parser.shouldReportNamespacePrefixes = false
         parser.shouldResolveExternalEntities = false
-        guard parser.parse() else { throw docxParseError(parser, document: "DOCX relationships") }
+        guard parser.parse() else {
+            try cancellationToken?.checkCancellation()
+            throw docxParseError(parser, document: "DOCX relationships")
+        }
         return delegate.relationships
     }
 
@@ -425,8 +460,10 @@ extension WebDocumentLoader {
         from url: URL,
         directory: URL,
         relationships: [String: String],
-        mediaReferenceStyle: DOCXMediaReferenceStyle = .absoluteFileURL
+        mediaReferenceStyle: DOCXMediaReferenceStyle = .absoluteFileURL,
+        cancellationToken: DocumentLoadCancellationToken? = nil
     ) throws -> DOCXStreamingResult {
+        try cancellationToken?.checkCancellation()
         guard let parser = XMLParser(contentsOf: url) else {
             throw NSError(domain: "LeafReader", code: -2, userInfo: [
                 NSLocalizedDescriptionKey: "Unable to read DOCX document XML"
@@ -435,13 +472,17 @@ extension WebDocumentLoader {
         let delegate = DOCXDocumentXMLParser(
             directory: directory,
             relationships: relationships,
-            mediaReferenceStyle: mediaReferenceStyle
+            mediaReferenceStyle: mediaReferenceStyle,
+            cancellationToken: cancellationToken
         )
         parser.delegate = delegate
         parser.shouldProcessNamespaces = true
         parser.shouldReportNamespacePrefixes = false
         parser.shouldResolveExternalEntities = false
-        guard parser.parse() else { throw docxParseError(parser, document: "DOCX document") }
+        guard parser.parse() else {
+            try cancellationToken?.checkCancellation()
+            throw docxParseError(parser, document: "DOCX document")
+        }
         return delegate.result()
     }
 }

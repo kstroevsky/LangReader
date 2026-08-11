@@ -22,8 +22,11 @@ package struct DOCXInlineContent {
 extension WebDocumentLoader {
     // MARK: - DOCX Loading
 
-    package static func loadDOCX(url: URL) throws -> WebReadableDocument {
-        try loadPreparedDOCX(url: url)
+    package static func loadDOCX(
+        url: URL,
+        cancellationToken: DocumentLoadCancellationToken? = nil
+    ) throws -> WebReadableDocument {
+        try loadPreparedDOCX(url: url, cancellationToken: cancellationToken)
     }
 
     // MARK: - DOCX Rendering

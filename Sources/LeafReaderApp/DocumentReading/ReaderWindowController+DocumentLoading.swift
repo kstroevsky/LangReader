@@ -81,12 +81,17 @@ extension ReaderWindowController {
 
     func loadWebDocument(_ url: URL, kind: ReaderDocumentKind, generation: Int) {
         let contentReadyStartedAt = ProcessInfo.processInfo.systemUptime
+        let cancellationToken = DocumentLoadCancellationToken()
+        activeWebDocumentLoadCancellationToken = cancellationToken
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             do {
-                let document = try WebDocumentLoader.load(url: url)
+                let document = try WebDocumentLoader.load(url: url, cancellationToken: cancellationToken)
                 let preparationMilliseconds = (ProcessInfo.processInfo.systemUptime - contentReadyStartedAt) * 1000
                 DispatchQueue.main.async {
                     guard let self, self.documentSession.acceptsLoad(generation: generation) else { return }
+                    if self.activeWebDocumentLoadCancellationToken === cancellationToken {
+                        self.activeWebDocumentLoadCancellationToken = nil
+                    }
                     ReaderPerformance.record(.webDocumentPreparation, milliseconds: preparationMilliseconds)
                     ReaderPerformance.record(
                         kind == .epub ? .epubPreparation : .docxPreparation,
@@ -105,6 +110,10 @@ extension ReaderWindowController {
                 }
             } catch {
                 DispatchQueue.main.async {
+                    if self?.activeWebDocumentLoadCancellationToken === cancellationToken {
+                        self?.activeWebDocumentLoadCancellationToken = nil
+                    }
+                    guard !(error is CancellationError) else { return }
                     self?.showDocumentLoadingFailure(error, generation: generation)
                 }
             }

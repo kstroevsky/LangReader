@@ -300,15 +300,22 @@ extension WebDocumentLoader {
     package static func loadPreparedDOCX(
         url: URL,
         cacheRootURL: URL? = nil,
-        policy: DOCXPreparedCachePolicy = .init()
+        policy: DOCXPreparedCachePolicy = .init(),
+        cancellationToken: DocumentLoadCancellationToken? = nil
     ) throws -> WebReadableDocument {
+        try cancellationToken?.checkCancellation()
         let title = url.deletingPathExtension().lastPathComponent
         var measurements: [DocumentLoadMeasurement] = []
 
         var startedAt = ProcessInfo.processInfo.systemUptime
         guard let fingerprint = DocumentContentFingerprint.sha256(for: url) else {
-            return try loadUncachedStreamingDOCX(url: url, measurements: measurements)
+            return try loadUncachedStreamingDOCX(
+                url: url,
+                measurements: measurements,
+                cancellationToken: cancellationToken
+            )
         }
+        try cancellationToken?.checkCancellation()
         measurements.append(measurement(.docxFingerprint, since: startedAt))
 
         let root: URL
@@ -318,7 +325,11 @@ extension WebDocumentLoader {
                 return $0
             } ?? DOCXPreparedCache.defaultRoot()
         } catch {
-            return try loadUncachedStreamingDOCX(url: url, measurements: measurements)
+            return try loadUncachedStreamingDOCX(
+                url: url,
+                measurements: measurements,
+                cancellationToken: cancellationToken
+            )
         }
         let key = DOCXPreparedCache.key(fingerprint: fingerprint, title: title)
         let destination = root.appendingPathComponent(key, isDirectory: true)
@@ -326,6 +337,7 @@ extension WebDocumentLoader {
         startedAt = ProcessInfo.processInfo.systemUptime
         if FileManager.default.fileExists(atPath: destination.path) {
             do {
+                try cancellationToken?.checkCancellation()
                 var hitMeasurements = measurements
                 hitMeasurements.append(measurement(.docxCacheLookup, since: startedAt))
                 let loadStartedAt = ProcessInfo.processInfo.systemUptime
@@ -336,9 +348,13 @@ extension WebDocumentLoader {
                     measurements: hitMeasurements
                 )
                 entry.document.loadMeasurements.append(measurement(.docxCacheHitLoad, since: loadStartedAt))
+                try cancellationToken?.checkCancellation()
                 DOCXPreparedCache.clean(root: root, keeping: key, policy: policy)
                 return entry.document
             } catch {
+                if error is CancellationError {
+                    throw error
+                }
                 try? FileManager.default.removeItem(at: destination)
             }
         }
@@ -347,14 +363,17 @@ extension WebDocumentLoader {
         let temporary = root.appendingPathComponent(".building-\(key)-\(UUID().uuidString)", isDirectory: true)
         do {
             try FileManager.default.createDirectory(at: temporary, withIntermediateDirectories: true)
+            try cancellationToken?.checkCancellation()
             startedAt = ProcessInfo.processInfo.systemUptime
             let entries = try validatedDOCXArchiveEntries(zipEntryPaths(in: url))
             try unzip(url: url, to: temporary, entryPaths: entries)
+            try cancellationToken?.checkCancellation()
             measurements.append(measurement(.docxArchiveExtraction, since: startedAt))
 
             startedAt = ProcessInfo.processInfo.systemUptime
             let relationships = try docxStreamingRelationships(
-                from: temporary.appendingPathComponent("word/_rels/document.xml.rels")
+                from: temporary.appendingPathComponent("word/_rels/document.xml.rels"),
+                cancellationToken: cancellationToken
             )
             measurements.append(measurement(.docxRelationshipParse, since: startedAt))
 
@@ -363,11 +382,13 @@ extension WebDocumentLoader {
                 from: temporary.appendingPathComponent("word/document.xml"),
                 directory: temporary,
                 relationships: relationships,
-                mediaReferenceStyle: .relativeToPreparedEntry
+                mediaReferenceStyle: .relativeToPreparedEntry,
+                cancellationToken: cancellationToken
             )
             measurements.append(measurement(.docxXMLRender, since: startedAt))
             try? FileManager.default.removeItem(at: temporary.appendingPathComponent("word/document.xml"))
             try? FileManager.default.removeItem(at: temporary.appendingPathComponent("word/_rels", isDirectory: true))
+            try cancellationToken?.checkCancellation()
 
             startedAt = ProcessInfo.processInfo.systemUptime
             let entryBytes = try DOCXPreparedCache.write(
@@ -376,6 +397,7 @@ extension WebDocumentLoader {
                 title: title,
                 content: content
             )
+            try cancellationToken?.checkCancellation()
             if entryBytes > policy.maximumBytes || policy.maximumEntries < 1 {
                 measurements.append(measurement(.docxCacheCommit, since: startedAt))
                 return try DOCXPreparedCache.load(
@@ -395,6 +417,7 @@ extension WebDocumentLoader {
                     title: title,
                     measurements: measurements
                    ) {
+                    try cancellationToken?.checkCancellation()
                     try? FileManager.default.removeItem(at: temporary)
                     measurements.append(measurement(.docxCacheCommit, since: startedAt))
                     var winnerDocument = winner.document
@@ -406,45 +429,70 @@ extension WebDocumentLoader {
             }
             measurements.append(measurement(.docxCacheCommit, since: startedAt))
             DOCXPreparedCache.clean(root: root, keeping: key, policy: policy)
-            return try DOCXPreparedCache.load(
+            let committed = try DOCXPreparedCache.load(
                 directory: destination,
                 fingerprint: fingerprint,
                 title: title,
                 measurements: measurements
             ).document
+            try cancellationToken?.checkCancellation()
+            return committed
         } catch {
             try? FileManager.default.removeItem(at: temporary)
+            if error is CancellationError {
+                throw error
+            }
             if (error as NSError).code == -3 {
                 throw error
             }
-            return try loadUncachedStreamingDOCX(url: url, measurements: measurements)
+            return try loadUncachedStreamingDOCX(
+                url: url,
+                measurements: measurements,
+                cancellationToken: cancellationToken
+            )
         }
     }
 
     private static func loadUncachedStreamingDOCX(
         url: URL,
-        measurements initialMeasurements: [DocumentLoadMeasurement]
+        measurements initialMeasurements: [DocumentLoadMeasurement],
+        cancellationToken: DocumentLoadCancellationToken?
     ) throws -> WebReadableDocument {
         var measurements = initialMeasurements
         var startedAt = ProcessInfo.processInfo.systemUptime
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("LeafReader-DOCX-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let entries = try validatedDOCXArchiveEntries(zipEntryPaths(in: url))
-        try unzip(url: url, to: directory, entryPaths: entries)
-        measurements.append(measurement(.docxArchiveExtraction, since: startedAt))
-        startedAt = ProcessInfo.processInfo.systemUptime
-        let relationships = try docxStreamingRelationships(
-            from: directory.appendingPathComponent("word/_rels/document.xml.rels")
-        )
-        measurements.append(measurement(.docxRelationshipParse, since: startedAt))
-        startedAt = ProcessInfo.processInfo.systemUptime
-        let content = try docxStreamingContent(
-            from: directory.appendingPathComponent("word/document.xml"),
-            directory: directory,
-            relationships: relationships
-        )
-        measurements.append(measurement(.docxXMLRender, since: startedAt))
+        do {
+            try cancellationToken?.checkCancellation()
+            let entries = try validatedDOCXArchiveEntries(zipEntryPaths(in: url))
+            try unzip(url: url, to: directory, entryPaths: entries)
+            try cancellationToken?.checkCancellation()
+        } catch {
+            try? FileManager.default.removeItem(at: directory)
+            throw error
+        }
+        let content: DOCXStreamingResult
+        do {
+            measurements.append(measurement(.docxArchiveExtraction, since: startedAt))
+            startedAt = ProcessInfo.processInfo.systemUptime
+            let relationships = try docxStreamingRelationships(
+                from: directory.appendingPathComponent("word/_rels/document.xml.rels"),
+                cancellationToken: cancellationToken
+            )
+            measurements.append(measurement(.docxRelationshipParse, since: startedAt))
+            startedAt = ProcessInfo.processInfo.systemUptime
+            content = try docxStreamingContent(
+                from: directory.appendingPathComponent("word/document.xml"),
+                directory: directory,
+                relationships: relationships,
+                cancellationToken: cancellationToken
+            )
+            measurements.append(measurement(.docxXMLRender, since: startedAt))
+        } catch {
+            try? FileManager.default.removeItem(at: directory)
+            throw error
+        }
         let title = url.deletingPathExtension().lastPathComponent
         return WebReadableDocument(
             html: pageHTML(
