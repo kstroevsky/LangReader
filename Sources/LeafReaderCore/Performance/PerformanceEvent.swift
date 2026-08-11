@@ -16,6 +16,13 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
     case webDocumentPreparation
     case epubPreparation
     case docxPreparation
+    case docxFingerprint
+    case docxCacheLookup
+    case docxCacheHitLoad
+    case docxArchiveExtraction
+    case docxRelationshipParse
+    case docxXMLRender
+    case docxCacheCommit
     case webOpen
     case webContentReady
     case epubContentReady
@@ -69,6 +76,13 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
         case .webDocumentPreparation: return "EPUB/DOCX preparation"
         case .epubPreparation: return "EPUB preparation"
         case .docxPreparation: return "DOCX preparation"
+        case .docxFingerprint: return "DOCX fingerprint"
+        case .docxCacheLookup: return "DOCX cache lookup"
+        case .docxCacheHitLoad: return "DOCX cache hit load"
+        case .docxArchiveExtraction: return "DOCX archive extraction"
+        case .docxRelationshipParse: return "DOCX relationship parse"
+        case .docxXMLRender: return "DOCX XML render"
+        case .docxCacheCommit: return "DOCX cache commit"
         case .webOpen: return "EPUB/DOCX open"
         case .webContentReady: return "EPUB/DOCX content ready"
         case .epubContentReady: return "EPUB content ready"

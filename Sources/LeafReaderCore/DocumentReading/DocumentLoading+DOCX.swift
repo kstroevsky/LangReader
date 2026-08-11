@@ -23,11 +23,28 @@ extension WebDocumentLoader {
     // MARK: - DOCX Loading
 
     package static func loadDOCX(url: URL) throws -> WebReadableDocument {
+        var measurements: [DocumentLoadMeasurement] = []
+        var stageStartedAt = ProcessInfo.processInfo.systemUptime
         let directory = try unzip(url: url)
+        measurements.append(.init(
+            event: .docxArchiveExtraction,
+            milliseconds: (ProcessInfo.processInfo.systemUptime - stageStartedAt) * 1_000
+        ))
         let documentURL = directory.appendingPathComponent("word/document.xml")
         let xml = try String(contentsOf: documentURL, encoding: .utf8)
+        stageStartedAt = ProcessInfo.processInfo.systemUptime
         let relationships = docxRelationships(from: directory.appendingPathComponent("word/_rels/document.xml.rels"))
+        measurements.append(.init(
+            event: .docxRelationshipParse,
+            milliseconds: (ProcessInfo.processInfo.systemUptime - stageStartedAt) * 1_000
+        ))
+        stageStartedAt = ProcessInfo.processInfo.systemUptime
         let content = docxBodyContent(from: xml, directory: directory, relationships: relationships)
+        let tocItems = docxTOCItems(from: content.html)
+        measurements.append(.init(
+            event: .docxXMLRender,
+            milliseconds: (ProcessInfo.processInfo.systemUptime - stageStartedAt) * 1_000
+        ))
         let title = url.deletingPathExtension().lastPathComponent
         return WebReadableDocument(
             html: pageHTML(title: title, body: content.html.isEmpty ? "<p>Unable to read DOCX content.</p>" : content.html, documentStyles: docxReaderStyles, profile: .docx),
@@ -36,8 +53,9 @@ extension WebDocumentLoader {
             plainText: content.plainText.joined(separator: "\n\n"),
             plainTextLoader: nil,
             coverImageURL: nil,
-            tocItems: docxTOCItems(from: content.html),
-            diagnostics: []
+            tocItems: tocItems,
+            diagnostics: [],
+            loadMeasurements: measurements
         )
     }
 

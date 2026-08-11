@@ -9,6 +9,17 @@ package struct WebReadableDocument {
     package let coverImageURL: URL?
     package let tocItems: [ReaderTOCItem]
     package let diagnostics: [String]
+    package var loadMeasurements: [DocumentLoadMeasurement] = []
+}
+
+package struct DocumentLoadMeasurement: Sendable {
+    package let event: PerformanceEvent
+    package let milliseconds: Double
+
+    package init(event: PerformanceEvent, milliseconds: Double) {
+        self.event = event
+        self.milliseconds = milliseconds
+    }
 }
 
 package struct ReaderTOCItem {

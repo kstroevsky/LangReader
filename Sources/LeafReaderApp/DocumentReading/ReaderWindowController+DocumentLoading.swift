@@ -92,6 +92,9 @@ extension ReaderWindowController {
                         kind == .epub ? .epubPreparation : .docxPreparation,
                         milliseconds: preparationMilliseconds
                     )
+                    for measurement in document.loadMeasurements {
+                        ReaderPerformance.record(measurement.event, milliseconds: measurement.milliseconds)
+                    }
                     self.applyLoadedWebDocument(
                         document,
                         url: url,
