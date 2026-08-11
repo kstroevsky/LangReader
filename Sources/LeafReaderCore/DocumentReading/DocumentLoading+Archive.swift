@@ -126,6 +126,54 @@ extension WebDocumentLoader {
         }
     }
 
+    package static func zipEntryPaths(in url: URL) throws -> [String] {
+        let result = try ProcessRunner.run(
+            executableURL: URL(fileURLWithPath: "/usr/bin/unzip"),
+            arguments: ["-Z1", url.path],
+            timeout: archiveProcessTimeout
+        )
+        guard !result.timedOut, result.terminationStatus == 0 else {
+            throw NSError(domain: "LeafReader", code: Int(result.terminationStatus), userInfo: [
+                NSLocalizedDescriptionKey: archiveProcessErrorMessage(
+                    prefix: "Unable to inspect \(url.lastPathComponent)",
+                    stderr: result.stderr
+                )
+            ])
+        }
+        guard let output = String(data: result.stdout, encoding: .utf8) else {
+            throw NSError(domain: "LeafReader", code: -2, userInfo: [
+                NSLocalizedDescriptionKey: "Unable to decode the archive directory for \(url.lastPathComponent)."
+            ])
+        }
+        return output.split(whereSeparator: \.isNewline).map(String.init)
+    }
+
+    package static func unzip(url: URL, to destination: URL, entryPaths: [String]) throws {
+        guard !entryPaths.isEmpty else {
+            throw NSError(domain: "LeafReader", code: -2, userInfo: [
+                NSLocalizedDescriptionKey: "The document archive has no readable entries."
+            ])
+        }
+        let result = try ProcessRunner.run(
+            executableURL: URL(fileURLWithPath: "/usr/bin/unzip"),
+            arguments: ["-qq", "-o", url.path] + entryPaths + ["-d", destination.path],
+            timeout: archiveProcessTimeout
+        )
+        guard !result.timedOut else {
+            throw NSError(domain: "LeafReader", code: -1, userInfo: [
+                NSLocalizedDescriptionKey: "Unable to unpack \(url.lastPathComponent): unzip timed out."
+            ])
+        }
+        guard result.terminationStatus == 0 else {
+            throw NSError(domain: "LeafReader", code: Int(result.terminationStatus), userInfo: [
+                NSLocalizedDescriptionKey: archiveProcessErrorMessage(
+                    prefix: "Unable to unpack \(url.lastPathComponent)",
+                    stderr: result.stderr
+                )
+            ])
+        }
+    }
+
     package static func zipEntryData(in url: URL, entryPath: String) throws -> Data? {
         guard let entryPath = EPUBPathResolver.safeArchivePath(entryPath) else { return nil }
         let result = try ProcessRunner.run(

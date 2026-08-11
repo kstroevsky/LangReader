@@ -6,6 +6,11 @@ package struct DOCXStreamingResult {
     package let tocItems: [ReaderTOCItem]
 }
 
+package enum DOCXMediaReferenceStyle {
+    case absoluteFileURL
+    case relativeToPreparedEntry
+}
+
 private enum DOCXXMLNamespace {
     static let wordProcessing = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
     static let drawing = "http://schemas.openxmlformats.org/drawingml/2006/main"
@@ -65,6 +70,7 @@ private struct DOCXStreamingParagraph {
 private final class DOCXDocumentXMLParser: NSObject, XMLParserDelegate {
     private let directory: URL
     private let relationships: [String: String]
+    private let mediaReferenceStyle: DOCXMediaReferenceStyle
 
     private var output: [String] = ["<main class=\"docx-document\">"]
     private var plainText: [String] = []
@@ -86,9 +92,14 @@ private final class DOCXDocumentXMLParser: NSObject, XMLParserDelegate {
     private var listOpen = false
     private var headingIndex = 0
 
-    init(directory: URL, relationships: [String: String]) {
+    init(
+        directory: URL,
+        relationships: [String: String],
+        mediaReferenceStyle: DOCXMediaReferenceStyle
+    ) {
         self.directory = directory
         self.relationships = relationships
+        self.mediaReferenceStyle = mediaReferenceStyle
     }
 
     func result() -> DOCXStreamingResult {
@@ -335,12 +346,13 @@ private final class DOCXDocumentXMLParser: NSObject, XMLParserDelegate {
 
     private func appendImage(relationshipID: String?) {
         guard let relationshipID,
-              let source = WebDocumentLoader.docxMediaURL(
+              let source = WebDocumentLoader.docxMediaReference(
                 for: relationshipID,
                 directory: directory,
-                relationships: relationships
+                relationships: relationships,
+                style: mediaReferenceStyle
               ) else { return }
-        run?.html.append("<img src=\"\(EPUBHTMLSanitizer.escapeHTML(source.absoluteString))\">")
+        run?.html.append("<img src=\"\(EPUBHTMLSanitizer.escapeHTML(source))\">")
         run?.visibleText.append(" ")
         paragraph?.containsImage = true
     }
@@ -412,14 +424,19 @@ extension WebDocumentLoader {
     package static func docxStreamingContent(
         from url: URL,
         directory: URL,
-        relationships: [String: String]
+        relationships: [String: String],
+        mediaReferenceStyle: DOCXMediaReferenceStyle = .absoluteFileURL
     ) throws -> DOCXStreamingResult {
         guard let parser = XMLParser(contentsOf: url) else {
             throw NSError(domain: "LeafReader", code: -2, userInfo: [
                 NSLocalizedDescriptionKey: "Unable to read DOCX document XML"
             ])
         }
-        let delegate = DOCXDocumentXMLParser(directory: directory, relationships: relationships)
+        let delegate = DOCXDocumentXMLParser(
+            directory: directory,
+            relationships: relationships,
+            mediaReferenceStyle: mediaReferenceStyle
+        )
         parser.delegate = delegate
         parser.shouldProcessNamespaces = true
         parser.shouldReportNamespacePrefixes = false

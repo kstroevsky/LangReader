@@ -23,40 +23,7 @@ extension WebDocumentLoader {
     // MARK: - DOCX Loading
 
     package static func loadDOCX(url: URL) throws -> WebReadableDocument {
-        var measurements: [DocumentLoadMeasurement] = []
-        var stageStartedAt = ProcessInfo.processInfo.systemUptime
-        let directory = try unzip(url: url)
-        measurements.append(.init(
-            event: .docxArchiveExtraction,
-            milliseconds: (ProcessInfo.processInfo.systemUptime - stageStartedAt) * 1_000
-        ))
-        let documentURL = directory.appendingPathComponent("word/document.xml")
-        stageStartedAt = ProcessInfo.processInfo.systemUptime
-        let relationships = try docxStreamingRelationships(
-            from: directory.appendingPathComponent("word/_rels/document.xml.rels")
-        )
-        measurements.append(.init(
-            event: .docxRelationshipParse,
-            milliseconds: (ProcessInfo.processInfo.systemUptime - stageStartedAt) * 1_000
-        ))
-        stageStartedAt = ProcessInfo.processInfo.systemUptime
-        let content = try docxStreamingContent(from: documentURL, directory: directory, relationships: relationships)
-        measurements.append(.init(
-            event: .docxXMLRender,
-            milliseconds: (ProcessInfo.processInfo.systemUptime - stageStartedAt) * 1_000
-        ))
-        let title = url.deletingPathExtension().lastPathComponent
-        return WebReadableDocument(
-            html: pageHTML(title: title, body: content.html.isEmpty ? "<p>Unable to read DOCX content.</p>" : content.html, documentStyles: docxReaderStyles, profile: .docx),
-            htmlFileURL: nil,
-            baseURL: directory,
-            plainText: content.plainText.joined(separator: "\n\n"),
-            plainTextLoader: nil,
-            coverImageURL: nil,
-            tocItems: content.tocItems,
-            diagnostics: [],
-            loadMeasurements: measurements
-        )
+        try loadPreparedDOCX(url: url)
     }
 
     // MARK: - DOCX Rendering
@@ -270,6 +237,29 @@ extension WebDocumentLoader {
             return URL(string: target)
         }
         return directory.appendingPathComponent("word").appendingPathComponent(target)
+    }
+
+    package static func docxMediaReference(
+        for relationshipID: String,
+        directory: URL,
+        relationships: [String: String],
+        style: DOCXMediaReferenceStyle
+    ) -> String? {
+        guard let target = relationships[relationshipID] else { return nil }
+        if target.hasPrefix("http://") || target.hasPrefix("https://") {
+            return URL(string: target)?.absoluteString
+        }
+        guard let safeTarget = EPUBPathResolver.safeArchivePath(target),
+              !target.split(separator: "/", omittingEmptySubsequences: false).contains("..") else {
+            return nil
+        }
+        switch style {
+        case .absoluteFileURL:
+            return directory.appendingPathComponent("word").appendingPathComponent(safeTarget).absoluteString
+        case .relativeToPreparedEntry:
+            let path = "word/\(safeTarget)"
+            return path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
+        }
     }
 
     package static func docxRelationships(from url: URL) -> [String: String] {
