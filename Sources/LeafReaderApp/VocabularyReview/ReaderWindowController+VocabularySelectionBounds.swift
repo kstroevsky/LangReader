@@ -59,6 +59,17 @@ extension ReaderWindowController {
         return bestBounds
     }
 
+    func exactPDFSelectionBounds(_ selection: PDFSelection, page: PDFPage) -> CGRect? {
+        let originalBounds = selection.bounds(for: page)
+        guard originalBounds.width > 0, originalBounds.height > 0 else { return nil }
+        let bounds = tightSelectionBounds(
+            selection,
+            page: page,
+            originalBounds: originalBounds
+        ).insetBy(dx: -1.5, dy: -1)
+        return bounds.width > 0 && bounds.height > 0 ? bounds : nil
+    }
+
     func pdfTextRanges(matching query: String, in pageText: String) -> [NSRange] {
         let nsText = pageText as NSString
         let patterns = [

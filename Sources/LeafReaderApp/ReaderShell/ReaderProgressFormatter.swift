@@ -17,4 +17,10 @@ enum ReaderProgressFormatter {
     static func webProgressPercent(_ progress: Double) -> Int {
         min(100, max(0, Int(round(min(1, max(0, progress)) * 100))))
     }
+
+    static func webSectionProgress(index: Int, locationCount: Int) -> Double {
+        let count = max(1, locationCount)
+        guard count > 1 else { return 0 }
+        return Double(min(max(index, 0), count - 1)) / Double(count - 1)
+    }
 }

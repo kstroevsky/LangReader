@@ -12,6 +12,10 @@ import Foundation
 package struct PerformanceReport: Equatable {
     package struct Row: Equatable {
         package let event: PerformanceEvent
+        /// Samples in observation order. Summaries are useful for a quick diff,
+        /// but the raw values are the evidence needed to recompute percentiles,
+        /// uncertainty, and paired comparisons without rerunning the app.
+        package let samplesMS: [Double]
         package let count: Int
         package let minMS: Double
         package let medianMS: Double
@@ -22,6 +26,7 @@ package struct PerformanceReport: Equatable {
             precondition(!samples.isEmpty, "a report row needs at least one sample")
             let sorted = samples.sorted()
             self.event = event
+            samplesMS = samples
             self.count = sorted.count
             self.minMS = sorted.first!
             self.maxMS = sorted.last!
@@ -72,9 +77,12 @@ package struct PerformanceReport: Equatable {
 
     /// Deterministic JSON for the committed baseline. Numbers are rounded to one
     /// decimal so an insignificant sub-millisecond wobble is not a diff.
-    package func json() -> String {
+    package func json(metadata: [String: String] = [:]) -> String {
         let events = rows.map { row -> String in
-            """
+            let samples = row.samplesMS
+                .map(Self.rounded)
+                .joined(separator: ", ")
+            return """
               {
                 "event": "\(row.event.rawValue)",
                 "label": "\(row.event.label)",
@@ -82,11 +90,19 @@ package struct PerformanceReport: Equatable {
                 "min_ms": \(Self.rounded(row.minMS)),
                 "median_ms": \(Self.rounded(row.medianMS)),
                 "mean_ms": \(Self.rounded(row.meanMS)),
-                "max_ms": \(Self.rounded(row.maxMS))
+                "max_ms": \(Self.rounded(row.maxMS)),
+                "samples_ms": [\(samples)]
               }
             """
         }
-        return "{\n  \"events\": [\n" + events.joined(separator: ",\n") + "\n  ]\n}\n"
+        let metadataRows = metadata.keys.sorted().map { key in
+            "    \"\(Self.jsonEscaped(key))\": \"\(Self.jsonEscaped(metadata[key] ?? ""))\""
+        }
+        let metadataJSON = metadataRows.isEmpty
+            ? "{}"
+            : "{\n" + metadataRows.joined(separator: ",\n") + "\n  }"
+        return "{\n  \"schema_version\": 2,\n  \"metadata\": \(metadataJSON),\n  \"events\": [\n"
+            + events.joined(separator: ",\n") + "\n  ]\n}\n"
     }
 
     private static func median(ofSorted sorted: [Double]) -> Double {
@@ -103,6 +119,26 @@ package struct PerformanceReport: Equatable {
 
     private static func rounded(_ value: Double) -> String {
         String(format: "%.1f", value)
+    }
+
+    private static func jsonEscaped(_ value: String) -> String {
+        var result = ""
+        for scalar in value.unicodeScalars {
+            switch scalar.value {
+            case 0x22: result += "\\\""
+            case 0x5C: result += "\\\\"
+            case 0x08: result += "\\b"
+            case 0x0C: result += "\\f"
+            case 0x0A: result += "\\n"
+            case 0x0D: result += "\\r"
+            case 0x09: result += "\\t"
+            case 0x00...0x1F:
+                result += String(format: "\\u%04X", scalar.value)
+            default:
+                result.unicodeScalars.append(scalar)
+            }
+        }
+        return result
     }
 
     private static func order(of event: PerformanceEvent) -> Int {

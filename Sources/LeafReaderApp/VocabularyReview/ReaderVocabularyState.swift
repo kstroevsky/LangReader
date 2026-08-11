@@ -1,5 +1,6 @@
 import Foundation
 import NaturalLanguage
+import PDFKit
 import LeafReaderCore
 
 struct ReaderVocabularyState {
@@ -14,6 +15,9 @@ struct ReaderVocabularyState {
     var webWordRecordStore: WebWordRecordStore?
     var currentExportRecords: [VocabularyExportRecord] = []
     var occurrenceSearchID: UUID?
+    var occurrenceSearchCancellationToken: PDFDocumentTextCancellationToken?
     var expandedOccurrenceKeys: Set<String> = []
     var pendingLibraryOccurrence: VocabularyLibraryOccurrence?
+    var renderedPDFWordAnnotations: [(page: PDFPage, annotation: PDFAnnotation)] = []
+    var resolvedPDFWordBounds: [String: CGRect] = [:]
 }

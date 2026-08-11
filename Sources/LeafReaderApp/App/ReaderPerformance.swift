@@ -77,6 +77,13 @@ enum ReaderPerformance {
         recorder.record(event, milliseconds: milliseconds)
     }
 
+    static func recordMainThreadWork(startedAt: TimeInterval) {
+        record(
+            .mainThreadUninterruptedWork,
+            milliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
+        )
+    }
+
     /// Folds the launch tracker's marks into the recorder so the baseline has
     /// one report, not two. Idempotent enough for a single end-of-run call.
     static func absorbLaunchMarks(_ snapshot: LaunchPerformanceSnapshot?) {
@@ -105,9 +112,44 @@ enum ReaderPerformance {
         guard let outPath = ProcessInfo.processInfo.environment["LEAFVOCAB_PERF_OUT"],
               !outPath.isEmpty else { return }
         let base = URL(fileURLWithPath: outPath)
-        try? report.json().write(to: base.appendingPathExtension("json"),
+        try? report.json(metadata: captureMetadata()).write(to: base.appendingPathExtension("json"),
                                  atomically: true, encoding: .utf8)
         try? report.textTable().write(to: base.appendingPathExtension("txt"),
                                       atomically: true, encoding: .utf8)
+    }
+
+    private static func captureMetadata() -> [String: String] {
+        let environment = ProcessInfo.processInfo.environment
+        let process = ProcessInfo.processInfo
+        var metadata: [String: String] = [
+            "phase": environment["LEAFVOCAB_PERF_PHASE"] ?? "unclassified",
+            "configuration": environment["LEAFVOCAB_PERF_CONFIGURATION"] ?? "unknown",
+            "os_version": process.operatingSystemVersionString,
+            "architecture": architectureName(),
+            "processor_count": String(process.processorCount),
+            "active_processor_count": String(process.activeProcessorCount),
+            "physical_memory_bytes": String(process.physicalMemory)
+        ]
+        for (environmentKey, metadataKey) in [
+            ("LEAFVOCAB_PERF_SOURCE_REVISION", "source_revision"),
+            ("LEAFVOCAB_PERF_BUILD_SHA256", "build_sha256"),
+            ("LEAFVOCAB_PERF_FIXTURE_SET", "fixture_set"),
+            ("LEAFVOCAB_PERF_RUN_ID", "run_id")
+        ] {
+            if let value = environment[environmentKey], !value.isEmpty {
+                metadata[metadataKey] = value
+            }
+        }
+        return metadata
+    }
+
+    private static func architectureName() -> String {
+#if arch(arm64)
+        "arm64"
+#elseif arch(x86_64)
+        "x86_64"
+#else
+        "unknown"
+#endif
     }
 }

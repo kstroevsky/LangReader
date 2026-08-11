@@ -1,0 +1,188 @@
+{
+  "schema_version": 2,
+  "metadata": {
+    "active_processor_count": "10",
+    "architecture": "arm64",
+    "build_sha256": "151a19f687023ed9c77532c55092661b924a6c93993e39e4ec9ac367d4a60044",
+    "configuration": "release",
+    "fixture_set": "e91ca61c92bf279de2d2e427376f7f11919fdc9bccbbe24863d0b9822e220efb",
+    "os_version": "Version 14.8.8 (Build 23J620)",
+    "phase": "warm",
+    "physical_memory_bytes": "34359738368",
+    "processor_count": "10",
+    "run_id": "20260809T191359Z-55609-warm",
+    "source_revision": "33ff1c4484c742239da976c1e3592acf2f75e6a7"
+  },
+  "events": [
+  {
+    "event": "launch",
+    "label": "App launch",
+    "count": 1,
+    "min_ms": 116.0,
+    "median_ms": 116.0,
+    "mean_ms": 116.0,
+    "max_ms": 116.0,
+    "samples_ms": [116.0]
+  },
+  {
+    "event": "mainWindow",
+    "label": "Main window",
+    "count": 1,
+    "min_ms": 114.0,
+    "median_ms": 114.0,
+    "mean_ms": 114.0,
+    "max_ms": 114.0,
+    "samples_ms": [114.0]
+  },
+  {
+    "event": "pdfOpen",
+    "label": "PDF open",
+    "count": 3,
+    "min_ms": 77.2,
+    "median_ms": 91.2,
+    "mean_ms": 100.5,
+    "max_ms": 133.1,
+    "samples_ms": [133.1, 77.2, 91.2]
+  },
+  {
+    "event": "webDocumentPreparation",
+    "label": "EPUB/DOCX preparation",
+    "count": 2,
+    "min_ms": 140.5,
+    "median_ms": 163.2,
+    "mean_ms": 163.2,
+    "max_ms": 185.9,
+    "samples_ms": [185.9, 140.5]
+  },
+  {
+    "event": "epubPreparation",
+    "label": "EPUB preparation",
+    "count": 2,
+    "min_ms": 140.5,
+    "median_ms": 163.2,
+    "mean_ms": 163.2,
+    "max_ms": 185.9,
+    "samples_ms": [185.9, 140.5]
+  },
+  {
+    "event": "webOpen",
+    "label": "EPUB/DOCX open",
+    "count": 2,
+    "min_ms": 10.7,
+    "median_ms": 23.6,
+    "mean_ms": 23.6,
+    "max_ms": 36.4,
+    "samples_ms": [36.4, 10.7]
+  },
+  {
+    "event": "webContentReady",
+    "label": "EPUB/DOCX content ready",
+    "count": 2,
+    "min_ms": 189.9,
+    "median_ms": 287.9,
+    "mean_ms": 287.9,
+    "max_ms": 386.0,
+    "samples_ms": [386.0, 189.9]
+  },
+  {
+    "event": "epubContentReady",
+    "label": "EPUB content ready",
+    "count": 2,
+    "min_ms": 189.9,
+    "median_ms": 287.9,
+    "mean_ms": 287.9,
+    "max_ms": 386.0,
+    "samples_ms": [386.0, 189.9]
+  },
+  {
+    "event": "firstPageDisplay",
+    "label": "First page display",
+    "count": 3,
+    "min_ms": 27.3,
+    "median_ms": 68.9,
+    "mean_ms": 73.5,
+    "max_ms": 124.2,
+    "samples_ms": [124.2, 68.9, 27.3]
+  },
+  {
+    "event": "pdfCoverThumbnail",
+    "label": "PDF cover thumbnail",
+    "count": 3,
+    "min_ms": 6.7,
+    "median_ms": 6.7,
+    "mean_ms": 17.6,
+    "max_ms": 39.3,
+    "samples_ms": [6.7, 6.7, 39.3]
+  },
+  {
+    "event": "documentVisibleReady",
+    "label": "Document visibly ready",
+    "count": 5,
+    "min_ms": 107.6,
+    "median_ms": 196.4,
+    "mean_ms": 217.0,
+    "max_ms": 387.8,
+    "samples_ms": [273.2, 107.6, 120.0, 387.8, 196.4]
+  },
+  {
+    "event": "pdfVisibleReady",
+    "label": "PDF visibly ready",
+    "count": 3,
+    "min_ms": 107.6,
+    "median_ms": 120.0,
+    "mean_ms": 166.9,
+    "max_ms": 273.2,
+    "samples_ms": [273.2, 107.6, 120.0]
+  },
+  {
+    "event": "epubVisibleReady",
+    "label": "EPUB visibly ready",
+    "count": 2,
+    "min_ms": 196.4,
+    "median_ms": 292.1,
+    "mean_ms": 292.1,
+    "max_ms": 387.8,
+    "samples_ms": [387.8, 196.4]
+  },
+  {
+    "event": "vocabularyRecordLoad",
+    "label": "Vocabulary record load",
+    "count": 5,
+    "min_ms": 0.1,
+    "median_ms": 0.1,
+    "mean_ms": 1.4,
+    "max_ms": 6.3,
+    "samples_ms": [6.3, 0.1, 0.1, 0.1, 0.1]
+  },
+  {
+    "event": "vocabularyLanguageDetection",
+    "label": "Vocabulary language detection",
+    "count": 3,
+    "min_ms": 4.9,
+    "median_ms": 27.4,
+    "mean_ms": 26.6,
+    "max_ms": 47.5,
+    "samples_ms": [27.4, 47.5, 4.9]
+  },
+  {
+    "event": "webHighlightRestore",
+    "label": "Web highlight restoration",
+    "count": 2,
+    "min_ms": 0.2,
+    "median_ms": 0.2,
+    "mean_ms": 0.2,
+    "max_ms": 0.2,
+    "samples_ms": [0.2, 0.2]
+  },
+  {
+    "event": "themeSwitch",
+    "label": "Theme switch",
+    "count": 6,
+    "min_ms": 2.6,
+    "median_ms": 3.5,
+    "mean_ms": 4.5,
+    "max_ms": 9.0,
+    "samples_ms": [9.0, 3.6, 2.6, 2.7, 3.4, 5.9]
+  }
+  ]
+}

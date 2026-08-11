@@ -1,0 +1,378 @@
+{
+  "schema_version": 2,
+  "metadata": {
+    "active_processor_count": "10",
+    "architecture": "arm64",
+    "build_sha256": "151a19f687023ed9c77532c55092661b924a6c93993e39e4ec9ac367d4a60044",
+    "configuration": "release",
+    "fixture_set": "d8e3e7aca48934240a536cde629ff592576fbd0f011ac1f9341cc5c444f79e15",
+    "os_version": "Version 14.8.8 (Build 23J620)",
+    "phase": "interaction",
+    "physical_memory_bytes": "34359738368",
+    "processor_count": "10",
+    "run_id": "20260809T191125Z-55082-interaction",
+    "source_revision": "33ff1c4484c742239da976c1e3592acf2f75e6a7"
+  },
+  "events": [
+  {
+    "event": "launch",
+    "label": "App launch",
+    "count": 1,
+    "min_ms": 154.0,
+    "median_ms": 154.0,
+    "mean_ms": 154.0,
+    "max_ms": 154.0,
+    "samples_ms": [154.0]
+  },
+  {
+    "event": "mainWindow",
+    "label": "Main window",
+    "count": 1,
+    "min_ms": 153.0,
+    "median_ms": 153.0,
+    "mean_ms": 153.0,
+    "max_ms": 153.0,
+    "samples_ms": [153.0]
+  },
+  {
+    "event": "pdfOpen",
+    "label": "PDF open",
+    "count": 1,
+    "min_ms": 403.8,
+    "median_ms": 403.8,
+    "mean_ms": 403.8,
+    "max_ms": 403.8,
+    "samples_ms": [403.8]
+  },
+  {
+    "event": "webDocumentPreparation",
+    "label": "EPUB/DOCX preparation",
+    "count": 1,
+    "min_ms": 199.6,
+    "median_ms": 199.6,
+    "mean_ms": 199.6,
+    "max_ms": 199.6,
+    "samples_ms": [199.6]
+  },
+  {
+    "event": "epubPreparation",
+    "label": "EPUB preparation",
+    "count": 1,
+    "min_ms": 199.6,
+    "median_ms": 199.6,
+    "mean_ms": 199.6,
+    "max_ms": 199.6,
+    "samples_ms": [199.6]
+  },
+  {
+    "event": "webOpen",
+    "label": "EPUB/DOCX open",
+    "count": 1,
+    "min_ms": 52.3,
+    "median_ms": 52.3,
+    "mean_ms": 52.3,
+    "max_ms": 52.3,
+    "samples_ms": [52.3]
+  },
+  {
+    "event": "webContentReady",
+    "label": "EPUB/DOCX content ready",
+    "count": 1,
+    "min_ms": 498.7,
+    "median_ms": 498.7,
+    "mean_ms": 498.7,
+    "max_ms": 498.7,
+    "samples_ms": [498.7]
+  },
+  {
+    "event": "epubContentReady",
+    "label": "EPUB content ready",
+    "count": 1,
+    "min_ms": 498.7,
+    "median_ms": 498.7,
+    "mean_ms": 498.7,
+    "max_ms": 498.7,
+    "samples_ms": [498.7]
+  },
+  {
+    "event": "firstPageDisplay",
+    "label": "First page display",
+    "count": 1,
+    "min_ms": 365.1,
+    "median_ms": 365.1,
+    "mean_ms": 365.1,
+    "max_ms": 365.1,
+    "samples_ms": [365.1]
+  },
+  {
+    "event": "pdfCoverThumbnail",
+    "label": "PDF cover thumbnail",
+    "count": 1,
+    "min_ms": 89.9,
+    "median_ms": 89.9,
+    "mean_ms": 89.9,
+    "max_ms": 89.9,
+    "samples_ms": [89.9]
+  },
+  {
+    "event": "documentVisibleReady",
+    "label": "Document visibly ready",
+    "count": 2,
+    "min_ms": 502.3,
+    "median_ms": 690.7,
+    "mean_ms": 690.7,
+    "max_ms": 879.0,
+    "samples_ms": [879.0, 502.3]
+  },
+  {
+    "event": "pdfVisibleReady",
+    "label": "PDF visibly ready",
+    "count": 1,
+    "min_ms": 879.0,
+    "median_ms": 879.0,
+    "mean_ms": 879.0,
+    "max_ms": 879.0,
+    "samples_ms": [879.0]
+  },
+  {
+    "event": "epubVisibleReady",
+    "label": "EPUB visibly ready",
+    "count": 1,
+    "min_ms": 502.3,
+    "median_ms": 502.3,
+    "mean_ms": 502.3,
+    "max_ms": 502.3,
+    "samples_ms": [502.3]
+  },
+  {
+    "event": "selectionToolbar",
+    "label": "Selection toolbar",
+    "count": 2,
+    "min_ms": 9.8,
+    "median_ms": 97.4,
+    "mean_ms": 97.4,
+    "max_ms": 185.0,
+    "samples_ms": [185.0, 9.8]
+  },
+  {
+    "event": "pdfTextSnapshot",
+    "label": "PDF text snapshot",
+    "count": 1,
+    "min_ms": 15847.2,
+    "median_ms": 15847.2,
+    "mean_ms": 15847.2,
+    "max_ms": 15847.2,
+    "samples_ms": [15847.2]
+  },
+  {
+    "event": "vocabularyIndexBuild",
+    "label": "Vocabulary index build",
+    "count": 1,
+    "min_ms": 7421.7,
+    "median_ms": 7421.7,
+    "mean_ms": 7421.7,
+    "max_ms": 7421.7,
+    "samples_ms": [7421.7]
+  },
+  {
+    "event": "vocabularySaveAcknowledgement",
+    "label": "Vocabulary save acknowledgement",
+    "count": 1,
+    "min_ms": 42.0,
+    "median_ms": 42.0,
+    "mean_ms": 42.0,
+    "max_ms": 42.0,
+    "samples_ms": [42.0]
+  },
+  {
+    "event": "vocabularyOccurrenceQuery",
+    "label": "Vocabulary occurrence query",
+    "count": 1,
+    "min_ms": 1.3,
+    "median_ms": 1.3,
+    "mean_ms": 1.3,
+    "max_ms": 1.3,
+    "samples_ms": [1.3]
+  },
+  {
+    "event": "vocabularyOccurrencePersistence",
+    "label": "Vocabulary occurrence persistence",
+    "count": 1,
+    "min_ms": 21956.5,
+    "median_ms": 21956.5,
+    "mean_ms": 21956.5,
+    "max_ms": 21956.5,
+    "samples_ms": [21956.5]
+  },
+  {
+    "event": "vocabularyRecordLoad",
+    "label": "Vocabulary record load",
+    "count": 2,
+    "min_ms": 0.1,
+    "median_ms": 0.2,
+    "mean_ms": 0.2,
+    "max_ms": 0.2,
+    "samples_ms": [0.2, 0.1]
+  },
+  {
+    "event": "vocabularyRecordRepair",
+    "label": "Vocabulary record repair",
+    "count": 2,
+    "min_ms": 0.4,
+    "median_ms": 0.5,
+    "mean_ms": 0.5,
+    "max_ms": 0.6,
+    "samples_ms": [0.6, 0.4]
+  },
+  {
+    "event": "vocabularyLanguageDetection",
+    "label": "Vocabulary language detection",
+    "count": 1,
+    "min_ms": 93.7,
+    "median_ms": 93.7,
+    "mean_ms": 93.7,
+    "max_ms": 93.7,
+    "samples_ms": [93.7]
+  },
+  {
+    "event": "vocabularyDatabaseWrite",
+    "label": "Vocabulary database write",
+    "count": 1,
+    "min_ms": 1666.2,
+    "median_ms": 1666.2,
+    "mean_ms": 1666.2,
+    "max_ms": 1666.2,
+    "samples_ms": [1666.2]
+  },
+  {
+    "event": "visibleHighlightMaterialization",
+    "label": "Visible highlight materialization",
+    "count": 19,
+    "min_ms": 0.5,
+    "median_ms": 1.2,
+    "mean_ms": 1.2,
+    "max_ms": 1.7,
+    "samples_ms": [1.7, 1.3, 1.2, 1.5, 1.3, 1.2, 1.2, 1.2, 1.2, 1.3, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 0.5]
+  },
+  {
+    "event": "webHighlightRestore",
+    "label": "Web highlight restoration",
+    "count": 1,
+    "min_ms": 0.2,
+    "median_ms": 0.2,
+    "mean_ms": 0.2,
+    "max_ms": 0.2,
+    "samples_ms": [0.2]
+  },
+  {
+    "event": "pdfSearch",
+    "label": "PDF search",
+    "count": 1,
+    "min_ms": 370.2,
+    "median_ms": 370.2,
+    "mean_ms": 370.2,
+    "max_ms": 370.2,
+    "samples_ms": [370.2]
+  },
+  {
+    "event": "searchAcknowledgement",
+    "label": "Search acknowledgement",
+    "count": 4,
+    "min_ms": 0.2,
+    "median_ms": 0.5,
+    "mean_ms": 0.6,
+    "max_ms": 1.1,
+    "samples_ms": [0.5, 1.1, 0.4, 0.2]
+  },
+  {
+    "event": "searchFirstVisibleResult",
+    "label": "Search first visible result",
+    "count": 3,
+    "min_ms": 6.0,
+    "median_ms": 6.4,
+    "mean_ms": 8.1,
+    "max_ms": 12.0,
+    "samples_ms": [6.0, 6.4, 12.0]
+  },
+  {
+    "event": "searchCancellationResponse",
+    "label": "Search cancellation response",
+    "count": 2,
+    "min_ms": 0.0,
+    "median_ms": 0.0,
+    "mean_ms": 0.0,
+    "max_ms": 0.0,
+    "samples_ms": [0.0, 0.0]
+  },
+  {
+    "event": "searchResultNavigation",
+    "label": "Search result navigation",
+    "count": 11,
+    "min_ms": 1.8,
+    "median_ms": 2.1,
+    "mean_ms": 2.9,
+    "max_ms": 8.2,
+    "samples_ms": [3.4, 4.2, 2.6, 2.1, 2.1, 1.8, 2.2, 1.9, 2.0, 1.8, 8.2]
+  },
+  {
+    "event": "pdfZoomHighlightUpdate",
+    "label": "PDF zoom highlight update",
+    "count": 2,
+    "min_ms": 2.0,
+    "median_ms": 2.2,
+    "mean_ms": 2.2,
+    "max_ms": 2.3,
+    "samples_ms": [2.3, 2.0]
+  },
+  {
+    "event": "webFontHighlightUpdate",
+    "label": "Web font highlight update",
+    "count": 2,
+    "min_ms": 0.0,
+    "median_ms": 0.1,
+    "mean_ms": 0.1,
+    "max_ms": 0.2,
+    "samples_ms": [0.2, 0.0]
+  },
+  {
+    "event": "mainThreadUninterruptedWork",
+    "label": "Main-thread uninterrupted work",
+    "count": 90,
+    "min_ms": 0.0,
+    "median_ms": 0.2,
+    "mean_ms": 0.8,
+    "max_ms": 4.2,
+    "samples_ms": [0.5, 3.4, 1.1, 4.2, 2.6, 2.1, 2.1, 1.8, 2.2, 1.9, 2.0, 1.8, 2.4, 2.0, 0.1, 0.2, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.2, 0.1, 0.2, 0.1, 0.0, 0.0, 0.1, 0.1, 0.1, 0.1, 0.0, 0.4, 0.1, 0.2, 0.1, 0.1, 0.2, 0.1, 0.2, 0.1, 0.2, 0.2, 0.3, 0.2, 0.1, 0.3, 0.1, 0.2, 0.2, 3.1, 1.6, 0.6, 2.3, 2.0, 2.7, 1.5, 1.1, 1.4, 1.3, 1.9, 0.9, 1.0, 1.3, 2.0, 1.5, 1.7, 0.6, 1.5, 1.2, 1.8, 2.6, 0.6, 0.4, 0.2, 0.2, 0.0]
+  },
+  {
+    "event": "idleScrollFrame",
+    "label": "Idle scroll frame delay",
+    "count": 24,
+    "min_ms": 0.1,
+    "median_ms": 1.7,
+    "mean_ms": 1.4,
+    "max_ms": 3.4,
+    "samples_ms": [1.4, 0.3, 0.4, 0.8, 1.7, 1.7, 0.4, 0.9, 3.4, 1.6, 1.7, 2.7, 1.7, 1.8, 2.4, 1.7, 1.7, 1.7, 1.4, 1.7, 1.7, 0.7, 1.1, 0.1]
+  },
+  {
+    "event": "backgroundIndexScrollFrame",
+    "label": "Background-index scroll frame delay",
+    "count": 48,
+    "min_ms": 0.1,
+    "median_ms": 1.5,
+    "mean_ms": 1.4,
+    "max_ms": 7.0,
+    "samples_ms": [1.7, 1.7, 7.0, 1.4, 1.7, 0.7, 0.4, 1.8, 1.6, 0.9, 0.1, 0.6, 0.2, 1.8, 1.8, 1.7, 1.7, 0.3, 1.4, 0.6, 0.6, 1.8, 0.9, 1.8, 0.8, 1.8, 0.8, 1.3, 1.7, 1.7, 1.5, 1.2, 1.6, 1.6, 1.1, 0.2, 1.7, 0.2, 0.5, 1.7, 1.6, 1.6, 1.6, 0.8, 1.6, 1.1, 1.3, 1.5]
+  },
+  {
+    "event": "themeSwitch",
+    "label": "Theme switch",
+    "count": 3,
+    "min_ms": 3.9,
+    "median_ms": 13.1,
+    "mean_ms": 10.8,
+    "max_ms": 15.4,
+    "samples_ms": [15.4, 13.1, 3.9]
+  }
+  ]
+}

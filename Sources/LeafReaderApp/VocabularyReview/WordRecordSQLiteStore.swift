@@ -593,6 +593,7 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             location_key TEXT NOT NULL,
             page_index INTEGER NOT NULL,
             bounds_json TEXT NOT NULL,
+            text_anchor_json TEXT,
             context TEXT,
             surface_form TEXT,
             created_at REAL NOT NULL,
@@ -672,6 +673,7 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
         ensureColumn(table: "web_word_records", name: "dictionary_frequency", definition: "INTEGER")
         ensureColumn(table: "pdf_vocabulary_words", name: "lemma", definition: "TEXT")
         ensureColumn(table: "pdf_vocabulary_occurrences", name: "surface_form", definition: "TEXT")
+        ensureColumn(table: "pdf_vocabulary_occurrences", name: "text_anchor_json", definition: "TEXT")
     }
 
     private func ensureColumn(table: String, name: String, definition: String) {
@@ -847,8 +849,9 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
         return executeStatement(
             sql: """
             INSERT OR REPLACE INTO pdf_vocabulary_occurrences(
-                document_id, id, vocabulary_id, location_key, page_index, bounds_json, context, surface_form, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                document_id, id, vocabulary_id, location_key, page_index, bounds_json,
+                text_anchor_json, context, surface_form, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             prepareOperation: "prepare insert PDF vocabulary occurrence",
             stepOperation: "insert PDF vocabulary occurrence",
@@ -856,12 +859,13 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             bindSQLiteText(documentID, index: 1, statement: statement)
             bindSQLiteText(record.id, index: 2, statement: statement)
             bindSQLiteText(vocabularyID, index: 3, statement: statement)
-            bindSQLiteText(pdfLocationKey(pageIndex: record.pageIndex, bounds: record.bounds.cgRect), index: 4, statement: statement)
+            bindSQLiteText(pdfLocationKey(record: record), index: 4, statement: statement)
             sqlite3_bind_int(statement, 5, Int32(record.pageIndex))
             bindSQLiteText(codec.encode(record.bounds) ?? "{}", index: 6, statement: statement)
-            bindSQLiteOptionalText(record.context, index: 7, statement: statement)
-            bindSQLiteText(record.occurrenceSurfaceForm, index: 8, statement: statement)
-            sqlite3_bind_double(statement, 9, record.createdAt.timeIntervalSince1970)
+            bindSQLiteOptionalText(codec.encode(record.textAnchor), index: 7, statement: statement)
+            bindSQLiteOptionalText(record.context, index: 8, statement: statement)
+            bindSQLiteText(record.occurrenceSurfaceForm, index: 9, statement: statement)
+            sqlite3_bind_double(statement, 10, record.createdAt.timeIntervalSince1970)
             }
         )
     }
@@ -896,6 +900,13 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
 
     private func pdfLocationKey(pageIndex: Int, bounds: CGRect) -> String {
         "\(pageIndex):\(Int(bounds.origin.x.rounded())):\(Int(bounds.origin.y.rounded())):\(Int(bounds.width.rounded())):\(Int(bounds.height.rounded()))"
+    }
+
+    private func pdfLocationKey(record: StoredPDFWordRecord) -> String {
+        if let anchor = record.textAnchor {
+            return "text:\(anchor.unitOrdinal):\(anchor.sourceStart):\(anchor.sourceLength)"
+        }
+        return pdfLocationKey(pageIndex: record.pageIndex, bounds: record.bounds.cgRect)
     }
 
     private func migrateLegacyPDFRecordsIfNeeded() {

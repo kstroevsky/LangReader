@@ -70,6 +70,11 @@ extension ReaderWindowController {
 
     func markReaderInteraction() {
         lastReaderInteractionAt = Date()
+        // Whole-document extraction/indexing is utility work. Yield briefly to
+        // scrolling and zooming, while the separate visible-page priority index
+        // remains unthrottled for the current vocabulary action.
+        documentTextState.snapshotCancellationToken?.deferWork(for: 0.25)
+        documentTextState.vocabularyIndexCancellationToken?.deferWork(for: 0.25)
     }
 
     func cancelScheduledEmbeddingWarmup() {

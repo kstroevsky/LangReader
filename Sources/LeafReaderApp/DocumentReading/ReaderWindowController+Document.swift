@@ -18,6 +18,9 @@ extension ReaderWindowController {
 
     func loadDocument(_ url: URL) {
         guard let kind = ReaderDocumentKind.kind(for: url) else { return }
+        activeVisibleDocumentLoadStartedAt = ProcessInfo.processInfo.systemUptime
+        activeVisibleDocumentLoadKind = kind
+        activeVisibleDocumentLoadIsSessionRestore = isRestoringSession
         stopReadAloudImmediately()
         SpeechPlaybackCoordinator.shared.shutdownRuntime(.kokoro)
         activateReaderBackend(for: kind)
@@ -48,10 +51,52 @@ extension ReaderWindowController {
     func hideDocumentLoading(generation: Int) {
         guard documentSession.acceptsLoad(generation: generation) else { return }
         mutateReaderPresentation { $0.finishDocumentLoading() }
+        if currentDocumentKind == .pdf {
+            recordVisibleDocumentReadyIfNeeded()
+        }
+    }
+
+    func recordVisibleDocumentReadyIfNeeded(
+        now: TimeInterval = ProcessInfo.processInfo.systemUptime
+    ) {
+        guard let startedAt = activeVisibleDocumentLoadStartedAt,
+              let kind = activeVisibleDocumentLoadKind,
+              currentDocumentKind == kind else { return }
+        activeVisibleDocumentLoadStartedAt = nil
+        activeVisibleDocumentLoadKind = nil
+        let isSessionRestore = activeVisibleDocumentLoadIsSessionRestore
+        activeVisibleDocumentLoadIsSessionRestore = false
+
+        let elapsedMilliseconds = max(0, (now - startedAt) * 1_000)
+        ReaderPerformance.record(.documentVisibleReady, milliseconds: elapsedMilliseconds)
+        switch kind {
+        case .pdf:
+            ReaderPerformance.record(.pdfVisibleReady, milliseconds: elapsedMilliseconds)
+        case .epub:
+            ReaderPerformance.record(.epubVisibleReady, milliseconds: elapsedMilliseconds)
+        case .docx:
+            ReaderPerformance.record(.docxVisibleReady, milliseconds: elapsedMilliseconds)
+        }
+        if isSessionRestore {
+            ReaderPerformance.record(
+                .restoredDocumentVisibleReady,
+                milliseconds: Double(LaunchPerformanceTracker.shared.elapsedMilliseconds(now: now))
+            )
+        }
+        if kind == .pdf {
+            startPendingPDFTOCBuildIfNeeded()
+            startPendingPDFCoverThumbnailIfNeeded()
+        }
+        schedulePerformanceAutomationIfNeeded(for: kind)
     }
 
     func showDocumentLoadingFailure(_ error: Error, generation: Int) {
         guard documentSession.acceptsLoad(generation: generation) else { return }
+        activeVisibleDocumentLoadStartedAt = nil
+        activeVisibleDocumentLoadKind = nil
+        activeVisibleDocumentLoadIsSessionRestore = false
+        pendingPDFCoverThumbnailRequest = nil
+        pendingPDFTOCBuildRequest = nil
         hideDocumentLoading(generation: generation)
         let alert = NSAlert(error: error)
         alert.applyLeafStyle()

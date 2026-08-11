@@ -369,12 +369,12 @@ if ! grep -q "bottomBar\." <<<"$CHROME_IDS"; then
   echo "$CHROME_IDS" >&2
   exit $EXIT_SKIPPED
 fi
-for id in settings shelf words notes review toc cover previousPage nextPage farthestPosition; do
+for id in settings shelf words review notes toc; do
   expect_identifier "bottomBar.$id" "$CHROME_IDS" "bottom bar $id"
 done
-# The top toolbar is SwiftUI now; assert its controls by identifier too. The
-# restored PDF session shows read-aloud, page-layout, crop and full-screen.
-for id in readAloud pageLayout crop fullScreen; do
+# The screenshot contract: the document identity cluster, read controls,
+# editable zoom/page controls, search, and the two PDF-specific trailing actions.
+for id in cover title relatedForms readAloud zoomOut zoom zoomIn pageNavigation searchUnderline search pageLayout crop; do
   expect_identifier "topBar.$id" "$CHROME_IDS" "top bar $id"
 done
 # The AI panel's chrome (header actions + status row) is SwiftUI too. Its

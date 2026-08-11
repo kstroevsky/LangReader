@@ -146,6 +146,7 @@ extension ReaderWindowController {
         pendingWebWordRecords.removeAll()
         storedWordRecords.removeAll()
         storedWebWordRecords.removeAll()
+        vocabularyState.resolvedPDFWordBounds.removeAll()
         highlightedSelectionKeys.removeAll()
         currentVocabularyExportRecords.removeAll()
     }

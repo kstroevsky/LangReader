@@ -14,12 +14,7 @@ extension ReaderWindowController {
 
     func clearCurrentPDFWordRecords() {
         guard !storedWordRecords.isEmpty else { return }
-        for record in storedWordRecords {
-            guard let page = pdfView.document?.page(at: record.pageIndex) else { continue }
-            for annotation in page.annotations where storedWordID(from: annotation) == record.id {
-                page.removeAnnotation(annotation)
-            }
-        }
+        removeAllVocabularyWordAnnotations()
         storedWordRecords.removeAll()
         highlightedSelectionKeys.removeAll()
         saveStoredWordRecords()
@@ -30,18 +25,7 @@ extension ReaderWindowController {
         guard !storedWebWordRecords.isEmpty else { return }
         storedWebWordRecords.removeAll()
         saveStoredWebWordRecords()
-        let script = """
-        (() => {
-          document.querySelectorAll('span.leaf-reader-linked-word').forEach((span) => {
-            const parent = span.parentNode;
-            if (!parent) return;
-            while (span.firstChild) parent.insertBefore(span.firstChild, span);
-            parent.removeChild(span);
-            parent.normalize();
-          });
-        })();
-        """
-        webView.evaluateJavaScript(script)
+        webView.evaluateJavaScript("window.leafReaderRestoreWordHighlights && window.leafReaderRestoreWordHighlights([]);")
     }
 
     func storedWordID(at event: NSEvent) -> String? {

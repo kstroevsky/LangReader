@@ -3,9 +3,20 @@ import Foundation
 package struct DOCXParagraph {
     package let html: String
     package let text: String
+    package let sourceText: String
     package let tag: String
     package let classes: [String]
     package let isListItem: Bool
+}
+
+package struct DOCXRenderedContent {
+    package let html: String
+    package let plainText: [String]
+}
+
+package struct DOCXInlineContent {
+    package let html: String
+    package let sourceText: String
 }
 
 extension WebDocumentLoader {
@@ -16,17 +27,16 @@ extension WebDocumentLoader {
         let documentURL = directory.appendingPathComponent("word/document.xml")
         let xml = try String(contentsOf: documentURL, encoding: .utf8)
         let relationships = docxRelationships(from: directory.appendingPathComponent("word/_rels/document.xml.rels"))
-        let body = docxBodyHTML(from: xml, directory: directory, relationships: relationships)
+        let content = docxBodyContent(from: xml, directory: directory, relationships: relationships)
         let title = url.deletingPathExtension().lastPathComponent
-        let plainText = docxParagraphs(from: xml).joined(separator: "\n\n")
         return WebReadableDocument(
-            html: pageHTML(title: title, body: body.isEmpty ? "<p>Unable to read DOCX content.</p>" : body, documentStyles: docxReaderStyles, profile: .docx),
+            html: pageHTML(title: title, body: content.html.isEmpty ? "<p>Unable to read DOCX content.</p>" : content.html, documentStyles: docxReaderStyles, profile: .docx),
             htmlFileURL: nil,
             baseURL: directory,
-            plainText: plainText,
+            plainText: content.plainText.joined(separator: "\n\n"),
             plainTextLoader: nil,
             coverImageURL: nil,
-            tocItems: docxTOCItems(from: body),
+            tocItems: docxTOCItems(from: content.html),
             diagnostics: []
         )
     }
@@ -35,12 +45,14 @@ extension WebDocumentLoader {
 
     package static func docxParagraphs(from xml: String) -> [String] {
         let paragraphMatches = regexMatches(#"<w:p\b[\s\S]*?</w:p>"#, in: xml).compactMap(\.first)
-        return paragraphMatches.map { paragraph in
-            regexMatches(#"<w:t\b[^>]*>([\s\S]*?)</w:t>"#, in: paragraph)
-                .compactMap { $0.count > 1 ? EPUBHTMLSanitizer.decodeEntities($0[1]) : nil }
-                .joined()
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-        }.filter { !$0.isEmpty }
+        return paragraphMatches.map(docxSourceText).filter { !$0.isEmpty }
+    }
+
+    package static func docxSourceText(from paragraph: String) -> String {
+        regexMatches(#"<w:t\b[^>]*>([\s\S]*?)</w:t>"#, in: paragraph)
+            .compactMap { $0.count > 1 ? EPUBHTMLSanitizer.decodeEntities($0[1]) : nil }
+            .joined()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     package static let docxReaderStyles = """
@@ -61,8 +73,13 @@ extension WebDocumentLoader {
             """
 
     package static func docxBodyHTML(from xml: String, directory: URL, relationships: [String: String]) -> String {
+        docxBodyContent(from: xml, directory: directory, relationships: relationships).html
+    }
+
+    package static func docxBodyContent(from xml: String, directory: URL, relationships: [String: String]) -> DOCXRenderedContent {
         let body = regexMatches(#"<w:body\b[^>]*>([\s\S]*?)</w:body>"#, in: xml).first.flatMap { $0.count > 1 ? $0[1] : nil } ?? xml
         var output: [String] = ["<main class=\"docx-document\">"]
+        var plainText: [String] = []
         var listOpen = false
         var headingIndex = 0
 
@@ -72,12 +89,17 @@ extension WebDocumentLoader {
                     output.append("</ul>")
                     listOpen = false
                 }
-                output.append(docxTableHTML(from: block, directory: directory, relationships: relationships))
+                let table = docxTableContent(from: block, directory: directory, relationships: relationships)
+                output.append(table.html)
+                plainText.append(contentsOf: table.plainText)
                 continue
             }
 
             let paragraph = docxParagraphHTML(from: block, directory: directory, relationships: relationships)
             guard !paragraph.text.isEmpty || paragraph.html.contains("<img") else { continue }
+            if !paragraph.sourceText.isEmpty {
+                plainText.append(paragraph.sourceText)
+            }
             if paragraph.isListItem {
                 if !listOpen {
                     output.append("<ul>")
@@ -103,32 +125,21 @@ extension WebDocumentLoader {
             output.append("</ul>")
         }
         output.append("</main>")
-        return output.joined(separator: "\n")
+        return DOCXRenderedContent(html: output.joined(separator: "\n"), plainText: plainText)
     }
 
     package static func docxTopLevelBlocks(from body: String) -> [String] {
-        let nsBody = body as NSString
-        var blocks: [String] = []
-        var cursor = 0
-        while cursor < nsBody.length {
-            let remaining = NSRange(location: cursor, length: nsBody.length - cursor)
-            let pRange = nsBody.range(of: "<w:p", options: [], range: remaining)
-            let tblRange = nsBody.range(of: "<w:tbl", options: [], range: remaining)
-            let candidates = [pRange, tblRange].filter { $0.location != NSNotFound }
-            guard let start = candidates.min(by: { $0.location < $1.location }) else { break }
-            let isTable = nsBody.substring(with: NSRange(location: start.location, length: min(6, nsBody.length - start.location))).hasPrefix("<w:tbl")
-            let closeTag = isTable ? "</w:tbl>" : "</w:p>"
-            let closeRange = nsBody.range(of: closeTag, options: [], range: NSRange(location: start.location, length: nsBody.length - start.location))
-            guard closeRange.location != NSNotFound else { break }
-            let end = closeRange.location + closeRange.length
-            blocks.append(nsBody.substring(with: NSRange(location: start.location, length: end - start.location)))
-            cursor = end
-        }
-        return blocks
+        regexMatches(#"<w:p\b[\s\S]*?</w:p>|<w:tbl\b[\s\S]*?</w:tbl>"#, in: body)
+            .compactMap(\.first)
     }
 
     package static func docxTableHTML(from table: String, directory: URL, relationships: [String: String]) -> String {
+        docxTableContent(from: table, directory: directory, relationships: relationships).html
+    }
+
+    package static func docxTableContent(from table: String, directory: URL, relationships: [String: String]) -> DOCXRenderedContent {
         let rows = regexMatches(#"<w:tr\b[\s\S]*?</w:tr>"#, in: table).compactMap(\.first)
+        var plainText: [String] = []
         let htmlRows = rows.map { row in
             let cells = regexMatches(#"<w:tc\b[\s\S]*?</w:tc>"#, in: row).compactMap(\.first)
             let htmlCells = cells.map { cell -> String in
@@ -136,20 +147,21 @@ extension WebDocumentLoader {
                     .compactMap(\.first)
                     .map { docxParagraphHTML(from: $0, directory: directory, relationships: relationships) }
                     .filter { !$0.text.isEmpty || $0.html.contains("<img") }
-                    .map { "<p>\($0.html)</p>" }
-                    .joined()
-                return "<td>\(paragraphs)</td>"
+                plainText.append(contentsOf: paragraphs.map(\.sourceText).filter { !$0.isEmpty })
+                return "<td>\(paragraphs.map { "<p>\($0.html)</p>" }.joined())</td>"
             }.joined()
             return "<tr>\(htmlCells)</tr>"
         }.joined()
-        return "<table>\(htmlRows)</table>"
+        return DOCXRenderedContent(html: "<table>\(htmlRows)</table>", plainText: plainText)
     }
 
     package static func docxParagraphHTML(from paragraph: String, directory: URL, relationships: [String: String]) -> DOCXParagraph {
         let style = firstXMLAttribute("w:val", in: regexMatches(#"<w:pStyle\b[^>]*/?>"#, in: paragraph).first?.first ?? "") ?? ""
         let alignment = firstXMLAttribute("w:val", in: regexMatches(#"<w:jc\b[^>]*/?>"#, in: paragraph).first?.first ?? "")
         let runs = regexMatches(#"<w:hyperlink\b[\s\S]*?</w:hyperlink>|<w:r\b[\s\S]*?</w:r>"#, in: paragraph).compactMap(\.first)
-        var html = runs.map { docxInlineHTML(from: $0, directory: directory, relationships: relationships) }.joined()
+        let inlineContent = runs.map { docxInlineContent(from: $0, directory: directory, relationships: relationships) }
+        var html = inlineContent.map(\.html).joined()
+        let sourceText = inlineContent.map(\.sourceText).joined().trimmingCharacters(in: .whitespacesAndNewlines)
         var text = EPUBHTMLSanitizer.plainText(from: html)
         var isListItem = paragraph.contains("<w:numPr") || style.localizedCaseInsensitiveContains("List")
 
@@ -182,27 +194,35 @@ extension WebDocumentLoader {
             tag = "p"
         }
 
-        return DOCXParagraph(html: html, text: text, tag: tag, classes: classes, isListItem: isListItem)
+        return DOCXParagraph(html: html, text: text, sourceText: sourceText, tag: tag, classes: classes, isListItem: isListItem)
     }
 
     package static func docxInlineHTML(from runOrHyperlink: String, directory: URL, relationships: [String: String]) -> String {
+        docxInlineContent(from: runOrHyperlink, directory: directory, relationships: relationships).html
+    }
+
+    package static func docxInlineContent(from runOrHyperlink: String, directory: URL, relationships: [String: String]) -> DOCXInlineContent {
         if runOrHyperlink.hasPrefix("<w:hyperlink") {
             let rid = firstXMLAttribute("r:id", in: runOrHyperlink)
             let inner = regexMatches(#"<w:r\b[\s\S]*?</w:r>"#, in: runOrHyperlink).compactMap(\.first)
-                .map { docxInlineHTML(from: $0, directory: directory, relationships: relationships) }
-                .joined()
+                .map { docxInlineContent(from: $0, directory: directory, relationships: relationships) }
+            let innerHTML = inner.map(\.html).joined()
+            let sourceText = inner.map(\.sourceText).joined()
             if let rid, let target = relationships[rid] {
-                return "<a href=\"\(escapeHTML(target))\">\(inner)</a>"
+                return DOCXInlineContent(html: "<a href=\"\(escapeHTML(target))\">\(innerHTML)</a>", sourceText: sourceText)
             }
-            return inner
+            return DOCXInlineContent(html: innerHTML, sourceText: sourceText)
         }
 
         var parts: [String] = []
+        var sourceText: [String] = []
         let tokens = regexMatches(#"<w:t\b[^>]*>[\s\S]*?</w:t>|<w:tab\s*/>|<w:br\s*/>|<w:drawing\b[\s\S]*?</w:drawing>"#, in: runOrHyperlink).compactMap(\.first)
         for token in tokens {
             if token.hasPrefix("<w:t") {
                 let text = regexMatches(#"<w:t\b[^>]*>([\s\S]*?)</w:t>"#, in: token).first.flatMap { $0.count > 1 ? $0[1] : nil } ?? ""
-                parts.append(escapeHTML(EPUBHTMLSanitizer.decodeEntities(text)))
+                let decodedText = EPUBHTMLSanitizer.decodeEntities(text)
+                parts.append(escapeHTML(decodedText))
+                sourceText.append(decodedText)
             } else if token.hasPrefix("<w:tab") {
                 parts.append("&emsp;")
             } else if token.hasPrefix("<w:br") {
@@ -213,7 +233,7 @@ extension WebDocumentLoader {
         }
 
         var html = parts.joined()
-        if html.isEmpty { return "" }
+        if html.isEmpty { return DOCXInlineContent(html: "", sourceText: sourceText.joined()) }
         if runOrHyperlink.contains("<w:b") {
             html = "<strong>\(html)</strong>"
         }
@@ -223,7 +243,7 @@ extension WebDocumentLoader {
         if runOrHyperlink.contains("<w:u") {
             html = "<u>\(html)</u>"
         }
-        return html
+        return DOCXInlineContent(html: html, sourceText: sourceText.joined())
     }
 
     package static func docxMediaURL(for relationshipID: String, directory: URL, relationships: [String: String]) -> URL? {

@@ -23,6 +23,11 @@ enum EPUBLogicTests {
             "&lt;tag&gt;",
             "reader entity decoding should avoid recursive over-decoding"
         )
+        try expectEqual(
+            EPUBHTMLSanitizer.plainText(from: "<STYLE>hidden</STYLE><p>Tom&nbsp; &amp; <strong>Jerry</strong></p><SCRIPT>bad()</SCRIPT>"),
+            "Tom\u{00A0} & Jerry",
+            "reader plain-text conversion should remove markup, scripts, and styles while decoding entities"
+        )
     }
 
     static func testEPUBTextDecoding() throws {

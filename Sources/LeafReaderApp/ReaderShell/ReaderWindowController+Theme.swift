@@ -2,7 +2,7 @@ import Cocoa
 import LeafReaderCore
 
 extension ReaderWindowController {
-    func applyReaderTheme() {
+    func applyReaderTheme(refreshDocumentDecorations: Bool = true) {
         let themeSpan = ReaderPerformance.begin(.themeSwitch)
         defer { ReaderPerformance.end(themeSpan) }
         let theme = ReaderTheme.selected
@@ -47,8 +47,10 @@ extension ReaderWindowController {
         vocabularyLibraryWindowController?.refreshTheme()
         pdfView.backgroundColor = chromeBackground
         pdfView.enclosingScrollView?.backgroundColor = chromeBackground
-        applyPDFReaderTheme(theme: theme)
-        refreshStoredWordAnnotationAppearance()
+        applyPDFReaderTheme(theme: theme, refreshReadingNotes: refreshDocumentDecorations)
+        if refreshDocumentDecorations {
+            refreshStoredWordAnnotationAppearance()
+        }
 
         applyWebReaderTheme(theme: theme)
     }
@@ -113,7 +115,7 @@ extension ReaderWindowController {
         // Embedding status is SwiftUI now and colours itself from the theme.
     }
 
-    func applyPDFReaderTheme(theme: ReaderTheme) {
+    func applyPDFReaderTheme(theme: ReaderTheme, refreshReadingNotes: Bool = true) {
         pdfView.displaysPageBreaks = true
         pdfView.pageShadowsEnabled = true
         clearPDFContentFilters()
@@ -123,7 +125,9 @@ extension ReaderWindowController {
         pdfView.documentView?.needsDisplay = true
         pdfView.setNeedsDisplay(pdfView.bounds)
         updateAISourceUnderlineTheme(theme)
-        restoreReadingNoteAnnotations()
+        if refreshReadingNotes {
+            restoreReadingNoteAnnotations()
+        }
     }
 
     func clearPDFContentFilters() {

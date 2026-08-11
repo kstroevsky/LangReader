@@ -1,6 +1,8 @@
 import Foundation
 
 package enum EPUBHTMLSanitizer {
+    private static let regexCache = RegexCache()
+
     private static let removableBlockPatterns = [
         #"(?i)<script\b[\s\S]*?</script>"#,
         #"(?i)<style\b[\s\S]*?</style>"#,
@@ -78,11 +80,11 @@ package enum EPUBHTMLSanitizer {
     }
 
     package static func plainText(from html: String) -> String {
-        decodeEntities(html
-            .replacingOccurrences(of: #"<script\b[\s\S]*?</script>"#, with: " ", options: [.regularExpression, .caseInsensitive])
-            .replacingOccurrences(of: #"<style\b[\s\S]*?</style>"#, with: " ", options: [.regularExpression, .caseInsensitive])
-            .replacingOccurrences(of: #"<[^>]+>"#, with: " ", options: .regularExpression)
-            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression))
+        let withoutScripts = replacingMatches(in: html, pattern: #"<script\b[\s\S]*?</script>"#, with: " ")
+        let withoutStyles = replacingMatches(in: withoutScripts, pattern: #"<style\b[\s\S]*?</style>"#, with: " ")
+        let withoutTags = replacingMatches(in: withoutStyles, pattern: #"<[^>]+>"#, with: " ")
+        let collapsedWhitespace = replacingMatches(in: withoutTags, pattern: #"\s+"#, with: " ")
+        return decodeEntities(collapsedWhitespace)
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -139,6 +141,15 @@ package enum EPUBHTMLSanitizer {
     }
 
     private static func cachedRegex(_ pattern: String) -> NSRegularExpression? {
-        try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
+        regexCache.regex(for: pattern)
+    }
+
+    private static func replacingMatches(in text: String, pattern: String, with replacement: String) -> String {
+        guard let regex = cachedRegex(pattern) else { return text }
+        return regex.stringByReplacingMatches(
+            in: text,
+            range: NSRange(location: 0, length: (text as NSString).length),
+            withTemplate: replacement
+        )
     }
 }

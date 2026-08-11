@@ -13,6 +13,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
         let word: String
         let pageIndex: Int
         let bounds: StoredPDFWordRect
+        let textAnchor: TextQuoteAnchor?
         let context: String
         var dictionaryTags: String?
         var dictionaryFrequency: Int?
@@ -94,11 +95,27 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     weak var zoomGroupView: NSView?
     var documentSession = DocumentSession()
     var documentPresentationState = DocumentPresentationState()
+    var activeVisibleDocumentLoadStartedAt: TimeInterval?
+    var activeVisibleDocumentLoadKind: ReaderDocumentKind?
+    var activeVisibleDocumentLoadIsSessionRestore = false
+    var pendingPDFCoverThumbnailRequest: (url: URL, documentID: String?)?
+    var pendingPDFTOCBuildRequest: (url: URL, displayBox: PDFDisplayBox)?
     /// Hits for the current PDF query. The web path keeps its hits in the page,
     /// so only the PDF side stores them here.
     var searchResults: [PDFSelection] = []
     /// Which hit is selected and how the query changed — shared by both paths.
     var searchCursor = ReaderSearchCursor()
+    var activePDFSearchDocument: PDFDocument?
+    var activePDFSearchQuery = ""
+    var activePDFSearchStartedAt: TimeInterval?
+    var activePDFSearchFirstResultStartedAt: TimeInterval?
+    var webSearchGeneration = 0
+    var performanceAutomationKinds = Set<ReaderDocumentKind>()
+    var performanceAutomationOriginalPDFRecordIDs = Set<String>()
+    var didRegisterPDFSearchObservers = false
+    var pdfVocabularyAnnotationRestoreGeneration = 0
+    var pdfNoteAnnotationRestoreGeneration = 0
+    var documentTextState = ReaderDocumentTextState()
     var embeddingState = ReaderEmbeddingState()
     var aiState = ReaderAIState()
     let sessionSaveTask = DebouncedTask(delay: ReaderSessionPolicy.lastPositionSaveDelay)

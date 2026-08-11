@@ -2,6 +2,13 @@ import Cocoa
 import PDFKit
 import LeafReaderCore
 
+private enum ReaderPDFCoverThumbnailLoader {
+    static let queue = DispatchQueue(
+        label: "com.linlu.leafreader.pdf-cover-thumbnail",
+        qos: .utility
+    )
+}
+
 extension ReaderWindowController {
     func loadPDF(_ url: URL, generation: Int? = nil) {
         let openSpan = ReaderPerformance.begin(.pdfOpen)
@@ -28,17 +35,14 @@ extension ReaderWindowController {
         pdfWordRecordStore = currentFileMD5.map { PDFWordRecordStore(fileMD5: $0) }
         webWordRecordStore = nil
         schedulePDFTOCBuild(for: url, displayBox: pdfView.displayBox)
-        updateVocabularyDocumentLanguage()
         storedWordRecords = loadStoredWordRecords()
         storedWebWordRecords.removeAll()
         loadReadingNotesForCurrentDocument()
-        restoreStoredWordAnnotations()
-        restoreReadingNoteAnnotations()
         aiPanel.loadLinkedWordBubbles(pdfWordRecordStore?.linkedWordBubbles(from: storedWordRecords) ?? [])
         loadSavedAIConversationIfNeeded()
         setDocumentTitle(ReaderPresentationState.documentTitle(for: url))
         applyDocumentDiagnostics([], fileName: url.lastPathComponent)
-        updateCoverThumbnail(from: document)
+        scheduleCoverThumbnail(for: url, documentID: currentFileMD5)
         refreshChromeState(presentation: .pdf)
         updatePDFMarginCropButton()
         applyPDFPageLayout(animated: false)
@@ -46,6 +50,14 @@ extension ReaderWindowController {
         // PDFView still rasterises tiles asynchronously, so this is the
         // synchronous "ready to show" point, not the last pixel.
         ReaderPerformance.end(firstPageSpan)
+        let annotationDocumentID = currentFileMD5
+        DispatchQueue.main.async { [weak self] in
+            guard let self,
+                  self.currentDocumentKind == .pdf,
+                  self.currentFileMD5 == annotationDocumentID else { return }
+            self.restoreStoredWordAnnotationsIncrementally(documentID: annotationDocumentID)
+            self.restoreReadingNoteAnnotationsIncrementally(documentID: annotationDocumentID)
+        }
 
         if !didRegisterSelectionObserver {
             didRegisterSelectionObserver = true
@@ -55,26 +67,38 @@ extension ReaderWindowController {
         restoreBookProgressOrGoHome()
         documentSession.position.lastPageIndex = currentPageIndex()
         syncPDFZoomPercentFromNative()
-        applyReaderTheme()
+        applyReaderTheme(refreshDocumentDecorations: false)
         updatePageLabel()
         updateZoomLabel()
         RecentDocumentsStore.record(url: url, kind: .pdf)
         saveSession()
         scheduleDocumentEmbeddingWarmup(priorityPageIndex: currentEmbeddingPriorityIndex())
         completePendingVocabularyLibraryNavigationIfNeeded()
-        SpeechPlaybackCoordinator.shared.stopKokoroWorkerIfLanguageDiffers(from: currentReadAloudProbeText() ?? "")
         if let generation {
             finishDocumentLoadingAfterAIBubbles(generation: generation)
         }
     }
 
     func loadWebDocument(_ url: URL, kind: ReaderDocumentKind, generation: Int) {
+        let contentReadyStartedAt = ProcessInfo.processInfo.systemUptime
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             do {
                 let document = try WebDocumentLoader.load(url: url)
+                let preparationMilliseconds = (ProcessInfo.processInfo.systemUptime - contentReadyStartedAt) * 1000
                 DispatchQueue.main.async {
                     guard let self, self.documentSession.acceptsLoad(generation: generation) else { return }
-                    self.applyLoadedWebDocument(document, url: url, kind: kind, generation: generation)
+                    ReaderPerformance.record(.webDocumentPreparation, milliseconds: preparationMilliseconds)
+                    ReaderPerformance.record(
+                        kind == .epub ? .epubPreparation : .docxPreparation,
+                        milliseconds: preparationMilliseconds
+                    )
+                    self.applyLoadedWebDocument(
+                        document,
+                        url: url,
+                        kind: kind,
+                        generation: generation,
+                        contentReadyStartedAt: contentReadyStartedAt
+                    )
                 }
             } catch {
                 DispatchQueue.main.async {
@@ -84,7 +108,13 @@ extension ReaderWindowController {
         }
     }
 
-    func applyLoadedWebDocument(_ document: WebReadableDocument, url: URL, kind: ReaderDocumentKind, generation: Int) {
+    func applyLoadedWebDocument(
+        _ document: WebReadableDocument,
+        url: URL,
+        kind: ReaderDocumentKind,
+        generation: Int,
+        contentReadyStartedAt: TimeInterval
+    ) {
         // The on-main cost of presenting an already-parsed document — the part
         // that blocks the UI. Background parsing in `loadWebDocument` is I/O and
         // measured separately if needed.
@@ -92,6 +122,8 @@ extension ReaderWindowController {
         defer { ReaderPerformance.end(openSpan) }
         closeReadingNotePanelsForDocumentTransition()
         activateDocumentSession(url: url, kind: kind)
+        documentPresentationState.webContentReadyStartedAt = contentReadyStartedAt
+        documentPresentationState.webContentReadyDocumentKind = kind
         pdfView.isHidden = true
         pdfDimOverlay.isHidden = true
         webView.isHidden = false
@@ -125,7 +157,6 @@ extension ReaderWindowController {
             webView.loadHTMLString(document.html, baseURL: document.baseURL)
         }
         applyReaderTheme()
-        SpeechPlaybackCoordinator.shared.stopKokoroWorkerIfLanguageDiffers(from: currentReadAloudProbeText() ?? "")
         applyWebZoomToPage()
         restoreWebProgressAfterLoad()
         RecentDocumentsStore.record(url: url, kind: kind)
@@ -138,11 +169,14 @@ extension ReaderWindowController {
     func activateDocumentSession(url: URL, kind: ReaderDocumentKind) {
         documentSession.adopt(url: url, kind: kind, documentID: fileMD5(for: url))
         documentPresentationState.resetForDocumentChange()
+        invalidateDocumentTextState()
         aiConversationStore = currentFileMD5.map { AIConversationStore(fileMD5: $0) }
         loadedAIConversation = nil
         invalidateDocumentAgentIndex()
         pendingPDFWordRecords.removeAll()
         pendingWebWordRecords.removeAll()
+        vocabularyState.renderedPDFWordAnnotations.removeAll()
+        vocabularyState.resolvedPDFWordBounds.removeAll()
         storedReadingNotes.removeAll()
         readingNotePanelControllers.removeAll()
         lastPersonalVocabularyPDFPageIndex = nil
@@ -184,14 +218,38 @@ extension ReaderWindowController {
         }
     }
 
-    /// Sets the cover image only. Whether the cover is shown is decided by
-    /// `ReaderChromeState`, which the caller applies afterwards — keeping every
-    /// visibility rule in one place.
-    func updateCoverThumbnail(from document: PDFDocument) {
-        guard let firstPage = document.page(at: 0) else {
-            coverImageView.image = nil
-            return
+    /// Keeps the cover element in the toolbar without rendering PDF page 1 on
+    /// the first-page critical path. A separate PDFDocument is used on the
+    /// serial utility queue because the on-screen PDFKit document remains owned
+    /// by the main thread.
+    func scheduleCoverThumbnail(for url: URL, documentID: String?) {
+        coverImageView.image = NSImage(
+            systemSymbolName: "doc.richtext",
+            accessibilityDescription: AppText.localized("文档封面", "Document cover")
+        )
+        pendingPDFCoverThumbnailRequest = (url, documentID)
+    }
+
+    func startPendingPDFCoverThumbnailIfNeeded() {
+        guard let request = pendingPDFCoverThumbnailRequest else { return }
+        pendingPDFCoverThumbnailRequest = nil
+        let startedAt = ProcessInfo.processInfo.systemUptime
+        ReaderPDFCoverThumbnailLoader.queue.async { [weak self] in
+            let image = PDFDocument(url: request.url)?.page(at: 0)?.thumbnail(
+                of: CGSize(width: 56, height: 76),
+                for: .cropBox
+            )
+            let elapsedMilliseconds = (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
+            DispatchQueue.main.async {
+                guard let self,
+                      self.currentDocumentKind == .pdf,
+                      self.currentFileMD5 == request.documentID,
+                      self.currentFileURL?.standardizedFileURL == request.url.standardizedFileURL else { return }
+                if let image {
+                    self.coverImageView.image = image
+                }
+                ReaderPerformance.record(.pdfCoverThumbnail, milliseconds: elapsedMilliseconds)
+            }
         }
-        coverImageView.image = firstPage.thumbnail(of: CGSize(width: 56, height: 76), for: .cropBox)
     }
 }

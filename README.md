@@ -90,7 +90,8 @@ Build and run the app:
 open "Leaf Reader.app"
 ```
 
-Daily builds default to `--debug --arm64` for faster iteration. Use `./scripts/build_app.sh --release --universal` when you need a local release-style universal app; release packaging already does this automatically.
+Daily builds default to `--debug --arm64` and reuse SwiftPM's persistent `.build` products. Repeating an unchanged build only reassembles and signs the app bundle; editing a source recompiles the affected SwiftPM target. Use `./scripts/build_app.sh --release --universal` only when you need a local release-style universal app; release packaging already does this automatically.
+Do not delete `.build` between routine builds unless you intentionally need a clean-build measurement.
 Use `./scripts/audit_app_bundle.sh` to inspect the generated app, speech runtime sizes, symlinks, and largest bundled resources.
 
 ### Tests
