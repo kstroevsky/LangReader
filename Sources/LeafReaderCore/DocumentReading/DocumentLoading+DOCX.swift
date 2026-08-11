@@ -31,16 +31,16 @@ extension WebDocumentLoader {
             milliseconds: (ProcessInfo.processInfo.systemUptime - stageStartedAt) * 1_000
         ))
         let documentURL = directory.appendingPathComponent("word/document.xml")
-        let xml = try String(contentsOf: documentURL, encoding: .utf8)
         stageStartedAt = ProcessInfo.processInfo.systemUptime
-        let relationships = docxRelationships(from: directory.appendingPathComponent("word/_rels/document.xml.rels"))
+        let relationships = try docxStreamingRelationships(
+            from: directory.appendingPathComponent("word/_rels/document.xml.rels")
+        )
         measurements.append(.init(
             event: .docxRelationshipParse,
             milliseconds: (ProcessInfo.processInfo.systemUptime - stageStartedAt) * 1_000
         ))
         stageStartedAt = ProcessInfo.processInfo.systemUptime
-        let content = docxBodyContent(from: xml, directory: directory, relationships: relationships)
-        let tocItems = docxTOCItems(from: content.html)
+        let content = try docxStreamingContent(from: documentURL, directory: directory, relationships: relationships)
         measurements.append(.init(
             event: .docxXMLRender,
             milliseconds: (ProcessInfo.processInfo.systemUptime - stageStartedAt) * 1_000
@@ -53,7 +53,7 @@ extension WebDocumentLoader {
             plainText: content.plainText.joined(separator: "\n\n"),
             plainTextLoader: nil,
             coverImageURL: nil,
-            tocItems: tocItems,
+            tocItems: content.tocItems,
             diagnostics: [],
             loadMeasurements: measurements
         )
