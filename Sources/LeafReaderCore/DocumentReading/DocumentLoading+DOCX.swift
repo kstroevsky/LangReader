@@ -22,23 +22,11 @@ package struct DOCXInlineContent {
 extension WebDocumentLoader {
     // MARK: - DOCX Loading
 
-    package static func loadDOCX(url: URL) throws -> WebReadableDocument {
-        let directory = try unzip(url: url)
-        let documentURL = directory.appendingPathComponent("word/document.xml")
-        let xml = try String(contentsOf: documentURL, encoding: .utf8)
-        let relationships = docxRelationships(from: directory.appendingPathComponent("word/_rels/document.xml.rels"))
-        let content = docxBodyContent(from: xml, directory: directory, relationships: relationships)
-        let title = url.deletingPathExtension().lastPathComponent
-        return WebReadableDocument(
-            html: pageHTML(title: title, body: content.html.isEmpty ? "<p>Unable to read DOCX content.</p>" : content.html, documentStyles: docxReaderStyles, profile: .docx),
-            htmlFileURL: nil,
-            baseURL: directory,
-            plainText: content.plainText.joined(separator: "\n\n"),
-            plainTextLoader: nil,
-            coverImageURL: nil,
-            tocItems: docxTOCItems(from: content.html),
-            diagnostics: []
-        )
+    package static func loadDOCX(
+        url: URL,
+        cancellationToken: DocumentLoadCancellationToken? = nil
+    ) throws -> WebReadableDocument {
+        try loadPreparedDOCX(url: url, cancellationToken: cancellationToken)
     }
 
     // MARK: - DOCX Rendering
@@ -252,6 +240,29 @@ extension WebDocumentLoader {
             return URL(string: target)
         }
         return directory.appendingPathComponent("word").appendingPathComponent(target)
+    }
+
+    package static func docxMediaReference(
+        for relationshipID: String,
+        directory: URL,
+        relationships: [String: String],
+        style: DOCXMediaReferenceStyle
+    ) -> String? {
+        guard let target = relationships[relationshipID] else { return nil }
+        if target.hasPrefix("http://") || target.hasPrefix("https://") {
+            return URL(string: target)?.absoluteString
+        }
+        guard let safeTarget = EPUBPathResolver.safeArchivePath(target),
+              !target.split(separator: "/", omittingEmptySubsequences: false).contains("..") else {
+            return nil
+        }
+        switch style {
+        case .absoluteFileURL:
+            return directory.appendingPathComponent("word").appendingPathComponent(safeTarget).absoluteString
+        case .relativeToPreparedEntry:
+            let path = "word/\(safeTarget)"
+            return path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
+        }
     }
 
     package static func docxRelationships(from url: URL) -> [String: String] {

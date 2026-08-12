@@ -155,6 +155,57 @@ Two-up, Crop, settings, Shelf, Words, Review, Notes, and TOC. The AI assistant
 panel and its collapse control also remained present. No performance automation
 runs in an ordinary launch.
 
+## DOCX audited optimization (2026-08-11)
+
+Fresh profiling of the 6.19 MB XML-heavy German fixture found that archive
+extraction was not the limiting stage. The old renderer repeatedly created and
+rescanned large XML `String` slices with nested regular expressions. The
+replacement uses namespace-aware `XMLParser` delegates to render HTML, plain
+text, and the TOC together, then persists validated prepared entries keyed by
+the full document SHA-256, parser schema, and presentation title. Cache hits
+load `rendered.html` through the existing `WKWebView.loadFileURL` path. Opening
+a newer document cancels superseded parsing and removes its temporary build.
+
+The final signed arm64 Release executable had SHA-256
+`dfc264cec1cc87b13aa722cedb5587e9b432e88e2f8b3abd503c4f52bdd6cb4b`.
+Five primary pairs used separate empty cache roots; each warm run reused only
+its paired cold entry. Times are milliseconds.
+
+| Primary metric | Old baseline | Final median | Improvement | Acceptance |
+| --- | ---: | ---: | ---: | --- |
+| Cold preparation | 1,745.4 | 493.9 | 71.7% | PASS (at least 50%) |
+| Cold visible-ready | 2,028.3 | 684.9 | 66.2% | PASS (at least 50%, at most 1,000 ms) |
+| Warm preparation | 1,750.7 | 6.1 | 99.7% | PASS (at least 70%) |
+| Warm visible-ready | 1,950.2 | 208.4 | 89.3% | PASS (at least 70%, at most 500 ms) |
+
+The individual primary measurements are recorded in
+`docx-performance-summary.csv`. The media-heavy holdout prepared in 23.6 ms
+cold and 2.3 ms warm, reaching visible-ready in 62.6/46.9 ms. The deterministic
+all-construct fixture prepared in 129.4/3.1 ms and reached visible-ready in
+239.9/136.4 ms. Cold stage telemetry attributed the primary median chiefly to
+about 422 ms of streaming XML rendering and 53 ms of selective extraction;
+warm runs contained fingerprint, lookup, and cache-hit-load events but no
+extraction or XML-render event.
+
+A 15-second cold-open Time Profiler capture sampled peak RSS at 139,424 KB,
+28.5% below the 195,120 KB reference and below the allowed 214,632 KB limit.
+A separate 15-second Animation Hitches capture exported zero hitch rows. The
+reference German PDF then passed all 50 accessibility-based screenshot-contract
+UI checks, including related forms, Read, zoom/page/search controls, Two-up,
+Crop, Shelf, Words, Review, Notes, TOC, and AI-panel actions. PDF and EPUB code
+paths were not changed; their contemporaneous capture events remained present
+and valid in all five pairs.
+
+Verification included exact real-fixture plain-text and TOC parity,
+canonicalized body-DOM parity, 15 focused parser/cache tests, a strict Swift 6
+build, and 47 package tests with zero failures (one optional private-fixture
+test skipped in the generic run after passing separately). The legacy harness
+passed every DOCX case and still ends on two unrelated vocabulary expectations:
+French `parler` grouping and a now-resolved German `Häuser` known-gap assertion.
+The repository-wide native-view seam check also reports two unchanged existing
+allowlist violations in `ReaderWindowController+DocumentText.swift` and
+`ReaderWindowController+PerformanceAutomation.swift`.
+
 ## Deferred work and re-entry thresholds
 
 These are not missing implementation tasks; each is a measurement-triggered

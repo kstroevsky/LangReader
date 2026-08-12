@@ -36,7 +36,7 @@ enum ValidationError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .usage:
-            return "usage: validate_perf_capture.swift <synthetic|documents|matrix|interactions|private> <report.json> [--not-before unix-seconds] [--expected-phase phase]"
+            return "usage: validate_perf_capture.swift <synthetic|documents|docx|matrix|interactions|private> <report.json> [--not-before unix-seconds] [--expected-phase phase]"
         case .invalid(let message):
             return "Invalid performance capture: \(message)"
         }
@@ -47,6 +47,12 @@ func require(_ counts: [String: Int], _ event: String, atLeast expected: Int) th
     let actual = counts[event] ?? 0
     guard actual >= expected else {
         throw ValidationError.invalid("\(event) needs \(expected) samples, found \(actual)")
+    }
+}
+
+func forbid(_ counts: [String: Int], _ event: String) throws {
+    guard (counts[event] ?? 0) == 0 else {
+        throw ValidationError.invalid("\(event) must not be present in this capture phase")
     }
 }
 
@@ -128,7 +134,7 @@ func requirePercentile(
 
 do {
     guard CommandLine.arguments.count >= 3,
-          let mode = ["synthetic", "documents", "matrix", "interactions", "private"].first(where: { $0 == CommandLine.arguments[1] }) else {
+          let mode = ["synthetic", "documents", "docx", "matrix", "interactions", "private"].first(where: { $0 == CommandLine.arguments[1] }) else {
         throw ValidationError.usage
     }
     let url = URL(fileURLWithPath: CommandLine.arguments[2])
@@ -189,7 +195,7 @@ do {
         try require(counts, "firstPageDisplay", atLeast: 2)
         try require(counts, "documentVisibleReady", atLeast: 2)
         try require(counts, "pdfVisibleReady", atLeast: 2)
-    case "documents":
+    case "documents", "docx":
         try require(counts, "pdfOpen", atLeast: 1)
         try require(counts, "webDocumentPreparation", atLeast: 2)
         try require(counts, "epubPreparation", atLeast: 1)
@@ -202,6 +208,25 @@ do {
         try require(counts, "pdfVisibleReady", atLeast: 1)
         try require(counts, "epubVisibleReady", atLeast: 1)
         try require(counts, "docxVisibleReady", atLeast: 1)
+        if mode == "docx" {
+            try require(counts, "docxFingerprint", atLeast: 1)
+            try require(counts, "docxCacheLookup", atLeast: 1)
+            if phase == "cold" {
+                try require(counts, "docxArchiveExtraction", atLeast: 1)
+                try require(counts, "docxRelationshipParse", atLeast: 1)
+                try require(counts, "docxXMLRender", atLeast: 1)
+                try require(counts, "docxCacheCommit", atLeast: 1)
+                try forbid(counts, "docxCacheHitLoad")
+            } else if phase == "warm" {
+                try require(counts, "docxCacheHitLoad", atLeast: 1)
+                try forbid(counts, "docxArchiveExtraction")
+                try forbid(counts, "docxRelationshipParse")
+                try forbid(counts, "docxXMLRender")
+                try forbid(counts, "docxCacheCommit")
+            } else {
+                throw ValidationError.invalid("DOCX capture phase must be cold or warm")
+            }
+        }
     case "matrix":
         try require(counts, "pdfOpen", atLeast: 3)
         try require(counts, "webDocumentPreparation", atLeast: 2)

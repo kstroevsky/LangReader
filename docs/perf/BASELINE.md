@@ -58,6 +58,29 @@ idle-versus-background-index paging delay. `scripts/profile_running_app.sh`
 adds an Instruments Time Profiler or Animation Hitches trace plus a 10 Hz
 CPU/RSS series without changing the JSON acceptance run.
 
+The DOCX gate gives each cold/warm pair its own prepared-cache root and checks
+that cold captures contain extraction/render/commit stages while warm captures
+contain a cache-hit load and no extraction or XML render:
+
+```sh
+swift scripts/make_docx_perf_fixture.swift /tmp/leafreader-all-constructs.docx
+
+./scripts/capture_docx_performance.sh \
+  representative.pdf representative.epub primary.docx \
+  /tmp/leafreader-docx-primary 5
+
+swift scripts/summarize_docx_performance.swift --accept-primary \
+  /tmp/leafreader-docx-primary/pair-1.cold.json /tmp/leafreader-docx-primary/pair-1.warm.json \
+  /tmp/leafreader-docx-primary/pair-2.cold.json /tmp/leafreader-docx-primary/pair-2.warm.json \
+  /tmp/leafreader-docx-primary/pair-3.cold.json /tmp/leafreader-docx-primary/pair-3.warm.json \
+  /tmp/leafreader-docx-primary/pair-4.cold.json /tmp/leafreader-docx-primary/pair-4.warm.json \
+  /tmp/leafreader-docx-primary/pair-5.cold.json /tmp/leafreader-docx-primary/pair-5.warm.json
+```
+
+Pass cold/warm files as adjacent pairs to the summarizer when invoking it
+directly. The capture wrapper supplies the correct order automatically and
+verifies that the Release executable hash does not change during the run.
+
 For the representative gate, copy `private-fixtures.example.json` to the
 gitignored `private-fixtures.json`, replace the three paths, and record the
 actual sizes of the long-conversation, notes, and vocabulary datasets:

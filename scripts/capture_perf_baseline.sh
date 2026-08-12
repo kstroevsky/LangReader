@@ -116,6 +116,8 @@ mkdir -p "$(dirname "$OUT_BASE")"
 OUT_DIRECTORY="$(cd "$(dirname "$OUT_BASE")" && pwd)"
 OUT_BASE="$OUT_DIRECTORY/$(basename "$OUT_BASE")"
 RUN_DIRECTORY="$(mktemp -d "$(dirname "$OUT_BASE")/.perf-capture.XXXXXX")"
+DOCX_CACHE_ROOT="$RUN_DIRECTORY/docx-cache"
+mkdir -p "$DOCX_CACHE_ROOT"
 RUN_STARTED="$(date +%s)"
 PERFORMANCE_ENVIRONMENT_INSTALLED=0
 SOURCE_REVISION="$(git -C "$ROOT_DIR" rev-parse HEAD)"
@@ -156,6 +158,7 @@ clear_performance_environment() {
     launchctl unsetenv LEAFVOCAB_PERF_RUN_ID || true
     launchctl unsetenv LEAFVOCAB_PERF_DISABLE_SESSION_RESTORE || true
     launchctl unsetenv LEAFVOCAB_PERF_AUTOMATION || true
+    launchctl unsetenv LEAFREADER_DOCX_CACHE_ROOT || true
   fi
 }
 trap clear_performance_environment EXIT
@@ -198,6 +201,9 @@ run_phase() {
   launchctl setenv LEAFVOCAB_PERF_FIXTURE_SET "$FIXTURE_SET"
   launchctl setenv LEAFVOCAB_PERF_RUN_ID "$RUN_ID-$phase"
   launchctl setenv LEAFVOCAB_PERF_DISABLE_SESSION_RESTORE 1
+  # Cold and warm share only this capture pair's prepared-DOCX entry. The
+  # directory starts empty because RUN_DIRECTORY is unique per invocation.
+  launchctl setenv LEAFREADER_DOCX_CACHE_ROOT "$DOCX_CACHE_ROOT"
   if [[ "$INTERACTION_MODE" == "1" ]]; then
     launchctl setenv LEAFVOCAB_PERF_AUTOMATION 1
   fi
@@ -239,7 +245,7 @@ run_phase() {
   elif [[ "$MATRIX_MODE" == "1" ]]; then
     swift "$VALIDATOR" matrix "$run_base.json" --not-before "$phase_started" --expected-phase "$phase"
   elif [[ "$DOCUMENT_MODE" == "1" ]]; then
-    swift "$VALIDATOR" documents "$run_base.json" --not-before "$phase_started" --expected-phase "$phase"
+    swift "$VALIDATOR" docx "$run_base.json" --not-before "$phase_started" --expected-phase "$phase"
   else
     swift "$VALIDATOR" synthetic "$run_base.json" --not-before "$phase_started" --expected-phase "$phase"
   fi
@@ -281,6 +287,7 @@ if [[ "$PRIVATE_MODE" == "1" ]]; then
   swift "$MANIFEST_TOOL" metadata "$PRIVATE_MANIFEST" "$OUT_BASE.fixtures.json"
 fi
 rm -f "${CAPTURE_FIXTURES[@]}"
+rm -rf "$DOCX_CACHE_ROOT"
 rmdir "$RUN_DIRECTORY"
 
 echo
