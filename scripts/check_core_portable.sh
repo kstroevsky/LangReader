@@ -7,9 +7,9 @@
 #   * `Sources/LeafReaderCore` — already a real module. Its compilation is proved
 #     by `scripts/build_core_module.sh`, which every build and test run goes
 #     through, so this script only has to enforce the import ban on it.
-#   * `scripts/core_portable_files.txt` — files still in the app target that are
-#     *ready* to move. They have no home module yet, so proving them means
-#     compiling them together with the core sources as one UI-free module.
+#   * `scripts/core_portable_files.txt` — framework-free files that intentionally
+#     remain in the app target. The probe proves they can be reused by a future
+#     platform; it does not decide that they belong in the domain Core.
 #
 # Why the compiler and not grep: 85 files that import no AppKit at all still
 # could not compile standalone, because they referenced app-target types through
@@ -20,7 +20,8 @@
 #   * a candidate file gains a dependency on an app-target type;
 #   * a listed file is deleted or renamed without updating the list.
 #
-# It also reports files that have *become* portable, so the queue can grow.
+# It also reports app files that may have become technically portable. Those
+# files still require a domain-versus-presentation ownership decision.
 #
 #   0  the core and its candidates are portable
 #   1  they are not
@@ -110,11 +111,11 @@ if ! ./scripts/build_core_module.sh "$BUILD_DIR" >"$BUILD_DIR/core-build.txt" 2>
   exit $EXIT_NOT_PORTABLE
 fi
 
-# The candidates are compiled *against* the core module rather than alongside its
-# sources, because they already `import LeafReaderCore`. Passing means they need
-# nothing beyond Foundation and the core — which is exactly what "ready to move"
-# means.
-echo "core portability: compiling ${#CANDIDATE_FILES[@]} candidate files against it"
+# The app files are compiled *against* the core module rather than alongside its
+# sources, because some already `import LeafReaderCore`. Passing means they need
+# nothing beyond Foundation and the core. That is a portability property, not a
+# decision to move them into Core.
+echo "core portability: compiling ${#CANDIDATE_FILES[@]} framework-free app files against it"
 
 if ! swiftc -emit-module \
     -module-name LeafReaderCoreCandidates \
@@ -127,16 +128,17 @@ if ! swiftc -emit-module \
   echo >&2
   grep "error:" "$BUILD_DIR/errors.txt" | head -25 >&2
   echo >&2
-  echo "Either the new dependency belongs in the app target (move the file out of" >&2
-  echo "$LIST), or it should be abstracted behind a protocol the core owns." >&2
+  echo "If the dependency is presentation-specific, keep the file in the app and" >&2
+  echo "remove it from $LIST. Otherwise, abstract the platform dependency behind" >&2
+  echo "a narrow protocol; this check does not determine Core ownership." >&2
   exit $EXIT_NOT_PORTABLE
 fi
 
-echo "core portability: ok - ${#MODULE_FILES[@]} in the module, ${#CANDIDATE_FILES[@]} ready to join it"
+echo "core portability: ok - ${#MODULE_FILES[@]} domain-core files, ${#CANDIDATE_FILES[@]} portable app files"
 
-# Advisory only: files that import no UI framework and are not yet listed. These
-# are candidates to grow the core; several may still fail for app-target
-# references, which is why this never fails the check.
+# Advisory only: files that import no UI framework and are not yet listed.
+# Several may still fail for app-target references, and presentation files may
+# be correctly placed in LeafReaderApp, so this never fails the check.
 UNLISTED="$(comm -23 \
   <(find Sources/LeafReaderApp -name '*.swift' -type f | sort) \
   <(sort "$LIST") \
@@ -144,5 +146,5 @@ UNLISTED="$(comm -23 \
 
 if [[ -n "$UNLISTED" ]]; then
   count=$(wc -l <<<"$UNLISTED" | tr -d ' ')
-  echo "core portability: $count more files import no UI framework and are not in the core yet"
+  echo "core portability: $count more app files import no UI framework; classify them before adding them to this probe or Core"
 fi

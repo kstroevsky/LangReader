@@ -11,7 +11,7 @@ extension ReaderWindowController {
         guard currentDocumentKind == .pdf,
               let documentID = currentFileMD5,
               let url = currentFileURL,
-              let expectedPageCount = pdfView.document?.pageCount else {
+              let expectedPageCount = activePagedReaderBackend?.pageCount else {
             completion(nil)
             return
         }
@@ -173,7 +173,7 @@ extension ReaderWindowController {
         guard currentDocumentKind == .pdf,
               let documentID = currentFileMD5,
               let url = currentFileURL,
-              let document = pdfView.document else {
+              let totalPageCount = activePagedReaderBackend?.pageCount else {
             completion(nil)
             return
         }
@@ -183,7 +183,6 @@ extension ReaderWindowController {
             return
         }
 
-        let totalPageCount = document.pageCount
         var seen = Set<Int>()
         let boundedPageIndexes = pageIndexes.filter {
             $0 >= 0 && $0 < totalPageCount && seen.insert($0).inserted

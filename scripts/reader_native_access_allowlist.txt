@@ -2,12 +2,12 @@ Sources/LeafReaderApp/AIConversation/ReaderWindowController+AI.swift
 Sources/LeafReaderApp/AIConversation/ReaderWindowController+AIContext.swift
 Sources/LeafReaderApp/AIConversation/ReaderWindowController+AIPanelCallbacks.swift
 Sources/LeafReaderApp/AIConversation/ReaderWindowController+AISourceAnnotations.swift
-Sources/LeafReaderApp/AIConversation/ReaderWindowController+Embedding.swift
 Sources/LeafReaderApp/DocumentReading/ReaderWindowController+DocumentLoading.swift
 Sources/LeafReaderApp/DocumentReading/ReaderWindowController+DocumentTOC.swift
 Sources/LeafReaderApp/DocumentReading/ReaderWindowController+Navigation.swift
 Sources/LeafReaderApp/DocumentReading/ReaderWindowController+PDFCrop.swift
 Sources/LeafReaderApp/DocumentReading/ReaderWindowController+PDFPageLayout.swift
+Sources/LeafReaderApp/DocumentReading/ReaderWindowController+PerformanceAutomation.swift
 Sources/LeafReaderApp/DocumentReading/ReaderWindowController+Search.swift
 Sources/LeafReaderApp/DocumentReading/ReaderWindowController+WebDelegate.swift
 Sources/LeafReaderApp/DocumentReading/ReaderWindowController+Zoom.swift
@@ -18,7 +18,6 @@ Sources/LeafReaderApp/ReadAloud/ReaderWindowController+ReadAloudAppleFallback.sw
 Sources/LeafReaderApp/ReadAloud/ReaderWindowController+ReadAloudPDF.swift
 Sources/LeafReaderApp/ReadAloud/ReaderWindowController+ReadAloudProgress.swift
 Sources/LeafReaderApp/ReadAloud/ReaderWindowController+ReadAloudWeb.swift
-Sources/LeafReaderApp/ReaderShell/ReaderWindowController+ChromeUI.swift
 Sources/LeafReaderApp/ReaderShell/ReaderWindowController+DocumentShelf.swift
 Sources/LeafReaderApp/ReaderShell/ReaderWindowController+Input.swift
 Sources/LeafReaderApp/ReaderShell/ReaderWindowController+Panel.swift

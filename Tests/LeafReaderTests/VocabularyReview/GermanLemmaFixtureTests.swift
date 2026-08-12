@@ -113,9 +113,10 @@ enum GermanLemmaFixtureTests {
     }
 
     static func testNounPluralBaseline() throws {
-        // Most irregular plurals resolve. 'Häuser' does not — see knownGaps.
+        // Irregular plurals resolve through the system lemma model.
         let cases: [(surface: String, lemma: String)] = [
             ("Bücher", "Buch"),
+            ("Häuser", "Haus"),
             ("Kinder", "Kind"),
             ("Männer", "Mann"),
             ("Wörter", "Wort"),
@@ -155,16 +156,6 @@ enum GermanLemmaFixtureTests {
     // MARK: - Known gaps: wrong today, pinned deliberately
 
     static func testKnownLemmaGaps() throws {
-        // 'Häuser' fails to reduce to 'Haus' both in isolation and in context.
-        // The Wiktionary flexion table for 'Haus' lists 'Nominativ Plural=Häuser',
-        // so the dictionary tier is expected to fix this. When it does, move
-        // this case into testNounPluralBaseline.
-        try expectEqual(
-            GermanLemmaResolver.lemma(for: "Häuser", language: .german),
-            "Häuser",
-            "KNOWN GAP: 'Häuser' does not currently reduce to 'Haus'"
-        )
-
         // The nominalized infinitive 'das Essen' lemmatizes to 'Esse' (a forge),
         // which is a different word entirely. POS is correct here; the lemma is not.
         guard let essen = inSentence("Das Essen ist sehr gut.", target: "Essen") else {

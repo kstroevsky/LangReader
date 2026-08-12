@@ -1,3 +1,6 @@
+# Framework-free LeafReaderApp files covered by the portability compile probe.
+# Inclusion proves technical portability only; it does not mean a file belongs
+# in the domain-focused LeafReaderCore module. Classify ownership separately.
 Sources/LeafReaderApp/App/LaunchPerformanceTracker.swift
 Sources/LeafReaderApp/App/UpdateFailureClassifier.swift
 Sources/LeafReaderApp/Platform/Networking/NetworkConnectivityMonitor.swift

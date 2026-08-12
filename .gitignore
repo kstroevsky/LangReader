@@ -26,3 +26,6 @@ sparkle-ed25519-private-key
 
 .codex
 .codegraph
+
+# Machine-local Graphify runtime state
+graphify-out

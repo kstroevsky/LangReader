@@ -485,33 +485,32 @@ enum VocabularyLogicTests {
         )
     }
 
-    /// The occurrence engine is language-neutral: pass a language and it groups
-    /// that language's inflected forms. The same forms under a different
-    /// language do NOT group, proving the language parameter is load-bearing.
+    /// The occurrence engine passes the document language through to the system
+    /// lemmatizer. Use language models present on a clean macOS runner here;
+    /// additional NaturalLanguage assets are optional and machine-dependent.
     static func testLemmaEngineIsLanguageParameterized() throws {
-        // French — all forms of "parler" collapse to one lemma under .french.
-        let fr = "Je parle, tu parles, ils parlent souvent. Nous avons parlé hier."
-        let frGroups = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["parler": "parler"], in: fr, language: .french)
-        try expectEqual(
-            Set((frGroups["parler"] ?? []).map { $0.matchedText.lowercased() }),
-            ["parle", "parles", "parlent", "parlé"],
-            "French inflected forms of 'parler' should group under one lemma"
+        let text = "I run every day and I am running now."
+        let englishGroups = GermanLemmaOccurrenceMatcher.matches(
+            lemmasByKey: ["run": "run"],
+            in: text,
+            language: .english
         )
-        // The identical text under German fails to group them — the parameter,
-        // not the text, is what makes the grouping work.
-        let frUnderGerman = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["parler": "parler"], in: fr, language: .german)
-        try expect(
-            (frUnderGerman["parler"]?.count ?? 0) < (frGroups["parler"]?.count ?? 0),
-            "German lemmatization must not reproduce the French grouping"
+        try expectEqual(
+            Set((englishGroups["run"] ?? []).map { $0.matchedText.lowercased() }),
+            ["run", "running"],
+            "English inflected forms should group under their lemma"
         )
 
-        // Spanish.
-        let es = "Yo hablo, tú hablas y ellos hablan mucho."
-        let esGroups = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["hablar": "hablar"], in: es, language: .spanish)
-        try expectEqual(
-            Set((esGroups["hablar"] ?? []).map { $0.matchedText.lowercased() }),
-            ["hablo", "hablas", "hablan"],
-            "Spanish inflected forms of 'hablar' should group under one lemma"
+        // The identical English text under the German model retains only the
+        // exact base-form surface, proving the language parameter is load-bearing.
+        let englishUnderGerman = GermanLemmaOccurrenceMatcher.matches(
+            lemmasByKey: ["run": "run"],
+            in: text,
+            language: .german
+        )
+        try expect(
+            (englishUnderGerman["run"]?.count ?? 0) < (englishGroups["run"]?.count ?? 0),
+            "German lemmatization must not reproduce the English grouping"
         )
 
         // English, via the resolver directly.

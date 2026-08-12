@@ -1,6 +1,18 @@
 # Development Tasks
 
-Use this page when a task starts with a product behavior. Paths marked App are rooted at `Sources/LeafReaderApp/`; paths marked Core are rooted at `Sources/LeafReaderCore/`. Feature tests are under `Tests/LeafReaderTests/`.
+Use this page when a task starts with a product behavior. Paths marked App are rooted at `Sources/LeafReaderApp/`; paths marked Core are rooted at `Sources/LeafReaderCore/`. Tests are split between `Tests/LeafReaderCoreTests/`, `Tests/LeafReaderAppTests/`, and the legacy regression harness in `Tests/LeafReaderTests/`.
+
+## Feature Spec, Design, And Tasks
+
+Before implementing a behavior-changing or multi-file feature, write down three layers of intent:
+
+1. **Spec:** user-visible behavior, non-goals, acceptance criteria, and important edge or failure cases.
+2. **Design:** the authoritative state owner, Core-versus-App placement, data and control flow, PDFKit/WebKit seams, persistence or migration effects, and material performance or security risks.
+3. **Tasks:** dependency-ordered implementation slices, each with its focused verification, followed by the relevant repository checks.
+
+An isolated fix can keep these compact in the working plan. Larger or review-sensitive work should store them in `docs/plans/<feature>/spec.md`, `design.md`, and `tasks.md`. Update the design when implementation reveals a different ownership boundary; do not silently let the code become the only specification.
+
+Do not start a broad refactor phase as part of feature work. Improve an existing boundary when the feature touches it, especially by moving direct native-reader access behind an adapter and moving domain rules out of `ReaderWindowController`.
 
 ## Change PDF Page Turning
 

@@ -24,8 +24,10 @@ let package = Package(
         .executable(name: "LeafReaderApp", targets: ["LeafReaderApp"])
     ],
     targets: [
-        // The platform-neutral core. It links no UI framework, so anything that
-        // reaches for AppKit, PDFKit or WebKit fails here rather than in review.
+        // The platform-neutral domain core. It links no UI framework, so
+        // anything that reaches for AppKit, PDFKit or WebKit fails here rather
+        // than in review. Framework-free compilation is only a technical gate;
+        // presentation types still belong in LeafReaderApp.
         //
         // `scripts/build_app.sh` delegates compilation to this package and copies
         // the resulting product into the signed app bundle. That keeps this real
