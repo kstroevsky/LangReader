@@ -24,7 +24,6 @@ struct SelectionToolbarConfiguration: Equatable {
         isVocabularySelection: Bool,
         queryCapability: ReaderQueryCapability,
         shouldShowSpeakAction: Bool,
-        isPDFSelection: Bool = false,
         isVocabularySelectionSaved: Bool = false
     ) -> SelectionToolbarConfiguration {
         let contextAction: SelectionToolbarContextAction = isVocabularySelection ? .addWord : .summarize
@@ -40,8 +39,8 @@ struct SelectionToolbarConfiguration: Equatable {
         return SelectionToolbarConfiguration(
             contextAction: contextAction,
             displayMode: displayMode,
-            showsVocabularySaveAction: isPDFSelection && isVocabularySelection,
-            isVocabularySelectionSaved: isPDFSelection && isVocabularySelection && isVocabularySelectionSaved
+            showsVocabularySaveAction: isVocabularySelection,
+            isVocabularySelectionSaved: isVocabularySelection && isVocabularySelectionSaved
         )
     }
 }

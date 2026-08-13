@@ -313,15 +313,15 @@ final class SelectionActionToolbar: NSView {
             saveButton.title = AppText.localized("移除", "Remove")
             saveButton.symbolName = "trash"
             saveButton.toolTip = AppText.localized(
-                "移除此单词及其在当前 PDF 中的全部位置",
-                "Remove this word and every occurrence in this PDF"
+                "从当前文档中移除此单词",
+                "Remove this word from the current document"
             )
         } else {
             saveButton.title = AppText.localized("保存", "Save")
             saveButton.symbolName = "bookmark"
             saveButton.toolTip = AppText.localized(
-                "保存单词及其在当前 PDF 中的全部位置",
-                "Save the word and every occurrence in this PDF"
+                "将此单词保存到当前文档的词汇中",
+                "Save this word in the current document"
             )
         }
         saveButton.isEnabled = true

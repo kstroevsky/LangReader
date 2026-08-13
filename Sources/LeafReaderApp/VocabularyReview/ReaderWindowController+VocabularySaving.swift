@@ -94,6 +94,94 @@ private final class PDFVocabularyBackfillMaterialization {
 }
 
 extension ReaderWindowController {
+    func saveCurrentVocabularySelection() {
+        if currentDocumentKind == .pdf {
+            saveCurrentPDFVocabularySelection()
+        } else {
+            saveCurrentWebVocabularySelection()
+        }
+    }
+
+    func toggleFocusedVocabularyWord(word: String, answer: String) {
+        if removeVocabularyWordIfSaved(word) {
+            return
+        }
+        if currentDocumentKind == .pdf {
+            saveCurrentPDFVocabularySelection(preferredWord: word, definitionAnswer: answer)
+        } else {
+            saveCurrentWebVocabularySelection(preferredWord: word, definitionAnswer: answer)
+        }
+    }
+
+    func saveCurrentWebVocabularySelection(
+        preferredWord: String? = nil,
+        definitionAnswer: String? = nil
+    ) {
+        guard currentDocumentKind != .pdf,
+              let store = webWordRecordStore else {
+            NSSound.beep()
+            return
+        }
+
+        let selectedWord = VocabularyTextPolicy.normalizedVocabularyText(selectedReaderTextForToolbar())
+        let word = VocabularyTextPolicy.normalizedVocabularyText(preferredWord ?? selectedWord)
+        guard VocabularyTextPolicy.isVocabularySelection(word) else {
+            NSSound.beep()
+            return
+        }
+        let language = vocabularyDocumentLanguage
+        let lemma = GermanLemmaResolver.lemma(for: word, language: language)
+        let requestedKey = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+        if preferredWord != nil, !selectedWord.isEmpty {
+            let selectedKey = GermanLemmaResolver.groupingKey(word: selectedWord, language: language)
+            guard selectedKey == requestedKey else {
+                NSSound.beep()
+                return
+            }
+        }
+
+        if removeVocabularyWordIfSaved(word) {
+            return
+        }
+
+        let createdAt = Date()
+        let id = UUID().uuidString
+        let answer = definitionAnswer?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let context = ReaderAIContextBuilder.trimLeadingContextQuotes(selectionState.webSelectionContext)
+        let record = StoredWebWordRecord(
+            id: id,
+            vocabularyID: existingWebVocabularyID(for: word, lemma: lemma) ?? UUID().uuidString,
+            word: word,
+            lemma: lemma,
+            surfaceForm: word,
+            context: context,
+            occurrenceIndex: selectionState.webSelectionOccurrenceIndex,
+            scrollProgress: webScrollProgress,
+            question: answer.isEmpty ? "" : AppText.localized("释义：\(word)", "Define: \(word)"),
+            answer: answer,
+            dictionaryTags: nil,
+            dictionaryFrequency: nil,
+            createdAt: createdAt,
+            srs: VocabularySRSState.initial(createdAt: createdAt)
+        )
+        guard store.upsert(record) else {
+            selectionActionToolbar.showSaveFailure()
+            NSSound.beep()
+            return
+        }
+
+        storedWebWordRecords.append(record)
+        if !selectedWord.isEmpty {
+            markCurrentWebSelectionAsStoredWord(id: id)
+        }
+        refreshVocabularyPanelAfterLocalSave()
+        if answer.isEmpty {
+            backfillDictionaryAnswerAsync(vocabularyID: record.vocabularyID, word: word)
+        }
+        selectionActionToolbar.showSaveResult(found: 1, inserted: 1)
+        recordPersonalVocabularyQuery(word)
+    }
+
     /// Detects and caches the language this document's vocabulary is grouped by,
     /// from a sample of its first pages. Must run before any occurrence scanning
     /// or lemma grouping so every grouping key uses the same language.
@@ -300,7 +388,10 @@ extension ReaderWindowController {
         refreshVocabularyPanelAfterLocalSave()
     }
 
-    func saveCurrentPDFVocabularySelection() {
+    func saveCurrentPDFVocabularySelection(
+        preferredWord: String? = nil,
+        definitionAnswer: String? = nil
+    ) {
         let acknowledgementStartedAt = ProcessInfo.processInfo.systemUptime
         guard currentDocumentKind == .pdf,
               let document = pdfView.document,
@@ -309,15 +400,24 @@ extension ReaderWindowController {
             return
         }
         let fallback = selectedReaderTextForToolbar()
-        let word = vocabularyTextForCurrentPDFSelection(selection: selection, fallback: fallback)
+        let selectedWord = vocabularyTextForCurrentPDFSelection(selection: selection, fallback: fallback)
+        let word = VocabularyTextPolicy.normalizedVocabularyText(preferredWord ?? selectedWord)
         guard VocabularyTextPolicy.isVocabularySelection(word) else {
             NSSound.beep()
             return
         }
         let language = vocabularyDocumentLanguage
         let lemma = GermanLemmaResolver.lemma(for: word, language: language)
+        if preferredWord != nil {
+            let selectedKey = GermanLemmaResolver.groupingKey(word: selectedWord, language: language)
+            let requestedKey = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+            guard selectedKey == requestedKey else {
+                NSSound.beep()
+                return
+            }
+        }
 
-        if removeCurrentPDFVocabularySelectionIfSaved(word, lemma: lemma) {
+        if removeVocabularyWordIfSaved(word, lemma: lemma) {
             return
         }
 
@@ -331,7 +431,7 @@ extension ReaderWindowController {
             return
         }
         let selectedPageText = selectedPage.string ?? ""
-        guard let selectedRecord = storedPDFVocabularyRecord(
+        guard var selectedRecord = storedPDFVocabularyRecord(
             selection: selection,
             word: word,
             lemma: lemma,
@@ -340,6 +440,11 @@ extension ReaderWindowController {
         ) else {
             NSSound.beep()
             return
+        }
+        let answer = definitionAnswer?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !answer.isEmpty {
+            selectedRecord.question = AppText.localized("释义：\(word)", "Define: \(word)")
+            selectedRecord.answer = answer
         }
 
         guard let documentID = currentFileMD5,
@@ -353,7 +458,9 @@ extension ReaderWindowController {
         storedWordRecords.append(selectedRecord)
         addStoredWordAnnotation(selectedRecord, refineBounds: false)
         refreshVocabularyPanelAfterLocalSave()
-        backfillDictionaryAnswerAsync(vocabularyID: selectedRecord.vocabularyID, word: word)
+        if answer.isEmpty {
+            backfillDictionaryAnswerAsync(vocabularyID: selectedRecord.vocabularyID, word: word)
+        }
         selectionActionToolbar.showSaveProgress(found: 1, indexedPages: 0, totalPages: document.pageCount)
         ReaderPerformance.record(
             .vocabularySaveAcknowledgement,
@@ -798,26 +905,34 @@ extension ReaderWindowController {
         }?.vocabularyID
     }
 
-    func isPDFVocabularySelectionSaved(_ word: String) -> Bool {
+    func isVocabularyWordSaved(_ word: String) -> Bool {
+        !vocabularyRecordIDs(for: word).isEmpty
+    }
+
+    private func vocabularyRecordIDs(for word: String, lemma: String? = nil) -> [String] {
         let language = vocabularyDocumentLanguage
-        let key = GermanLemmaResolver.groupingKey(word: word, language: language)
-        return !key.isEmpty && storedWordRecords.contains {
-            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key
+        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+        guard !key.isEmpty else { return [] }
+        if currentDocumentKind == .pdf {
+            return storedWordRecords.compactMap {
+                GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key ? $0.id : nil
+            }
+        }
+        return storedWebWordRecords.compactMap {
+            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key ? $0.id : nil
         }
     }
 
-    private func removeCurrentPDFVocabularySelectionIfSaved(_ word: String, lemma: String) -> Bool {
-        let language = vocabularyDocumentLanguage
-        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
-        let ids = storedWordRecords.compactMap { record in
-            GermanLemmaResolver.groupingKey(word: record.word, lemma: record.lemma, language: language) == key ? record.id : nil
-        }
+    private func removeVocabularyWordIfSaved(_ word: String, lemma: String? = nil) -> Bool {
+        let ids = vocabularyRecordIDs(for: word, lemma: lemma)
         guard !ids.isEmpty else { return false }
 
-        vocabularyState.occurrenceSearchID = nil
-        vocabularyState.occurrenceSearchCancellationToken?.cancel()
-        vocabularyState.occurrenceSearchCancellationToken = nil
-        cancelPDFVocabularyPriorityIndexBuild()
+        if currentDocumentKind == .pdf {
+            vocabularyState.occurrenceSearchID = nil
+            vocabularyState.occurrenceSearchCancellationToken?.cancel()
+            vocabularyState.occurrenceSearchCancellationToken = nil
+            cancelPDFVocabularyPriorityIndexBuild()
+        }
         removeVocabularyRecords(ids: ids)
         refreshVocabularyPanelAfterLocalSave()
         selectionActionToolbar.showRemoveResult(removed: ids.count)

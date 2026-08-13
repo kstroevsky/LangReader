@@ -1063,8 +1063,7 @@ enum VocabularyLogicTests {
         let offlineWord = SelectionToolbarConfiguration.make(
             isVocabularySelection: true,
             queryCapability: .offlineDictionary,
-            shouldShowSpeakAction: false,
-            isPDFSelection: true
+            shouldShowSpeakAction: false
         )
         try expectEqual(offlineWord.contextAction, .addWord, "offline word selections should keep the word action")
         try expectEqual(offlineWord.displayMode, .offlineWord, "offline word selections should show only word/speak/copy actions")
@@ -1075,7 +1074,6 @@ enum VocabularyLogicTests {
             isVocabularySelection: true,
             queryCapability: .offlineDictionary,
             shouldShowSpeakAction: false,
-            isPDFSelection: true,
             isVocabularySelectionSaved: true
         )
         try expect(savedWord.isVocabularySelectionSaved, "a saved PDF vocabulary word should switch the toolbar to Remove")
@@ -1095,6 +1093,15 @@ enum VocabularyLogicTests {
             shouldShowSpeakAction: true
         )
         try expectEqual(full.displayMode, .full(showsSpeak: true), "configured online state should expose the full toolbar")
+        try expect(full.showsVocabularySaveAction, "DOCX and EPUB vocabulary selections should expose Save just like PDF selections")
+
+        let savedWebWord = SelectionToolbarConfiguration.make(
+            isVocabularySelection: true,
+            queryCapability: .modelAvailable,
+            shouldShowSpeakAction: true,
+            isVocabularySelectionSaved: true
+        )
+        try expect(savedWebWord.isVocabularySelectionSaved, "a saved DOCX or EPUB word should switch the toolbar to Remove")
     }
 
     static func testLocalDictionaryFallbackRequiresOfflineState() throws {

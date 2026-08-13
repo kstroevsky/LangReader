@@ -87,7 +87,7 @@ extension ReaderWindowController {
             prepareAIForSelectionAction(text: wordText)
             aiPanel.startQuestion()
         case .saveWord:
-            saveCurrentPDFVocabularySelection()
+            saveCurrentVocabularySelection()
             return
         case .summarize:
             prepareAIForSelectionAction(text: text)
@@ -118,8 +118,7 @@ extension ReaderWindowController {
             isVocabularySelection: isVocabulary,
             queryCapability: capabilityState.queryCapability,
             shouldShowSpeakAction: shouldShowSelectionSpeakAction(for: text),
-            isPDFSelection: currentDocumentKind == .pdf,
-            isVocabularySelectionSaved: isPDFVocabularySelectionSaved(wordText)
+            isVocabularySelectionSaved: isVocabularyWordSaved(wordText)
         )
         selectionActionToolbar.applyConfiguration(configuration)
     }
