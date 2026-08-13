@@ -16,12 +16,7 @@ struct ReaderAIState {
     var conversationStore: AIConversationStore?
     var loadedConversation: SavedAIConversation?
     var pendingConversationToSave: SavedAIConversation?
-    /// Prompt requests are scoped by consumer (the AI panel or a particular
-    /// Reading Note).  A global generation counter made opening a second note
-    /// cancel the first one as an accidental side effect.
-    var activeDocumentPromptIDs = Set<UUID>()
-    var documentPromptContinuations: [UUID: CheckedContinuation<String?, Never>] = [:]
-    var retrievalQueryTasks: [UUID: Task<Void, Never>] = [:]
+    let documentPromptCoordinator = DocumentAgentPromptCoordinator()
     let conversationSaveTask = DebouncedTask(delay: 1.0)
     let preferredWidthSaveTask = DebouncedTask(delay: 0.4)
     let windowResizeLayoutTask = DebouncedTask(delay: 0.08)

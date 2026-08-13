@@ -27,14 +27,13 @@ extension ReaderWindowController {
         Chinese question:
         \(question)
         """
-        aiState.retrievalQueryTasks.removeValue(forKey: requestID)?.cancel()
-        aiState.retrievalQueryTasks[requestID] = Task { [weak self] in
+        let task = Task { [weak self] in
             let response = try? await self?.retrievalQueryClient.response(messages: [
                 ChatMessage(role: "system", content: "You create concise English search queries."),
                 ChatMessage(role: "user", content: prompt)
             ])
             guard let self, !Task.isCancelled, self.isDocumentAgentPromptActive(requestID) else { return }
-            self.aiState.retrievalQueryTasks[requestID] = nil
+            self.aiState.documentPromptCoordinator.auxiliaryTaskCompleted(for: requestID)
             guard let text = response else {
                 completion(nil)
                 return
@@ -44,6 +43,7 @@ extension ReaderWindowController {
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             completion(cleaned.isEmpty ? nil : String(cleaned.prefix(240)))
         }
+        aiState.documentPromptCoordinator.replaceAuxiliaryTask(task, for: requestID)
     }
 
     func questionLooksMostlyChinese(_ text: String) -> Bool {

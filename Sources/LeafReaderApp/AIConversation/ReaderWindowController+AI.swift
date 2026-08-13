@@ -1,6 +1,4 @@
-import Cocoa
-import PDFKit
-import WebKit
+import Foundation
 import LeafReaderCore
 
 extension ReaderWindowController {
@@ -12,26 +10,20 @@ extension ReaderWindowController {
         context: String,
         showsEvidenceBubbles: Bool = true
     ) async -> String? {
-        let requestID = beginDocumentAgentPrompt()
-        return await withTaskCancellationHandler(operation: { [weak self] in
-            guard let self else { return nil }
-            return await withCheckedContinuation { continuation in
-                self.aiState.documentPromptContinuations[requestID] = continuation
-                self.startDocumentAgentPrompt(
-                    question: question,
-                    questionSubject: questionSubject,
-                    context: context,
-                    showsEvidenceBubbles: showsEvidenceBubbles,
-                    requestID: requestID
-                ) { [weak self] value in
-                    self?.resumeDocumentAgentPrompt(requestID, value: value)
-                }
+        await aiState.documentPromptCoordinator.request { [weak self] requestID, finish in
+            guard let self else {
+                finish(nil)
+                return
             }
-        }, onCancel: { [weak self] in
-            Task { @MainActor in
-                self?.cancelDocumentAgentPrompt(requestID: requestID)
-            }
-        })
+            self.startDocumentAgentPrompt(
+                question: question,
+                questionSubject: questionSubject,
+                context: context,
+                showsEvidenceBubbles: showsEvidenceBubbles,
+                requestID: requestID,
+                completion: finish
+            )
+        }
     }
 
     /// Callback compatibility for the existing AI chat panel.  It has a
@@ -43,13 +35,21 @@ extension ReaderWindowController {
         showsEvidenceBubbles: Bool = true,
         completion: @escaping (String?) -> Void
     ) {
-        let requestID = beginDocumentAgentPrompt()
-        startDocumentAgentPrompt(
-            question: question,
-            questionSubject: questionSubject,
-            context: context,
-            showsEvidenceBubbles: showsEvidenceBubbles,
-            requestID: requestID,
+        aiState.documentPromptCoordinator.request(
+            starting: { [weak self] requestID, finish in
+                guard let self else {
+                    finish(nil)
+                    return
+                }
+                self.startDocumentAgentPrompt(
+                    question: question,
+                    questionSubject: questionSubject,
+                    context: context,
+                    showsEvidenceBubbles: showsEvidenceBubbles,
+                    requestID: requestID,
+                    completion: finish
+                )
+            },
             completion: completion
         )
     }
@@ -62,15 +62,10 @@ extension ReaderWindowController {
         requestID: UUID,
         completion: @escaping (String?) -> Void
     ) {
-        let finish: (String?) -> Void = { [weak self] value in
-            guard let self, self.isDocumentAgentPromptActive(requestID) else { return }
-            self.finishDocumentAgentPrompt(requestID)
-            completion(value)
-        }
         currentReadingContextSnapshot(preserveLineBreaks: true) { [weak self] snapshot in
             DispatchQueue.main.async {
                 guard let self, self.isDocumentAgentPromptActive(requestID), let snapshot else {
-                    finish(nil)
+                    completion(nil)
                     return
                 }
                 if self.currentDocumentKind == .pdf {
@@ -81,7 +76,7 @@ extension ReaderWindowController {
                         showsEvidenceBubbles: showsEvidenceBubbles,
                         snapshot: snapshot,
                         requestID: requestID,
-                        completion: finish
+                        completion: completion
                     )
                     return
                 }
@@ -92,43 +87,22 @@ extension ReaderWindowController {
                     showsEvidenceBubbles: showsEvidenceBubbles,
                     snapshot: snapshot,
                     requestID: requestID,
-                    completion: finish
+                    completion: completion
                 )
             }
         }
     }
 
     func cancelDocumentAgentPrompt() {
-        for requestID in aiState.activeDocumentPromptIDs {
-            cancelDocumentAgentPrompt(requestID: requestID)
-        }
+        aiState.documentPromptCoordinator.cancelAll()
     }
 
     func cancelDocumentAgentPrompt(requestID: UUID) {
-        guard aiState.activeDocumentPromptIDs.remove(requestID) != nil else { return }
-        aiState.retrievalQueryTasks.removeValue(forKey: requestID)?.cancel()
-        aiState.documentPromptContinuations.removeValue(forKey: requestID)?.resume(returning: nil)
-    }
-
-    private func beginDocumentAgentPrompt() -> UUID {
-        let requestID = UUID()
-        aiState.activeDocumentPromptIDs.insert(requestID)
-        return requestID
+        aiState.documentPromptCoordinator.cancel(requestID)
     }
 
     func isDocumentAgentPromptActive(_ requestID: UUID) -> Bool {
-        aiState.activeDocumentPromptIDs.contains(requestID)
-    }
-
-    private func finishDocumentAgentPrompt(_ requestID: UUID) {
-        aiState.activeDocumentPromptIDs.remove(requestID)
-        aiState.retrievalQueryTasks.removeValue(forKey: requestID)?.cancel()
-    }
-
-    private func resumeDocumentAgentPrompt(_ requestID: UUID, value: String?) {
-        guard isDocumentAgentPromptActive(requestID) else { return }
-        finishDocumentAgentPrompt(requestID)
-        aiState.documentPromptContinuations.removeValue(forKey: requestID)?.resume(returning: value)
+        aiState.documentPromptCoordinator.isActive(requestID)
     }
 
     func pdfDocumentAgentPrompt(
@@ -140,7 +114,7 @@ extension ReaderWindowController {
         requestID: UUID,
         completion: @escaping (String?) -> Void
     ) {
-        guard pdfView.document != nil else {
+        guard (activePagedReaderBackend?.pageCount ?? 0) > 0 else {
             completion(nil)
             return
         }

@@ -1,4 +1,3 @@
-Sources/LeafReaderApp/AIConversation/ReaderWindowController+AI.swift
 Sources/LeafReaderApp/AIConversation/ReaderWindowController+AIContext.swift
 Sources/LeafReaderApp/AIConversation/ReaderWindowController+AIPanelCallbacks.swift
 Sources/LeafReaderApp/AIConversation/ReaderWindowController+AISourceAnnotations.swift
