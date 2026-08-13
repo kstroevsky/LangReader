@@ -2,44 +2,6 @@ import Cocoa
 import PDFKit
 import LeafReaderCore
 
-struct StoredPDFWordRecord: Codable, Sendable {
-    let id: String
-    var vocabularyID: String? = nil
-    var word: String
-    var lemma: String? = nil
-    var surfaceForm: String? = nil
-    let pageIndex: Int
-    let bounds: StoredPDFWordRect
-    var textAnchor: TextQuoteAnchor? = nil
-    var context: String?
-    var question: String
-    var answer: String
-    var dictionaryTags: String? = nil
-    var dictionaryFrequency: Int? = nil
-    let createdAt: Date
-    var srs: VocabularySRSState?
-
-    var vocabularyGroupingText: String {
-        guard let lemma = lemma?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !lemma.isEmpty else { return word }
-        return lemma
-    }
-
-    var occurrenceSurfaceForm: String {
-        guard let surfaceForm = surfaceForm?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !surfaceForm.isEmpty else { return word }
-        return surfaceForm
-    }
-
-    /// Whether this occurrence is the exact form the user saved, as opposed to
-    /// a different inflected form the lemma matcher turned up. The saved form
-    /// keeps the standard highlight; the other forms are drawn faded.
-    var matchesSavedSurfaceForm: Bool {
-        VocabularyTextPolicy.canonicalVocabularyKey(occurrenceSurfaceForm)
-            == VocabularyTextPolicy.canonicalVocabularyKey(word)
-    }
-}
-
 enum PDFTextQuoteAnchorBuilder {
     static func make(
         pageIndex: Int,
@@ -161,10 +123,7 @@ struct PDFWordRecordStore {
     }
 
     func recordKey(record: StoredPDFWordRecord) -> String {
-        if let anchor = record.textAnchor {
-            return "text:\(anchor.unitOrdinal):\(anchor.sourceStart):\(anchor.sourceLength)"
-        }
-        return recordKey(pageIndex: record.pageIndex, bounds: record.bounds.cgRect)
+        record.occurrenceKey
     }
 
     func existingRecord(

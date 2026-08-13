@@ -38,10 +38,9 @@ private final class PDFVocabularySaveMaterialization {
     let startedAt: Date
     let startedUptime: TimeInterval
     var nextMatchIndex = 0
-    var knownKeys: Set<String>
+    let existingRecordKeys: Set<String>
     let legacyGeometryPageIndexes: Set<Int>
-    var foundKeys: Set<String> = []
-    var newRecords: [StoredPDFWordRecord] = []
+    var candidateRecords: [StoredPDFWordRecord] = []
 
     init(
         word: String,
@@ -50,7 +49,7 @@ private final class PDFVocabularySaveMaterialization {
         matches: [PDFVocabularyPageMatch],
         documentID: String,
         document: PDFDocument,
-        knownKeys: Set<String>,
+        existingRecordKeys: Set<String>,
         legacyGeometryPageIndexes: Set<Int>,
         startedAt: Date
     ) {
@@ -60,7 +59,7 @@ private final class PDFVocabularySaveMaterialization {
         self.matches = matches
         self.documentID = documentID
         self.document = document
-        self.knownKeys = knownKeys
+        self.existingRecordKeys = existingRecordKeys
         self.legacyGeometryPageIndexes = legacyGeometryPageIndexes
         self.startedAt = startedAt
         startedUptime = ProcessInfo.processInfo.systemUptime
@@ -549,7 +548,7 @@ extension ReaderWindowController {
             return
         }
 
-        let knownKeys = Set(storedWordRecords.map(store.recordKey(record:)))
+        let existingRecordKeys = Set(storedWordRecords.map(store.recordKey(record:)))
         let legacyGeometryPageIndexes = Set(storedWordRecords.compactMap {
             $0.textAnchor == nil ? $0.pageIndex : nil
         })
@@ -560,7 +559,7 @@ extension ReaderWindowController {
             matches: matches,
             documentID: documentID,
             document: document,
-            knownKeys: knownKeys,
+            existingRecordKeys: existingRecordKeys,
             legacyGeometryPageIndexes: legacyGeometryPageIndexes,
             startedAt: saveStartedAt
         ))
@@ -570,14 +569,7 @@ extension ReaderWindowController {
         guard currentDocumentKind == .pdf,
               currentFileMD5 == state.documentID,
               pdfView.document === state.document,
-              let store = pdfWordRecordStore else { return }
-
-        func appendIfNeeded(_ record: StoredPDFWordRecord) {
-            let key = store.recordKey(record: record)
-            guard state.foundKeys.insert(key).inserted else { return }
-            guard state.knownKeys.insert(key).inserted else { return }
-            state.newRecords.append(record)
-        }
+              pdfWordRecordStore != nil else { return }
 
         let endIndex = min(state.nextMatchIndex + 12, state.matches.count)
         if state.nextMatchIndex < endIndex {
@@ -610,7 +602,7 @@ extension ReaderWindowController {
                     )
                 }
                 guard let record else { continue }
-                appendIfNeeded(record)
+                state.candidateRecords.append(record)
             }
             state.nextMatchIndex = endIndex
         }
@@ -622,9 +614,13 @@ extension ReaderWindowController {
             return
         }
 
-        appendIfNeeded(state.selectedRecord)
-        let records = state.newRecords
-        let foundCount = state.foundKeys.count
+        let plan = VocabularyOccurrenceSavePlanner.plan(
+            selectedRecord: state.selectedRecord,
+            discoveredRecords: state.candidateRecords,
+            existingRecordKeys: state.existingRecordKeys
+        )
+        let records = plan.recordsToInsert
+        let foundCount = plan.foundCount
         let matchCount = state.matches.count
         let startedAt = state.startedAt
         let startedUptime = state.startedUptime
