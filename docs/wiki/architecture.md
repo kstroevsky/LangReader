@@ -14,7 +14,7 @@ Sources/LeafReaderCore/
   ReadAloud/           speech text, matching, and keyboard policies
   ReaderShell/         portable reader-session domain state
   ReadingNotes/        note models, persistence, Markdown, assets, and export
-  SharedUI/            legacy framework-free policies; not a destination for new presentation types
+  Support/             framework-independent serialization and process utilities
   VocabularyReview/    dictionary, vocabulary, review, statistics, and export
 
 Sources/LeafReaderApp/
@@ -58,6 +58,8 @@ App
 - Put Core tests under `Tests/LeafReaderCoreTests/`, app tests under `Tests/LeafReaderAppTests/`, and legacy regression-harness tests under `Tests/LeafReaderTests/`.
 
 `scripts/check_core_portable.sh` enforces framework independence. Its app-file list proves technical portability only; it is not a queue of types that should move into Core.
+
+`scripts/check_core_semantics.sh` enforces the complementary ownership rule: Core may not contain presentation/view-model types, accessibility/window-coordinate concepts, or a `SharedUI` source bucket. Native-reader access is separately enforced by `scripts/check_reader_native_access.sh`; its reviewed migration debt currently moves only downward.
 
 ## High-Leverage Files
 
