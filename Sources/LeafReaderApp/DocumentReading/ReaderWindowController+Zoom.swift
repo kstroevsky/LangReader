@@ -34,7 +34,7 @@ extension ReaderWindowController {
         syncZoomPercentFromBackend(applied)
         updateZoomLabel()
         saveSession()
-        window?.makeFirstResponder(currentDocumentKind == .pdf ? pdfView : webView)
+        activeReaderBackend?.focus()
     }
 
     func setWebZoom(_ percent: Int) {
@@ -44,7 +44,7 @@ extension ReaderWindowController {
         documentSession.web.zoomPercent = applied
         updateZoomLabel()
         saveSession()
-        window?.makeFirstResponder(webView)
+        activeReaderBackend?.focus()
     }
 
     func applyWebZoomToPage() {

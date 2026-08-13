@@ -8,4 +8,8 @@ extension ReaderWindowController {
     var activePagedReaderBackend: (any ReaderPagedBackend)? {
         activeReaderBackend as? any ReaderPagedBackend
     }
+
+    var activeContinuousReaderBackend: (any ReaderContinuousBackend)? {
+        activeReaderBackend as? any ReaderContinuousBackend
+    }
 }
