@@ -3,9 +3,9 @@ import Foundation
 
 /// Which side of the selection the floating toolbar prefers to sit on.
 ///
-/// Lifted out of `ReaderWindowController`, where it was a nested enum and so
-/// could only be named through an AppKit class, even though the choice itself is
-/// pure geometry.
+/// Lifted out of `ReaderWindowController`, where it was a nested enum. This is
+/// app presentation state because its meaning is explicitly tied to window
+/// coordinates, even though it does not import AppKit.
 package enum SelectionToolbarEdge {
     case above
     case below

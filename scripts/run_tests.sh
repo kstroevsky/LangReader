@@ -33,7 +33,7 @@ LOGIC_APP_SOURCES=()
 always_include_logic_app_source() {
   local base="$1"
   case "$base" in
-    ReadingNoteEditorViews.swift|SelectionToolbarConfiguration.swift|ReaderChromeState.swift|ReaderToolbarItem.swift|ReaderShellPresentationState.swift)
+    ReadingNoteEditorViews.swift|SelectionToolbarConfiguration.swift|ReaderChromeState.swift|ReaderPresentationState.swift|ReaderToolbarItem.swift|ReaderShellPresentationState.swift)
       return 0
       ;;
   esac
@@ -168,7 +168,7 @@ LOGIC_TEST_SOURCES=(
   "$TEST_SOURCE_ROOT/AIConversation/AITranscriptModelTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderSearchCursorTests.swift"
   "$TEST_SOURCE_ROOT/Performance/PerformanceRecorderTests.swift"
-  "Tests/LeafReaderCoreTests/ReaderPresentationStateTests.swift"
+  "$TEST_SOURCE_ROOT/DocumentReading/ReaderPresentationStateTests.swift"
   "$TEST_SOURCE_ROOT/ReaderShellPresentationStateTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderFieldInputTests.swift"
   "$TEST_SOURCE_ROOT/DocumentReading/ReaderChromeStateTests.swift"

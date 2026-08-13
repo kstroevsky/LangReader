@@ -4,8 +4,8 @@ import Foundation
 /// extracted text, the zoom level, and how far down it is scrolled.
 ///
 /// Split out of `DocumentSession`, which held this alongside three unrelated
-/// concerns. Platform-neutral: the values here describe *what* is shown, not
-/// how, so the same state would drive a WKWebView or its iOS equivalent.
+/// concerns. Although framework-free, zoom and scroll restoration are reader
+/// presentation policy and therefore belong to the app module.
 package struct ReaderWebPresentation: Equatable {
     package init() {}
 
@@ -67,20 +67,4 @@ package struct ReaderWebPresentation: Equatable {
         next.plainTextGeneration = previous.plainTextGeneration + 1
         return next
     }
-}
-
-/// Where the reader last was in the document, per document kind.
-///
-/// Kept apart from the web presentation because it outlives it: the page index
-/// is what gets written to the session store and restored on reopen, and the
-/// vocabulary buckets are used to decide when to re-offer personal words.
-package struct ReaderReadingPosition: Equatable {
-    package init() {}
-
-    /// The PDF page the reader was last on.
-    package var lastPageIndex: Int?
-    /// The page/scroll position the personal-vocabulary prompt last fired at,
-    /// so it does not re-fire while the reader stays put.
-    package var lastPersonalVocabularyPDFPageIndex: Int?
-    package var lastPersonalVocabularyWebProgressBucket: Int?
 }

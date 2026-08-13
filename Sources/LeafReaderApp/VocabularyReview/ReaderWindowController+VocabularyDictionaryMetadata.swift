@@ -3,7 +3,7 @@ import LeafReaderCore
 
 extension ReaderWindowController {
     func vocabularyRecordWithDictionaryMetadata(_ record: VocabularyExportRecord) -> VocabularyExportRecord {
-        VocabularyReviewDisplayRecordLoader.displayRecord(
+        VocabularyDictionaryMetadataEnrichmentPolicy.enrichedRecord(
             for: record,
             metadataLookup: dictionaryMetadata(for:),
             persistTags: persistDictionaryMetadata(tags:for:)

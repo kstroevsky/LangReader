@@ -1109,13 +1109,13 @@ enum VocabularyLogicTests {
         )
     }
 
-    static func testVocabularyReviewDisplayRecordLoaderLoadsOnlyCurrentRecord() throws {
+    static func testVocabularyDictionaryMetadataEnrichmentLoadsOnlyCurrentRecord() throws {
         let createdAt = Date(timeIntervalSince1970: 1_700_000_000)
         let record = vocabularyRecord(id: "current", word: "induction", createdAt: createdAt)
         var lookedUpWords: [String] = []
         var persisted: [(String, VocabularyExportRecord)] = []
 
-        let displayRecord = VocabularyReviewDisplayRecordLoader.displayRecord(
+        let displayRecord = VocabularyDictionaryMetadataEnrichmentPolicy.enrichedRecord(
             for: record,
             metadataLookup: { word in
                 lookedUpWords.append(word)

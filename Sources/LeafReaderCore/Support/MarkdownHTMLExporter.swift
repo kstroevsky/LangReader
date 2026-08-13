@@ -1,5 +1,6 @@
 import Foundation
 
+/// Framework-independent serialization of the app's supported Markdown subset.
 package enum MarkdownHTMLExporter {
     package static func document(title: String, markdown: String) -> String {
         """

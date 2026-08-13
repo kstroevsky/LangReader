@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 package struct ReadingNoteListRowViewModel: Equatable {
     package let id: String

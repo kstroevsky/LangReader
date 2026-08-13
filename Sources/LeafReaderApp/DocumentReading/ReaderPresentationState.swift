@@ -12,7 +12,7 @@ import Foundation
 /// With the title owned here, the label is free to show whatever it likes while
 /// consumers read the real value.
 ///
-/// This type grows only when another presentation fact needs a portable owner
+/// This type grows only when another presentation fact needs an authoritative owner
 /// or currently has duplicate mutable owners. Native PDFKit/WebKit state is not
 /// mirrored here merely to make the type look comprehensive. The PDF zoom
 /// percentage is kept because the editable toolbar field used to be both its

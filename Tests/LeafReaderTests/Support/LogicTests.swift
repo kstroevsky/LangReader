@@ -956,7 +956,7 @@ private let tests: [(String, () throws -> Void)] = [
     ("AI conversation markdown exporter", testAIConversationMarkdownExporter),
     ("Embedding action policy", testEmbeddingActionPolicy),
     ("Selection toolbar configuration", VocabularyLogicTests.testSelectionToolbarConfiguration),
-    ("Vocabulary review display record loader", VocabularyLogicTests.testVocabularyReviewDisplayRecordLoaderLoadsOnlyCurrentRecord),
+    ("Vocabulary dictionary metadata enrichment", VocabularyLogicTests.testVocabularyDictionaryMetadataEnrichmentLoadsOnlyCurrentRecord),
     ("Reading context snapshot", testReadingContextSnapshot),
     ("Reader focused selection priority", testReaderFocusedSelectionPriority),
     ("Reader AI source matcher", testReaderAISourceMatcher),

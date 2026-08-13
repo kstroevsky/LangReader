@@ -10,7 +10,7 @@ import Foundation
 ///
 /// Platform-neutral on purpose, and now *semantic* only: the toolbar's anchor
 /// rectangle moved to `ReaderSelectionPresentation`, so consumers that want to
-/// know what the reader picked no longer carry window coordinates that go stale
+/// know what the reader picked no longer carry presentation coordinates that go stale
 /// as soon as the view scrolls.
 package struct ReaderSelectionState: Equatable {
     /// Swift synthesises a memberwise initialiser at `internal`, which stops at

@@ -8,9 +8,9 @@ import Foundation
 /// order lived only in the order of those statements and could not be inspected
 /// or tested.
 ///
-/// Carries no AppKit references: the controller turns each descriptor into a
-/// real button and supplies the action, which keeps the composition rules
-/// testable.
+/// The controller turns each descriptor into a real button and supplies the
+/// action, which keeps the composition rules testable. The type remains in the
+/// app module because control order and accessibility identifiers are UI policy.
 package struct ReaderBottomBarItem: Equatable {
     package enum Identifier: String, Equatable, CaseIterable {
         case settings

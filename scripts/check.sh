@@ -32,6 +32,9 @@ echo "==> Checking UI theme coverage"
 echo "==> Checking core portability"
 ./scripts/check_core_portable.sh
 
+echo "==> Checking Core semantic ownership"
+./scripts/check_core_semantics.sh
+
 echo "==> Checking Reader native-view access seam"
 bash ./scripts/check_reader_native_access.sh
 

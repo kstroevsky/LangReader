@@ -1,7 +1,7 @@
 import Foundation
 import LeafReaderCore
 
-/// The reader's authoritative presentation title — extracted out of
+/// The app's authoritative presentation title — extracted out of
 /// `titleLabel.stringValue` so read-aloud progress text can no longer be read
 /// back as the document title.
 enum ReaderPresentationStateTests {
