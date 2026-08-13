@@ -83,7 +83,13 @@ extension AIChatPanel {
     /// focused word, so the caller falls through to the bubble path.
     @discardableResult
     func restyleFocusedWordCard() -> Bool {
-        guard let focused = transcript.focusedWord else { return false }
+        guard transcript.focusedWord != nil else { return false }
+        refreshFocusedWordCard()
+        return true
+    }
+
+    func refreshFocusedWordCard() {
+        guard let focused = transcript.focusedWord else { return }
         transcriptStack.arrangedSubviews.forEach { view in
             transcriptStack.removeArrangedSubview(view)
             view.removeFromSuperview()
@@ -91,7 +97,6 @@ extension AIChatPanel {
         buildFocusedWordViews(word: focused.word, answer: focused.answer)
         transcriptStack.needsLayout = true
         scheduleTranscriptLayout()
-        return true
     }
 
     /// The card itself: header, definition, and the spacer that pins them to the
@@ -172,13 +177,38 @@ extension AIChatPanel {
         occurrencesButton.setContentHuggingPriority(.required, for: .horizontal)
         occurrencesButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
+        let isSaved = info?.isSaved == true
+        let saveButton = CapsuleChromeButton(
+            title: isSaved
+                ? AppText.localized("移除", "Remove")
+                : AppText.localized("保存", "Save"),
+            target: self,
+            action: #selector(focusedWordSaveButtonTapped(_:))
+        )
+        saveButton.controlSize = .large
+        saveButton.font = AppFont.semibold(ofSize: 14)
+        saveButton.theme = readerTheme
+        saveButton.isDark = isDarkMode
+        saveButton.identifier = NSUserInterfaceItemIdentifier(word)
+        saveButton.toolTip = isSaved
+            ? AppText.localized("从当前文档中移除此单词", "Remove this word from the current document")
+            : AppText.localized("将此单词保存到当前文档的词汇中", "Save this word in the current document")
+        saveButton.translatesAutoresizingMaskIntoConstraints = false
+        saveButton.setContentHuggingPriority(.required, for: .horizontal)
+        saveButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        focusedWordSaveButton = saveButton
+
         card.addSubview(headerText)
+        card.addSubview(saveButton)
         card.addSubview(occurrencesButton)
         NSLayoutConstraint.activate([
             headerText.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 4),
             headerText.topAnchor.constraint(equalTo: card.topAnchor, constant: 6),
             headerText.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -10),
-            headerText.trailingAnchor.constraint(lessThanOrEqualTo: occurrencesButton.leadingAnchor, constant: -12),
+            headerText.trailingAnchor.constraint(lessThanOrEqualTo: saveButton.leadingAnchor, constant: -12),
+            saveButton.trailingAnchor.constraint(equalTo: occurrencesButton.leadingAnchor, constant: -8),
+            saveButton.topAnchor.constraint(equalTo: card.topAnchor, constant: 6),
+            saveButton.heightAnchor.constraint(equalToConstant: 38),
             occurrencesButton.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -4),
             occurrencesButton.topAnchor.constraint(equalTo: card.topAnchor, constant: 6),
             occurrencesButton.heightAnchor.constraint(equalToConstant: 38)
@@ -242,6 +272,13 @@ extension AIChatPanel {
     @objc private func occurrencesButtonTapped(_ sender: NSButton) {
         guard let word = sender.identifier?.rawValue, !word.isEmpty else { return }
         onOccurrencesRequested?(word)
+    }
+
+    @objc private func focusedWordSaveButtonTapped(_ sender: NSButton) {
+        guard let focused = transcript.focusedWord,
+              sender.identifier?.rawValue == focused.word else { return }
+        onFocusedWordSaveToggleRequested?(focused.word, focused.answer)
+        refreshFocusedWordCard()
     }
 
     @objc private func copyFocusedDefinition(_ sender: NSButton) {

@@ -116,14 +116,12 @@ extension ReaderWindowController {
         }
     }
 
-    func linkedWordAnswer(for linkID: String) -> String? {
-        if let record = storedWordRecords.first(where: { $0.id == linkID }) {
-            return record.answer
-        }
-        if let record = storedWebWordRecords.first(where: { $0.id == linkID }) {
-            return record.answer
-        }
-        return nil
+    func vocabularyAnswer(for word: String) -> String? {
+        let answer = currentDocumentKind == .pdf
+            ? reusablePDFWordRecord(for: word)?.answer
+            : reusableWebWordRecord(for: word)?.answer
+        let trimmed = answer?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed?.isEmpty == false ? trimmed : nil
     }
 
     func reusablePDFWordRecord(for word: String) -> StoredPDFWordRecord? {

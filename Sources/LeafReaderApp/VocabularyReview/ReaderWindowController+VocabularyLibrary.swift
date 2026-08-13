@@ -224,7 +224,8 @@ extension ReaderWindowController {
         return AIChatPanel.WordFocusInfo(
             partOfSpeech: record.dictionaryTags,
             formsText: formsText,
-            occurrenceCount: record.occurrences.count
+            occurrenceCount: record.occurrences.count,
+            isSaved: true
         )
     }
 

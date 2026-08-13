@@ -11,13 +11,8 @@ extension AIChatPanel {
         isSingleEnglishWord(text)
     }
 
-    func startWordQuestionIfNeeded(text: String) -> WordQuestionStartResult? {
-        guard isVocabularySelection(text) else { return nil }
-        return onSelectedWordQuestionStarted?(WordQuestionRequest(text: text, selectedContext: nil))
-    }
-
-    func contextForWordQuestion(text: String, start: WordQuestionStartResult?) -> String {
-        start?.selectedContext ?? onAskSelectedText?(text) ?? ""
+    func contextForWordQuestion(text: String) -> String {
+        onAskSelectedText?(text) ?? ""
     }
 
     func handleLocalDictionaryQuestion(_ text: String) -> Bool {
@@ -28,28 +23,12 @@ extension AIChatPanel {
             return false
         }
 
-        let wordStart = startWordQuestionIfNeeded(text: text)
-        let linkID = wordStart?.linkID
-        if let linkID, hasLinkedBubble(id: linkID) {
-            clearSelectedText()
-            scrollToLinkedBubble(id: linkID)
-            return true
-        }
-        let selectedContext = contextForWordQuestion(text: text, start: wordStart)
+        let selectedContext = contextForWordQuestion(text: text)
         let answer = localOnlyAnswerProvider()
-            .answer(for: AnswerProviderRequest(text: text, context: selectedContext, linkID: linkID))?
+            .answer(for: AnswerProviderRequest(text: text, context: selectedContext, linkID: nil))?
             .answer ?? initialAnswer
-        let displayedQuestion = vocabularyBubbleTitle(for: text)
-        appendBubble(role: AppText.userRole, text: displayedQuestion, collapsible: true, linkID: linkID)
-        recordTranscript(role: AppText.userRole, text: displayedQuestion, linkID: linkID)
-        let answerBody = appendBubble(role: AppText.aiRole, text: answer, collapsible: false, renderMarkdown: true, linkID: linkID)
-        recordTranscript(role: AppText.aiRole, text: answer, linkID: linkID)
-        appendMessage(ChatMessage(role: "user", content: wordPrompt(for: text, context: selectedContext), linkID: linkID))
-        appendMessage(ChatMessage(role: "assistant", content: answer, linkID: linkID))
-        if let linkID {
-            onLinkedAnswerCompleted?(linkID, displayedQuestion, answer)
-        }
-        scrollToDictionaryAnswer(answerBody)
+        appendMessage(ChatMessage(role: "user", content: wordPrompt(for: text, context: selectedContext)))
+        showFocusedWord(word: text, answer: answer, linkID: nil)
         clearSelectedText()
         return true
     }
@@ -59,15 +38,13 @@ extension AIChatPanel {
             return false
         }
         speakSelectedWordIfNeeded(text)
-        let wordStart = startWordQuestionIfNeeded(text: text)
-        let linkID = wordStart?.linkID
-        let selectedContext = contextForWordQuestion(text: text, start: wordStart)
+        let selectedContext = contextForWordQuestion(text: text)
         let displayedQuestion = vocabularyBubbleTitle(for: text)
         // Focus on this one word: clear whatever the transcript held so the
         // lookup does not append to a list of other words.
         resetTranscript()
-        appendBubble(role: AppText.userRole, text: displayedQuestion, collapsible: false, linkID: linkID)
-        recordTranscript(role: AppText.userRole, text: displayedQuestion, linkID: linkID)
+        appendBubble(role: AppText.userRole, text: displayedQuestion, collapsible: false)
+        recordTranscript(role: AppText.userRole, text: displayedQuestion)
         clearSelectedText()
         setBusy(true, text: AppText.localized("正在查德语词典...", "Looking up German dictionary..."))
 
@@ -108,20 +85,14 @@ extension AIChatPanel {
                     // The prompt is recorded first so the answer's follow-up
                     // context is intact, then the focused view replaces the
                     // loading bubble with the header + definition for this word.
-                    self.appendMessage(ChatMessage(role: "user", content: self.wordPrompt(for: text, context: selectedContext), linkID: linkID))
-                    self.showFocusedWord(word: text, answer: answer, linkID: linkID)
-                    if let linkID {
-                        self.onLinkedAnswerCompleted?(linkID, displayedQuestion, answer)
-                    }
+                    self.appendMessage(ChatMessage(role: "user", content: self.wordPrompt(for: text, context: selectedContext)))
+                    self.showFocusedWord(word: text, answer: answer, linkID: nil)
             case .failure:
                 let message = AppText.localized(
                     "Deutsch Wiktionary 中没有找到“\(text)”的词条。",
                     "No German Wiktionary entry was found for “\(text)”."
                 )
                 self.appendBubble(role: AppText.errorRole, text: message, collapsible: false)
-                if let linkID {
-                    self.onLinkedAnswerFailed?(linkID)
-                }
             }
         }
         return true

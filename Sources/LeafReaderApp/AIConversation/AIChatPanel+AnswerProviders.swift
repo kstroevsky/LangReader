@@ -2,10 +2,10 @@ import Foundation
 import LeafReaderCore
 
 extension AIChatPanel {
-    func cachedVocabularyAnswerProvider() -> AnswerProvider {
-        CachedVocabularyAnswerProvider(answerForLinkID: { [weak self] linkID in
-            self?.onLinkedWordAnswerAvailable?(linkID)
-        })
+    func cachedVocabularyAnswer(for word: String) -> AnswerProviderResult? {
+        guard let answer = onVocabularyAnswerRequested?(word)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !answer.isEmpty else { return nil }
+        return AnswerProviderResult(answer: answer, source: .cachedVocabulary)
     }
 
     func localOnlyAnswerProvider() -> AnswerProvider {

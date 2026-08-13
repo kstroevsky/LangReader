@@ -47,25 +47,14 @@ extension ReaderWindowController {
     }
 
     private func configureAIPanelVocabularyCallbacks() {
-        aiPanel.onSelectedWordQuestionStarted = { [weak self] request in
-            guard let self else { return nil }
-            if self.currentDocumentKind == .pdf {
-                return self.persistSelectedWordIfNeeded(
-                    self.pdfView.currentSelection,
-                    text: request.text,
-                    context: request.selectedContext
-                )
-            }
-            return self.persistSelectedWebWordIfNeeded(text: request.text, context: request.selectedContext)
-        }
         aiPanel.onLinkedAnswerCompleted = { [weak self] linkID, question, answer in
             self?.updateStoredLinkedWordAnswer(linkID: linkID, question: question, answer: answer)
         }
         aiPanel.onLinkedAnswerFailed = { [weak self] linkID in
             self?.discardPendingLinkedWord(linkID: linkID)
         }
-        aiPanel.onLinkedWordAnswerAvailable = { [weak self] linkID in
-            self?.linkedWordAnswer(for: linkID)
+        aiPanel.onVocabularyAnswerRequested = { [weak self] word in
+            self?.vocabularyAnswer(for: word)
         }
         aiPanel.onLinkedBubbleSelected = { [weak self] linkID in
             self?.jumpToStoredLinkedWord(linkID: linkID)
@@ -78,6 +67,9 @@ extension ReaderWindowController {
         }
         aiPanel.onWordFocusInfoRequested = { [weak self] word in
             self?.wordFocusInfo(for: word)
+        }
+        aiPanel.onFocusedWordSaveToggleRequested = { [weak self] word, answer in
+            self?.toggleFocusedVocabularyWord(word: word, answer: answer)
         }
     }
 

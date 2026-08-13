@@ -16,6 +16,7 @@ extension AIChatPanel {
         let partOfSpeech: String?
         let formsText: String?
         let occurrenceCount: Int
+        let isSaved: Bool
     }
 
     struct FailedAIRequest {
@@ -24,5 +25,6 @@ extension AIChatPanel {
         let linkedQuestion: String?
         let fallbackAnswer: String?
         let answerSuffix: String?
+        let focusedWord: String?
     }
 }

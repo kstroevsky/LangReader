@@ -23,39 +23,29 @@ extension AIChatPanel {
         let isVocabularyItem = isVocabularySelection(text)
         let canUseLocalDictionary = shouldUseLocalDictionary(for: text)
         speakSelectedWordIfNeeded(text)
-        let wordStart = startWordQuestionIfNeeded(text: text)
-        let linkID = wordStart?.linkID
-        if let linkID, hasLinkedBubble(id: linkID) {
-            clearSelectedText()
-            scrollToLinkedBubble(id: linkID)
-            return
-        }
-        let selectedContext = contextForWordQuestion(text: text, start: wordStart)
+        let selectedContext = isVocabularyItem ? contextForWordQuestion(text: text) : ""
         let prompt = isVocabularyItem ? wordPrompt(for: text, context: selectedContext) : sentencePrompt(for: text)
         let displayedQuestion = isVocabularyItem ? vocabularyBubbleTitle(for: text) : selectedTextActionTitle(actionTitle: AppText.explainPrefix, text: text)
-        appendBubble(role: AppText.userRole, text: displayedQuestion, collapsible: true, linkID: linkID)
-        recordTranscript(role: AppText.userRole, text: displayedQuestion, linkID: linkID)
+        appendBubble(role: AppText.userRole, text: displayedQuestion, collapsible: true)
+        recordTranscript(role: AppText.userRole, text: displayedQuestion)
         clearSelectedText()
-        let answerRequest = AnswerProviderRequest(text: text, context: selectedContext, linkID: linkID)
-        if let reusedAnswer = cachedVocabularyAnswerProvider().answer(for: answerRequest) {
+        let answerRequest = AnswerProviderRequest(text: text, context: selectedContext, linkID: nil)
+        if isVocabularyItem, let reusedAnswer = cachedVocabularyAnswer(for: text) {
             let answer = reusedAnswer.answer
-            appendBubble(role: AppText.aiRole, text: answer, collapsible: false, renderMarkdown: true, linkID: linkID)
-            recordTranscript(role: AppText.aiRole, text: answer, linkID: linkID)
-            appendMessage(ChatMessage(role: "user", content: prompt, linkID: linkID))
-            appendMessage(ChatMessage(role: "assistant", content: answer, linkID: linkID))
+            appendMessage(ChatMessage(role: "user", content: prompt))
+            showFocusedWord(word: text, answer: answer, linkID: nil)
             return
         }
-        appendMessage(ChatMessage(role: "user", content: prompt, linkID: linkID))
+        appendMessage(ChatMessage(role: "user", content: prompt))
         let localAnswer = canUseLocalDictionary ? cachedLocalDictionaryAnswer(for: answerRequest) : nil
         let fallbackAnswer = localAnswer?.answer
         let answerSuffix = canUseLocalDictionary
             ? localDictionaryTagSuffix(fallbackMetadata: localAnswer?.dictionaryMetadata)
             : nil
         requestAI(
-            linkID: linkID,
-            linkedQuestion: displayedQuestion,
             fallbackAnswer: fallbackAnswer,
-            answerSuffix: answerSuffix
+            answerSuffix: answerSuffix,
+            focusedWord: isVocabularyItem ? text : nil
         )
     }
 

@@ -187,8 +187,7 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
     var lastFailedAIRequest: FailedAIRequest?
 
     var onAskSelectedText: ((String) -> String?)?
-    var onSelectedWordQuestionStarted: ((WordQuestionRequest) -> WordQuestionStartResult?)?
-    var onLinkedWordAnswerAvailable: ((String) -> String?)?
+    var onVocabularyAnswerRequested: ((String) -> String?)?
     var onLinkedAnswerCompleted: ((String, String, String) -> Void)?
     var onLinkedAnswerFailed: ((String) -> Void)?
     var onLinkedBubbleSelected: ((String) -> Void)?
@@ -197,6 +196,9 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
     var onOccurrencesRequested: ((String) -> Void)?
     /// Grammatical summary (POS, forms, occurrence count) for the focused word.
     var onWordFocusInfoRequested: ((String) -> WordFocusInfo?)?
+    /// Explicit persistence intent from the focused definition card. Merely
+    /// displaying a definition never invokes this callback.
+    var onFocusedWordSaveToggleRequested: ((String, String) -> Void)?
     var onSummarizeCurrentContent: ((@escaping ((title: String, text: String)?) -> Void) -> Void)?
     var onTranslateCurrentContent: ((@escaping ((title: String, text: String)?) -> Void) -> Void)?
     var onCurrentReadingContent: ((@escaping ((title: String, text: String)?) -> Void) -> Void)?
@@ -254,6 +256,7 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
     var isLoadingLinkedWordBubbles = false
     var isRestoringSavedConversation = false
     var selectedLinkID: String?
+    weak var focusedWordSaveButton: NSButton?
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)

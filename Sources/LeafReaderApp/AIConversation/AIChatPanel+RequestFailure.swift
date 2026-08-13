@@ -14,7 +14,8 @@ extension AIChatPanel {
         linkID: String?,
         linkedQuestion: String?,
         fallbackAnswer: String?,
-        answerSuffix: String?
+        answerSuffix: String?,
+        focusedWord: String?
     ) {
         let shouldUseDictionaryFallback = shouldUseLocalDictionaryFallback(for: error)
         logAIRequestFailure(error, usesDictionaryFallback: shouldUseDictionaryFallback)
@@ -26,7 +27,8 @@ extension AIChatPanel {
                     fallbackAnswer,
                     assistantBody: assistantBody,
                     linkID: linkID,
-                    linkedQuestion: linkedQuestion
+                    linkedQuestion: linkedQuestion,
+                    focusedWord: focusedWord
                 )
                 return
             }
@@ -37,12 +39,18 @@ extension AIChatPanel {
             linkID: linkID,
             linkedQuestion: linkedQuestion,
             fallbackAnswer: fallbackAnswer,
-            answerSuffix: answerSuffix
+            answerSuffix: answerSuffix,
+            focusedWord: focusedWord
         )
         showAIRequestError(error, streamedText: streamedText, assistantBody: assistantBody)
         appendRetryButton()
         if let fallbackAnswer, !shouldUseDictionaryFallback {
-            appendLocalDictionaryFallbackAnswer(fallbackAnswer, linkID: linkID, linkedQuestion: linkedQuestion)
+            appendLocalDictionaryFallbackAnswer(
+                fallbackAnswer,
+                linkID: linkID,
+                linkedQuestion: linkedQuestion,
+                focusedWord: focusedWord
+            )
         }
     }
 
@@ -50,8 +58,13 @@ extension AIChatPanel {
         _ answer: String,
         assistantBody: NSTextField,
         linkID: String?,
-        linkedQuestion: String?
+        linkedQuestion: String?,
+        focusedWord: String?
     ) {
+        if let focusedWord {
+            showFocusedWord(word: focusedWord, answer: answer, linkID: nil)
+            return
+        }
         recordTranscript(role: AppText.aiRole, text: answer, linkID: linkID)
         appendMessage(ChatMessage(role: "assistant", content: answer, linkID: linkID))
         updateBubble(assistantBody, role: AppText.aiRole, text: answer, notify: false)
@@ -71,7 +84,16 @@ extension AIChatPanel {
         }
     }
 
-    func appendLocalDictionaryFallbackAnswer(_ answer: String, linkID: String?, linkedQuestion: String?) {
+    func appendLocalDictionaryFallbackAnswer(
+        _ answer: String,
+        linkID: String?,
+        linkedQuestion: String?,
+        focusedWord: String?
+    ) {
+        if let focusedWord {
+            showFocusedWord(word: focusedWord, answer: answer, linkID: nil)
+            return
+        }
         let text = AppText.localized(
             "AI 暂时连接失败。以下为本地词典结果：\n\n\(answer)",
             "AI is temporarily unavailable. Local dictionary result:\n\n\(answer)"

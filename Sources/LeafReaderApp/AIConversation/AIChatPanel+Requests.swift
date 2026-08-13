@@ -7,6 +7,7 @@ extension AIChatPanel {
         linkedQuestion: String? = nil,
         fallbackAnswer: String? = nil,
         answerSuffix: String? = nil,
+        focusedWord: String? = nil,
         replacing assistantBodyToReplace: NSTextField? = nil
     ) {
         trimMessagesIfNeeded()
@@ -15,7 +16,12 @@ extension AIChatPanel {
         lastFailedAIRequest = nil
         setBusy(true, text: AppText.thinking)
         let regenerationRequest = linkID == nil
-            ? RegenerationRequest(messages: requestMessages, fallbackAnswer: fallbackAnswer, answerSuffix: answerSuffix)
+            ? RegenerationRequest(
+                messages: requestMessages,
+                fallbackAnswer: fallbackAnswer,
+                answerSuffix: answerSuffix,
+                focusedWord: focusedWord
+            )
             : nil
         let assistantBody: NSTextField
         if let assistantBodyToReplace {
@@ -91,6 +97,10 @@ extension AIChatPanel {
                         }
                         return
                     }
+                    if let focusedWord {
+                        self.showFocusedWord(word: focusedWord, answer: finalContent, linkID: nil)
+                        return
+                    }
                     self.recordTranscript(role: AppText.aiRole, text: finalContent, linkID: linkID)
                     self.appendMessage(ChatMessage(role: "assistant", content: finalContent, linkID: linkID))
                     if let assistantBody = assistantBody {
@@ -113,7 +123,8 @@ extension AIChatPanel {
                         linkID: linkID,
                         linkedQuestion: linkedQuestion,
                         fallbackAnswer: fallbackAnswer,
-                        answerSuffix: answerSuffix
+                        answerSuffix: answerSuffix,
+                        focusedWord: focusedWord
                     )
                 }
             }
@@ -161,7 +172,8 @@ extension AIChatPanel {
             linkID: request.linkID,
             linkedQuestion: request.linkedQuestion,
             fallbackAnswer: request.fallbackAnswer,
-            answerSuffix: request.answerSuffix
+            answerSuffix: request.answerSuffix,
+            focusedWord: request.focusedWord
         )
     }
 
@@ -177,6 +189,7 @@ extension AIChatPanel {
         requestAI(
             fallbackAnswer: request.fallbackAnswer,
             answerSuffix: request.answerSuffix,
+            focusedWord: request.focusedWord,
             replacing: body
         )
     }

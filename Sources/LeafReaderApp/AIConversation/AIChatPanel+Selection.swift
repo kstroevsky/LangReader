@@ -97,6 +97,7 @@ extension AIChatPanel {
         isMouseEvent(event, inside: inputBar)
             || isMouseEvent(event, inside: sendButton)
             || chromeHeaderView.map { isMouseEvent(event, inside: $0) } == true
+            || focusedWordSaveButton.map { isMouseEvent(event, inside: $0) } == true
     }
 
     func isMouseEvent(_ event: NSEvent, inside view: NSView) -> Bool {
