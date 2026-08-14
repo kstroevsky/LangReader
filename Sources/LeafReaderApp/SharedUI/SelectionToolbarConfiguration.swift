@@ -9,9 +9,9 @@ enum SelectionToolbarContextAction: Equatable {
 enum SelectionToolbarDisplayMode: Equatable {
     case full(showsSpeak: Bool)
     case offlineWord
-    case offlineCopyOnly
+    case offlineText
     case needsModelKeyWord
-    case needsModelKeyCopyOnly
+    case needsModelKeyText
 }
 
 struct SelectionToolbarConfiguration: Equatable {
@@ -32,9 +32,9 @@ struct SelectionToolbarConfiguration: Equatable {
         case .modelAvailable:
             displayMode = .full(showsSpeak: shouldShowSpeakAction)
         case .offlineDictionary:
-            displayMode = isVocabularySelection ? .offlineWord : .offlineCopyOnly
+            displayMode = isVocabularySelection ? .offlineWord : .offlineText
         case .needsModelConfiguration:
-            displayMode = isVocabularySelection ? .needsModelKeyWord : .needsModelKeyCopyOnly
+            displayMode = isVocabularySelection ? .needsModelKeyWord : .needsModelKeyText
         }
         return SelectionToolbarConfiguration(
             contextAction: contextAction,
