@@ -132,7 +132,7 @@ package enum VocabularyPreparationInvitationState: String, Codable, Equatable, S
 }
 
 package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
-    package static let currentAlgorithmVersion = 1
+    package static let currentAlgorithmVersion = 2
 
     package var mode: VocabularyAssessmentMode
     package var invitationState: VocabularyPreparationInvitationState
@@ -164,6 +164,24 @@ package enum VocabularyAssessmentClassification: String, Codable, Equatable, Sen
     case excluded
 }
 
+package enum VocabularyAssessmentStopReason: String, Codable, Equatable, Sendable {
+    case exhaustedCandidates
+    case lowExpectedValue
+    case targetCoverageStable
+    case questionLimit
+}
+
+package struct VocabularyAssessmentDiagnostics: Codable, Equatable, Sendable {
+    package let estimatedTheta: Double
+    package let thetaLowerBound: Double
+    package let thetaUpperBound: Double
+    package let conservativeCoverageLowerBound: Double
+    package let skippedQuestionCount: Int
+    package let bestExpectedLossReduction: Double
+    package let stopReason: VocabularyAssessmentStopReason?
+    package let reachedQuestionLimit: Bool
+}
+
 package struct VocabularyAssessmentResultItem: Codable, Equatable, Identifiable, Sendable {
     package var id: String { candidate.canonicalKey }
     package let candidate: DocumentVocabularyCandidate
@@ -179,6 +197,7 @@ package struct VocabularyAssessmentResult: Codable, Equatable, Sendable {
     package let expectedCoverageAfterSelection: Double
     package let residualUncertainty: Double
     package let reachedQuestionLimit: Bool
+    package let diagnostics: VocabularyAssessmentDiagnostics
 
     package func applyingSelection(_ selectedKeys: Set<String>) -> VocabularyAssessmentResult {
         var totalOccurrences = 0.0
@@ -197,14 +216,52 @@ package struct VocabularyAssessmentResult: Codable, Equatable, Sendable {
                 isSelected: selected
             )
         }
+        let conservativeCoverage = Self.coverageLowerBound(
+            items: updatedItems,
+            theta: diagnostics.thetaLowerBound,
+            epsilon: errorFloor
+        )
         return VocabularyAssessmentResult(
             items: updatedItems,
             answeredQuestionCount: answeredQuestionCount,
             errorFloor: errorFloor,
             expectedCoverageAfterSelection: totalOccurrences > 0 ? expectedKnownOccurrences / totalOccurrences : 1,
             residualUncertainty: residualUncertainty,
-            reachedQuestionLimit: reachedQuestionLimit
+            reachedQuestionLimit: reachedQuestionLimit,
+            diagnostics: VocabularyAssessmentDiagnostics(
+                estimatedTheta: diagnostics.estimatedTheta,
+                thetaLowerBound: diagnostics.thetaLowerBound,
+                thetaUpperBound: diagnostics.thetaUpperBound,
+                conservativeCoverageLowerBound: conservativeCoverage,
+                skippedQuestionCount: diagnostics.skippedQuestionCount,
+                bestExpectedLossReduction: diagnostics.bestExpectedLossReduction,
+                stopReason: diagnostics.stopReason,
+                reachedQuestionLimit: diagnostics.reachedQuestionLimit
+            )
         )
+    }
+
+    private static func coverageLowerBound(
+        items: [VocabularyAssessmentResultItem],
+        theta: Double,
+        epsilon: Double
+    ) -> Double {
+        let included = items.filter { $0.classification != .excluded }
+        let total = Double(included.reduce(0) { $0 + $1.candidate.occurrenceCount })
+        guard total > 0 else { return 1 }
+        let known = included.reduce(0.0) { partial, item in
+            let probability: Double
+            if item.isSelected || item.classification == .confirmedKnown {
+                probability = 1
+            } else if item.classification == .confirmedUnknown {
+                probability = 0
+            } else {
+                probability = epsilon
+                    + (1 - 2 * epsilon) / (1 + exp(-(theta - item.candidate.difficulty)))
+            }
+            return partial + Double(item.candidate.occurrenceCount) * probability
+        }
+        return known / total
     }
 }
 
@@ -224,8 +281,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     private var skippedQuestionKeys = Set<String>()
     private var lowValueStreak = 0
     private var stableCoverageDeckStreak = 0
-    private var previousCoverageDeck = Set<String>()
-    private var contradictionAfterMinimum = false
+    private var previousCoverageDeck: Set<String>?
+    private var suppressStoppingUpdateOnce = false
 
     package init(
         inventory: DocumentVocabularyInventory,
@@ -247,13 +304,17 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     }
 
     package var isFinished: Bool {
-        if answeredQuestionCount >= min(80, inventory.candidates.count) { return true }
-        guard answeredQuestionCount >= min(20, inventory.candidates.count), !contradictionAfterMinimum else { return false }
+        if answeredQuestionCount >= 80 { return true }
+        let remaining = answerableCandidates
+        let minimumAnswerCount = min(20, answeredQuestionCount + remaining.count)
+        guard answeredQuestionCount >= minimumAnswerCount else { return false }
+        if remaining.isEmpty { return true }
         switch mode {
         case .allUnknown:
             return lowValueStreak >= 3
         case .targetCoverage:
-            return stableCoverageDeckStreak >= 3 && coverageLowerBound() >= (mode.targetCoverage ?? 0.98)
+            return stableCoverageDeckStreak >= 3
+                && coverageLowerBound(selection: proposedSelection()) >= (mode.targetCoverage ?? 0.98)
         }
     }
 
@@ -261,7 +322,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         self.mode = mode
         lowValueStreak = 0
         stableCoverageDeckStreak = 0
-        previousCoverageDeck = []
+        previousCoverageDeck = nil
         refreshStoppingState()
     }
 
@@ -270,7 +331,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             return inventory.candidates.first { $0.canonicalKey == pendingQuestion.key }
         }
         guard !isFinished else { return nil }
-        let remaining = unaskedCandidates.filter { !skippedQuestionKeys.contains($0.canonicalKey) }
+        let remaining = answerableCandidates
         guard !remaining.isEmpty else { return nil }
 
         let questionNumber = answeredQuestionCount + 1
@@ -317,6 +378,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         guard let pendingQuestion else { return }
         skippedQuestionKeys.insert(pendingQuestion.key)
         self.pendingQuestion = nil
+        refreshStoppingState()
     }
 
     package func knownProbability(for canonicalKey: String) -> Double? {
@@ -358,26 +420,62 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 candidate: candidate,
                 knownProbability: probability,
                 classification: classification,
-                isSelected: selection.contains(candidate.canonicalKey)
+                isSelected: classification != .excluded && selection.contains(candidate.canonicalKey)
             )
         }
         let uncertainty = items.reduce(0.0) { partial, item in
             guard item.classification != .excluded else { return partial }
             return partial + min(item.knownProbability, 1 - item.knownProbability)
         }
+        let reachedQuestionLimit = answeredQuestionCount >= 80
+        let lowerTheta = posteriorQuantile(0.05)
+        let upperTheta = posteriorQuantile(0.95)
+        let bestReduction = bestAvailableQuestionReduction()
+        let diagnostics = VocabularyAssessmentDiagnostics(
+            estimatedTheta: posteriorMean(),
+            thetaLowerBound: lowerTheta,
+            thetaUpperBound: upperTheta,
+            conservativeCoverageLowerBound: coverageLowerBound(selection: selection),
+            skippedQuestionCount: skippedQuestionKeys.count,
+            bestExpectedLossReduction: bestReduction,
+            stopReason: stopReason,
+            reachedQuestionLimit: reachedQuestionLimit
+        )
         return VocabularyAssessmentResult(
             items: items,
             answeredQuestionCount: answeredQuestionCount,
             errorFloor: errorFloor,
             expectedCoverageAfterSelection: totalOccurrences > 0 ? expectedKnownOccurrences / totalOccurrences : 1,
             residualUncertainty: uncertainty,
-            reachedQuestionLimit: answeredQuestionCount >= min(80, inventory.candidates.count)
+            reachedQuestionLimit: reachedQuestionLimit,
+            diagnostics: diagnostics
         )
     }
 
     private var unaskedCandidates: [DocumentVocabularyCandidate] {
         let answered = Set(answers.map(\.canonicalKey))
         return inventory.candidates.filter { !answered.contains($0.canonicalKey) }
+    }
+
+    private var answerableCandidates: [DocumentVocabularyCandidate] {
+        unaskedCandidates.filter { !skippedQuestionKeys.contains($0.canonicalKey) }
+    }
+
+    private var stopReason: VocabularyAssessmentStopReason? {
+        if answeredQuestionCount >= 80 { return .questionLimit }
+        let remaining = answerableCandidates
+        let minimumAnswerCount = min(20, answeredQuestionCount + remaining.count)
+        guard answeredQuestionCount >= minimumAnswerCount else { return nil }
+        if remaining.isEmpty { return .exhaustedCandidates }
+        switch mode {
+        case .allUnknown:
+            return lowValueStreak >= 3 ? .lowExpectedValue : nil
+        case .targetCoverage:
+            return stableCoverageDeckStreak >= 3
+                && coverageLowerBound(selection: proposedSelection()) >= (mode.targetCoverage ?? 0.98)
+                ? .targetCoverageStable
+                : nil
+        }
     }
 
     private mutating func apply(_ answer: VocabularyAssessmentAnswer) {
@@ -393,15 +491,13 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 ($0.predictedKnown == true && $0.outcome == .unknown)
                     || ($0.predictedKnown == false && $0.outcome == .known)
             }.count
-            let smoothedRate = Double(contradictions) / Double(validations.count + 4)
+            let smoothedRate = Double(contradictions + 1) / Double(validations.count + 20)
             errorFloor = min(0.25, max(0.05, smoothedRate))
             if contradicted && answeredQuestionCount >= 20 {
-                contradictionAfterMinimum = true
                 lowValueStreak = 0
                 stableCoverageDeckStreak = 0
+                suppressStoppingUpdateOnce = true
             }
-        } else if contradictionAfterMinimum {
-            contradictionAfterMinimum = false
         }
 
         _ = candidate
@@ -426,14 +522,20 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     }
 
     private mutating func refreshStoppingState() {
-        guard answeredQuestionCount >= min(20, inventory.candidates.count), !unaskedCandidates.isEmpty else { return }
+        if suppressStoppingUpdateOnce {
+            suppressStoppingUpdateOnce = false
+            return
+        }
+        let remaining = answerableCandidates
+        let minimumAnswerCount = min(20, answeredQuestionCount + remaining.count)
+        guard answeredQuestionCount >= minimumAnswerCount, !remaining.isEmpty else { return }
         switch mode {
         case .allUnknown:
-            let reduction = bestQuestion(from: shortlist(from: unaskedCandidates)).reduction
+            let reduction = bestQuestion(from: shortlist(from: remaining)).reduction
             lowValueStreak = reduction < 0.25 ? lowValueStreak + 1 : 0
         case .targetCoverage:
             let deck = proposedSelection()
-            stableCoverageDeckStreak = deck == previousCoverageDeck ? stableCoverageDeckStreak + 1 : 0
+            stableCoverageDeckStreak = previousCoverageDeck == deck ? stableCoverageDeckStreak + 1 : 0
             previousCoverageDeck = deck
         }
     }
@@ -470,20 +572,30 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         }
     }
 
-    private func coverageLowerBound() -> Double {
-        guard let target = mode.targetCoverage else { return 0 }
-        let deck = proposedSelection()
+    private func coverageLowerBound(selection: Set<String>) -> Double {
         let lowerTheta = posteriorQuantile(0.05)
         let included = inventory.candidates.filter { knownProbability(for: $0.canonicalKey) != nil }
         let total = Double(included.reduce(0) { $0 + $1.occurrenceCount })
-        guard total > 0 else { return target }
+        guard total > 0 else { return 1 }
         let known = included.reduce(0.0) { partial, candidate in
-            let p = deck.contains(candidate.canonicalKey)
-                ? 1
-                : Self.itemProbability(theta: lowerTheta, difficulty: candidate.difficulty, epsilon: errorFloor)
+            let answer = answers.first { $0.canonicalKey == candidate.canonicalKey }
+            let p: Double
+            if selection.contains(candidate.canonicalKey) || answer?.outcome == .known {
+                p = 1
+            } else if answer?.outcome == .unknown {
+                p = 0
+            } else {
+                p = Self.itemProbability(theta: lowerTheta, difficulty: candidate.difficulty, epsilon: errorFloor)
+            }
             return partial + Double(candidate.occurrenceCount) * p
         }
         return known / total
+    }
+
+    private func bestAvailableQuestionReduction() -> Double {
+        let remaining = answerableCandidates
+        guard !remaining.isEmpty else { return 0 }
+        return bestQuestion(from: shortlist(from: remaining)).reduction
     }
 
     private func validationCandidate(from candidates: [DocumentVocabularyCandidate]) -> (DocumentVocabularyCandidate, Bool?)? {
@@ -569,6 +681,10 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             if cumulative >= quantile { return theta }
         }
         return Self.thetaGrid.last ?? 6
+    }
+
+    private func posteriorMean() -> Double {
+        zip(Self.thetaGrid, posterior).reduce(0.0) { $0 + $1.0 * $1.1 }
     }
 
     private static func itemProbability(theta: Double, difficulty: Double, epsilon: Double) -> Double {

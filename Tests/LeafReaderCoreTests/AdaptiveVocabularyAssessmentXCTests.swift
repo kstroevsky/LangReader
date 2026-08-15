@@ -98,6 +98,160 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
 
         XCTAssertGreaterThan(assessment.errorFloor, 0.05)
         XCTAssertLessThanOrEqual(assessment.errorFloor, 0.25)
+        XCTAssertEqual(assessment.errorFloor, 2.0 / 21.0, accuracy: 0.000_001)
+    }
+
+    func testCoverageLowerBoundPreservesDirectAnswers() {
+        let candidates = [
+            candidate(key: "known", difficulty: 4, count: 50),
+            candidate(key: "unknown", difficulty: -4, count: 30),
+            candidate(key: "unasked", difficulty: 0, count: 20)
+        ]
+        var assessment = AdaptiveVocabularyAssessment(
+            inventory: DocumentVocabularyInventory(languageCode: "en", candidates: candidates),
+            mode: .targetCoverage(0.98)
+        )
+        assessment.record(.known, for: "known")
+        assessment.record(.unknown, for: "unknown")
+
+        let result = assessment.result(selectionOverride: [])
+        let lowerTheta = result.diagnostics.thetaLowerBound
+        let unaskedProbability = assessment.errorFloor
+            + (1 - 2 * assessment.errorFloor) / (1 + exp(-(lowerTheta - 0)))
+        let expected = (50 + 20 * unaskedProbability) / 100
+
+        XCTAssertEqual(result.diagnostics.conservativeCoverageLowerBound, expected, accuracy: 0.000_001)
+        XCTAssertEqual(result.items.first { $0.id == "known" }?.knownProbability, 1)
+        XCTAssertEqual(result.items.first { $0.id == "unknown" }?.knownProbability, 0)
+    }
+
+    func testApplyingSelectionRecomputesConservativeCoverage() {
+        let candidates = [
+            candidate(key: "known", difficulty: 0, count: 60),
+            candidate(key: "unknown", difficulty: 0, count: 40)
+        ]
+        var assessment = AdaptiveVocabularyAssessment(
+            inventory: DocumentVocabularyInventory(languageCode: "en", candidates: candidates),
+            mode: .targetCoverage(0.98)
+        )
+        assessment.record(.known, for: "known")
+        assessment.record(.unknown, for: "unknown")
+
+        let withoutDeck = assessment.result(selectionOverride: [])
+        let withDeck = withoutDeck.applyingSelection(["unknown"])
+
+        XCTAssertEqual(withoutDeck.diagnostics.conservativeCoverageLowerBound, 0.6, accuracy: 0.000_001)
+        XCTAssertEqual(withDeck.diagnostics.conservativeCoverageLowerBound, 1, accuracy: 0.000_001)
+    }
+
+    func testSkippingEveryCandidateFinishesAsExhaustedWithoutAnswers() throws {
+        var assessment = AdaptiveVocabularyAssessment(inventory: inventory(count: 5), mode: .allUnknown)
+        for _ in 0..<5 {
+            _ = try XCTUnwrap(assessment.nextQuestion())
+            assessment.skipCurrentQuestion()
+        }
+
+        XCTAssertTrue(assessment.isFinished)
+        XCTAssertNil(assessment.nextQuestion())
+        XCTAssertEqual(assessment.answeredQuestionCount, 0)
+        XCTAssertEqual(assessment.result().diagnostics.skippedQuestionCount, 5)
+        XCTAssertEqual(assessment.result().diagnostics.stopReason, .exhaustedCandidates)
+    }
+
+    func testQuestionLimitIsAlwaysEightyAnswers() {
+        let inventory = inventory(count: 100)
+        var assessment = AdaptiveVocabularyAssessment(inventory: inventory, mode: .allUnknown)
+        for candidate in inventory.candidates.prefix(80) {
+            assessment.record(.known, for: candidate.canonicalKey)
+        }
+
+        XCTAssertTrue(assessment.isFinished)
+        XCTAssertEqual(assessment.result().diagnostics.stopReason, .questionLimit)
+        XCTAssertTrue(assessment.result().reachedQuestionLimit)
+    }
+
+    func testExcludedSelectionCannotReenterCoverageDenominator() throws {
+        let inventory = DocumentVocabularyInventory(
+            languageCode: "en",
+            candidates: [candidate(key: "noise", difficulty: 0, count: 100)]
+        )
+        var assessment = AdaptiveVocabularyAssessment(inventory: inventory, mode: .targetCoverage(0.98))
+        assessment.record(.excluded, for: "noise")
+
+        let result = assessment.result(selectionOverride: ["noise"])
+        XCTAssertFalse(try XCTUnwrap(result.items.first).isSelected)
+        XCTAssertEqual(result.expectedCoverageAfterSelection, 1)
+        XCTAssertEqual(result.diagnostics.conservativeCoverageLowerBound, 1)
+    }
+
+    func testAllUnknownStopsAfterThreeLowValueSelections() throws {
+        var assessment = AdaptiveVocabularyAssessment(inventory: inventory(count: 60), mode: .allUnknown)
+        while !assessment.isFinished {
+            let question = try XCTUnwrap(assessment.nextQuestion())
+            assessment.record(.known, for: question.canonicalKey)
+        }
+
+        XCTAssertGreaterThanOrEqual(assessment.answeredQuestionCount, 20)
+        XCTAssertLessThan(assessment.answeredQuestionCount, 80)
+        XCTAssertEqual(assessment.result().diagnostics.stopReason, .lowExpectedValue)
+    }
+
+    func testCoverageStopsOnlyAfterStableDeckAndLowerBound() throws {
+        let candidates = (0..<60).map { index in
+            candidate(key: String(format: "easy-%03d", index), difficulty: -4, count: 1)
+        }
+        var assessment = AdaptiveVocabularyAssessment(
+            inventory: DocumentVocabularyInventory(languageCode: "en", candidates: candidates),
+            mode: .targetCoverage(0.98)
+        )
+        while !assessment.isFinished {
+            let question = try XCTUnwrap(assessment.nextQuestion())
+            assessment.record(.known, for: question.canonicalKey)
+        }
+
+        let result = assessment.result()
+        XCTAssertGreaterThanOrEqual(assessment.answeredQuestionCount, 23)
+        XCTAssertEqual(result.diagnostics.stopReason, .targetCoverageStable)
+        XCTAssertGreaterThanOrEqual(result.diagnostics.conservativeCoverageLowerBound, 0.98)
+    }
+
+    func testValidationQuestionsBeginAtFifteenAndAlternateTails() throws {
+        var assessment = AdaptiveVocabularyAssessment(inventory: inventory(count: 80), mode: .allUnknown)
+        for questionNumber in 1...20 {
+            let question = try XCTUnwrap(assessment.nextQuestion())
+            assessment.record(questionNumber.isMultiple(of: 2) ? .known : .unknown, for: question.canonicalKey)
+            let answer = try XCTUnwrap(assessment.answers.last)
+            XCTAssertEqual(answer.wasValidation, questionNumber == 15 || questionNumber == 20)
+        }
+
+        let validations = assessment.answers.filter(\.wasValidation)
+        XCTAssertEqual(validations.count, 2)
+        XCTAssertNotEqual(validations[0].predictedKnown, validations[1].predictedKnown)
+    }
+
+    func testRestoredDirectAnswersRecomputeSamePosterior() throws {
+        let inventory = inventory(count: 40)
+        var original = AdaptiveVocabularyAssessment(inventory: inventory, mode: .allUnknown)
+        for index in 0..<12 {
+            let question = try XCTUnwrap(original.nextQuestion())
+            original.record(index.isMultiple(of: 3) ? .unknown : .known, for: question.canonicalKey)
+        }
+        let restored = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .allUnknown,
+            restoredAnswers: original.answers
+        )
+
+        for candidate in inventory.candidates {
+            let restoredProbability = try XCTUnwrap(restored.knownProbability(for: candidate.canonicalKey))
+            let originalProbability = try XCTUnwrap(original.knownProbability(for: candidate.canonicalKey))
+            XCTAssertEqual(
+                restoredProbability,
+                originalProbability,
+                accuracy: 0.000_000_1
+            )
+        }
+        XCTAssertEqual(restored.result().diagnostics.estimatedTheta, original.result().diagnostics.estimatedTheta, accuracy: 0.000_000_1)
     }
 
     private func inventory(count: Int) -> DocumentVocabularyInventory {
