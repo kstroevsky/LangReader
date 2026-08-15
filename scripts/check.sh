@@ -50,6 +50,9 @@ echo "==> Running regression harness"
 echo "==> Testing performance-capture validator"
 bash ./scripts/test_perf_capture_validator.sh
 
+echo "==> Testing vocabulary assessment evaluator"
+bash ./scripts/test_vocabulary_assessment_evaluator.sh
+
 if [[ "$RUN_BUILD" -eq 1 ]]; then
   echo "==> Building docs site"
   DOCS_SITE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/leafreader-docs-check.XXXXXX")"

@@ -73,7 +73,7 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         )
 
         let selected = assessment.result().items.filter(\.isSelected).map(\.id)
-        XCTAssertEqual(selected, ["frequent"])
+        XCTAssertEqual(selected, ["frequent", "rare-a"])
         XCTAssertGreaterThanOrEqual(assessment.result().expectedCoverageAfterSelection, 0.80)
     }
 
@@ -118,7 +118,8 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         let lowerTheta = result.diagnostics.thetaLowerBound
         let unaskedProbability = assessment.errorFloor
             + (1 - 2 * assessment.errorFloor) / (1 + exp(-(lowerTheta - 0)))
-        let expected = (50 + 20 * unaskedProbability) / 100
+        let variance = 20.0 * 20.0 * unaskedProbability * (1 - unaskedProbability)
+        let expected = (50 + 20 * unaskedProbability - 1.644_853_626_951_47 * sqrt(variance)) / 100
 
         XCTAssertEqual(result.diagnostics.conservativeCoverageLowerBound, expected, accuracy: 0.000_001)
         XCTAssertEqual(result.items.first { $0.id == "known" }?.knownProbability, 1)
@@ -287,17 +288,9 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         )
         let result = assessment.result()
         let selected = Set(result.items.filter(\.isSelected).map(\.id))
-        let probabilities = Dictionary(uniqueKeysWithValues: result.items.map { ($0.id, $0.knownProbability) })
-        let total = Double(candidates.reduce(0) { $0 + $1.occurrenceCount })
 
         func reachesTarget(_ keys: Set<String>) -> Bool {
-            let known = candidates.reduce(0.0) { partial, candidate in
-                let probability = keys.contains(candidate.canonicalKey)
-                    ? 1
-                    : probabilities[candidate.canonicalKey] ?? 0
-                return partial + Double(candidate.occurrenceCount) * probability
-            }
-            return known / total >= 0.90
+            result.applyingSelection(keys).diagnostics.conservativeCoverageLowerBound >= 0.90
         }
 
         var oracleMinimum = candidates.count

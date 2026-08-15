@@ -1,5 +1,7 @@
 import Foundation
 
+private let vocabularyCoverageOneSided95Z = 1.644_853_626_951_47
+
 package enum VocabularyAssessmentMode: Codable, Equatable, Sendable {
     case allUnknown
     case targetCoverage(Double)
@@ -256,6 +258,7 @@ package struct VocabularyAssessmentResult: Codable, Equatable, Sendable {
         let included = items.filter { $0.classification != .excluded }
         let total = Double(included.reduce(0) { $0 + $1.candidate.occurrenceCount })
         guard total > 0 else { return 1 }
+        var variance = 0.0
         let known = included.reduce(0.0) { partial, item in
             let probability: Double
             if item.isSelected || item.classification == .confirmedKnown {
@@ -266,9 +269,11 @@ package struct VocabularyAssessmentResult: Codable, Equatable, Sendable {
                 probability = epsilon
                     + (1 - 2 * epsilon) / (1 + exp(-(theta - item.candidate.difficulty)))
             }
-            return partial + Double(item.candidate.occurrenceCount) * probability
+            let weight = Double(item.candidate.occurrenceCount)
+            variance += weight * weight * probability * (1 - probability)
+            return partial + weight * probability
         }
-        return known / total
+        return min(1, max(0, (known - vocabularyCoverageOneSided95Z * sqrt(variance)) / total))
     }
 }
 
@@ -614,21 +619,56 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 return probability < 0.5 ? candidate.canonicalKey : nil
             })
         case let .targetCoverage(target):
+            let lowerTheta = posteriorQuantile(0.05)
+            let conservativeProbabilities = Dictionary(uniqueKeysWithValues: eligible.map { candidate in
+                let probability: Double
+                switch answerByKey[candidate.canonicalKey]?.outcome {
+                case .known:
+                    probability = 1
+                case .unknown:
+                    probability = 0
+                case .excluded:
+                    probability = 0
+                case nil:
+                    probability = Self.itemProbability(
+                        theta: lowerTheta,
+                        difficulty: candidate.difficulty,
+                        epsilon: errorFloor
+                    )
+                }
+                return (candidate.canonicalKey, probability)
+            })
             let total = Double(eligible.reduce(0) { $0 + $1.occurrenceCount })
             guard total > 0 else { return [] }
             var expectedKnown = eligible.reduce(0.0) { partial, candidate in
-                partial + Double(candidate.occurrenceCount) * (probabilities[candidate.canonicalKey] ?? 0)
+                partial + Double(candidate.occurrenceCount)
+                    * (conservativeProbabilities[candidate.canonicalKey] ?? 0)
+            }
+            var variance = eligible.reduce(0.0) { partial, candidate in
+                let weight = Double(candidate.occurrenceCount)
+                let probability = conservativeProbabilities[candidate.canonicalKey] ?? 0
+                return partial + weight * weight * probability * (1 - probability)
             }
             var selection = Set<String>()
             let ranked = eligible.sorted {
-                let lhsGain = Double($0.occurrenceCount) * (1 - (probabilities[$0.canonicalKey] ?? 0))
-                let rhsGain = Double($1.occurrenceCount) * (1 - (probabilities[$1.canonicalKey] ?? 0))
+                let lhsProbability = conservativeProbabilities[$0.canonicalKey] ?? 0
+                let rhsProbability = conservativeProbabilities[$1.canonicalKey] ?? 0
+                let lhsWeight = Double($0.occurrenceCount)
+                let rhsWeight = Double($1.occurrenceCount)
+                let lhsGain = lhsWeight * (1 - lhsProbability)
+                    + vocabularyCoverageOneSided95Z * lhsWeight * sqrt(lhsProbability * (1 - lhsProbability))
+                let rhsGain = rhsWeight * (1 - rhsProbability)
+                    + vocabularyCoverageOneSided95Z * rhsWeight * sqrt(rhsProbability * (1 - rhsProbability))
                 if lhsGain != rhsGain { return lhsGain > rhsGain }
                 return $0.canonicalKey < $1.canonicalKey
             }
-            for candidate in ranked where expectedKnown / total < target {
-                let probability = probabilities[candidate.canonicalKey] ?? 0
-                expectedKnown += Double(candidate.occurrenceCount) * (1 - probability)
+            for candidate in ranked where (
+                expectedKnown - vocabularyCoverageOneSided95Z * sqrt(max(0, variance))
+            ) / total < target {
+                let probability = conservativeProbabilities[candidate.canonicalKey] ?? 0
+                let weight = Double(candidate.occurrenceCount)
+                expectedKnown += weight * (1 - probability)
+                variance -= weight * weight * probability * (1 - probability)
                 selection.insert(candidate.canonicalKey)
             }
             return selection
@@ -640,6 +680,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         let included = inventory.candidates.filter { knownProbability(for: $0.canonicalKey) != nil }
         let total = Double(included.reduce(0) { $0 + $1.occurrenceCount })
         guard total > 0 else { return 1 }
+        var variance = 0.0
         let known = included.reduce(0.0) { partial, candidate in
             let answer = answerByKey[candidate.canonicalKey]
             let p: Double
@@ -650,9 +691,11 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             } else {
                 p = Self.itemProbability(theta: lowerTheta, difficulty: candidate.difficulty, epsilon: errorFloor)
             }
-            return partial + Double(candidate.occurrenceCount) * p
+            let weight = Double(candidate.occurrenceCount)
+            variance += weight * weight * p * (1 - p)
+            return partial + weight * p
         }
-        return known / total
+        return min(1, max(0, (known - vocabularyCoverageOneSided95Z * sqrt(variance)) / total))
     }
 
     private func bestAvailableQuestionReduction() -> Double {
