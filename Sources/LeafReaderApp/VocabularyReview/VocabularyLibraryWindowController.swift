@@ -197,13 +197,19 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
             action: #selector(refreshTapped(_:)),
             fontSize: 13
         ) ?? NSButton(title: AppText.localized("刷新", "Refresh"), target: self, action: #selector(refreshTapped(_:)))
+        let prepareButton = owner?.vocabularyActionButton(
+            title: AppText.localized("准备词汇", "Prepare Vocabulary"),
+            target: self,
+            action: #selector(prepareTapped(_:)),
+            fontSize: 13
+        ) ?? NSButton(title: AppText.localized("准备词汇", "Prepare Vocabulary"), target: self, action: #selector(prepareTapped(_:)))
 
         let listScroll = makeListView()
         let detailScroll = makeDetailView()
         let divider = NSBox()
         divider.boxType = .separator
 
-        for view in [icon, title, summaryLabel, searchField, sourcePopup, sortPopup, refreshButton, listScroll, divider, detailScroll] {
+        for view in [icon, title, summaryLabel, searchField, sourcePopup, sortPopup, prepareButton, refreshButton, listScroll, divider, detailScroll] {
             view.translatesAutoresizingMaskIntoConstraints = false
             rootView.addSubview(view)
         }
@@ -223,7 +229,11 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
             refreshButton.centerYAnchor.constraint(equalTo: icon.centerYAnchor),
             refreshButton.widthAnchor.constraint(equalToConstant: 82),
             refreshButton.heightAnchor.constraint(equalToConstant: 30),
-            sortPopup.trailingAnchor.constraint(equalTo: refreshButton.leadingAnchor, constant: -8),
+            prepareButton.trailingAnchor.constraint(equalTo: refreshButton.leadingAnchor, constant: -8),
+            prepareButton.centerYAnchor.constraint(equalTo: icon.centerYAnchor),
+            prepareButton.widthAnchor.constraint(equalToConstant: 142),
+            prepareButton.heightAnchor.constraint(equalToConstant: 30),
+            sortPopup.trailingAnchor.constraint(equalTo: prepareButton.leadingAnchor, constant: -8),
             sortPopup.centerYAnchor.constraint(equalTo: icon.centerYAnchor),
             sortPopup.widthAnchor.constraint(equalToConstant: 132),
             sourcePopup.trailingAnchor.constraint(equalTo: sortPopup.leadingAnchor, constant: -8),
@@ -355,6 +365,10 @@ final class VocabularyLibraryWindowController: NSObject, NSWindowDelegate, NSSea
 
     @objc private func refreshTapped(_ sender: Any?) {
         owner?.reloadVocabularyLibraryInBackground()
+    }
+
+    @objc private func prepareTapped(_ sender: Any?) {
+        owner?.showVocabularyPreparation()
     }
 
     // MARK: Detail pane (SwiftUI)

@@ -133,6 +133,8 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var readingNotesPanelController: ReadingNotesPanelController?
     var vocabularyPanelController: VocabularyPanelController!
     var vocabularyLibraryWindowController: VocabularyLibraryWindowController!
+    var vocabularyPreparationCoordinator: VocabularyPreparationCoordinator!
+    var vocabularyPreparationPanelController: VocabularyPreparationPanelController!
     nonisolated let vocabularyLibraryBuildCache = VocabularyLibraryBuildCache()
     lazy var selectionToolbarCoordinator = SelectionToolbarCoordinator(owner: self)
     let vocabularyReviewSession = VocabularyReviewSession()
@@ -145,6 +147,10 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
         readerPresentation.preferredAIWidth = Self.loadPreferredAIWidth()
         vocabularyPanelController = VocabularyPanelController(owner: self)
         vocabularyLibraryWindowController = VocabularyLibraryWindowController(owner: self)
+        vocabularyPreparationCoordinator = VocabularyPreparationCoordinator(owner: self)
+        vocabularyPreparationPanelController = VocabularyPreparationPanelController(
+            coordinator: vocabularyPreparationCoordinator
+        )
     }
 
     required init?(coder: NSCoder) {
@@ -199,6 +205,8 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
             webWordRecordsSaveTask.cancel()
             vocabularyPanelController.close()
             vocabularyLibraryWindowController.close()
+            vocabularyPreparationCoordinator.cancel()
+            vocabularyPreparationPanelController.close()
             webView?.configuration.userContentController.removeScriptMessageHandler(forName: "selectionChanged")
             webView?.configuration.userContentController.removeScriptMessageHandler(forName: "scrollChanged")
             webView?.configuration.userContentController.removeScriptMessageHandler(forName: "webWordClicked")

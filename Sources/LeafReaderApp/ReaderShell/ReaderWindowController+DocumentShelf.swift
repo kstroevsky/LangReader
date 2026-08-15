@@ -96,6 +96,7 @@ extension ReaderWindowController {
         if let documentID {
             ReaderSessionStore(fileMD5: documentID).clearProgress()
             clearStoredEmbeddingControlState(documentID: documentID)
+            VocabularyPreparationSessionStore(documentID: documentID).clear()
         }
         if clearVectorCache {
             clearVectorCacheForShelfItem(path: path)

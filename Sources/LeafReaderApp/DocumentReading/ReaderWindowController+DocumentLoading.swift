@@ -197,6 +197,7 @@ extension ReaderWindowController {
         highlightedSelectionKeys.removeAll()
         clearAISourceUnderlineTracking()
         clearSearchState()
+        vocabularyPreparationCoordinator.resetForCurrentDocument()
     }
 
     func applyDocumentDiagnostics(_ diagnostics: [String], fileName: String) {
