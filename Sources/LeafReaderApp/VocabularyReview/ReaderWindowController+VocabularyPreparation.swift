@@ -48,3 +48,140 @@ extension ReaderWindowController {
         }
     }
 }
+
+extension ReaderWindowController: VocabularyPreparationDocumentSource {
+    var vocabularyPreparationIdentity: VocabularyPreparationDocumentIdentity? {
+        guard let documentID = currentFileMD5 else { return nil }
+        return VocabularyPreparationDocumentIdentity(
+            documentID: documentID,
+            loadGeneration: documentLoadGeneration,
+            webPlainTextGeneration: currentDocumentKind == .pdf ? nil : webPlainTextGeneration
+        )
+    }
+
+    func acceptsVocabularyPreparationIdentity(_ identity: VocabularyPreparationDocumentIdentity) -> Bool {
+        vocabularyPreparationIdentity == identity
+    }
+
+    func vocabularyPreparationSnapshot(
+        requestedLanguage: NLLanguage?
+    ) async throws -> VocabularyPreparationSourceSnapshot {
+        guard let identity = vocabularyPreparationIdentity else {
+            throw VocabularyPreparationSourceError.noDocument
+        }
+        if currentDocumentKind == .pdf {
+            let language = requestedLanguage ?? vocabularyDocumentLanguage
+            guard language == .english || language == .german else {
+                throw VocabularyPreparationSourceError.unsupportedLanguage
+            }
+            return try await withCheckedThrowingContinuation { continuation in
+                ensurePDFVocabularyIndex(language: language) { [weak self] snapshot, index in
+                    guard let self, self.acceptsVocabularyPreparationIdentity(identity) else {
+                        continuation.resume(throwing: VocabularyPreparationSourceError.cancelled)
+                        return
+                    }
+                    guard let snapshot, let index else {
+                        continuation.resume(throwing: VocabularyPreparationSourceError.textNotReady)
+                        return
+                    }
+                    continuation.resume(returning: VocabularyPreparationSourceSnapshot(
+                        identity: identity,
+                        kind: .pdf,
+                        language: language,
+                        texts: snapshot.pageTexts,
+                        index: index
+                    ))
+                }
+            }
+        }
+
+        let plainText = currentWebPlainText
+        guard !plainText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw VocabularyPreparationSourceError.textNotReady
+        }
+        let language = requestedLanguage
+            ?? VocabularyLanguageDetector.language(forSample: String(plainText.prefix(8_000)))
+        guard language == .english || language == .german else {
+            throw VocabularyPreparationSourceError.unsupportedLanguage
+        }
+        vocabularyDocumentLanguage = language
+        guard let index = await Task.detached(priority: .userInitiated, operation: {
+            VocabularyDocumentLemmaIndex(
+                texts: [plainText],
+                language: language,
+                maximumWorkerCount: 1,
+                isCancelled: { Task.isCancelled }
+            )
+        }).value else {
+            throw VocabularyPreparationSourceError.cancelled
+        }
+        guard acceptsVocabularyPreparationIdentity(identity) else {
+            throw VocabularyPreparationSourceError.cancelled
+        }
+        return VocabularyPreparationSourceSnapshot(
+            identity: identity,
+            kind: currentDocumentKind,
+            language: language,
+            texts: [plainText],
+            index: index
+        )
+    }
+}
+
+extension ReaderWindowController: VocabularyPreparationLibraryAccess {
+    func vocabularyPreparationExistingKeys(language: NLLanguage, kind: ReaderDocumentKind) -> Set<String> {
+        if kind == .pdf {
+            return Set(storedWordRecords.map {
+                GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language)
+            })
+        }
+        return Set(storedWebWordRecords.map {
+            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language)
+        })
+    }
+
+    func persistVocabularyPreparationBatch(
+        _ batch: VocabularyPreparationImportBatch,
+        documentID: String
+    ) async -> Bool {
+        await Task.detached(priority: .utility) {
+            switch batch {
+            case .pdf(let records):
+                WordRecordSQLiteStore.shared.upsertPDFRecords(documentID: documentID, records: records)
+            case .web(let records):
+                WordRecordSQLiteStore.shared.upsertWebRecords(documentID: documentID, records: records)
+            }
+        }.value
+    }
+
+    func finishVocabularyPreparationImport(_ batch: VocabularyPreparationImportBatch) {
+        switch batch {
+        case .pdf(let records):
+            storedWordRecords.append(contentsOf: records)
+            addStoredWordAnnotations(records, refineBounds: false)
+        case .web(let records):
+            storedWebWordRecords.append(contentsOf: records)
+            restoreStoredWebWordHighlights()
+        }
+        refreshVocabularyPanelAfterLocalSave()
+        vocabularyPreparationPanelController.close()
+        presentVocabularyTrainer()
+
+        for unresolved in batch.unresolvedDefinitions {
+            backfillDictionaryAnswerAsync(vocabularyID: unresolved.vocabularyID, word: unresolved.word)
+        }
+        guard !batch.unresolvedDefinitions.isEmpty else { return }
+        let alert = NSAlert()
+        alert.messageText = AppText.localized(
+            "已创建 \(batch.count) 个词汇记录",
+            "Created \(batch.count) vocabulary records"
+        )
+        alert.informativeText = AppText.localized(
+            "其中 \(batch.unresolvedDefinitions.count) 个释义仍在后台补充，暂时不可复习。",
+            "\(batch.unresolvedDefinitions.count) definitions are still being backfilled and are not reviewable yet."
+        )
+        alert.addButton(withTitle: AppText.localized("好", "OK"))
+        alert.applyLeafStyle()
+        if let window { alert.beginSheetModal(for: window) }
+    }
+}

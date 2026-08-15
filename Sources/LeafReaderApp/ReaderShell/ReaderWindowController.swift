@@ -147,7 +147,10 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
         readerPresentation.preferredAIWidth = Self.loadPreferredAIWidth()
         vocabularyPanelController = VocabularyPanelController(owner: self)
         vocabularyLibraryWindowController = VocabularyLibraryWindowController(owner: self)
-        vocabularyPreparationCoordinator = VocabularyPreparationCoordinator(owner: self)
+        vocabularyPreparationCoordinator = VocabularyPreparationCoordinator(
+            documentSource: self,
+            library: self
+        )
         vocabularyPreparationPanelController = VocabularyPreparationPanelController(
             coordinator: vocabularyPreparationCoordinator
         )

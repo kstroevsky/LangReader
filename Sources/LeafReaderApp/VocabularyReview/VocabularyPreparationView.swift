@@ -23,8 +23,8 @@ struct VocabularyPreparationView: View {
                 Text(AppText.localized("阅读前词汇准备", "Prepare Vocabulary"))
                     .font(.title2.weight(.semibold))
                 Text(AppText.localized(
-                    "估计结果包含不确定性；98% 指词汇覆盖率，并非理解保证。",
-                    "Results are probabilistic; 98% means lexical coverage, not guaranteed comprehension."
+                    "概率是基于词频和本次测试的模型估计；98% 指词汇覆盖率，并非理解保证。",
+                    "Probabilities are frequency-based estimates from this assessment; 98% means lexical coverage, not guaranteed comprehension."
                 ))
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -213,9 +213,13 @@ struct VocabularyPreparationView: View {
             if let result = coordinator.results {
                 let uncertainty = String(format: "%.1f", result.residualUncertainty)
                 let coverage = String(format: "%.1f", result.expectedCoverageAfterSelection * 100)
+                let lowerCoverage = String(
+                    format: "%.1f",
+                    result.diagnostics.conservativeCoverageLowerBound * 100
+                )
                 Text(AppText.localized(
-                    "已回答 \(result.answeredQuestionCount) 题 · 剩余不确定度 \(uncertainty) · 预计覆盖率 \(coverage)%",
-                    "\(result.answeredQuestionCount) answered · residual uncertainty \(uncertainty) · expected coverage \(coverage)%"
+                    "已回答 \(result.answeredQuestionCount) 题 · \(stopReasonText(result.diagnostics.stopReason)) · 剩余不确定度 \(uncertainty) · 预计覆盖率 \(coverage)%（保守值 \(lowerCoverage)%）",
+                    "\(result.answeredQuestionCount) answered · \(stopReasonText(result.diagnostics.stopReason)) · residual uncertainty \(uncertainty) · expected coverage \(coverage)% (conservative \(lowerCoverage)%)"
                 ))
                 .font(.headline)
                 ScrollView {
@@ -267,7 +271,7 @@ struct VocabularyPreparationView: View {
                 Text(AppText.localized("已在词库", "Already in library"))
                     .foregroundStyle(.secondary)
             } else {
-                Text("P(known) \(item.knownProbability * 100, specifier: "%.0f")%")
+                Text("Estimated P(known) \(item.knownProbability * 100, specifier: "%.0f")%")
                     .monospacedDigit()
                     .foregroundStyle(item.classification == .uncertain ? .orange : .secondary)
             }
@@ -318,6 +322,21 @@ struct VocabularyPreparationView: View {
         case .uncertain: AppText.localized("不确定", "Uncertain")
         case .probablyUnknown: AppText.localized("可能不认识", "Probably unknown")
         case .excluded: AppText.localized("已排除", "Excluded")
+        }
+    }
+
+    private func stopReasonText(_ reason: VocabularyAssessmentStopReason?) -> String {
+        switch reason {
+        case .exhaustedCandidates:
+            AppText.localized("已测试所有可回答词", "all answerable words assessed")
+        case .lowExpectedValue:
+            AppText.localized("继续提问的预期收益很低", "additional questions have low expected value")
+        case .targetCoverageStable:
+            AppText.localized("覆盖率目标已稳定", "coverage target is stable")
+        case .questionLimit:
+            AppText.localized("已达到 80 题上限，仍有不确定性", "80-question limit reached with residual uncertainty")
+        case nil:
+            AppText.localized("模型估计", "model estimate")
         }
     }
 }

@@ -26,12 +26,6 @@ struct VocabularyPreparationInventoryPayload: Sendable {
     let sourceTexts: [String]
 }
 
-private struct VocabularyPreparedDefinition: Sendable {
-    let markdown: String
-    let tags: String?
-    let frequency: Int?
-}
-
 private final class VocabularyPreparationCancellationToken: @unchecked Sendable {
     private let lock = NSLock()
     private var cancelled = false
@@ -56,7 +50,9 @@ private struct VocabularyAssessmentAdvance: Sendable {
 @MainActor
 @Observable
 final class VocabularyPreparationCoordinator {
-    private weak var owner: ReaderWindowController?
+    private weak var documentSource: (any VocabularyPreparationDocumentSource)?
+    private weak var library: (any VocabularyPreparationLibraryAccess)?
+    private let definitionProvider: any VocabularyPreparationDefinitionProviding
     private var assessment: AdaptiveVocabularyAssessment?
     private var session = VocabularyPreparationSession()
     private var sessionStore: VocabularyPreparationSessionStore?
@@ -65,6 +61,12 @@ final class VocabularyPreparationCoordinator {
     private var sourceTexts: [String] = []
     private var contexts: [String: String] = [:]
     private var definitions: [String: VocabularyPreparedDefinition] = [:]
+    private var definitionFailures: [String: String] = [:]
+    private var definitionTask: Task<Void, Never>?
+    private var workflowTask: Task<Void, Never>?
+    private var revealedDefinitionKey: String?
+    private var activeIdentity: VocabularyPreparationDocumentIdentity?
+    private var activeDocumentKind: ReaderDocumentKind?
     private(set) var inventory: DocumentVocabularyInventory?
     private(set) var currentCandidate: DocumentVocabularyCandidate?
     private(set) var definitionState: VocabularyPreparationDefinitionState = .hidden
@@ -79,8 +81,14 @@ final class VocabularyPreparationCoordinator {
     var phase: VocabularyPreparationPhase = .welcome
     var progressText = ""
 
-    init(owner: ReaderWindowController) {
-        self.owner = owner
+    init(
+        documentSource: any VocabularyPreparationDocumentSource,
+        library: any VocabularyPreparationLibraryAccess,
+        definitionProvider: any VocabularyPreparationDefinitionProviding = LiveVocabularyPreparationDefinitionProvider()
+    ) {
+        self.documentSource = documentSource
+        self.library = library
+        self.definitionProvider = definitionProvider
     }
 
     var currentContext: String {
@@ -108,10 +116,14 @@ final class VocabularyPreparationCoordinator {
         selectedKeys = []
         contexts = [:]
         definitions = [:]
+        definitionFailures = [:]
+        revealedDefinitionKey = nil
+        activeIdentity = nil
+        activeDocumentKind = nil
         sourceTexts = []
         phase = .welcome
         progressText = ""
-        guard let documentID = owner?.currentFileMD5 else {
+        guard let documentID = documentSource?.vocabularyPreparationIdentity?.documentID else {
             sessionStore = nil
             session = VocabularyPreparationSession()
             return
@@ -123,87 +135,41 @@ final class VocabularyPreparationCoordinator {
     }
 
     func startAnalysis() {
-        guard let owner, let documentID = owner.currentFileMD5 else {
+        guard let documentSource else {
             phase = .error(AppText.localized("没有打开的文档。", "No document is open."))
             return
         }
         requestID = UUID()
         cancellationToken.cancel()
         cancellationToken = VocabularyPreparationCancellationToken()
+        workflowTask?.cancel()
         let activeRequestID = requestID
         let activeToken = cancellationToken
-        let loadGeneration = owner.documentLoadGeneration
         session.mode = mode
         session.invitationState = .started
         sessionStore?.save(session)
         phase = .analyzing
         progressText = AppText.localized("正在建立词汇清单…", "Building the vocabulary inventory…")
 
-        if owner.currentDocumentKind == .pdf {
-            let language = requestedLanguage ?? owner.vocabularyDocumentLanguage
-            guard language == .english || language == .german else {
-                phase = .error(AppText.localized(
-                    "此版本只支持英语和德语文档。",
-                    "This version supports English and German documents only."
-                ))
-                return
-            }
-            owner.ensurePDFVocabularyIndex(language: language) { [weak self, weak owner] snapshot, index in
-                guard let self, let owner, let snapshot, let index,
-                      owner.currentFileMD5 == documentID,
-                      owner.documentLoadGeneration == loadGeneration,
-                      self.requestID == activeRequestID else { return }
+        workflowTask = Task { [weak self, weak documentSource] in
+            do {
+                guard let snapshot = try await documentSource?.vocabularyPreparationSnapshot(
+                    requestedLanguage: self?.requestedLanguage
+                ), let self,
+                self.requestID == activeRequestID,
+                !activeToken.isCancelled,
+                documentSource?.acceptsVocabularyPreparationIdentity(snapshot.identity) == true else { return }
+                self.activeIdentity = snapshot.identity
+                self.activeDocumentKind = snapshot.kind
                 self.buildPayload(
-                    index: index,
-                    texts: snapshot.pageTexts,
-                    language: language,
-                    documentID: documentID,
-                    loadGeneration: loadGeneration,
-                    webGeneration: nil,
+                    snapshot: snapshot,
                     requestID: activeRequestID,
                     cancellationToken: activeToken
                 )
-            }
-            return
-        }
-
-        let plainText = owner.currentWebPlainText
-        guard !plainText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            phase = .error(AppText.localized(
-                "文档文本仍在载入。请稍后重试。",
-                "Document text is still loading. Please retry shortly."
-            ))
-            return
-        }
-        let language = requestedLanguage
-            ?? VocabularyLanguageDetector.language(forSample: String(plainText.prefix(8_000)))
-        guard language == .english || language == .german else {
-            phase = .error(AppText.localized(
-                "未能检测为英语或德语文档。",
-                "The document was not detected as English or German."
-            ))
-            return
-        }
-        owner.vocabularyDocumentLanguage = language
-        let webGeneration = owner.webPlainTextGeneration
-        DispatchQueue.global(qos: .userInitiated).async {
-            guard let index = VocabularyDocumentLemmaIndex(
-                texts: [plainText],
-                language: language,
-                maximumWorkerCount: 1,
-                isCancelled: { activeToken.isCancelled }
-            ) else { return }
-            Task { @MainActor [weak self] in
-                self?.buildPayload(
-                    index: index,
-                    texts: [plainText],
-                    language: language,
-                    documentID: documentID,
-                    loadGeneration: loadGeneration,
-                    webGeneration: webGeneration,
-                    requestID: activeRequestID,
-                    cancellationToken: activeToken
-                )
+            } catch {
+                guard let self, self.requestID == activeRequestID, !activeToken.isCancelled else { return }
+                if case VocabularyPreparationSourceError.cancelled = error { return }
+                self.phase = .error(error.localizedDescription)
             }
         }
     }
@@ -230,12 +196,16 @@ final class VocabularyPreparationCoordinator {
     }
 
     func resetAssessment() {
+        definitionTask?.cancel()
+        definitionTask = nil
         assessment = nil
         currentCandidate = nil
         definitionState = .hidden
         results = nil
         selectedKeys = []
         definitions = [:]
+        definitionFailures = [:]
+        revealedDefinitionKey = nil
         session.answers = []
         session.finalSelection = []
         session.algorithmVersion = VocabularyPreparationSession.currentAlgorithmVersion
@@ -245,55 +215,25 @@ final class VocabularyPreparationCoordinator {
 
     func revealCurrentQuestion() {
         guard let candidate = currentCandidate else { return }
+        revealedDefinitionKey = candidate.canonicalKey
         if let cached = definitionFromResults(for: candidate.canonicalKey) {
             definitionState = .available(cached)
             return
         }
-        definitionState = .loading
-        let languageCode = inventory?.languageCode
-        let context = contexts[candidate.canonicalKey] ?? ""
-        let activeRequestID = requestID
-        if languageCode == NLLanguage.german.rawValue {
-            Task { [weak self] in
-                do {
-                    let entry = try await GermanWiktionaryDictionary.shared.lookup(candidate.displayLemma)
-                    guard !Task.isCancelled, let self, self.requestID == activeRequestID else { return }
-                    self.definitions[candidate.canonicalKey] = VocabularyPreparedDefinition(
-                        markdown: entry.markdown,
-                        tags: entry.metadata.tags,
-                        frequency: candidate.generalFrequencyRank
-                    )
-                    self.definitionState = .available(entry.markdown)
-                } catch {
-                    guard let self, self.requestID == activeRequestID else { return }
-                    self.definitionState = .unavailable(error.localizedDescription)
-                }
-            }
-        } else {
-            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                let answer = LocalDictionaryLookupService.shared.dictionaryAnswer(
-                    for: candidate.displayLemma,
-                    context: context
-                )?.markdown
-                Task { @MainActor [weak self] in
-                    guard let self, self.requestID == activeRequestID else { return }
-                    if let answer {
-                        let metadata = LocalDictionaryLookupService.shared.metadata(for: candidate.displayLemma)
-                        self.definitions[candidate.canonicalKey] = VocabularyPreparedDefinition(
-                            markdown: answer,
-                            tags: metadata.tags,
-                            frequency: candidate.generalFrequencyRank ?? metadata.frequency
-                        )
-                    }
-                    self.definitionState = answer.map(VocabularyPreparationDefinitionState.available)
-                        ?? .available(AppText.localized("本地词典中没有释义。", "No local definition is available."))
-                }
-            }
+        if let failure = definitionFailures[candidate.canonicalKey] {
+            definitionState = .unavailable(failure)
+            return
         }
+        definitionState = .loading
+        if definitionTask == nil { prefetchDefinition(for: candidate) }
     }
 
     func retryDefinition() {
+        guard let candidate = currentCandidate else { return }
+        definitionFailures[candidate.canonicalKey] = nil
         definitionState = .hidden
+        definitionTask?.cancel()
+        definitionTask = nil
         revealCurrentQuestion()
     }
 
@@ -322,131 +262,97 @@ final class VocabularyPreparationCoordinator {
     }
 
     func createAndReview() {
-        guard let owner, let inventory, !selectedKeys.isEmpty,
-              let documentID = owner.currentFileMD5 else { return }
+        guard let inventory, !selectedKeys.isEmpty,
+              let identity = activeIdentity,
+              documentSource?.acceptsVocabularyPreparationIdentity(identity) == true,
+              library != nil else { return }
         let selected = inventory.candidates.filter {
             selectedKeys.contains($0.canonicalKey) && !alreadySavedKeys.contains($0.canonicalKey)
         }
         guard !selected.isEmpty else { return }
 
         let activeRequestID = requestID
-        let loadGeneration = owner.documentLoadGeneration
         let languageCode = inventory.languageCode
         phase = .importing
         progressText = AppText.localized("正在准备释义…", "Preparing definitions…")
-
-        if languageCode == NLLanguage.german.rawValue {
-            Task { [weak self] in
-                guard let self else { return }
-                var resolved = self.definitions
-                let missing = selected.filter { resolved[$0.canonicalKey] == nil }
-                var iterator = missing.makeIterator()
-                await withTaskGroup(of: (String, VocabularyPreparedDefinition?).self) { group in
-                    func addNext() {
-                        guard let candidate = iterator.next() else { return }
-                        group.addTask {
-                            let entry = try? await GermanWiktionaryDictionary.shared.lookup(candidate.displayLemma)
-                            return (
-                                candidate.canonicalKey,
-                                entry.map {
-                                    VocabularyPreparedDefinition(
-                                        markdown: $0.markdown,
-                                        tags: $0.metadata.tags,
-                                        frequency: candidate.generalFrequencyRank
-                                    )
-                                }
-                            )
-                        }
-                    }
-                    for _ in 0..<min(4, missing.count) { addNext() }
-                    while let (key, definition) = await group.next() {
-                        if let definition { resolved[key] = definition }
-                        addNext()
+        let provider = definitionProvider
+        let candidateContexts = contexts
+        workflowTask?.cancel()
+        workflowTask = Task { [weak self] in
+            guard let self else { return }
+            var resolved = self.definitions
+            let missing = selected.filter { resolved[$0.canonicalKey] == nil }
+            var iterator = missing.makeIterator()
+            await withTaskGroup(of: (String, VocabularyPreparedDefinition?).self) { group in
+                func addNext() {
+                    guard let candidate = iterator.next() else { return }
+                    group.addTask {
+                        let definition = try? await provider.definition(
+                            for: candidate,
+                            languageCode: languageCode,
+                            context: candidateContexts[candidate.canonicalKey] ?? ""
+                        )
+                        return (candidate.canonicalKey, definition)
                     }
                 }
-                guard !Task.isCancelled, self.requestID == activeRequestID else { return }
-                self.finishImport(
-                    selected: selected,
-                    definitions: resolved,
-                    documentID: documentID,
-                    loadGeneration: loadGeneration,
-                    requestID: activeRequestID
-                )
+                for _ in 0..<min(4, missing.count) { addNext() }
+                while let (key, definition) = await group.next() {
+                    if let definition { resolved[key] = definition }
+                    addNext()
+                }
             }
-            return
-        }
-
-        let cachedDefinitions = definitions
-        let candidateContexts = contexts
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            var resolved = cachedDefinitions
-            for candidate in selected where resolved[candidate.canonicalKey] == nil {
-                let context = candidateContexts[candidate.canonicalKey] ?? ""
-                let lookup = LocalDictionaryLookupService.shared.dictionaryAnswer(
-                    for: candidate.displayLemma,
-                    context: context
-                )
-                resolved[candidate.canonicalKey] = VocabularyPreparedDefinition(
-                    markdown: lookup?.markdown ?? "",
-                    tags: lookup?.metadata.tags,
-                    frequency: candidate.generalFrequencyRank ?? lookup?.metadata.frequency
-                )
-            }
-            Task { @MainActor [weak self] in
-                self?.finishImport(
-                    selected: selected,
-                    definitions: resolved,
-                    documentID: documentID,
-                    loadGeneration: loadGeneration,
-                    requestID: activeRequestID
-                )
-            }
+            guard !Task.isCancelled,
+                  self.requestID == activeRequestID,
+                  self.documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
+            await self.finishImport(
+                selected: selected,
+                definitions: resolved,
+                identity: identity,
+                requestID: activeRequestID
+            )
         }
     }
 
     func cancel() {
         requestID = UUID()
         cancellationToken.cancel()
+        workflowTask?.cancel()
+        workflowTask = nil
+        definitionTask?.cancel()
+        definitionTask = nil
     }
 
     private func buildPayload(
-        index: VocabularyDocumentLemmaIndex,
-        texts: [String],
-        language: NLLanguage,
-        documentID: String,
-        loadGeneration: Int,
-        webGeneration: Int?,
+        snapshot: VocabularyPreparationSourceSnapshot,
         requestID: UUID,
         cancellationToken: VocabularyPreparationCancellationToken
     ) {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard !cancellationToken.isCancelled else { return }
-            let summaries = index.lemmaSummaries()
-            let difficultyProvider = language == .german
+            let summaries = snapshot.index.lemmaSummaries()
+            let difficultyProvider = snapshot.language == .german
                 ? DocumentVocabularyFrequencyProvider.german
                 : DocumentVocabularyFrequencyProvider.english
             let inventory = DocumentVocabularyInventory(
                 summaries: summaries,
-                languageCode: language.rawValue,
+                languageCode: snapshot.language.rawValue,
                 maximumFrequencyRank: difficultyProvider.frequencyScale.maximumRank
             ) { summary in
                 difficultyProvider.bestRank(for: summary)
             }
             guard !cancellationToken.isCancelled else { return }
             let contexts = Dictionary(uniqueKeysWithValues: inventory.candidates.map { candidate in
-                (candidate.canonicalKey, Self.context(for: candidate.representativeRange, texts: texts))
+                (candidate.canonicalKey, Self.context(for: candidate.representativeRange, texts: snapshot.texts))
             })
             let payload = VocabularyPreparationInventoryPayload(
                 inventory: inventory,
                 contexts: contexts,
-                sourceTexts: texts
+                sourceTexts: snapshot.texts
             )
             Task { @MainActor [weak self] in
-                guard let self, let owner = self.owner,
+                guard let self,
                       self.requestID == requestID,
-                      owner.currentFileMD5 == documentID,
-                      owner.documentLoadGeneration == loadGeneration,
-                      webGeneration == nil || owner.webPlainTextGeneration == webGeneration else { return }
+                      self.documentSource?.acceptsVocabularyPreparationIdentity(snapshot.identity) == true else { return }
                 self.apply(payload: payload)
             }
         }
@@ -466,6 +372,9 @@ final class VocabularyPreparationCoordinator {
 
     private func advanceAssessment(_ mutation: VocabularyAssessmentMutation, persistAnswers: Bool) {
         guard let assessment else { return }
+        definitionTask?.cancel()
+        definitionTask = nil
+        revealedDefinitionKey = nil
         phase = .analyzing
         progressText = AppText.localized("正在更新估计…", "Updating the estimate…")
         currentCandidate = nil
@@ -516,7 +425,9 @@ final class VocabularyPreparationCoordinator {
         requestID: UUID,
         persistAnswers: Bool
     ) {
-        guard self.requestID == requestID else { return }
+        guard self.requestID == requestID,
+              let identity = activeIdentity,
+              documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
         assessment = advance.assessment
         if persistAnswers { persistAssessment() }
         if let result = advance.result {
@@ -526,6 +437,49 @@ final class VocabularyPreparationCoordinator {
         currentCandidate = advance.candidate
         definitionState = .hidden
         phase = .assessment
+        if let candidate = advance.candidate {
+            prefetchDefinition(for: candidate)
+        }
+    }
+
+    private func prefetchDefinition(for candidate: DocumentVocabularyCandidate) {
+        guard definitionTask == nil,
+              definitions[candidate.canonicalKey] == nil,
+              definitionFailures[candidate.canonicalKey] == nil,
+              let languageCode = inventory?.languageCode,
+              let identity = activeIdentity else { return }
+        let key = candidate.canonicalKey
+        let context = contexts[key] ?? ""
+        let activeRequestID = requestID
+        let provider = definitionProvider
+        definitionTask = Task { [weak self] in
+            do {
+                let definition = try await provider.definition(
+                    for: candidate,
+                    languageCode: languageCode,
+                    context: context
+                )
+                guard !Task.isCancelled, let self,
+                      self.requestID == activeRequestID,
+                      self.currentCandidate?.canonicalKey == key,
+                      self.documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
+                self.definitions[key] = definition
+                self.definitionTask = nil
+                if self.revealedDefinitionKey == key {
+                    self.definitionState = .available(definition.markdown)
+                }
+            } catch {
+                guard !Task.isCancelled, let self,
+                      self.requestID == activeRequestID,
+                      self.currentCandidate?.canonicalKey == key,
+                      self.documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
+                self.definitionFailures[key] = error.localizedDescription
+                self.definitionTask = nil
+                if self.revealedDefinitionKey == key {
+                    self.definitionState = .unavailable(error.localizedDescription)
+                }
+            }
+        }
     }
 
     private func showResults(_ proposed: VocabularyAssessmentResult) {
@@ -549,16 +503,12 @@ final class VocabularyPreparationCoordinator {
     }
 
     private func existingVocabularyKeys() -> Set<String> {
-        guard let owner else { return [] }
-        let language = owner.vocabularyDocumentLanguage
-        if owner.currentDocumentKind == .pdf {
-            return Set(owner.storedWordRecords.map {
-                GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language)
-            })
-        }
-        return Set(owner.storedWebWordRecords.map {
-            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language)
-        })
+        guard let library, let kind = activeDocumentKind,
+              let languageCode = inventory?.languageCode else { return [] }
+        return library.vocabularyPreparationExistingKeys(
+            language: NLLanguage(rawValue: languageCode),
+            kind: kind
+        )
     }
 
     private func definitionFromResults(for key: String) -> String? {
@@ -576,19 +526,16 @@ final class VocabularyPreparationCoordinator {
     private func finishImport(
         selected: [DocumentVocabularyCandidate],
         definitions: [String: VocabularyPreparedDefinition],
-        documentID: String,
-        loadGeneration: Int,
+        identity: VocabularyPreparationDocumentIdentity,
         requestID: UUID
-    ) {
-        guard let owner,
+    ) async {
+        guard let library, let kind = activeDocumentKind,
               self.requestID == requestID,
-              owner.currentFileMD5 == documentID,
-              owner.documentLoadGeneration == loadGeneration else { return }
+              documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
         self.definitions = definitions
         let createdAt = Date()
         let existingKeys = existingVocabularyKeys()
         let candidates = selected.filter { !existingKeys.contains($0.canonicalKey) }
-        let kind = owner.currentDocumentKind
         let texts = sourceTexts
 
         let pdfRecords: [StoredPDFWordRecord]
@@ -647,57 +594,21 @@ final class VocabularyPreparationCoordinator {
             }
         }
         progressText = AppText.localized("正在原子写入词库…", "Saving the vocabulary set atomically…")
-        DispatchQueue.global(qos: .utility).async { [weak self] in
-            let didPersist = kind == .pdf
-                ? WordRecordSQLiteStore.shared.upsertPDFRecords(documentID: documentID, records: pdfRecords)
-                : WordRecordSQLiteStore.shared.upsertWebRecords(documentID: documentID, records: webRecords)
-            Task { @MainActor [weak self] in
-                guard let self, let owner = self.owner,
-                      self.requestID == requestID,
-                      owner.currentFileMD5 == documentID,
-                      owner.documentLoadGeneration == loadGeneration else { return }
-                guard didPersist else {
-                    self.phase = .error(AppText.localized(
-                        "无法写入词库；没有创建任何记录。",
-                        "The vocabulary library could not be updated; no records were created."
-                    ))
-                    return
-                }
-                if kind == .pdf {
-                    owner.storedWordRecords.append(contentsOf: pdfRecords)
-                    owner.addStoredWordAnnotations(pdfRecords, refineBounds: false)
-                } else {
-                    owner.storedWebWordRecords.append(contentsOf: webRecords)
-                    owner.restoreStoredWebWordHighlights()
-                }
-                self.session.invitationState = .completed
-                self.session.finalSelection = self.selectedKeys
-                self.sessionStore?.save(self.session)
-                owner.refreshVocabularyPanelAfterLocalSave()
-                owner.vocabularyPreparationPanelController.close()
-                owner.presentVocabularyTrainer()
-
-                let unresolved = (kind == .pdf ? pdfRecords.map { ($0.vocabularyID, $0.word, $0.answer) } : webRecords.map { ($0.vocabularyID, $0.word, $0.answer) })
-                    .filter { $0.2.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-                for record in unresolved {
-                    owner.backfillDictionaryAnswerAsync(vocabularyID: record.0, word: record.1)
-                }
-                if !unresolved.isEmpty {
-                    let alert = NSAlert()
-                    alert.messageText = AppText.localized(
-                        "已创建 \(pdfRecords.count + webRecords.count) 个词汇记录",
-                        "Created \(pdfRecords.count + webRecords.count) vocabulary records"
-                    )
-                    alert.informativeText = AppText.localized(
-                        "其中 \(unresolved.count) 个释义仍在后台补充，暂时不可复习。",
-                        "\(unresolved.count) definitions are still being backfilled and are not reviewable yet."
-                    )
-                    alert.addButton(withTitle: AppText.localized("好", "OK"))
-                    alert.applyLeafStyle()
-                    if let window = owner.window { alert.beginSheetModal(for: window) }
-                }
-            }
+        let batch: VocabularyPreparationImportBatch = kind == .pdf ? .pdf(pdfRecords) : .web(webRecords)
+        let didPersist = await library.persistVocabularyPreparationBatch(batch, documentID: identity.documentID)
+        guard self.requestID == requestID,
+              documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
+        guard didPersist else {
+            phase = .error(AppText.localized(
+                "无法写入词库；没有创建任何记录。",
+                "The vocabulary library could not be updated; no records were created."
+            ))
+            return
         }
+        session.invitationState = .completed
+        session.finalSelection = selectedKeys
+        sessionStore?.save(session)
+        library.finishVocabularyPreparationImport(batch)
     }
 
     nonisolated private static func context(

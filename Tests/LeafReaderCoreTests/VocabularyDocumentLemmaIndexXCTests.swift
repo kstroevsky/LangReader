@@ -128,6 +128,18 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         XCTAssertEqual(summaries.first { $0.canonicalKey == "development" }?.occurrenceCount, 1)
     }
 
+    func testOrdinaryEnglishWordsAreNotClassifiedAsConfidentNames() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: ["They develop tools while readers learn vocabulary."],
+            language: .english
+        ))
+
+        let summaries = index.lemmaSummaries()
+        XCTAssertFalse(try XCTUnwrap(summaries.first { $0.canonicalKey == "develop" }).isConfidentName)
+        XCTAssertFalse(try XCTUnwrap(summaries.first { $0.canonicalKey == "tool" }).isConfidentName)
+        XCTAssertFalse(try XCTUnwrap(summaries.first { $0.canonicalKey == "vocabulary" }).isConfidentName)
+    }
+
     func testInventorySummariesAggregateAcrossUnitsAndRepairPDFLineWraps() throws {
         let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
             texts: ["A remark was develop-\ned here.", "Later they developed it again."],

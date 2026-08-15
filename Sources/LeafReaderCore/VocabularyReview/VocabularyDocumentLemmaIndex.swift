@@ -484,7 +484,12 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             bySurface[exactSurfaceKey(surface), default: []].append(occurrence)
             displayLemmaByKey[lemmaKey] = displayLemmaByKey[lemmaKey] ?? matchedLemma
             formCountsByLemmaKey[lemmaKey, default: [:]][surface, default: 0] += 1
-            if nameTagger.tag(at: tokenRange.lowerBound, unit: .word, scheme: .nameType).0 != nil {
+            let nameTag = nameTagger.tag(
+                at: tokenRange.lowerBound,
+                unit: .word,
+                scheme: .nameType
+            ).0
+            if nameTag == .personalName || nameTag == .placeName || nameTag == .organizationName {
                 nameOccurrenceCountsByLemmaKey[lemmaKey, default: 0] += 1
             }
             return true
