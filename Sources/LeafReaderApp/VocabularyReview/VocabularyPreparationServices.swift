@@ -86,6 +86,23 @@ struct LiveVocabularyPreparationDefinitionProvider: VocabularyPreparationDefinit
     }
 }
 
+/// Used only by the opt-in GUI performance/smoke harness. It keeps German
+/// preparation deterministic and guarantees that automation never contacts
+/// Wiktionary.
+struct FixtureVocabularyPreparationDefinitionProvider: VocabularyPreparationDefinitionProviding {
+    func definition(
+        for candidate: DocumentVocabularyCandidate,
+        languageCode: String,
+        context: String
+    ) async throws -> VocabularyPreparedDefinition {
+        VocabularyPreparedDefinition(
+            markdown: "Fixture definition for **\(candidate.displayLemma)**.",
+            tags: "fixture,\(languageCode)",
+            frequency: candidate.generalFrequencyRank
+        )
+    }
+}
+
 enum VocabularyPreparationImportBatch: Sendable {
     case pdf([StoredPDFWordRecord])
     case web([StoredWebWordRecord])

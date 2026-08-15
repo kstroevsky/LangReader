@@ -13,6 +13,7 @@ extension ReaderWindowController {
     }
 
     func offerVocabularyPreparationIfNeeded(generation: Int) {
+        guard ProcessInfo.processInfo.environment["LEAFVOCAB_PERF"] != "1" else { return }
         guard documentSession.acceptsLoad(generation: generation),
               let documentID = currentFileMD5,
               window?.attachedSheet == nil else { return }

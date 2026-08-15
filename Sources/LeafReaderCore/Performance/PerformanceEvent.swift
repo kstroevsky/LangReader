@@ -42,6 +42,10 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
     case pdfTextSnapshot
     case pdfTextSnapshotCacheLoad
     case vocabularyIndexBuild
+    case vocabularyPreparationInventoryBuild
+    case vocabularyAssessmentAdvance
+    case vocabularyPreparationResults
+    case vocabularyPreparationImport
     case vocabularySaveAcknowledgement
     case vocabularyOccurrenceQuery
     case vocabularyOccurrencePersistence
@@ -102,6 +106,10 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
         case .pdfTextSnapshot: return "PDF text snapshot"
         case .pdfTextSnapshotCacheLoad: return "PDF text snapshot cache load"
         case .vocabularyIndexBuild: return "Vocabulary index build"
+        case .vocabularyPreparationInventoryBuild: return "Preparation inventory build"
+        case .vocabularyAssessmentAdvance: return "Assessment answer to next card"
+        case .vocabularyPreparationResults: return "Preparation results presentation"
+        case .vocabularyPreparationImport: return "Preparation atomic import"
         case .vocabularySaveAcknowledgement: return "Vocabulary save acknowledgement"
         case .vocabularyOccurrenceQuery: return "Vocabulary occurrence query"
         case .vocabularyOccurrencePersistence: return "Vocabulary occurrence persistence"

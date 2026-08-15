@@ -113,6 +113,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var webSearchGeneration = 0
     var performanceAutomationKinds = Set<ReaderDocumentKind>()
     var performanceAutomationOriginalPDFRecordIDs = Set<String>()
+    var performanceVocabularyPreparationDocumentIDs = Set<String>()
     var didRegisterPDFSearchObservers = false
     var pdfVocabularyAnnotationRestoreGeneration = 0
     var pdfNoteAnnotationRestoreGeneration = 0
@@ -147,9 +148,14 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
         readerPresentation.preferredAIWidth = Self.loadPreferredAIWidth()
         vocabularyPanelController = VocabularyPanelController(owner: self)
         vocabularyLibraryWindowController = VocabularyLibraryWindowController(owner: self)
+        let preparationDefinitionProvider: any VocabularyPreparationDefinitionProviding =
+            ProcessInfo.processInfo.environment["LEAFVOCAB_PREPARATION_AUTOMATION"] == "1"
+                ? FixtureVocabularyPreparationDefinitionProvider()
+                : LiveVocabularyPreparationDefinitionProvider()
         vocabularyPreparationCoordinator = VocabularyPreparationCoordinator(
             documentSource: self,
-            library: self
+            library: self,
+            definitionProvider: preparationDefinitionProvider
         )
         vocabularyPreparationPanelController = VocabularyPreparationPanelController(
             coordinator: vocabularyPreparationCoordinator

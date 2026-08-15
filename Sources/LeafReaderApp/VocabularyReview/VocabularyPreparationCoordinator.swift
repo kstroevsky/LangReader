@@ -45,6 +45,7 @@ private struct VocabularyAssessmentAdvance: Sendable {
     let assessment: AdaptiveVocabularyAssessment
     let candidate: DocumentVocabularyCandidate?
     let result: VocabularyAssessmentResult?
+    let durationMilliseconds: Double
 }
 
 @MainActor
@@ -150,6 +151,7 @@ final class VocabularyPreparationCoordinator {
         sessionStore?.save(session)
         phase = .analyzing
         progressText = AppText.localized("正在建立词汇清单…", "Building the vocabulary inventory…")
+        let analysisStartedAt = ProcessInfo.processInfo.systemUptime
 
         workflowTask = Task { [weak self, weak documentSource] in
             do {
@@ -164,7 +166,8 @@ final class VocabularyPreparationCoordinator {
                 self.buildPayload(
                     snapshot: snapshot,
                     requestID: activeRequestID,
-                    cancellationToken: activeToken
+                    cancellationToken: activeToken,
+                    analysisStartedAt: analysisStartedAt
                 )
             } catch {
                 guard let self, self.requestID == activeRequestID, !activeToken.isCancelled else { return }
@@ -277,6 +280,7 @@ final class VocabularyPreparationCoordinator {
         progressText = AppText.localized("正在准备释义…", "Preparing definitions…")
         let provider = definitionProvider
         let candidateContexts = contexts
+        let importStartedAt = ProcessInfo.processInfo.systemUptime
         workflowTask?.cancel()
         workflowTask = Task { [weak self] in
             guard let self else { return }
@@ -308,7 +312,8 @@ final class VocabularyPreparationCoordinator {
                 selected: selected,
                 definitions: resolved,
                 identity: identity,
-                requestID: activeRequestID
+                requestID: activeRequestID,
+                importStartedAt: importStartedAt
             )
         }
     }
@@ -325,7 +330,8 @@ final class VocabularyPreparationCoordinator {
     private func buildPayload(
         snapshot: VocabularyPreparationSourceSnapshot,
         requestID: UUID,
-        cancellationToken: VocabularyPreparationCancellationToken
+        cancellationToken: VocabularyPreparationCancellationToken,
+        analysisStartedAt: TimeInterval
     ) {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard !cancellationToken.isCancelled else { return }
@@ -353,12 +359,16 @@ final class VocabularyPreparationCoordinator {
                 guard let self,
                       self.requestID == requestID,
                       self.documentSource?.acceptsVocabularyPreparationIdentity(snapshot.identity) == true else { return }
-                self.apply(payload: payload)
+                self.apply(
+                    payload: payload,
+                    durationMilliseconds: (ProcessInfo.processInfo.systemUptime - analysisStartedAt) * 1_000
+                )
             }
         }
     }
 
-    private func apply(payload: VocabularyPreparationInventoryPayload) {
+    private func apply(payload: VocabularyPreparationInventoryPayload, durationMilliseconds: Double) {
+        let mainWorkStartedAt = ProcessInfo.processInfo.systemUptime
         inventory = payload.inventory
         contexts = payload.contexts
         sourceTexts = payload.sourceTexts
@@ -368,6 +378,8 @@ final class VocabularyPreparationCoordinator {
             "找到 \(payload.inventory.candidates.count) 个可测试词元。",
             "Found \(payload.inventory.candidates.count) assessable lemmas."
         )
+        ReaderPerformance.record(.vocabularyPreparationInventoryBuild, milliseconds: durationMilliseconds)
+        ReaderPerformance.recordMainThreadWork(startedAt: mainWorkStartedAt)
     }
 
     private func advanceAssessment(_ mutation: VocabularyAssessmentMutation, persistAnswers: Bool) {
@@ -394,6 +406,7 @@ final class VocabularyPreparationCoordinator {
         _ assessment: AdaptiveVocabularyAssessment,
         mutation: VocabularyAssessmentMutation
     ) -> VocabularyAssessmentAdvance {
+        let startedAt = ProcessInfo.processInfo.systemUptime
         var assessment = assessment
         switch mutation {
         case .none:
@@ -409,14 +422,16 @@ final class VocabularyPreparationCoordinator {
             return VocabularyAssessmentAdvance(
                 assessment: assessment,
                 candidate: nil,
-                result: assessment.result()
+                result: assessment.result(),
+                durationMilliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
             )
         }
         let candidate = assessment.nextQuestion()
         return VocabularyAssessmentAdvance(
             assessment: assessment,
             candidate: candidate,
-            result: candidate == nil ? assessment.result() : nil
+            result: candidate == nil ? assessment.result() : nil,
+            durationMilliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
         )
     }
 
@@ -428,6 +443,7 @@ final class VocabularyPreparationCoordinator {
         guard self.requestID == requestID,
               let identity = activeIdentity,
               documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
+        ReaderPerformance.record(.vocabularyAssessmentAdvance, milliseconds: advance.durationMilliseconds)
         assessment = advance.assessment
         if persistAnswers { persistAssessment() }
         if let result = advance.result {
@@ -483,6 +499,12 @@ final class VocabularyPreparationCoordinator {
     }
 
     private func showResults(_ proposed: VocabularyAssessmentResult) {
+        let mainWorkStartedAt = ProcessInfo.processInfo.systemUptime
+        let span = ReaderPerformance.begin(.vocabularyPreparationResults)
+        defer {
+            ReaderPerformance.end(span)
+            ReaderPerformance.recordMainThreadWork(startedAt: mainWorkStartedAt)
+        }
         let restored = session.finalSelection
         let baseSelection = restored.isEmpty
             ? Set(proposed.items.filter(\.isSelected).map(\.id))
@@ -527,7 +549,8 @@ final class VocabularyPreparationCoordinator {
         selected: [DocumentVocabularyCandidate],
         definitions: [String: VocabularyPreparedDefinition],
         identity: VocabularyPreparationDocumentIdentity,
-        requestID: UUID
+        requestID: UUID,
+        importStartedAt: TimeInterval
     ) async {
         guard let library, let kind = activeDocumentKind,
               self.requestID == requestID,
@@ -598,6 +621,10 @@ final class VocabularyPreparationCoordinator {
         let didPersist = await library.persistVocabularyPreparationBatch(batch, documentID: identity.documentID)
         guard self.requestID == requestID,
               documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
+        ReaderPerformance.record(
+            .vocabularyPreparationImport,
+            milliseconds: (ProcessInfo.processInfo.systemUptime - importStartedAt) * 1_000
+        )
         guard didPersist else {
             phase = .error(AppText.localized(
                 "无法写入词库；没有创建任何记录。",
@@ -608,7 +635,9 @@ final class VocabularyPreparationCoordinator {
         session.invitationState = .completed
         session.finalSelection = selectedKeys
         sessionStore?.save(session)
+        let mainWorkStartedAt = ProcessInfo.processInfo.systemUptime
         library.finishVocabularyPreparationImport(batch)
+        ReaderPerformance.recordMainThreadWork(startedAt: mainWorkStartedAt)
     }
 
     nonisolated private static func context(
