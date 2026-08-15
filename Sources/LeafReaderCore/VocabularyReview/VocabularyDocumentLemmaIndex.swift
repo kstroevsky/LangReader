@@ -1,6 +1,53 @@
 import Foundation
 import NaturalLanguage
 
+package struct VocabularyDocumentSourceRange: Codable, Equatable, Sendable {
+    package let unitIndex: Int
+    package let utf16Location: Int
+    package let utf16Length: Int
+
+    package init(unitIndex: Int, utf16Location: Int, utf16Length: Int) {
+        self.unitIndex = unitIndex
+        self.utf16Location = utf16Location
+        self.utf16Length = utf16Length
+    }
+}
+
+package struct VocabularyDocumentObservedForm: Codable, Equatable, Sendable {
+    package let surface: String
+    package let occurrenceCount: Int
+
+    package init(surface: String, occurrenceCount: Int) {
+        self.surface = surface
+        self.occurrenceCount = occurrenceCount
+    }
+}
+
+package struct VocabularyDocumentLemmaSummary: Codable, Equatable, Sendable {
+    package let canonicalKey: String
+    package let displayLemma: String
+    package let observedForms: [VocabularyDocumentObservedForm]
+    package let occurrenceCount: Int
+    package let representativeRange: VocabularyDocumentSourceRange
+    package let isConfidentName: Bool
+
+    package init(
+        canonicalKey: String,
+        displayLemma: String,
+        observedForms: [VocabularyDocumentObservedForm],
+        occurrenceCount: Int,
+        representativeRange: VocabularyDocumentSourceRange,
+        isConfidentName: Bool = false
+    ) {
+        self.canonicalKey = canonicalKey
+        self.displayLemma = displayLemma
+        self.observedForms = observedForms
+        self.occurrenceCount = occurrenceCount
+        self.representativeRange = representativeRange
+        self.isConfidentName = isConfidentName
+    }
+}
+
 /// A small, already-built page slice that can seed a whole-document index.
 /// The page mapping is explicit because the slice is ordered for latency (the
 /// current page first), not necessarily in document order.
@@ -81,6 +128,9 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let text: String
         let occurrencesByLemmaKey: [String: [VocabularyTextOccurrence]]
         let occurrencesByExactSurface: [String: [VocabularyTextOccurrence]]
+        let displayLemmaByKey: [String: String]
+        let formCountsByLemmaKey: [String: [String: Int]]
+        let nameOccurrenceCountsByLemmaKey: [String: Int]
         let lineWraps: [LineWrap]
     }
 
@@ -153,6 +203,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let workerCount = min(remainingPageIndexes.count, max(1, min(maximumWorkerCount, availableWorkers)))
         DispatchQueue.concurrentPerform(iterations: workerCount) { worker in
             let tagger = NLTagger(tagSchemes: [.lemma])
+            let nameTagger = NLTagger(tagSchemes: [.nameType])
             let fallbackTagger = NLTagger(tagSchemes: [.lemma])
             var lemmaMemo: [String: String] = [:]
             var remainingIndex = worker
@@ -162,6 +213,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                     text: texts[pageIndex],
                     language: language,
                     tagger: tagger,
+                    nameTagger: nameTagger,
                     fallbackTagger: fallbackTagger,
                     lemmaMemo: &lemmaMemo
                 ), at: pageIndex)
@@ -174,6 +226,66 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     }
 
     package var pageCount: Int { pages.count }
+
+    /// Returns the immutable document vocabulary population in deterministic
+    /// occurrence-first order. A source range identifies the first observed
+    /// occurrence in the corresponding PDF page or Web text unit.
+    package func lemmaSummaries() -> [VocabularyDocumentLemmaSummary] {
+        struct Aggregate {
+            var displayLemma: String
+            var forms: [String: (surface: String, count: Int)]
+            var count: Int
+            var nameCount: Int
+            var representativeRange: VocabularyDocumentSourceRange
+        }
+
+        var aggregateByKey: [String: Aggregate] = [:]
+        for (unitIndex, page) in pages.enumerated() {
+            for (key, occurrences) in page.occurrencesByLemmaKey {
+                guard !key.isEmpty, let first = occurrences.first else { continue }
+                let representative = VocabularyDocumentSourceRange(
+                    unitIndex: unitIndex,
+                    utf16Location: first.range.location,
+                    utf16Length: first.range.length
+                )
+                var aggregate = aggregateByKey[key] ?? Aggregate(
+                    displayLemma: page.displayLemmaByKey[key] ?? first.matchedText,
+                    forms: [:],
+                    count: 0,
+                    nameCount: 0,
+                    representativeRange: representative
+                )
+                aggregate.count += occurrences.count
+                aggregate.nameCount += page.nameOccurrenceCountsByLemmaKey[key] ?? 0
+                for (surface, count) in page.formCountsByLemmaKey[key] ?? [:] {
+                    let surfaceKey = Self.exactSurfaceKey(surface)
+                    let existing = aggregate.forms[surfaceKey]
+                    aggregate.forms[surfaceKey] = (existing?.surface ?? surface, (existing?.count ?? 0) + count)
+                }
+                aggregateByKey[key] = aggregate
+            }
+        }
+
+        return aggregateByKey.map { key, aggregate in
+            VocabularyDocumentLemmaSummary(
+                canonicalKey: key,
+                displayLemma: aggregate.displayLemma,
+                observedForms: aggregate.forms.values
+                    .map { VocabularyDocumentObservedForm(surface: $0.surface, occurrenceCount: $0.count) }
+                    .sorted {
+                        if $0.occurrenceCount != $1.occurrenceCount { return $0.occurrenceCount > $1.occurrenceCount }
+                        return $0.surface.localizedStandardCompare($1.surface) == .orderedAscending
+                    },
+                occurrenceCount: aggregate.count,
+                representativeRange: aggregate.representativeRange,
+                isConfidentName: aggregate.nameCount == aggregate.count
+            )
+        }.sorted {
+            if $0.occurrenceCount != $1.occurrenceCount { return $0.occurrenceCount > $1.occurrenceCount }
+            if $0.canonicalKey != $1.canonicalKey { return $0.canonicalKey < $1.canonicalKey }
+            return $0.representativeRange.unitIndex < $1.representativeRange.unitIndex
+        }
+    }
 
     package func matches(lemma rawLemma: String, selectedForm: String) -> [[VocabularyTextOccurrence]] {
         let lemma = VocabularyTextPolicy.normalizedVocabularyText(rawLemma)
@@ -296,6 +408,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         text: String,
         language: NLLanguage,
         tagger: NLTagger,
+        nameTagger: NLTagger,
         fallbackTagger: NLTagger,
         lemmaMemo: inout [String: String]
     ) -> Page {
@@ -304,6 +417,9 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                 text: text,
                 occurrencesByLemmaKey: [:],
                 occurrencesByExactSurface: [:],
+                displayLemmaByKey: [:],
+                formCountsByLemmaKey: [:],
+                nameOccurrenceCountsByLemmaKey: [:],
                 lineWraps: []
             )
         }
@@ -316,10 +432,15 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let lineWrapSpans = lineWrapMatches.map(\.range)
         var byLemma: [String: [VocabularyTextOccurrence]] = [:]
         var bySurface: [String: [VocabularyTextOccurrence]] = [:]
+        var displayLemmaByKey: [String: String] = [:]
+        var formCountsByLemmaKey: [String: [String: Int]] = [:]
+        var nameOccurrenceCountsByLemmaKey: [String: Int] = [:]
 
         tagger.string = text
+        nameTagger.string = text
         let fullRange = text.startIndex..<text.endIndex
         tagger.setLanguage(language, range: fullRange)
+        nameTagger.setLanguage(language, range: fullRange)
         tagger.enumerateTags(
             in: fullRange,
             unit: .word,
@@ -341,8 +462,14 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                 lemmaMemo[surface] = matchedLemma
             }
             let occurrence = VocabularyTextOccurrence(range: range, matchedText: surface)
-            byLemma[VocabularyTextPolicy.canonicalVocabularyKey(matchedLemma), default: []].append(occurrence)
+            let lemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(matchedLemma)
+            byLemma[lemmaKey, default: []].append(occurrence)
             bySurface[exactSurfaceKey(surface), default: []].append(occurrence)
+            displayLemmaByKey[lemmaKey] = displayLemmaByKey[lemmaKey] ?? matchedLemma
+            formCountsByLemmaKey[lemmaKey, default: [:]][surface, default: 0] += 1
+            if nameTagger.tag(at: tokenRange.lowerBound, unit: .word, scheme: .nameType).0 != nil {
+                nameOccurrenceCountsByLemmaKey[lemmaKey, default: 0] += 1
+            }
             return true
         }
 
@@ -362,10 +489,25 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                 )
             )
         }
+        for lineWrap in lineWraps {
+            let key = lineWrap.dehyphenatedLemmaKey
+            guard !key.isEmpty else { continue }
+            byLemma[key, default: []].append(lineWrap.occurrence)
+            bySurface[exactSurfaceKey(lineWrap.dehyphenated), default: []].append(lineWrap.occurrence)
+            displayLemmaByKey[key] = displayLemmaByKey[key] ?? GermanLemmaResolver.lemma(
+                for: lineWrap.dehyphenated,
+                tagger: fallbackTagger,
+                language: language
+            )
+            formCountsByLemmaKey[key, default: [:]][lineWrap.dehyphenated, default: 0] += 1
+        }
         return Page(
             text: text,
             occurrencesByLemmaKey: byLemma,
             occurrencesByExactSurface: bySurface,
+            displayLemmaByKey: displayLemmaByKey,
+            formCountsByLemmaKey: formCountsByLemmaKey,
+            nameOccurrenceCountsByLemmaKey: nameOccurrenceCountsByLemmaKey,
             lineWraps: lineWraps
         )
     }

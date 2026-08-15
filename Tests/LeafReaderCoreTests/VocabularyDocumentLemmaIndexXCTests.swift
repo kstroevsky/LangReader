@@ -110,4 +110,81 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         XCTAssertNil(result)
         XCTAssertLessThanOrEqual(checks, 4)
     }
+
+    func testInventorySummariesCollapseInflectionsButKeepDerivationsSeparate() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: ["They develop tools. She developed one while developing another. Development continues."],
+            language: .english
+        ))
+
+        let summaries = index.lemmaSummaries()
+        let develop = try XCTUnwrap(summaries.first { $0.canonicalKey == "develop" })
+        XCTAssertEqual(develop.occurrenceCount, 3)
+        XCTAssertEqual(Dictionary(uniqueKeysWithValues: develop.observedForms.map { ($0.surface.lowercased(), $0.occurrenceCount) }), [
+            "develop": 1,
+            "developed": 1,
+            "developing": 1
+        ])
+        XCTAssertEqual(summaries.first { $0.canonicalKey == "development" }?.occurrenceCount, 1)
+    }
+
+    func testInventorySummariesAggregateAcrossUnitsAndRepairPDFLineWraps() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: ["A remark was develop-\ned here.", "Later they developed it again."],
+            language: .english
+        ))
+
+        let develop = try XCTUnwrap(index.lemmaSummaries().first { $0.canonicalKey == "develop" })
+        XCTAssertEqual(develop.occurrenceCount, 2)
+        XCTAssertEqual(develop.representativeRange.unitIndex, 0)
+        XCTAssertTrue(develop.observedForms.contains { $0.surface == "developed" && $0.occurrenceCount == 2 })
+    }
+
+    func testGermanCompoundsRemainSeparateLemmas() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: ["Das Haus steht neben dem Krankenhaus. Die Häuser sind alt."],
+            language: .german
+        ))
+        let keys = Set(index.lemmaSummaries().map(\.canonicalKey))
+
+        XCTAssertTrue(keys.contains("haus"))
+        XCTAssertTrue(keys.contains("krankenhaus"))
+        XCTAssertNotEqual("haus", "krankenhaus")
+    }
+
+    func testInventoryExcludesConfidentNamesAndNoiseButKeepsFunctionWords() {
+        let summaries = [
+            VocabularyDocumentLemmaSummary(
+                canonicalKey: "anna",
+                displayLemma: "Anna",
+                observedForms: [VocabularyDocumentObservedForm(surface: "Anna", occurrenceCount: 2)],
+                occurrenceCount: 2,
+                representativeRange: VocabularyDocumentSourceRange(unitIndex: 0, utf16Location: 0, utf16Length: 4),
+                isConfidentName: true
+            ),
+            VocabularyDocumentLemmaSummary(
+                canonicalKey: "the",
+                displayLemma: "the",
+                observedForms: [VocabularyDocumentObservedForm(surface: "the", occurrenceCount: 5)],
+                occurrenceCount: 5,
+                representativeRange: VocabularyDocumentSourceRange(unitIndex: 0, utf16Location: 5, utf16Length: 3)
+            ),
+            VocabularyDocumentLemmaSummary(
+                canonicalKey: "12345",
+                displayLemma: "12345",
+                observedForms: [VocabularyDocumentObservedForm(surface: "12345", occurrenceCount: 1)],
+                occurrenceCount: 1,
+                representativeRange: VocabularyDocumentSourceRange(unitIndex: 0, utf16Location: 9, utf16Length: 5)
+            )
+        ]
+        let inventory = DocumentVocabularyInventory(
+            summaries: summaries,
+            languageCode: "en",
+            maximumFrequencyRank: 10_000,
+            rank: { _ in nil }
+        )
+
+        XCTAssertEqual(inventory.candidates.map(\.canonicalKey), ["the"])
+        XCTAssertEqual(inventory.excludedCount, 2)
+    }
 }
