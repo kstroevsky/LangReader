@@ -106,6 +106,14 @@ package enum VocabularyIndexPriorityPlanner {
 /// also supports phrases and PDF line-break spelling variants, but the costly
 /// linguistic pass is reused by every save and backfill.
 package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
+    private static let ignoredTextRegexes: [NSRegularExpression] = [
+        #"(?i)\b(?:https?://|www\.)[^\s<>{}\[\]]+"#,
+        #"(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b"#,
+        #"</?[A-Za-z][^>]{0,512}>"#,
+        #"&(?:#\d{1,7}|#x[0-9A-Fa-f]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});"#,
+        #"\b[\p{L}\p{M}]+(?:--+|'{2,}|’{2,})[\p{L}\p{M}]+\b"#
+    ].compactMap { try? NSRegularExpression(pattern: $0) }
+
     private struct OccurrenceRangeKey: Hashable {
         let location: Int
         let length: Int
@@ -425,10 +433,15 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         }
 
         let nsText = text as NSString
-        let lineWrapMatches = GermanLemmaOccurrenceMatcher.lineWrapRegex?.matches(
+        let ignoredRanges = ignoredTextRegexes.flatMap {
+            $0.matches(in: text, range: NSRange(location: 0, length: nsText.length)).map(\.range)
+        }
+        let lineWrapMatches = (GermanLemmaOccurrenceMatcher.lineWrapRegex?.matches(
             in: text,
             range: NSRange(location: 0, length: nsText.length)
-        ) ?? []
+        ) ?? []).filter { match in
+            !ignoredRanges.contains { NSIntersectionRange(match.range, $0).length > 0 }
+        }
         let lineWrapSpans = lineWrapMatches.map(\.range)
         var byLemma: [String: [VocabularyTextOccurrence]] = [:]
         var bySurface: [String: [VocabularyTextOccurrence]] = [:]
@@ -452,6 +465,10 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                 return true
             }
             let surface = String(text[tokenRange])
+            if ignoredRanges.contains(where: { NSIntersectionRange(range, $0).length > 0 })
+                || isObviousArtifact(surface) {
+                return true
+            }
             let matchedLemma: String
             if let tag {
                 matchedLemma = VocabularyTextPolicy.normalizedVocabularyText(tag.rawValue)
@@ -514,6 +531,19 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
 
     private static func exactSurfaceKey(_ value: String) -> String {
         VocabularyTextPolicy.normalizedVocabularyText(value).precomposedStringWithCanonicalMapping
+    }
+
+    private static func isObviousArtifact(_ value: String) -> Bool {
+        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return true }
+        if normalized.hasPrefix("-") || normalized.hasSuffix("-")
+            || normalized.hasPrefix("'") || normalized.hasSuffix("'")
+            || normalized.hasPrefix("’") || normalized.hasSuffix("’")
+            || normalized.contains("--") || normalized.contains("''") || normalized.contains("’’") {
+            return true
+        }
+        let letters = normalized.lowercased().filter(\.isLetter)
+        return letters.count >= 6 && Set(letters).count == 1
     }
 
     /// Natural Language can split punctuation-bearing selections such as

@@ -187,4 +187,22 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         XCTAssertEqual(inventory.candidates.map(\.canonicalKey), ["the"])
         XCTAssertEqual(inventory.excludedCount, 2)
     }
+
+    func testInventoryExcludesLinkEmailMarkupAndObviousOCRArtifacts() throws {
+        let text = """
+        Read the book at https://example.com/ReaderPath or www.example.org.
+        Mail reader@example.com. <span>Visible prose</span> &nbsp; aaaaaa foo--bar.
+        """
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(texts: [text], language: .english))
+        let keys = Set(index.lemmaSummaries().map(\.canonicalKey))
+
+        for excluded in ["https", "example", "com", "readerpath", "www", "org", "reader", "span", "nbsp", "aaaaaa", "foo", "bar"] {
+            XCTAssertFalse(keys.contains(excluded), "unexpected noise lemma: \(excluded)")
+        }
+        XCTAssertTrue(keys.contains("read"))
+        XCTAssertTrue(keys.contains("the"))
+        XCTAssertTrue(keys.contains("book"))
+        XCTAssertTrue(keys.contains("visible"))
+        XCTAssertTrue(keys.contains("prose"))
+    }
 }

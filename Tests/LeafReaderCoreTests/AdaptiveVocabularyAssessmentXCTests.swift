@@ -254,6 +254,64 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         XCTAssertEqual(restored.result().diagnostics.estimatedTheta, original.result().diagnostics.estimatedTheta, accuracy: 0.000_000_1)
     }
 
+    func testAdaptiveChoiceMaximizesExpectedLossReduction() throws {
+        let inventory = inventory(count: 12)
+        var assessment = AdaptiveVocabularyAssessment(inventory: inventory, mode: .allUnknown)
+        for index in 0..<8 {
+            let question = try XCTUnwrap(assessment.nextQuestion())
+            assessment.record(index.isMultiple(of: 2) ? .known : .unknown, for: question.canonicalKey)
+        }
+
+        let scored = inventory.candidates.compactMap { candidate -> (String, Double)? in
+            assessment.expectedLossReduction(for: candidate.canonicalKey).map { (candidate.canonicalKey, $0) }
+        }.sorted {
+            if $0.1 != $1.1 { return $0.1 > $1.1 }
+            return $0.0 < $1.0
+        }
+        let selected = try XCTUnwrap(assessment.nextQuestion())
+
+        XCTAssertEqual(selected.canonicalKey, try XCTUnwrap(scored.first).0)
+    }
+
+    func testCoverageDeckHasMinimumCardinalityAgainstBruteForceOracle() {
+        let candidates = [
+            candidate(key: "a", difficulty: -2, count: 40),
+            candidate(key: "b", difficulty: 0, count: 25),
+            candidate(key: "c", difficulty: 1, count: 20),
+            candidate(key: "d", difficulty: 2, count: 10),
+            candidate(key: "e", difficulty: 4, count: 5)
+        ]
+        let assessment = AdaptiveVocabularyAssessment(
+            inventory: DocumentVocabularyInventory(languageCode: "en", candidates: candidates),
+            mode: .targetCoverage(0.90)
+        )
+        let result = assessment.result()
+        let selected = Set(result.items.filter(\.isSelected).map(\.id))
+        let probabilities = Dictionary(uniqueKeysWithValues: result.items.map { ($0.id, $0.knownProbability) })
+        let total = Double(candidates.reduce(0) { $0 + $1.occurrenceCount })
+
+        func reachesTarget(_ keys: Set<String>) -> Bool {
+            let known = candidates.reduce(0.0) { partial, candidate in
+                let probability = keys.contains(candidate.canonicalKey)
+                    ? 1
+                    : probabilities[candidate.canonicalKey] ?? 0
+                return partial + Double(candidate.occurrenceCount) * probability
+            }
+            return known / total >= 0.90
+        }
+
+        var oracleMinimum = candidates.count
+        for mask in 0..<(1 << candidates.count) {
+            let keys = Set(candidates.indices.compactMap { index in
+                mask & (1 << index) == 0 ? nil : candidates[index].canonicalKey
+            })
+            if reachesTarget(keys) { oracleMinimum = min(oracleMinimum, keys.count) }
+        }
+
+        XCTAssertTrue(reachesTarget(selected))
+        XCTAssertEqual(selected.count, oracleMinimum)
+    }
+
     private func inventory(count: Int) -> DocumentVocabularyInventory {
         let candidates = (0..<count).map { index in
             candidate(

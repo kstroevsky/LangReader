@@ -95,19 +95,72 @@ package final class GermanFrequencyRankTable: @unchecked Sendable {
     }
 }
 
+package struct VocabularyFrequencyScale: Codable, Equatable, Sendable {
+    package let sourceID: String
+    package let version: String
+    package let maximumRank: Int
+
+    package init(sourceID: String, version: String, maximumRank: Int) {
+        self.sourceID = sourceID
+        self.version = version
+        self.maximumRank = maximumRank
+    }
+}
+
+package protocol DocumentVocabularyDifficultyProviding: Sendable {
+    var frequencyScale: VocabularyFrequencyScale { get }
+    func bestRank(for summary: VocabularyDocumentLemmaSummary) -> Int?
+}
+
+package struct ECDICTDocumentVocabularyDifficultyProvider: DocumentVocabularyDifficultyProviding {
+    package static let pinnedMaximumRank = 47_062
+    package let frequencyScale = VocabularyFrequencyScale(
+        sourceID: "ECDICT.frq",
+        version: "bundled-lite-v1",
+        maximumRank: pinnedMaximumRank
+    )
+    private let dictionary: LocalDictionaryLookupService
+
+    package init(dictionary: LocalDictionaryLookupService = .shared) {
+        self.dictionary = dictionary
+    }
+
+    package func bestRank(for summary: VocabularyDocumentLemmaSummary) -> Int? {
+        ([summary.displayLemma] + summary.observedForms.map(\.surface))
+            .compactMap { dictionary.metadata(for: $0).frequency }
+            .min()
+    }
+}
+
+package struct GermanCorpusDocumentVocabularyDifficultyProvider: DocumentVocabularyDifficultyProviding {
+    package let frequencyScale = VocabularyFrequencyScale(
+        sourceID: "Leipzig.deu_news_2025_1M",
+        version: "2025-1M-top-200000",
+        maximumRank: GermanFrequencyRankTable.maximumRank
+    )
+    private let table: GermanFrequencyRankTable
+
+    package init(table: GermanFrequencyRankTable = .shared) {
+        self.table = table
+    }
+
+    package func bestRank(for summary: VocabularyDocumentLemmaSummary) -> Int? {
+        table.bestRank(lemma: summary.displayLemma, observedForms: summary.observedForms)
+    }
+}
+
 package enum DocumentVocabularyFrequencyProvider {
-    package static let englishMaximumRank = 43_336
+    package static let english: any DocumentVocabularyDifficultyProviding = ECDICTDocumentVocabularyDifficultyProvider()
+    package static let german: any DocumentVocabularyDifficultyProviding = GermanCorpusDocumentVocabularyDifficultyProvider()
+
+    // Compatibility for callers that display the raw rank scale.
+    package static let englishMaximumRank = ECDICTDocumentVocabularyDifficultyProvider.pinnedMaximumRank
 
     package static func englishBestRank(for summary: VocabularyDocumentLemmaSummary) -> Int? {
-        ([summary.displayLemma] + summary.observedForms.map(\.surface))
-            .compactMap { LocalDictionaryLookupService.shared.metadata(for: $0).frequency }
-            .min()
+        english.bestRank(for: summary)
     }
 
     package static func germanBestRank(for summary: VocabularyDocumentLemmaSummary) -> Int? {
-        GermanFrequencyRankTable.shared.bestRank(
-            lemma: summary.displayLemma,
-            observedForms: summary.observedForms
-        )
+        german.bestRank(for: summary)
     }
 }

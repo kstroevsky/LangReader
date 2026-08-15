@@ -422,17 +422,15 @@ final class VocabularyPreparationCoordinator {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard !cancellationToken.isCancelled else { return }
             let summaries = index.lemmaSummaries()
-            let maximumRank = language == .german
-                ? GermanFrequencyRankTable.maximumRank
-                : DocumentVocabularyFrequencyProvider.englishMaximumRank
+            let difficultyProvider = language == .german
+                ? DocumentVocabularyFrequencyProvider.german
+                : DocumentVocabularyFrequencyProvider.english
             let inventory = DocumentVocabularyInventory(
                 summaries: summaries,
                 languageCode: language.rawValue,
-                maximumFrequencyRank: maximumRank
+                maximumFrequencyRank: difficultyProvider.frequencyScale.maximumRank
             ) { summary in
-                language == .german
-                    ? DocumentVocabularyFrequencyProvider.germanBestRank(for: summary)
-                    : DocumentVocabularyFrequencyProvider.englishBestRank(for: summary)
+                difficultyProvider.bestRank(for: summary)
             }
             guard !cancellationToken.isCancelled else { return }
             let contexts = Dictionary(uniqueKeysWithValues: inventory.candidates.map { candidate in

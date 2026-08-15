@@ -3,6 +3,30 @@ import XCTest
 import LeafReaderCore
 
 final class GermanFrequencyRankTableXCTests: XCTestCase {
+    func testDifficultyProvidersExposePinnedVersionedScales() throws {
+        let englishURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+            .appendingPathComponent("Sources/LeafReaderApp/Resources/ECDICT/ecdict.db")
+        let dictionary = ECDICTDictionary(databaseURLs: [englishURL], csvURLs: [])
+        let english = ECDICTDocumentVocabularyDifficultyProvider(
+            dictionary: LocalDictionaryLookupService(dictionary: dictionary)
+        )
+        let german = GermanCorpusDocumentVocabularyDifficultyProvider()
+
+        XCTAssertEqual(dictionary.maximumFrequencyRank(), 47_062)
+        XCTAssertEqual(english.frequencyScale.maximumRank, 47_062)
+        XCTAssertEqual(english.frequencyScale.sourceID, "ECDICT.frq")
+        XCTAssertEqual(german.frequencyScale.maximumRank, 200_000)
+        XCTAssertEqual(german.frequencyScale.sourceID, "Leipzig.deu_news_2025_1M")
+
+        let summary = VocabularyDocumentLemmaSummary(
+            canonicalKey: "develop",
+            displayLemma: "develop",
+            observedForms: [VocabularyDocumentObservedForm(surface: "developed", occurrenceCount: 1)],
+            occurrenceCount: 1,
+            representativeRange: VocabularyDocumentSourceRange(unitIndex: 0, utf16Location: 0, utf16Length: 7)
+        )
+        XCTAssertEqual(english.bestRank(for: summary), 484)
+    }
     func testPinnedResourceHasExpectedRowsAndFrequencyOrdering() throws {
         let url = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
             .appendingPathComponent("Sources/LeafReaderApp/Resources/GermanFrequency/deu_news_2025_1M.sqlite")

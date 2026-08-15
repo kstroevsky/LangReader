@@ -91,11 +91,18 @@ package struct DocumentVocabularyInventory: Codable, Equatable, Sendable {
               summary.canonicalKey.count <= 64 else { return false }
         let scalars = summary.canonicalKey.unicodeScalars
         guard scalars.contains(where: CharacterSet.letters.contains) else { return false }
-        return scalars.allSatisfy {
+        guard scalars.allSatisfy({
             CharacterSet.letters.contains($0)
                 || CharacterSet.nonBaseCharacters.contains($0)
                 || $0 == "'" || $0 == "’" || $0 == "-"
-        }
+        }) else { return false }
+        let key = summary.canonicalKey
+        guard !key.hasPrefix("-"), !key.hasSuffix("-"),
+              !key.hasPrefix("'"), !key.hasSuffix("'"),
+              !key.hasPrefix("’"), !key.hasSuffix("’"),
+              !key.contains("--"), !key.contains("''"), !key.contains("’’") else { return false }
+        let letters = key.lowercased().filter(\.isLetter)
+        return letters.count < 6 || Set(letters).count > 1
     }
 
     private static func inventoryOrder(_ lhs: DocumentVocabularyCandidate, _ rhs: DocumentVocabularyCandidate) -> Bool {
@@ -271,18 +278,30 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         let validationPrediction: Bool?
     }
 
+    private struct BestQuestionCache: Sendable {
+        let key: String
+        let reduction: Double
+    }
+
     private static let thetaGrid: [Double] = stride(from: -6.0, through: 6.0001, by: 0.1).map { $0 }
     private let inventory: DocumentVocabularyInventory
+    private let candidateIndexByKey: [String: Int]
+    private let responseCurves: [[Double]]
+    private let difficultyOrderedIndexes: [Int]
     private(set) package var mode: VocabularyAssessmentMode
     private(set) package var answers: [VocabularyAssessmentAnswer]
     private(set) package var errorFloor: Double = 0.05
     private var posterior: [Double]
+    private var answerByKey: [String: VocabularyAssessmentAnswer]
+    private var answeredCandidateIndexes: Set<Int>
+    private var currentProbabilities: [Double]
     private var pendingQuestion: PendingQuestion?
     private var skippedQuestionKeys = Set<String>()
     private var lowValueStreak = 0
     private var stableCoverageDeckStreak = 0
     private var previousCoverageDeck: Set<String>?
     private var suppressStoppingUpdateOnce = false
+    private var cachedBestQuestion: BestQuestionCache?
 
     package init(
         inventory: DocumentVocabularyInventory,
@@ -291,9 +310,22 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     ) {
         self.inventory = inventory
         self.mode = mode
+        candidateIndexByKey = Dictionary(uniqueKeysWithValues: inventory.candidates.enumerated().map {
+            ($0.element.canonicalKey, $0.offset)
+        })
+        responseCurves = inventory.candidates.map { candidate in
+            Self.thetaGrid.map { theta in Self.baseItemProbability(theta: theta, difficulty: candidate.difficulty) }
+        }
+        difficultyOrderedIndexes = inventory.candidates.indices.sorted {
+            Self.difficultyOrder(inventory.candidates[$0], inventory.candidates[$1])
+        }
         answers = []
         posterior = Self.normalPrior()
-        for answer in restoredAnswers where inventory.candidates.contains(where: { $0.canonicalKey == answer.canonicalKey }) {
+        answerByKey = [:]
+        answeredCandidateIndexes = []
+        currentProbabilities = []
+        currentProbabilities = probabilities(for: posterior)
+        for answer in restoredAnswers where candidateIndexByKey[answer.canonicalKey] != nil {
             apply(answer)
         }
         refreshStoppingState()
@@ -323,12 +355,13 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         lowValueStreak = 0
         stableCoverageDeckStreak = 0
         previousCoverageDeck = nil
+        cachedBestQuestion = nil
         refreshStoppingState()
     }
 
     package mutating func nextQuestion() -> DocumentVocabularyCandidate? {
         if let pendingQuestion {
-            return inventory.candidates.first { $0.canonicalKey == pendingQuestion.key }
+            return candidate(for: pendingQuestion.key)
         }
         guard !isFinished else { return nil }
         let remaining = answerableCandidates
@@ -338,9 +371,11 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         let selected: (DocumentVocabularyCandidate, Bool?)
         if questionNumber <= 8 {
             let fraction = (Double(questionNumber) - 0.5) / 8.0
-            let allOrdered = inventory.candidates.sorted(by: Self.difficultyOrder)
-            let index = min(allOrdered.count - 1, max(0, Int((fraction * Double(allOrdered.count)).rounded(.down))))
-            let targetDifficulty = allOrdered[index].difficulty
+            let orderedIndex = min(
+                difficultyOrderedIndexes.count - 1,
+                max(0, Int((fraction * Double(difficultyOrderedIndexes.count)).rounded(.down)))
+            )
+            let targetDifficulty = inventory.candidates[difficultyOrderedIndexes[orderedIndex]].difficulty
             let nearest = remaining.min {
                 let lhs = abs($0.difficulty - targetDifficulty)
                 let rhs = abs($1.difficulty - targetDifficulty)
@@ -351,15 +386,24 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         } else if questionNumber > 10, questionNumber.isMultiple(of: 5), let validation = validationCandidate(from: remaining) {
             selected = validation
         } else {
-            selected = (bestQuestion(from: shortlist(from: remaining)).candidate, nil)
+            let adaptive: DocumentVocabularyCandidate
+            if let cachedBestQuestion,
+               let cached = candidate(for: cachedBestQuestion.key),
+               answerByKey[cached.canonicalKey] == nil,
+               !skippedQuestionKeys.contains(cached.canonicalKey) {
+                adaptive = cached
+            } else {
+                adaptive = bestQuestion(from: shortlist(from: remaining)).candidate
+            }
+            selected = (adaptive, nil)
         }
         pendingQuestion = PendingQuestion(key: selected.0.canonicalKey, validationPrediction: selected.1)
         return selected.0
     }
 
     package mutating func record(_ outcome: VocabularyAssessmentOutcome, for canonicalKey: String) {
-        guard inventory.candidates.contains(where: { $0.canonicalKey == canonicalKey }),
-              !answers.contains(where: { $0.canonicalKey == canonicalKey }) else { return }
+        guard candidateIndexByKey[canonicalKey] != nil, answerByKey[canonicalKey] == nil else { return }
+        cachedBestQuestion = nil
         let pending = pendingQuestion?.key == canonicalKey ? pendingQuestion : nil
         let answer = VocabularyAssessmentAnswer(
             canonicalKey: canonicalKey,
@@ -378,19 +422,29 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         guard let pendingQuestion else { return }
         skippedQuestionKeys.insert(pendingQuestion.key)
         self.pendingQuestion = nil
+        cachedBestQuestion = nil
         refreshStoppingState()
     }
 
     package func knownProbability(for canonicalKey: String) -> Double? {
-        guard let candidate = inventory.candidates.first(where: { $0.canonicalKey == canonicalKey }) else { return nil }
-        if let answer = answers.first(where: { $0.canonicalKey == canonicalKey }) {
+        guard let index = candidateIndexByKey[canonicalKey] else { return nil }
+        if let answer = answerByKey[canonicalKey] {
             switch answer.outcome {
             case .known: return 1
             case .unknown: return 0
             case .excluded: return nil
             }
         }
-        return probability(candidate, posterior: posterior, epsilon: errorFloor)
+        return currentProbabilities[index]
+    }
+
+    /// Exposes the exact decision objective for deterministic evaluator and
+    /// oracle tests without exposing the posterior representation itself.
+    package func expectedLossReduction(for canonicalKey: String) -> Double? {
+        guard answerByKey[canonicalKey] == nil,
+              !skippedQuestionKeys.contains(canonicalKey),
+              let candidate = candidate(for: canonicalKey) else { return nil }
+        return bestQuestion(from: [candidate]).reduction
     }
 
     package func result(selectionOverride: Set<String>? = nil) -> VocabularyAssessmentResult {
@@ -399,7 +453,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         var totalOccurrences = 0.0
         var expectedKnownOccurrences = 0.0
         let items = inventory.candidates.map { candidate -> VocabularyAssessmentResultItem in
-            let answer = answers.first { $0.canonicalKey == candidate.canonicalKey }
+            let answer = answerByKey[candidate.canonicalKey]
             let probability = knownProbability(for: candidate.canonicalKey) ?? 0
             let classification: VocabularyAssessmentClassification
             switch answer?.outcome {
@@ -453,8 +507,9 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     }
 
     private var unaskedCandidates: [DocumentVocabularyCandidate] {
-        let answered = Set(answers.map(\.canonicalKey))
-        return inventory.candidates.filter { !answered.contains($0.canonicalKey) }
+        inventory.candidates.indices.compactMap {
+            answeredCandidateIndexes.contains($0) ? nil : inventory.candidates[$0]
+        }
     }
 
     private var answerableCandidates: [DocumentVocabularyCandidate] {
@@ -479,9 +534,14 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     }
 
     private mutating func apply(_ answer: VocabularyAssessmentAnswer) {
+        guard answerByKey[answer.canonicalKey] == nil else { return }
         answers.append(answer)
+        answerByKey[answer.canonicalKey] = answer
+        if let index = candidateIndexByKey[answer.canonicalKey] {
+            answeredCandidateIndexes.insert(index)
+        }
         guard answer.outcome != .excluded,
-              let candidate = inventory.candidates.first(where: { $0.canonicalKey == answer.canonicalKey }) else { return }
+              candidateIndexByKey[answer.canonicalKey] != nil else { return }
 
         if let predictedKnown = answer.predictedKnown {
             let contradicted = (predictedKnown && answer.outcome == .unknown)
@@ -500,39 +560,39 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             }
         }
 
-        _ = candidate
         rebuildPosterior()
     }
 
     private mutating func rebuildPosterior() {
         posterior = Self.normalPrior()
         for answer in answers where answer.outcome != .excluded {
-            guard let candidate = inventory.candidates.first(where: { $0.canonicalKey == answer.canonicalKey }) else { continue }
+            guard let candidateIndex = candidateIndexByKey[answer.canonicalKey] else { continue }
             let expectedKnown = answer.outcome == .known
             for index in posterior.indices {
-                let p = Self.itemProbability(
-                    theta: Self.thetaGrid[index],
-                    difficulty: candidate.difficulty,
-                    epsilon: errorFloor
-                )
+                let p = Self.adjustedProbability(responseCurves[candidateIndex][index], epsilon: errorFloor)
                 posterior[index] *= expectedKnown ? p : (1 - p)
             }
             Self.normalize(&posterior)
         }
+        currentProbabilities = probabilities(for: posterior)
     }
 
     private mutating func refreshStoppingState() {
+        cachedBestQuestion = nil
         if suppressStoppingUpdateOnce {
             suppressStoppingUpdateOnce = false
             return
         }
         let remaining = answerableCandidates
         let minimumAnswerCount = min(20, answeredQuestionCount + remaining.count)
-        guard answeredQuestionCount >= minimumAnswerCount, !remaining.isEmpty else { return }
+        guard answeredQuestionCount < 80,
+              answeredQuestionCount >= minimumAnswerCount,
+              !remaining.isEmpty else { return }
         switch mode {
         case .allUnknown:
-            let reduction = bestQuestion(from: shortlist(from: remaining)).reduction
-            lowValueStreak = reduction < 0.25 ? lowValueStreak + 1 : 0
+            let best = bestQuestion(from: shortlist(from: remaining))
+            cachedBestQuestion = BestQuestionCache(key: best.candidate.canonicalKey, reduction: best.reduction)
+            lowValueStreak = best.reduction < 0.25 ? lowValueStreak + 1 : 0
         case .targetCoverage:
             let deck = proposedSelection()
             stableCoverageDeckStreak = previousCoverageDeck == deck ? stableCoverageDeckStreak + 1 : 0
@@ -542,29 +602,32 @@ package struct AdaptiveVocabularyAssessment: Sendable {
 
     private func proposedSelection() -> Set<String> {
         let eligible = inventory.candidates.filter { candidate in
-            answers.first(where: { $0.canonicalKey == candidate.canonicalKey })?.outcome != .excluded
+            answerByKey[candidate.canonicalKey]?.outcome != .excluded
         }
+        let probabilities = Dictionary(uniqueKeysWithValues: eligible.compactMap { candidate -> (String, Double)? in
+            knownProbability(for: candidate.canonicalKey).map { (candidate.canonicalKey, $0) }
+        })
         switch mode {
         case .allUnknown:
             return Set(eligible.compactMap { candidate -> String? in
-                guard let probability = knownProbability(for: candidate.canonicalKey) else { return nil }
+                guard let probability = probabilities[candidate.canonicalKey] else { return nil }
                 return probability < 0.5 ? candidate.canonicalKey : nil
             })
         case let .targetCoverage(target):
             let total = Double(eligible.reduce(0) { $0 + $1.occurrenceCount })
             guard total > 0 else { return [] }
             var expectedKnown = eligible.reduce(0.0) { partial, candidate in
-                partial + Double(candidate.occurrenceCount) * (knownProbability(for: candidate.canonicalKey) ?? 0)
+                partial + Double(candidate.occurrenceCount) * (probabilities[candidate.canonicalKey] ?? 0)
             }
             var selection = Set<String>()
             let ranked = eligible.sorted {
-                let lhsGain = Double($0.occurrenceCount) * (1 - (knownProbability(for: $0.canonicalKey) ?? 0))
-                let rhsGain = Double($1.occurrenceCount) * (1 - (knownProbability(for: $1.canonicalKey) ?? 0))
+                let lhsGain = Double($0.occurrenceCount) * (1 - (probabilities[$0.canonicalKey] ?? 0))
+                let rhsGain = Double($1.occurrenceCount) * (1 - (probabilities[$1.canonicalKey] ?? 0))
                 if lhsGain != rhsGain { return lhsGain > rhsGain }
                 return $0.canonicalKey < $1.canonicalKey
             }
             for candidate in ranked where expectedKnown / total < target {
-                let probability = knownProbability(for: candidate.canonicalKey) ?? 0
+                let probability = probabilities[candidate.canonicalKey] ?? 0
                 expectedKnown += Double(candidate.occurrenceCount) * (1 - probability)
                 selection.insert(candidate.canonicalKey)
             }
@@ -578,7 +641,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         let total = Double(included.reduce(0) { $0 + $1.occurrenceCount })
         guard total > 0 else { return 1 }
         let known = included.reduce(0.0) { partial, candidate in
-            let answer = answers.first { $0.canonicalKey == candidate.canonicalKey }
+            let answer = answerByKey[candidate.canonicalKey]
             let p: Double
             if selection.contains(candidate.canonicalKey) || answer?.outcome == .known {
                 p = 1
@@ -593,6 +656,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     }
 
     private func bestAvailableQuestionReduction() -> Double {
+        if let cachedBestQuestion { return cachedBestQuestion.reduction }
+        if answeredQuestionCount >= 80 { return 0 }
         let remaining = answerableCandidates
         guard !remaining.isEmpty else { return 0 }
         return bestQuestion(from: shortlist(from: remaining)).reduction
@@ -600,7 +665,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
 
     private func validationCandidate(from candidates: [DocumentVocabularyCandidate]) -> (DocumentVocabularyCandidate, Bool?)? {
         let tails = candidates.compactMap { candidate -> (DocumentVocabularyCandidate, Double)? in
-            let p = probability(candidate, posterior: posterior, epsilon: errorFloor)
+            guard let index = candidateIndexByKey[candidate.canonicalKey] else { return nil }
+            let p = currentProbabilities[index]
             guard p <= 0.15 || p >= 0.85 else { return nil }
             return (candidate, p)
         }
@@ -619,59 +685,93 @@ package struct AdaptiveVocabularyAssessment: Sendable {
 
     private func shortlist(from candidates: [DocumentVocabularyCandidate]) -> [DocumentVocabularyCandidate] {
         guard candidates.count > 16 else { return candidates }
-        let byBoundary = candidates.sorted {
-            abs(probability($0, posterior: posterior, epsilon: errorFloor) - 0.5)
-                < abs(probability($1, posterior: posterior, epsilon: errorFloor) - 0.5)
-        }.prefix(8)
-        let byImportance = candidates.sorted {
-            let lhs = Double($0.occurrenceCount) * min(probability($0, posterior: posterior, epsilon: errorFloor), 1 - probability($0, posterior: posterior, epsilon: errorFloor))
-            let rhs = Double($1.occurrenceCount) * min(probability($1, posterior: posterior, epsilon: errorFloor), 1 - probability($1, posterior: posterior, epsilon: errorFloor))
-            if lhs != rhs { return lhs > rhs }
-            return $0.canonicalKey < $1.canonicalKey
-        }.prefix(8)
+        struct Score {
+            let candidate: DocumentVocabularyCandidate
+            let boundary: Double
+            let importance: Double
+        }
+        var byBoundary: [Score] = []
+        var byImportance: [Score] = []
+        for candidate in candidates {
+            guard let index = candidateIndexByKey[candidate.canonicalKey] else { continue }
+            let probability = currentProbabilities[index]
+            let score = Score(
+                candidate: candidate,
+                boundary: abs(probability - 0.5),
+                importance: Double(candidate.occurrenceCount) * min(probability, 1 - probability)
+            )
+            byBoundary.append(score)
+            byBoundary.sort {
+                if $0.boundary != $1.boundary { return $0.boundary < $1.boundary }
+                return $0.candidate.canonicalKey < $1.candidate.canonicalKey
+            }
+            if byBoundary.count > 8 { byBoundary.removeLast() }
+            byImportance.append(score)
+            byImportance.sort {
+                if $0.importance != $1.importance { return $0.importance > $1.importance }
+                return $0.candidate.canonicalKey < $1.candidate.canonicalKey
+            }
+            if byImportance.count > 8 { byImportance.removeLast() }
+        }
         var seen = Set<String>()
-        return (Array(byBoundary) + Array(byImportance)).filter { seen.insert($0.canonicalKey).inserted }
+        return (byBoundary + byImportance)
+            .map(\.candidate)
+            .filter { seen.insert($0.canonicalKey).inserted }
     }
 
     private func bestQuestion(from candidates: [DocumentVocabularyCandidate]) -> (candidate: DocumentVocabularyCandidate, reduction: Double) {
         let currentLoss = loss(posterior: posterior)
         return candidates.map { candidate in
-            let pKnown = probability(candidate, posterior: posterior, epsilon: errorFloor)
+            guard let index = candidateIndexByKey[candidate.canonicalKey] else { return (candidate, 0.0) }
+            let pKnown = currentProbabilities[index]
             let knownPosterior = updatedPosterior(for: candidate, known: true)
             let unknownPosterior = updatedPosterior(for: candidate, known: false)
             let expectedLoss = pKnown * loss(posterior: knownPosterior, excluding: candidate.canonicalKey)
                 + (1 - pKnown) * loss(posterior: unknownPosterior, excluding: candidate.canonicalKey)
-            return (candidate, max(0, currentLoss - expectedLoss))
+            return (candidate, max(0.0, currentLoss - expectedLoss))
         }.sorted {
             if $0.1 != $1.1 { return $0.1 > $1.1 }
             return $0.0.canonicalKey < $1.0.canonicalKey
-        }.first ?? (candidates[0], 0)
+        }.first ?? (candidates[0], 0.0)
     }
 
     private func loss(posterior: [Double], excluding excludedKey: String? = nil) -> Double {
-        inventory.candidates.reduce(0.0) { partial, candidate in
+        inventory.candidates.enumerated().reduce(0.0) { partial, pair in
+            let (index, candidate) = pair
             guard candidate.canonicalKey != excludedKey,
-                  !answers.contains(where: { $0.canonicalKey == candidate.canonicalKey }) else { return partial }
-            let p = probability(candidate, posterior: posterior, epsilon: errorFloor)
+                  !answeredCandidateIndexes.contains(index) else { return partial }
+            let p = probability(candidateIndex: index, posterior: posterior, epsilon: errorFloor)
             let weight: Double = mode == .allUnknown ? 1 : Double(candidate.occurrenceCount)
             return partial + weight * min(p, 1 - p)
         }
     }
 
     private func updatedPosterior(for candidate: DocumentVocabularyCandidate, known: Bool) -> [Double] {
+        guard let candidateIndex = candidateIndexByKey[candidate.canonicalKey] else { return posterior }
         var result = posterior
         for index in result.indices {
-            let p = Self.itemProbability(theta: Self.thetaGrid[index], difficulty: candidate.difficulty, epsilon: errorFloor)
+            let p = Self.adjustedProbability(responseCurves[candidateIndex][index], epsilon: errorFloor)
             result[index] *= known ? p : (1 - p)
         }
         Self.normalize(&result)
         return result
     }
 
-    private func probability(_ candidate: DocumentVocabularyCandidate, posterior: [Double], epsilon: Double) -> Double {
-        zip(Self.thetaGrid, posterior).reduce(0.0) { partial, pair in
-            partial + pair.1 * Self.itemProbability(theta: pair.0, difficulty: candidate.difficulty, epsilon: epsilon)
+    private func probability(candidateIndex: Int, posterior: [Double], epsilon: Double) -> Double {
+        let baseProbability = zip(responseCurves[candidateIndex], posterior).reduce(0.0) { partial, pair in
+            partial + pair.0 * pair.1
         }
+        return Self.adjustedProbability(baseProbability, epsilon: epsilon)
+    }
+
+    private func probabilities(for posterior: [Double]) -> [Double] {
+        inventory.candidates.indices.map {
+            probability(candidateIndex: $0, posterior: posterior, epsilon: errorFloor)
+        }
+    }
+
+    private func candidate(for canonicalKey: String) -> DocumentVocabularyCandidate? {
+        candidateIndexByKey[canonicalKey].map { inventory.candidates[$0] }
     }
 
     private func posteriorQuantile(_ quantile: Double) -> Double {
@@ -688,7 +788,15 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     }
 
     private static func itemProbability(theta: Double, difficulty: Double, epsilon: Double) -> Double {
-        epsilon + (1 - 2 * epsilon) / (1 + exp(-(theta - difficulty)))
+        adjustedProbability(baseItemProbability(theta: theta, difficulty: difficulty), epsilon: epsilon)
+    }
+
+    private static func baseItemProbability(theta: Double, difficulty: Double) -> Double {
+        1 / (1 + exp(-(theta - difficulty)))
+    }
+
+    private static func adjustedProbability(_ baseProbability: Double, epsilon: Double) -> Double {
+        epsilon + (1 - 2 * epsilon) * baseProbability
     }
 
     private static func normalPrior() -> [Double] {
