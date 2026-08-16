@@ -76,6 +76,10 @@ package enum VocabularyKnowledgeEvidence: String, Codable, Equatable, Sendable {
         self == .verifiedKnown || self == .typedVerifiedKnown
     }
 
+    package var isVerifiedEvidence: Bool {
+        isVerifiedKnown || self == .verifiedUnknownOrPartial
+    }
+
     /// Source compatibility for call sites that do not need the richer protocol.
     package static var known: Self { .verifiedKnown }
     package static var unknown: Self { .reportedUnknown }
@@ -343,19 +347,25 @@ package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
     package var answers: [VocabularyAssessmentAnswer]
     package var finalSelection: Set<String>
     package var algorithmVersion: Int
+    package var readerPriorContributionRecorded: Bool?
+    package var readerPriorContributionID: String?
 
     package init(
         mode: VocabularyAssessmentMode = .allUnknown,
         invitationState: VocabularyPreparationInvitationState = .notOffered,
         answers: [VocabularyAssessmentAnswer] = [],
         finalSelection: Set<String> = [],
-        algorithmVersion: Int = currentAlgorithmVersion
+        algorithmVersion: Int = currentAlgorithmVersion,
+        readerPriorContributionRecorded: Bool? = nil,
+        readerPriorContributionID: String? = nil
     ) {
         self.mode = mode
         self.invitationState = invitationState
         self.answers = answers
         self.finalSelection = finalSelection
         self.algorithmVersion = algorithmVersion
+        self.readerPriorContributionRecorded = readerPriorContributionRecorded
+        self.readerPriorContributionID = readerPriorContributionID
     }
 }
 
@@ -540,6 +550,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     private let responseCurves: [[Double]]
     private let difficultyOrderedIndexes: [Int]
     private let predictiveSeed: UInt64
+    private let initialPosterior: [Double]
     private(set) package var mode: VocabularyAssessmentMode
     private(set) package var answers: [VocabularyAssessmentAnswer]
     private(set) package var errorFloor: Double = 0.05
@@ -559,11 +570,14 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     private var cachedPredictiveSamples: PredictiveCoverageSamples?
     private var cachedCoverageSelection: Set<String>?
     private var cachedCoverageTargetReached: Bool
+    private let usesEligibleReaderPrior: Bool
 
     package init(
         inventory: DocumentVocabularyInventory,
         mode: VocabularyAssessmentMode,
-        restoredAnswers: [VocabularyAssessmentAnswer] = []
+        restoredAnswers: [VocabularyAssessmentAnswer] = [],
+        readerPrior: VocabularyReaderPrior? = nil,
+        currentDate: Date = Date()
     ) {
         self.inventory = inventory
         self.mode = mode
@@ -580,7 +594,12 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         }
         predictiveSeed = Self.inventorySeed(inventory)
         answers = []
-        posterior = Self.normalPrior()
+        let genericPrior = Self.normalPrior()
+        usesEligibleReaderPrior = readerPrior?.isEligible(at: currentDate) == true
+        initialPosterior = usesEligibleReaderPrior
+            ? readerPrior?.warmStartPosterior(thetaGrid: Self.thetaGrid, genericPrior: genericPrior) ?? genericPrior
+            : genericPrior
+        posterior = initialPosterior
         answerByKey = [:]
         answeredCandidateIndexes = []
         excludedCandidateIndexes = []
@@ -589,8 +608,21 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         cachedCoverageSelection = nil
         cachedCoverageTargetReached = false
         currentProbabilities = probabilities(for: posterior)
-        for answer in restoredAnswers where candidateIndexByKey[answer.canonicalKey] != nil {
-            apply(answer)
+        for answer in restoredAnswers {
+            if candidateIndexByKey[answer.canonicalKey] != nil {
+                apply(answer)
+                continue
+            }
+            guard let migrated = inventory.candidates.first(where: { $0.lemmaKey == answer.canonicalKey }) else {
+                continue
+            }
+            apply(VocabularyAssessmentAnswer(
+                canonicalKey: migrated.canonicalKey,
+                evidence: answer.evidence,
+                wasValidation: answer.wasValidation,
+                predictedKnown: answer.predictedKnown,
+                typedMeaning: answer.typedMeaning
+            ))
         }
         refreshStoppingState()
     }
@@ -599,10 +631,18 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         answers.lazy.filter { $0.evidence != .excluded }.count
     }
 
+    private var minimumQuestionCount: Int {
+        usesEligibleReaderPrior && validationAnswerCount >= 2 ? 8 : 20
+    }
+
+    private var validationAnswerCount: Int {
+        answers.lazy.filter { $0.wasValidation && $0.evidence != .excluded }.count
+    }
+
     package var isFinished: Bool {
         if answeredQuestionCount >= 80 { return true }
         let remaining = answerableCandidates
-        let minimumAnswerCount = min(20, answeredQuestionCount + remaining.count)
+        let minimumAnswerCount = min(minimumQuestionCount, answeredQuestionCount + remaining.count)
         guard answeredQuestionCount >= minimumAnswerCount else { return false }
         if remaining.isEmpty { return true }
         switch mode {
@@ -636,7 +676,11 @@ package struct AdaptiveVocabularyAssessment: Sendable {
 
         let questionNumber = answeredQuestionCount + 1
         let selected: (DocumentVocabularyCandidate, Bool?)
-        if questionNumber <= 8 {
+        if usesEligibleReaderPrior,
+           (questionNumber == 4 || questionNumber == 8),
+           let validation = validationCandidate(from: remaining) {
+            selected = validation
+        } else if questionNumber <= 8 {
             let fraction = (Double(questionNumber) - 0.5) / 8.0
             let orderedIndex = min(
                 difficultyOrderedIndexes.count - 1,
@@ -687,6 +731,15 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         pendingQuestion = nil
         refreshStoppingState()
     }
+
+    package var thetaPosteriorSnapshot: [Double] { posterior }
+
+    package var verifiedEvidenceCount: Int {
+        answers.lazy.filter { $0.evidence.isVerifiedEvidence }.count
+    }
+
+    package var usedEligibleReaderPrior: Bool { usesEligibleReaderPrior }
+    package var requiredMinimumAnsweredQuestionCount: Int { minimumQuestionCount }
 
     /// Skips a dictionary-failure item without treating it as an answer or an
     /// exclusion. It remains an unasked posterior item in the final result.
@@ -802,7 +855,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     private var stopReason: VocabularyAssessmentStopReason? {
         if answeredQuestionCount >= 80 { return .questionLimit }
         let remaining = answerableCandidates
-        let minimumAnswerCount = min(20, answeredQuestionCount + remaining.count)
+        let minimumAnswerCount = min(minimumQuestionCount, answeredQuestionCount + remaining.count)
         guard answeredQuestionCount >= minimumAnswerCount else { return nil }
         if remaining.isEmpty { return .exhaustedCandidates }
         switch mode {
@@ -853,7 +906,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     }
 
     private mutating func rebuildPosterior() {
-        posterior = Self.normalPrior()
+        posterior = initialPosterior
         cachedPredictiveSamples = nil
         cachedCoverageSelection = nil
         cachedCoverageTargetReached = false
@@ -880,7 +933,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             return
         }
         let remaining = answerableCandidates
-        let minimumAnswerCount = min(20, answeredQuestionCount + remaining.count)
+        let minimumAnswerCount = min(minimumQuestionCount, answeredQuestionCount + remaining.count)
         guard answeredQuestionCount < 80,
               answeredQuestionCount >= minimumAnswerCount,
               !remaining.isEmpty else { return }

@@ -30,6 +30,7 @@ struct VocabularyPreparationInventoryPayload: Sendable {
     let inventory: DocumentVocabularyInventory
     let contexts: [String: String]
     let sourceTexts: [String]
+    let readerPrior: VocabularyReaderPrior?
 }
 
 private final class VocabularyPreparationCancellationToken: @unchecked Sendable {
@@ -61,12 +62,14 @@ final class VocabularyPreparationCoordinator {
     private weak var documentSource: (any VocabularyPreparationDocumentSource)?
     private weak var library: (any VocabularyPreparationLibraryAccess)?
     private let definitionProvider: any VocabularyPreparationDefinitionProviding
+    private let readerPriorStore: any VocabularyReaderPriorStoring
     private var assessment: AdaptiveVocabularyAssessment?
     private var session = VocabularyPreparationSession()
     private var sessionStore: VocabularyPreparationSessionStore?
     private var requestID = UUID()
     private var cancellationToken = VocabularyPreparationCancellationToken()
     private var sourceTexts: [String] = []
+    private var readerPrior: VocabularyReaderPrior?
     private var contexts: [String: String] = [:]
     private var definitions: [String: VocabularyPreparedDefinition] = [:]
     private var definitionFailures: [String: String] = [:]
@@ -95,11 +98,13 @@ final class VocabularyPreparationCoordinator {
     init(
         documentSource: any VocabularyPreparationDocumentSource,
         library: any VocabularyPreparationLibraryAccess,
-        definitionProvider: any VocabularyPreparationDefinitionProviding = LiveVocabularyPreparationDefinitionProvider()
+        definitionProvider: any VocabularyPreparationDefinitionProviding = LiveVocabularyPreparationDefinitionProvider(),
+        readerPriorStore: any VocabularyReaderPriorStoring = VocabularyReaderPriorStore.shared
     ) {
         self.documentSource = documentSource
         self.library = library
         self.definitionProvider = definitionProvider
+        self.readerPriorStore = readerPriorStore
     }
 
     var currentContext: String {
@@ -128,6 +133,7 @@ final class VocabularyPreparationCoordinator {
         activeIdentity = nil
         activeDocumentKind = nil
         sourceTexts = []
+        readerPrior = nil
         phase = .welcome
         progressText = ""
         typedMeaningDraft = ""
@@ -194,11 +200,17 @@ final class VocabularyPreparationCoordinator {
         progressText = AppText.localized("正在选择第一道题…", "Selecting the first question…")
         let activeRequestID = requestID
         let mode = mode
+        let readerPrior = readerPrior
+        if session.readerPriorContributionID == nil {
+            session.readerPriorContributionID = UUID().uuidString
+            sessionStore?.save(session)
+        }
         Task.detached { [weak self] in
             let assessment = AdaptiveVocabularyAssessment(
                 inventory: inventory,
                 mode: mode,
-                restoredAnswers: restored
+                restoredAnswers: restored,
+                readerPrior: readerPrior
             )
             let advance = Self.advance(assessment, mutation: .none)
             await self?.apply(advance: advance, requestID: activeRequestID, persistAnswers: false)
@@ -220,6 +232,8 @@ final class VocabularyPreparationCoordinator {
         typedMeaningDraft = ""
         session.answers = []
         session.finalSelection = []
+        session.readerPriorContributionRecorded = false
+        session.readerPriorContributionID = nil
         session.algorithmVersion = VocabularyPreparationSession.currentAlgorithmVersion
         sessionStore?.save(session)
         phase = inventory == nil ? .welcome : .inventory
@@ -403,7 +417,8 @@ final class VocabularyPreparationCoordinator {
             let payload = VocabularyPreparationInventoryPayload(
                 inventory: inventory,
                 contexts: contexts,
-                sourceTexts: snapshot.texts
+                sourceTexts: snapshot.texts,
+                readerPrior: self?.readerPriorStore.load(languageCode: snapshot.language.rawValue)
             )
             Task { @MainActor [weak self] in
                 guard let self,
@@ -422,6 +437,7 @@ final class VocabularyPreparationCoordinator {
         inventory = payload.inventory
         contexts = payload.contexts
         sourceTexts = payload.sourceTexts
+        readerPrior = payload.readerPrior
         alreadySavedKeys = existingVocabularyKeys()
         phase = .inventory
         progressText = AppText.localized(
@@ -601,6 +617,35 @@ final class VocabularyPreparationCoordinator {
         session.finalSelection = selectedKeys
         sessionStore?.save(session)
         phase = .results
+        recordReaderPriorContributionIfNeeded()
+    }
+
+    private func recordReaderPriorContributionIfNeeded() {
+        guard session.readerPriorContributionRecorded != true,
+              let contributionID = session.readerPriorContributionID,
+              let assessment,
+              assessment.answeredQuestionCount > 0,
+              let languageCode = inventory?.languageCode else { return }
+        let posterior = assessment.thetaPosteriorSnapshot
+        let verifiedCount = assessment.verifiedEvidenceCount
+        let store = readerPriorStore
+        let activeRequestID = requestID
+        Task { [weak self] in
+            let saved = await Task.detached {
+                store.recordCompletedSession(
+                    contributionID: contributionID,
+                    languageCode: languageCode,
+                    thetaPosterior: posterior,
+                    verifiedEvidenceCount: verifiedCount,
+                    completedAt: Date(),
+                    algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion
+                )
+            }.value
+            guard saved else { return }
+            guard let self, self.requestID == activeRequestID else { return }
+            self.session.readerPriorContributionRecorded = true
+            self.sessionStore?.save(self.session)
+        }
     }
 
     private func persistAssessment() {

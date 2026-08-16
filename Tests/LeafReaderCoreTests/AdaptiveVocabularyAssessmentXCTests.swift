@@ -399,6 +399,76 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         }
     }
 
+    func testWarmPriorNeedsTwoCurrentTailValidationsBeforeEightQuestionMinimum() throws {
+        let prior = VocabularyReaderPrior(
+            languageCode: "en",
+            thetaPosterior: Array(repeating: 1.0 / 121.0, count: 121),
+            completedSessionCount: 2,
+            verifiedEvidenceCount: 40,
+            lastUpdatedAt: Date(timeIntervalSince1970: 1_000),
+            algorithmVersion: 3
+        )
+        var assessment = AdaptiveVocabularyAssessment(
+            inventory: inventory(count: 40),
+            mode: .allUnknown,
+            readerPrior: prior,
+            currentDate: Date(timeIntervalSince1970: 1_001)
+        )
+        XCTAssertTrue(assessment.usedEligibleReaderPrior)
+        XCTAssertEqual(assessment.requiredMinimumAnsweredQuestionCount, 20)
+
+        for _ in 0..<8 {
+            let question = try XCTUnwrap(assessment.nextQuestion())
+            assessment.record(.verifiedKnown, for: question.canonicalKey)
+        }
+        XCTAssertEqual(assessment.answers.filter(\.wasValidation).count, 2)
+        XCTAssertEqual(assessment.requiredMinimumAnsweredQuestionCount, 8)
+    }
+
+    func testIneligibleOrStalePriorRetainsTwentyQuestionMinimum() {
+        let prior = VocabularyReaderPrior(
+            languageCode: "en",
+            thetaPosterior: Array(repeating: 1.0 / 121.0, count: 121),
+            completedSessionCount: 2,
+            verifiedEvidenceCount: 40,
+            lastUpdatedAt: Date(timeIntervalSince1970: 1_000),
+            algorithmVersion: 3
+        )
+        let assessment = AdaptiveVocabularyAssessment(
+            inventory: inventory(count: 40),
+            mode: .allUnknown,
+            readerPrior: prior,
+            currentDate: Date(timeIntervalSince1970: 1_000 + 181 * 24 * 60 * 60)
+        )
+
+        XCTAssertFalse(assessment.usedEligibleReaderPrior)
+        XCTAssertEqual(assessment.requiredMinimumAnsweredQuestionCount, 20)
+    }
+
+    func testLemmaOnlyRestoredAnswerMigratesToLexicalCandidate() throws {
+        let lexicalID = VocabularyLexicalItemID(language: "en", lemma: "book", partOfSpeech: .verb)
+        let candidate = DocumentVocabularyCandidate(
+            canonicalKey: lexicalID.canonicalKey,
+            lemmaKey: "book",
+            displayLemma: "book",
+            lexicalItemID: lexicalID,
+            partOfSpeech: .verb,
+            observedForms: [VocabularyDocumentObservedForm(surface: "booked", occurrenceCount: 1)],
+            occurrenceCount: 1,
+            representativeRange: VocabularyDocumentSourceRange(unitIndex: 0, utf16Location: 0, utf16Length: 6),
+            generalFrequencyRank: nil,
+            difficulty: 0
+        )
+        let assessment = AdaptiveVocabularyAssessment(
+            inventory: DocumentVocabularyInventory(languageCode: "en", candidates: [candidate]),
+            mode: .allUnknown,
+            restoredAnswers: [VocabularyAssessmentAnswer(canonicalKey: "book", evidence: .legacyKnown)]
+        )
+
+        XCTAssertEqual(assessment.answers.first?.canonicalKey, lexicalID.canonicalKey)
+        XCTAssertGreaterThan(try XCTUnwrap(assessment.knownProbability(for: lexicalID.canonicalKey)), 0.5)
+    }
+
     private func inventory(count: Int) -> DocumentVocabularyInventory {
         let candidates = (0..<count).map { index in
             candidate(
