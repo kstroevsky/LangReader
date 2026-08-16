@@ -49,6 +49,8 @@ private func webRecord(
     createdAt: TimeInterval,
     vocabularyID: String? = nil,
     lemma: String? = nil,
+    lexicalKey: String? = nil,
+    partOfSpeech: VocabularyPartOfSpeech? = nil,
     surfaceForm: String? = nil,
     srs: VocabularySRSState? = nil
 ) -> StoredWebWordRecord {
@@ -57,6 +59,8 @@ private func webRecord(
         vocabularyID: vocabularyID,
         word: word,
         lemma: lemma,
+        lexicalKey: lexicalKey,
+        partOfSpeech: partOfSpeech,
         surfaceForm: surfaceForm,
         context: "web context",
         occurrenceIndex: nil,
@@ -223,6 +227,8 @@ struct SQLiteWordRecordStoreTestRunner {
             createdAt: 1,
             vocabularyID: "web-vocabulary-go",
             lemma: "gehen",
+            lexicalKey: "de|gehen|verb|",
+            partOfSpeech: .verb,
             surfaceForm: "ging",
             srs: srs
         )
@@ -233,6 +239,8 @@ struct SQLiteWordRecordStoreTestRunner {
             createdAt: 2,
             vocabularyID: "web-vocabulary-go",
             lemma: "gehen",
+            lexicalKey: "de|gehen|verb|",
+            partOfSpeech: .verb,
             surfaceForm: "Ging",
             srs: srs
         )
@@ -245,6 +253,8 @@ struct SQLiteWordRecordStoreTestRunner {
         assert(loadedWeb.first?.answer == "updated", "Web upsert should replace existing rows")
         assert(loadedWeb.first?.vocabularyID == "web-vocabulary-go", "Web vocabulary identity should round-trip")
         assert(loadedWeb.first?.lemma == "gehen", "Web lemma should round-trip")
+        assert(loadedWeb.first?.lexicalKey == "de|gehen|verb|", "Web lexical key should round-trip")
+        assert(loadedWeb.first?.partOfSpeech == .verb, "Web part of speech should round-trip")
         assert(loadedWeb.first?.occurrenceSurfaceForm == "Ging", "Web surface form should round-trip exactly")
         assert(loadedWeb.first?.srs?.dueDate == Date(timeIntervalSince1970: 20), "Web SRS state should round-trip")
 
@@ -270,6 +280,8 @@ struct SQLiteWordRecordStoreTestRunner {
             id: "occurrence-one",
             word: "Fehlerhafte",
             lemma: "fehlerhaft",
+            lexicalKey: "de|fehlerhaft|adjective|",
+            partOfSpeech: .adjective,
             surfaceForm: "Fehlerhafte",
             pageIndex: 0,
             bounds: StoredPDFWordRect(CGRect(x: 12, y: 700, width: 60, height: 14)),
@@ -283,6 +295,8 @@ struct SQLiteWordRecordStoreTestRunner {
             id: "occurrence-two",
             word: "fehlerhaften",
             lemma: "fehlerhaft",
+            lexicalKey: "de|fehlerhaft|adjective|",
+            partOfSpeech: .adjective,
             surfaceForm: "fehlerhaften",
             pageIndex: 5,
             bounds: StoredPDFWordRect(CGRect(x: 40, y: 500, width: 60, height: 14)),
@@ -302,6 +316,8 @@ struct SQLiteWordRecordStoreTestRunner {
         assert(Set(uniqueLoaded.map(\.word)) == ["Fehlerhafte"], "the first selected surface form should remain the shared display word")
         assert(Set(uniqueLoaded.map(\.occurrenceSurfaceForm)) == ["Fehlerhafte", "fehlerhaften"], "each occurrence should preserve its exact surface form")
         assert(uniqueLoaded.allSatisfy { $0.lemma == "fehlerhaft" }, "the German lemma should round-trip through SQLite")
+        assert(uniqueLoaded.allSatisfy { $0.lexicalKey == "de|fehlerhaft|adjective|" }, "the PDF lexical key should round-trip")
+        assert(uniqueLoaded.allSatisfy { $0.partOfSpeech == .adjective }, "the PDF part of speech should round-trip")
         assert(uniqueLoaded.allSatisfy { $0.answer == "incorrect" }, "one definition should be shared by every inflected occurrence")
         assert(store.deletePDFRecords(documentID: uniqueDocumentID, ids: uniqueLoaded.map(\.id)), "deleting all occurrences should succeed")
         assert(store.loadPDFRecords(documentID: uniqueDocumentID).isEmpty, "deleting all occurrences should remove the orphaned word")

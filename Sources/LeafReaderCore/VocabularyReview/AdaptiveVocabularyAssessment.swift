@@ -84,7 +84,10 @@ package enum VocabularyKnowledgeEvidence: String, Codable, Equatable, Sendable {
 package struct DocumentVocabularyCandidate: Codable, Equatable, Identifiable, Sendable {
     package var id: String { canonicalKey }
     package let canonicalKey: String
+    package let lemmaKey: String
     package let displayLemma: String
+    package let lexicalItemID: VocabularyLexicalItemID?
+    package let partOfSpeech: VocabularyPartOfSpeech
     package let observedForms: [VocabularyDocumentObservedForm]
     package let occurrenceCount: Int
     package let representativeRange: VocabularyDocumentSourceRange
@@ -94,7 +97,10 @@ package struct DocumentVocabularyCandidate: Codable, Equatable, Identifiable, Se
 
     package init(
         canonicalKey: String,
+        lemmaKey: String? = nil,
         displayLemma: String,
+        lexicalItemID: VocabularyLexicalItemID? = nil,
+        partOfSpeech: VocabularyPartOfSpeech = .unknown,
         observedForms: [VocabularyDocumentObservedForm],
         occurrenceCount: Int,
         representativeRange: VocabularyDocumentSourceRange,
@@ -102,7 +108,10 @@ package struct DocumentVocabularyCandidate: Codable, Equatable, Identifiable, Se
         difficulty: Double
     ) {
         self.canonicalKey = canonicalKey
+        self.lemmaKey = lemmaKey ?? VocabularyTextPolicy.canonicalVocabularyKey(displayLemma)
         self.displayLemma = displayLemma
+        self.lexicalItemID = lexicalItemID
+        self.partOfSpeech = partOfSpeech
         self.observedForms = observedForms
         self.occurrenceCount = occurrenceCount
         self.representativeRange = representativeRange
@@ -117,7 +126,10 @@ package struct DocumentVocabularyCandidate: Codable, Equatable, Identifiable, Se
 
     package init(
         canonicalKey: String,
+        lemmaKey: String? = nil,
         displayLemma: String,
+        lexicalItemID: VocabularyLexicalItemID? = nil,
+        partOfSpeech: VocabularyPartOfSpeech = .unknown,
         observedForms: [VocabularyDocumentObservedForm],
         occurrenceCount: Int,
         representativeRange: VocabularyDocumentSourceRange,
@@ -125,7 +137,10 @@ package struct DocumentVocabularyCandidate: Codable, Equatable, Identifiable, Se
         difficultyPrior: VocabularyItemDifficultyPrior
     ) {
         self.canonicalKey = canonicalKey
+        self.lemmaKey = lemmaKey ?? VocabularyTextPolicy.canonicalVocabularyKey(displayLemma)
         self.displayLemma = displayLemma
+        self.lexicalItemID = lexicalItemID
+        self.partOfSpeech = partOfSpeech
         self.observedForms = observedForms
         self.occurrenceCount = occurrenceCount
         self.representativeRange = representativeRange
@@ -150,7 +165,10 @@ package struct DocumentVocabularyInventory: Codable, Equatable, Sendable {
             let resolvedRank = rank(summary)
             return DocumentVocabularyCandidate(
                 canonicalKey: summary.canonicalKey,
+                lemmaKey: summary.lemmaKey,
                 displayLemma: summary.displayLemma,
+                lexicalItemID: summary.lexicalItemID,
+                partOfSpeech: summary.partOfSpeech,
                 observedForms: summary.observedForms,
                 occurrenceCount: summary.occurrenceCount,
                 representativeRange: summary.representativeRange,
@@ -185,7 +203,10 @@ package struct DocumentVocabularyInventory: Codable, Equatable, Sendable {
             let resolvedRank = difficultyProvider.bestRank(for: summary)
             return DocumentVocabularyCandidate(
                 canonicalKey: summary.canonicalKey,
+                lemmaKey: summary.lemmaKey,
                 displayLemma: summary.displayLemma,
+                lexicalItemID: summary.lexicalItemID,
+                partOfSpeech: summary.partOfSpeech,
                 observedForms: summary.observedForms,
                 occurrenceCount: summary.occurrenceCount,
                 representativeRange: summary.representativeRange,
@@ -204,17 +225,16 @@ package struct DocumentVocabularyInventory: Codable, Equatable, Sendable {
     }
 
     private static func isAssessable(_ summary: VocabularyDocumentLemmaSummary) -> Bool {
-        guard !summary.isConfidentName,
-              !summary.canonicalKey.isEmpty,
-              summary.canonicalKey.count <= 64 else { return false }
-        let scalars = summary.canonicalKey.unicodeScalars
+        guard !summary.isConfidentName else { return false }
+        let key = summary.lemmaKey
+        guard !key.isEmpty, key.count <= 64 else { return false }
+        let scalars = key.unicodeScalars
         guard scalars.contains(where: CharacterSet.letters.contains) else { return false }
         guard scalars.allSatisfy({
             CharacterSet.letters.contains($0)
                 || CharacterSet.nonBaseCharacters.contains($0)
                 || $0 == "'" || $0 == "’" || $0 == "-"
         }) else { return false }
-        let key = summary.canonicalKey
         guard !key.hasPrefix("-"), !key.hasSuffix("-"),
               !key.hasPrefix("'"), !key.hasSuffix("'"),
               !key.hasPrefix("’"), !key.hasSuffix("’"),

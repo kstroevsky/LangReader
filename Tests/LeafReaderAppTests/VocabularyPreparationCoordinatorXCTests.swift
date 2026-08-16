@@ -180,7 +180,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
             text: fixtureText,
             kind: .epub
         )
-        let library = FakeVocabularyPreparationLibrary(existingKeys: ["read"])
+        let library = FakeVocabularyPreparationLibrary(existingKeys: ["reader"])
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: library,
@@ -189,7 +189,10 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         coordinator.resetForCurrentDocument()
         coordinator.startAnalysis()
         try await waitUntil { coordinator.phase == .inventory }
-        XCTAssertTrue(coordinator.alreadySavedKeys.contains("read"))
+        let savedReadKey = try XCTUnwrap(
+            coordinator.inventory?.candidates.first { $0.lemmaKey == "reader" }?.canonicalKey
+        )
+        XCTAssertTrue(coordinator.alreadySavedKeys.contains(savedReadKey))
 
         try await answerEveryAvailableQuestionUnknown(in: coordinator)
         let importable = try XCTUnwrap(
@@ -199,8 +202,8 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
             coordinator.updateSelection(item.id, selected: false)
         }
         coordinator.updateSelection(importable.id, selected: true)
-        coordinator.updateSelection("read", selected: true)
-        XCTAssertFalse(coordinator.selectedKeys.contains("read"))
+        coordinator.updateSelection(savedReadKey, selected: true)
+        XCTAssertFalse(coordinator.selectedKeys.contains(savedReadKey))
 
         coordinator.createAndReview()
         try await waitUntil { library.finishedBatchCount == 1 }

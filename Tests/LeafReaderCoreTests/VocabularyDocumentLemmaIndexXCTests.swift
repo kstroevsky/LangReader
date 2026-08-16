@@ -118,14 +118,14 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         ))
 
         let summaries = index.lemmaSummaries()
-        let develop = try XCTUnwrap(summaries.first { $0.canonicalKey == "develop" })
+        let develop = try XCTUnwrap(summaries.first { $0.lemmaKey == "develop" })
         XCTAssertEqual(develop.occurrenceCount, 3)
         XCTAssertEqual(Dictionary(uniqueKeysWithValues: develop.observedForms.map { ($0.surface.lowercased(), $0.occurrenceCount) }), [
             "develop": 1,
             "developed": 1,
             "developing": 1
         ])
-        XCTAssertEqual(summaries.first { $0.canonicalKey == "development" }?.occurrenceCount, 1)
+        XCTAssertEqual(summaries.first { $0.lemmaKey == "development" }?.occurrenceCount, 1)
     }
 
     func testOrdinaryEnglishWordsAreNotClassifiedAsConfidentNames() throws {
@@ -135,9 +135,9 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         ))
 
         let summaries = index.lemmaSummaries()
-        XCTAssertFalse(try XCTUnwrap(summaries.first { $0.canonicalKey == "develop" }).isConfidentName)
-        XCTAssertFalse(try XCTUnwrap(summaries.first { $0.canonicalKey == "tool" }).isConfidentName)
-        XCTAssertFalse(try XCTUnwrap(summaries.first { $0.canonicalKey == "vocabulary" }).isConfidentName)
+        XCTAssertFalse(try XCTUnwrap(summaries.first { $0.lemmaKey == "develop" }).isConfidentName)
+        XCTAssertFalse(try XCTUnwrap(summaries.first { $0.lemmaKey == "tool" }).isConfidentName)
+        XCTAssertFalse(try XCTUnwrap(summaries.first { $0.lemmaKey == "vocabulary" }).isConfidentName)
     }
 
     func testInventorySummariesAggregateAcrossUnitsAndRepairPDFLineWraps() throws {
@@ -146,7 +146,7 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
             language: .english
         ))
 
-        let develop = try XCTUnwrap(index.lemmaSummaries().first { $0.canonicalKey == "develop" })
+        let develop = try XCTUnwrap(index.lemmaSummaries().first { $0.lemmaKey == "develop" })
         XCTAssertEqual(develop.occurrenceCount, 2)
         XCTAssertEqual(develop.representativeRange.unitIndex, 0)
         XCTAssertTrue(develop.observedForms.contains { $0.surface == "developed" && $0.occurrenceCount == 2 })
@@ -157,7 +157,7 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
             texts: ["Das Haus steht neben dem Krankenhaus. Die Häuser sind alt."],
             language: .german
         ))
-        let keys = Set(index.lemmaSummaries().map(\.canonicalKey))
+        let keys = Set(index.lemmaSummaries().map(\.lemmaKey))
 
         XCTAssertTrue(keys.contains("haus"))
         XCTAssertTrue(keys.contains("krankenhaus"))
@@ -206,7 +206,7 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         Mail reader@example.com. <span>Visible prose</span> &nbsp; aaaaaa foo--bar.
         """
         let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(texts: [text], language: .english))
-        let keys = Set(index.lemmaSummaries().map(\.canonicalKey))
+        let keys = Set(index.lemmaSummaries().map(\.lemmaKey))
 
         for excluded in ["https", "example", "com", "readerpath", "www", "org", "reader", "span", "nbsp", "aaaaaa", "foo", "bar"] {
             XCTAssertFalse(keys.contains(excluded), "unexpected noise lemma: \(excluded)")
@@ -216,5 +216,21 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         XCTAssertTrue(keys.contains("book"))
         XCTAssertTrue(keys.contains("visible"))
         XCTAssertTrue(keys.contains("prose"))
+    }
+
+    func testLexicalIdentitySeparatesPartOfSpeechAndReservesSenseKey() {
+        let noun = VocabularyLexicalItemID(language: "en", lemma: "book", partOfSpeech: .noun)
+        let verb = VocabularyLexicalItemID(language: "en", lemma: "book", partOfSpeech: .verb)
+        let futureSense = VocabularyLexicalItemID(
+            language: "en",
+            lemma: "bank",
+            partOfSpeech: .noun,
+            senseKey: "river"
+        )
+
+        XCTAssertNotEqual(noun, verb)
+        XCTAssertNotEqual(noun.canonicalKey, verb.canonicalKey)
+        XCTAssertNil(noun.senseKey)
+        XCTAssertTrue(futureSense.canonicalKey.hasSuffix("|river"))
     }
 }

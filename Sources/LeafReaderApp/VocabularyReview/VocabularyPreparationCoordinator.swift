@@ -614,10 +614,16 @@ final class VocabularyPreparationCoordinator {
     private func existingVocabularyKeys() -> Set<String> {
         guard let library, let kind = activeDocumentKind,
               let languageCode = inventory?.languageCode else { return [] }
-        return library.vocabularyPreparationExistingKeys(
+        let persistedKeys = library.vocabularyPreparationExistingKeys(
             language: NLLanguage(rawValue: languageCode),
             kind: kind
         )
+        guard let inventory else { return persistedKeys }
+        return Set(inventory.candidates.compactMap { candidate in
+            persistedKeys.contains(candidate.canonicalKey) || persistedKeys.contains(candidate.lemmaKey)
+                ? candidate.canonicalKey
+                : nil
+        })
     }
 
     private func definitionFromResults(for key: String) -> String? {
@@ -665,6 +671,8 @@ final class VocabularyPreparationCoordinator {
                     vocabularyID: UUID().uuidString,
                     word: candidate.displayLemma,
                     lemma: candidate.displayLemma,
+                    lexicalKey: candidate.canonicalKey,
+                    partOfSpeech: candidate.partOfSpeech,
                     surfaceForm: candidate.observedForms.first?.surface ?? candidate.displayLemma,
                     pageIndex: range.unitIndex,
                     bounds: StoredPDFWordRect(.zero),
@@ -690,6 +698,8 @@ final class VocabularyPreparationCoordinator {
                     vocabularyID: UUID().uuidString,
                     word: candidate.displayLemma,
                     lemma: candidate.displayLemma,
+                    lexicalKey: candidate.canonicalKey,
+                    partOfSpeech: candidate.partOfSpeech,
                     surfaceForm: candidate.observedForms.first?.surface ?? candidate.displayLemma,
                     context: contexts[candidate.canonicalKey] ?? "",
                     occurrenceIndex: nil,

@@ -128,7 +128,10 @@ struct VocabularyPreparationView: View {
     private func inventoryRow(_ candidate: DocumentVocabularyCandidate) -> some View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(candidate.displayLemma).font(.body.weight(.semibold))
+                HStack(spacing: 6) {
+                    Text(candidate.displayLemma).font(.body.weight(.semibold))
+                    partOfSpeech(candidate)
+                }
                 Text(candidate.observedForms.map { "\($0.surface) ×\($0.occurrenceCount)" }.joined(separator: ", "))
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -153,9 +156,12 @@ struct VocabularyPreparationView: View {
                 }
             }
             if let candidate = coordinator.currentCandidate {
-                Text(candidate.displayLemma)
-                    .font(.system(size: 42, weight: .bold, design: .rounded))
-                    .textSelection(.enabled)
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text(candidate.displayLemma)
+                        .font(.system(size: 42, weight: .bold, design: .rounded))
+                        .textSelection(.enabled)
+                    partOfSpeech(candidate)
+                }
                 if coordinator.interactionState == .awaitingAnswer {
                     Toggle(
                         AppText.localized("输入含义再核对（可选）", "Type a meaning before checking (optional)"),
@@ -303,7 +309,10 @@ struct VocabularyPreparationView: View {
                 set: { coordinator.updateSelection(item.id, selected: $0) }
             )) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(item.candidate.displayLemma).font(.body.weight(.semibold))
+                    HStack(spacing: 6) {
+                        Text(item.candidate.displayLemma).font(.body.weight(.semibold))
+                        partOfSpeech(item.candidate)
+                    }
                     Text(classificationText(item.classification))
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -324,6 +333,18 @@ struct VocabularyPreparationView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
+    }
+
+    @ViewBuilder
+    private func partOfSpeech(_ candidate: DocumentVocabularyCandidate) -> some View {
+        if let label = candidate.partOfSpeech.displayName {
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(.secondary.opacity(0.1), in: Capsule())
+        }
     }
 
     private var modePicker: some View {

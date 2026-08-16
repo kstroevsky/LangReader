@@ -133,11 +133,19 @@ extension ReaderWindowController: VocabularyPreparationLibraryAccess {
     func vocabularyPreparationExistingKeys(language: NLLanguage, kind: ReaderDocumentKind) -> Set<String> {
         if kind == .pdf {
             return Set(storedWordRecords.map {
-                GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language)
+                $0.lexicalKey ?? GermanLemmaResolver.groupingKey(
+                    word: $0.word,
+                    lemma: $0.lemma,
+                    language: language
+                )
             })
         }
         return Set(storedWebWordRecords.map {
-            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language)
+            $0.lexicalKey ?? GermanLemmaResolver.groupingKey(
+                word: $0.word,
+                lemma: $0.lemma,
+                language: language
+            )
         })
     }
 
