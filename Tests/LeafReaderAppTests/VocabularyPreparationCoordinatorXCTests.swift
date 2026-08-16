@@ -120,6 +120,61 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         XCTAssertEqual(coordinator.answeredCount, 0)
     }
 
+    func testKnownAnswerDoesNotCountUntilVerifiedAfterReveal() async throws {
+        let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: .pdf)
+        let coordinator = VocabularyPreparationCoordinator(
+            documentSource: source,
+            library: FakeVocabularyPreparationLibrary(),
+            definitionProvider: FakeVocabularyPreparationDefinitionProvider()
+        )
+        coordinator.resetForCurrentDocument()
+        coordinator.startAnalysis()
+        try await waitUntil { coordinator.phase == .inventory }
+        coordinator.beginAssessment()
+        try await waitUntil { coordinator.phase == .assessment }
+
+        coordinator.chooseKnown()
+        XCTAssertEqual(coordinator.interactionState, .pendingKnownVerification)
+        XCTAssertEqual(coordinator.answeredCount, 0)
+        try await waitUntil {
+            if case .available = coordinator.definitionState { return true }
+            return false
+        }
+        XCTAssertEqual(coordinator.answeredCount, 0)
+        coordinator.verifyKnown(correct: true)
+        try await waitUntil { coordinator.answeredCount == 1 && coordinator.phase == .assessment }
+    }
+
+    func testUnknownEvidenceCountsBeforeFailedDefinitionAndSkipOnlyContinues() async throws {
+        let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: .epub)
+        let provider = FakeVocabularyPreparationDefinitionProvider(failFirstRequest: true)
+        let coordinator = VocabularyPreparationCoordinator(
+            documentSource: source,
+            library: FakeVocabularyPreparationLibrary(),
+            definitionProvider: provider
+        )
+        coordinator.resetForCurrentDocument()
+        coordinator.startAnalysis()
+        try await waitUntil { coordinator.phase == .inventory }
+        coordinator.beginAssessment()
+        try await waitUntil { coordinator.phase == .assessment }
+        let firstKey = try XCTUnwrap(coordinator.currentCandidate?.canonicalKey)
+
+        coordinator.chooseReportedUnknown()
+        try await waitUntil {
+            coordinator.answeredCount == 1 && coordinator.interactionState == .learningAfterAnswer
+        }
+        try await waitUntil {
+            if case .unavailable = coordinator.definitionState { return true }
+            return false
+        }
+        coordinator.skipDefinition()
+        try await waitUntil {
+            coordinator.phase == .assessment && coordinator.currentCandidate?.canonicalKey != firstKey
+        }
+        XCTAssertEqual(coordinator.answeredCount, 1)
+    }
+
     func testAlreadySavedLemmaIsProtectedAndSuccessfulImportOpensReview() async throws {
         let source = try FakeVocabularyPreparationSource(
             text: fixtureText,

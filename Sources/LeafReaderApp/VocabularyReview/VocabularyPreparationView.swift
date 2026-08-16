@@ -156,6 +156,23 @@ struct VocabularyPreparationView: View {
                 Text(candidate.displayLemma)
                     .font(.system(size: 42, weight: .bold, design: .rounded))
                     .textSelection(.enabled)
+                if coordinator.interactionState == .awaitingAnswer {
+                    Toggle(
+                        AppText.localized("输入含义再核对（可选）", "Type a meaning before checking (optional)"),
+                        isOn: $coordinator.typedModeEnabled
+                    )
+                    .toggleStyle(.checkbox)
+                    .frame(maxWidth: 420, alignment: .leading)
+                    if coordinator.typedModeEnabled {
+                        TextField(
+                            AppText.localized("用自己的话写下含义", "Meaning in your own words"),
+                            text: $coordinator.typedMeaningDraft,
+                            axis: .vertical
+                        )
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: 520)
+                    }
+                }
                 definition(candidate)
             }
             Spacer(minLength: 8)
@@ -167,9 +184,16 @@ struct VocabularyPreparationView: View {
     private func definition(_ candidate: DocumentVocabularyCandidate) -> some View {
         switch coordinator.definitionState {
         case .hidden:
-            Button(AppText.localized("显示释义", "Reveal")) { coordinator.revealCurrentQuestion() }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+            HStack(spacing: 10) {
+                Button(AppText.localized("我认识", "I know it")) { coordinator.chooseKnown() }
+                    .buttonStyle(.borderedProminent)
+                Button(AppText.localized("不确定", "Not sure")) { coordinator.chooseUnsure() }
+                Button(AppText.localized("我不认识", "I don’t know")) { coordinator.chooseReportedUnknown() }
+                Button(AppText.localized("不是单词/是名称", "Not a word/name")) {
+                    coordinator.excludeCurrentCandidate()
+                }
+            }
+            .controlSize(.large)
         case .loading:
             ProgressView(AppText.localized("正在查询释义…", "Looking up definition…"))
         case let .unavailable(message):
@@ -194,16 +218,36 @@ struct VocabularyPreparationView: View {
                     }
                     Text(definition)
                         .textSelection(.enabled)
+                    if !coordinator.typedMeaningDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Divider()
+                        Text(AppText.localized("你的回答", "Your answer"))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        Text(coordinator.typedMeaningDraft)
+                            .textSelection(.enabled)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(maxHeight: 280)
-            HStack(spacing: 10) {
-                Button(AppText.localized("认识", "Knew it")) { coordinator.score(.known) }
+            switch coordinator.interactionState {
+            case .pendingKnownVerification:
+                HStack(spacing: 10) {
+                    Button(AppText.localized("我的含义正确", "My meaning was correct")) {
+                        coordinator.verifyKnown(correct: true)
+                    }
                     .buttonStyle(.borderedProminent)
-                Button(AppText.localized("不认识", "Didn’t know")) { coordinator.score(.unknown) }
-                Button(AppText.localized("不确定", "Wasn’t sure")) { coordinator.score(.unknown) }
-                Button(AppText.localized("不是单词/是名称", "Not a word/name")) { coordinator.excludeCurrentCandidate() }
+                    Button(AppText.localized("不正确/只对了一部分", "No / only partly")) {
+                        coordinator.verifyKnown(correct: false)
+                    }
+                }
+                .controlSize(.large)
+            case .learningAfterAnswer:
+                Button(AppText.localized("继续", "Continue")) { coordinator.continueAfterLearning() }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+            case .awaitingAnswer:
+                EmptyView()
             }
         }
     }
@@ -316,11 +360,12 @@ struct VocabularyPreparationView: View {
 
     private func classificationText(_ classification: VocabularyAssessmentClassification) -> String {
         switch classification {
-        case .confirmedKnown: AppText.localized("确认认识", "Confirmed known")
-        case .confirmedUnknown: AppText.localized("确认不认识", "Confirmed unknown")
-        case .probablyKnown: AppText.localized("可能认识", "Probably known")
+        case .verifiedKnown: AppText.localized("已核对认识", "Verified known")
+        case .reportedUnknown: AppText.localized("自报不认识", "Reported unknown")
+        case .notSure: AppText.localized("不确定", "Not sure")
+        case .estimatedKnown: AppText.localized("估计认识", "Estimated known")
         case .uncertain: AppText.localized("不确定", "Uncertain")
-        case .probablyUnknown: AppText.localized("可能不认识", "Probably unknown")
+        case .estimatedUnknown: AppText.localized("估计不认识", "Estimated unknown")
         case .excluded: AppText.localized("已排除", "Excluded")
         }
     }

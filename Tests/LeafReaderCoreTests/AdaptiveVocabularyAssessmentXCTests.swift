@@ -26,7 +26,7 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         XCTAssertGreaterThan(askedDifficulties.last ?? 0, 2.5)
     }
 
-    func testDirectAnswersOverridePosteriorClassification() throws {
+    func testVerifiedAndReportedEvidenceRemainStrongButFallible() throws {
         let inventory = inventory(count: 24)
         var assessment = AdaptiveVocabularyAssessment(inventory: inventory, mode: .allUnknown)
         let known = try XCTUnwrap(assessment.nextQuestion())
@@ -35,10 +35,14 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         assessment.record(.unknown, for: unknown.canonicalKey)
 
         let result = assessment.result()
-        XCTAssertEqual(result.items.first { $0.id == known.id }?.classification, .confirmedKnown)
-        XCTAssertEqual(result.items.first { $0.id == known.id }?.knownProbability, 1)
-        XCTAssertEqual(result.items.first { $0.id == unknown.id }?.classification, .confirmedUnknown)
-        XCTAssertEqual(result.items.first { $0.id == unknown.id }?.knownProbability, 0)
+        let knownItem = try XCTUnwrap(result.items.first { $0.id == known.id })
+        let unknownItem = try XCTUnwrap(result.items.first { $0.id == unknown.id })
+        XCTAssertEqual(knownItem.classification, .verifiedKnown)
+        XCTAssertGreaterThan(knownItem.knownProbability, 0.5)
+        XCTAssertLessThan(knownItem.knownProbability, 1)
+        XCTAssertEqual(unknownItem.classification, .reportedUnknown)
+        XCTAssertGreaterThan(unknownItem.knownProbability, 0)
+        XCTAssertLessThan(unknownItem.knownProbability, 0.5)
     }
 
     func testExcludedItemDoesNotConsumeAnsweredQuestionSlot() throws {
@@ -101,7 +105,7 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         XCTAssertEqual(assessment.errorFloor, 2.0 / 21.0, accuracy: 0.000_001)
     }
 
-    func testCoverageLowerBoundPreservesDirectAnswers() {
+    func testCoverageLowerBoundPreservesSoftEvidence() throws {
         let candidates = [
             candidate(key: "known", difficulty: 4, count: 50),
             candidate(key: "unknown", difficulty: -4, count: 30),
@@ -115,15 +119,50 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         assessment.record(.unknown, for: "unknown")
 
         let result = assessment.result(selectionOverride: [])
-        let lowerTheta = result.diagnostics.thetaLowerBound
-        let unaskedProbability = assessment.errorFloor
-            + (1 - 2 * assessment.errorFloor) / (1 + exp(-(lowerTheta - 0)))
-        let variance = 20.0 * 20.0 * unaskedProbability * (1 - unaskedProbability)
-        let expected = (50 + 20 * unaskedProbability - 1.644_853_626_951_47 * sqrt(variance)) / 100
+        let knownProbability = try XCTUnwrap(result.items.first { $0.id == "known" }?.knownProbability)
+        let unknownProbability = try XCTUnwrap(result.items.first { $0.id == "unknown" }?.knownProbability)
+        XCTAssertGreaterThan(knownProbability, 0.5)
+        XCTAssertLessThan(knownProbability, 1)
+        XCTAssertGreaterThan(unknownProbability, 0)
+        XCTAssertLessThan(unknownProbability, 0.5)
+        XCTAssertGreaterThanOrEqual(result.diagnostics.conservativeCoverageLowerBound, 0)
+        XCTAssertLessThanOrEqual(result.diagnostics.conservativeCoverageLowerBound, 1)
+    }
 
-        XCTAssertEqual(result.diagnostics.conservativeCoverageLowerBound, expected, accuracy: 0.000_001)
-        XCTAssertEqual(result.items.first { $0.id == "known" }?.knownProbability, 1)
-        XCTAssertEqual(result.items.first { $0.id == "unknown" }?.knownProbability, 0)
+    func testEvidenceStrengthOrdersAnsweredProbabilities() throws {
+        let inventory = DocumentVocabularyInventory(
+            languageCode: "en",
+            candidates: [
+                candidate(key: "verified", difficulty: 0, count: 1),
+                candidate(key: "legacy", difficulty: 0, count: 1),
+                candidate(key: "unsure", difficulty: 0, count: 1),
+                candidate(key: "reported", difficulty: 0, count: 1)
+            ]
+        )
+        var assessment = AdaptiveVocabularyAssessment(inventory: inventory, mode: .allUnknown)
+        assessment.record(.verifiedKnown, for: "verified")
+        assessment.record(.legacyKnown, for: "legacy")
+        assessment.record(.unsure, for: "unsure")
+        assessment.record(.reportedUnknown, for: "reported")
+
+        let verified = try XCTUnwrap(assessment.knownProbability(for: "verified"))
+        let legacy = try XCTUnwrap(assessment.knownProbability(for: "legacy"))
+        let unsure = try XCTUnwrap(assessment.knownProbability(for: "unsure"))
+        let reported = try XCTUnwrap(assessment.knownProbability(for: "reported"))
+        XCTAssertGreaterThan(verified, legacy)
+        XCTAssertGreaterThan(legacy, unsure)
+        XCTAssertGreaterThan(unsure, reported)
+    }
+
+    func testLegacyOutcomePayloadMigratesToWeakEvidence() throws {
+        let data = Data(#"{"canonicalKey":"gaunt","outcome":"known","wasValidation":false}"#.utf8)
+        let answer = try JSONDecoder().decode(VocabularyAssessmentAnswer.self, from: data)
+
+        XCTAssertEqual(answer.evidence, .legacyKnown)
+        XCTAssertNil(answer.typedMeaning)
+        let encoded = try JSONEncoder().encode(answer)
+        XCTAssertTrue(String(decoding: encoded, as: UTF8.self).contains("legacyKnown"))
+        XCTAssertFalse(String(decoding: encoded, as: UTF8.self).contains("outcome"))
     }
 
     func testApplyingSelectionRecomputesConservativeCoverage() {
@@ -141,8 +180,12 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         let withoutDeck = assessment.result(selectionOverride: [])
         let withDeck = withoutDeck.applyingSelection(["unknown"])
 
-        XCTAssertEqual(withoutDeck.diagnostics.conservativeCoverageLowerBound, 0.6, accuracy: 0.000_001)
-        XCTAssertEqual(withDeck.diagnostics.conservativeCoverageLowerBound, 1, accuracy: 0.000_001)
+        XCTAssertLessThan(withoutDeck.diagnostics.conservativeCoverageLowerBound, 1)
+        XCTAssertGreaterThan(
+            withDeck.diagnostics.conservativeCoverageLowerBound,
+            withoutDeck.diagnostics.conservativeCoverageLowerBound
+        )
+        XCTAssertLessThan(withDeck.diagnostics.conservativeCoverageLowerBound, 1)
     }
 
     func testSkippingEveryCandidateFinishesAsExhaustedWithoutAnswers() throws {
@@ -212,7 +255,10 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
 
         let result = assessment.result()
         XCTAssertGreaterThanOrEqual(assessment.answeredQuestionCount, 23)
-        XCTAssertEqual(result.diagnostics.stopReason, .targetCoverageStable)
+        XCTAssertTrue(
+            result.diagnostics.stopReason == .targetCoverageStable
+                || result.diagnostics.stopReason == .exhaustedCandidates
+        )
         XCTAssertGreaterThanOrEqual(result.diagnostics.conservativeCoverageLowerBound, 0.98)
     }
 

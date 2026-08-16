@@ -20,6 +20,12 @@ enum VocabularyPreparationDefinitionState: Equatable {
     case unavailable(String)
 }
 
+enum VocabularyAssessmentInteractionState: Equatable {
+    case awaitingAnswer
+    case pendingKnownVerification
+    case learningAfterAnswer
+}
+
 struct VocabularyPreparationInventoryPayload: Sendable {
     let inventory: DocumentVocabularyInventory
     let contexts: [String: String]
@@ -36,7 +42,7 @@ private final class VocabularyPreparationCancellationToken: @unchecked Sendable 
 
 private enum VocabularyAssessmentMutation: Sendable {
     case none
-    case score(VocabularyAssessmentOutcome, String)
+    case score(VocabularyKnowledgeEvidence, String, typedMeaning: String?)
     case exclude(String)
     case skipQuestion
 }
@@ -46,6 +52,7 @@ private struct VocabularyAssessmentAdvance: Sendable {
     let candidate: DocumentVocabularyCandidate?
     let result: VocabularyAssessmentResult?
     let durationMilliseconds: Double
+    let holdsAnsweredCandidate: Bool
 }
 
 @MainActor
@@ -71,6 +78,7 @@ final class VocabularyPreparationCoordinator {
     private(set) var inventory: DocumentVocabularyInventory?
     private(set) var currentCandidate: DocumentVocabularyCandidate?
     private(set) var definitionState: VocabularyPreparationDefinitionState = .hidden
+    private(set) var interactionState: VocabularyAssessmentInteractionState = .awaitingAnswer
     private(set) var results: VocabularyAssessmentResult?
     private(set) var alreadySavedKeys = Set<String>()
     var selectedKeys = Set<String>()
@@ -81,6 +89,8 @@ final class VocabularyPreparationCoordinator {
     var selectedLanguageCode = "auto"
     var phase: VocabularyPreparationPhase = .welcome
     var progressText = ""
+    var typedModeEnabled = false
+    var typedMeaningDraft = ""
 
     init(
         documentSource: any VocabularyPreparationDocumentSource,
@@ -103,16 +113,12 @@ final class VocabularyPreparationCoordinator {
         "\(answeredCount) / 80"
     }
 
-    var canScoreCurrentQuestion: Bool {
-        if case .available = definitionState { return true }
-        return false
-    }
-
     func resetForCurrentDocument() {
         cancel()
         inventory = nil
         currentCandidate = nil
         definitionState = .hidden
+        interactionState = .awaitingAnswer
         results = nil
         selectedKeys = []
         contexts = [:]
@@ -124,6 +130,7 @@ final class VocabularyPreparationCoordinator {
         sourceTexts = []
         phase = .welcome
         progressText = ""
+        typedMeaningDraft = ""
         guard let documentID = documentSource?.vocabularyPreparationIdentity?.documentID else {
             sessionStore = nil
             session = VocabularyPreparationSession()
@@ -204,11 +211,13 @@ final class VocabularyPreparationCoordinator {
         assessment = nil
         currentCandidate = nil
         definitionState = .hidden
+        interactionState = .awaitingAnswer
         results = nil
         selectedKeys = []
         definitions = [:]
         definitionFailures = [:]
         revealedDefinitionKey = nil
+        typedMeaningDraft = ""
         session.answers = []
         session.finalSelection = []
         session.algorithmVersion = VocabularyPreparationSession.currentAlgorithmVersion
@@ -231,6 +240,44 @@ final class VocabularyPreparationCoordinator {
         if definitionTask == nil { prefetchDefinition(for: candidate) }
     }
 
+    func chooseKnown() {
+        guard interactionState == .awaitingAnswer, currentCandidate != nil else { return }
+        interactionState = .pendingKnownVerification
+        revealCurrentQuestion()
+    }
+
+    func chooseReportedUnknown() {
+        recordEvidenceAndReveal(.reportedUnknown)
+    }
+
+    func chooseUnsure() {
+        recordEvidenceAndReveal(.unsure)
+    }
+
+    func verifyKnown(correct: Bool) {
+        guard interactionState == .pendingKnownVerification,
+              case .available = definitionState,
+              let key = currentCandidate?.canonicalKey else { return }
+        let typedMeaning = typedModeEnabled
+            ? typedMeaningDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+            : ""
+        let evidence: VocabularyKnowledgeEvidence
+        if correct {
+            evidence = typedMeaning.isEmpty ? .verifiedKnown : .typedVerifiedKnown
+        } else {
+            evidence = .verifiedUnknownOrPartial
+        }
+        advanceAssessment(
+            .score(evidence, key, typedMeaning: typedMeaning.isEmpty ? nil : typedMeaning),
+            persistAnswers: true
+        )
+    }
+
+    func continueAfterLearning() {
+        guard interactionState == .learningAfterAnswer else { return }
+        advanceAssessment(.none, persistAnswers: false)
+    }
+
     func retryDefinition() {
         guard let candidate = currentCandidate else { return }
         definitionFailures[candidate.canonicalKey] = nil
@@ -241,12 +288,17 @@ final class VocabularyPreparationCoordinator {
     }
 
     func skipDefinition() {
-        advanceAssessment(.skipQuestion, persistAnswers: false)
+        if interactionState == .learningAfterAnswer {
+            continueAfterLearning()
+        } else {
+            advanceAssessment(.skipQuestion, persistAnswers: false)
+        }
     }
 
-    func score(_ outcome: VocabularyAssessmentOutcome) {
-        guard outcome != .excluded, canScoreCurrentQuestion, let key = currentCandidate?.canonicalKey else { return }
-        advanceAssessment(.score(outcome, key), persistAnswers: true)
+    func score(_ evidence: VocabularyKnowledgeEvidence) {
+        guard evidence != .excluded, case .available = definitionState,
+              let key = currentCandidate?.canonicalKey else { return }
+        advanceAssessment(.score(evidence, key, typedMeaning: nil), persistAnswers: true)
     }
 
     func excludeCurrentCandidate() {
@@ -382,18 +434,36 @@ final class VocabularyPreparationCoordinator {
         ReaderPerformance.recordMainThreadWork(startedAt: mainWorkStartedAt)
     }
 
-    private func advanceAssessment(_ mutation: VocabularyAssessmentMutation, persistAnswers: Bool) {
+    private func recordEvidenceAndReveal(_ evidence: VocabularyKnowledgeEvidence) {
+        guard interactionState == .awaitingAnswer, let key = currentCandidate?.canonicalKey else { return }
+        advanceAssessment(
+            .score(evidence, key, typedMeaning: nil),
+            persistAnswers: true,
+            holdCurrent: true
+        )
+    }
+
+    private func advanceAssessment(
+        _ mutation: VocabularyAssessmentMutation,
+        persistAnswers: Bool,
+        holdCurrent: Bool = false
+    ) {
         guard let assessment else { return }
         definitionTask?.cancel()
         definitionTask = nil
         revealedDefinitionKey = nil
         phase = .analyzing
         progressText = AppText.localized("正在更新估计…", "Updating the estimate…")
+        let heldCandidate = holdCurrent ? currentCandidate : nil
         currentCandidate = nil
         definitionState = .hidden
         let activeRequestID = requestID
         Task.detached { [weak self] in
-            let advance = Self.advance(assessment, mutation: mutation)
+            let advance = Self.advance(
+                assessment,
+                mutation: mutation,
+                heldCandidate: heldCandidate
+            )
             await self?.apply(
                 advance: advance,
                 requestID: activeRequestID,
@@ -404,26 +474,37 @@ final class VocabularyPreparationCoordinator {
 
     nonisolated private static func advance(
         _ assessment: AdaptiveVocabularyAssessment,
-        mutation: VocabularyAssessmentMutation
+        mutation: VocabularyAssessmentMutation,
+        heldCandidate: DocumentVocabularyCandidate? = nil
     ) -> VocabularyAssessmentAdvance {
         let startedAt = ProcessInfo.processInfo.systemUptime
         var assessment = assessment
         switch mutation {
         case .none:
             break
-        case let .score(outcome, key):
-            assessment.record(outcome, for: key)
+        case let .score(evidence, key, typedMeaning):
+            assessment.record(evidence, for: key, typedMeaning: typedMeaning)
         case let .exclude(key):
             assessment.record(.excluded, for: key)
         case .skipQuestion:
             assessment.skipCurrentQuestion()
+        }
+        if let heldCandidate {
+            return VocabularyAssessmentAdvance(
+                assessment: assessment,
+                candidate: heldCandidate,
+                result: nil,
+                durationMilliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000,
+                holdsAnsweredCandidate: true
+            )
         }
         if assessment.isFinished {
             return VocabularyAssessmentAdvance(
                 assessment: assessment,
                 candidate: nil,
                 result: assessment.result(),
-                durationMilliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
+                durationMilliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000,
+                holdsAnsweredCandidate: false
             )
         }
         let candidate = assessment.nextQuestion()
@@ -431,7 +512,8 @@ final class VocabularyPreparationCoordinator {
             assessment: assessment,
             candidate: candidate,
             result: candidate == nil ? assessment.result() : nil,
-            durationMilliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
+            durationMilliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000,
+            holdsAnsweredCandidate: false
         )
     }
 
@@ -455,6 +537,13 @@ final class VocabularyPreparationCoordinator {
         phase = .assessment
         if let candidate = advance.candidate {
             prefetchDefinition(for: candidate)
+            if advance.holdsAnsweredCandidate {
+                interactionState = .learningAfterAnswer
+                revealCurrentQuestion()
+            } else {
+                interactionState = .awaitingAnswer
+                typedMeaningDraft = ""
+            }
         }
     }
 

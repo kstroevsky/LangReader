@@ -12,10 +12,43 @@ package enum VocabularyAssessmentMode: Codable, Equatable, Sendable {
     }
 }
 
-package enum VocabularyAssessmentOutcome: String, Codable, Equatable, Sendable {
-    case known
-    case unknown
+package enum VocabularyKnowledgeEvidence: String, Codable, Equatable, Sendable {
+    case verifiedKnown
+    case typedVerifiedKnown
+    case verifiedUnknownOrPartial
+    case reportedUnknown
+    case unsure
+    case legacyKnown
+    case legacyUnknown
     case excluded
+
+    package var reliability: Double? {
+        switch self {
+        case .verifiedKnown: 0.97
+        case .typedVerifiedKnown: 0.98
+        case .verifiedUnknownOrPartial: 0.98
+        case .reportedUnknown: 0.95
+        case .unsure: 0.75
+        case .legacyKnown: 0.75
+        case .legacyUnknown: 0.85
+        case .excluded: nil
+        }
+    }
+
+    package var supportsKnown: Bool {
+        switch self {
+        case .verifiedKnown, .typedVerifiedKnown, .legacyKnown: true
+        case .verifiedUnknownOrPartial, .reportedUnknown, .unsure, .legacyUnknown, .excluded: false
+        }
+    }
+
+    package var isVerifiedKnown: Bool {
+        self == .verifiedKnown || self == .typedVerifiedKnown
+    }
+
+    /// Source compatibility for call sites that do not need the richer protocol.
+    package static var known: Self { .verifiedKnown }
+    package static var unknown: Self { .reportedUnknown }
 }
 
 package struct DocumentVocabularyCandidate: Codable, Equatable, Identifiable, Sendable {
@@ -115,20 +148,79 @@ package struct DocumentVocabularyInventory: Codable, Equatable, Sendable {
 
 package struct VocabularyAssessmentAnswer: Codable, Equatable, Sendable {
     package let canonicalKey: String
-    package let outcome: VocabularyAssessmentOutcome
+    package let evidence: VocabularyKnowledgeEvidence
     package let wasValidation: Bool
     package let predictedKnown: Bool?
+    package let typedMeaning: String?
 
     package init(
         canonicalKey: String,
-        outcome: VocabularyAssessmentOutcome,
+        evidence: VocabularyKnowledgeEvidence,
+        wasValidation: Bool = false,
+        predictedKnown: Bool? = nil,
+        typedMeaning: String? = nil
+    ) {
+        self.canonicalKey = canonicalKey
+        self.evidence = evidence
+        self.wasValidation = wasValidation
+        self.predictedKnown = predictedKnown
+        self.typedMeaning = typedMeaning
+    }
+
+    package init(
+        canonicalKey: String,
+        outcome: VocabularyKnowledgeEvidence,
         wasValidation: Bool = false,
         predictedKnown: Bool? = nil
     ) {
-        self.canonicalKey = canonicalKey
-        self.outcome = outcome
-        self.wasValidation = wasValidation
-        self.predictedKnown = predictedKnown
+        self.init(
+            canonicalKey: canonicalKey,
+            evidence: outcome,
+            wasValidation: wasValidation,
+            predictedKnown: predictedKnown
+        )
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case canonicalKey
+        case evidence
+        case outcome
+        case wasValidation
+        case predictedKnown
+        case typedMeaning
+    }
+
+    package init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        canonicalKey = try container.decode(String.self, forKey: .canonicalKey)
+        wasValidation = try container.decodeIfPresent(Bool.self, forKey: .wasValidation) ?? false
+        predictedKnown = try container.decodeIfPresent(Bool.self, forKey: .predictedKnown)
+        typedMeaning = try container.decodeIfPresent(String.self, forKey: .typedMeaning)
+        if let decoded = try container.decodeIfPresent(VocabularyKnowledgeEvidence.self, forKey: .evidence) {
+            evidence = decoded
+        } else {
+            let legacy = try container.decode(String.self, forKey: .outcome)
+            switch legacy {
+            case "known": evidence = .legacyKnown
+            case "unknown": evidence = .legacyUnknown
+            case "excluded": evidence = .excluded
+            default:
+                throw DecodingError.dataCorruptedError(
+                    forKey: .outcome,
+                    in: container,
+                    debugDescription: "Unknown legacy vocabulary assessment outcome: \(legacy)"
+                )
+            }
+        }
+    }
+
+    package func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(canonicalKey, forKey: .canonicalKey)
+        try container.encode(evidence, forKey: .evidence)
+        try container.encode(wasValidation, forKey: .wasValidation)
+        try container.encodeIfPresent(predictedKnown, forKey: .predictedKnown)
+        try container.encodeIfPresent(typedMeaning, forKey: .typedMeaning)
     }
 }
 
@@ -141,7 +233,7 @@ package enum VocabularyPreparationInvitationState: String, Codable, Equatable, S
 }
 
 package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
-    package static let currentAlgorithmVersion = 2
+    package static let currentAlgorithmVersion = 3
 
     package var mode: VocabularyAssessmentMode
     package var invitationState: VocabularyPreparationInvitationState
@@ -165,11 +257,12 @@ package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
 }
 
 package enum VocabularyAssessmentClassification: String, Codable, Equatable, Sendable {
-    case confirmedKnown
-    case confirmedUnknown
-    case probablyKnown
+    case verifiedKnown
+    case reportedUnknown
+    case notSure
+    case estimatedKnown
     case uncertain
-    case probablyUnknown
+    case estimatedUnknown
     case excluded
 }
 
@@ -260,15 +353,7 @@ package struct VocabularyAssessmentResult: Codable, Equatable, Sendable {
         guard total > 0 else { return 1 }
         var variance = 0.0
         let known = included.reduce(0.0) { partial, item in
-            let probability: Double
-            if item.isSelected || item.classification == .confirmedKnown {
-                probability = 1
-            } else if item.classification == .confirmedUnknown {
-                probability = 0
-            } else {
-                probability = epsilon
-                    + (1 - 2 * epsilon) / (1 + exp(-(theta - item.candidate.difficulty)))
-            }
+            let probability = item.isSelected ? 1 : item.knownProbability
             let weight = Double(item.candidate.occurrenceCount)
             variance += weight * weight * probability * (1 - probability)
             return partial + weight * probability
@@ -299,6 +384,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     private var posterior: [Double]
     private var answerByKey: [String: VocabularyAssessmentAnswer]
     private var answeredCandidateIndexes: Set<Int>
+    private var answeredProbabilities: [String: Double]
     private var currentProbabilities: [Double]
     private var pendingQuestion: PendingQuestion?
     private var skippedQuestionKeys = Set<String>()
@@ -328,6 +414,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         posterior = Self.normalPrior()
         answerByKey = [:]
         answeredCandidateIndexes = []
+        answeredProbabilities = [:]
         currentProbabilities = []
         currentProbabilities = probabilities(for: posterior)
         for answer in restoredAnswers where candidateIndexByKey[answer.canonicalKey] != nil {
@@ -337,7 +424,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     }
 
     package var answeredQuestionCount: Int {
-        answers.lazy.filter { $0.outcome != .excluded }.count
+        answers.lazy.filter { $0.evidence != .excluded }.count
     }
 
     package var isFinished: Bool {
@@ -406,15 +493,20 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         return selected.0
     }
 
-    package mutating func record(_ outcome: VocabularyAssessmentOutcome, for canonicalKey: String) {
+    package mutating func record(
+        _ evidence: VocabularyKnowledgeEvidence,
+        for canonicalKey: String,
+        typedMeaning: String? = nil
+    ) {
         guard candidateIndexByKey[canonicalKey] != nil, answerByKey[canonicalKey] == nil else { return }
         cachedBestQuestion = nil
         let pending = pendingQuestion?.key == canonicalKey ? pendingQuestion : nil
         let answer = VocabularyAssessmentAnswer(
             canonicalKey: canonicalKey,
-            outcome: outcome,
+            evidence: evidence,
             wasValidation: pending?.validationPrediction != nil,
-            predictedKnown: pending?.validationPrediction
+            predictedKnown: pending?.validationPrediction,
+            typedMeaning: typedMeaning
         )
         apply(answer)
         pendingQuestion = nil
@@ -434,11 +526,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     package func knownProbability(for canonicalKey: String) -> Double? {
         guard let index = candidateIndexByKey[canonicalKey] else { return nil }
         if let answer = answerByKey[canonicalKey] {
-            switch answer.outcome {
-            case .known: return 1
-            case .unknown: return 0
-            case .excluded: return nil
-            }
+            return answer.evidence == .excluded ? nil : answeredProbabilities[canonicalKey]
         }
         return currentProbabilities[index]
     }
@@ -461,14 +549,19 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             let answer = answerByKey[candidate.canonicalKey]
             let probability = knownProbability(for: candidate.canonicalKey) ?? 0
             let classification: VocabularyAssessmentClassification
-            switch answer?.outcome {
-            case .known: classification = .confirmedKnown
-            case .unknown: classification = .confirmedUnknown
+            switch answer?.evidence {
+            case .verifiedKnown, .typedVerifiedKnown: classification = .verifiedKnown
+            case .verifiedUnknownOrPartial, .reportedUnknown, .legacyUnknown: classification = .reportedUnknown
+            case .unsure: classification = .notSure
+            case .legacyKnown:
+                if probability >= 0.85 { classification = .estimatedKnown }
+                else if probability <= 0.15 { classification = .estimatedUnknown }
+                else { classification = .uncertain }
             case .excluded: classification = .excluded
             case nil:
-                if probability < 0.35 { classification = .probablyUnknown }
-                else if probability <= 0.65 { classification = .uncertain }
-                else { classification = .probablyKnown }
+                if probability >= 0.85 { classification = .estimatedKnown }
+                else if probability <= 0.15 { classification = .estimatedUnknown }
+                else { classification = .uncertain }
             }
             if classification != .excluded {
                 let weight = Double(candidate.occurrenceCount)
@@ -545,20 +638,25 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         if let index = candidateIndexByKey[answer.canonicalKey] {
             answeredCandidateIndexes.insert(index)
         }
-        guard answer.outcome != .excluded,
+        guard answer.evidence != .excluded,
               candidateIndexByKey[answer.canonicalKey] != nil else { return }
 
         if let predictedKnown = answer.predictedKnown {
-            let contradicted = (predictedKnown && answer.outcome == .unknown)
-                || (!predictedKnown && answer.outcome == .known)
-            let validations = answers.filter { $0.predictedKnown != nil && $0.outcome != .excluded }
-            let contradictions = validations.filter {
-                ($0.predictedKnown == true && $0.outcome == .unknown)
-                    || ($0.predictedKnown == false && $0.outcome == .known)
-            }.count
-            let smoothedRate = Double(contradictions + 1) / Double(validations.count + 20)
+            let contradiction = Self.contradictionAmount(
+                evidence: answer.evidence,
+                predictedKnown: predictedKnown
+            )
+            let validations = answers.filter { $0.predictedKnown != nil && $0.evidence != .excluded }
+            let contradictions = validations.reduce(0.0) { partial, validation in
+                guard let prediction = validation.predictedKnown else { return partial }
+                return partial + Self.contradictionAmount(
+                    evidence: validation.evidence,
+                    predictedKnown: prediction
+                )
+            }
+            let smoothedRate = (contradictions + 1) / Double(validations.count + 20)
             errorFloor = min(0.25, max(0.05, smoothedRate))
-            if contradicted && answeredQuestionCount >= 20 {
+            if contradiction > 0 && answeredQuestionCount >= 20 {
                 lowValueStreak = 0
                 stableCoverageDeckStreak = 0
                 suppressStoppingUpdateOnce = true
@@ -570,16 +668,20 @@ package struct AdaptiveVocabularyAssessment: Sendable {
 
     private mutating func rebuildPosterior() {
         posterior = Self.normalPrior()
-        for answer in answers where answer.outcome != .excluded {
+        for answer in answers where answer.evidence != .excluded {
             guard let candidateIndex = candidateIndexByKey[answer.canonicalKey] else { continue }
-            let expectedKnown = answer.outcome == .known
             for index in posterior.indices {
                 let p = Self.adjustedProbability(responseCurves[candidateIndex][index], epsilon: errorFloor)
-                posterior[index] *= expectedKnown ? p : (1 - p)
+                posterior[index] *= Self.evidenceLikelihood(
+                    knownProbability: p,
+                    evidence: answer.evidence,
+                    errorFloor: errorFloor
+                )
             }
             Self.normalize(&posterior)
         }
         currentProbabilities = probabilities(for: posterior)
+        rebuildAnsweredProbabilities()
     }
 
     private mutating func refreshStoppingState() {
@@ -607,7 +709,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
 
     private func proposedSelection() -> Set<String> {
         let eligible = inventory.candidates.filter { candidate in
-            answerByKey[candidate.canonicalKey]?.outcome != .excluded
+            answerByKey[candidate.canonicalKey]?.evidence != .excluded
         }
         let probabilities = Dictionary(uniqueKeysWithValues: eligible.compactMap { candidate -> (String, Double)? in
             knownProbability(for: candidate.canonicalKey).map { (candidate.canonicalKey, $0) }
@@ -619,23 +721,9 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 return probability < 0.5 ? candidate.canonicalKey : nil
             })
         case let .targetCoverage(target):
-            let lowerTheta = posteriorQuantile(0.05)
             let conservativeProbabilities = Dictionary(uniqueKeysWithValues: eligible.map { candidate in
                 let probability: Double
-                switch answerByKey[candidate.canonicalKey]?.outcome {
-                case .known:
-                    probability = 1
-                case .unknown:
-                    probability = 0
-                case .excluded:
-                    probability = 0
-                case nil:
-                    probability = Self.itemProbability(
-                        theta: lowerTheta,
-                        difficulty: candidate.difficulty,
-                        epsilon: errorFloor
-                    )
-                }
+                probability = knownProbability(for: candidate.canonicalKey) ?? 0
                 return (candidate.canonicalKey, probability)
             })
             let total = Double(eligible.reduce(0) { $0 + $1.occurrenceCount })
@@ -684,10 +772,10 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         let known = included.reduce(0.0) { partial, candidate in
             let answer = answerByKey[candidate.canonicalKey]
             let p: Double
-            if selection.contains(candidate.canonicalKey) || answer?.outcome == .known {
+            if selection.contains(candidate.canonicalKey) {
                 p = 1
-            } else if answer?.outcome == .unknown {
-                p = 0
+            } else if answer != nil {
+                p = knownProbability(for: candidate.canonicalKey) ?? 0
             } else {
                 p = Self.itemProbability(theta: lowerTheta, difficulty: candidate.difficulty, epsilon: errorFloor)
             }
@@ -782,7 +870,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         inventory.candidates.enumerated().reduce(0.0) { partial, pair in
             let (index, candidate) = pair
             guard candidate.canonicalKey != excludedKey,
-                  !answeredCandidateIndexes.contains(index) else { return partial }
+                  answerByKey[candidate.canonicalKey]?.evidence != .excluded else { return partial }
             let p = probability(candidateIndex: index, posterior: posterior, epsilon: errorFloor)
             let weight: Double = mode == .allUnknown ? 1 : Double(candidate.occurrenceCount)
             return partial + weight * min(p, 1 - p)
@@ -794,7 +882,11 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         var result = posterior
         for index in result.indices {
             let p = Self.adjustedProbability(responseCurves[candidateIndex][index], epsilon: errorFloor)
-            result[index] *= known ? p : (1 - p)
+            result[index] *= Self.evidenceLikelihood(
+                knownProbability: p,
+                evidence: known ? .verifiedKnown : .reportedUnknown,
+                errorFloor: errorFloor
+            )
         }
         Self.normalize(&result)
         return result
@@ -840,6 +932,70 @@ package struct AdaptiveVocabularyAssessment: Sendable {
 
     private static func adjustedProbability(_ baseProbability: Double, epsilon: Double) -> Double {
         epsilon + (1 - 2 * epsilon) * baseProbability
+    }
+
+    private mutating func rebuildAnsweredProbabilities() {
+        answeredProbabilities.removeAll(keepingCapacity: true)
+        for answer in answers where answer.evidence != .excluded {
+            guard let candidateIndex = candidateIndexByKey[answer.canonicalKey] else { continue }
+            var leaveOneOut = posterior
+            for thetaIndex in leaveOneOut.indices {
+                let probability = Self.adjustedProbability(
+                    responseCurves[candidateIndex][thetaIndex],
+                    epsilon: errorFloor
+                )
+                let likelihood = Self.evidenceLikelihood(
+                    knownProbability: probability,
+                    evidence: answer.evidence,
+                    errorFloor: errorFloor
+                )
+                leaveOneOut[thetaIndex] /= max(likelihood, Double.leastNormalMagnitude)
+            }
+            Self.normalize(&leaveOneOut)
+            let prior = probability(candidateIndex: candidateIndex, posterior: leaveOneOut, epsilon: errorFloor)
+            answeredProbabilities[answer.canonicalKey] = Self.posteriorKnownProbability(
+                prior: prior,
+                evidence: answer.evidence,
+                errorFloor: errorFloor
+            )
+        }
+    }
+
+    private static func evidenceLikelihood(
+        knownProbability: Double,
+        evidence: VocabularyKnowledgeEvidence,
+        errorFloor: Double
+    ) -> Double {
+        guard let reliability = evidence.reliability else { return 1 }
+        let effectiveReliability = min(reliability, 1 - errorFloor)
+        if evidence.supportsKnown {
+            return effectiveReliability * knownProbability
+                + (1 - effectiveReliability) * (1 - knownProbability)
+        }
+        return effectiveReliability * (1 - knownProbability)
+            + (1 - effectiveReliability) * knownProbability
+    }
+
+    private static func posteriorKnownProbability(
+        prior: Double,
+        evidence: VocabularyKnowledgeEvidence,
+        errorFloor: Double
+    ) -> Double {
+        guard let reliability = evidence.reliability else { return prior }
+        let effectiveReliability = min(reliability, 1 - errorFloor)
+        let knownJoint = prior * (evidence.supportsKnown ? effectiveReliability : 1 - effectiveReliability)
+        let unknownJoint = (1 - prior) * (evidence.supportsKnown ? 1 - effectiveReliability : effectiveReliability)
+        let total = knownJoint + unknownJoint
+        return total > 0 ? knownJoint / total : prior
+    }
+
+    private static func contradictionAmount(
+        evidence: VocabularyKnowledgeEvidence,
+        predictedKnown: Bool
+    ) -> Double {
+        guard evidence != .excluded else { return 0 }
+        if evidence == .unsure { return 0.5 }
+        return evidence.supportsKnown == predictedKnown ? 0 : 1
     }
 
     private static func normalPrior() -> [Double] {
