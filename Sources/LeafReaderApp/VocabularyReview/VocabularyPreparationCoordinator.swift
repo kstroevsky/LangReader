@@ -394,10 +394,8 @@ final class VocabularyPreparationCoordinator {
             let inventory = DocumentVocabularyInventory(
                 summaries: summaries,
                 languageCode: snapshot.language.rawValue,
-                maximumFrequencyRank: difficultyProvider.frequencyScale.maximumRank
-            ) { summary in
-                difficultyProvider.bestRank(for: summary)
-            }
+                difficultyProvider: difficultyProvider
+            )
             guard !cancellationToken.isCancelled else { return }
             let contexts = Dictionary(uniqueKeysWithValues: inventory.candidates.map { candidate in
                 (candidate.canonicalKey, Self.context(for: candidate.representativeRange, texts: snapshot.texts))

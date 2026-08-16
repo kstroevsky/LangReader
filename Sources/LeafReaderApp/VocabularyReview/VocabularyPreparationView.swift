@@ -262,8 +262,8 @@ struct VocabularyPreparationView: View {
                     result.diagnostics.conservativeCoverageLowerBound * 100
                 )
                 Text(AppText.localized(
-                    "已回答 \(result.answeredQuestionCount) 题 · \(stopReasonText(result.diagnostics.stopReason)) · 剩余不确定度 \(uncertainty) · 预计覆盖率 \(coverage)%（保守值 \(lowerCoverage)%）",
-                    "\(result.answeredQuestionCount) answered · \(stopReasonText(result.diagnostics.stopReason)) · residual uncertainty \(uncertainty) · expected coverage \(coverage)% (conservative \(lowerCoverage)%)"
+                    "已回答 \(result.answeredQuestionCount) 题 · \(stopReasonText(result.diagnostics.stopReason)) · 剩余不确定度 \(uncertainty) · 预计覆盖率 \(coverage)%（后验预测第 5 百分位 \(lowerCoverage)%）",
+                    "\(result.answeredQuestionCount) answered · \(stopReasonText(result.diagnostics.stopReason)) · residual uncertainty \(uncertainty) · expected coverage \(coverage)% (posterior-predictive 5th percentile \(lowerCoverage)%)"
                 ))
                 .font(.headline)
                 ScrollView {

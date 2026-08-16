@@ -9,6 +9,36 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         XCTAssertEqual(DocumentVocabularyInventory.difficulty(forRank: 200_000, maximumRank: 200_000), 4)
     }
 
+    func testFrequencyDifficultyPriorCarriesRankDependentUncertainty() {
+        let scale = VocabularyFrequencyScale(sourceID: "fixture", version: "v1", maximumRank: 200_000)
+        let common = VocabularyItemDifficultyPrior.frequencyRank(1, scale: scale)
+        let rare = VocabularyItemDifficultyPrior.frequencyRank(190_000, scale: scale)
+        let missing = VocabularyItemDifficultyPrior.frequencyRank(nil, scale: scale)
+
+        XCTAssertEqual(common.source, .rankedFrequency)
+        XCTAssertEqual(common.standardDeviation, 0.350_04, accuracy: 0.000_01)
+        XCTAssertGreaterThan(rare.standardDeviation, common.standardDeviation)
+        XCTAssertEqual(missing.mean, 4)
+        XCTAssertEqual(missing.standardDeviation, 1.5)
+        XCTAssertEqual(missing.source, .unrankedFrequency)
+    }
+
+    func testPosteriorPredictiveCoverageIsDeterministicForInventoryIdentity() {
+        let inventory = inventory(count: 5)
+        let first = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .targetCoverage(0.98)
+        ).result()
+        let second = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .targetCoverage(0.98)
+        ).result()
+
+        XCTAssertEqual(first.diagnostics.conservativeCoverageLowerBound, second.diagnostics.conservativeCoverageLowerBound)
+        XCTAssertEqual(first.items.map(\.predictiveKnownMask), second.items.map(\.predictiveKnownMask))
+        XCTAssertEqual(first.items.map(\.isSelected), second.items.map(\.isSelected))
+    }
+
     func testFirstEightQuestionsSpanAvailableDifficultyOctilesDeterministically() throws {
         var assessment = AdaptiveVocabularyAssessment(
             inventory: inventory(count: 80),
@@ -77,7 +107,7 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         )
 
         let selected = assessment.result().items.filter(\.isSelected).map(\.id)
-        XCTAssertEqual(selected, ["frequent", "rare-a"])
+        XCTAssertEqual(selected, ["frequent"])
         XCTAssertGreaterThanOrEqual(assessment.result().expectedCoverageAfterSelection, 0.80)
     }
 
@@ -349,6 +379,24 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
 
         XCTAssertTrue(reachesTarget(selected))
         XCTAssertEqual(selected.count, oracleMinimum)
+    }
+
+    func testLargeCoverageDeckDeletionPassIsLocallyMinimal() {
+        let assessment = AdaptiveVocabularyAssessment(
+            inventory: inventory(count: 20),
+            mode: .targetCoverage(0.98)
+        )
+        let result = assessment.result()
+        let selected = Set(result.items.filter(\.isSelected).map(\.id))
+
+        XCTAssertGreaterThanOrEqual(result.diagnostics.conservativeCoverageLowerBound, 0.98)
+        for key in selected {
+            XCTAssertLessThan(
+                result.applyingSelection(selected.subtracting([key]))
+                    .diagnostics.conservativeCoverageLowerBound,
+                0.98
+            )
+        }
     }
 
     private func inventory(count: Int) -> DocumentVocabularyInventory {

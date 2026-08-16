@@ -107,9 +107,77 @@ package struct VocabularyFrequencyScale: Codable, Equatable, Sendable {
     }
 }
 
+package enum VocabularyItemDifficultySource: String, Codable, Equatable, Sendable {
+    case rankedFrequency
+    case unrankedFrequency
+    case empiricalCalibration
+    case syntheticFixture
+}
+
+package struct VocabularyItemDifficultyPrior: Codable, Equatable, Sendable {
+    package let mean: Double
+    package let standardDeviation: Double
+    package let source: VocabularyItemDifficultySource
+    package let version: String
+
+    package init(
+        mean: Double,
+        standardDeviation: Double,
+        source: VocabularyItemDifficultySource,
+        version: String
+    ) {
+        self.mean = min(max(mean, -6), 6)
+        self.standardDeviation = min(max(standardDeviation, 0), 3)
+        self.source = source
+        self.version = version
+    }
+
+    package static func frequencyRank(
+        _ rank: Int?,
+        scale: VocabularyFrequencyScale
+    ) -> VocabularyItemDifficultyPrior {
+        guard let rank, rank > 0, scale.maximumRank > 0 else {
+            return VocabularyItemDifficultyPrior(
+                mean: 4,
+                standardDeviation: 1.5,
+                source: .unrankedFrequency,
+                version: scale.version
+            )
+        }
+        let percentile = min(max(Double(rank) / Double(scale.maximumRank), 0.0001), 0.9999)
+        let mean = min(max(log(percentile / (1 - percentile)), -4), 4)
+        return VocabularyItemDifficultyPrior(
+            mean: mean,
+            standardDeviation: 0.35 + 0.40 * percentile,
+            source: .rankedFrequency,
+            version: scale.version
+        )
+    }
+
+    package static func empirical(
+        mean: Double,
+        standardError: Double,
+        version: String
+    ) -> VocabularyItemDifficultyPrior {
+        VocabularyItemDifficultyPrior(
+            mean: mean,
+            standardDeviation: max(0.15, standardError),
+            source: .empiricalCalibration,
+            version: version
+        )
+    }
+}
+
 package protocol DocumentVocabularyDifficultyProviding: Sendable {
     var frequencyScale: VocabularyFrequencyScale { get }
     func bestRank(for summary: VocabularyDocumentLemmaSummary) -> Int?
+    func difficultyPrior(for summary: VocabularyDocumentLemmaSummary) -> VocabularyItemDifficultyPrior
+}
+
+package extension DocumentVocabularyDifficultyProviding {
+    func difficultyPrior(for summary: VocabularyDocumentLemmaSummary) -> VocabularyItemDifficultyPrior {
+        VocabularyItemDifficultyPrior.frequencyRank(bestRank(for: summary), scale: frequencyScale)
+    }
 }
 
 package struct ECDICTDocumentVocabularyDifficultyProvider: DocumentVocabularyDifficultyProviding {
