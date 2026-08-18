@@ -155,6 +155,7 @@ package struct DocumentVocabularyCandidate: Codable, Equatable, Identifiable, Se
 
 package struct DocumentVocabularyInventory: Codable, Equatable, Sendable {
     package let languageCode: String
+    package let documentDomain: VocabularyDocumentDomain
     package let candidates: [DocumentVocabularyCandidate]
     package let excludedCount: Int
 
@@ -188,11 +189,18 @@ package struct DocumentVocabularyInventory: Codable, Equatable, Sendable {
             )
         }.sorted(by: Self.inventoryOrder)
         self.languageCode = languageCode
+        documentDomain = .general
         excludedCount = summaries.count - valid.count
     }
 
-    package init(languageCode: String, candidates: [DocumentVocabularyCandidate], excludedCount: Int = 0) {
+    package init(
+        languageCode: String,
+        candidates: [DocumentVocabularyCandidate],
+        excludedCount: Int = 0,
+        documentDomain: VocabularyDocumentDomain = .general
+    ) {
         self.languageCode = languageCode
+        self.documentDomain = documentDomain
         self.candidates = candidates.sorted(by: Self.inventoryOrder)
         self.excludedCount = excludedCount
     }
@@ -219,6 +227,7 @@ package struct DocumentVocabularyInventory: Codable, Equatable, Sendable {
             )
         }.sorted(by: Self.inventoryOrder)
         self.languageCode = languageCode
+        documentDomain = .general
         excludedCount = summaries.count - valid.count
     }
 
@@ -349,6 +358,7 @@ package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
     package var algorithmVersion: Int
     package var readerPriorContributionRecorded: Bool?
     package var readerPriorContributionID: String?
+    package var documentDomain: VocabularyDocumentDomain?
 
     package init(
         mode: VocabularyAssessmentMode = .allUnknown,
@@ -357,7 +367,8 @@ package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
         finalSelection: Set<String> = [],
         algorithmVersion: Int = currentAlgorithmVersion,
         readerPriorContributionRecorded: Bool? = nil,
-        readerPriorContributionID: String? = nil
+        readerPriorContributionID: String? = nil,
+        documentDomain: VocabularyDocumentDomain? = nil
     ) {
         self.mode = mode
         self.invitationState = invitationState
@@ -366,6 +377,7 @@ package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
         self.algorithmVersion = algorithmVersion
         self.readerPriorContributionRecorded = readerPriorContributionRecorded
         self.readerPriorContributionID = readerPriorContributionID
+        self.documentDomain = documentDomain
     }
 }
 

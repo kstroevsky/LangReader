@@ -66,6 +66,9 @@ struct VocabularyPreparationView: View {
             .frame(maxWidth: 600)
             languagePicker
             modePicker
+            if coordinator.experimentalDomainsEnabled {
+                domainPicker
+            }
             Button(AppText.localized("分析文档", "Analyze Document")) {
                 coordinator.startAnalysis()
             }
@@ -95,6 +98,9 @@ struct VocabularyPreparationView: View {
                 Spacer()
                 languagePicker
                 modePicker
+                if coordinator.experimentalDomainsEnabled {
+                    domainPicker
+                }
                 Button(AppText.localized("开始测试", "Start Assessment")) {
                     coordinator.beginAssessment()
                 }
@@ -366,6 +372,28 @@ struct VocabularyPreparationView: View {
             Text("Deutsch").tag("de")
         }
         .frame(width: 150)
+    }
+
+    private var domainPicker: some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            Picker(
+                AppText.localized("实验领域", "Experimental domain"),
+                selection: Binding(
+                    get: { coordinator.selectedDocumentDomain },
+                    set: { coordinator.selectDocumentDomain($0) }
+                )
+            ) {
+                Text(AppText.localized("通用", "General")).tag(VocabularyDocumentDomain.general)
+                Text(AppText.localized("文学", "Literary")).tag(VocabularyDocumentDomain.literary)
+                Text(AppText.localized("新闻", "News")).tag(VocabularyDocumentDomain.news)
+                Text(AppText.localized("技术/参考", "Technical/reference"))
+                    .tag(VocabularyDocumentDomain.technicalReference)
+            }
+            .frame(width: 190)
+            Text(AppText.localized("仅记录元数据；不改变生产难度", "Metadata only; production difficulty unchanged"))
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
     }
 
     private func error(_ message: String) -> some View {

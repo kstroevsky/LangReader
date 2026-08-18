@@ -28,6 +28,7 @@ enum VocabularyAssessmentInteractionState: Equatable {
 
 struct VocabularyPreparationInventoryPayload: Sendable {
     let inventory: DocumentVocabularyInventory
+    let domainDetection: VocabularyDocumentDomainDetection?
     let contexts: [String: String]
     let sourceTexts: [String]
     let readerPrior: VocabularyReaderPrior?
@@ -84,6 +85,7 @@ final class VocabularyPreparationCoordinator {
     private(set) var interactionState: VocabularyAssessmentInteractionState = .awaitingAnswer
     private(set) var results: VocabularyAssessmentResult?
     private(set) var alreadySavedKeys = Set<String>()
+    private(set) var domainDetection: VocabularyDocumentDomainDetection?
     var selectedKeys = Set<String>()
     var mode: VocabularyAssessmentMode = .allUnknown
     /// "auto", "en", or "de". The explicit choices support mixed-language
@@ -94,6 +96,14 @@ final class VocabularyPreparationCoordinator {
     var progressText = ""
     var typedModeEnabled = false
     var typedMeaningDraft = ""
+
+    var experimentalDomainsEnabled: Bool {
+        UserDefaults.standard.bool(forKey: "LeafReader.experimentalVocabularyDomains")
+    }
+
+    var selectedDocumentDomain: VocabularyDocumentDomain {
+        session.documentDomain ?? domainDetection?.suggestedDomain ?? .general
+    }
 
     init(
         documentSource: any VocabularyPreparationDocumentSource,
@@ -134,6 +144,7 @@ final class VocabularyPreparationCoordinator {
         activeDocumentKind = nil
         sourceTexts = []
         readerPrior = nil
+        domainDetection = nil
         phase = .welcome
         progressText = ""
         typedMeaningDraft = ""
@@ -146,6 +157,19 @@ final class VocabularyPreparationCoordinator {
         sessionStore = store
         session = store.load() ?? VocabularyPreparationSession()
         mode = session.mode
+    }
+
+    func selectDocumentDomain(_ domain: VocabularyDocumentDomain) {
+        guard experimentalDomainsEnabled else { return }
+        session.documentDomain = domain
+        sessionStore?.save(session)
+        guard let inventory else { return }
+        self.inventory = DocumentVocabularyInventory(
+            languageCode: inventory.languageCode,
+            candidates: inventory.candidates,
+            excludedCount: inventory.excludedCount,
+            documentDomain: domain
+        )
     }
 
     func startAnalysis() {
@@ -399,6 +423,9 @@ final class VocabularyPreparationCoordinator {
         cancellationToken: VocabularyPreparationCancellationToken,
         analysisStartedAt: TimeInterval
     ) {
+        let domainsEnabled = experimentalDomainsEnabled
+        let restoredDomain = session.documentDomain
+        let priorStore = readerPriorStore
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard !cancellationToken.isCancelled else { return }
             let summaries = snapshot.index.lemmaSummaries()
@@ -410,15 +437,34 @@ final class VocabularyPreparationCoordinator {
                 languageCode: snapshot.language.rawValue,
                 difficultyProvider: difficultyProvider
             )
+            let domainDetection: VocabularyDocumentDomainDetection?
+            if domainsEnabled {
+                domainDetection = VocabularyDocumentDomainResources.detector.detect(
+                    summaries: summaries,
+                    languageCode: snapshot.language.rawValue
+                )
+            } else {
+                domainDetection = nil
+            }
+            let selectedDomain = restoredDomain
+                ?? domainDetection?.suggestedDomain
+                ?? .general
+            let domainInventory = DocumentVocabularyInventory(
+                languageCode: inventory.languageCode,
+                candidates: inventory.candidates,
+                excludedCount: inventory.excludedCount,
+                documentDomain: selectedDomain
+            )
             guard !cancellationToken.isCancelled else { return }
-            let contexts = Dictionary(uniqueKeysWithValues: inventory.candidates.map { candidate in
+            let contexts = Dictionary(uniqueKeysWithValues: domainInventory.candidates.map { candidate in
                 (candidate.canonicalKey, Self.context(for: candidate.representativeRange, texts: snapshot.texts))
             })
             let payload = VocabularyPreparationInventoryPayload(
-                inventory: inventory,
+                inventory: domainInventory,
+                domainDetection: domainDetection,
                 contexts: contexts,
                 sourceTexts: snapshot.texts,
-                readerPrior: self?.readerPriorStore.load(languageCode: snapshot.language.rawValue)
+                readerPrior: priorStore.load(languageCode: snapshot.language.rawValue)
             )
             Task { @MainActor [weak self] in
                 guard let self,
@@ -435,6 +481,7 @@ final class VocabularyPreparationCoordinator {
     private func apply(payload: VocabularyPreparationInventoryPayload, durationMilliseconds: Double) {
         let mainWorkStartedAt = ProcessInfo.processInfo.systemUptime
         inventory = payload.inventory
+        domainDetection = payload.domainDetection
         contexts = payload.contexts
         sourceTexts = payload.sourceTexts
         readerPrior = payload.readerPrior
