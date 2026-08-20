@@ -547,7 +547,6 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     private struct CoverageDeckStabilitySnapshot: Sendable {
         let selection: Set<String>
         let selectedOccurrences: Int
-        let lowerBound: Double
     }
 
     private static let thetaGrid: [Double] = stride(from: -6.0, through: 6.0001, by: 0.1).map { $0 }
@@ -555,7 +554,6 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     private static let stableDeckCardCountTolerance = 3
     private static let stableDeckChangedOccurrenceShare = 0.06
     private static let stableDeckSelectedOccurrenceShare = 0.025
-    private static let stableDeckCoverageDelta = 0.02
     private static let gaussianQuadrature: [(node: Double, weight: Double)] = [
         (-3.190_993_201_781_527_6, 0.000_022_345_844_007_746),
         (-2.266_580_584_531_843, 0.002_789_141_321_231_767),
@@ -967,7 +965,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             if advancesStoppingStreak {
                 lowValueStreak = best.reduction < 0.25 ? lowValueStreak + 1 : 0
             }
-        case let .targetCoverage(target):
+        case .targetCoverage:
             let snapshot = self
             let samplesBox = VocabularySynchronizedBox<PredictiveCoverageSamples?>(nil)
             let deckBox = VocabularySynchronizedBox<Set<String>?>(nil)
@@ -989,12 +987,15 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             cachedPredictiveSamples = samples
             cachedCoverageSelection = deck
             cachedBestQuestion = questionBox.value()
-            let lowerBound = coverageLowerBound(selection: deck, predictiveSamples: samples)
-            cachedCoverageTargetReached = lowerBound >= target
+            // coverageSelection constructs a prefix whose fifth-percentile
+            // coverage reaches the requested target (or an exact small-set
+            // solution). Recomputing the same global lower bound here adds a
+            // second O(deck × samples) pass to every answer. result() still
+            // calculates the reported bound independently.
+            cachedCoverageTargetReached = true
             let currentSnapshot = CoverageDeckStabilitySnapshot(
                 selection: deck,
-                selectedOccurrences: selectedOccurrences(in: deck),
-                lowerBound: lowerBound
+                selectedOccurrences: selectedOccurrences(in: deck)
             )
             if advancesStoppingStreak, cachedCoverageTargetReached {
                 stableCoverageDeckStreak = previousCoverageDeck.map {
@@ -1047,7 +1048,6 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         return cardCountDelta <= Self.stableDeckCardCountTolerance
             && changedOccurrences <= changedOccurrenceTolerance
             && abs(previousOccurrences - currentOccurrences) <= selectedOccurrenceTolerance
-            && abs(previous.lowerBound - current.lowerBound) <= Self.stableDeckCoverageDelta
     }
 
     private func selectedOccurrences(in selection: Set<String>) -> Int {

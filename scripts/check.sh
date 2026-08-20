@@ -59,6 +59,9 @@ python3 ./scripts/fit_vocabulary_calibration.py --self-test
 echo "==> Testing vocabulary domain resource builders"
 bash ./scripts/test_vocabulary_domain_resource_builders.sh
 
+echo "==> Testing vocabulary benchmark series summarizer"
+python3 ./scripts/summarize_vocabulary_assessment_benchmarks.py --self-test
+
 if [[ "$RUN_BUILD" -eq 1 ]]; then
   echo "==> Building docs site"
   DOCS_SITE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/leafreader-docs-check.XXXXXX")"

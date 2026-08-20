@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="${LEAFREADER_VOCABULARY_BENCHMARK_BUILD_DIR:-$ROOT_DIR/.build/vocabulary-assessment-benchmark}"
 EXECUTABLE="$BUILD_DIR/benchmark-vocabulary-assessment"
+CORE_LIBRARY="$BUILD_DIR/libLeafReaderCore.a"
 OUTPUT_PATH="${1:-$ROOT_DIR/docs/perf/vocabulary-assessment-benchmark.json}"
 mkdir -p "$BUILD_DIR"
 
@@ -16,12 +17,16 @@ fi
 export LEAFREADER_BENCHMARK_SOURCE_REVISION="$SOURCE_REVISION"
 export LEAFREADER_BENCHMARK_SWIFT_VERSION="$(swift --version 2>&1 | head -1)"
 
-if [[ ! -x "$EXECUTABLE" ]] || find \
+if [[ ! -f "$CORE_LIBRARY" ]] || find \
   "$ROOT_DIR/Sources/LeafReaderCore" \
-  "$ROOT_DIR/scripts/benchmark_vocabulary_assessment.swift" \
   "$ROOT_DIR/scripts/build_core_module.sh" \
-  -type f -newer "$EXECUTABLE" -print -quit | grep -q .; then
+  -type f -newer "$CORE_LIBRARY" -print -quit | grep -q .; then
   "$ROOT_DIR/scripts/build_core_module.sh" "$BUILD_DIR" -O >/dev/null
+fi
+
+if [[ ! -x "$EXECUTABLE" ]] \
+  || [[ "$ROOT_DIR/scripts/benchmark_vocabulary_assessment.swift" -nt "$EXECUTABLE" ]] \
+  || [[ "$CORE_LIBRARY" -nt "$EXECUTABLE" ]]; then
   swiftc \
     -O \
     -parse-as-library \

@@ -9,12 +9,21 @@ private struct BenchmarkCase: Codable {
     let p50MS: Double
     let p95MS: Double
     let maxMS: Double
+    let profile: String
+}
+
+private struct AuxiliaryBenchmark: Codable {
+    let name: String
+    let samplesMS: [Double]
+    let p50MS: Double
+    let p95MS: Double
 }
 
 private struct BenchmarkReport: Codable {
     let schemaVersion: Int
     let metadata: [String: String]
     let cases: [BenchmarkCase]
+    let auxiliary: [AuxiliaryBenchmark]
     let gatePassed: Bool
 }
 
@@ -45,7 +54,13 @@ private func candidate(index: Int, count: Int) -> DocumentVocabularyCandidate {
     )
 }
 
-private func run(lemmaCount: Int, mode: VocabularyAssessmentMode, modeName: String) -> BenchmarkCase {
+private func run(
+    lemmaCount: Int,
+    mode: VocabularyAssessmentMode,
+    modeName: String,
+    readerPrior: VocabularyReaderPrior? = nil,
+    profile: String = "cold"
+) -> BenchmarkCase {
     let inventory = DocumentVocabularyInventory(
         languageCode: "en",
         candidates: (0..<lemmaCount).map { candidate(index: $0, count: lemmaCount) }
@@ -55,7 +70,11 @@ private func run(lemmaCount: Int, mode: VocabularyAssessmentMode, modeName: Stri
     var samples: [Double] = []
     var discarded = 0
     while samples.count < requestedSamples {
-        var assessment = AdaptiveVocabularyAssessment(inventory: inventory, mode: mode)
+        var assessment = AdaptiveVocabularyAssessment(inventory: inventory, mode: mode, readerPrior: readerPrior)
+        precondition(
+            assessment.usedEligibleReaderPrior == (readerPrior != nil),
+            "benchmark did not execute the requested reader-prior path"
+        )
         while !assessment.isFinished, let question = assessment.nextQuestion(), samples.count < requestedSamples {
             let known = question.difficulty < Double((assessment.answeredQuestionCount % 5) - 2) * 0.35
             let started = ProcessInfo.processInfo.systemUptime
@@ -77,7 +96,24 @@ private func run(lemmaCount: Int, mode: VocabularyAssessmentMode, modeName: Stri
         samplesMS: samples,
         p50MS: percentile(sorted, 0.50),
         p95MS: percentile(sorted, 0.95),
-        maxMS: sorted.last ?? 0
+        maxMS: sorted.last ?? 0,
+        profile: profile
+    )
+}
+
+private func measure(name: String, warmups: Int = 2, samples: Int = 10, body: () -> Void) -> AuxiliaryBenchmark {
+    for _ in 0..<warmups { body() }
+    let values = (0..<samples).map { _ -> Double in
+        let started = ProcessInfo.processInfo.systemUptime
+        body()
+        return (ProcessInfo.processInfo.systemUptime - started) * 1_000
+    }
+    let sorted = values.sorted()
+    return AuxiliaryBenchmark(
+        name: name,
+        samplesMS: values,
+        p50MS: percentile(sorted, 0.50),
+        p95MS: percentile(sorted, 0.95)
     )
 }
 
@@ -92,7 +128,60 @@ private struct VocabularyAssessmentBenchmark {
                 run(lemmaCount: lemmaCount, mode: .targetCoverage(0.98), modeName: "coverage-98")
             ]
         }
-        let largest = cases.filter { $0.lemmaCount == 10_000 }
+        let thetaGrid = (0...120).map { -6.0 + Double($0) * 0.1 }
+        let storedPosterior = thetaGrid.map { exp(-pow($0 - 0.5, 2) / (2 * 0.35 * 0.35)) }
+        let warmPrior = VocabularyReaderPrior(
+            languageCode: "en",
+            thetaPosterior: storedPosterior,
+            completedSessionCount: 3,
+            verifiedEvidenceCount: 80,
+            lastUpdatedAt: Date(),
+            algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion
+        )
+        let warmCase = run(
+            lemmaCount: 10_000,
+            mode: .targetCoverage(0.98),
+            modeName: "coverage-98",
+            readerPrior: warmPrior,
+            profile: "warm"
+        )
+        let allCases = cases + [warmCase]
+        let legacyJSON = """
+        {"mode":{"allUnknown":{}},"invitationState":"started","answers":[{"canonicalKey":"word","outcome":"known","wasValidation":false}],"finalSelection":[],"algorithmVersion":2}
+        """.data(using: .utf8)!
+        let exportRecords = (0..<5_000).map { index in
+            VocabularyResearchEvidenceRecord(
+                languageCode: "en",
+                lexicalItemID: VocabularyLexicalItemID(language: "en", lemma: "word-\(index)", partOfSpeech: .noun),
+                documentDomain: .general,
+                difficultyMean: 0,
+                difficultyStandardDeviation: 0.5,
+                difficultySource: .rankedFrequency,
+                difficultyVersion: "benchmark",
+                evidence: .verifiedKnown,
+                protocolVersion: 3,
+                sessionOrdinal: 1
+            )
+        }
+        let researchExport = VocabularyResearchExport(
+            participant: VocabularyResearchProfile(participantPseudonym: "benchmark"),
+            records: exportRecords
+        )
+        let auxiliary = [
+            measure(name: "session-migration") {
+                _ = try? JSONDecoder().decode(VocabularyPreparationSession.self, from: legacyJSON)
+            },
+            measure(name: "research-export-5000") {
+                _ = try? researchExport.encoded(prettyPrinted: false)
+            },
+            measure(name: "pos-indexing-10000-tokens", samples: 5) {
+                _ = VocabularyDocumentLemmaIndex(
+                    texts: [Array(repeating: "Readers develop useful vocabulary while reading books.", count: 1_667).joined(separator: " ")],
+                    language: .english
+                )
+            }
+        ]
+        let largest = allCases.filter { $0.lemmaCount == 10_000 }
         let passed = largest.allSatisfy { $0.p95MS <= 150 }
         let environment = ProcessInfo.processInfo.environment
         let report = BenchmarkReport(
@@ -104,13 +193,14 @@ private struct VocabularyAssessmentBenchmark {
                 "os_version": ProcessInfo.processInfo.operatingSystemVersionString,
                 "processor_count": String(ProcessInfo.processInfo.processorCount)
             ],
-            cases: cases,
+            cases: allCases,
+            auxiliary: auxiliary,
             gatePassed: passed
         )
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         try encoder.encode(report).write(to: URL(fileURLWithPath: outputPath), options: .atomic)
-        for item in cases {
+        for item in allCases {
             print(String(
                 format: "%6d %@ p50=%8.3fms p95=%8.3fms max=%8.3fms",
                 item.lemmaCount,
@@ -119,6 +209,9 @@ private struct VocabularyAssessmentBenchmark {
                 item.p95MS,
                 item.maxMS
             ))
+        }
+        for item in auxiliary {
+            print(String(format: "%@ p50=%8.3fms p95=%8.3fms", item.name, item.p50MS, item.p95MS))
         }
         if !passed {
             fputs("10,000-lemma answer-to-next-card p95 exceeds 150ms\n", stderr)
