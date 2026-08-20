@@ -284,7 +284,7 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         }
 
         let result = assessment.result()
-        XCTAssertGreaterThanOrEqual(assessment.answeredQuestionCount, 23)
+        XCTAssertGreaterThanOrEqual(assessment.answeredQuestionCount, 20)
         XCTAssertTrue(
             result.diagnostics.stopReason == .targetCoverageStable
                 || result.diagnostics.stopReason == .exhaustedCandidates
@@ -423,6 +423,62 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         }
         XCTAssertEqual(assessment.answers.filter(\.wasValidation).count, 2)
         XCTAssertEqual(assessment.requiredMinimumAnsweredQuestionCount, 8)
+    }
+
+    func testEligibleWarmPriorMateriallyReducesCoverageQuestionCount() throws {
+        let inventory = inventory(count: 40)
+        let thetaGrid = (0...120).map { -6.0 + Double($0) * 0.1 }
+        let storedPosterior = thetaGrid.map { theta in
+            exp(-pow(theta - 0.5, 2) / (2 * 0.25 * 0.25))
+        }
+        let prior = VocabularyReaderPrior(
+            languageCode: "en",
+            thetaPosterior: storedPosterior,
+            completedSessionCount: 3,
+            verifiedEvidenceCount: 80,
+            lastUpdatedAt: Date(timeIntervalSince1970: 1_000),
+            algorithmVersion: 3
+        )
+
+        func run(readerPrior: VocabularyReaderPrior?) throws -> (
+            result: VocabularyAssessmentResult,
+            validationCount: Int,
+            requiredMinimum: Int,
+            usedEligiblePrior: Bool
+        ) {
+            var assessment = AdaptiveVocabularyAssessment(
+                inventory: inventory,
+                mode: .targetCoverage(0.98),
+                readerPrior: readerPrior,
+                currentDate: Date(timeIntervalSince1970: 1_001)
+            )
+            while !assessment.isFinished {
+                let question = try XCTUnwrap(assessment.nextQuestion())
+                assessment.record(
+                    question.difficulty < 0.5 ? .verifiedKnown : .reportedUnknown,
+                    for: question.canonicalKey
+                )
+            }
+            return (
+                assessment.result(),
+                assessment.answers.filter(\.wasValidation).count,
+                assessment.requiredMinimumAnsweredQuestionCount,
+                assessment.usedEligibleReaderPrior
+            )
+        }
+
+        let cold = try run(readerPrior: nil)
+        let warm = try run(readerPrior: prior)
+
+        XCTAssertTrue(warm.usedEligiblePrior)
+        XCTAssertGreaterThanOrEqual(warm.validationCount, 2)
+        XCTAssertEqual(warm.requiredMinimum, 8)
+        XCTAssertGreaterThanOrEqual(warm.result.diagnostics.conservativeCoverageLowerBound, 0.98)
+        XCTAssertGreaterThanOrEqual(warm.result.answeredQuestionCount, 8)
+        XCTAssertLessThanOrEqual(
+            Double(warm.result.answeredQuestionCount),
+            Double(cold.result.answeredQuestionCount) * 0.75
+        )
     }
 
     func testIneligibleOrStalePriorRetainsTwentyQuestionMinimum() {

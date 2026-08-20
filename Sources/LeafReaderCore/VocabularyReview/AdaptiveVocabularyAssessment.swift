@@ -544,8 +544,18 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         let baselineTotals: [Int]
     }
 
+    private struct CoverageDeckStabilitySnapshot: Sendable {
+        let selection: Set<String>
+        let selectedOccurrences: Int
+        let lowerBound: Double
+    }
+
     private static let thetaGrid: [Double] = stride(from: -6.0, through: 6.0001, by: 0.1).map { $0 }
     package static let predictiveSampleCount = 512
+    private static let stableDeckCardCountTolerance = 3
+    private static let stableDeckChangedOccurrenceShare = 0.06
+    private static let stableDeckSelectedOccurrenceShare = 0.025
+    private static let stableDeckCoverageDelta = 0.02
     private static let gaussianQuadrature: [(node: Double, weight: Double)] = [
         (-3.190_993_201_781_527_6, 0.000_022_345_844_007_746),
         (-2.266_580_584_531_843, 0.002_789_141_321_231_767),
@@ -576,7 +586,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     private var skippedQuestionKeys = Set<String>()
     private var lowValueStreak = 0
     private var stableCoverageDeckStreak = 0
-    private var previousCoverageDeck: Set<String>?
+    private var previousCoverageDeck: CoverageDeckStabilitySnapshot?
     private var suppressStoppingUpdateOnce = false
     private var cachedBestQuestion: BestQuestionCache?
     private var cachedPredictiveSamples: PredictiveCoverageSamples?
@@ -741,7 +751,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         )
         apply(answer)
         pendingQuestion = nil
-        refreshStoppingState()
+        refreshStoppingState(afterAnsweredKey: evidence == .excluded ? nil : canonicalKey)
     }
 
     package var thetaPosteriorSnapshot: [Double] { posterior }
@@ -938,23 +948,24 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         rebuildAnsweredProbabilities()
     }
 
-    private mutating func refreshStoppingState() {
+    private mutating func refreshStoppingState(afterAnsweredKey answeredKey: String? = nil) {
         cachedBestQuestion = nil
-        if suppressStoppingUpdateOnce {
-            suppressStoppingUpdateOnce = false
-            return
-        }
+        let stoppingUpdateWasSuppressed = suppressStoppingUpdateOnce
+        suppressStoppingUpdateOnce = false
+        let advancesStoppingStreak = answeredKey != nil && !stoppingUpdateWasSuppressed
         let remaining = answerableCandidates
         let minimumAnswerCount = min(minimumQuestionCount, answeredQuestionCount + remaining.count)
         guard answeredQuestionCount < 80,
-              answeredQuestionCount >= minimumAnswerCount,
+              (usesEligibleReaderPrior || answeredQuestionCount >= minimumAnswerCount),
               !remaining.isEmpty else { return }
         switch mode {
         case .allUnknown:
             let best = bestQuestion(from: shortlist(from: remaining))
             cachedBestQuestion = BestQuestionCache(key: best.candidate.canonicalKey, reduction: best.reduction)
-            lowValueStreak = best.reduction < 0.25 ? lowValueStreak + 1 : 0
-        case .targetCoverage:
+            if advancesStoppingStreak {
+                lowValueStreak = best.reduction < 0.25 ? lowValueStreak + 1 : 0
+            }
+        case let .targetCoverage(target):
             let snapshot = self
             let samplesBox = VocabularySynchronizedBox<PredictiveCoverageSamples?>(nil)
             let deckBox = VocabularySynchronizedBox<Set<String>?>(nil)
@@ -976,9 +987,71 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             cachedPredictiveSamples = samples
             cachedCoverageSelection = deck
             cachedBestQuestion = questionBox.value()
-            cachedCoverageTargetReached = true
-            stableCoverageDeckStreak = previousCoverageDeck == deck ? stableCoverageDeckStreak + 1 : 0
-            previousCoverageDeck = deck
+            let lowerBound = coverageLowerBound(selection: deck, predictiveSamples: samples)
+            cachedCoverageTargetReached = lowerBound >= target
+            let currentSnapshot = CoverageDeckStabilitySnapshot(
+                selection: deck,
+                selectedOccurrences: selectedOccurrences(in: deck),
+                lowerBound: lowerBound
+            )
+            if advancesStoppingStreak, cachedCoverageTargetReached {
+                stableCoverageDeckStreak = previousCoverageDeck.map {
+                    let isStable = usesEligibleReaderPrior
+                        ? coverageDeckIsMateriallyStable(
+                            previous: $0,
+                            current: currentSnapshot,
+                            normalizing: answeredKey,
+                            totalOccurrences: samples.totalOccurrences
+                        )
+                        : $0.selection == currentSnapshot.selection
+                    return isStable ? stableCoverageDeckStreak + 1 : 0
+                } ?? 0
+            } else if advancesStoppingStreak {
+                stableCoverageDeckStreak = 0
+            }
+            previousCoverageDeck = currentSnapshot
+        }
+    }
+
+    private func coverageDeckIsMateriallyStable(
+        previous: CoverageDeckStabilitySnapshot,
+        current: CoverageDeckStabilitySnapshot,
+        normalizing answeredKey: String?,
+        totalOccurrences: Int
+    ) -> Bool {
+        guard cachedCoverageTargetReached else { return false }
+        let previousKeys = answeredKey.map { previous.selection.subtracting([$0]) } ?? previous.selection
+        let currentKeys = answeredKey.map { current.selection.subtracting([$0]) } ?? current.selection
+        let cardCountDelta = abs(previousKeys.count - currentKeys.count)
+        let changedOccurrences = previousKeys.symmetricDifference(currentKeys).reduce(0) { partial, key in
+            guard let index = candidateIndexByKey[key] else { return partial }
+            return partial + inventory.candidates[index].occurrenceCount
+        }
+        let changedOccurrenceTolerance = max(
+            1,
+            Int(ceil(Double(totalOccurrences) * Self.stableDeckChangedOccurrenceShare))
+        )
+        let selectedOccurrenceTolerance = max(
+            1,
+            Int(ceil(Double(totalOccurrences) * Self.stableDeckSelectedOccurrenceShare))
+        )
+        let answeredOccurrences = answeredKey.flatMap { candidateIndexByKey[$0] }.map {
+            inventory.candidates[$0].occurrenceCount
+        } ?? 0
+        let previousOccurrences = previous.selectedOccurrences
+            - (answeredKey.map(previous.selection.contains) == true ? answeredOccurrences : 0)
+        let currentOccurrences = current.selectedOccurrences
+            - (answeredKey.map(current.selection.contains) == true ? answeredOccurrences : 0)
+        return cardCountDelta <= Self.stableDeckCardCountTolerance
+            && changedOccurrences <= changedOccurrenceTolerance
+            && abs(previousOccurrences - currentOccurrences) <= selectedOccurrenceTolerance
+            && abs(previous.lowerBound - current.lowerBound) <= Self.stableDeckCoverageDelta
+    }
+
+    private func selectedOccurrences(in selection: Set<String>) -> Int {
+        selection.reduce(0) { partial, key in
+            guard let index = candidateIndexByKey[key] else { return partial }
+            return partial + inventory.candidates[index].occurrenceCount
         }
     }
 
