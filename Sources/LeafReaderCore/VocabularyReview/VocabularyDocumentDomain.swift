@@ -212,7 +212,7 @@ package enum VocabularyDocumentDomainResources {
             source: "Google Books English Fiction one-grams",
             sourceVersion: "20200217",
             sourceChecksum: "md5:d4b8b7b0654313359da3eef00c48aafd",
-            derivedChecksum: "pending",
+            derivedChecksum: "sha256:ab4b82e15194ac77db1beeac806c829c6aad08871202882065c9180883315b88",
             attribution: "Google Books Ngram Viewer, CC BY 3.0"
         ),
         VocabularyDomainResourceMetadata(
@@ -221,8 +221,8 @@ package enum VocabularyDocumentDomainResources {
             domain: .literary,
             source: "Google Books German one-grams",
             sourceVersion: "20200217",
-            sourceChecksum: "md5:66e38f0b…64463f4b (8 pinned shards)",
-            derivedChecksum: "pending",
+            sourceChecksum: "sha256:3a55a2dff3e47faaac9c415741426365caf5f4facb807de06bb533515b34998f",
+            derivedChecksum: "sha256:bf2538cc2bc6952fd8a68bf51d54993b43bcdf3e83b2bf55a0ea882680d3db40",
             attribution: "Google Books Ngram Viewer, CC BY 3.0"
         ),
         VocabularyDomainResourceMetadata(
