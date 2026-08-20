@@ -24,7 +24,15 @@ private struct Configuration: Codable {
     let seed: UInt64
     let readersPerScenario: Int
     let lemmaCount: Int
+    let documentsPerScenario: Int
     let algorithmVersion: Int
+    let populationParameters: PopulationParameters
+}
+
+private struct PopulationParameters: Codable {
+    let itemResidualStandardDeviation: Double
+    let responseNoiseRate: Double
+    let idiosyncraticFlipRate: Double
 }
 
 private struct Metrics: Codable {
@@ -50,6 +58,23 @@ private struct QualityGates: Codable {
     let wellSpecifiedECE: Double
     let thetaInterval90Coverage: Double
     let coverage98HitRate: Double
+    let itemResidualCoverageHitRate: Double
+    let responseNoiseCoverageHitRate: Double
+    let idiosyncraticCoverageHitRate: Double
+    let minimumDeckPrecision: Double
+    let warmStartQuestionReduction: Double
+    let warmStartCoverageHitDelta: Double
+}
+
+private struct ProtocolDiagnostics: Codable {
+    let responseProtocol: String
+    let difficultyUncertaintyEnabled: Bool
+    let partOfSpeechAmbiguityShare: Double
+    let coldMeanQuestionCount: Double
+    let warmMeanQuestionCount: Double
+    let warmStartQuestionReduction: Double
+    let coldCoverageHitRate: Double
+    let warmCoverageHitRate: Double
 }
 
 private struct EvaluationReport: Codable {
@@ -57,6 +82,7 @@ private struct EvaluationReport: Codable {
     let configuration: Configuration
     let results: [Metrics]
     let qualityGates: QualityGates
+    let protocolDiagnostics: ProtocolDiagnostics
 }
 
 private struct Accumulator {
@@ -97,6 +123,11 @@ private struct Accumulator {
             stopReasons: stopReasons
         )
     }
+}
+
+private struct SyntheticDocument {
+    let inventory: DocumentVocabularyInventory
+    let actualDifficulties: [String: Double]
 }
 
 private struct SeededGenerator: RandomNumberGenerator {
@@ -150,9 +181,13 @@ private func sigmoid(_ value: Double) -> Double {
 
 private func candidate(index: Int, difficulty: Double, occurrenceCount: Int) -> DocumentVocabularyCandidate {
     let key = String(format: "word-%05d", index)
+    let partOfSpeech: VocabularyPartOfSpeech = index % 10 == 0 ? .unknown : (index.isMultiple(of: 2) ? .noun : .verb)
+    let lexical = VocabularyLexicalItemID(language: "en", lemma: key, partOfSpeech: partOfSpeech)
     return DocumentVocabularyCandidate(
-        canonicalKey: key,
+        canonicalKey: lexical.canonicalKey,
         displayLemma: key,
+        lexicalItemID: lexical,
+        partOfSpeech: partOfSpeech,
         observedForms: [VocabularyDocumentObservedForm(surface: key, occurrenceCount: occurrenceCount)],
         occurrenceCount: occurrenceCount,
         representativeRange: VocabularyDocumentSourceRange(
@@ -161,7 +196,12 @@ private func candidate(index: Int, difficulty: Double, occurrenceCount: Int) -> 
             utf16Length: key.utf16.count
         ),
         generalFrequencyRank: nil,
-        difficulty: difficulty
+        difficultyPrior: VocabularyItemDifficultyPrior(
+            mean: difficulty,
+            standardDeviation: 0.35 + 0.4 * Double(index % 100) / 100,
+            source: .rankedFrequency,
+            version: "synthetic-uncertain-v3"
+        )
     )
 }
 
@@ -180,12 +220,37 @@ private func makeInventory(count: Int, generator: inout SeededGenerator) -> Docu
 private func actualDifficulties(
     inventory: DocumentVocabularyInventory,
     scenario: Scenario,
+    parameters: PopulationParameters,
     generator: inout SeededGenerator
 ) -> [String: Double] {
     Dictionary(uniqueKeysWithValues: inventory.candidates.map { item in
-        let residual = scenario == .itemResidual ? generator.normal() * 0.8 : 0
+        let priorResidual = generator.normal() * item.difficultyPrior.standardDeviation
+        let residual = priorResidual + (
+            scenario == .itemResidual
+                ? generator.normal() * parameters.itemResidualStandardDeviation
+                : 0
+        )
         return (item.canonicalKey, min(max(item.difficulty + residual, -6), 6))
     })
+}
+
+private func simulatedEvidence(
+    truthKnown: Bool,
+    scenario: Scenario,
+    parameters: PopulationParameters,
+    generator: inout SeededGenerator
+) -> VocabularyKnowledgeEvidence {
+    let draw = generator.unit()
+    if truthKnown {
+        let wrong = scenario == .responseNoise ? parameters.responseNoiseRate : 0.03
+        if draw < wrong { return .verifiedUnknownOrPartial }
+        if draw < wrong + 0.03 { return .unsure }
+        return .verifiedKnown
+    }
+    let wrong = scenario == .responseNoise ? parameters.responseNoiseRate : 0.02
+    if draw < wrong { return .verifiedKnown }
+    if draw < wrong + 0.04 { return .unsure }
+    return .reportedUnknown
 }
 
 private func simulateTruth(
@@ -193,13 +258,15 @@ private func simulateTruth(
     inventory: DocumentVocabularyInventory,
     actualDifficulties: [String: Double],
     scenario: Scenario,
+    parameters: PopulationParameters,
     generator: inout SeededGenerator
 ) -> [String: Bool] {
     Dictionary(uniqueKeysWithValues: inventory.candidates.map { item in
         let difficulty = actualDifficulties[item.canonicalKey] ?? item.difficulty
         let probability = 0.05 + 0.9 * sigmoid(theta - difficulty)
         var known = generator.unit() < probability
-        if scenario == .idiosyncraticKnowledge, generator.unit() < 0.12 {
+        if scenario == .idiosyncraticKnowledge,
+           generator.unit() < parameters.idiosyncraticFlipRate {
             known.toggle()
         }
         return (item.canonicalKey, known)
@@ -234,26 +301,47 @@ private func simulate(
     mode: ModeName,
     readerCount: Int,
     lemmaCount: Int,
+    documentCount: Int,
+    parameters: PopulationParameters,
     generator: inout SeededGenerator
 ) -> Metrics {
-    let inventory = makeInventory(count: lemmaCount, generator: &generator)
-    let actualItems = actualDifficulties(inventory: inventory, scenario: scenario, generator: &generator)
+    let documents = (0..<min(documentCount, readerCount)).map { _ -> SyntheticDocument in
+        let inventory = makeInventory(count: lemmaCount, generator: &generator)
+        return SyntheticDocument(
+            inventory: inventory,
+            actualDifficulties: actualDifficulties(
+                inventory: inventory,
+                scenario: scenario,
+                parameters: parameters,
+                generator: &generator
+            )
+        )
+    }
     var aggregate = Accumulator()
 
-    for _ in 0..<readerCount {
+    for readerIndex in 0..<readerCount {
+        let document = documents[readerIndex % documents.count]
+        let inventory = document.inventory
         let theta = min(max(generator.normal() * 1.6, -5.5), 5.5)
         let truth = simulateTruth(
             theta: theta,
             inventory: inventory,
-            actualDifficulties: actualItems,
+            actualDifficulties: document.actualDifficulties,
             scenario: scenario,
+            parameters: parameters,
             generator: &generator
         )
         var assessment = AdaptiveVocabularyAssessment(inventory: inventory, mode: mode.assessmentMode)
         while !assessment.isFinished, let question = assessment.nextQuestion() {
-            var response = truth[question.canonicalKey] == true
-            if scenario == .responseNoise, generator.unit() < 0.12 { response.toggle() }
-            assessment.record(response ? .known : .unknown, for: question.canonicalKey)
+            assessment.record(
+                simulatedEvidence(
+                    truthKnown: truth[question.canonicalKey] == true,
+                    scenario: scenario,
+                    parameters: parameters,
+                    generator: &generator
+                ),
+                for: question.canonicalKey
+            )
         }
 
         let result = assessment.result()
@@ -288,10 +376,109 @@ private func simulate(
     return aggregate.metrics(scenario: scenario, mode: mode)
 }
 
+private func warmStartDiagnostics(
+    readerCount: Int,
+    lemmaCount: Int,
+    documentCount: Int,
+    parameters: PopulationParameters,
+    generator: inout SeededGenerator
+) -> ProtocolDiagnostics {
+    let diagnosticReaderCount = readerCount
+    let documents = (0..<min(documentCount, diagnosticReaderCount)).map { _ -> SyntheticDocument in
+        let inventory = makeInventory(count: lemmaCount, generator: &generator)
+        return SyntheticDocument(
+            inventory: inventory,
+            actualDifficulties: actualDifficulties(
+                inventory: inventory,
+                scenario: .wellSpecified,
+                parameters: parameters,
+                generator: &generator
+            )
+        )
+    }
+    var coldCounts: [Double] = []
+    var warmCounts: [Double] = []
+    var coldHits: [Double] = []
+    var warmHits: [Double] = []
+    for readerIndex in 0..<diagnosticReaderCount {
+        let document = documents[readerIndex % documents.count]
+        let inventory = document.inventory
+        let theta = min(max(generator.normal() * 1.6, -5.5), 5.5)
+        let truth = simulateTruth(
+            theta: theta,
+            inventory: inventory,
+            actualDifficulties: document.actualDifficulties,
+            scenario: .wellSpecified,
+            parameters: parameters,
+            generator: &generator
+        )
+        func run(prior: VocabularyReaderPrior?) -> (Int, Double) {
+            var assessment = AdaptiveVocabularyAssessment(inventory: inventory, mode: .targetCoverage(0.98), readerPrior: prior)
+            precondition(
+                assessment.usedEligibleReaderPrior == (prior != nil),
+                "warm-start diagnostic did not execute the requested prior path"
+            )
+            while !assessment.isFinished, let question = assessment.nextQuestion() {
+                assessment.record(
+                    truth[question.canonicalKey] == true ? .verifiedKnown : .reportedUnknown,
+                    for: question.canonicalKey
+                )
+            }
+            let result = assessment.result()
+            if prior != nil {
+                precondition(
+                    assessment.answers.filter(\.wasValidation).count >= 2,
+                    "warm-start diagnostic did not complete two current tail validations"
+                )
+            }
+            let selected = Set(result.items.filter(\.isSelected).map(\.id))
+            let total = Double(inventory.candidates.reduce(0) { $0 + $1.occurrenceCount })
+            let covered = Double(inventory.candidates.reduce(0) { partial, item in
+                partial + ((truth[item.canonicalKey] == true || selected.contains(item.canonicalKey)) ? item.occurrenceCount : 0)
+            })
+            return (result.answeredQuestionCount, total > 0 ? covered / total : 1)
+        }
+        let cold = run(prior: nil)
+        let grid = (0...120).map { -6.0 + Double($0) * 0.1 }
+        let posterior = grid.map { exp(-pow($0 - theta, 2) / (2 * 0.25 * 0.25)) }
+        let prior = VocabularyReaderPrior(
+            languageCode: "en",
+            thetaPosterior: posterior,
+            completedSessionCount: 3,
+            verifiedEvidenceCount: 80,
+            lastUpdatedAt: Date(),
+            algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion
+        )
+        let warm = run(prior: prior)
+        coldCounts.append(Double(cold.0))
+        warmCounts.append(Double(warm.0))
+        coldHits.append(cold.1 >= 0.98 ? 1 : 0)
+        warmHits.append(warm.1 >= 0.98 ? 1 : 0)
+    }
+    let coldCount = mean(coldCounts)
+    let warmCount = mean(warmCounts)
+    let coldHit = mean(coldHits)
+    let warmHit = mean(warmHits)
+    return ProtocolDiagnostics(
+        responseProtocol: "answer-before-reveal-verified-v3",
+        difficultyUncertaintyEnabled: true,
+        partOfSpeechAmbiguityShare: 0.10,
+        coldMeanQuestionCount: coldCount,
+        warmMeanQuestionCount: warmCount,
+        warmStartQuestionReduction: coldCount > 0 ? 1 - warmCount / coldCount : 0,
+        coldCoverageHitRate: coldHit,
+        warmCoverageHitRate: warmHit
+    )
+}
+
 private struct Arguments {
     var seed: UInt64 = 20_260_815
     var readers = 64
     var lemmas = 400
+    var documents = 8
+    var itemResidualStandardDeviation = 0.8
+    var responseNoiseRate = 0.12
+    var idiosyncraticFlipRate = 0.12
     var jsonPath = "vocabulary-assessment-quality.json"
     var markdownPath = "vocabulary-assessment-quality.md"
     var enforceGates = true
@@ -303,6 +490,13 @@ private struct Arguments {
             case "--seed": seed = iterator.next().flatMap(UInt64.init) ?? seed
             case "--readers": readers = iterator.next().flatMap(Int.init) ?? readers
             case "--lemmas": lemmas = iterator.next().flatMap(Int.init) ?? lemmas
+            case "--documents": documents = iterator.next().flatMap(Int.init) ?? documents
+            case "--item-residual-sd":
+                itemResidualStandardDeviation = iterator.next().flatMap(Double.init) ?? itemResidualStandardDeviation
+            case "--response-noise-rate":
+                responseNoiseRate = iterator.next().flatMap(Double.init) ?? responseNoiseRate
+            case "--idiosyncratic-flip-rate":
+                idiosyncraticFlipRate = iterator.next().flatMap(Double.init) ?? idiosyncraticFlipRate
             case "--json": jsonPath = iterator.next() ?? jsonPath
             case "--markdown": markdownPath = iterator.next() ?? markdownPath
             case "--no-gate": enforceGates = false
@@ -311,18 +505,34 @@ private struct Arguments {
                 exit(2)
             }
         }
-        guard readers > 0, lemmas >= 20 else {
-            fputs("readers must be positive and lemmas must be at least 20\n", stderr)
+        guard readers > 0, lemmas >= 20, documents > 0 else {
+            fputs("readers/documents must be positive and lemmas must be at least 20\n", stderr)
+            exit(2)
+        }
+        guard itemResidualStandardDeviation >= 0,
+              (0...0.40).contains(responseNoiseRate),
+              (0...0.40).contains(idiosyncraticFlipRate) else {
+            fputs("population parameters must be nonnegative and rates must be within 0...0.40\n", stderr)
             exit(2)
         }
     }
+
+    var populationParameters: PopulationParameters {
+        PopulationParameters(
+            itemResidualStandardDeviation: itemResidualStandardDeviation,
+            responseNoiseRate: responseNoiseRate,
+            idiosyncraticFlipRate: idiosyncraticFlipRate
+        )
+    }
+
+    var effectiveDocumentCount: Int { min(documents, readers) }
 }
 
 private func markdown(for report: EvaluationReport) -> String {
     var lines = [
         "# Vocabulary assessment synthetic evaluation",
         "",
-        "Seed: `\(report.configuration.seed)`; readers/scenario: \(report.configuration.readersPerScenario); lemmas: \(report.configuration.lemmaCount).",
+        "Seed: `\(report.configuration.seed)`; readers/scenario: \(report.configuration.readersPerScenario); documents/scenario: \(report.configuration.documentsPerScenario); lemmas/document: \(report.configuration.lemmaCount).",
         "",
         "These are synthetic cold-start diagnostics, not evidence of calibration on real learners.",
         "",
@@ -365,27 +575,55 @@ private struct VocabularyAssessmentEvaluator {
                     mode: mode,
                     readerCount: arguments.readers,
                     lemmaCount: arguments.lemmas,
+                    documentCount: arguments.effectiveDocumentCount,
+                    parameters: arguments.populationParameters,
                     generator: &generator
                 ))
             }
         }
+        let protocolDiagnostics = warmStartDiagnostics(
+            readerCount: arguments.readers,
+            lemmaCount: arguments.lemmas,
+            documentCount: arguments.effectiveDocumentCount,
+            parameters: arguments.populationParameters,
+            generator: &generator
+        )
         let wellSpecified = results.filter { $0.scenario == Scenario.wellSpecified.rawValue }
         let wellECE = mean(wellSpecified.map(\.expectedCalibrationError))
         let intervalCoverage = mean(wellSpecified.map(\.thetaInterval90Coverage))
         let coverageHitRate = 1 - (results.first {
             $0.scenario == Scenario.wellSpecified.rawValue && $0.mode == ModeName.coverage98.rawValue
         }?.targetMissRate ?? 1)
-        let eligible = arguments.readers >= 50 && arguments.lemmas >= 200
+        func coverageHit(_ scenario: Scenario) -> Double {
+            1 - (results.first {
+                $0.scenario == scenario.rawValue && $0.mode == ModeName.coverage98.rawValue
+            }?.targetMissRate ?? 1)
+        }
+        let itemResidualHit = coverageHit(.itemResidual)
+        let responseNoiseHit = coverageHit(.responseNoise)
+        let idiosyncraticHit = coverageHit(.idiosyncraticKnowledge)
+        let minimumPrecision = results.map(\.deckPrecision).min() ?? 0
+        let eligible = arguments.readers >= 50
+            && arguments.lemmas >= 200
+            && arguments.effectiveDocumentCount >= 4
         let passed = wellECE <= 0.05
             && (0.85...0.95).contains(intervalCoverage)
             && coverageHitRate >= 0.95
+            && itemResidualHit >= 0.95
+            && responseNoiseHit >= 0.90
+            && idiosyncraticHit >= 0.85
+            && minimumPrecision >= 0.50
+            && protocolDiagnostics.warmStartQuestionReduction >= 0.25
+            && protocolDiagnostics.coldCoverageHitRate - protocolDiagnostics.warmCoverageHitRate <= 0.02
         let report = EvaluationReport(
             schemaVersion: 1,
             configuration: Configuration(
                 seed: arguments.seed,
                 readersPerScenario: arguments.readers,
                 lemmaCount: arguments.lemmas,
-                algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion
+                documentsPerScenario: arguments.effectiveDocumentCount,
+                algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion,
+                populationParameters: arguments.populationParameters
             ),
             results: results,
             qualityGates: QualityGates(
@@ -394,7 +632,14 @@ private struct VocabularyAssessmentEvaluator {
                 wellSpecifiedECE: wellECE,
                 thetaInterval90Coverage: intervalCoverage,
                 coverage98HitRate: coverageHitRate
-            )
+                ,itemResidualCoverageHitRate: itemResidualHit
+                ,responseNoiseCoverageHitRate: responseNoiseHit
+                ,idiosyncraticCoverageHitRate: idiosyncraticHit
+                ,minimumDeckPrecision: minimumPrecision
+                ,warmStartQuestionReduction: protocolDiagnostics.warmStartQuestionReduction
+                ,warmStartCoverageHitDelta: protocolDiagnostics.warmCoverageHitRate - protocolDiagnostics.coldCoverageHitRate
+            ),
+            protocolDiagnostics: protocolDiagnostics
         )
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
