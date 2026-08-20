@@ -617,7 +617,9 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         predictiveSeed = Self.inventorySeed(inventory)
         answers = []
         let genericPrior = Self.normalPrior()
-        usesEligibleReaderPrior = readerPrior?.isEligible(at: currentDate) == true
+        usesEligibleReaderPrior = readerPrior?.languageCode == inventory.languageCode.lowercased()
+            && readerPrior?.algorithmVersion == VocabularyPreparationSession.currentAlgorithmVersion
+            && readerPrior?.isEligible(at: currentDate) == true
         initialPosterior = usesEligibleReaderPrior
             ? readerPrior?.warmStartPosterior(thetaGrid: Self.thetaGrid, genericPrior: genericPrior) ?? genericPrior
             : genericPrior

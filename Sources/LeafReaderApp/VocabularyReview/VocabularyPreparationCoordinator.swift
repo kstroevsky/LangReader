@@ -693,13 +693,13 @@ final class VocabularyPreparationCoordinator {
                     completedAt: Date(),
                     algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion
                 )
-                let researchSaved = researchStore.recordCompletedSession(
+                _ = researchStore.recordCompletedSession(
                     contributionID: contributionID,
                     inventory: inventory,
                     answers: answers,
                     protocolVersion: VocabularyPreparationSession.currentAlgorithmVersion
                 )
-                return priorSaved && researchSaved
+                return priorSaved
             }.value
             guard saved else { return }
             guard let self, self.requestID == activeRequestID else { return }

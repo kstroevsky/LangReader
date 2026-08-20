@@ -501,6 +501,26 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         XCTAssertEqual(assessment.requiredMinimumAnsweredQuestionCount, 20)
     }
 
+    func testReaderPriorFromAnotherLanguageIsNeverUsed() {
+        let prior = VocabularyReaderPrior(
+            languageCode: "de",
+            thetaPosterior: Array(repeating: 1.0 / 121.0, count: 121),
+            completedSessionCount: 3,
+            verifiedEvidenceCount: 80,
+            lastUpdatedAt: Date(timeIntervalSince1970: 1_000),
+            algorithmVersion: 3
+        )
+        let assessment = AdaptiveVocabularyAssessment(
+            inventory: inventory(count: 40),
+            mode: .targetCoverage(0.98),
+            readerPrior: prior,
+            currentDate: Date(timeIntervalSince1970: 1_001)
+        )
+
+        XCTAssertFalse(assessment.usedEligibleReaderPrior)
+        XCTAssertEqual(assessment.requiredMinimumAnsweredQuestionCount, 20)
+    }
+
     func testLemmaOnlyRestoredAnswerMigratesToLexicalCandidate() throws {
         let lexicalID = VocabularyLexicalItemID(language: "en", lemma: "book", partOfSpeech: .verb)
         let candidate = DocumentVocabularyCandidate(

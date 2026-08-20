@@ -159,6 +159,40 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         try await waitUntil { coordinator.answeredCount == 1 && coordinator.phase == .assessment }
     }
 
+    func testTypedKnownAnswerRemainsPendingUntilSelfVerificationAndPersistsLocally() async throws {
+        let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: .pdf)
+        let sessionStore = VocabularyPreparationSessionStore(documentID: source.identity.documentID)
+        defer { sessionStore.clear() }
+        let coordinator = VocabularyPreparationCoordinator(
+            documentSource: source,
+            library: FakeVocabularyPreparationLibrary(),
+            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            readerPriorStore: readerPriorStore,
+            researchEvidenceStore: researchEvidenceStore
+        )
+        coordinator.resetForCurrentDocument()
+        coordinator.startAnalysis()
+        try await waitUntil { coordinator.phase == .inventory }
+        coordinator.beginAssessment()
+        try await waitUntil { coordinator.phase == .assessment }
+        coordinator.typedModeEnabled = true
+        coordinator.typedMeaningDraft = "to create or improve over time"
+
+        coordinator.chooseKnown()
+        XCTAssertEqual(coordinator.answeredCount, 0)
+        try await waitUntil {
+            if case .available = coordinator.definitionState { return true }
+            return false
+        }
+        XCTAssertEqual(coordinator.answeredCount, 0)
+
+        coordinator.verifyKnown(correct: true)
+        try await waitUntil { coordinator.answeredCount == 1 }
+        let answer = try XCTUnwrap(sessionStore.load()?.answers.first)
+        XCTAssertEqual(answer.evidence, .typedVerifiedKnown)
+        XCTAssertEqual(answer.typedMeaning, "to create or improve over time")
+    }
+
     func testUnknownEvidenceCountsBeforeFailedDefinitionAndSkipOnlyContinues() async throws {
         let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: .epub)
         let provider = FakeVocabularyPreparationDefinitionProvider(failFirstRequest: true)
@@ -262,7 +296,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
     func testOnlyCompletedAssessmentUpdatesLocalReaderProfile() async throws {
         let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: .pdf)
         let store = FakeVocabularyReaderPriorStore()
-        let researchStore = FakeVocabularyResearchEvidenceStore()
+        let researchStore = FakeVocabularyResearchEvidenceStore(shouldRecord: false)
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
@@ -280,7 +314,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         try await answerEveryAvailableQuestionUnknown(in: coordinator)
         try await waitUntil { store.load(languageCode: "en")?.completedSessionCount == 1 }
         XCTAssertEqual(store.load(languageCode: "en")?.verifiedEvidenceCount, 0)
-        XCTAssertEqual(researchStore.recordedSessionCount, 1)
+        XCTAssertEqual(researchStore.recordedSessionCount, 0)
     }
 
     private func answerEveryAvailableQuestionUnknown(
@@ -458,7 +492,12 @@ private final class FakeVocabularyReaderPriorStore: VocabularyReaderPriorStoring
 
 private final class FakeVocabularyResearchEvidenceStore: VocabularyResearchEvidenceStoring, @unchecked Sendable {
     private let lock = NSLock()
+    private let shouldRecord: Bool
     private var contributionIDs = Set<String>()
+
+    init(shouldRecord: Bool = true) {
+        self.shouldRecord = shouldRecord
+    }
 
     var recordedSessionCount: Int {
         lock.withLock { contributionIDs.count }
@@ -470,6 +509,7 @@ private final class FakeVocabularyResearchEvidenceStore: VocabularyResearchEvide
         answers: [VocabularyAssessmentAnswer],
         protocolVersion: Int
     ) -> Bool {
+        guard shouldRecord else { return false }
         lock.withLock {
             _ = contributionIDs.insert(contributionID)
         }

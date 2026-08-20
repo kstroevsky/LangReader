@@ -32,6 +32,7 @@ final class VocabularySettingsModel {
     private(set) var researchPreview = ""
     private(set) var researchRecordCount = 0
     private(set) var exportError: String?
+    private var researchRequestID: UUID?
     var firstLanguageCode = ""
     var selfRatedProficiency = ""
 
@@ -74,57 +75,78 @@ final class VocabularySettingsModel {
 
     func resetPseudonym() {
         preferences.removeObject(forKey: Self.pseudonymKey)
+        researchRequestID = nil
         researchPreview = ""
         _ = participantPseudonym
     }
 
     func previewResearchExport() {
+        let requestID = UUID()
+        researchRequestID = requestID
+        let researchStore = researchStore
+        let profile = makeResearchProfile()
         let startedAt = ProcessInfo.processInfo.systemUptime
-        defer {
+        Task { [weak self] in
+            let data = await Task.detached {
+                try? researchStore.export(profile: profile).encoded()
+            }.value
+            guard let self, self.researchRequestID == requestID else { return }
             ReaderPerformance.record(
                 .vocabularyResearchExport,
                 milliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
             )
+            guard let data, let text = String(data: data, encoding: .utf8) else {
+                self.exportError = AppText.localized("无法生成导出预览。", "Could not generate export preview.")
+                return
+            }
+            self.researchPreview = text
+            self.exportError = nil
         }
-        let export = makeResearchExport()
-        guard let data = try? export.encoded(), let text = String(data: data, encoding: .utf8) else {
-            exportError = AppText.localized("无法生成导出预览。", "Could not generate export preview.")
-            return
-        }
-        researchPreview = text
-        exportError = nil
     }
 
     func saveResearchExport() {
-        let export = makeResearchExport()
-        guard !export.records.isEmpty else {
-            exportError = AppText.localized("没有可导出的测试证据。", "There is no assessment evidence to export.")
-            return
-        }
+        let requestID = UUID()
+        researchRequestID = requestID
+        let researchStore = researchStore
+        let profile = makeResearchProfile()
         let startedAt = ProcessInfo.processInfo.systemUptime
-        defer {
+        Task { [weak self] in
+            let payload = await Task.detached { () -> (Data, Int)? in
+                let export = researchStore.export(profile: profile)
+                guard let data = try? export.encoded() else { return nil }
+                return (data, export.records.count)
+            }.value
+            guard let self, self.researchRequestID == requestID else { return }
             ReaderPerformance.record(
                 .vocabularyResearchExport,
                 milliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
             )
-        }
-        do {
-            guard try researchExportSaver.save(
-                export.encoded(),
-                suggestedFilename: "leafreader-vocabulary-research.json"
-            ) else { return }
-            exportError = nil
-        } catch {
-            exportError = error.localizedDescription
+            guard let payload else {
+                self.exportError = AppText.localized("无法生成研究导出。", "Could not generate research export.")
+                return
+            }
+            guard payload.1 > 0 else {
+                self.exportError = AppText.localized("没有可导出的测试证据。", "There is no assessment evidence to export.")
+                return
+            }
+            do {
+                guard try self.researchExportSaver.save(
+                    payload.0,
+                    suggestedFilename: "leafreader-vocabulary-research.json"
+                ) else { return }
+                self.exportError = nil
+            } catch {
+                self.exportError = error.localizedDescription
+            }
         }
     }
 
-    private func makeResearchExport() -> VocabularyResearchExport {
-        researchStore.export(profile: VocabularyResearchProfile(
+    private func makeResearchProfile() -> VocabularyResearchProfile {
+        VocabularyResearchProfile(
             participantPseudonym: participantPseudonym,
             firstLanguageCode: firstLanguageCode,
             selfRatedProficiency: selfRatedProficiency
-        ))
+        )
     }
 
     private static let pseudonymKey = "VocabularyResearch.participantPseudonym.v1"

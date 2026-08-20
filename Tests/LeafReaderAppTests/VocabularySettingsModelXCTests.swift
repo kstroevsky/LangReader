@@ -5,7 +5,7 @@ import LeafReaderCore
 
 @MainActor
 final class VocabularySettingsModelXCTests: XCTestCase {
-    func testPreviewAndExplicitSaveContainOnlyDisclosedResearchFields() throws {
+    func testPreviewAndExplicitSaveContainOnlyDisclosedResearchFields() async throws {
         let saver = FakeVocabularyResearchExportSaver()
         let suiteName = "VocabularySettingsModelXCTests.\(UUID().uuidString)"
         let preferences = try XCTUnwrap(UserDefaults(suiteName: suiteName))
@@ -20,12 +20,14 @@ final class VocabularySettingsModelXCTests: XCTestCase {
         model.selfRatedProficiency = "intermediate"
 
         model.previewResearchExport()
+        try await waitUntil { !model.researchPreview.isEmpty }
         XCTAssertTrue(model.researchPreview.contains("develop"))
         for forbidden in ["documentID", "document title", "file path", "context", "definition", "typed meaning", "timestamp"] {
             XCTAssertFalse(model.researchPreview.localizedCaseInsensitiveContains(forbidden), forbidden)
         }
 
         model.saveResearchExport()
+        try await waitUntil { saver.savedData != nil }
         let saved = try XCTUnwrap(saver.savedData)
         XCTAssertEqual(saver.suggestedFilename, "leafreader-vocabulary-research.json")
         let decoded = try JSONDecoder().decode(VocabularyResearchExport.self, from: saved)
@@ -50,6 +52,20 @@ final class VocabularySettingsModelXCTests: XCTestCase {
 
         XCTAssertNotEqual(model.participantPseudonym, first)
         XCTAssertTrue(model.participantPseudonym.hasPrefix("lr-"))
+    }
+
+    private func waitUntil(
+        timeoutNanoseconds: UInt64 = 2_000_000_000,
+        _ condition: @escaping @MainActor () -> Bool
+    ) async throws {
+        let start = ContinuousClock.now
+        while !condition() {
+            if ContinuousClock.now - start > .nanoseconds(Int64(timeoutNanoseconds)) {
+                XCTFail("Timed out waiting for vocabulary settings state")
+                throw CocoaError(.coderReadCorrupt)
+            }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
     }
 }
 
