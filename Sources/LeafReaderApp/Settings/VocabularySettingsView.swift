@@ -44,6 +44,38 @@ struct VocabularySettingsView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             }
+
+            Section(AppText.localized("研究数据导出", "Research data export")) {
+                Text(AppText.localized(
+                    "仅在您明确保存时生成本地 JSON 文件。不会自动上传。导出不含文档标题、ID、路径、上下文、释义、输入的含义、精确时间或账户信息。",
+                    "A local JSON file is created only when you explicitly save it. Nothing is uploaded automatically. The export excludes document titles, IDs, paths, contexts, definitions, typed meanings, exact timestamps, and account data."
+                ))
+                .foregroundStyle(.secondary)
+                LabeledContent(AppText.localized("参与者假名", "Participant pseudonym")) {
+                    Text(model.participantPseudonym).textSelection(.enabled).monospaced()
+                    Button(AppText.localized("重置", "Reset")) { model.resetPseudonym() }
+                }
+                TextField(AppText.localized("第一语言代码（可选）", "L1 language code (optional)"), text: $model.firstLanguageCode)
+                TextField(AppText.localized("自评水平（可选）", "Broad self-rated proficiency (optional)"), text: $model.selfRatedProficiency)
+                LabeledContent(AppText.localized("记录", "Records"), value: "\(model.researchRecordCount)")
+                HStack {
+                    Button(AppText.localized("预览字段", "Preview included fields")) { model.previewResearchExport() }
+                    Button(AppText.localized("保存研究导出…", "Save research export…")) { model.saveResearchExport() }
+                        .disabled(model.researchRecordCount == 0)
+                }
+                if !model.researchPreview.isEmpty {
+                    ScrollView {
+                        Text(model.researchPreview)
+                            .font(.system(.caption, design: .monospaced))
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(height: 180)
+                }
+                if let error = model.exportError {
+                    Text(error).foregroundStyle(.red)
+                }
+            }
         }
         .settingsFormStyle()
     }

@@ -8,6 +8,7 @@ import LeafReaderCore
 final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
     private let fixtureText = "They develop tools. She developed one while developing another. Development continues. Readers learn vocabulary."
     private let readerPriorStore = FakeVocabularyReaderPriorStore()
+    private let researchEvidenceStore = FakeVocabularyResearchEvidenceStore()
 
     func testPDFAndWebSnapshotsProduceEquivalentInventories() async throws {
         let text = fixtureText
@@ -20,13 +21,15 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
             documentSource: pdfSource,
             library: pdfLibrary,
             definitionProvider: provider,
-            readerPriorStore: readerPriorStore
+            readerPriorStore: readerPriorStore,
+            researchEvidenceStore: researchEvidenceStore
         )
         let web = VocabularyPreparationCoordinator(
             documentSource: webSource,
             library: webLibrary,
             definitionProvider: provider,
-            readerPriorStore: readerPriorStore
+            readerPriorStore: readerPriorStore,
+            researchEvidenceStore: researchEvidenceStore
         )
 
         pdf.resetForCurrentDocument()
@@ -55,7 +58,8 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
             documentSource: source,
             library: library,
             definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
-            readerPriorStore: readerPriorStore
+            readerPriorStore: readerPriorStore,
+            researchEvidenceStore: researchEvidenceStore
         )
         coordinator.resetForCurrentDocument()
         coordinator.startAnalysis()
@@ -77,7 +81,8 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
             documentSource: source,
             library: library,
             definitionProvider: provider,
-            readerPriorStore: readerPriorStore
+            readerPriorStore: readerPriorStore,
+            researchEvidenceStore: researchEvidenceStore
         )
         coordinator.resetForCurrentDocument()
         coordinator.startAnalysis()
@@ -110,7 +115,8 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
             definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
-            readerPriorStore: readerPriorStore
+            readerPriorStore: readerPriorStore,
+            researchEvidenceStore: researchEvidenceStore
         )
         coordinator.resetForCurrentDocument()
         coordinator.startAnalysis()
@@ -132,7 +138,8 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
             definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
-            readerPriorStore: readerPriorStore
+            readerPriorStore: readerPriorStore,
+            researchEvidenceStore: researchEvidenceStore
         )
         coordinator.resetForCurrentDocument()
         coordinator.startAnalysis()
@@ -159,7 +166,8 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
             definitionProvider: provider,
-            readerPriorStore: readerPriorStore
+            readerPriorStore: readerPriorStore,
+            researchEvidenceStore: researchEvidenceStore
         )
         coordinator.resetForCurrentDocument()
         coordinator.startAnalysis()
@@ -193,7 +201,8 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
             documentSource: source,
             library: library,
             definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
-            readerPriorStore: readerPriorStore
+            readerPriorStore: readerPriorStore,
+            researchEvidenceStore: researchEvidenceStore
         )
         coordinator.resetForCurrentDocument()
         coordinator.startAnalysis()
@@ -231,7 +240,8 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
             documentSource: source,
             library: library,
             definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
-            readerPriorStore: readerPriorStore
+            readerPriorStore: readerPriorStore,
+            researchEvidenceStore: researchEvidenceStore
         )
         coordinator.resetForCurrentDocument()
         coordinator.startAnalysis()
@@ -252,11 +262,13 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
     func testOnlyCompletedAssessmentUpdatesLocalReaderProfile() async throws {
         let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: .pdf)
         let store = FakeVocabularyReaderPriorStore()
+        let researchStore = FakeVocabularyResearchEvidenceStore()
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
             definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
-            readerPriorStore: store
+            readerPriorStore: store,
+            researchEvidenceStore: researchStore
         )
         coordinator.resetForCurrentDocument()
         coordinator.startAnalysis()
@@ -268,6 +280,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         try await answerEveryAvailableQuestionUnknown(in: coordinator)
         try await waitUntil { store.load(languageCode: "en")?.completedSessionCount == 1 }
         XCTAssertEqual(store.load(languageCode: "en")?.verifiedEvidenceCount, 0)
+        XCTAssertEqual(researchStore.recordedSessionCount, 1)
     }
 
     private func answerEveryAvailableQuestionUnknown(
@@ -441,6 +454,33 @@ private final class FakeVocabularyReaderPriorStore: VocabularyReaderPriorStoring
         }
         return true
     }
+}
+
+private final class FakeVocabularyResearchEvidenceStore: VocabularyResearchEvidenceStoring, @unchecked Sendable {
+    private let lock = NSLock()
+    private var contributionIDs = Set<String>()
+
+    var recordedSessionCount: Int {
+        lock.withLock { contributionIDs.count }
+    }
+
+    func recordCompletedSession(
+        contributionID: String,
+        inventory: DocumentVocabularyInventory,
+        answers: [VocabularyAssessmentAnswer],
+        protocolVersion: Int
+    ) -> Bool {
+        lock.withLock {
+            _ = contributionIDs.insert(contributionID)
+        }
+        return true
+    }
+
+    func export(profile: VocabularyResearchProfile) -> VocabularyResearchExport {
+        VocabularyResearchExport(participant: profile, records: [])
+    }
+
+    func recordCount() -> Int { 0 }
 }
 
 @MainActor

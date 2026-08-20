@@ -64,6 +64,7 @@ final class VocabularyPreparationCoordinator {
     private weak var library: (any VocabularyPreparationLibraryAccess)?
     private let definitionProvider: any VocabularyPreparationDefinitionProviding
     private let readerPriorStore: any VocabularyReaderPriorStoring
+    private let researchEvidenceStore: any VocabularyResearchEvidenceStoring
     private var assessment: AdaptiveVocabularyAssessment?
     private var session = VocabularyPreparationSession()
     private var sessionStore: VocabularyPreparationSessionStore?
@@ -109,12 +110,14 @@ final class VocabularyPreparationCoordinator {
         documentSource: any VocabularyPreparationDocumentSource,
         library: any VocabularyPreparationLibraryAccess,
         definitionProvider: any VocabularyPreparationDefinitionProviding = LiveVocabularyPreparationDefinitionProvider(),
-        readerPriorStore: any VocabularyReaderPriorStoring = VocabularyReaderPriorStore.shared
+        readerPriorStore: any VocabularyReaderPriorStoring = VocabularyReaderPriorStore.shared,
+        researchEvidenceStore: any VocabularyResearchEvidenceStoring = VocabularyResearchEvidenceStore.shared
     ) {
         self.documentSource = documentSource
         self.library = library
         self.definitionProvider = definitionProvider
         self.readerPriorStore = readerPriorStore
+        self.researchEvidenceStore = researchEvidenceStore
     }
 
     var currentContext: String {
@@ -429,9 +432,9 @@ final class VocabularyPreparationCoordinator {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard !cancellationToken.isCancelled else { return }
             let summaries = snapshot.index.lemmaSummaries()
-            let difficultyProvider = snapshot.language == .german
-                ? DocumentVocabularyFrequencyProvider.german
-                : DocumentVocabularyFrequencyProvider.english
+            let difficultyProvider = DocumentVocabularyFrequencyProvider.calibrated(
+                languageCode: snapshot.language.rawValue
+            )
             let inventory = DocumentVocabularyInventory(
                 summaries: summaries,
                 languageCode: snapshot.language.rawValue,
@@ -672,14 +675,17 @@ final class VocabularyPreparationCoordinator {
               let contributionID = session.readerPriorContributionID,
               let assessment,
               assessment.answeredQuestionCount > 0,
-              let languageCode = inventory?.languageCode else { return }
+              let inventory else { return }
+        let languageCode = inventory.languageCode
         let posterior = assessment.thetaPosteriorSnapshot
         let verifiedCount = assessment.verifiedEvidenceCount
         let store = readerPriorStore
+        let researchStore = researchEvidenceStore
+        let answers = assessment.answers
         let activeRequestID = requestID
         Task { [weak self] in
             let saved = await Task.detached {
-                store.recordCompletedSession(
+                let priorSaved = store.recordCompletedSession(
                     contributionID: contributionID,
                     languageCode: languageCode,
                     thetaPosterior: posterior,
@@ -687,6 +693,13 @@ final class VocabularyPreparationCoordinator {
                     completedAt: Date(),
                     algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion
                 )
+                let researchSaved = researchStore.recordCompletedSession(
+                    contributionID: contributionID,
+                    inventory: inventory,
+                    answers: answers,
+                    protocolVersion: VocabularyPreparationSession.currentAlgorithmVersion
+                )
+                return priorSaved && researchSaved
             }.value
             guard saved else { return }
             guard let self, self.requestID == activeRequestID else { return }

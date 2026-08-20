@@ -58,8 +58,8 @@ struct VocabularyPreparationView: View {
         VStack(spacing: 22) {
             Spacer()
             Text(AppText.localized(
-                "先分析本文档的英语或德语词汇，再用 20–80 个自评问题建立学习列表。",
-                "Analyze this document’s English or German vocabulary, then build a learning list with 20–80 self-scored questions."
+                "先分析本文档的英语或德语词汇，再用通常 20–80 个核对问题建立学习列表；符合条件的本地资料最少可用 8 题。",
+                "Analyze this document’s English or German vocabulary, then build a list with usually 20–80 verified questions; an eligible local profile may reduce the minimum to 8."
             ))
             .font(.title3)
             .multilineTextAlignment(.center)

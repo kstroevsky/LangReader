@@ -217,9 +217,43 @@ package struct GermanCorpusDocumentVocabularyDifficultyProvider: DocumentVocabul
     }
 }
 
+package struct CalibratedDocumentVocabularyDifficultyProvider: DocumentVocabularyDifficultyProviding {
+    package let frequencyScale: VocabularyFrequencyScale
+    private let base: any DocumentVocabularyDifficultyProviding
+    private let items: [String: VocabularyItemCalibrationPack.Item]
+
+    package init(base: any DocumentVocabularyDifficultyProviding, pack: VocabularyItemCalibrationPack) {
+        self.base = base
+        items = pack.productionItemsByKey
+        frequencyScale = VocabularyFrequencyScale(
+            sourceID: base.frequencyScale.sourceID,
+            version: items.isEmpty ? base.frequencyScale.version : "\(base.frequencyScale.version)+\(pack.version)",
+            maximumRank: base.frequencyScale.maximumRank
+        )
+    }
+
+    package func bestRank(for summary: VocabularyDocumentLemmaSummary) -> Int? {
+        base.bestRank(for: summary)
+    }
+
+    package func difficultyPrior(for summary: VocabularyDocumentLemmaSummary) -> VocabularyItemDifficultyPrior {
+        guard let lexical = summary.lexicalItemID,
+              let item = items[lexical.canonicalKey] else { return base.difficultyPrior(for: summary) }
+        return .empirical(mean: item.difficulty, standardError: item.standardError, version: frequencyScale.version)
+    }
+}
+
 package enum DocumentVocabularyFrequencyProvider {
     package static let english: any DocumentVocabularyDifficultyProviding = ECDICTDocumentVocabularyDifficultyProvider()
     package static let german: any DocumentVocabularyDifficultyProviding = GermanCorpusDocumentVocabularyDifficultyProvider()
+
+    package static func calibrated(languageCode: String) -> any DocumentVocabularyDifficultyProviding {
+        let base = languageCode.lowercased() == "de" ? german : english
+        guard let pack = VocabularyItemCalibrationPackLoader.loadReviewed(languageCode: languageCode) else {
+            return base
+        }
+        return CalibratedDocumentVocabularyDifficultyProvider(base: base, pack: pack)
+    }
 
     // Compatibility for callers that display the raw rank scale.
     package static let englishMaximumRank = ECDICTDocumentVocabularyDifficultyProvider.pinnedMaximumRank
