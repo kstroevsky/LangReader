@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "base_sha256": "868106f57e1fa78a0b0f03c3e4e0dd29d6161500ef6b8ed8d13bc05bcc6a1671",
+  "failed_candidate_sha256": "ba734ee8ea40337735584a7c93a52b4e5233f6305eb2f87bf474e8cada752e1b",
+  "source": "independent verifier /root/verify_plan_revision_final",
+  "repairs": [
+    {
+      "finding_id": "IF-001",
+      "requirement_ids": ["COLD-001"],
+      "action": "Restore the review's division objective exactly; remove the invented subtraction objective."
+    },
+    {
+      "finding_id": "IF-002",
+      "requirement_ids": ["EVID-002"],
+      "action": "Remove the invented latent-probability formula; require extraction/versioning of the existing production knowledge function without changing its form in this stage."
+    },
+    {
+      "finding_id": "IF-003",
+      "requirement_ids": ["STUDY-002"],
+      "action": "Remove validation-study policies and comparison baselines not present in the review; remove the unmapped calibration-test bullet."
+    },
+    {
+      "finding_id": "IF-004",
+      "requirement_ids": ["CALDATA-001"],
+      "action": "Do not enable adaptive calibration slots until the frozen assignment design has a versioned schema that makes its assignment mechanism reconstructable; do not invent exact propensity fields."
+    },
+    {
+      "finding_id": "IF-005",
+      "requirement_ids": ["CAL-001", "EVID-002"],
+      "action": "Define one versioned Core observation-model artifact/function as the runtime and fitter source of truth, with generated cross-language fixtures, instead of duplicating an underspecified likelihood."
+    },
+    {
+      "finding_id": "IF-006",
+      "requirement_ids": ["ARCH-001", "PRIORITY-001", "SENSE-001"],
+      "action": "State that stages 1–6 are retained completed baseline capabilities and the priority list is the next-stage ordering; correct the amended SENSE-001 ledger section."
+    }
+  ]
+}

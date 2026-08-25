@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "phase": "COMPLETE",
+  "base_status": "accepted user roadmap materialized from the prior task message; locked base for the completed authorized lineage",
+  "base_sha256": "868106f57e1fa78a0b0f03c3e4e0dd29d6161500ef6b8ed8d13bc05bcc6a1671",
+  "review_sha256": "f5299abc0c32aa5fb1af34068aaad74e069d08bb274c455f737e06de2379bc5c",
+  "authorization_sha256": "762b97c9fff039b46f13d235a9e69b0eec1f37e7dcf29c7e7b1d9bf9a46f53f1",
+  "prior_failed_candidate_sha256": "1283794cae1af72d36249ad999fd52fd20f81e07f3b2df2145d31e3033de8ec3",
+  "base_ledger_sha256": "d11ff5931fed900d437b65f34e8f578747e95c86e2ce0373c10d04b60e06dbb1",
+  "delta_sha256": "77de2b1afe7c1c4c33ebe7387ca7473101347e417e560527935e06cbd42b786d",
+  "authorization_delta_sha256": "52e0bd344f9ebbc66881f232f106f8879b42f2d3703595706d1aacd1815ae9eb",
+  "authorized_amendments_patch_sha256": "5501d20923e4e8c28cad7f432ac978dc7923dc3e3d61973eacfe2b801a4e1228",
+  "target_ledger_sha256": "90851e78d7f588310c45ed1fd3d9b0c9d9cebe8ac0b74c90e0bdf93e4655f6c1",
+  "candidate_sha256": "b218edcb4deff49af2e899553e196d562aa2de0e1a004e49b81bee134ba67512",
+  "independent_verification_sha256": "b8d3953ebcafec8a771fe6e6eb1c18769b01148b46c3cf74b1df674308b4207e",
+  "acceptance_sha256": "dd33476d8b9d3054682f1978b13803638639b943ee497b563334f24d7f97fbeb",
+  "canonical_manifest_sha256": "e4f5e2a95a9569e72c720f69a1dd454e135661e18dc66d02722215910dfc59f5",
+  "accepted_on": "2026-08-25",
+  "completed_feedback_ids": [
+    "F-01", "F-02", "F-03", "F-04", "F-05", "F-06", "F-07", "F-08", "F-09", "F-10",
+    "F-11", "F-12", "F-13", "F-14", "F-15", "F-16", "F-17", "F-18", "F-19", "F-20",
+    "F-21", "F-22"
+  ],
+  "authorization_ids": ["AUTH-001", "AUTH-002"],
+  "validation_results": {
+    "mechanical": "PASS",
+    "semantic_delta": "PASS",
+    "semantic_preservation": "PASS",
+    "semantic_exact_contract": "PASS",
+    "semantic_negative_control": "PASS",
+    "semantic_cross_interface": "PASS",
+    "semantic_standalone": "PASS",
+    "independent": "PASS"
+  },
+  "repair_attempts_by_finding": {},
+  "open_findings": [],
+  "canonical_status": "accepted canonical implementation roadmap; implementation authorized"
+}

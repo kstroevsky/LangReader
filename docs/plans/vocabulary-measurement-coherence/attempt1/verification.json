@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "base": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-measurement-coherence/base-roadmap.md",
+    "sha256": "868106f57e1fa78a0b0f03c3e4e0dd29d6161500ef6b8ed8d13bc05bcc6a1671"
+  },
+  "candidate": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-measurement-coherence/candidate-roadmap.md",
+    "sha256": "ba734ee8ea40337735584a7c93a52b4e5233f6305eb2f87bf474e8cada752e1b"
+  },
+  "delta": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-measurement-coherence/delta.json",
+    "feedback_ids": [
+      "F-01",
+      "F-02",
+      "F-03",
+      "F-04",
+      "F-05",
+      "F-06",
+      "F-07",
+      "F-08",
+      "F-09",
+      "F-10",
+      "F-11",
+      "F-12",
+      "F-13",
+      "F-14",
+      "F-15",
+      "F-16",
+      "F-17",
+      "F-18",
+      "F-19",
+      "F-20"
+    ]
+  },
+  "changed_sections": [
+    "Vocabulary measurement, personalization, and calibration roadmap / Assumptions",
+    "Vocabulary measurement, personalization, and calibration roadmap / Core model and assessment changes",
+    "Vocabulary measurement, personalization, and calibration roadmap / Deferred lexical and risk extensions",
+    "Vocabulary measurement, personalization, and calibration roadmap / Domain and empirical calibration infrastructure",
+    "Vocabulary measurement, personalization, and calibration roadmap / Lexical identity, personalization, and app flow",
+    "Vocabulary measurement, personalization, and calibration roadmap / PR #9 description refresh",
+    "Vocabulary measurement, personalization, and calibration roadmap / Product coverage behavior and empirically gated options",
+    "Vocabulary measurement, personalization, and calibration roadmap / Real-learner validation execution",
+    "Vocabulary measurement, personalization, and calibration roadmap / Summary",
+    "Vocabulary measurement, personalization, and calibration roadmap / Testing, measurements, and rollout gates"
+  ],
+  "added_sections": [
+    "Vocabulary measurement, personalization, and calibration roadmap / Deferred lexical and risk extensions",
+    "Vocabulary measurement, personalization, and calibration roadmap / PR #9 description refresh",
+    "Vocabulary measurement, personalization, and calibration roadmap / Product coverage behavior and empirically gated options",
+    "Vocabulary measurement, personalization, and calibration roadmap / Real-learner validation execution"
+  ],
+  "removed_sections": [],
+  "allowed_sections": [
+    "Vocabulary measurement, personalization, and calibration roadmap / Assumptions",
+    "Vocabulary measurement, personalization, and calibration roadmap / Core model and assessment changes",
+    "Vocabulary measurement, personalization, and calibration roadmap / Deferred lexical and risk extensions",
+    "Vocabulary measurement, personalization, and calibration roadmap / Domain and empirical calibration infrastructure",
+    "Vocabulary measurement, personalization, and calibration roadmap / Lexical identity, personalization, and app flow",
+    "Vocabulary measurement, personalization, and calibration roadmap / PR #9 description refresh",
+    "Vocabulary measurement, personalization, and calibration roadmap / Product coverage behavior and empirically gated options",
+    "Vocabulary measurement, personalization, and calibration roadmap / Real-learner validation execution",
+    "Vocabulary measurement, personalization, and calibration roadmap / Summary",
+    "Vocabulary measurement, personalization, and calibration roadmap / Testing, measurements, and rollout gates"
+  ],
+  "contract_signal_deltas": {
+    "Vocabulary measurement, personalization, and calibration roadmap / Assumptions": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary measurement, personalization, and calibration roadmap / Core model and assessment changes": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "2"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary measurement, personalization, and calibration roadmap / Domain and empirical calibration infrastructure": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "10%",
+        "5"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary measurement, personalization, and calibration roadmap / Lexical identity, personalization, and app flow": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "1",
+        "121",
+        "25%"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary measurement, personalization, and calibration roadmap / Summary": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "0"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary measurement, personalization, and calibration roadmap / Testing, measurements, and rollout gates": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "0.20",
+        "0.65",
+        "1",
+        "1024",
+        "128",
+        "155.69",
+        "2",
+        "3",
+        "4",
+        "4.6875",
+        "5",
+        "512",
+        "84.375%",
+        "87.5%"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    }
+  },
+  "ledger_counts": {
+    "active": 42,
+    "deferred": 12,
+    "superseded": 0,
+    "other": 0
+  },
+  "base_ledger": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-measurement-coherence/base-ledger.json",
+  "errors": [],
+  "warnings": []
+}

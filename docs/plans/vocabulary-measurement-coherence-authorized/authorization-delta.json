@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "lineage": {
+    "locked_base_sha256": "868106f57e1fa78a0b0f03c3e4e0dd29d6161500ef6b8ed8d13bc05bcc6a1671",
+    "prior_failed_candidate_sha256": "1283794cae1af72d36249ad999fd52fd20f81e07f3b2df2145d31e3033de8ec3",
+    "authorization_path": "authorization-2026-08-25.md",
+    "authorization_sha256": "762b97c9fff039b46f13d235a9e69b0eec1f37e7dcf29c7e7b1d9bf9a46f53f1"
+  },
+  "changes": [
+    {
+      "authorization_id": "AUTH-001",
+      "operation": "AMEND",
+      "requirement_ids": ["EVID-002", "VALID-001", "CAL-001"],
+      "authorized_change": "Replace the shared errorFloor/evidence-reliability cap with independent latent-knowledge mismatch and evidence-reliability parameters. Tail-validation contradictions affect only εknowledge; independently measured protocol noise affects the corresponding evidence-specific ρ.",
+      "allowed_sections": [
+        ["Vocabulary measurement, personalization, and calibration roadmap", "Core model and assessment changes"],
+        ["Vocabulary measurement, personalization, and calibration roadmap", "Domain and empirical calibration infrastructure"]
+      ],
+      "required_literals": [
+        "Authorized mathematical change",
+        "Evidence-specific `ρ` values are used directly and never capped by `εknowledge`",
+        "Tail-validation contradictions update only `εknowledge`"
+      ],
+      "forbidden_literals": [
+        "Cap effective reliability at `1 - errorFloor`",
+        "extracted without mathematical change from `AdaptiveVocabularyAssessment.swift` symbol `evidenceLikelihood`"
+      ]
+    },
+    {
+      "authorization_id": "AUTH-002",
+      "operation": "AMEND",
+      "requirement_ids": ["STUDY-002"],
+      "authorized_change": "Defer the weighting estimator and variance/interval construction to a separately reviewed SAP frozen before confirmatory data collection and before confirmatory outcomes are inspected.",
+      "allowed_sections": [
+        ["Vocabulary measurement, personalization, and calibration roadmap", "Real-learner validation execution"]
+      ],
+      "required_literals": [
+        "Statistical Analysis Plan gate",
+        "roadmap deliberately does not choose",
+        "must not be selected retrospectively"
+      ],
+      "forbidden_literals": []
+    }
+  ],
+  "default_for_unmentioned_requirements": "NO_CHANGE"
+}

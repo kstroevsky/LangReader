@@ -1,0 +1,109 @@
+--- docs/plans/vocabulary-measurement-coherence/attempt1/candidate-roadmap.md	2026-08-25 15:33:17
++++ /tmp/vocabulary-candidate-final-before-rebuild.md	2026-08-25 15:47:21
+@@ -11,6 +11,8 @@
+ 5. Add privacy-preserving research export and offline empirical calibration tooling.
+ 6. Keep same-POS sense splitting, domain blending, and empirical parameters disabled until their validation gates pass.
+ 
++Stages 1–6 are the retained, already implemented baseline capabilities and constraints. They remain prerequisites and are not a second delivery sequence. The priority list below is the binding order for the next implementation phase.
++
+ The next implementation phase is measurement coherence rather than another production modeling dimension. Execute it in this order:
+ 
+ - **Priority 0 — observation and calibration consistency:** separate latent person-item exceptions from response reliability, make the offline fitter use the production evidence likelihood, and collect calibration-purpose assignment metadata.
+@@ -40,10 +42,12 @@
+ 
+   - `εknowledge` represents person-item exceptions and other misspecification in `P(K_j | θ, b_j)`.
+   - `ρverifiedKnown`, `ρtypedVerifiedKnown`, `ρverifiedUnknownOrPartial`, `ρreportedUnknown`, `ρunsure`, `ρlegacyKnown`, and `ρlegacyUnknown` represent `P(E | K_j, evidenceType)`.
+-  - Use `P(K_j | θ, b_j) = εknowledge + (1 - 2 × εknowledge) × sigmoid(θ - b_j)` for latent knowledge.
++  - Extract the production latent-knowledge function from `Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift` symbols `adjustedProbability` and `baseItemProbability` at source SHA-256 `5ff417329db82f4ad655e444927f51adaa07f7d79b674121a028107a9b990166` into a versioned `VocabularyKnowledgeModel`; rename only its model-misspecification parameter to `εknowledge` and do not change the function’s mathematical form in this separation stage. If the source hash differs before implementation, stop and rebaseline this requirement against the reviewed code rather than inferring a replacement formula.
+   - Use the evidence-specific `ρ` values only in the observation likelihood. Do not flatten latent knowledge and cap response reliability with one shared parameter.
+   - Preserve the existing evidence coefficients as versioned synthetic priors until independently scored pilot responses estimate or supersede them.
+ 
++- Make a versioned Core `VocabularyObservationModel.evidenceLikelihood(evidence, latentKnownProbability)` the single normative implementation of the categorical observation likelihood, extracted without mathematical change from `AdaptiveVocabularyAssessment.swift` symbol `evidenceLikelihood` at the same source SHA-256. Runtime posterior updates and answered-item reconstruction call it directly. The offline fitter consumes a generated observation-model manifest plus golden likelihood fixtures produced from that same Core implementation; it must not maintain an independently authored hard/fractional mapping or formula.
++
+ - Calculate an answered item’s displayed `P(known)` by Bayes-updating its item prior with its evidence. Preserve evidence labels separately from estimated classifications; use:
+ 
+   - Verified known.
+@@ -131,14 +135,14 @@
+ 
+ - Add offline tools to validate/merge exports, fit shrinkage Rasch item difficulties, calculate standard errors/item fit/DIF, compare Rasch with 2PL on participant-held-out folds, and generate a versioned `VocabularyItemCalibrationPack`.
+ 
+-- Make the offline fitter use the same categorical observation likelihood as production: fit `P(Eij | θi, bj, ρE)` rather than mapping evidence to hard or fractional target values. Keep the runtime evidence coefficients as fixed versioned priors for exploratory fitting; estimate them only from independently criterion-scored pilot data. Report which reliability source/version produced every calibration pack.
++- Make the offline fitter use the same categorical observation likelihood as production: consume the generated `VocabularyObservationModel` manifest from the hash-locked Core source above and pass every golden likelihood fixture before fitting `P(Eij | θi, bj, ρE)`. Do not map evidence to hard or fractional target values or author a second likelihood. Keep the runtime evidence coefficients as fixed versioned priors for exploratory fitting; estimate them only from independently criterion-scored pilot data. Report the observation-model and reliability source/version in every calibration pack.
+ 
+ - Separate reader-serving item selection from calibration-data collection:
+ 
+   - Normal production sessions retain the current adaptive-loss and tail-validation policy.
+   - An explicitly consented research mode reserves a protocol-frozen rate within 5–10% of scored questions for calibration/exploration assignments.
+   - Calibration assignments target underrepresented ability ranges for items encountered in the current document; they do not request unrelated document text or transmit data automatically.
+-  - Freeze the slot rate, assignment policy, and inclusion probabilities before confirmatory collection. Do not tune them on the confirmatory holdout.
++  - Freeze and version the slot rate and assignment policy before confirmatory collection. Keep calibration slots disabled until the selected assignment design has an approved versioned export schema that lets the offline fitter reconstruct or condition on the assignment mechanism. The four listed research fields are the minimum schema, not a claim that every future assignment design needs no additional metadata. Do not tune the assignment design on the confirmatory holdout.
+ 
+ - Replace the current residual-mean DIF eligibility heuristic before using DIF as a production fairness claim:
+ 
+@@ -152,7 +156,7 @@
+ 
+ - Add a separate `ConsentedValidationStudyDataset` contract. It may contain an opaque study document ID, independently scored criterion label, rater/adjudication fields, question assignment metadata, randomized audit inclusion probability, and delayed-retest linkage only under explicit study consent. It must exclude ordinary file paths, titles, account identity, and raw document text. Confirmatory tooling must enforce both participant disjointness and document disjointness; the normal `ProductResearchExport` remains privacy-minimized and cannot be used to claim a document-held-out validation.
+ 
+-- After sufficient real responses exist, fit difficulty hierarchically with partial pooling. Candidate predictors include general frequency, prevalence, contextual diversity, word length, morphology, POS, L1 cognateness, and domain-frequency residuals. Sparse items borrow strength from the feature model; well-observed items increasingly use empirical item difficulty. Feature coefficients and item effects are trained and evaluated only on participant-and-document held-out data.
++- After sufficient real responses exist, fit difficulty hierarchically with partial pooling. Candidate predictors include general frequency, prevalence, contextual diversity, word length, morphology, POS, L1 cognateness, and domain-frequency residuals. Sparse items borrow strength from the feature model; well-observed items increasingly use empirical item difficulty. Fit feature coefficients and item effects on training participants/documents, tune on validation participants/documents, and evaluate on the untouched participant-and-document holdout.
+ 
+ - Test domain information as residual difficulty evidence rather than as a hard document label. After accounting for general frequency and the frozen lexical feature set, evaluate fiction/news/reference frequency deltas on participant-and-document holdouts. If the existing domain gates pass, use detector scores as `P(domain | document)` and integrate over domain uncertainty; do not introduce an arbitrary fixed blend.
+ 
+@@ -171,13 +175,13 @@
+ 
+   Production self-verification remains low-friction and optional typed recall remains optional; neither is reused as the independent criterion label.
+ 
+-- Recruit multiple English/German learner, L1, and proficiency strata and multiple genres/formats. Freeze an untouched confirmatory set. The final split must be disjoint by participant and opaque study document ID; near-duplicate documents cannot cross the split.
++- Recruit multiple English/German learner, L1, and proficiency strata and multiple genres/formats. Freeze an untouched confirmatory set. The final split must be disjoint by participant and opaque study document ID.
+ 
+-- Use complete lexical audits for small documents. For large documents, test every selected card plus a probability/frequency/POS/occurrence-stratified sample of unselected items, including both high-confidence tails. Store each item’s audit inclusion probability and use weighted estimates with participant-clustered uncertainty intervals. Add a delayed stability/retention retest with randomized order and alternate context-free prompts.
++- Use complete lexical audits for small documents. For large documents, test every selected card plus a probability/frequency/POS/occurrence-stratified sample of unselected items. Store each item’s audit inclusion probability and use weighted estimates with uncertainty intervals. Add a delayed stability/retention retest.
+ 
+ - Report Brier score, log loss, calibration plot/ECE, calibration slope/intercept, θ-interval coverage, deck precision, occurrence-weighted unknown-item recall, realized post-learning lexical-token coverage, nominal-98% miss rate, question/time burden, warm-versus-cold non-inferiority, inter-rater agreement, DIF, and subgroup calibration. Reading comprehension is a separate exploratory outcome and is never inferred from lexical coverage.
+ 
+-- Fit and tune only on training/validation participants and documents. Evaluate once on the untouched participant-and-document holdout. Compare frequency-only, generic Rasch, warm-prior Rasch, and empirical-item variants plus simple baselines such as a frequency threshold and selecting all unranked words. Freeze numerical product gates before confirmatory data collection; synthetic gates remain separately labeled engineering diagnostics.
++- Fit and tune only on training/validation participants and documents. Keep the participant-and-document confirmatory holdout untouched during fitting and tuning, then use it for final evaluation. Synthetic gates remain separately labeled engineering diagnostics.
+ 
+ ## Testing, measurements, and rollout gates
+ 
+@@ -195,7 +199,7 @@
+   - No scenario’s Brier/ECE may degrade by more than 0.01 from its newly reviewed golden.
+   - Warm-start question count improves by at least 25% without coverage-hit degradation above two percentage points.
+ 
+-- Keep the current failing three-seed/eight-document version-3 release holdout frozen as adverse evidence. Do not weaken its gates or replace the version-2 golden with a favorable development result. Add a preregistered diagnostic matrix that varies, one factor at a time and then in bounded combinations:
++- Keep the current failing three-seed/eight-document version-3 release holdout frozen as adverse evidence. Do not weaken its gates or replace the version-2 golden with a favorable development result. Add a diagnostic matrix that separately varies:
+ 
+   The locked baseline has only 1/3 seeds passing every gate: idiosyncratic coverage hit falls to 84.375%, response-noise coverage hit falls to 87.5%, warm coverage degrades by as much as 4.6875 percentage points, and several cold profiles still consume essentially all 80 questions. These values are blockers, not tuning targets.
+ 
+@@ -209,8 +213,6 @@
+ 
+ - Validate POS identity independently with licensed English and German Universal Dependencies fixtures. Report POS precision, recall, abstention rate, language/genre strata, noun↔verb errors, adjective↔participle errors, and resulting lexical-item split/merge error. Keep the production `unknown` fallback. Treat the current 0.65 probability and 0.20 margin as engineering thresholds until this evaluation is complete.
+ 
+-- Extend calibration-tool tests with categorical evidence-likelihood fixtures, duplicate/selection-propensity checks, participant-and-document split leakage negatives, uniform/non-uniform DIF fixtures, anchor-purification convergence, multiple-comparison control, and exact pack provenance.
+-
+ - Domain blending remains experimental until participant-held-out real-response evaluation improves Brier by at least 0.005, worsens ECE by no more than 0.005, and does not reduce coverage-hit rate by more than two percentage points in either language.
+ 
+ - Keep Release gates at 150 ms p95 for 10,000-lemma answer-to-next-card and 16 ms real-app main-thread uninterrupted work. Add posterior-sampling, POS-indexing, warm-start, migration, and export benchmarks.
+@@ -223,7 +225,7 @@
+   - build the full 512-sample conservative coverage deck only when a stop is otherwise eligible and for final results;
+   - optionally evaluate a 128-sample screening approximation for deciding whether to attempt a full stop check;
+   - evaluate 1024 samples only as a measurement candidate, not a new production default;
+-  - accept staged screening only if deterministic parity tests show that stop reason, selected deck, conservative coverage decision, and release-gate outcome stay within a preregistered tolerance;
++  - accept staged screening only if empirical comparison with the full path shows that the release decision does not change more than the accepted tolerance;
+   - keep all benchmark repetitions and profile the frequency and phase of full deck recomputation before further optimization.
+ 
+ - Deliver as green staged commits: evidence/UX protocol; difficulty and posterior coverage; POS/schema migration; local reader prior; experimental domain resources; research export/fitter; evaluator/performance gates; documentation. Run focused suites after each stage, then the full evaluator, Release benchmarks, six-document GUI matrix, `./scripts/check.sh --no-build`, and `./scripts/build_app.sh`.
+@@ -244,11 +246,11 @@
+   - Balanced: approximately 40–60 questions;
+   - High confidence: up to 80 questions.
+ 
+-  Formalize stopping as `expected reduction in decision loss - λ × question cost`. Freeze each mode’s `λ`, maximum burden, displayed uncertainty language, and coverage-risk gate before confirmatory evaluation. Keep the current 20-question cold minimum and 80-question maximum until a replacement mode passes the real and synthetic gates.
++  Formalize stopping as `expected reduction in decision loss / (λ × question cost)`. Keep the current 20-question cold minimum and 80-question maximum until a replacement mode passes the real and synthetic gates.
+ 
+ ## Deferred lexical and risk extensions
+ 
+-- Add high-value multi-word lexical items before enabling same-POS sense clustering. Candidate classes include phrasal verbs, idioms, lexical phrases, and compounds whose meaning is not recoverable from independently known component words. Define book occurrence identity, dictionary/reveal behavior, overlap resolution with single-word cards, and English/German labeled gates before production use.
++- Add high-value multi-word lexical items before enabling same-POS sense clustering. Candidate classes include phrasal verbs, idioms, lexical phrases, and compounds whose meaning is not recoverable from independently known component words. Keep production use disabled until a separately approved MWU design and validation plan exists.
+ 
+ - If sense splitting proceeds afterward, make it book-local: split a lemma+POS only when the current document uses meaningfully incompatible contextual clusters. Use clustering only as a proposal mechanism and retain the existing macro-F1 ≥ 0.85 and oversplitting < 2% gates. Do not map every occurrence to a global dictionary sense inventory.
+ 
