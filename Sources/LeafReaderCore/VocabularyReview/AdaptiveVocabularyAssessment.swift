@@ -42,7 +42,7 @@ package enum VocabularyAssessmentMode: Codable, Equatable, Sendable {
     }
 }
 
-package enum VocabularyKnowledgeEvidence: String, Codable, Equatable, Sendable {
+package enum VocabularyKnowledgeEvidence: String, CaseIterable, Codable, Equatable, Sendable {
     case verifiedKnown
     case typedVerifiedKnown
     case verifiedUnknownOrPartial
@@ -573,7 +573,10 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     private let initialPosterior: [Double]
     private(set) package var mode: VocabularyAssessmentMode
     private(set) package var answers: [VocabularyAssessmentAnswer]
-    private(set) package var errorFloor: Double = 0.05
+    private(set) package var epsilonKnowledge = VocabularyKnowledgeModel.defaultEpsilonKnowledge
+    /// Compatibility projection for existing diagnostics and callers. The value
+    /// now belongs only to the latent-knowledge model.
+    package var errorFloor: Double { epsilonKnowledge }
     private var posterior: [Double]
     private var answerByKey: [String: VocabularyAssessmentAnswer]
     private var answeredCandidateIndexes: Set<Int>
@@ -856,7 +859,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         return VocabularyAssessmentResult(
             items: items,
             answeredQuestionCount: answeredQuestionCount,
-            errorFloor: errorFloor,
+            errorFloor: epsilonKnowledge,
             expectedCoverageAfterSelection: totalOccurrences > 0 ? expectedKnownOccurrences / totalOccurrences : 1,
             residualUncertainty: uncertainty,
             reachedQuestionLimit: reachedQuestionLimit,
@@ -916,7 +919,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 )
             }
             let smoothedRate = (contradictions + 1) / Double(validations.count + 20)
-            errorFloor = min(0.25, max(0.05, smoothedRate))
+            epsilonKnowledge = min(0.25, max(0.05, smoothedRate))
             if contradiction > 0 && answeredQuestionCount >= 20 {
                 lowValueStreak = 0
                 stableCoverageDeckStreak = 0
@@ -935,11 +938,13 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         for answer in answers where answer.evidence != .excluded {
             guard let candidateIndex = candidateIndexByKey[answer.canonicalKey] else { continue }
             for index in posterior.indices {
-                let p = Self.adjustedProbability(responseCurves[candidateIndex][index], epsilon: errorFloor)
-                posterior[index] *= Self.evidenceLikelihood(
-                    knownProbability: p,
+                let latentKnown = VocabularyKnowledgeModel.adjustedKnownProbability(
+                    baseKnownProbability: responseCurves[candidateIndex][index],
+                    epsilonKnowledge: epsilonKnowledge
+                )
+                posterior[index] *= VocabularyObservationModel.evidenceLikelihood(
                     evidence: answer.evidence,
-                    errorFloor: errorFloor
+                    latentKnownProbability: latentKnown
                 )
             }
             Self.normalize(&posterior)
@@ -1120,14 +1125,13 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 let curve = responseCurves[candidateIndex]
                 if let evidence {
                     for sampleIndex in 0..<Self.predictiveSampleCount {
-                        let base = Self.adjustedProbability(
-                            curve[thetaSampleIndexes[sampleIndex]],
-                            epsilon: errorFloor
+                        let latentKnown = VocabularyKnowledgeModel.adjustedKnownProbability(
+                            baseKnownProbability: curve[thetaSampleIndexes[sampleIndex]],
+                            epsilonKnowledge: epsilonKnowledge
                         )
-                        let probability = Self.posteriorKnownProbability(
-                            prior: base,
-                            evidence: evidence,
-                            errorFloor: errorFloor
+                        let probability = VocabularyObservationModel.posteriorKnownProbability(
+                            prior: latentKnown,
+                            evidence: evidence
                         )
                         if Self.nextRandomUnit(state: &randomState) < probability {
                             localMasks[localMaskOffset + (sampleIndex >> 6)] |= UInt64(1) << UInt64(sampleIndex & 63)
@@ -1136,9 +1140,9 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                     }
                 } else {
                     for sampleIndex in 0..<Self.predictiveSampleCount {
-                        let probability = Self.adjustedProbability(
-                            curve[thetaSampleIndexes[sampleIndex]],
-                            epsilon: errorFloor
+                        let probability = VocabularyKnowledgeModel.adjustedKnownProbability(
+                            baseKnownProbability: curve[thetaSampleIndexes[sampleIndex]],
+                            epsilonKnowledge: epsilonKnowledge
                         )
                         if Self.nextRandomUnit(state: &randomState) < probability {
                             localMasks[localMaskOffset + (sampleIndex >> 6)] |= UInt64(1) << UInt64(sampleIndex & 63)
@@ -1528,7 +1532,11 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             let (index, candidate) = pair
             guard index != excludingIndex,
                   !excludedCandidateIndexes.contains(index) else { return partial }
-            let p = probability(candidateIndex: index, posterior: posterior, epsilon: errorFloor)
+            let p = probability(
+                candidateIndex: index,
+                posterior: posterior,
+                epsilonKnowledge: epsilonKnowledge
+            )
             let weight: Double = mode == .allUnknown ? 1 : Double(candidate.occurrenceCount)
             return partial + weight * min(p, 1 - p)
         }
@@ -1538,27 +1546,40 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         guard let candidateIndex = candidateIndexByKey[candidate.canonicalKey] else { return posterior }
         var result = posterior
         for index in result.indices {
-            let p = Self.adjustedProbability(responseCurves[candidateIndex][index], epsilon: errorFloor)
-            result[index] *= Self.evidenceLikelihood(
-                knownProbability: p,
+            let latentKnown = VocabularyKnowledgeModel.adjustedKnownProbability(
+                baseKnownProbability: responseCurves[candidateIndex][index],
+                epsilonKnowledge: epsilonKnowledge
+            )
+            result[index] *= VocabularyObservationModel.evidenceLikelihood(
                 evidence: known ? .verifiedKnown : .reportedUnknown,
-                errorFloor: errorFloor
+                latentKnownProbability: latentKnown
             )
         }
         Self.normalize(&result)
         return result
     }
 
-    private func probability(candidateIndex: Int, posterior: [Double], epsilon: Double) -> Double {
+    private func probability(
+        candidateIndex: Int,
+        posterior: [Double],
+        epsilonKnowledge: Double
+    ) -> Double {
         let baseProbability = zip(responseCurves[candidateIndex], posterior).reduce(0.0) { partial, pair in
             partial + pair.0 * pair.1
         }
-        return Self.adjustedProbability(baseProbability, epsilon: epsilon)
+        return VocabularyKnowledgeModel.adjustedKnownProbability(
+            baseKnownProbability: baseProbability,
+            epsilonKnowledge: epsilonKnowledge
+        )
     }
 
     private func probabilities(for posterior: [Double]) -> [Double] {
         inventory.candidates.indices.map {
-            probability(candidateIndex: $0, posterior: posterior, epsilon: errorFloor)
+            probability(
+                candidateIndex: $0,
+                posterior: posterior,
+                epsilonKnowledge: epsilonKnowledge
+            )
         }
     }
 
@@ -1579,32 +1600,23 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         zip(Self.thetaGrid, posterior).reduce(0.0) { $0 + $1.0 * $1.1 }
     }
 
-    private static func itemProbability(theta: Double, difficulty: Double, epsilon: Double) -> Double {
-        adjustedProbability(baseItemProbability(theta: theta, difficulty: difficulty), epsilon: epsilon)
-    }
-
-    private static func baseItemProbability(theta: Double, difficulty: Double) -> Double {
-        1 / (1 + exp(-(theta - difficulty)))
-    }
-
     private static func baseItemProbability(
         theta: Double,
         difficultyPrior: VocabularyItemDifficultyPrior
     ) -> Double {
         guard difficultyPrior.standardDeviation > 0 else {
-            return baseItemProbability(theta: theta, difficulty: difficultyPrior.mean)
+            return VocabularyKnowledgeModel.baseKnownProbability(
+                theta: theta,
+                difficulty: difficultyPrior.mean
+            )
         }
         let scale = sqrt(2) * difficultyPrior.standardDeviation
         return gaussianQuadrature.reduce(0.0) { partial, point in
-            partial + point.weight * baseItemProbability(
+            partial + point.weight * VocabularyKnowledgeModel.baseKnownProbability(
                 theta: theta,
                 difficulty: difficultyPrior.mean + scale * point.node
             )
         }
-    }
-
-    private static func adjustedProbability(_ baseProbability: Double, epsilon: Double) -> Double {
-        epsilon + (1 - 2 * epsilon) * baseProbability
     }
 
     private static func inventorySeed(_ inventory: DocumentVocabularyInventory) -> UInt64 {
@@ -1646,53 +1658,27 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             guard let candidateIndex = candidateIndexByKey[answer.canonicalKey] else { continue }
             var leaveOneOut = posterior
             for thetaIndex in leaveOneOut.indices {
-                let probability = Self.adjustedProbability(
-                    responseCurves[candidateIndex][thetaIndex],
-                    epsilon: errorFloor
+                let latentKnown = VocabularyKnowledgeModel.adjustedKnownProbability(
+                    baseKnownProbability: responseCurves[candidateIndex][thetaIndex],
+                    epsilonKnowledge: epsilonKnowledge
                 )
-                let likelihood = Self.evidenceLikelihood(
-                    knownProbability: probability,
+                let likelihood = VocabularyObservationModel.evidenceLikelihood(
                     evidence: answer.evidence,
-                    errorFloor: errorFloor
+                    latentKnownProbability: latentKnown
                 )
                 leaveOneOut[thetaIndex] /= max(likelihood, Double.leastNormalMagnitude)
             }
             Self.normalize(&leaveOneOut)
-            let prior = probability(candidateIndex: candidateIndex, posterior: leaveOneOut, epsilon: errorFloor)
-            answeredProbabilities[answer.canonicalKey] = Self.posteriorKnownProbability(
+            let prior = probability(
+                candidateIndex: candidateIndex,
+                posterior: leaveOneOut,
+                epsilonKnowledge: epsilonKnowledge
+            )
+            answeredProbabilities[answer.canonicalKey] = VocabularyObservationModel.posteriorKnownProbability(
                 prior: prior,
-                evidence: answer.evidence,
-                errorFloor: errorFloor
+                evidence: answer.evidence
             )
         }
-    }
-
-    private static func evidenceLikelihood(
-        knownProbability: Double,
-        evidence: VocabularyKnowledgeEvidence,
-        errorFloor: Double
-    ) -> Double {
-        guard let reliability = evidence.reliability else { return 1 }
-        let effectiveReliability = min(reliability, 1 - errorFloor)
-        if evidence.supportsKnown {
-            return effectiveReliability * knownProbability
-                + (1 - effectiveReliability) * (1 - knownProbability)
-        }
-        return effectiveReliability * (1 - knownProbability)
-            + (1 - effectiveReliability) * knownProbability
-    }
-
-    private static func posteriorKnownProbability(
-        prior: Double,
-        evidence: VocabularyKnowledgeEvidence,
-        errorFloor: Double
-    ) -> Double {
-        guard let reliability = evidence.reliability else { return prior }
-        let effectiveReliability = min(reliability, 1 - errorFloor)
-        let knownJoint = prior * (evidence.supportsKnown ? effectiveReliability : 1 - effectiveReliability)
-        let unknownJoint = (1 - prior) * (evidence.supportsKnown ? 1 - effectiveReliability : effectiveReliability)
-        let total = knownJoint + unknownJoint
-        return total > 0 ? knownJoint / total : prior
     }
 
     private static func contradictionAmount(

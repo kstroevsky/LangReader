@@ -16,13 +16,8 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-KNOWN = {"verifiedKnown": 1.0, "typedVerifiedKnown": 1.0, "legacyKnown": 1.0}
-UNKNOWN = {
-    "verifiedUnknownOrPartial": 0.0,
-    "reportedUnknown": 0.0,
-    "legacyUnknown": 0.0,
-    "unsure": 0.25,
-}
+ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_OBSERVATION_MANIFEST = ROOT / "scripts" / "fixtures" / "vocabulary-observation-model-v1.json"
 REQUIRED = {
     "languageCode", "lexicalItemID", "documentDomain", "difficultyMean",
     "difficultyStandardDeviation", "difficultySource", "difficultyVersion",
@@ -35,14 +30,135 @@ def sigmoid(value: float) -> float:
     return 1.0 / (1.0 + math.exp(-value))
 
 
-def log_loss(y: float, p: float) -> float:
-    p = max(1e-9, min(1 - 1e-9, p))
-    return -(y * math.log(p) + (1 - y) * math.log(1 - p))
+class ObservationModel:
+    """Manifest-driven `P(E | K, rho)` shared with the Core runtime."""
+
+    def __init__(self, path: Path):
+        raw = path.read_bytes()
+        payload = json.loads(raw)
+        if payload.get("schemaVersion") != 1:
+            raise ValueError(f"{path}: unsupported observation schemaVersion")
+        for field in (
+            "observationModelVersion", "knowledgeModelVersion", "reliabilitySourceVersion",
+        ):
+            if not isinstance(payload.get(field), str) or not payload[field]:
+                raise ValueError(f"{path}: missing {field}")
+        epsilon = payload.get("defaultEpsilonKnowledge")
+        if not isinstance(epsilon, (int, float)) or not 0 <= epsilon <= 0.25:
+            raise ValueError(f"{path}: invalid defaultEpsilonKnowledge")
+        emissions = {}
+        for entry in payload.get("evidence", []):
+            evidence = entry.get("evidence")
+            if not isinstance(evidence, str) or evidence == "excluded" or evidence in emissions:
+                raise ValueError(f"{path}: invalid or duplicate observation evidence")
+            try:
+                values = tuple(float(entry[field]) for field in (
+                    "reliability", "probabilityGivenKnown", "probabilityGivenUnknown",
+                ))
+            except (KeyError, TypeError, ValueError) as error:
+                raise ValueError(f"{path}: malformed emission for {evidence}") from error
+            if any(not 0 <= value <= 1 for value in values):
+                raise ValueError(f"{path}: invalid emission probability for {evidence}")
+            emissions[evidence] = {
+                "reliability": values[0],
+                "probabilityGivenKnown": values[1],
+                "probabilityGivenUnknown": values[2],
+            }
+        if not emissions:
+            raise ValueError(f"{path}: observation evidence is empty")
+        self.path = path
+        self.sha256 = hashlib.sha256(raw).hexdigest()
+        self.observation_version = payload["observationModelVersion"]
+        self.knowledge_version = payload["knowledgeModelVersion"]
+        self.reliability_version = payload["reliabilitySourceVersion"]
+        self.epsilon_knowledge = float(epsilon)
+        self.emissions = emissions
+        self.golden_fixtures = payload.get("goldenFixtures", [])
+        self._validate_golden_fixtures(path)
+
+    def latent_known_probability(
+        self, theta: float, difficulty: float, epsilon_knowledge: float | None = None,
+        slope: float = 1.0,
+    ) -> float:
+        epsilon = self.epsilon_knowledge if epsilon_knowledge is None else epsilon_knowledge
+        base = sigmoid(slope * (theta - difficulty))
+        return epsilon + (1 - 2 * epsilon) * base
+
+    def likelihood(self, evidence: str, latent_known_probability: float) -> float:
+        emission = self.emissions[evidence]
+        return (
+            latent_known_probability * emission["probabilityGivenKnown"]
+            + (1 - latent_known_probability) * emission["probabilityGivenUnknown"]
+        )
+
+    def posterior_known_probability(self, evidence: str, prior: float) -> float:
+        emission = self.emissions[evidence]
+        known_joint = prior * emission["probabilityGivenKnown"]
+        unknown_joint = (1 - prior) * emission["probabilityGivenUnknown"]
+        total = known_joint + unknown_joint
+        return known_joint / total if total > 0 else prior
+
+    def terms(
+        self, evidence: str, theta: float, difficulty: float, slope: float = 1.0,
+    ) -> tuple[float, float]:
+        """Returns likelihood and derivative with respect to `slope * (theta - b)`."""
+        base = sigmoid(slope * (theta - difficulty))
+        latent = self.epsilon_knowledge + (1 - 2 * self.epsilon_knowledge) * base
+        emission = self.emissions[evidence]
+        contrast = emission["probabilityGivenKnown"] - emission["probabilityGivenUnknown"]
+        likelihood = self.likelihood(evidence, latent)
+        derivative = contrast * (1 - 2 * self.epsilon_knowledge) * base * (1 - base)
+        return max(likelihood, 1e-12), derivative
+
+    def metadata(self) -> dict:
+        return {
+            "manifestSHA256": self.sha256,
+            "observationModelVersion": self.observation_version,
+            "knowledgeModelVersion": self.knowledge_version,
+            "reliabilitySourceVersion": self.reliability_version,
+            "epsilonKnowledge": self.epsilon_knowledge,
+        }
+
+    def _validate_golden_fixtures(self, path: Path) -> None:
+        if not self.golden_fixtures:
+            raise ValueError(f"{path}: observation golden fixtures are empty")
+        for fixture in self.golden_fixtures:
+            evidence = fixture.get("evidence")
+            if evidence not in self.emissions:
+                raise ValueError(f"{path}: golden fixture has unknown evidence {evidence}")
+            try:
+                latent = self.latent_known_probability(
+                    float(fixture["theta"]),
+                    float(fixture["difficulty"]),
+                    float(fixture["epsilonKnowledge"]),
+                )
+            except (KeyError, TypeError, ValueError) as error:
+                raise ValueError(f"{path}: malformed golden fixture for {evidence}") from error
+            likelihood = self.likelihood(evidence, latent)
+            posterior = self.posterior_known_probability(evidence, latent)
+            expected = (
+                ("latentKnownProbability", latent),
+                ("evidenceLikelihood", likelihood),
+                ("posteriorKnownProbability", posterior),
+            )
+            for field, actual in expected:
+                try:
+                    fixture_value = float(fixture[field])
+                except (KeyError, TypeError, ValueError) as error:
+                    raise ValueError(
+                        f"{path}: malformed golden fixture for {evidence}.{field}"
+                    ) from error
+                if not math.isclose(actual, fixture_value, rel_tol=0, abs_tol=1e-12):
+                    raise ValueError(f"{path}: golden fixture mismatch for {evidence}.{field}")
 
 
-def load_exports(paths: list[Path]) -> list[dict]:
+def fisher_information(likelihood: float, derivative: float) -> float:
+    return derivative * derivative / max(likelihood * (1 - likelihood), 1e-9)
+
+
+def load_exports(paths: list[Path], observation_model: ObservationModel) -> list[dict]:
     rows: list[dict] = []
-    seen: dict[tuple[str, str, int, str], tuple[str, float]] = {}
+    seen: dict[tuple[str, str, int, str], str] = {}
     for path in paths:
         payload = json.loads(path.read_text(encoding="utf-8"))
         if payload.get("schemaVersion") != 1:
@@ -58,7 +174,7 @@ def load_exports(paths: list[Path]) -> list[dict]:
             evidence = record["evidence"]
             if evidence == "excluded":
                 continue
-            if evidence not in KNOWN and evidence not in UNKNOWN:
+            if evidence not in observation_model.emissions:
                 raise ValueError(f"{path}: unknown evidence {evidence}")
             lexical = record["lexicalItemID"]
             for field in ("language", "lemma", "partOfSpeech"):
@@ -69,7 +185,6 @@ def load_exports(paths: list[Path]) -> list[dict]:
                 "participant": pseudonym,
                 "l1": participant.get("firstLanguageCode"),
                 "proficiency": participant.get("selfRatedProficiency"),
-                "y": KNOWN.get(evidence, UNKNOWN.get(evidence)),
                 "key": "|".join([
                     lexical["language"], lexical["lemma"], lexical["partOfSpeech"],
                     lexical.get("senseKey") or "",
@@ -81,7 +196,7 @@ def load_exports(paths: list[Path]) -> list[dict]:
                 int(normalized["sessionOrdinal"]),
                 normalized["key"],
             )
-            signature = (normalized["evidence"], normalized["y"])
+            signature = normalized["evidence"]
             if identity in seen:
                 if seen[identity] != signature:
                     raise ValueError(f"{path}: conflicting duplicate evidence for {identity}")
@@ -91,7 +206,9 @@ def load_exports(paths: list[Path]) -> list[dict]:
     return rows
 
 
-def fit_rasch(rows: list[dict], iterations: int = 35) -> tuple[dict, dict]:
+def fit_rasch(
+    rows: list[dict], observation_model: ObservationModel, iterations: int = 35,
+) -> tuple[dict, dict]:
     people = sorted({row["participant"] for row in rows})
     items = sorted({row["key"] for row in rows})
     theta = {person: 0.0 for person in people}
@@ -112,9 +229,11 @@ def fit_rasch(rows: list[dict], iterations: int = 35) -> tuple[dict, dict]:
             gradient = -theta[person] / 6.25
             information = 1 / 6.25
             for row in observations:
-                p = sigmoid(theta[person] - difficulty[row["key"]])
-                gradient += row["y"] - p
-                information += p * (1 - p)
+                likelihood, derivative = observation_model.terms(
+                    row["evidence"], theta[person], difficulty[row["key"]]
+                )
+                gradient += derivative / likelihood
+                information += fisher_information(likelihood, derivative)
             theta[person] = max(-6, min(6, theta[person] + gradient / max(information, 1e-6)))
         for item, observations in by_item.items():
             mean, sd = prior[item]
@@ -122,9 +241,11 @@ def fit_rasch(rows: list[dict], iterations: int = 35) -> tuple[dict, dict]:
             gradient = -(difficulty[item] - mean) * precision
             information = precision
             for row in observations:
-                p = sigmoid(theta[row["participant"]] - difficulty[item])
-                gradient += p - row["y"]
-                information += p * (1 - p)
+                likelihood, derivative = observation_model.terms(
+                    row["evidence"], theta[row["participant"]], difficulty[item]
+                )
+                gradient -= derivative / likelihood
+                information += fisher_information(likelihood, derivative)
             difficulty[item] = max(-6, min(6, difficulty[item] + gradient / max(information, 1e-6)))
     return theta, difficulty
 
@@ -132,6 +253,7 @@ def fit_rasch(rows: list[dict], iterations: int = 35) -> tuple[dict, dict]:
 def estimate_theta(
     observations: list[dict],
     difficulty: dict[str, float],
+    observation_model: ObservationModel,
     slopes: dict[str, float] | None = None,
     iterations: int = 25,
 ) -> float:
@@ -144,14 +266,19 @@ def estimate_theta(
             item = row["key"]
             b = difficulty.get(item, float(row["difficultyMean"]))
             slope = slopes.get(item, 1.0)
-            p = sigmoid(slope * (theta - b))
-            gradient += slope * (row["y"] - p)
-            information += slope * slope * p * (1 - p)
+            likelihood, linear_derivative = observation_model.terms(
+                row["evidence"], theta, b, slope
+            )
+            derivative = slope * linear_derivative
+            gradient += derivative / likelihood
+            information += fisher_information(likelihood, derivative)
         theta = max(-6, min(6, theta + gradient / max(information, 1e-6)))
     return theta
 
 
-def heldout_comparison(rows: list[dict], seed: int = 20260820) -> dict:
+def heldout_comparison(
+    rows: list[dict], observation_model: ObservationModel, seed: int = 20260820,
+) -> dict:
     participants = sorted({row["participant"] for row in rows})
     random.Random(seed).shuffle(participants)
     folds = {person: index % 5 for index, person in enumerate(participants)}
@@ -162,7 +289,7 @@ def heldout_comparison(rows: list[dict], seed: int = 20260820) -> dict:
         test = [row for row in rows if folds[row["participant"]] == fold]
         if not train or not test:
             continue
-        theta, difficulty = fit_rasch(train, 20)
+        theta, difficulty = fit_rasch(train, observation_model, 20)
         slopes = defaultdict(lambda: 1.0)
         # Conservative regularized discrimination estimates. Sparse/unstable
         # items remain at Rasch slope 1.
@@ -179,9 +306,12 @@ def heldout_comparison(rows: list[dict], seed: int = 20260820) -> dict:
                 for row in observations:
                     person_theta = theta[row["participant"]]
                     delta = person_theta - difficulty[item]
-                    p = sigmoid(slope * delta)
-                    gradient += (row["y"] - p) * delta
-                    info += p * (1 - p) * delta * delta
+                    likelihood, linear_derivative = observation_model.terms(
+                        row["evidence"], person_theta, difficulty[item], slope
+                    )
+                    derivative = linear_derivative * delta
+                    gradient += derivative / likelihood
+                    info += fisher_information(likelihood, derivative)
                 slope = max(0.5, min(2.0, slope + gradient / max(info, 1e-6)))
             slopes[item] = slope
             stable_slopes.append(slope)
@@ -200,13 +330,19 @@ def heldout_comparison(rows: list[dict], seed: int = 20260820) -> dict:
             evaluation = ordered[split:]
             if not evaluation:
                 continue
-            rasch_theta = estimate_theta(calibration, difficulty)
-            two_pl_theta = estimate_theta(calibration, difficulty, slopes)
+            rasch_theta = estimate_theta(calibration, difficulty, observation_model)
+            two_pl_theta = estimate_theta(calibration, difficulty, observation_model, slopes)
             for row in evaluation:
                 item = row["key"]
                 b = difficulty.get(item, float(row["difficultyMean"]))
-                rasch_losses.append(log_loss(row["y"], sigmoid(rasch_theta - b)))
-                two_pl_losses.append(log_loss(row["y"], sigmoid(slopes[item] * (two_pl_theta - b))))
+                rasch_likelihood, _ = observation_model.terms(
+                    row["evidence"], rasch_theta, b
+                )
+                two_pl_likelihood, _ = observation_model.terms(
+                    row["evidence"], two_pl_theta, b, slopes[item]
+                )
+                rasch_losses.append(-math.log(rasch_likelihood))
+                two_pl_losses.append(-math.log(two_pl_likelihood))
     rasch = sum(rasch_losses) / max(1, len(rasch_losses))
     two_pl = sum(two_pl_losses) / max(1, len(two_pl_losses))
     return {
@@ -220,8 +356,10 @@ def heldout_comparison(rows: list[dict], seed: int = 20260820) -> dict:
     }
 
 
-def fit_pack(rows: list[dict], version: str) -> tuple[dict, dict]:
-    theta, difficulty = fit_rasch(rows)
+def fit_pack(
+    rows: list[dict], version: str, observation_model: ObservationModel,
+) -> tuple[dict, dict]:
+    theta, difficulty = fit_rasch(rows, observation_model)
     by_item = defaultdict(list)
     for row in rows:
         by_item[row["key"]].append(row)
@@ -229,19 +367,26 @@ def fit_pack(rows: list[dict], version: str) -> tuple[dict, dict]:
     for key in sorted(by_item):
         observations = by_item[key]
         learners = len({row["participant"] for row in observations})
-        info = sum(
-            (lambda p: p * (1 - p))(sigmoid(theta[row["participant"]] - difficulty[key]))
-            for row in observations
-        )
+        info = 0.0
+        for row in observations:
+            likelihood, linear_derivative = observation_model.terms(
+                row["evidence"], theta[row["participant"]], difficulty[key]
+            )
+            info += fisher_information(likelihood, -linear_derivative)
         prior_sd = max(0.35, sum(float(row["difficultyStandardDeviation"]) for row in observations) / len(observations))
         standard_error = math.sqrt(1 / max(info + 1 / (prior_sd * prior_sd), 1e-9))
         residuals = defaultdict(list)
         standardized = []
         for row in observations:
-            p = sigmoid(theta[row["participant"]] - difficulty[key])
-            standardized.append((row["y"] - p) / math.sqrt(max(p * (1 - p), 1e-6)))
+            likelihood, linear_derivative = observation_model.terms(
+                row["evidence"], theta[row["participant"]], difficulty[key]
+            )
+            derivative = -linear_derivative
+            observation_information = fisher_information(likelihood, derivative)
+            score = derivative / likelihood
+            standardized.append(score / math.sqrt(max(observation_information, 1e-9)))
             group = f"{row.get('l1') or '-'}|{row.get('proficiency') or '-'}"
-            residuals[group].append(row["y"] - p)
+            residuals[group].append(score)
         eligible_groups = [values for values in residuals.values() if len(values) >= 30]
         dif = False
         if len(eligible_groups) >= 2:
@@ -257,38 +402,69 @@ def fit_pack(rows: list[dict], version: str) -> tuple[dict, dict]:
             "itemFitMeanSquare": sum(value * value for value in standardized) / len(standardized),
             "productionEligible": learners >= 100 and standard_error <= 0.35 and not dif,
         })
-    comparison = heldout_comparison(rows)
-    pack = {"version": version, "reviewed": False, "model": "rasch", "items": [
-        {key: value for key, value in item.items() if key not in {"itemFitMeanSquare", "productionEligible"}}
-        for item in items
-    ]}
+    comparison = heldout_comparison(rows, observation_model)
+    pack = {
+        "version": version,
+        "reviewed": False,
+        "model": "rasch",
+        "observationModel": observation_model.metadata(),
+        "items": [
+            {
+                key: value for key, value in item.items()
+                if key not in {"itemFitMeanSquare", "productionEligible"}
+            }
+            for item in items
+        ],
+    }
     report = {
         "participants": len({row["participant"] for row in rows}),
         "responses": len(rows),
         "items": len(items),
         "eligibleItems": sum(item["productionEligible"] for item in items),
         "itemsWithMaterialDIF": sum(item["hasMaterialDIF"] for item in items),
+        "observationModel": observation_model.metadata(),
         **comparison,
     }
     return pack, report
 
 
-def self_test() -> None:
+def self_test(observation_model: ObservationModel) -> None:
+    for evidence in observation_model.emissions:
+        likelihood, derivative = observation_model.terms(evidence, 0.4, -0.2)
+        step = 1e-6
+        upper = observation_model.likelihood(
+            evidence,
+            observation_model.latent_known_probability(0.4 + step, -0.2),
+        )
+        lower = observation_model.likelihood(
+            evidence,
+            observation_model.latent_known_probability(0.4 - step, -0.2),
+        )
+        assert likelihood > 0
+        assert math.isclose(derivative, (upper - lower) / (2 * step), rel_tol=1e-7)
+
     rows = []
     for person in range(120):
         theta = (person - 60) / 25
         for index, difficulty in enumerate((-1.0, 0.0, 1.0)):
-            p = sigmoid(theta - difficulty)
+            latent_known = observation_model.latent_known_probability(theta, difficulty)
             rows.append({
-                "participant": f"p-{person}", "key": f"en|word{index}|noun|", "y": 1.0 if p >= 0.5 else 0.0,
+                "participant": f"p-{person}", "key": f"en|word{index}|noun|",
+                "evidence": "verifiedKnown" if latent_known >= 0.5 else "reportedUnknown",
                 "difficultyMean": difficulty, "difficultyStandardDeviation": 0.5,
                 "lexicalItemID": {"language": "en", "lemma": f"word{index}", "partOfSpeech": "noun"},
                 "l1": "de" if person % 2 else "fr", "proficiency": "broad",
             })
-    pack, report = fit_pack(rows, "self-test")
+    theta, difficulty = fit_rasch(rows, observation_model)
+    assert min(theta.values()) < 0 < max(theta.values())
+    assert difficulty["en|word0|noun|"] < difficulty["en|word1|noun|"]
+    assert difficulty["en|word1|noun|"] < difficulty["en|word2|noun|"]
+    pack, report = fit_pack(rows, "self-test", observation_model)
     assert len(pack["items"]) == 3
     assert report["participants"] == 120
     assert pack["reviewed"] is False
+    assert pack["observationModel"] == observation_model.metadata()
+    assert all("y" not in row for row in rows)
     print("vocabulary calibration self-test passed")
 
 
@@ -298,17 +474,19 @@ def main() -> int:
     parser.add_argument("--output-pack", type=Path)
     parser.add_argument("--output-report", type=Path)
     parser.add_argument("--version", default="calibration-unreviewed-v1")
+    parser.add_argument("--observation-manifest", type=Path, default=DEFAULT_OBSERVATION_MANIFEST)
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
+    observation_model = ObservationModel(args.observation_manifest)
     if args.self_test:
-        self_test()
+        self_test(observation_model)
         return 0
     if not args.exports:
         parser.error("provide at least one export")
-    rows = load_exports(args.exports)
+    rows = load_exports(args.exports, observation_model)
     if not rows:
         raise ValueError("no usable evidence records")
-    pack, report = fit_pack(rows, args.version)
+    pack, report = fit_pack(rows, args.version, observation_model)
     report["inputSHA256"] = hashlib.sha256(
         b"".join(path.read_bytes() for path in sorted(args.exports))
     ).hexdigest()

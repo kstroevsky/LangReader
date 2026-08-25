@@ -121,7 +121,7 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         XCTAssertTrue(result.items.filter { $0.knownProbability < 0.5 && $0.classification != .excluded }.allSatisfy(\.isSelected))
     }
 
-    func testTailValidationContradictionRaisesCappedErrorFloor() throws {
+    func testTailValidationContradictionRaisesOnlyCappedKnowledgeMismatch() throws {
         var assessment = AdaptiveVocabularyAssessment(inventory: inventory(count: 60), mode: .allUnknown)
         for _ in 0..<14 {
             let question = try XCTUnwrap(assessment.nextQuestion())
@@ -130,9 +130,14 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         let validation = try XCTUnwrap(assessment.nextQuestion())
         assessment.record(.unknown, for: validation.canonicalKey)
 
-        XCTAssertGreaterThan(assessment.errorFloor, 0.05)
-        XCTAssertLessThanOrEqual(assessment.errorFloor, 0.25)
-        XCTAssertEqual(assessment.errorFloor, 2.0 / 21.0, accuracy: 0.000_001)
+        XCTAssertGreaterThan(assessment.epsilonKnowledge, 0.05)
+        XCTAssertLessThanOrEqual(assessment.epsilonKnowledge, 0.25)
+        XCTAssertEqual(assessment.epsilonKnowledge, 2.0 / 21.0, accuracy: 0.000_001)
+        XCTAssertEqual(assessment.errorFloor, assessment.epsilonKnowledge)
+        XCTAssertEqual(
+            VocabularyObservationModel.emission(for: .verifiedKnown)?.reliability,
+            0.97
+        )
     }
 
     func testCoverageLowerBoundPreservesSoftEvidence() throws {

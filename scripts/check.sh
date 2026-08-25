@@ -53,8 +53,8 @@ bash ./scripts/test_perf_capture_validator.sh
 echo "==> Testing vocabulary assessment evaluator"
 bash ./scripts/test_vocabulary_assessment_evaluator.sh
 
-echo "==> Testing vocabulary calibration fitter"
-python3 ./scripts/fit_vocabulary_calibration.py --self-test
+echo "==> Testing vocabulary observation model and calibration fitter"
+bash ./scripts/check_vocabulary_observation_model.sh
 
 echo "==> Testing vocabulary domain resource builders"
 bash ./scripts/test_vocabulary_domain_resource_builders.sh
