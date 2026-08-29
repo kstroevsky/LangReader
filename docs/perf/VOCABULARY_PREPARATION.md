@@ -22,6 +22,25 @@ The result is editable before **Create & Review** performs one atomic,
 idempotent import and opens the existing Review Session. Already-saved lemmas
 are shown but never duplicated or modified.
 
+## Personal blind prediction audit
+
+After **Analyze Document** finishes, the inventory toolbar also offers
+**Audit no-test prediction**. This experimental path bypasses the adaptive
+questions and freezes a cold-start prediction with no local reader prior. It
+then presents every assessable lemma in a deterministic blind order using only
+lemma and POS, with **Know** and **Don't know** actions. Definitions, document
+context, predicted probability, and deck membership remain hidden until the
+complete inventory is scored. Progress is stored in the document-scoped
+preparation session and can be resumed.
+
+The completed audit reports predicted-list precision/recall, missed unknown
+lemmas, current and projected assessable lexical-token coverage, Brier score,
+and ten-bin ECE. Because every lemma is scored, these personal document metrics need no
+sampling estimator. They are still self-report evidence from one reader and one
+document—not independently rated meaning recall, population calibration, or a
+comprehension measure. Audit answers never update the adaptive reader prior or
+the research-evidence store and are never uploaded automatically.
+
 ## What the estimates mean
 
 Answers are probabilistic evidence, not infallible labels. `I know it` is not

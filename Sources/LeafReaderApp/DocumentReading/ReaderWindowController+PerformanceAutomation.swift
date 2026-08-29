@@ -62,6 +62,8 @@ extension ReaderWindowController {
             return
         case .error:
             return
+        case .predictionAudit, .predictionAuditResults:
+            return
         case .welcome, .analyzing, .importing:
             break
         }

@@ -47,6 +47,10 @@ struct VocabularyPreparationView: View {
             assessment
         case .results:
             results
+        case .predictionAudit:
+            predictionAudit
+        case .predictionAuditResults:
+            predictionAuditResults
         case .importing:
             progress
         case let .error(message):
@@ -92,21 +96,39 @@ struct VocabularyPreparationView: View {
 
     private var inventory: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text(coordinator.progressText)
-                    .font(.headline)
-                Spacer()
-                languagePicker
-                modePicker
-                if coordinator.experimentalDomainsEnabled {
-                    domainPicker
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(coordinator.progressText)
+                        .font(.headline)
+                    Spacer()
+                    Button(
+                        coordinator.hasCompatiblePredictionAudit
+                            ? AppText.localized("继续盲测", "Resume blind audit")
+                            : AppText.localized("评估无测试预测", "Audit no-test prediction")
+                    ) {
+                        coordinator.beginPredictionAudit()
+                    }
+                    Button(AppText.localized("开始测试", "Start Assessment")) {
+                        coordinator.beginAssessment()
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
-                Button(AppText.localized("开始测试", "Start Assessment")) {
-                    coordinator.beginAssessment()
+                HStack {
+                    Spacer()
+                    languagePicker
+                    modePicker
+                    if coordinator.experimentalDomainsEnabled {
+                        domainPicker
+                    }
                 }
-                .buttonStyle(.borderedProminent)
             }
             inventoryHeader
+            Text(AppText.localized(
+                "实验性完整盲测会跳过预备测试，并逐一显示全部 \(coordinator.inventory?.candidates.count ?? 0) 个词元（仅词元和词性）。预测在完成前保持隐藏；进度保存在本机。",
+                "The experimental complete blind audit bypasses the assessment and shows all \(coordinator.inventory?.candidates.count ?? 0) lemmas using only lemma and POS. Predictions stay hidden until completion, and progress is saved locally."
+            ))
+            .font(.caption)
+            .foregroundStyle(.secondary)
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(coordinator.inventory?.candidates ?? []) { candidate in
@@ -190,6 +212,143 @@ struct VocabularyPreparationView: View {
             Spacer(minLength: 8)
         }
         .padding(28)
+    }
+
+    private var predictionAudit: some View {
+        VStack(spacing: 22) {
+            HStack {
+                Text(AppText.localized("盲测", "Blind prediction audit") + " " + coordinator.predictionAuditProgressText)
+                    .font(.headline)
+                Spacer()
+                Button(AppText.localized("返回清单", "Back to inventory")) {
+                    coordinator.returnToInventoryFromPredictionAudit()
+                }
+            }
+            Text(AppText.localized(
+                "在作答前不显示模型预测、释义或文档上下文。请选择你现在能否从词元和词性中想起文档相关含义。",
+                "The model prediction, definition, and document context stay hidden. Answer whether you can currently retrieve the document-relevant meaning from the lemma and POS."
+            ))
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: 640)
+            if let item = coordinator.currentPredictionAuditItem {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text(item.displayLemma)
+                        .font(.system(size: 42, weight: .bold, design: .rounded))
+                        .textSelection(.enabled)
+                    partOfSpeech(item.partOfSpeech)
+                }
+                HStack(spacing: 12) {
+                    Button(AppText.localized("认识", "Know")) {
+                        coordinator.recordPredictionAudit(.known)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    Button(AppText.localized("不认识", "Don’t know")) {
+                        coordinator.recordPredictionAudit(.unknown)
+                    }
+                }
+                .controlSize(.large)
+            }
+            Spacer()
+        }
+        .padding(28)
+    }
+
+    private var predictionAuditResults: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            if let result = coordinator.predictionAuditResult {
+                Text(AppText.localized("个人盲测结果", "Personal blind-audit result"))
+                    .font(.title2.weight(.semibold))
+                Text(AppText.localized(
+                    "这是对一位读者和一份文档的完整自报检查，不是独立评分的含义回忆测试，也不能验证所有学习者。",
+                    "This is a complete self-report check for one reader and one document. It is not independently scored meaning recall and does not validate the model for other learners."
+                ))
+                .foregroundStyle(.secondary)
+                Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 8) {
+                    auditMetric(
+                        AppText.localized("预测学习清单精确率", "Predicted-list precision"),
+                        result.predictedLearningPrecision
+                    )
+                    auditMetric(
+                        AppText.localized("预测学习清单召回率", "Predicted-list recall"),
+                        result.predictedLearningRecall
+                    )
+                    auditMetric(
+                        AppText.localized("当前可评估词汇词元覆盖率", "Current assessable lexical-token coverage"),
+                        result.currentLexicalTokenCoverage
+                    )
+                    auditMetric(
+                        AppText.localized("掌握所选词后的可评估投影覆盖率", "Projected assessable coverage after mastering selected words"),
+                        result.projectedLexicalTokenCoverage
+                    )
+                    auditMetric(AppText.localized("Brier 分数", "Brier score"), result.brierScore, percent: false)
+                    auditMetric(
+                        AppText.localized("10 桶 ECE", "Ten-bin ECE"),
+                        result.expectedCalibrationError,
+                        percent: false
+                    )
+                }
+                Text(AppText.localized(
+                    "模型遗漏的生词：\(result.missedUnknownCount) · 实际生词：\(result.actualUnknownCount) · 预测学习词：\(result.predictedLearningCount)",
+                    "Missed unknown lemmas: \(result.missedUnknownCount) · actual unknown lemmas: \(result.actualUnknownCount) · predicted learning lemmas: \(result.predictedLearningCount)"
+                ))
+                .font(.headline)
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(
+                            result.scoredItems.filter {
+                                $0.item.selectedForLearning || $0.answer == .unknown
+                            },
+                            id: \.item.canonicalKey
+                        ) { scored in
+                            HStack {
+                                Text(scored.item.displayLemma).font(.body.weight(.semibold))
+                                partOfSpeech(scored.item.partOfSpeech)
+                                Spacer()
+                                Text(scored.item.selectedForLearning
+                                    ? AppText.localized("模型选入", "Selected by model")
+                                    : AppText.localized("模型遗漏", "Missed by model"))
+                                    .foregroundStyle(
+                                        scored.item.selectedForLearning ? Color.secondary : Color.red
+                                    )
+                                Text(scored.answer == .known
+                                    ? AppText.localized("实际认识", "Actually known")
+                                    : AppText.localized("实际不认识", "Actually unknown"))
+                                    .foregroundStyle(
+                                        scored.answer == .known ? Color.orange : Color.secondary
+                                    )
+                                Text("P(known) \(scored.item.predictedKnownProbability * 100, specifier: "%.0f")%")
+                                    .monospacedDigit()
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            Divider()
+                        }
+                    }
+                }
+                .background(.background, in: RoundedRectangle(cornerRadius: 8))
+                HStack {
+                    Button(AppText.localized("返回清单", "Back to inventory")) {
+                        coordinator.returnToInventoryFromPredictionAudit()
+                    }
+                    Button(AppText.localized("重新盲测", "Restart audit"), role: .destructive) {
+                        coordinator.resetPredictionAudit()
+                        coordinator.beginPredictionAudit()
+                    }
+                    Spacer()
+                }
+            }
+        }
+        .padding(20)
+    }
+
+    @ViewBuilder
+    private func auditMetric(_ label: String, _ value: Double, percent: Bool = true) -> some View {
+        GridRow {
+            Text(label).foregroundStyle(.secondary)
+            Text(percent ? "\(value * 100, specifier: "%.1f")%" : "\(value, specifier: "%.4f")")
+                .monospacedDigit()
+        }
     }
 
     @ViewBuilder
@@ -343,7 +502,12 @@ struct VocabularyPreparationView: View {
 
     @ViewBuilder
     private func partOfSpeech(_ candidate: DocumentVocabularyCandidate) -> some View {
-        if let label = candidate.partOfSpeech.displayName {
+        partOfSpeech(candidate.partOfSpeech)
+    }
+
+    @ViewBuilder
+    private func partOfSpeech(_ partOfSpeech: VocabularyPartOfSpeech) -> some View {
+        if let label = partOfSpeech.displayName {
             Text(label)
                 .font(.caption2)
                 .foregroundStyle(.secondary)

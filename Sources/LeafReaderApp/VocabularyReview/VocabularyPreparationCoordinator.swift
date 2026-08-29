@@ -9,6 +9,8 @@ enum VocabularyPreparationPhase: Equatable {
     case inventory
     case assessment
     case results
+    case predictionAudit
+    case predictionAuditResults
     case importing
     case error(String)
 }
@@ -126,6 +128,22 @@ final class VocabularyPreparationCoordinator {
 
     var answeredCount: Int { assessment?.answeredQuestionCount ?? 0 }
     var hasSavedAnswers: Bool { !session.answers.isEmpty }
+    var predictionAudit: VocabularyPredictionAuditSession? { session.predictionAudit }
+    var currentPredictionAuditItem: VocabularyPredictionAuditItem? {
+        session.predictionAudit?.nextItem
+    }
+    var predictionAuditResult: VocabularyPredictionAuditResult? {
+        session.predictionAudit?.result()
+    }
+    var hasCompatiblePredictionAudit: Bool {
+        guard let audit = session.predictionAudit, let inventory else { return false }
+        return audit.isCompatible(inventory: inventory, mode: mode)
+    }
+
+    var predictionAuditProgressText: String {
+        guard let audit = session.predictionAudit else { return "0 / 0" }
+        return "\(audit.answeredCount) / \(audit.totalCount)"
+    }
 
     var questionLimitText: String {
         "\(answeredCount) / 80"
@@ -242,6 +260,55 @@ final class VocabularyPreparationCoordinator {
             let advance = Self.advance(assessment, mutation: .none)
             await self?.apply(advance: advance, requestID: activeRequestID, persistAnswers: false)
         }
+    }
+
+    func beginPredictionAudit() {
+        guard let inventory else { return }
+        if let audit = session.predictionAudit,
+           audit.isCompatible(inventory: inventory, mode: mode) {
+            phase = audit.isComplete ? .predictionAuditResults : .predictionAudit
+            return
+        }
+        phase = .analyzing
+        progressText = AppText.localized(
+            "正在冻结无测试预测…",
+            "Freezing the no-assessment prediction…"
+        )
+        let activeRequestID = requestID
+        let mode = mode
+        Task.detached { [weak self] in
+            let prediction = AdaptiveVocabularyAssessment(
+                inventory: inventory,
+                mode: mode,
+                readerPrior: nil
+            ).result()
+            let audit = VocabularyPredictionAuditSession(
+                inventory: inventory,
+                prediction: prediction,
+                mode: mode
+            )
+            await self?.applyPredictionAudit(audit, requestID: activeRequestID)
+        }
+    }
+
+    func recordPredictionAudit(_ answer: VocabularyPredictionAuditAnswer) {
+        guard phase == .predictionAudit,
+              let key = session.predictionAudit?.nextItem?.canonicalKey else { return }
+        session.predictionAudit?.record(answer, for: key)
+        sessionStore?.save(session)
+        if session.predictionAudit?.isComplete == true {
+            phase = .predictionAuditResults
+        }
+    }
+
+    func resetPredictionAudit() {
+        session.predictionAudit = nil
+        sessionStore?.save(session)
+        phase = inventory == nil ? .welcome : .inventory
+    }
+
+    func returnToInventoryFromPredictionAudit() {
+        phase = inventory == nil ? .welcome : .inventory
     }
 
     func resetAssessment() {
@@ -418,6 +485,22 @@ final class VocabularyPreparationCoordinator {
         workflowTask = nil
         definitionTask?.cancel()
         definitionTask = nil
+    }
+
+    private func applyPredictionAudit(
+        _ audit: VocabularyPredictionAuditSession,
+        requestID activeRequestID: UUID
+    ) {
+        guard requestID == activeRequestID,
+              let inventory,
+              audit.isCompatible(inventory: inventory, mode: mode),
+              let identity = activeIdentity,
+              documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
+        session.predictionAudit = audit
+        sessionStore?.save(session)
+        phase = audit.totalCount == 0
+            ? .error(AppText.localized("没有可盲测的词元。", "There are no assessable lemmas to audit."))
+            : audit.isComplete ? .predictionAuditResults : .predictionAudit
     }
 
     private func buildPayload(

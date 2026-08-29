@@ -159,6 +159,46 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         try await waitUntil { coordinator.answeredCount == 1 && coordinator.phase == .assessment }
     }
 
+    func testBlindPredictionAuditBypassesAssessmentAndStaysOutOfProfilesAndResearch() async throws {
+        let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: .pdf)
+        let priorStore = FakeVocabularyReaderPriorStore()
+        let researchStore = FakeVocabularyResearchEvidenceStore()
+        let provider = FakeVocabularyPreparationDefinitionProvider()
+        let sessionStore = VocabularyPreparationSessionStore(documentID: source.identity.documentID)
+        defer { sessionStore.clear() }
+        let coordinator = VocabularyPreparationCoordinator(
+            documentSource: source,
+            library: FakeVocabularyPreparationLibrary(),
+            definitionProvider: provider,
+            readerPriorStore: priorStore,
+            researchEvidenceStore: researchStore
+        )
+        coordinator.resetForCurrentDocument()
+        coordinator.startAnalysis()
+        try await waitUntil { coordinator.phase == .inventory }
+
+        coordinator.beginPredictionAudit()
+        try await waitUntil { coordinator.phase == .predictionAudit }
+        let firstKey = try XCTUnwrap(coordinator.currentPredictionAuditItem?.canonicalKey)
+        coordinator.recordPredictionAudit(.known)
+        coordinator.returnToInventoryFromPredictionAudit()
+        coordinator.beginPredictionAudit()
+        XCTAssertEqual(coordinator.predictionAudit?.answeredCount, 1)
+        XCTAssertNotEqual(coordinator.currentPredictionAuditItem?.canonicalKey, firstKey)
+
+        while coordinator.phase == .predictionAudit {
+            coordinator.recordPredictionAudit(.unknown)
+        }
+        XCTAssertEqual(coordinator.phase, .predictionAuditResults)
+        XCTAssertNotNil(coordinator.predictionAuditResult)
+        XCTAssertEqual(coordinator.answeredCount, 0)
+        XCTAssertNil(priorStore.load(languageCode: "en"))
+        XCTAssertEqual(researchStore.recordedSessionCount, 0)
+        let definitionRequestCount = await provider.requestCount()
+        XCTAssertEqual(definitionRequestCount, 0)
+        XCTAssertTrue(sessionStore.load()?.predictionAudit?.isComplete == true)
+    }
+
     func testTypedKnownAnswerRemainsPendingUntilSelfVerificationAndPersistsLocally() async throws {
         let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: .pdf)
         let sessionStore = VocabularyPreparationSessionStore(documentID: source.identity.documentID)

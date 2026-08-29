@@ -359,6 +359,7 @@ package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
     package var readerPriorContributionRecorded: Bool?
     package var readerPriorContributionID: String?
     package var documentDomain: VocabularyDocumentDomain?
+    package var predictionAudit: VocabularyPredictionAuditSession?
 
     package init(
         mode: VocabularyAssessmentMode = .allUnknown,
@@ -368,7 +369,8 @@ package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
         algorithmVersion: Int = currentAlgorithmVersion,
         readerPriorContributionRecorded: Bool? = nil,
         readerPriorContributionID: String? = nil,
-        documentDomain: VocabularyDocumentDomain? = nil
+        documentDomain: VocabularyDocumentDomain? = nil,
+        predictionAudit: VocabularyPredictionAuditSession? = nil
     ) {
         self.mode = mode
         self.invitationState = invitationState
@@ -378,6 +380,7 @@ package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
         self.readerPriorContributionRecorded = readerPriorContributionRecorded
         self.readerPriorContributionID = readerPriorContributionID
         self.documentDomain = documentDomain
+        self.predictionAudit = predictionAudit
     }
 }
 
