@@ -96,6 +96,12 @@ metadata, while production difficulty remains general-language. Domain blending,
 same-POS sense splitting, and 2PL parameters stay inactive until their documented
 held-out gates pass.
 
+Research exports use schema version 2 for newly generated files. Optional
+self-rated proficiency is bounded to `A1/A2`, `B1/B2`, `C1/C2`, or
+`Unknown / prefer not to say`; it remains a research covariate and never becomes
+a strong production reader prior. The offline fitter continues accepting
+existing schema-version-1 exports.
+
 Results expose the stop reason, reader-ability estimate and interval,
 conservative coverage, residual uncertain-lemma mass, skipped definitions,
 final expected-loss reduction, and whether the 80-question limit was reached.

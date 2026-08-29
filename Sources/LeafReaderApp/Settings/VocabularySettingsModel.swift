@@ -34,7 +34,7 @@ final class VocabularySettingsModel {
     private(set) var exportError: String?
     private var researchRequestID: UUID?
     var firstLanguageCode = ""
-    var selfRatedProficiency = ""
+    var selfRatedProficiency: VocabularySelfRatedProficiency = .unknown
 
     var participantPseudonym: String {
         if let existing = preferences.string(forKey: Self.pseudonymKey), !existing.isEmpty {

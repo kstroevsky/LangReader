@@ -13,6 +13,7 @@ import json
 import math
 import random
 import sys
+import tempfile
 from collections import defaultdict
 from pathlib import Path
 
@@ -161,7 +162,7 @@ def load_exports(paths: list[Path], observation_model: ObservationModel) -> list
     seen: dict[tuple[str, str, int, str], str] = {}
     for path in paths:
         payload = json.loads(path.read_text(encoding="utf-8"))
-        if payload.get("schemaVersion") != 1:
+        if payload.get("schemaVersion") not in (1, 2):
             raise ValueError(f"{path}: unsupported schemaVersion")
         participant = payload.get("participant", {})
         pseudonym = participant.get("participantPseudonym", "").strip()
@@ -465,6 +466,38 @@ def self_test(observation_model: ObservationModel) -> None:
     assert pack["reviewed"] is False
     assert pack["observationModel"] == observation_model.metadata()
     assert all("y" not in row for row in rows)
+
+    export_record = {
+        "languageCode": "en",
+        "lexicalItemID": {
+            "language": "en", "lemma": "word", "partOfSpeech": "noun",
+        },
+        "documentDomain": "general",
+        "difficultyMean": 0.0,
+        "difficultyStandardDeviation": 0.5,
+        "difficultySource": "englishECDICT",
+        "difficultyVersion": "self-test",
+        "evidence": "verifiedKnown",
+        "protocolVersion": 3,
+        "sessionOrdinal": 1,
+    }
+    with tempfile.TemporaryDirectory() as directory:
+        paths = []
+        for schema_version, proficiency in ((1, "legacy free text"), (2, "B1/B2")):
+            path = Path(directory) / f"schema-{schema_version}.json"
+            path.write_text(json.dumps({
+                "schemaVersion": schema_version,
+                "participant": {
+                    "participantPseudonym": f"p-schema-{schema_version}",
+                    "selfRatedProficiency": proficiency,
+                },
+                "records": [export_record],
+            }), encoding="utf-8")
+            paths.append(path)
+        compatible_rows = load_exports(paths, observation_model)
+        assert [row["proficiency"] for row in compatible_rows] == [
+            "legacy free text", "B1/B2",
+        ]
     print("vocabulary calibration self-test passed")
 
 

@@ -56,7 +56,14 @@ struct VocabularySettingsView: View {
                     Button(AppText.localized("重置", "Reset")) { model.resetPseudonym() }
                 }
                 TextField(AppText.localized("第一语言代码（可选）", "L1 language code (optional)"), text: $model.firstLanguageCode)
-                TextField(AppText.localized("自评水平（可选）", "Broad self-rated proficiency (optional)"), text: $model.selfRatedProficiency)
+                Picker(
+                    AppText.localized("自评水平（可选）", "Broad self-rated proficiency (optional)"),
+                    selection: $model.selfRatedProficiency
+                ) {
+                    ForEach(VocabularySelfRatedProficiency.allCases, id: \.self) { proficiency in
+                        Text(proficiency.rawValue).tag(proficiency)
+                    }
+                }
                 LabeledContent(AppText.localized("记录", "Records"), value: "\(model.researchRecordCount)")
                 HStack {
                     Button(AppText.localized("预览字段", "Preview included fields")) { model.previewResearchExport() }

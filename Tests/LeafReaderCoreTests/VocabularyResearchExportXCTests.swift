@@ -51,8 +51,9 @@ final class VocabularyResearchExportXCTests: XCTestCase {
         let exported = store.export(profile: VocabularyResearchProfile(
             participantPseudonym: "lr-random",
             firstLanguageCode: "de",
-            selfRatedProficiency: "intermediate"
+            selfRatedProficiency: .b1B2
         ))
+        XCTAssertEqual(exported.schemaVersion, 2)
         XCTAssertEqual(exported.records.count, 1)
         XCTAssertEqual(exported.records[0].lexicalItemID, lexical)
         XCTAssertEqual(exported.records[0].documentDomain, .literary)
@@ -62,6 +63,7 @@ final class VocabularyResearchExportXCTests: XCTestCase {
         XCTAssertFalse(json.contains("documentID"))
         XCTAssertFalse(json.contains("context"))
         XCTAssertFalse(json.contains("timestamp"))
+        XCTAssertTrue(json.contains("B1/B2"))
     }
 
     func testOnlyReviewedEligibleRaschCalibrationItemsReachProductionMap() {

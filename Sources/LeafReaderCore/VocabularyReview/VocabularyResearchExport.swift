@@ -3,19 +3,26 @@ import SQLite3
 
 private let VOCABULARY_RESEARCH_SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
+package enum VocabularySelfRatedProficiency: String, CaseIterable, Codable, Equatable, Sendable {
+    case a1A2 = "A1/A2"
+    case b1B2 = "B1/B2"
+    case c1C2 = "C1/C2"
+    case unknown = "Unknown / prefer not to say"
+}
+
 package struct VocabularyResearchProfile: Codable, Equatable, Sendable {
     package let participantPseudonym: String
     package let firstLanguageCode: String?
-    package let selfRatedProficiency: String?
+    package let selfRatedProficiency: VocabularySelfRatedProficiency?
 
     package init(
         participantPseudonym: String,
         firstLanguageCode: String? = nil,
-        selfRatedProficiency: String? = nil
+        selfRatedProficiency: VocabularySelfRatedProficiency? = nil
     ) {
         self.participantPseudonym = participantPseudonym
         self.firstLanguageCode = firstLanguageCode?.nilIfTrimmedEmpty
-        self.selfRatedProficiency = selfRatedProficiency?.nilIfTrimmedEmpty
+        self.selfRatedProficiency = selfRatedProficiency
     }
 }
 
@@ -57,7 +64,7 @@ package struct VocabularyResearchEvidenceRecord: Codable, Equatable, Sendable {
 }
 
 package struct VocabularyResearchExport: Codable, Equatable, Sendable {
-    package static let currentSchemaVersion = 1
+    package static let currentSchemaVersion = 2
     package let schemaVersion: Int
     package let participant: VocabularyResearchProfile
     package let records: [VocabularyResearchEvidenceRecord]

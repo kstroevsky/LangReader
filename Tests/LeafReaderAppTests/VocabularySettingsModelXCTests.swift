@@ -17,7 +17,7 @@ final class VocabularySettingsModelXCTests: XCTestCase {
             preferences: preferences
         )
         model.firstLanguageCode = "de"
-        model.selfRatedProficiency = "intermediate"
+        model.selfRatedProficiency = .b1B2
 
         model.previewResearchExport()
         try await waitUntil { !model.researchPreview.isEmpty }
@@ -32,7 +32,7 @@ final class VocabularySettingsModelXCTests: XCTestCase {
         XCTAssertEqual(saver.suggestedFilename, "leafreader-vocabulary-research.json")
         let decoded = try JSONDecoder().decode(VocabularyResearchExport.self, from: saved)
         XCTAssertEqual(decoded.participant.firstLanguageCode, "de")
-        XCTAssertEqual(decoded.participant.selfRatedProficiency, "intermediate")
+        XCTAssertEqual(decoded.participant.selfRatedProficiency, .b1B2)
         XCTAssertEqual(decoded.records.count, 1)
     }
 
