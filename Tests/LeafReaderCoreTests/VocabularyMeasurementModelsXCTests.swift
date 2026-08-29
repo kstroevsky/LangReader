@@ -2,6 +2,15 @@ import XCTest
 import LeafReaderCore
 
 final class VocabularyMeasurementModelsXCTests: XCTestCase {
+    func testAssessmentModelConfigurationKeepsProductionDefaultsExplicit() {
+        let configuration = VocabularyAssessmentModelConfiguration.production
+
+        XCTAssertEqual(configuration.evidenceReliabilityScale, 1)
+        XCTAssertEqual(configuration.minimumEpsilonKnowledge, 0.05)
+        XCTAssertEqual(configuration.coverageQuantile, 0.05)
+        XCTAssertEqual(configuration.warmPriorWeight, 0.90)
+    }
+
     func testKnowledgeModelPreservesLockedRaschMathematics() {
         let theta = 1.25
         let difficulty = -0.40
@@ -41,6 +50,26 @@ final class VocabularyMeasurementModelsXCTests: XCTestCase {
 
         XCTAssertEqual(actual, expected, accuracy: 1e-12)
         XCTAssertNotEqual(actual, formerlyCapped, accuracy: 1e-6)
+    }
+
+    func testDiagnosticReliabilityScaleChangesOnlyObservationEmission() throws {
+        let emission = try XCTUnwrap(
+            VocabularyObservationModel.emission(
+                for: .verifiedKnown,
+                reliabilityScale: 0.8
+            )
+        )
+
+        XCTAssertEqual(emission.reliability, 0.876, accuracy: 1e-12)
+        XCTAssertEqual(
+            VocabularyKnowledgeModel.knownProbability(
+                theta: 0.7,
+                difficulty: -0.2,
+                epsilonKnowledge: 0.05
+            ),
+            0.05 + 0.9 / (1 + exp(-0.9)),
+            accuracy: 1e-12
+        )
     }
 
     func testAnsweredPosteriorUsesTheSameObservationEmission() {

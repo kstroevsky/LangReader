@@ -36,7 +36,8 @@ package struct VocabularyReaderPrior: Codable, Equatable, Sendable {
     package func warmStartPosterior(
         thetaGrid: [Double],
         genericPrior: [Double],
-        smoothingStandardDeviation: Double = 0.35
+        smoothingStandardDeviation: Double = 0.35,
+        warmPriorWeight: Double = 0.90
     ) -> [Double]? {
         guard thetaPosterior.count == thetaGrid.count,
               genericPrior.count == thetaGrid.count,
@@ -50,7 +51,10 @@ package struct VocabularyReaderPrior: Codable, Equatable, Sendable {
             }
         }
         smoothed = Self.normalized(smoothed)
-        return Self.normalized(zip(smoothed, genericPrior).map { 0.9 * $0.0 + 0.1 * $0.1 })
+        let weight = min(max(warmPriorWeight, 0), 1)
+        return Self.normalized(zip(smoothed, genericPrior).map {
+            weight * $0.0 + (1 - weight) * $0.1
+        })
     }
 
     private static func normalized(_ values: [Double]) -> [Double] {

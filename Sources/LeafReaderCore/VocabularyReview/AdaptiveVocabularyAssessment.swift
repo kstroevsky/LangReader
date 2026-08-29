@@ -436,6 +436,7 @@ package struct VocabularyAssessmentResult: Codable, Equatable, Sendable {
     package let items: [VocabularyAssessmentResultItem]
     package let answeredQuestionCount: Int
     package let errorFloor: Double
+    package let coverageQuantile: Double
     package let expectedCoverageAfterSelection: Double
     package let residualUncertainty: Double
     package let reachedQuestionLimit: Bool
@@ -461,13 +462,13 @@ package struct VocabularyAssessmentResult: Codable, Equatable, Sendable {
         }
         let conservativeCoverage = Self.coverageLowerBound(
             items: updatedItems,
-            theta: diagnostics.thetaLowerBound,
-            epsilon: errorFloor
+            quantile: coverageQuantile
         )
         return VocabularyAssessmentResult(
             items: updatedItems,
             answeredQuestionCount: answeredQuestionCount,
             errorFloor: errorFloor,
+            coverageQuantile: coverageQuantile,
             expectedCoverageAfterSelection: totalOccurrences > 0 ? expectedKnownOccurrences / totalOccurrences : 1,
             residualUncertainty: residualUncertainty,
             reachedQuestionLimit: reachedQuestionLimit,
@@ -486,8 +487,7 @@ package struct VocabularyAssessmentResult: Codable, Equatable, Sendable {
 
     private static func coverageLowerBound(
         items: [VocabularyAssessmentResultItem],
-        theta: Double,
-        epsilon: Double
+        quantile: Double
     ) -> Double {
         let included = items.filter { $0.classification != .excluded }
         let total = Double(included.reduce(0) { $0 + $1.candidate.occurrenceCount })
@@ -505,7 +505,7 @@ package struct VocabularyAssessmentResult: Codable, Equatable, Sendable {
                 }
             }
             let sorted = sampleTotals.sorted()
-            let index = Int((0.05 * Double(sorted.count - 1)).rounded(.down))
+            let index = Int((quantile * Double(sorted.count - 1)).rounded(.down))
             return Double(sorted[index]) / total
         }
         let known = included.reduce(0.0) { partial, item in
@@ -571,9 +571,10 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     private let difficultyOrderedIndexes: [Int]
     private let predictiveSeed: UInt64
     private let initialPosterior: [Double]
+    private let modelConfiguration: VocabularyAssessmentModelConfiguration
     private(set) package var mode: VocabularyAssessmentMode
     private(set) package var answers: [VocabularyAssessmentAnswer]
-    private(set) package var epsilonKnowledge = VocabularyKnowledgeModel.defaultEpsilonKnowledge
+    private(set) package var epsilonKnowledge: Double
     /// Compatibility projection for existing diagnostics and callers. The value
     /// now belongs only to the latent-knowledge model.
     package var errorFloor: Double { epsilonKnowledge }
@@ -600,10 +601,13 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         mode: VocabularyAssessmentMode,
         restoredAnswers: [VocabularyAssessmentAnswer] = [],
         readerPrior: VocabularyReaderPrior? = nil,
-        currentDate: Date = Date()
+        currentDate: Date = Date(),
+        modelConfiguration: VocabularyAssessmentModelConfiguration = .production
     ) {
         self.inventory = inventory
         self.mode = mode
+        self.modelConfiguration = modelConfiguration
+        epsilonKnowledge = modelConfiguration.minimumEpsilonKnowledge
         candidateIndexByKey = Dictionary(uniqueKeysWithValues: inventory.candidates.enumerated().map {
             ($0.element.canonicalKey, $0.offset)
         })
@@ -622,7 +626,11 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             && readerPrior?.algorithmVersion == VocabularyPreparationSession.currentAlgorithmVersion
             && readerPrior?.isEligible(at: currentDate) == true
         initialPosterior = usesEligibleReaderPrior
-            ? readerPrior?.warmStartPosterior(thetaGrid: Self.thetaGrid, genericPrior: genericPrior) ?? genericPrior
+            ? readerPrior?.warmStartPosterior(
+                thetaGrid: Self.thetaGrid,
+                genericPrior: genericPrior,
+                warmPriorWeight: modelConfiguration.warmPriorWeight
+            ) ?? genericPrior
             : genericPrior
         posterior = initialPosterior
         answerByKey = [:]
@@ -860,6 +868,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             items: items,
             answeredQuestionCount: answeredQuestionCount,
             errorFloor: epsilonKnowledge,
+            coverageQuantile: modelConfiguration.coverageQuantile,
             expectedCoverageAfterSelection: totalOccurrences > 0 ? expectedKnownOccurrences / totalOccurrences : 1,
             residualUncertainty: uncertainty,
             reachedQuestionLimit: reachedQuestionLimit,
@@ -919,7 +928,10 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 )
             }
             let smoothedRate = (contradictions + 1) / Double(validations.count + 20)
-            epsilonKnowledge = min(0.25, max(0.05, smoothedRate))
+            epsilonKnowledge = min(
+                0.25,
+                max(modelConfiguration.minimumEpsilonKnowledge, smoothedRate)
+            )
             if contradiction > 0 && answeredQuestionCount >= 20 {
                 lowValueStreak = 0
                 stableCoverageDeckStreak = 0
@@ -944,7 +956,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 )
                 posterior[index] *= VocabularyObservationModel.evidenceLikelihood(
                     evidence: answer.evidence,
-                    latentKnownProbability: latentKnown
+                    latentKnownProbability: latentKnown,
+                    reliabilityScale: modelConfiguration.evidenceReliabilityScale
                 )
             }
             Self.normalize(&posterior)
@@ -1095,7 +1108,11 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         for index in samples.includedIndexes where selection.contains(inventory.candidates[index].canonicalKey) {
             addLearningGain(candidateIndex: index, samples: samples, totals: &totals)
         }
-        return Self.coverageLowerBound(totals: totals, totalOccurrences: samples.totalOccurrences)
+        return Self.coverageLowerBound(
+            totals: totals,
+            totalOccurrences: samples.totalOccurrences,
+            quantile: modelConfiguration.coverageQuantile
+        )
     }
 
     private func predictiveCoverageSamples() -> PredictiveCoverageSamples {
@@ -1131,7 +1148,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                         )
                         let probability = VocabularyObservationModel.posteriorKnownProbability(
                             prior: latentKnown,
-                            evidence: evidence
+                            evidence: evidence,
+                            reliabilityScale: modelConfiguration.evidenceReliabilityScale
                         )
                         if Self.nextRandomUnit(state: &randomState) < probability {
                             localMasks[localMaskOffset + (sampleIndex >> 6)] |= UInt64(1) << UInt64(sampleIndex & 63)
@@ -1211,7 +1229,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         let baseline = baselineCoverageTotals(samples)
         if Self.coverageLowerBound(
             totals: baseline,
-            totalOccurrences: samples.totalOccurrences
+            totalOccurrences: samples.totalOccurrences,
+            quantile: modelConfiguration.coverageQuantile
         ) >= target { return [] }
 
         if samples.includedIndexes.count <= 10,
@@ -1219,7 +1238,10 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             return exact
         }
 
-        let tailCount = max(1, Int(ceil(0.05 * Double(Self.predictiveSampleCount))))
+        let tailCount = max(
+            1,
+            Int(ceil(modelConfiguration.coverageQuantile * Double(Self.predictiveSampleCount)))
+        )
         let worstSamples = baseline.indices.sorted {
             if baseline[$0] != baseline[$1] { return baseline[$0] < baseline[$1] }
             return $0 < $1
@@ -1273,7 +1295,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             .flatMap { requiredBox.value()[$0] ?? [] }
             .sorted()
         let requiredSuccessCount = Self.predictiveSampleCount - Int(
-            (0.05 * Double(Self.predictiveSampleCount - 1)).rounded(.down)
+            (modelConfiguration.coverageQuantile * Double(Self.predictiveSampleCount - 1)).rounded(.down)
         )
         let cutoff = requiredPrefixes[min(requiredSuccessCount - 1, requiredPrefixes.count - 1)]
         let selectedIndexes = ranked.prefix(cutoff).map(\.0)
@@ -1292,6 +1314,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             if Self.coverageLowerBound(
                 totals: totals,
                 totalOccurrences: samples.totalOccurrences,
+                quantile: modelConfiguration.coverageQuantile,
                 scratch: &quantileScratch
             ) >= target {
                 removedIndexes.insert(index)
@@ -1314,7 +1337,11 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         func search(start: Int, remaining: Int, chosen: inout [Int], totals: [Int]) {
             guard found == nil else { return }
             if remaining == 0 {
-                if Self.coverageLowerBound(totals: totals, totalOccurrences: samples.totalOccurrences) >= target {
+                if Self.coverageLowerBound(
+                    totals: totals,
+                    totalOccurrences: samples.totalOccurrences,
+                    quantile: modelConfiguration.coverageQuantile
+                ) >= target {
                     found = chosen
                 }
                 return
@@ -1378,20 +1405,30 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         }
     }
 
-    private static func coverageLowerBound(totals: [Int], totalOccurrences: Int) -> Double {
+    private static func coverageLowerBound(
+        totals: [Int],
+        totalOccurrences: Int,
+        quantile: Double
+    ) -> Double {
         guard totalOccurrences > 0 else { return 1 }
         var scratch = Array(repeating: 0, count: totals.count)
-        return coverageLowerBound(totals: totals, totalOccurrences: totalOccurrences, scratch: &scratch)
+        return coverageLowerBound(
+            totals: totals,
+            totalOccurrences: totalOccurrences,
+            quantile: quantile,
+            scratch: &scratch
+        )
     }
 
     private static func coverageLowerBound(
         totals: [Int],
         totalOccurrences: Int,
+        quantile: Double,
         scratch: inout [Int]
     ) -> Double {
         guard totalOccurrences > 0 else { return 1 }
         for index in totals.indices { scratch[index] = totals[index] }
-        let target = Int((0.05 * Double(scratch.count - 1)).rounded(.down))
+        let target = Int((quantile * Double(scratch.count - 1)).rounded(.down))
         var lower = 0
         var upper = scratch.count - 1
         while lower < upper {
@@ -1552,7 +1589,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             )
             result[index] *= VocabularyObservationModel.evidenceLikelihood(
                 evidence: known ? .verifiedKnown : .reportedUnknown,
-                latentKnownProbability: latentKnown
+                latentKnownProbability: latentKnown,
+                reliabilityScale: modelConfiguration.evidenceReliabilityScale
             )
         }
         Self.normalize(&result)
@@ -1664,7 +1702,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 )
                 let likelihood = VocabularyObservationModel.evidenceLikelihood(
                     evidence: answer.evidence,
-                    latentKnownProbability: latentKnown
+                    latentKnownProbability: latentKnown,
+                    reliabilityScale: modelConfiguration.evidenceReliabilityScale
                 )
                 leaveOneOut[thetaIndex] /= max(likelihood, Double.leastNormalMagnitude)
             }
@@ -1676,7 +1715,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             )
             answeredProbabilities[answer.canonicalKey] = VocabularyObservationModel.posteriorKnownProbability(
                 prior: prior,
-                evidence: answer.evidence
+                evidence: answer.evidence,
+                reliabilityScale: modelConfiguration.evidenceReliabilityScale
             )
         }
     }

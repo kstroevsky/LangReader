@@ -226,6 +226,33 @@ python3 scripts/run_vocabulary_assessment_sensitivity.py \
   --output-markdown /tmp/vocabulary-holdout.md
 ```
 
+The Priority-0 diagnostic matrix is a separate development-only tool. It runs
+paired one-factor-at-a-time perturbations of evidence reliability,
+`epsilonKnowledge`, difficulty-prior uncertainty, the conservative coverage
+quantile, and warm-prior weight:
+
+```sh
+python3 scripts/run_vocabulary_assessment_diagnostic_matrix.py \
+  --output-json /tmp/vocabulary-diagnostic-matrix.json \
+  --output-markdown /tmp/vocabulary-diagnostic-matrix.md
+```
+
+The matrix uses deterministic per-scenario substreams and requires the hidden
+synthetic-truth fingerprints to remain identical between every variant and its
+same-seed baseline. Production evaluator runs retain the frozen sequential
+stream. The matrix has no release-holdout mode, does not enforce or weaken
+release gates, and does not rank configurations or select a production
+candidate.
+
+Its fixed probes are `0.80/1.05` evidence-reliability scale,
+`0.025/0.10` minimum `epsilonKnowledge`, `0.50/1.50` difficulty-prior
+standard-deviation scale, `0.025/0.10` coverage quantile, and `0.75/0.98`
+warm-prior weight around the unchanged production baseline. `supported` in the
+report means that a paired perturbation materially moved a predeclared metric
+with consistent direction for that level across development seeds. It is
+sensitivity evidence, not proof that the named subsystem is the sole real-world
+cause. Null and adverse cells remain in the JSON.
+
 Seeds are deterministically derived from a versioned suite label, rather than
 selected after viewing results. The development sweep varies item-residual
 standard deviation, response-error rate, and idiosyncratic item-flip rate. The

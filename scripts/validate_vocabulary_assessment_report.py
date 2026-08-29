@@ -46,6 +46,22 @@ def summarize(report: dict) -> dict:
         for field in ("itemResidualStandardDeviation", "responseNoiseRate", "idiosyncraticFlipRate"):
             if not isinstance(parameters.get(field), (int, float)):
                 fail(f"populationParameters lacks numeric {field}")
+        model_parameters = configuration.get("assessmentModelParameters")
+        if model_parameters is not None:
+            if not isinstance(model_parameters, dict):
+                fail("assessmentModelParameters must be an object")
+            for field in (
+                "evidenceReliabilityScale",
+                "minimumEpsilonKnowledge",
+                "difficultyPriorStandardDeviationScale",
+                "coverageQuantile",
+                "warmPriorWeight",
+            ):
+                if not isinstance(model_parameters.get(field), (int, float)):
+                    fail(f"assessmentModelParameters lacks numeric {field}")
+        paired = configuration.get("usesPairedDiagnosticSubstreams", False)
+        if not isinstance(paired, bool):
+            fail("usesPairedDiagnosticSubstreams must be boolean")
     results = report.get("results")
     if not isinstance(results, list):
         fail("results must be an array")
@@ -71,6 +87,9 @@ def summarize(report: dict) -> dict:
                 fail(f"{item.get('scenario')}/{item.get('mode')} lacks numeric {field}")
         if not isinstance(item.get("stopReasons"), dict):
             fail("stopReasons must be an object")
+        if configuration.get("usesPairedDiagnosticSubstreams"):
+            if not isinstance(item.get("syntheticTruthFingerprint"), str):
+                fail("paired diagnostic result lacks syntheticTruthFingerprint")
 
     well = [indexed[("well-specified-rasch", mode)] for mode in ("all-unknown", "coverage-98")]
     brier = sum(item["brierScore"] for item in well) / 2
@@ -80,6 +99,12 @@ def summarize(report: dict) -> dict:
     gates = report.get("qualityGates")
     if not isinstance(gates, dict):
         fail("qualityGates must be an object")
+    if configuration.get("usesPairedDiagnosticSubstreams"):
+        diagnostics = report.get("protocolDiagnostics")
+        if not isinstance(diagnostics, dict) or not isinstance(
+            diagnostics.get("syntheticTruthFingerprint"), str
+        ):
+            fail("paired protocol diagnostics lack syntheticTruthFingerprint")
     if gates.get("eligible"):
         if ece > 0.05:
             fail(f"well-specified ECE {ece:.6f} exceeds 0.05")

@@ -87,4 +87,37 @@ final class VocabularyReaderPriorStoreXCTests: XCTestCase {
         XCTAssertGreaterThan(warm[89], generic[89] * 0.1)
         XCTAssertGreaterThan(warm[0], 0)
     }
+
+    func testWarmStartWeightIsExplicitAndProductionDefaultIsUnchanged() throws {
+        var concentrated = Array(repeating: 0.0, count: 121)
+        concentrated[90] = 1
+        let prior = VocabularyReaderPrior(
+            languageCode: "en",
+            thetaPosterior: concentrated,
+            completedSessionCount: 2,
+            verifiedEvidenceCount: 40,
+            lastUpdatedAt: Date(),
+            algorithmVersion: 3
+        )
+        let grid = (0...120).map { -6.0 + Double($0) * 0.1 }
+        let generic = Array(repeating: 1.0 / 121.0, count: 121)
+        let genericOnly = try XCTUnwrap(prior.warmStartPosterior(
+            thetaGrid: grid,
+            genericPrior: generic,
+            warmPriorWeight: 0
+        ))
+        let storedOnly = try XCTUnwrap(prior.warmStartPosterior(
+            thetaGrid: grid,
+            genericPrior: generic,
+            warmPriorWeight: 1
+        ))
+        let production = try XCTUnwrap(prior.warmStartPosterior(
+            thetaGrid: grid,
+            genericPrior: generic
+        ))
+
+        XCTAssertTrue(zip(genericOnly, generic).allSatisfy { abs($0 - $1) < 1e-15 })
+        XCTAssertGreaterThan(storedOnly[90], production[90])
+        XCTAssertEqual(production[90], storedOnly[90] * 0.9 + generic[90] * 0.1, accuracy: 1e-12)
+    }
 }

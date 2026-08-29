@@ -26,4 +26,5 @@ cmp "$TEMP_DIR/first.json" "$TEMP_DIR/second.json"
 cmp "$TEMP_DIR/first.md" "$TEMP_DIR/second.md"
 python3 "$ROOT_DIR/scripts/validate_vocabulary_assessment_report.py" "$TEMP_DIR/first.json" >/dev/null
 python3 "$ROOT_DIR/scripts/run_vocabulary_assessment_sensitivity.py" --self-test >/dev/null
+python3 "$ROOT_DIR/scripts/run_vocabulary_assessment_diagnostic_matrix.py" --self-test >/dev/null
 echo "vocabulary assessment evaluator tests passed"

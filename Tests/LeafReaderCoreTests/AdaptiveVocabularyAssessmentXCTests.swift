@@ -140,6 +140,52 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         )
     }
 
+    func testDiagnosticConfigurationDoesNotReplaceProductionDefaults() {
+        let configuration = VocabularyAssessmentModelConfiguration(
+            evidenceReliabilityScale: 0.8,
+            minimumEpsilonKnowledge: 0.10,
+            coverageQuantile: 0.10,
+            warmPriorWeight: 0.75
+        )
+        let diagnostic = AdaptiveVocabularyAssessment(
+            inventory: inventory(count: 5),
+            mode: .targetCoverage(0.98),
+            modelConfiguration: configuration
+        )
+        let production = AdaptiveVocabularyAssessment(
+            inventory: inventory(count: 5),
+            mode: .targetCoverage(0.98)
+        )
+
+        XCTAssertEqual(diagnostic.epsilonKnowledge, 0.10)
+        XCTAssertEqual(diagnostic.result().coverageQuantile, 0.10)
+        XCTAssertEqual(production.epsilonKnowledge, 0.05)
+        XCTAssertEqual(production.result().coverageQuantile, 0.05)
+    }
+
+    func testDiagnosticCoverageQuantileUsesTheSamePredictiveSamplesMonotonically() {
+        let inventory = inventory(count: 60)
+        let low = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .targetCoverage(0.98),
+            modelConfiguration: VocabularyAssessmentModelConfiguration(coverageQuantile: 0.025)
+        ).result(selectionOverride: [])
+        let high = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .targetCoverage(0.98),
+            modelConfiguration: VocabularyAssessmentModelConfiguration(coverageQuantile: 0.10)
+        ).result(selectionOverride: [])
+
+        XCTAssertGreaterThanOrEqual(
+            high.diagnostics.conservativeCoverageLowerBound,
+            low.diagnostics.conservativeCoverageLowerBound
+        )
+        XCTAssertNotEqual(
+            high.diagnostics.conservativeCoverageLowerBound,
+            low.diagnostics.conservativeCoverageLowerBound
+        )
+    }
+
     func testCoverageLowerBoundPreservesSoftEvidence() throws {
         let candidates = [
             candidate(key: "known", difficulty: 4, count: 50),

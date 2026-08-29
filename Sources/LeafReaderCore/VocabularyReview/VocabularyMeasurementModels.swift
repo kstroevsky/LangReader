@@ -1,5 +1,32 @@
 import Foundation
 
+/// Explicit assessment parameters used by synthetic diagnostics. Production
+/// callers use `.production`; alternate values must be passed deliberately.
+package struct VocabularyAssessmentModelConfiguration: Equatable, Sendable {
+    package static let production = VocabularyAssessmentModelConfiguration()
+
+    package let evidenceReliabilityScale: Double
+    package let minimumEpsilonKnowledge: Double
+    package let coverageQuantile: Double
+    package let warmPriorWeight: Double
+
+    package init(
+        evidenceReliabilityScale: Double = 1,
+        minimumEpsilonKnowledge: Double = 0.05,
+        coverageQuantile: Double = 0.05,
+        warmPriorWeight: Double = 0.90
+    ) {
+        precondition(evidenceReliabilityScale.isFinite && evidenceReliabilityScale >= 0)
+        precondition((0...0.25).contains(minimumEpsilonKnowledge))
+        precondition((0...0.5).contains(coverageQuantile))
+        precondition((0...1).contains(warmPriorWeight))
+        self.evidenceReliabilityScale = evidenceReliabilityScale
+        self.minimumEpsilonKnowledge = minimumEpsilonKnowledge
+        self.coverageQuantile = coverageQuantile
+        self.warmPriorWeight = warmPriorWeight
+    }
+}
+
 /// The versioned latent-knowledge curve used by vocabulary assessment.
 ///
 /// `epsilonKnowledge` models person-item exceptions and other mismatch that a
@@ -70,9 +97,14 @@ package enum VocabularyObservationModel {
     package static let reliabilitySourceVersion = "cold-start-evidence-v1"
 
     package static func emission(
-        for evidence: VocabularyKnowledgeEvidence
+        for evidence: VocabularyKnowledgeEvidence,
+        reliabilityScale: Double = 1
     ) -> VocabularyObservationEmission? {
-        guard let reliability = evidence.reliability else { return nil }
+        guard let baseReliability = evidence.reliability else { return nil }
+        let reliability = min(
+            1,
+            max(0.5, 0.5 + (baseReliability - 0.5) * reliabilityScale)
+        )
         return VocabularyObservationEmission(
             evidence: evidence,
             reliability: reliability,
@@ -83,18 +115,20 @@ package enum VocabularyObservationModel {
 
     package static func evidenceLikelihood(
         evidence: VocabularyKnowledgeEvidence,
-        latentKnownProbability: Double
+        latentKnownProbability: Double,
+        reliabilityScale: Double = 1
     ) -> Double {
-        guard let emission = emission(for: evidence) else { return 1 }
+        guard let emission = emission(for: evidence, reliabilityScale: reliabilityScale) else { return 1 }
         return latentKnownProbability * emission.probabilityGivenKnown
             + (1 - latentKnownProbability) * emission.probabilityGivenUnknown
     }
 
     package static func posteriorKnownProbability(
         prior: Double,
-        evidence: VocabularyKnowledgeEvidence
+        evidence: VocabularyKnowledgeEvidence,
+        reliabilityScale: Double = 1
     ) -> Double {
-        guard let emission = emission(for: evidence) else { return prior }
+        guard let emission = emission(for: evidence, reliabilityScale: reliabilityScale) else { return prior }
         let knownJoint = prior * emission.probabilityGivenKnown
         let unknownJoint = (1 - prior) * emission.probabilityGivenUnknown
         let total = knownJoint + unknownJoint
@@ -102,7 +136,9 @@ package enum VocabularyObservationModel {
     }
 
     package static func manifest() -> VocabularyObservationModelManifest {
-        let emissions = VocabularyKnowledgeEvidence.allCases.compactMap(emission(for:))
+        let emissions = VocabularyKnowledgeEvidence.allCases.compactMap {
+            emission(for: $0)
+        }
         let centeredFixtures = emissions.map {
             goldenFixture(
                 evidence: $0.evidence,
