@@ -262,25 +262,41 @@ package struct DocumentVocabularyInventory: Codable, Equatable, Sendable {
     }
 }
 
+package enum VocabularyQuestionSelectionType: String, Codable, Equatable, Sendable {
+    case initialCalibration
+    case adaptiveLoss
+    case tailValidation
+    case calibration
+}
+
 package struct VocabularyAssessmentAnswer: Codable, Equatable, Sendable {
     package let canonicalKey: String
     package let evidence: VocabularyKnowledgeEvidence
     package let wasValidation: Bool
     package let predictedKnown: Bool?
     package let typedMeaning: String?
+    package let questionOrdinal: Int?
+    package let selectionType: VocabularyQuestionSelectionType?
+    package let predictedKnownBeforeAnswer: Double?
 
     package init(
         canonicalKey: String,
         evidence: VocabularyKnowledgeEvidence,
         wasValidation: Bool = false,
         predictedKnown: Bool? = nil,
-        typedMeaning: String? = nil
+        typedMeaning: String? = nil,
+        questionOrdinal: Int? = nil,
+        selectionType: VocabularyQuestionSelectionType? = nil,
+        predictedKnownBeforeAnswer: Double? = nil
     ) {
         self.canonicalKey = canonicalKey
         self.evidence = evidence
         self.wasValidation = wasValidation
         self.predictedKnown = predictedKnown
         self.typedMeaning = typedMeaning
+        self.questionOrdinal = questionOrdinal
+        self.selectionType = selectionType
+        self.predictedKnownBeforeAnswer = predictedKnownBeforeAnswer
     }
 
     package init(
@@ -304,6 +320,9 @@ package struct VocabularyAssessmentAnswer: Codable, Equatable, Sendable {
         case wasValidation
         case predictedKnown
         case typedMeaning
+        case questionOrdinal
+        case selectionType
+        case predictedKnownBeforeAnswer
     }
 
     package init(from decoder: any Decoder) throws {
@@ -312,6 +331,9 @@ package struct VocabularyAssessmentAnswer: Codable, Equatable, Sendable {
         wasValidation = try container.decodeIfPresent(Bool.self, forKey: .wasValidation) ?? false
         predictedKnown = try container.decodeIfPresent(Bool.self, forKey: .predictedKnown)
         typedMeaning = try container.decodeIfPresent(String.self, forKey: .typedMeaning)
+        questionOrdinal = try container.decodeIfPresent(Int.self, forKey: .questionOrdinal)
+        selectionType = try container.decodeIfPresent(VocabularyQuestionSelectionType.self, forKey: .selectionType)
+        predictedKnownBeforeAnswer = try container.decodeIfPresent(Double.self, forKey: .predictedKnownBeforeAnswer)
         if let decoded = try container.decodeIfPresent(VocabularyKnowledgeEvidence.self, forKey: .evidence) {
             evidence = decoded
         } else {
@@ -337,6 +359,9 @@ package struct VocabularyAssessmentAnswer: Codable, Equatable, Sendable {
         try container.encode(wasValidation, forKey: .wasValidation)
         try container.encodeIfPresent(predictedKnown, forKey: .predictedKnown)
         try container.encodeIfPresent(typedMeaning, forKey: .typedMeaning)
+        try container.encodeIfPresent(questionOrdinal, forKey: .questionOrdinal)
+        try container.encodeIfPresent(selectionType, forKey: .selectionType)
+        try container.encodeIfPresent(predictedKnownBeforeAnswer, forKey: .predictedKnownBeforeAnswer)
     }
 }
 
@@ -528,6 +553,9 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     private struct PendingQuestion: Sendable {
         let key: String
         let validationPrediction: Bool?
+        let questionOrdinal: Int
+        let selectionType: VocabularyQuestionSelectionType
+        let predictedKnownBeforeAnswer: Double
     }
 
     private struct BestQuestionCache: Sendable {
@@ -657,7 +685,10 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 evidence: answer.evidence,
                 wasValidation: answer.wasValidation,
                 predictedKnown: answer.predictedKnown,
-                typedMeaning: answer.typedMeaning
+                typedMeaning: answer.typedMeaning,
+                questionOrdinal: answer.questionOrdinal,
+                selectionType: answer.selectionType,
+                predictedKnownBeforeAnswer: answer.predictedKnownBeforeAnswer
             ))
         }
         refreshStoppingState()
@@ -711,11 +742,15 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         guard !remaining.isEmpty else { return nil }
 
         let questionNumber = answeredQuestionCount + 1
-        let selected: (DocumentVocabularyCandidate, Bool?)
+        let selected: (
+            candidate: DocumentVocabularyCandidate,
+            validationPrediction: Bool?,
+            selectionType: VocabularyQuestionSelectionType
+        )
         if usesEligibleReaderPrior,
            (questionNumber == 4 || questionNumber == 8),
            let validation = validationCandidate(from: remaining) {
-            selected = validation
+            selected = (validation.0, validation.1, .tailValidation)
         } else if questionNumber <= 8 {
             let fraction = (Double(questionNumber) - 0.5) / 8.0
             let orderedIndex = min(
@@ -729,9 +764,9 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 if lhs != rhs { return lhs < rhs }
                 return $0.canonicalKey < $1.canonicalKey
             } ?? remaining[0]
-            selected = (nearest, nil)
+            selected = (nearest, nil, .initialCalibration)
         } else if questionNumber > 10, questionNumber.isMultiple(of: 5), let validation = validationCandidate(from: remaining) {
-            selected = validation
+            selected = (validation.0, validation.1, .tailValidation)
         } else {
             let adaptive: DocumentVocabularyCandidate
             if let cachedBestQuestion,
@@ -742,10 +777,17 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             } else {
                 adaptive = bestQuestion(from: shortlist(from: remaining)).candidate
             }
-            selected = (adaptive, nil)
+            selected = (adaptive, nil, .adaptiveLoss)
         }
-        pendingQuestion = PendingQuestion(key: selected.0.canonicalKey, validationPrediction: selected.1)
-        return selected.0
+        let candidateIndex = candidateIndexByKey[selected.candidate.canonicalKey]
+        pendingQuestion = PendingQuestion(
+            key: selected.candidate.canonicalKey,
+            validationPrediction: selected.validationPrediction,
+            questionOrdinal: questionNumber,
+            selectionType: selected.selectionType,
+            predictedKnownBeforeAnswer: candidateIndex.map { currentProbabilities[$0] } ?? 0.5
+        )
+        return selected.candidate
     }
 
     package mutating func record(
@@ -761,7 +803,10 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             evidence: evidence,
             wasValidation: pending?.validationPrediction != nil,
             predictedKnown: pending?.validationPrediction,
-            typedMeaning: typedMeaning
+            typedMeaning: typedMeaning,
+            questionOrdinal: pending?.questionOrdinal,
+            selectionType: pending?.selectionType,
+            predictedKnownBeforeAnswer: pending?.predictedKnownBeforeAnswer
         )
         apply(answer)
         pendingQuestion = nil

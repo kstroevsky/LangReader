@@ -102,6 +102,14 @@ self-rated proficiency is bounded to `A1/A2`, `B1/B2`, `C1/C2`, or
 a strong production reader prior. The offline fitter continues accepting
 existing schema-version-1 exports.
 
+The document-scoped session records the scored question ordinal, the ordinary
+selection path (`initialCalibration`, `adaptiveLoss`, or `tailValidation`), and
+the pre-answer predicted-known probability. These fields support restoration
+and assignment audits but are intentionally omitted from normal research
+exports. The reserved `calibration` path and its export fields remain disabled
+until an approved, versioned research assignment policy defines the slot rate
+and theta-bin reconstruction metadata.
+
 Results expose the stop reason, reader-ability estimate and interval,
 conservative coverage, residual uncertain-lemma mass, skipped definitions,
 final expected-loss reduction, and whether the 80-question limit was reached.

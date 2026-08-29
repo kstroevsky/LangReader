@@ -14,7 +14,13 @@ final class VocabularyPreparationPersistenceXCTests: XCTestCase {
             mode: .targetCoverage(0.98),
             invitationState: .started,
             answers: [
-                VocabularyAssessmentAnswer(canonicalKey: "develop", outcome: .known),
+                VocabularyAssessmentAnswer(
+                    canonicalKey: "develop",
+                    evidence: .legacyKnown,
+                    questionOrdinal: 1,
+                    selectionType: .initialCalibration,
+                    predictedKnownBeforeAnswer: 0.72
+                ),
                 VocabularyAssessmentAnswer(canonicalKey: "gaunt", outcome: .unknown)
             ],
             finalSelection: ["gaunt"]

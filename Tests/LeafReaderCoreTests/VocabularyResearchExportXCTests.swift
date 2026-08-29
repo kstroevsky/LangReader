@@ -31,7 +31,10 @@ final class VocabularyResearchExportXCTests: XCTestCase {
         let answer = VocabularyAssessmentAnswer(
             canonicalKey: lexical.canonicalKey,
             evidence: .typedVerifiedKnown,
-            typedMeaning: "sensitive typed response"
+            typedMeaning: "sensitive typed response",
+            questionOrdinal: 15,
+            selectionType: .tailValidation,
+            predictedKnownBeforeAnswer: 0.91
         )
 
         XCTAssertTrue(store.recordCompletedSession(
@@ -63,6 +66,9 @@ final class VocabularyResearchExportXCTests: XCTestCase {
         XCTAssertFalse(json.contains("documentID"))
         XCTAssertFalse(json.contains("context"))
         XCTAssertFalse(json.contains("timestamp"))
+        XCTAssertFalse(json.contains("questionOrdinal"))
+        XCTAssertFalse(json.contains("selectionType"))
+        XCTAssertFalse(json.contains("predictedKnownBeforeAnswer"))
         XCTAssertTrue(json.contains("B1/B2"))
     }
 

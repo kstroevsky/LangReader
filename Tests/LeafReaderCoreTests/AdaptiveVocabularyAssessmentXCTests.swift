@@ -350,6 +350,15 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
             assessment.record(questionNumber.isMultiple(of: 2) ? .known : .unknown, for: question.canonicalKey)
             let answer = try XCTUnwrap(assessment.answers.last)
             XCTAssertEqual(answer.wasValidation, questionNumber == 15 || questionNumber == 20)
+            XCTAssertEqual(answer.questionOrdinal, questionNumber)
+            XCTAssertEqual(
+                answer.selectionType,
+                questionNumber <= 8
+                    ? .initialCalibration
+                    : (questionNumber == 15 || questionNumber == 20 ? .tailValidation : .adaptiveLoss)
+            )
+            XCTAssertGreaterThanOrEqual(try XCTUnwrap(answer.predictedKnownBeforeAnswer), 0)
+            XCTAssertLessThanOrEqual(try XCTUnwrap(answer.predictedKnownBeforeAnswer), 1)
         }
 
         let validations = assessment.answers.filter(\.wasValidation)
