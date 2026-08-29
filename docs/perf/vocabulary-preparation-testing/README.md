@@ -253,6 +253,12 @@ with consistent direction for that level across development seeds. It is
 sensitivity evidence, not proof that the named subsystem is the sole real-world
 cause. Null and adverse cells remain in the JSON.
 
+The retained two-seed baseline is
+`docs/perf/vocabulary-assessment-diagnostic-matrix-v1.json`, with the concise
+human-readable disposition beside it in the matching Markdown file. Regenerate
+both only from the source revision recorded inside the report; never replace
+them with a favorable subset of experiments.
+
 Seeds are deterministically derived from a versioned suite label, rather than
 selected after viewing results. The development sweep varies item-residual
 standard deviation, response-error rate, and idiosyncratic item-flip rate. The
