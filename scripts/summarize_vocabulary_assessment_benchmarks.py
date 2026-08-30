@@ -10,10 +10,13 @@ from pathlib import Path
 
 def summarize(reports: list[dict]) -> dict:
     grouped: dict[tuple[int, str, str], list[dict]] = {}
+    grouped_auxiliary: dict[str, list[dict]] = {}
     for report in reports:
         for case in report["cases"]:
             key = (case["lemmaCount"], case["mode"], case.get("profile", "cold"))
             grouped.setdefault(key, []).append(case)
+        for item in report.get("auxiliary", []):
+            grouped_auxiliary.setdefault(item["name"], []).append(item)
     cases = []
     for (lemmas, mode, profile), values in sorted(grouped.items()):
         cases.append(
@@ -27,11 +30,21 @@ def summarize(reports: list[dict]) -> dict:
                 "maximumRangeMS": [min(item["maxMS"] for item in values), max(item["maxMS"] for item in values)],
             }
         )
+    auxiliary = [
+        {
+            "name": name,
+            "runCount": len(values),
+            "p50RangeMS": [min(item["p50MS"] for item in values), max(item["p50MS"] for item in values)],
+            "p95RangeMS": [min(item["p95MS"] for item in values), max(item["p95MS"] for item in values)],
+        }
+        for name, values in sorted(grouped_auxiliary.items())
+    ]
     return {
         "schemaVersion": 1,
         "runCount": len(reports),
         "allRunsPassed": all(report["gatePassed"] for report in reports),
         "cases": cases,
+        "auxiliary": auxiliary,
         "reports": reports,
     }
 
@@ -53,6 +66,19 @@ def markdown(summary: dict) -> str:
             f"{item['p95RangeMS'][0]:.2f}–{item['p95RangeMS'][1]:.2f} | "
             f"{item['maximumRangeMS'][0]:.2f}–{item['maximumRangeMS'][1]:.2f} |"
         )
+    if summary["auxiliary"]:
+        lines.extend([
+            "",
+            "Auxiliary phase trends (not part of the 150 ms next-card gate):",
+            "",
+            "| Measurement | p50 range ms | p95 range ms |",
+            "|---|---:|---:|",
+        ])
+        for item in summary["auxiliary"]:
+            lines.append(
+                f"| {item['name']} | {item['p50RangeMS'][0]:.2f}–{item['p50RangeMS'][1]:.2f} | "
+                f"{item['p95RangeMS'][0]:.2f}–{item['p95RangeMS'][1]:.2f} |"
+            )
     lines.extend(
         [
             "",
@@ -71,10 +97,12 @@ def self_test() -> None:
     failed = {
         "gatePassed": False,
         "cases": [{"lemmaCount": 10_000, "mode": "coverage-98", "profile": "cold", "p50MS": 90, "p95MS": 170, "maxMS": 220}],
+        "auxiliary": [{"name": "coverage-stop-check-10000", "p50MS": 140, "p95MS": 180}],
     }
     summary = summarize([fixture, failed])
     assert summary["allRunsPassed"] is False
     assert summary["cases"][0]["p95RangeMS"] == [120, 170]
+    assert summary["auxiliary"][0]["p95RangeMS"] == [180, 180]
     print("vocabulary benchmark series self-test passed")
 
 

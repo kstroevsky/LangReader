@@ -244,6 +244,22 @@ tolerance to cold screening. It reduced roughly 50 questions on the development
 workload but worsened Brier by as much as 0.051 and coverage-hit rate by as much
 as 18.75 percentage points, so exact cold-screen stability was restored.
 
+Three clean-tree Release repetitions from performance commit `152b47b` all
+passed the existing 150 ms ordinary next-card gate:
+
+| Mode/profile | p50 range | p95 range | Maximum range |
+|---|---:|---:|---:|
+| All unknown / cold | 58.90–62.50 | 72.79–74.75 | 76.94–86.76 |
+| Coverage / cold | 74.61–84.21 | 103.37–119.55 | 114.41–136.39 |
+| Coverage / warm | 99.39–105.40 | 117.76–121.37 | 122.52–127.68 |
+
+The separately reported 10,000-item terminal trends were 150.81–167.63 ms p95
+for the candidate stop check and 120.47–126.21 ms for final-result construction.
+Those phases are retained in `vocabulary-assessment-benchmark-staged-series.*`
+and are not silently folded into the next-card statistic. The response-time
+blocker is resolved for the staged next-card path, but the frozen version-3
+quality holdout and real-app/GUI gates remain independent blockers.
+
 Inventory construction depends heavily on Natural Language and hardware, so it
 is a same-machine trend rather than a portable absolute gate. Reproduce the
 300-page, approximately 90,000-token workload with:

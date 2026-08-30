@@ -401,6 +401,14 @@ The reviewed development comparison is retained in
 `vocabulary-stopping-staging-development-v1.{json,md}`. It does not replace or
 unlock the frozen release holdout.
 
+Three clean-tree Release repetitions from `152b47b` are retained in
+`vocabulary-assessment-benchmark-staged-series.{json,md}`. All ordinary
+10,000-lemma next-card gates passed: cold coverage p95 ranged 103.37–119.55 ms
+and warm coverage ranged 117.76–121.37 ms. Terminal stop-check p95 ranged
+150.81–167.63 ms and final-result p95 ranged 120.47–126.21 ms; these remain
+explicit auxiliary trends. Passing the next-card gate does not approve the
+frozen quality holdout or the real-app main-thread gate.
+
 Inventory building relies heavily on Apple's Natural Language framework and
 hardware, so it is measured as a same-machine trend:
 
