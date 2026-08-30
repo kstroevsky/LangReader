@@ -10,6 +10,12 @@ private struct BenchmarkCase: Codable {
     let p95MS: Double
     let maxMS: Double
     let profile: String
+    let stopCheckSamplesMS: [Double]
+    let stopCheckP95MS: Double
+    let finalResultSamplesMS: [Double]
+    let finalResultP95MS: Double
+    let screeningCoverageComputationCount: Int
+    let fullCoverageComputationCount: Int
 }
 
 private struct AuxiliaryBenchmark: Codable {
@@ -68,6 +74,10 @@ private func run(
     let warmupCount = 8
     let requestedSamples = 30
     var samples: [Double] = []
+    var stopCheckSamples: [Double] = []
+    var finalResultSamples: [Double] = []
+    var screeningCoverageComputationCount = 0
+    var fullCoverageComputationCount = 0
     var discarded = 0
     while samples.count < requestedSamples {
         var assessment = AdaptiveVocabularyAssessment(inventory: inventory, mode: mode, readerPrior: readerPrior)
@@ -79,13 +89,22 @@ private func run(
             let known = question.difficulty < Double((assessment.answeredQuestionCount % 5) - 2) * 0.35
             let started = ProcessInfo.processInfo.systemUptime
             assessment.record(known ? .known : .unknown, for: question.canonicalKey)
-            _ = assessment.nextQuestion()
+            let nextQuestion = assessment.nextQuestion()
             let milliseconds = (ProcessInfo.processInfo.systemUptime - started) * 1_000
-            if discarded < warmupCount {
+            if nextQuestion == nil {
+                stopCheckSamples.append(milliseconds)
+            } else if discarded < warmupCount {
                 discarded += 1
             } else {
                 samples.append(milliseconds)
             }
+        }
+        screeningCoverageComputationCount += assessment.screeningCoverageComputationCount
+        fullCoverageComputationCount += assessment.fullCoverageComputationCount
+        if assessment.isFinished {
+            let started = ProcessInfo.processInfo.systemUptime
+            _ = assessment.result()
+            finalResultSamples.append((ProcessInfo.processInfo.systemUptime - started) * 1_000)
         }
     }
     let sorted = samples.sorted()
@@ -97,7 +116,13 @@ private func run(
         p50MS: percentile(sorted, 0.50),
         p95MS: percentile(sorted, 0.95),
         maxMS: sorted.last ?? 0,
-        profile: profile
+        profile: profile,
+        stopCheckSamplesMS: stopCheckSamples,
+        stopCheckP95MS: percentile(stopCheckSamples.sorted(), 0.95),
+        finalResultSamplesMS: finalResultSamples,
+        finalResultP95MS: percentile(finalResultSamples.sorted(), 0.95),
+        screeningCoverageComputationCount: screeningCoverageComputationCount,
+        fullCoverageComputationCount: fullCoverageComputationCount
     )
 }
 
@@ -115,6 +140,68 @@ private func measure(name: String, warmups: Int = 2, samples: Int = 10, body: ()
         p50MS: percentile(sorted, 0.50),
         p95MS: percentile(sorted, 0.95)
     )
+}
+
+private func measured(name: String, values: [Double]) -> AuxiliaryBenchmark {
+    let sorted = values.sorted()
+    return AuxiliaryBenchmark(
+        name: name,
+        samplesMS: values,
+        p50MS: percentile(sorted, 0.50),
+        p95MS: percentile(sorted, 0.95)
+    )
+}
+
+private func coveragePhaseBenchmarks(lemmaCount: Int, samples: Int = 3) -> [AuxiliaryBenchmark] {
+    let inventory = DocumentVocabularyInventory(
+        languageCode: "en",
+        candidates: (0..<lemmaCount).map { candidate(index: $0, count: lemmaCount) }
+    )
+    var stopChecks: [Double] = []
+    var finalResults: [Double] = []
+    let thetaGrid = (0...120).map { -6.0 + Double($0) * 0.1 }
+    let storedPosterior = thetaGrid.map { exp(-pow($0 - 0.5, 2) / (2 * 0.35 * 0.35)) }
+    let warmPrior = VocabularyReaderPrior(
+        languageCode: "en",
+        thetaPosterior: storedPosterior,
+        completedSessionCount: 3,
+        verifiedEvidenceCount: 80,
+        lastUpdatedAt: Date(),
+        algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion
+    )
+    for _ in 0..<samples {
+        var assessment = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .targetCoverage(0.98),
+            readerPrior: warmPrior
+        )
+        while !assessment.isFinished, let question = assessment.nextQuestion() {
+            let started = ProcessInfo.processInfo.systemUptime
+            assessment.record(.verifiedKnown, for: question.canonicalKey)
+            let next = assessment.nextQuestion()
+            if next == nil {
+                stopChecks.append((ProcessInfo.processInfo.systemUptime - started) * 1_000)
+            }
+        }
+        guard assessment.fullCoverageComputationCount == 1,
+              stopChecks.count == finalResults.count + 1 else {
+            fputs(
+                "phase benchmark did not execute one staged full stop check "
+                    + "(answers=\(assessment.answeredQuestionCount), "
+                    + "screen=\(assessment.screeningCoverageComputationCount), "
+                    + "full=\(assessment.fullCoverageComputationCount))\n",
+                stderr
+            )
+            exit(2)
+        }
+        let started = ProcessInfo.processInfo.systemUptime
+        _ = assessment.result()
+        finalResults.append((ProcessInfo.processInfo.systemUptime - started) * 1_000)
+    }
+    return [
+        measured(name: "coverage-stop-check-\(lemmaCount)", values: stopChecks),
+        measured(name: "coverage-final-result-\(lemmaCount)", values: finalResults)
+    ]
 }
 
 @main
@@ -167,7 +254,7 @@ private struct VocabularyAssessmentBenchmark {
             participant: VocabularyResearchProfile(participantPseudonym: "benchmark"),
             records: exportRecords
         )
-        let auxiliary = [
+        var auxiliary = [
             measure(name: "session-migration") {
                 _ = try? JSONDecoder().decode(VocabularyPreparationSession.self, from: legacyJSON)
             },
@@ -181,11 +268,12 @@ private struct VocabularyAssessmentBenchmark {
                 )
             }
         ]
+        auxiliary.append(contentsOf: coveragePhaseBenchmarks(lemmaCount: 10_000))
         let largest = allCases.filter { $0.lemmaCount == 10_000 }
         let passed = largest.allSatisfy { $0.p95MS <= 150 }
         let environment = ProcessInfo.processInfo.environment
         let report = BenchmarkReport(
-            schemaVersion: 1,
+            schemaVersion: 2,
             metadata: [
                 "configuration": "release",
                 "source_revision": environment["LEAFREADER_BENCHMARK_SOURCE_REVISION"] ?? "unknown",
@@ -209,6 +297,15 @@ private struct VocabularyAssessmentBenchmark {
                 item.p95MS,
                 item.maxMS
             ))
+            if !item.stopCheckSamplesMS.isEmpty || !item.finalResultSamplesMS.isEmpty {
+                print(String(
+                    format: "       phases stop-check p95=%8.3fms final-result p95=%8.3fms screen/full=%d/%d",
+                    item.stopCheckP95MS,
+                    item.finalResultP95MS,
+                    item.screeningCoverageComputationCount,
+                    item.fullCoverageComputationCount
+                ))
+            }
         }
         for item in auxiliary {
             print(String(format: "%@ p50=%8.3fms p95=%8.3fms", item.name, item.p50MS, item.p95MS))

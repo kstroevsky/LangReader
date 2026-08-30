@@ -573,6 +573,9 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         let includedIndexes: [Int]
         let totalOccurrences: Int
         let baselineTotals: [Int]
+        let sampleCount: Int
+
+        var maskWordCount: Int { sampleCount / 64 }
     }
 
     private struct CoverageDeckStabilitySnapshot: Sendable {
@@ -582,6 +585,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
 
     private static let thetaGrid: [Double] = stride(from: -6.0, through: 6.0001, by: 0.1).map { $0 }
     package static let predictiveSampleCount = 512
+    package static let predictiveScreeningSampleCount = 128
     private static let stableDeckCardCountTolerance = 3
     private static let stableDeckChangedOccurrenceShare = 0.06
     private static let stableDeckSelectedOccurrenceShare = 0.025
@@ -620,12 +624,16 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     private var lowValueStreak = 0
     private var stableCoverageDeckStreak = 0
     private var previousCoverageDeck: CoverageDeckStabilitySnapshot?
+    private var previousScreeningCoverageDeck: CoverageDeckStabilitySnapshot?
+    private var screeningCoverageDeckStreak = 0
     private var suppressStoppingUpdateOnce = false
     private var cachedBestQuestion: BestQuestionCache?
     private var cachedPredictiveSamples: PredictiveCoverageSamples?
     private var cachedCoverageSelection: Set<String>?
     private var cachedCoverageTargetReached: Bool
     private let usesEligibleReaderPrior: Bool
+    private(set) package var screeningCoverageComputationCount = 0
+    private(set) package var fullCoverageComputationCount = 0
 
     package init(
         inventory: DocumentVocabularyInventory,
@@ -726,10 +734,14 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         lowValueStreak = 0
         stableCoverageDeckStreak = 0
         previousCoverageDeck = nil
+        screeningCoverageDeckStreak = 0
+        previousScreeningCoverageDeck = nil
         cachedBestQuestion = nil
         cachedPredictiveSamples = nil
         cachedCoverageSelection = nil
         cachedCoverageTargetReached = false
+        screeningCoverageComputationCount = 0
+        fullCoverageComputationCount = 0
         refreshStoppingState()
     }
 
@@ -887,7 +899,9 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 classification: classification,
                 isSelected: classification != .excluded && selection.contains(candidate.canonicalKey),
                 predictiveKnownMask: Array(
-                    predictiveSamples.knownMaskWords[(index * 8)..<((index + 1) * 8)]
+                    predictiveSamples.knownMaskWords[
+                        (index * predictiveSamples.maskWordCount)..<((index + 1) * predictiveSamples.maskWordCount)
+                    ]
                 )
             )
         }
@@ -983,6 +997,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             if contradiction > 0 && answeredQuestionCount >= 20 {
                 lowValueStreak = 0
                 stableCoverageDeckStreak = 0
+                screeningCoverageDeckStreak = 0
                 suppressStoppingUpdateOnce = true
             }
         }
@@ -1022,7 +1037,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         let remaining = answerableCandidates
         let minimumAnswerCount = min(minimumQuestionCount, answeredQuestionCount + remaining.count)
         guard answeredQuestionCount < 80,
-              (usesEligibleReaderPrior || answeredQuestionCount >= minimumAnswerCount),
+              answeredQuestionCount >= minimumAnswerCount,
               !remaining.isEmpty else { return }
         switch mode {
         case .allUnknown:
@@ -1036,9 +1051,12 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             let samplesBox = VocabularySynchronizedBox<PredictiveCoverageSamples?>(nil)
             let deckBox = VocabularySynchronizedBox<Set<String>?>(nil)
             let questionBox = VocabularySynchronizedBox<BestQuestionCache?>(nil)
+            let stoppingSampleCount = modelConfiguration.coverageStoppingComputation == .staged
+                ? Self.predictiveScreeningSampleCount
+                : Self.predictiveSampleCount
             DispatchQueue.concurrentPerform(iterations: 2) { operation in
                 if operation == 0 {
-                    let samples = snapshot.predictiveCoverageSamples()
+                    let samples = snapshot.predictiveCoverageSamples(sampleCount: stoppingSampleCount)
                     samplesBox.set(samples)
                     deckBox.set(snapshot.proposedSelection(predictiveSamples: samples))
                 } else {
@@ -1050,21 +1068,38 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 }
             }
             guard let samples = samplesBox.value(), let deck = deckBox.value() else { return }
-            cachedPredictiveSamples = samples
-            cachedCoverageSelection = deck
             cachedBestQuestion = questionBox.value()
-            // coverageSelection constructs a prefix whose fifth-percentile
-            // coverage reaches the requested target (or an exact small-set
-            // solution). Recomputing the same global lower bound here adds a
-            // second O(deck × samples) pass to every answer. result() still
-            // calculates the reported bound independently.
-            cachedCoverageTargetReached = true
             let currentSnapshot = CoverageDeckStabilitySnapshot(
                 selection: deck,
                 selectedOccurrences: selectedOccurrences(in: deck)
             )
-            if advancesStoppingStreak, cachedCoverageTargetReached {
-                stableCoverageDeckStreak = previousCoverageDeck.map {
+            if modelConfiguration.coverageStoppingComputation == .fullEveryAnswer {
+                fullCoverageComputationCount += 1
+                cachedPredictiveSamples = samples
+                cachedCoverageSelection = deck
+                cachedCoverageTargetReached = true
+                if advancesStoppingStreak {
+                    stableCoverageDeckStreak = previousCoverageDeck.map {
+                        let isStable = usesEligibleReaderPrior
+                            ? coverageDeckIsMateriallyStable(
+                                previous: $0,
+                                current: currentSnapshot,
+                                normalizing: answeredKey,
+                                totalOccurrences: samples.totalOccurrences
+                            )
+                            : $0.selection == currentSnapshot.selection
+                        return isStable ? stableCoverageDeckStreak + 1 : 0
+                    } ?? 0
+                }
+                previousCoverageDeck = currentSnapshot
+                return
+            }
+
+            screeningCoverageComputationCount += 1
+            cachedCoverageTargetReached = false
+            stableCoverageDeckStreak = 0
+            if advancesStoppingStreak {
+                screeningCoverageDeckStreak = previousScreeningCoverageDeck.map {
                     let isStable = usesEligibleReaderPrior
                         ? coverageDeckIsMateriallyStable(
                             previous: $0,
@@ -1073,12 +1108,24 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                             totalOccurrences: samples.totalOccurrences
                         )
                         : $0.selection == currentSnapshot.selection
-                    return isStable ? stableCoverageDeckStreak + 1 : 0
+                    return isStable ? screeningCoverageDeckStreak + 1 : 0
                 } ?? 0
-            } else if advancesStoppingStreak {
-                stableCoverageDeckStreak = 0
             }
-            previousCoverageDeck = currentSnapshot
+            previousScreeningCoverageDeck = currentSnapshot
+            guard screeningCoverageDeckStreak >= 3 else { return }
+
+            let fullSamples = predictiveCoverageSamples()
+            let fullDeck = proposedSelection(predictiveSamples: fullSamples)
+            fullCoverageComputationCount += 1
+            let fullSnapshot = CoverageDeckStabilitySnapshot(
+                selection: fullDeck,
+                selectedOccurrences: selectedOccurrences(in: fullDeck)
+            )
+            cachedPredictiveSamples = fullSamples
+            cachedCoverageSelection = fullDeck
+            cachedCoverageTargetReached = true
+            stableCoverageDeckStreak = 3
+            previousCoverageDeck = fullSnapshot
         }
     }
 
@@ -1088,7 +1135,6 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         normalizing answeredKey: String?,
         totalOccurrences: Int
     ) -> Bool {
-        guard cachedCoverageTargetReached else { return false }
         let previousKeys = answeredKey.map { previous.selection.subtracting([$0]) } ?? previous.selection
         let currentKeys = answeredKey.map { current.selection.subtracting([$0]) } ?? current.selection
         let cardCountDelta = abs(previousKeys.count - currentKeys.count)
@@ -1163,9 +1209,12 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         )
     }
 
-    private func predictiveCoverageSamples() -> PredictiveCoverageSamples {
-        let maskWordCount = Self.predictiveSampleCount / 64
-        let thetaSampleIndexes = stratifiedThetaSampleIndexes()
+    private func predictiveCoverageSamples(
+        sampleCount: Int = Self.predictiveSampleCount
+    ) -> PredictiveCoverageSamples {
+        precondition(sampleCount > 0 && sampleCount.isMultiple(of: 64))
+        let maskWordCount = sampleCount / 64
+        let thetaSampleIndexes = stratifiedThetaSampleIndexes(sampleCount: sampleCount)
         let candidateCount = inventory.candidates.count
         let workerCount = candidateCount >= 1_000 ? 4 : 1
         let buffer = VocabularyPredictiveWorkerBuffer()
@@ -1176,7 +1225,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             var localMasks = Array(repeating: UInt64(0), count: range.count * maskWordCount)
             var localIncluded: [Int] = []
             var localTotal = 0
-            var localBaseline = Array(repeating: 0, count: Self.predictiveSampleCount)
+            var localBaseline = Array(repeating: 0, count: sampleCount)
             var randomState = predictiveSeed
                 ^ (UInt64(worker + 1) &* 0x9E37_79B9_7F4A_7C15)
             if randomState == 0 { randomState = 0xA076_1D64_78BD_642F }
@@ -1189,7 +1238,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 let localMaskOffset = (candidateIndex - lower) * maskWordCount
                 let curve = responseCurves[candidateIndex]
                 if let evidence {
-                    for sampleIndex in 0..<Self.predictiveSampleCount {
+                    for sampleIndex in 0..<sampleCount {
                         let latentKnown = VocabularyKnowledgeModel.adjustedKnownProbability(
                             baseKnownProbability: curve[thetaSampleIndexes[sampleIndex]],
                             epsilonKnowledge: epsilonKnowledge
@@ -1205,7 +1254,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                         }
                     }
                 } else {
-                    for sampleIndex in 0..<Self.predictiveSampleCount {
+                    for sampleIndex in 0..<sampleCount {
                         let probability = VocabularyKnowledgeModel.adjustedKnownProbability(
                             baseKnownProbability: curve[thetaSampleIndexes[sampleIndex]],
                             epsilonKnowledge: epsilonKnowledge
@@ -1231,7 +1280,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         var maskWords = Array(repeating: UInt64(0), count: candidateCount * maskWordCount)
         var includedIndexes: [Int] = []
         var totalOccurrences = 0
-        var baselineTotals = Array(repeating: 0, count: Self.predictiveSampleCount)
+        var baselineTotals = Array(repeating: 0, count: sampleCount)
         for result in buffer.ordered(count: workerCount) {
             let destination = (result.range.lowerBound * maskWordCount)..<(result.range.upperBound * maskWordCount)
             maskWords.replaceSubrange(destination, with: result.maskWords)
@@ -1245,11 +1294,12 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             knownMaskWords: maskWords,
             includedIndexes: includedIndexes,
             totalOccurrences: totalOccurrences,
-            baselineTotals: baselineTotals
+            baselineTotals: baselineTotals,
+            sampleCount: sampleCount
         )
     }
 
-    private func stratifiedThetaSampleIndexes() -> [Int] {
+    private func stratifiedThetaSampleIndexes(sampleCount: Int) -> [Int] {
         var cumulative: [Double] = []
         cumulative.reserveCapacity(posterior.count)
         var running = 0.0
@@ -1258,8 +1308,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             cumulative.append(running)
         }
         var gridIndex = 0
-        return (0..<Self.predictiveSampleCount).map { sampleIndex in
-            let quantile = (Double(sampleIndex) + 0.5) / Double(Self.predictiveSampleCount)
+        return (0..<sampleCount).map { sampleIndex in
+            let quantile = (Double(sampleIndex) + 0.5) / Double(sampleCount)
             while gridIndex < cumulative.count - 1, cumulative[gridIndex] < quantile {
                 gridIndex += 1
             }
@@ -1288,7 +1338,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
 
         let tailCount = max(
             1,
-            Int(ceil(modelConfiguration.coverageQuantile * Double(Self.predictiveSampleCount)))
+            Int(ceil(modelConfiguration.coverageQuantile * Double(samples.sampleCount)))
         )
         let worstSamples = baseline.indices.sorted {
             if baseline[$0] != baseline[$1] { return baseline[$0] < baseline[$1] }
@@ -1308,11 +1358,11 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             return lhs.canonicalKey < rhs.canonicalKey
         }
 
-        let workerCount = 4
+        let workerCount = min(4, samples.maskWordCount)
         let requiredBox = VocabularySynchronizedBox<[Int: [Int]]>([:])
         DispatchQueue.concurrentPerform(iterations: workerCount) { worker in
-            let lowerWord = 8 * worker / workerCount
-            let upperWord = 8 * (worker + 1) / workerCount
+            let lowerWord = samples.maskWordCount * worker / workerCount
+            let upperWord = samples.maskWordCount * (worker + 1) / workerCount
             var required: [Int] = []
             required.reserveCapacity((upperWord - lowerWord) * 64)
             for wordIndex in lowerWord..<upperWord {
@@ -1322,7 +1372,9 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 var activeBits = UInt64.max
                 for (position, entry) in ranked.enumerated() where activeBits != 0 {
                     let candidateIndex = entry.0
-                    var unknownBits = ~samples.knownMaskWords[candidateIndex * 8 + wordIndex]
+                    var unknownBits = ~samples.knownMaskWords[
+                        candidateIndex * samples.maskWordCount + wordIndex
+                    ]
                         & activeBits
                     let weight = inventory.candidates[candidateIndex].occurrenceCount
                     while unknownBits != 0 {
@@ -1342,8 +1394,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         let requiredPrefixes = (0..<workerCount)
             .flatMap { requiredBox.value()[$0] ?? [] }
             .sorted()
-        let requiredSuccessCount = Self.predictiveSampleCount - Int(
-            (modelConfiguration.coverageQuantile * Double(Self.predictiveSampleCount - 1)).rounded(.down)
+        let requiredSuccessCount = samples.sampleCount - Int(
+            (modelConfiguration.coverageQuantile * Double(samples.sampleCount - 1)).rounded(.down)
         )
         let cutoff = requiredPrefixes[min(requiredSuccessCount - 1, requiredPrefixes.count - 1)]
         let selectedIndexes = ranked.prefix(cutoff).map(\.0)
@@ -1355,7 +1407,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         for index in selectedIndexes {
             addLearningGain(candidateIndex: index, samples: samples, totals: &totals)
         }
-        var quantileScratch = Array(repeating: 0, count: Self.predictiveSampleCount)
+        var quantileScratch = Array(repeating: 0, count: samples.sampleCount)
         var removedIndexes = Set<Int>()
         for index in selectedIndexes.reversed() {
             removeLearningGain(candidateIndex: index, samples: samples, totals: &totals)
@@ -1425,8 +1477,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         totals: inout [Int]
     ) {
         let weight = inventory.candidates[candidateIndex].occurrenceCount
-        let maskOffset = candidateIndex * 8
-        for wordIndex in 0..<8 {
+        let maskOffset = candidateIndex * samples.maskWordCount
+        for wordIndex in 0..<samples.maskWordCount {
             var unknownBits = ~samples.knownMaskWords[maskOffset + wordIndex]
             while unknownBits != 0 {
                 let bit = unknownBits.trailingZeroBitCount
@@ -1442,8 +1494,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         totals: inout [Int]
     ) {
         let weight = inventory.candidates[candidateIndex].occurrenceCount
-        let maskOffset = candidateIndex * 8
-        for wordIndex in 0..<8 {
+        let maskOffset = candidateIndex * samples.maskWordCount
+        for wordIndex in 0..<samples.maskWordCount {
             var unknownBits = ~samples.knownMaskWords[maskOffset + wordIndex]
             while unknownBits != 0 {
                 let bit = unknownBits.trailingZeroBitCount
@@ -1512,7 +1564,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         candidateIndex: Int,
         sample: Int
     ) -> Bool {
-        samples.knownMaskWords[candidateIndex * 8 + (sample >> 6)]
+        samples.knownMaskWords[candidateIndex * samples.maskWordCount + (sample >> 6)]
             & (UInt64(1) << UInt64(sample & 63)) != 0
     }
 

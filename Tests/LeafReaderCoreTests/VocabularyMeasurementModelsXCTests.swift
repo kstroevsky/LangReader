@@ -9,6 +9,7 @@ final class VocabularyMeasurementModelsXCTests: XCTestCase {
         XCTAssertEqual(configuration.minimumEpsilonKnowledge, 0.05)
         XCTAssertEqual(configuration.coverageQuantile, 0.05)
         XCTAssertEqual(configuration.warmPriorWeight, 0.90)
+        XCTAssertEqual(configuration.coverageStoppingComputation, .staged)
     }
 
     func testKnowledgeModelPreservesLockedRaschMathematics() {

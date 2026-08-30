@@ -229,6 +229,21 @@ The first post-build capture was more unstable still, with cold coverage p95 at
 `vocabulary-assessment-benchmark-series.json`; favorable repetitions are not
 selected in isolation.
 
+The staged candidate now keeps ordinary answer processing on a 128-sample
+screening path after the applicable question minimum. A full 512-sample deck is
+constructed only after three stable screens and when producing final results;
+the legacy full-every-answer path remains available only as an explicit
+diagnostic configuration. Benchmark schema version 2 separates next-card,
+candidate-stop, and final-result samples and records how often each predictive
+path ran. The paired development comparison is documented in
+`vocabulary-stopping-staging-development-v1.md`; the frozen release holdout has
+not yet been rerun.
+
+A rejected experiment applied the warm reader's material deck-stability
+tolerance to cold screening. It reduced roughly 50 questions on the development
+workload but worsened Brier by as much as 0.051 and coverage-hit rate by as much
+as 18.75 percentage points, so exact cold-screen stability was restored.
+
 Inventory construction depends heavily on Natural Language and hardware, so it
 is a same-machine trend rather than a portable absolute gate. Reproduce the
 300-page, approximately 90,000-token workload with:

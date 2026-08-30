@@ -369,6 +369,15 @@ warm profile plus auxiliary session-migration, 5,000-record research-export,
 and 10,000-token POS-indexing timings. Auxiliary values are trends until a
 reviewed threshold is defined.
 
+Schema-version-2 benchmark cases separate ordinary answer-to-next-card samples
+from candidate stop checks and final-result construction. Coverage mode uses a
+deterministic 128-sample screen after the applicable question minimum; the full
+512-sample deck is built only after three stable screens and for final results.
+The benchmark records screening/full computation counts and reports 10,000-item
+stop-check/final-result timings as trends. The 150 ms gate continues to apply to
+ordinary answer-to-next-card p95, not to a terminal transition that opens the
+results UI.
+
 Three no-build 2026-08-21 Release repetitions show substantial host-state
 variation. At 10,000 items, cold all-unknown p95 ranged 16.80–52.26 ms, cold
 coverage ranged 28.78–137.19 ms, and warm coverage ranged 33.17–155.69 ms.
@@ -376,6 +385,21 @@ One warm repetition therefore fails the 150 ms gate. An immediately post-build
 cold capture reached 201.2 ms p95. Every raw report is retained in the benchmark
 series rather than selecting a favorable repetition. Auxiliary POS/export values
 remain background trends, not UI latency budgets.
+
+Compare the staged path with the retained full-every-answer diagnostic on paired
+development reports using:
+
+```sh
+python3 scripts/compare_vocabulary_stopping_reports.py \
+  --full /tmp/full-seed-1.json /tmp/full-seed-2.json \
+  --staged /tmp/staged-seed-1.json /tmp/staged-seed-2.json \
+  --output-json /tmp/stopping-comparison.json \
+  --output-markdown /tmp/stopping-comparison.md
+```
+
+The reviewed development comparison is retained in
+`vocabulary-stopping-staging-development-v1.{json,md}`. It does not replace or
+unlock the frozen release holdout.
 
 Inventory building relies heavily on Apple's Natural Language framework and
 hardware, so it is measured as a same-machine trend:

@@ -343,6 +343,38 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(result.diagnostics.conservativeCoverageLowerBound, 0.98)
     }
 
+    func testStagedCoverageStoppingRetainsFullResultAndBoundsFullRecomputation() throws {
+        let inventory = inventory(count: 60)
+        func run(_ computation: VocabularyCoverageStoppingComputation) throws -> AdaptiveVocabularyAssessment {
+            var assessment = AdaptiveVocabularyAssessment(
+                inventory: inventory,
+                mode: .targetCoverage(0.98),
+                modelConfiguration: VocabularyAssessmentModelConfiguration(
+                    coverageStoppingComputation: computation
+                )
+            )
+            while !assessment.isFinished {
+                let question = try XCTUnwrap(assessment.nextQuestion())
+                assessment.record(
+                    question.difficulty < 0.5 ? .verifiedKnown : .reportedUnknown,
+                    for: question.canonicalKey
+                )
+            }
+            return assessment
+        }
+
+        let staged = try run(.staged)
+        let full = try run(.fullEveryAnswer)
+        let stagedResult = staged.result()
+        let fullResult = full.result()
+        XCTAssertGreaterThanOrEqual(stagedResult.diagnostics.conservativeCoverageLowerBound, 0.98)
+        XCTAssertGreaterThanOrEqual(fullResult.diagnostics.conservativeCoverageLowerBound, 0.98)
+        XCTAssertGreaterThan(staged.screeningCoverageComputationCount, 0)
+        XCTAssertEqual(staged.fullCoverageComputationCount, 1)
+        XCTAssertGreaterThan(full.fullCoverageComputationCount, staged.fullCoverageComputationCount)
+        XCTAssertLessThan(staged.answeredQuestionCount, full.answeredQuestionCount)
+    }
+
     func testValidationQuestionsBeginAtFifteenAndAlternateTails() throws {
         var assessment = AdaptiveVocabularyAssessment(inventory: inventory(count: 80), mode: .allUnknown)
         for questionNumber in 1...20 {

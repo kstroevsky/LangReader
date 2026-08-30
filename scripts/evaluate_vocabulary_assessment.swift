@@ -43,13 +43,17 @@ private struct AssessmentModelParameters: Codable {
     let difficultyPriorStandardDeviationScale: Double
     let coverageQuantile: Double
     let warmPriorWeight: Double
+    let coverageStoppingComputation: String
 
     var coreConfiguration: VocabularyAssessmentModelConfiguration {
         VocabularyAssessmentModelConfiguration(
             evidenceReliabilityScale: evidenceReliabilityScale,
             minimumEpsilonKnowledge: minimumEpsilonKnowledge,
             coverageQuantile: coverageQuantile,
-            warmPriorWeight: warmPriorWeight
+            warmPriorWeight: warmPriorWeight,
+            coverageStoppingComputation: coverageStoppingComputation == "full-every-answer"
+                ? .fullEveryAnswer
+                : .staged
         )
     }
 }
@@ -633,6 +637,7 @@ private struct Arguments {
     var difficultyPriorStandardDeviationScale = 1.0
     var coverageQuantile = 0.05
     var warmPriorWeight = 0.90
+    var coverageStoppingComputation = "staged"
     var usesPairedDiagnosticSubstreams = false
     var jsonPath = "vocabulary-assessment-quality.json"
     var markdownPath = "vocabulary-assessment-quality.md"
@@ -663,6 +668,8 @@ private struct Arguments {
                 coverageQuantile = iterator.next().flatMap(Double.init) ?? coverageQuantile
             case "--warm-prior-weight":
                 warmPriorWeight = iterator.next().flatMap(Double.init) ?? warmPriorWeight
+            case "--coverage-stopping-computation":
+                coverageStoppingComputation = iterator.next() ?? coverageStoppingComputation
             case "--paired-diagnostic-substreams":
                 usesPairedDiagnosticSubstreams = true
             case "--json": jsonPath = iterator.next() ?? jsonPath
@@ -687,7 +694,8 @@ private struct Arguments {
               (0...0.25).contains(minimumEpsilonKnowledge),
               difficultyPriorStandardDeviationScale > 0,
               (0...0.5).contains(coverageQuantile),
-              (0...1).contains(warmPriorWeight) else {
+              (0...1).contains(warmPriorWeight),
+              ["staged", "full-every-answer"].contains(coverageStoppingComputation) else {
             fputs("assessment model parameters are outside their supported diagnostic ranges\n", stderr)
             exit(2)
         }
@@ -707,7 +715,8 @@ private struct Arguments {
             minimumEpsilonKnowledge: minimumEpsilonKnowledge,
             difficultyPriorStandardDeviationScale: difficultyPriorStandardDeviationScale,
             coverageQuantile: coverageQuantile,
-            warmPriorWeight: warmPriorWeight
+            warmPriorWeight: warmPriorWeight,
+            coverageStoppingComputation: coverageStoppingComputation
         )
     }
 
@@ -723,12 +732,13 @@ private func markdown(for report: EvaluationReport) -> String {
         "These are synthetic cold-start diagnostics, not evidence of calibration on real learners.",
         "",
         String(
-            format: "Assumed model: reliability scale %.3f; epsilon minimum %.3f; difficulty SD scale %.3f; coverage quantile %.3f; warm-prior weight %.3f.",
+            format: "Assumed model: reliability scale %.3f; epsilon minimum %.3f; difficulty SD scale %.3f; coverage quantile %.3f; warm-prior weight %.3f; coverage stopping %@.",
             report.configuration.assessmentModelParameters.evidenceReliabilityScale,
             report.configuration.assessmentModelParameters.minimumEpsilonKnowledge,
             report.configuration.assessmentModelParameters.difficultyPriorStandardDeviationScale,
             report.configuration.assessmentModelParameters.coverageQuantile,
-            report.configuration.assessmentModelParameters.warmPriorWeight
+            report.configuration.assessmentModelParameters.warmPriorWeight,
+            report.configuration.assessmentModelParameters.coverageStoppingComputation
         ),
         "Random stream: \(report.configuration.usesPairedDiagnosticSubstreams ? "paired diagnostic substreams" : "frozen sequential evaluator stream").",
         "",
