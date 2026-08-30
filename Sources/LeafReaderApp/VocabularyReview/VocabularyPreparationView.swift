@@ -3,6 +3,7 @@ import LeafReaderCore
 
 struct VocabularyPreparationView: View {
     @Bindable var coordinator: VocabularyPreparationCoordinator
+    @State private var showsFullAuditConfirmation = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -12,6 +13,20 @@ struct VocabularyPreparationView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(minWidth: 820, minHeight: 620)
+        .alert(
+            AppText.localized("要逐一检查所有词元吗？", "Check every lemma?"),
+            isPresented: $showsFullAuditConfirmation
+        ) {
+            Button(AppText.localized("开始完整诊断盲测", "Start Full Diagnostic Audit")) {
+                coordinator.beginPredictionAudit()
+            }
+            Button(AppText.localized("取消", "Cancel"), role: .cancel) {}
+        } message: {
+            Text(AppText.localized(
+                "这是用于衡量模型的诊断工具，不是 20–80 题的自适应词汇准备。它会要求你判断文档中的全部 \(coordinator.inventory?.candidates.count ?? 0) 个词元。普通学习请改用“开始 20–80 题测试”。",
+                "This is a model-measurement tool, not the adaptive 20–80-question preparation. It will ask you about all \(coordinator.inventory?.candidates.count ?? 0) lemmas in this document. For normal learning, use Start 20–80 Assessment instead."
+            ))
+        }
     }
 
     private var header: some View {
@@ -103,12 +118,19 @@ struct VocabularyPreparationView: View {
                     Spacer()
                     Button(
                         coordinator.hasCompatiblePredictionAudit
-                            ? AppText.localized("继续盲测", "Resume blind audit")
-                            : AppText.localized("评估无测试预测", "Audit no-test prediction")
+                            ? AppText.localized("继续完整盲测", "Resume Full Audit")
+                            : AppText.localized(
+                                "诊断：检查全部 \(coordinator.inventory?.candidates.count ?? 0) 个词元",
+                                "Diagnostic: Audit All \(coordinator.inventory?.candidates.count ?? 0) Lemmas"
+                            )
                     ) {
-                        coordinator.beginPredictionAudit()
+                        if coordinator.hasCompatiblePredictionAudit {
+                            coordinator.beginPredictionAudit()
+                        } else {
+                            showsFullAuditConfirmation = true
+                        }
                     }
-                    Button(AppText.localized("开始测试", "Start Assessment")) {
+                    Button(AppText.localized("开始 20–80 题测试", "Start 20–80 Assessment")) {
                         coordinator.beginAssessment()
                     }
                     .buttonStyle(.borderedProminent)

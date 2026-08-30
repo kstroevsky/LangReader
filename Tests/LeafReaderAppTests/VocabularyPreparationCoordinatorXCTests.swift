@@ -179,6 +179,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
 
         coordinator.beginPredictionAudit()
         try await waitUntil { coordinator.phase == .predictionAudit }
+        XCTAssertEqual(coordinator.predictionAudit?.totalCount, coordinator.inventory?.candidates.count)
         let firstKey = try XCTUnwrap(coordinator.currentPredictionAuditItem?.canonicalKey)
         coordinator.recordPredictionAudit(.known)
         coordinator.returnToInventoryFromPredictionAudit()
