@@ -65,7 +65,8 @@ private func run(
     mode: VocabularyAssessmentMode,
     modeName: String,
     readerPrior: VocabularyReaderPrior? = nil,
-    profile: String = "cold"
+    profile: String = "cold",
+    coverageStoppingComputation: VocabularyCoverageStoppingComputation = .fullEveryAnswer
 ) -> BenchmarkCase {
     let inventory = DocumentVocabularyInventory(
         languageCode: "en",
@@ -80,7 +81,14 @@ private func run(
     var fullCoverageComputationCount = 0
     var discarded = 0
     while samples.count < requestedSamples {
-        var assessment = AdaptiveVocabularyAssessment(inventory: inventory, mode: mode, readerPrior: readerPrior)
+        var assessment = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: mode,
+            readerPrior: readerPrior,
+            modelConfiguration: VocabularyAssessmentModelConfiguration(
+                coverageStoppingComputation: coverageStoppingComputation
+            )
+        )
         precondition(
             assessment.usedEligibleReaderPrior == (readerPrior != nil),
             "benchmark did not execute the requested reader-prior path"
@@ -209,10 +217,30 @@ private struct VocabularyAssessmentBenchmark {
     static func main() throws {
         let outputPath = CommandLine.arguments.dropFirst().first
             ?? "vocabulary-assessment-benchmark.json"
+        let environment = ProcessInfo.processInfo.environment
+        let stoppingName = environment["LEAFREADER_COVERAGE_STOPPING_COMPUTATION"]
+            ?? "full-every-answer"
+        guard ["full-every-answer", "staged"].contains(stoppingName) else {
+            fputs("invalid LEAFREADER_COVERAGE_STOPPING_COMPUTATION\n", stderr)
+            exit(2)
+        }
+        let stoppingComputation: VocabularyCoverageStoppingComputation = stoppingName == "staged"
+            ? .staged
+            : .fullEveryAnswer
         let cases = [100, 1_000, 5_000, 10_000].flatMap { lemmaCount in
             [
-                run(lemmaCount: lemmaCount, mode: .allUnknown, modeName: "all-unknown"),
-                run(lemmaCount: lemmaCount, mode: .targetCoverage(0.98), modeName: "coverage-98")
+                run(
+                    lemmaCount: lemmaCount,
+                    mode: .allUnknown,
+                    modeName: "all-unknown",
+                    coverageStoppingComputation: stoppingComputation
+                ),
+                run(
+                    lemmaCount: lemmaCount,
+                    mode: .targetCoverage(0.98),
+                    modeName: "coverage-98",
+                    coverageStoppingComputation: stoppingComputation
+                )
             ]
         }
         let thetaGrid = (0...120).map { -6.0 + Double($0) * 0.1 }
@@ -230,7 +258,8 @@ private struct VocabularyAssessmentBenchmark {
             mode: .targetCoverage(0.98),
             modeName: "coverage-98",
             readerPrior: warmPrior,
-            profile: "warm"
+            profile: "warm",
+            coverageStoppingComputation: stoppingComputation
         )
         let allCases = cases + [warmCase]
         let legacyJSON = """
@@ -268,14 +297,16 @@ private struct VocabularyAssessmentBenchmark {
                 )
             }
         ]
-        auxiliary.append(contentsOf: coveragePhaseBenchmarks(lemmaCount: 10_000))
+        if stoppingComputation == .staged {
+            auxiliary.append(contentsOf: coveragePhaseBenchmarks(lemmaCount: 10_000))
+        }
         let largest = allCases.filter { $0.lemmaCount == 10_000 }
         let passed = largest.allSatisfy { $0.p95MS <= 150 }
-        let environment = ProcessInfo.processInfo.environment
         let report = BenchmarkReport(
             schemaVersion: 2,
             metadata: [
                 "configuration": "release",
+                "coverage_stopping_computation": stoppingName,
                 "source_revision": environment["LEAFREADER_BENCHMARK_SOURCE_REVISION"] ?? "unknown",
                 "swift_version": environment["LEAFREADER_BENCHMARK_SWIFT_VERSION"] ?? "unknown",
                 "os_version": ProcessInfo.processInfo.operatingSystemVersionString,

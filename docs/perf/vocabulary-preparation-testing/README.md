@@ -370,13 +370,13 @@ and 10,000-token POS-indexing timings. Auxiliary values are trends until a
 reviewed threshold is defined.
 
 Schema-version-2 benchmark cases separate ordinary answer-to-next-card samples
-from candidate stop checks and final-result construction. Coverage mode uses a
-deterministic 128-sample screen after the applicable question minimum; the full
-512-sample deck is built only after three stable screens and for final results.
+from candidate stop checks and final-result construction. With
+`LEAFREADER_COVERAGE_STOPPING_COMPUTATION=staged`, coverage mode uses a
+deterministic 128-sample screen after the applicable question minimum and builds
+the full 512-sample deck only after three stable screens and for final results.
 The benchmark records screening/full computation counts and reports 10,000-item
-stop-check/final-result timings as trends. The 150 ms gate continues to apply to
-ordinary answer-to-next-card p95, not to a terminal transition that opens the
-results UI.
+stop-check/final-result timings as trends. Production remains
+`full-every-answer` because staged stopping failed the frozen quality holdout.
 
 Three no-build 2026-08-21 Release repetitions show substantial host-state
 variation. At 10,000 items, cold all-unknown p95 ranged 16.80–52.26 ms, cold
@@ -408,6 +408,12 @@ and warm coverage ranged 117.76–121.37 ms. Terminal stop-check p95 ranged
 150.81–167.63 ms and final-result p95 ranged 120.47–126.21 ms; these remain
 explicit auxiliary trends. Passing the next-card gate does not approve the
 frozen quality holdout or the real-app main-thread gate.
+
+The untouched staged holdout is retained in
+`vocabulary-assessment-holdout-staged-v1.{json,md}`. Response-noise coverage hit
+fell to 71.9–79.7% and idiosyncratic-knowledge coverage hit to 78.1–84.4%, so
+the staged candidate was rejected for production. Do not interpret its latency
+series as resolving the production performance blocker.
 
 Inventory building relies heavily on Apple's Natural Language framework and
 hardware, so it is measured as a same-machine trend:

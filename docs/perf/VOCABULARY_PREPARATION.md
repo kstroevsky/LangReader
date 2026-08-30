@@ -229,15 +229,12 @@ The first post-build capture was more unstable still, with cold coverage p95 at
 `vocabulary-assessment-benchmark-series.json`; favorable repetitions are not
 selected in isolation.
 
-The staged candidate now keeps ordinary answer processing on a 128-sample
-screening path after the applicable question minimum. A full 512-sample deck is
-constructed only after three stable screens and when producing final results;
-the legacy full-every-answer path remains available only as an explicit
-diagnostic configuration. Benchmark schema version 2 separates next-card,
-candidate-stop, and final-result samples and records how often each predictive
-path ran. The paired development comparison is documented in
-`vocabulary-stopping-staging-development-v1.md`; the frozen release holdout has
-not yet been rerun.
+The experimental staged path keeps ordinary answer processing on a 128-sample
+screen after the applicable question minimum and constructs the full 512-sample
+deck only after three stable screens and for final results. Benchmark schema
+version 2 separates next-card, candidate-stop, and final-result samples and
+records how often each predictive path ran. The paired development comparison
+is documented in `vocabulary-stopping-staging-development-v1.md`.
 
 A rejected experiment applied the warm reader's material deck-stability
 tolerance to cold screening. It reduced roughly 50 questions on the development
@@ -256,9 +253,15 @@ passed the existing 150 ms ordinary next-card gate:
 The separately reported 10,000-item terminal trends were 150.81–167.63 ms p95
 for the candidate stop check and 120.47–126.21 ms for final-result construction.
 Those phases are retained in `vocabulary-assessment-benchmark-staged-series.*`
-and are not silently folded into the next-card statistic. The response-time
-blocker is resolved for the staged next-card path, but the frozen version-3
-quality holdout and real-app/GUI gates remain independent blockers.
+and are not silently folded into the next-card statistic.
+
+The untouched three-seed release holdout then failed the staged candidate. Its
+response-noise coverage-hit range was 71.9–79.7%, and its idiosyncratic-
+knowledge range was 78.1–84.4%. The complete adverse result is retained in
+`vocabulary-assessment-holdout-staged-v1.*`. Therefore production reverted to
+the full-every-answer stopping computation; staged stopping remains an explicit
+diagnostic only. The production response-time blocker remains open, and neither
+the holdout gates nor the 150 ms production gate were weakened.
 
 Inventory construction depends heavily on Natural Language and hardware, so it
 is a same-machine trend rather than a portable absolute gate. Reproduce the

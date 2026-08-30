@@ -21,7 +21,7 @@ package struct VocabularyAssessmentModelConfiguration: Equatable, Sendable {
         minimumEpsilonKnowledge: Double = 0.05,
         coverageQuantile: Double = 0.05,
         warmPriorWeight: Double = 0.90,
-        coverageStoppingComputation: VocabularyCoverageStoppingComputation = .staged
+        coverageStoppingComputation: VocabularyCoverageStoppingComputation = .fullEveryAnswer
     ) {
         precondition(evidenceReliabilityScale.isFinite && evidenceReliabilityScale >= 0)
         precondition((0...0.25).contains(minimumEpsilonKnowledge))

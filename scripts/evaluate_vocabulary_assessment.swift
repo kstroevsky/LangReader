@@ -637,7 +637,7 @@ private struct Arguments {
     var difficultyPriorStandardDeviationScale = 1.0
     var coverageQuantile = 0.05
     var warmPriorWeight = 0.90
-    var coverageStoppingComputation = "staged"
+    var coverageStoppingComputation = "full-every-answer"
     var usesPairedDiagnosticSubstreams = false
     var jsonPath = "vocabulary-assessment-quality.json"
     var markdownPath = "vocabulary-assessment-quality.md"

@@ -59,7 +59,7 @@ def summarize(report: dict) -> dict:
             ):
                 if not isinstance(model_parameters.get(field), (int, float)):
                     fail(f"assessmentModelParameters lacks numeric {field}")
-            if model_parameters.get("coverageStoppingComputation", "staged") not in (
+            if model_parameters.get("coverageStoppingComputation", "full-every-answer") not in (
                 "staged", "full-every-answer"
             ):
                 fail("assessmentModelParameters has invalid coverageStoppingComputation")
