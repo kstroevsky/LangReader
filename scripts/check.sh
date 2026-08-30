@@ -56,6 +56,9 @@ bash ./scripts/test_vocabulary_assessment_evaluator.sh
 echo "==> Testing vocabulary observation model and calibration fitter"
 bash ./scripts/check_vocabulary_observation_model.sh
 
+echo "==> Testing vocabulary validation-study dataset"
+python3 ./scripts/validate_vocabulary_validation_study.py --self-test
+
 echo "==> Testing vocabulary domain resource builders"
 bash ./scripts/test_vocabulary_domain_resource_builders.sh
 

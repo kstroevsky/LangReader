@@ -110,6 +110,14 @@ Before data collection, freeze numerical product gates in a timestamped study
 protocol. Do not derive them from the confirmatory results. Synthetic thresholds
 remain engineering regression gates and are reported separately.
 
+Confirmatory collection also requires a separately reviewed and approved
+[Statistical Analysis Plan](VOCABULARY_VALIDATION_SAP_TEMPLATE.md). It must
+freeze the estimand, weighting estimator, inclusion-probability treatment,
+participant/document clustering, variance or interval method, missing-data
+rules, multiplicity policy, outcomes/gates, and analysis populations before
+confirmatory data are collected and before confirmatory outcomes are inspected.
+The roadmap deliberately does not select those statistical methods.
+
 ## Fitting and model comparison
 
 - Fit shrinkage Rasch item difficulties only on the training participants.
@@ -132,6 +140,18 @@ account identity. A research study needing criterion responses or document
 linkage requires separate informed consent, retention limits, access controls,
 and a deletion procedure. No automatic upload or passive learner telemetry is
 introduced by this pilot plan.
+
+The Core `ConsentedValidationStudyDataset` is a separate explicit-consent
+contract. Validate a serialized dataset before study analysis with:
+
+```sh
+python3 scripts/validate_vocabulary_validation_study.py /path/to/study.json
+```
+
+The validator rejects product document fields, invalid rater/adjudication or
+sampling metadata, and participant or opaque-document leakage across training,
+validation, and confirmatory splits. It validates design inputs; it does not
+choose or execute the SAP's estimator or uncertainty method.
 
 ## Interpretation
 
