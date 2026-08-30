@@ -461,6 +461,11 @@ python3 scripts/fit_vocabulary_calibration.py \
 Tool output is always `reviewed: false` and therefore inert. Production loading
 accepts only a reviewed Rasch pack, and only items with at least 100 independent
 pseudonymous learners, standard error no greater than 0.35, and no material DIF.
+The report's DIF section uses categorical-likelihood-ratio contrasts, separates
+L1 from proficiency, distinguishes uniform difficulty shifts from non-uniform
+slope effects, applies Benjamini-Hochberg correction, and reports effect sizes
+after iterative anchor purification. The built-in self-test includes a seeded
+uniform-DIF population and verifies that the affected item is flagged.
 
 ## Resolved implementation blockers
 

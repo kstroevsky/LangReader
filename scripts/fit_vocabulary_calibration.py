@@ -24,6 +24,11 @@ REQUIRED = {
     "difficultyStandardDeviation", "difficultySource", "difficultyVersion",
     "evidence", "protocolVersion", "sessionOrdinal",
 }
+DIF_MINIMUM_GROUP_LEARNERS = 30
+DIF_FDR_ALPHA = 0.05
+DIF_UNIFORM_DIFFICULTY_DELTA = 0.50
+DIF_NONUNIFORM_SLOPE_RATIO = 1.50
+DIF_MAX_ANCHOR_PURIFICATION_ITERATIONS = 4
 
 
 def sigmoid(value: float) -> float:
@@ -357,10 +362,213 @@ def heldout_comparison(
     }
 
 
+def maximize_bounded(objective, initial: tuple[float, ...], bounds: tuple[tuple[float, float], ...],
+                     initial_steps: tuple[float, ...]) -> tuple[tuple[float, ...], float]:
+    """Deterministic coordinate maximization for the small offline DIF models."""
+    current = tuple(initial)
+    steps = list(initial_steps)
+    best = objective(current)
+    for _ in range(40):
+        candidates = [(best, current)]
+        for dimension, step in enumerate(steps):
+            for direction in (-1.0, 1.0):
+                values = list(current)
+                lower, upper = bounds[dimension]
+                values[dimension] = max(lower, min(upper, values[dimension] + direction * step))
+                candidate = tuple(values)
+                candidates.append((objective(candidate), candidate))
+        candidate_value, candidate = max(candidates, key=lambda pair: (pair[0], tuple(-v for v in pair[1])))
+        if candidate_value > best + 1e-10:
+            best, current = candidate_value, candidate
+        else:
+            steps = [step / 2 for step in steps]
+            if max(steps) < 1e-4:
+                break
+    return current, best
+
+
+def chi_square_survival(statistic: float, degrees_of_freedom: int) -> float:
+    statistic = max(0.0, statistic)
+    if degrees_of_freedom == 1:
+        return math.erfc(math.sqrt(statistic / 2))
+    if degrees_of_freedom == 2:
+        return math.exp(-statistic / 2)
+    raise ValueError(f"unsupported chi-square degrees of freedom: {degrees_of_freedom}")
+
+
+def apply_benjamini_hochberg(comparisons: list[dict]) -> None:
+    tests = []
+    for index, comparison in enumerate(comparisons):
+        tests.append((comparison["uniformPValue"], index, "uniformAdjustedPValue"))
+        tests.append((comparison["nonUniformPValue"], index, "nonUniformAdjustedPValue"))
+    ordered = sorted(tests, key=lambda test: (test[0], test[1], test[2]))
+    adjusted = [1.0] * len(ordered)
+    running = 1.0
+    for offset in range(len(ordered) - 1, -1, -1):
+        p_value = ordered[offset][0]
+        running = min(running, p_value * len(ordered) / (offset + 1))
+        adjusted[offset] = min(1.0, running)
+    for (_, comparison_index, field), value in zip(ordered, adjusted):
+        comparisons[comparison_index][field] = value
+
+
+def dif_log_likelihood(
+    observations: list[dict], theta: dict[str, float], difficulty: float,
+    observation_model: ObservationModel, comparison_group: str,
+    difficulty_delta: float = 0.0, slope_ratio: float = 1.0,
+) -> float:
+    total = 0.0
+    for row in observations:
+        is_comparison = row["_difGroup"] == comparison_group
+        likelihood, _ = observation_model.terms(
+            row["evidence"],
+            theta[row["participant"]],
+            difficulty + (difficulty_delta if is_comparison else 0.0),
+            slope_ratio if is_comparison else 1.0,
+        )
+        total += math.log(likelihood)
+    return total
+
+
+def dif_comparisons(
+    rows: list[dict], theta: dict[str, float], difficulty: dict[str, float],
+    observation_model: ObservationModel,
+) -> list[dict]:
+    by_item = defaultdict(list)
+    for row in rows:
+        by_item[row["key"]].append(row)
+    comparisons = []
+    for item in sorted(by_item):
+        for axis, field in (("l1", "l1"), ("proficiency", "proficiency")):
+            grouped = defaultdict(list)
+            for row in by_item[item]:
+                value = row.get(field)
+                if isinstance(value, str) and value.strip():
+                    grouped[value.strip()].append(row)
+            eligible = {
+                group: observations for group, observations in grouped.items()
+                if len({row["participant"] for row in observations}) >= DIF_MINIMUM_GROUP_LEARNERS
+            }
+            if len(eligible) < 2:
+                continue
+            reference = sorted(
+                eligible,
+                key=lambda group: (-len({row["participant"] for row in eligible[group]}), group),
+            )[0]
+            for comparison_group in sorted(group for group in eligible if group != reference):
+                observations = [
+                    {**row, "_difGroup": group}
+                    for group in (reference, comparison_group)
+                    for row in eligible[group]
+                ]
+                baseline = dif_log_likelihood(
+                    observations, theta, difficulty[item], observation_model, comparison_group,
+                )
+                (difficulty_delta,), uniform = maximize_bounded(
+                    lambda parameters: dif_log_likelihood(
+                        observations, theta, difficulty[item], observation_model,
+                        comparison_group, difficulty_delta=parameters[0],
+                    ),
+                    (0.0,), ((-3.0, 3.0),), (0.5,),
+                )
+                (full_delta, log_slope), nonuniform = maximize_bounded(
+                    lambda parameters: dif_log_likelihood(
+                        observations, theta, difficulty[item], observation_model,
+                        comparison_group,
+                        difficulty_delta=parameters[0],
+                        slope_ratio=math.exp(parameters[1]),
+                    ),
+                    (difficulty_delta, 0.0),
+                    ((-3.0, 3.0), (math.log(0.5), math.log(2.0))),
+                    (0.5, 0.20),
+                )
+                comparisons.append({
+                    "itemKey": item,
+                    "axis": axis,
+                    "referenceGroup": reference,
+                    "comparisonGroup": comparison_group,
+                    "referenceLearners": len({row["participant"] for row in eligible[reference]}),
+                    "comparisonLearners": len({row["participant"] for row in eligible[comparison_group]}),
+                    "uniformDifficultyDelta": difficulty_delta,
+                    "uniformLikelihoodRatio": max(0.0, 2 * (uniform - baseline)),
+                    "uniformPValue": chi_square_survival(max(0.0, 2 * (uniform - baseline)), 1),
+                    "nonUniformDifficultyDelta": full_delta,
+                    "nonUniformSlopeRatio": math.exp(log_slope),
+                    "nonUniformLikelihoodRatio": max(0.0, 2 * (nonuniform - uniform)),
+                    "nonUniformPValue": chi_square_survival(max(0.0, 2 * (nonuniform - uniform)), 1),
+                })
+    apply_benjamini_hochberg(comparisons)
+    for comparison in comparisons:
+        comparison["materialUniformDIF"] = (
+            comparison["uniformAdjustedPValue"] <= DIF_FDR_ALPHA
+            and abs(comparison["uniformDifficultyDelta"]) >= DIF_UNIFORM_DIFFICULTY_DELTA
+        )
+        slope = comparison["nonUniformSlopeRatio"]
+        comparison["materialNonUniformDIF"] = (
+            comparison["nonUniformAdjustedPValue"] <= DIF_FDR_ALPHA
+            and (slope >= DIF_NONUNIFORM_SLOPE_RATIO or slope <= 1 / DIF_NONUNIFORM_SLOPE_RATIO)
+        )
+        comparison["hasMaterialDIF"] = (
+            comparison["materialUniformDIF"] or comparison["materialNonUniformDIF"]
+        )
+    return comparisons
+
+
+def analyze_dif(
+    rows: list[dict], theta: dict[str, float], difficulty: dict[str, float],
+    observation_model: ObservationModel,
+) -> dict:
+    all_items = {row["key"] for row in rows}
+    anchors = set(all_items)
+    comparisons = []
+    iterations = 0
+    final_flagged = set()
+    for iteration in range(1, DIF_MAX_ANCHOR_PURIFICATION_ITERATIONS + 1):
+        iterations = iteration
+        if iteration == 1:
+            purified_theta = theta
+        else:
+            by_person = defaultdict(list)
+            for row in rows:
+                if row["key"] in anchors:
+                    by_person[row["participant"]].append(row)
+            purified_theta = {
+                person: estimate_theta(observations, difficulty, observation_model)
+                for person, observations in by_person.items()
+            }
+            for person, value in theta.items():
+                purified_theta.setdefault(person, value)
+        comparisons = dif_comparisons(rows, purified_theta, difficulty, observation_model)
+        flagged = {comparison["itemKey"] for comparison in comparisons if comparison["hasMaterialDIF"]}
+        final_flagged = flagged
+        new_anchors = all_items - flagged
+        if not new_anchors:
+            break
+        if new_anchors == anchors:
+            break
+        anchors = new_anchors
+    flagged_items = sorted(final_flagged)
+    return {
+        "method": "categorical-observation likelihood-ratio DIF",
+        "groupAxes": ["l1", "proficiency"],
+        "minimumIndependentLearnersPerGroup": DIF_MINIMUM_GROUP_LEARNERS,
+        "multipleComparisonMethod": "Benjamini-Hochberg",
+        "falseDiscoveryRate": DIF_FDR_ALPHA,
+        "uniformDifficultyDeltaThreshold": DIF_UNIFORM_DIFFICULTY_DELTA,
+        "nonUniformSlopeRatioThreshold": DIF_NONUNIFORM_SLOPE_RATIO,
+        "anchorPurificationIterations": iterations,
+        "anchorItemCount": len(all_items - final_flagged),
+        "flaggedItemKeys": flagged_items,
+        "comparisons": comparisons,
+    }
+
+
 def fit_pack(
     rows: list[dict], version: str, observation_model: ObservationModel,
 ) -> tuple[dict, dict]:
     theta, difficulty = fit_rasch(rows, observation_model)
+    dif_analysis = analyze_dif(rows, theta, difficulty, observation_model)
+    dif_items = set(dif_analysis["flaggedItemKeys"])
     by_item = defaultdict(list)
     for row in rows:
         by_item[row["key"]].append(row)
@@ -376,7 +584,6 @@ def fit_pack(
             info += fisher_information(likelihood, -linear_derivative)
         prior_sd = max(0.35, sum(float(row["difficultyStandardDeviation"]) for row in observations) / len(observations))
         standard_error = math.sqrt(1 / max(info + 1 / (prior_sd * prior_sd), 1e-9))
-        residuals = defaultdict(list)
         standardized = []
         for row in observations:
             likelihood, linear_derivative = observation_model.terms(
@@ -386,13 +593,7 @@ def fit_pack(
             observation_information = fisher_information(likelihood, derivative)
             score = derivative / likelihood
             standardized.append(score / math.sqrt(max(observation_information, 1e-9)))
-            group = f"{row.get('l1') or '-'}|{row.get('proficiency') or '-'}"
-            residuals[group].append(score)
-        eligible_groups = [values for values in residuals.values() if len(values) >= 30]
-        dif = False
-        if len(eligible_groups) >= 2:
-            group_means = [sum(values) / len(values) for values in eligible_groups]
-            dif = max(group_means) - min(group_means) >= 0.20
+        dif = key in dif_items
         lexical = observations[0]["lexicalItemID"]
         items.append({
             "lexicalItemID": lexical,
@@ -423,6 +624,7 @@ def fit_pack(
         "items": len(items),
         "eligibleItems": sum(item["productionEligible"] for item in items),
         "itemsWithMaterialDIF": sum(item["hasMaterialDIF"] for item in items),
+        "difAnalysis": dif_analysis,
         "observationModel": observation_model.metadata(),
         **comparison,
     }
@@ -498,6 +700,32 @@ def self_test(observation_model: ObservationModel) -> None:
         assert [row["proficiency"] for row in compatible_rows] == [
             "legacy free text", "B1/B2",
         ]
+
+    dif_rows = []
+    dif_theta = {}
+    for group in ("de", "fr"):
+        for person_index in range(80):
+            participant = f"dif-{group}-{person_index}"
+            person_theta = (person_index - 40) / 14
+            dif_theta[participant] = person_theta
+            shifted_difficulty = 1.5 if group == "de" else 0.0
+            latent = observation_model.latent_known_probability(person_theta, shifted_difficulty)
+            dif_rows.append({
+                "participant": participant,
+                "key": "en|difficult|adjective|",
+                "evidence": "verifiedKnown" if latent >= 0.5 else "reportedUnknown",
+                "l1": group,
+                "proficiency": "B1/B2",
+            })
+    dif_report = analyze_dif(
+        dif_rows,
+        dif_theta,
+        {"en|difficult|adjective|": 0.75},
+        observation_model,
+    )
+    assert dif_report["flaggedItemKeys"] == ["en|difficult|adjective|"]
+    assert {comparison["axis"] for comparison in dif_report["comparisons"]} == {"l1"}
+    assert any(comparison["materialUniformDIF"] for comparison in dif_report["comparisons"])
     print("vocabulary calibration self-test passed")
 
 

@@ -188,6 +188,16 @@ pseudonymous learners, standard error no greater than 0.35, and no material
 L1/proficiency DIF. 2PL stays disabled unless participant-held-out log loss
 improves by at least 0.01 with stable discrimination.
 
+The fitter analyzes L1 and proficiency as separate axes using the same
+categorical observation likelihood as the Rasch fit. It reports pairwise
+uniform difficulty shifts and non-uniform slope ratios, applies a
+Benjamini-Hochberg 5% false-discovery-rate correction across tested contrasts,
+requires 30 independent learners in each compared group, and iteratively
+removes flagged items from the ability-estimation anchor set. Material flags
+also require an absolute difficulty shift of at least 0.50 or a slope ratio of
+at least 1.50 (or its reciprocal). These are frozen exploratory-tool rules, not
+an empirical fairness claim; production packs still require explicit review.
+
 Evaluator and validator self-tests run in `./scripts/check.sh --no-build`.
 Changing the algorithm requires regenerating and deliberately reviewing both
 golden artifacts rather than merely accepting new numbers.
