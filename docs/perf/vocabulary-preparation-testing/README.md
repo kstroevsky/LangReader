@@ -428,6 +428,36 @@ cross-machine CI limit.
 
 ## 5. Real-app capture and six-document GUI smoke
 
+### Live local telemetry
+
+Heavy Prepare Vocabulary work emits two complementary local signals:
+
+- With `LEAFVOCAB_PERF=1`, `ReaderPerformance` records raw duration samples and
+  Instruments signposts. Set `LEAFVOCAB_PERF_OUT=/tmp/vocabulary-preparation`
+  to write the deterministic `.json` and `.txt` reports at capture completion.
+- Unified logging emits bounded milestone lines under subsystem
+  `com.leafvocabulary.app`, category `VocabularyPreparation`.
+
+Follow milestones live with:
+
+```sh
+log stream --style compact --level info \
+  --predicate 'subsystem == "com.leafvocabulary.app" && category == "VocabularyPreparation"'
+```
+
+The phase events distinguish source snapshot, inventory model construction,
+context materialization, assessment initialization, posterior/state update,
+next-question selection, result construction, definition lookup/batch, and
+import materialization/persistence. The existing total inventory, answer-to-next
+card, results-presentation, and atomic-import events remain for end-to-end
+comparison.
+
+Milestones contain only a fixed stage/outcome, duration, item count, and an
+auxiliary aggregate count. They never contain a Document ID/title, file path,
+raw text, lemma, typed meaning, definition, or account identity. Unified logs do
+not upload data, and the performance recorder remains disabled unless the
+capture environment explicitly enables it.
+
 Create a private manifest from:
 
 ```text

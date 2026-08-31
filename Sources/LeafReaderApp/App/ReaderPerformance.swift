@@ -2,6 +2,22 @@ import Foundation
 import LeafReaderCore
 import os
 
+enum VocabularyPreparationTelemetryStage: String {
+    case inventory
+    case assessmentInitialization
+    case assessmentAdvance
+    case assessmentResults
+    case definitionLookup
+    case definitionBatch
+    case importRecords
+}
+
+enum VocabularyPreparationTelemetryOutcome: String {
+    case completed
+    case failed
+    case slow
+}
+
 /// One open measurement on the app side: the core span plus the matching
 /// `os_signpost` interval, so Instruments and the committed baseline stay in
 /// step. Opaque on purpose — call sites hold it and hand it back, nothing else.
@@ -33,6 +49,10 @@ enum ReaderPerformance {
     private static let signposter = OSSignposter(
         subsystem: "com.leafvocabulary.app",
         category: "performance"
+    )
+    private static let vocabularyPreparationLogger = Logger(
+        subsystem: "com.leafvocabulary.app",
+        category: "VocabularyPreparation"
     )
 
     /// Opens a measurement. Returns an inactive span when disabled, so `end`
@@ -75,12 +95,31 @@ enum ReaderPerformance {
     static func record(_ event: PerformanceEvent, milliseconds: Double) {
         guard isEnabled else { return }
         recorder.record(event, milliseconds: milliseconds)
+        signposter.emitEvent(
+            "sample",
+            "\(event.rawValue, privacy: .public) duration_ms=\(milliseconds, privacy: .public)"
+        )
     }
 
     static func recordMainThreadWork(startedAt: TimeInterval) {
         record(
             .mainThreadUninterruptedWork,
             milliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000
+        )
+    }
+
+    /// One bounded, privacy-safe milestone line for following heavy vocabulary
+    /// work in Console. Counts and durations are public diagnostics; document
+    /// identity, text, lexical items, definitions, and paths are never logged.
+    static func logVocabularyPreparation(
+        _ stage: VocabularyPreparationTelemetryStage,
+        outcome: VocabularyPreparationTelemetryOutcome = .completed,
+        milliseconds: Double,
+        itemCount: Int = 0,
+        auxiliaryCount: Int = 0
+    ) {
+        vocabularyPreparationLogger.info(
+            "stage=\(stage.rawValue, privacy: .public) outcome=\(outcome.rawValue, privacy: .public) duration_ms=\(milliseconds, privacy: .public) items=\(itemCount, privacy: .public) aux=\(auxiliaryCount, privacy: .public)"
         )
     }
 

@@ -34,6 +34,9 @@ struct VocabularyPreparationInventoryPayload: Sendable {
     let contexts: [String: String]
     let sourceTexts: [String]
     let readerPrior: VocabularyReaderPrior?
+    let sourceSnapshotMilliseconds: Double
+    let inventoryModelMilliseconds: Double
+    let contextMaterializationMilliseconds: Double
 }
 
 private final class VocabularyPreparationCancellationToken: @unchecked Sendable {
@@ -56,6 +59,10 @@ private struct VocabularyAssessmentAdvance: Sendable {
     let candidate: DocumentVocabularyCandidate?
     let result: VocabularyAssessmentResult?
     let durationMilliseconds: Double
+    let initializationMilliseconds: Double
+    let posteriorUpdateMilliseconds: Double
+    let nextQuestionMilliseconds: Double
+    let resultBuildMilliseconds: Double
     let holdsAnsweredCandidate: Bool
 }
 
@@ -225,7 +232,10 @@ final class VocabularyPreparationCoordinator {
                     snapshot: snapshot,
                     requestID: activeRequestID,
                     cancellationToken: activeToken,
-                    analysisStartedAt: analysisStartedAt
+                    analysisStartedAt: analysisStartedAt,
+                    sourceSnapshotMilliseconds: (
+                        ProcessInfo.processInfo.systemUptime - analysisStartedAt
+                    ) * 1_000
                 )
             } catch {
                 guard let self, self.requestID == activeRequestID, !activeToken.isCancelled else { return }
@@ -251,13 +261,20 @@ final class VocabularyPreparationCoordinator {
             sessionStore?.save(session)
         }
         Task.detached { [weak self] in
+            let initializationStartedAt = ProcessInfo.processInfo.systemUptime
             let assessment = AdaptiveVocabularyAssessment(
                 inventory: inventory,
                 mode: mode,
                 restoredAnswers: restored,
                 readerPrior: readerPrior
             )
-            let advance = Self.advance(assessment, mutation: .none)
+            let advance = Self.advance(
+                assessment,
+                mutation: .none,
+                initializationMilliseconds: (
+                    ProcessInfo.processInfo.systemUptime - initializationStartedAt
+                ) * 1_000
+            )
             await self?.apply(advance: advance, requestID: activeRequestID, persistAnswers: false)
         }
     }
@@ -446,6 +463,7 @@ final class VocabularyPreparationCoordinator {
             guard let self else { return }
             var resolved = self.definitions
             let missing = selected.filter { resolved[$0.canonicalKey] == nil }
+            let definitionBatchStartedAt = ProcessInfo.processInfo.systemUptime
             var iterator = missing.makeIterator()
             await withTaskGroup(of: (String, VocabularyPreparedDefinition?).self) { group in
                 func addNext() {
@@ -468,6 +486,22 @@ final class VocabularyPreparationCoordinator {
             guard !Task.isCancelled,
                   self.requestID == activeRequestID,
                   self.documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
+            let definitionBatchMilliseconds = (
+                ProcessInfo.processInfo.systemUptime - definitionBatchStartedAt
+            ) * 1_000
+            let resolvedMissingCount = missing.reduce(0) { count, candidate in
+                count + (resolved[candidate.canonicalKey] == nil ? 0 : 1)
+            }
+            ReaderPerformance.record(
+                .vocabularyPreparationDefinitionBatch,
+                milliseconds: definitionBatchMilliseconds
+            )
+            ReaderPerformance.logVocabularyPreparation(
+                .definitionBatch,
+                milliseconds: definitionBatchMilliseconds,
+                itemCount: missing.count,
+                auxiliaryCount: resolvedMissingCount
+            )
             await self.finishImport(
                 selected: selected,
                 definitions: resolved,
@@ -507,13 +541,15 @@ final class VocabularyPreparationCoordinator {
         snapshot: VocabularyPreparationSourceSnapshot,
         requestID: UUID,
         cancellationToken: VocabularyPreparationCancellationToken,
-        analysisStartedAt: TimeInterval
+        analysisStartedAt: TimeInterval,
+        sourceSnapshotMilliseconds: Double
     ) {
         let domainsEnabled = experimentalDomainsEnabled
         let restoredDomain = session.documentDomain
         let priorStore = readerPriorStore
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard !cancellationToken.isCancelled else { return }
+            let inventoryModelStartedAt = ProcessInfo.processInfo.systemUptime
             let summaries = snapshot.index.lemmaSummaries()
             let difficultyProvider = DocumentVocabularyFrequencyProvider.calibrated(
                 languageCode: snapshot.language.rawValue
@@ -541,16 +577,26 @@ final class VocabularyPreparationCoordinator {
                 excludedCount: inventory.excludedCount,
                 documentDomain: selectedDomain
             )
+            let inventoryModelMilliseconds = (
+                ProcessInfo.processInfo.systemUptime - inventoryModelStartedAt
+            ) * 1_000
             guard !cancellationToken.isCancelled else { return }
+            let contextStartedAt = ProcessInfo.processInfo.systemUptime
             let contexts = Dictionary(uniqueKeysWithValues: domainInventory.candidates.map { candidate in
                 (candidate.canonicalKey, Self.context(for: candidate.representativeRange, texts: snapshot.texts))
             })
+            let contextMaterializationMilliseconds = (
+                ProcessInfo.processInfo.systemUptime - contextStartedAt
+            ) * 1_000
             let payload = VocabularyPreparationInventoryPayload(
                 inventory: domainInventory,
                 domainDetection: domainDetection,
                 contexts: contexts,
                 sourceTexts: snapshot.texts,
-                readerPrior: priorStore.load(languageCode: snapshot.language.rawValue)
+                readerPrior: priorStore.load(languageCode: snapshot.language.rawValue),
+                sourceSnapshotMilliseconds: sourceSnapshotMilliseconds,
+                inventoryModelMilliseconds: inventoryModelMilliseconds,
+                contextMaterializationMilliseconds: contextMaterializationMilliseconds
             )
             Task { @MainActor [weak self] in
                 guard let self,
@@ -577,7 +623,25 @@ final class VocabularyPreparationCoordinator {
             "找到 \(payload.inventory.candidates.count) 个可测试词元。",
             "Found \(payload.inventory.candidates.count) assessable lemmas."
         )
+        ReaderPerformance.record(
+            .vocabularyPreparationSourceSnapshot,
+            milliseconds: payload.sourceSnapshotMilliseconds
+        )
+        ReaderPerformance.record(
+            .vocabularyPreparationInventoryModelBuild,
+            milliseconds: payload.inventoryModelMilliseconds
+        )
+        ReaderPerformance.record(
+            .vocabularyPreparationContextMaterialization,
+            milliseconds: payload.contextMaterializationMilliseconds
+        )
         ReaderPerformance.record(.vocabularyPreparationInventoryBuild, milliseconds: durationMilliseconds)
+        ReaderPerformance.logVocabularyPreparation(
+            .inventory,
+            milliseconds: durationMilliseconds,
+            itemCount: payload.inventory.candidates.count,
+            auxiliaryCount: payload.inventory.excludedCount
+        )
         ReaderPerformance.recordMainThreadWork(startedAt: mainWorkStartedAt)
     }
 
@@ -622,10 +686,12 @@ final class VocabularyPreparationCoordinator {
     nonisolated private static func advance(
         _ assessment: AdaptiveVocabularyAssessment,
         mutation: VocabularyAssessmentMutation,
-        heldCandidate: DocumentVocabularyCandidate? = nil
+        heldCandidate: DocumentVocabularyCandidate? = nil,
+        initializationMilliseconds: Double = 0
     ) -> VocabularyAssessmentAdvance {
         let startedAt = ProcessInfo.processInfo.systemUptime
         var assessment = assessment
+        let mutationStartedAt = ProcessInfo.processInfo.systemUptime
         switch mutation {
         case .none:
             break
@@ -636,30 +702,57 @@ final class VocabularyPreparationCoordinator {
         case .skipQuestion:
             assessment.skipCurrentQuestion()
         }
+        let posteriorUpdateMilliseconds = (
+            ProcessInfo.processInfo.systemUptime - mutationStartedAt
+        ) * 1_000
         if let heldCandidate {
             return VocabularyAssessmentAdvance(
                 assessment: assessment,
                 candidate: heldCandidate,
                 result: nil,
                 durationMilliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000,
+                initializationMilliseconds: initializationMilliseconds,
+                posteriorUpdateMilliseconds: posteriorUpdateMilliseconds,
+                nextQuestionMilliseconds: 0,
+                resultBuildMilliseconds: 0,
                 holdsAnsweredCandidate: true
             )
         }
         if assessment.isFinished {
+            let resultStartedAt = ProcessInfo.processInfo.systemUptime
+            let result = assessment.result()
             return VocabularyAssessmentAdvance(
                 assessment: assessment,
                 candidate: nil,
-                result: assessment.result(),
+                result: result,
                 durationMilliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000,
+                initializationMilliseconds: initializationMilliseconds,
+                posteriorUpdateMilliseconds: posteriorUpdateMilliseconds,
+                nextQuestionMilliseconds: 0,
+                resultBuildMilliseconds: (
+                    ProcessInfo.processInfo.systemUptime - resultStartedAt
+                ) * 1_000,
                 holdsAnsweredCandidate: false
             )
         }
+        let nextQuestionStartedAt = ProcessInfo.processInfo.systemUptime
         let candidate = assessment.nextQuestion()
+        let nextQuestionMilliseconds = (
+            ProcessInfo.processInfo.systemUptime - nextQuestionStartedAt
+        ) * 1_000
+        let resultStartedAt = ProcessInfo.processInfo.systemUptime
+        let result = candidate == nil ? assessment.result() : nil
         return VocabularyAssessmentAdvance(
             assessment: assessment,
             candidate: candidate,
-            result: candidate == nil ? assessment.result() : nil,
+            result: result,
             durationMilliseconds: (ProcessInfo.processInfo.systemUptime - startedAt) * 1_000,
+            initializationMilliseconds: initializationMilliseconds,
+            posteriorUpdateMilliseconds: posteriorUpdateMilliseconds,
+            nextQuestionMilliseconds: nextQuestionMilliseconds,
+            resultBuildMilliseconds: result == nil
+                ? 0
+                : (ProcessInfo.processInfo.systemUptime - resultStartedAt) * 1_000,
             holdsAnsweredCandidate: false
         )
     }
@@ -672,6 +765,47 @@ final class VocabularyPreparationCoordinator {
         guard self.requestID == requestID,
               let identity = activeIdentity,
               documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
+        if advance.initializationMilliseconds > 0 {
+            ReaderPerformance.record(
+                .vocabularyAssessmentInitialization,
+                milliseconds: advance.initializationMilliseconds
+            )
+            ReaderPerformance.logVocabularyPreparation(
+                .assessmentInitialization,
+                milliseconds: advance.initializationMilliseconds,
+                itemCount: inventory?.candidates.count ?? 0
+            )
+        }
+        ReaderPerformance.record(
+            .vocabularyAssessmentPosteriorUpdate,
+            milliseconds: advance.posteriorUpdateMilliseconds
+        )
+        if advance.nextQuestionMilliseconds > 0 {
+            ReaderPerformance.record(
+                .vocabularyAssessmentNextQuestion,
+                milliseconds: advance.nextQuestionMilliseconds
+            )
+        }
+        if advance.resultBuildMilliseconds > 0 {
+            ReaderPerformance.record(
+                .vocabularyAssessmentResultBuild,
+                milliseconds: advance.resultBuildMilliseconds
+            )
+            ReaderPerformance.logVocabularyPreparation(
+                .assessmentResults,
+                milliseconds: advance.resultBuildMilliseconds,
+                itemCount: inventory?.candidates.count ?? 0,
+                auxiliaryCount: advance.assessment.answeredQuestionCount
+            )
+        } else if advance.durationMilliseconds >= 100 {
+            ReaderPerformance.logVocabularyPreparation(
+                .assessmentAdvance,
+                outcome: .slow,
+                milliseconds: advance.durationMilliseconds,
+                itemCount: inventory?.candidates.count ?? 0,
+                auxiliaryCount: advance.assessment.answeredQuestionCount
+            )
+        }
         ReaderPerformance.record(.vocabularyAssessmentAdvance, milliseconds: advance.durationMilliseconds)
         assessment = advance.assessment
         if persistAnswers { persistAssessment() }
@@ -705,6 +839,7 @@ final class VocabularyPreparationCoordinator {
         let activeRequestID = requestID
         let provider = definitionProvider
         definitionTask = Task { [weak self] in
+            let lookupStartedAt = ProcessInfo.processInfo.systemUptime
             do {
                 let definition = try await provider.definition(
                     for: candidate,
@@ -715,6 +850,20 @@ final class VocabularyPreparationCoordinator {
                       self.requestID == activeRequestID,
                       self.currentCandidate?.canonicalKey == key,
                       self.documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
+                let lookupMilliseconds = (
+                    ProcessInfo.processInfo.systemUptime - lookupStartedAt
+                ) * 1_000
+                ReaderPerformance.record(
+                    .vocabularyDefinitionLookup,
+                    milliseconds: lookupMilliseconds
+                )
+                if lookupMilliseconds >= 500 {
+                    ReaderPerformance.logVocabularyPreparation(
+                        .definitionLookup,
+                        outcome: .slow,
+                        milliseconds: lookupMilliseconds
+                    )
+                }
                 self.definitions[key] = definition
                 self.definitionTask = nil
                 if self.revealedDefinitionKey == key {
@@ -725,6 +874,18 @@ final class VocabularyPreparationCoordinator {
                       self.requestID == activeRequestID,
                       self.currentCandidate?.canonicalKey == key,
                       self.documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
+                let lookupMilliseconds = (
+                    ProcessInfo.processInfo.systemUptime - lookupStartedAt
+                ) * 1_000
+                ReaderPerformance.record(
+                    .vocabularyDefinitionLookup,
+                    milliseconds: lookupMilliseconds
+                )
+                ReaderPerformance.logVocabularyPreparation(
+                    .definitionLookup,
+                    outcome: .failed,
+                    milliseconds: lookupMilliseconds
+                )
                 self.definitionFailures[key] = error.localizedDescription
                 self.definitionTask = nil
                 if self.revealedDefinitionKey == key {
@@ -837,6 +998,7 @@ final class VocabularyPreparationCoordinator {
               self.requestID == requestID,
               documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
         self.definitions = definitions
+        let materializationStartedAt = ProcessInfo.processInfo.systemUptime
         let createdAt = Date()
         let existingKeys = existingVocabularyKeys()
         let candidates = selected.filter { !existingKeys.contains($0.canonicalKey) }
@@ -903,12 +1065,37 @@ final class VocabularyPreparationCoordinator {
         }
         progressText = AppText.localized("正在原子写入词库…", "Saving the vocabulary set atomically…")
         let batch: VocabularyPreparationImportBatch = kind == .pdf ? .pdf(pdfRecords) : .web(webRecords)
+        let materializationMilliseconds = (
+            ProcessInfo.processInfo.systemUptime - materializationStartedAt
+        ) * 1_000
+        ReaderPerformance.record(
+            .vocabularyPreparationImportMaterialization,
+            milliseconds: materializationMilliseconds
+        )
+        let persistenceStartedAt = ProcessInfo.processInfo.systemUptime
         let didPersist = await library.persistVocabularyPreparationBatch(batch, documentID: identity.documentID)
         guard self.requestID == requestID,
               documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
+        let persistenceMilliseconds = (
+            ProcessInfo.processInfo.systemUptime - persistenceStartedAt
+        ) * 1_000
+        ReaderPerformance.record(
+            .vocabularyPreparationImportPersistence,
+            milliseconds: persistenceMilliseconds
+        )
+        let importMilliseconds = (
+            ProcessInfo.processInfo.systemUptime - importStartedAt
+        ) * 1_000
         ReaderPerformance.record(
             .vocabularyPreparationImport,
-            milliseconds: (ProcessInfo.processInfo.systemUptime - importStartedAt) * 1_000
+            milliseconds: importMilliseconds
+        )
+        ReaderPerformance.logVocabularyPreparation(
+            .importRecords,
+            outcome: didPersist ? .completed : .failed,
+            milliseconds: importMilliseconds,
+            itemCount: batch.count,
+            auxiliaryCount: batch.unresolvedDefinitions.count
         )
         guard didPersist else {
             phase = .error(AppText.localized(

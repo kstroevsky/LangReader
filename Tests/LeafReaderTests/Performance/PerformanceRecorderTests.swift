@@ -131,4 +131,27 @@ enum PerformanceRecorderTests {
         recorder.reset()
         try expect(recorder.report().rows.isEmpty, "reset clears every sample")
     }
+
+    static func testVocabularyPreparationPhaseEventsRemainStableAndOrdered() throws {
+        let recorder = PerformanceRecorder()
+        recorder.record(.vocabularyPreparationImportPersistence, milliseconds: 8)
+        recorder.record(.vocabularyAssessmentPosteriorUpdate, milliseconds: 3)
+        recorder.record(.vocabularyPreparationSourceSnapshot, milliseconds: 5)
+
+        let report = recorder.report()
+        try expectEqual(
+            report.rows.map(\.event),
+            [
+                .vocabularyPreparationSourceSnapshot,
+                .vocabularyAssessmentPosteriorUpdate,
+                .vocabularyPreparationImportPersistence
+            ],
+            "preparation phase telemetry follows the stable PerformanceEvent contract"
+        )
+        let json = report.json()
+        try expect(
+            json.contains("\"event\": \"vocabularyAssessmentPosteriorUpdate\""),
+            "phase telemetry is exported to the deterministic capture JSON"
+        )
+    }
 }

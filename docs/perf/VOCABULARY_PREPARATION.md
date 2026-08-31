@@ -113,6 +113,15 @@ and theta-bin reconstruction metadata.
 Results expose the stop reason, reader-ability estimate and interval,
 conservative coverage, residual uncertain-lemma mass, skipped definitions,
 final expected-loss reduction, and whether the 80-question limit was reached.
+
+For local diagnosis, Prepare Vocabulary emits privacy-safe unified-log
+milestones and optional `LEAFVOCAB_PERF=1` duration/signpost samples. Detailed
+events split source snapshot, inventory model/context construction, assessment
+initialization/update/question/result work, definition lookup/batching, and
+import materialization/persistence while preserving the existing end-to-end
+events. Only durations, outcomes, and aggregate counts are logged; document and
+lexical content is excluded. Commands and field guarantees are documented in
+`vocabulary-preparation-testing/README.md`.
 Definition skips remain uncertain but cannot be selected again, count as an
 answered question, or prevent clean exhaustion.
 
