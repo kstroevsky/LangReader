@@ -39,6 +39,34 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         XCTAssertEqual(first.items.map(\.isSelected), second.items.map(\.isSelected))
     }
 
+    func testRepeatedThetaProbabilityReuseIsExactlyEquivalent() throws {
+        let inventory = inventory(count: 80)
+        var reused = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .targetCoverage(0.98)
+        )
+        var recomputed = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .targetCoverage(0.98),
+            modelConfiguration: VocabularyAssessmentModelConfiguration(
+                reuseRepeatedPredictiveProbabilities: false
+            )
+        )
+
+        for index in 0..<24 {
+            let reusedQuestion = try XCTUnwrap(reused.nextQuestion())
+            let recomputedQuestion = try XCTUnwrap(recomputed.nextQuestion())
+            XCTAssertEqual(reusedQuestion.canonicalKey, recomputedQuestion.canonicalKey)
+            let evidence: VocabularyKnowledgeEvidence = index.isMultiple(of: 3)
+                ? .reportedUnknown
+                : .verifiedKnown
+            reused.record(evidence, for: reusedQuestion.canonicalKey)
+            recomputed.record(evidence, for: recomputedQuestion.canonicalKey)
+        }
+
+        XCTAssertEqual(reused.result(), recomputed.result())
+    }
+
     func testFirstEightQuestionsSpanAvailableDifficultyOctilesDeterministically() throws {
         var assessment = AdaptiveVocabularyAssessment(
             inventory: inventory(count: 80),

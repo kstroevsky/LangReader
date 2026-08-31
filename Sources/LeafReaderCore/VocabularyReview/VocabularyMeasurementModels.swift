@@ -15,13 +15,15 @@ package struct VocabularyAssessmentModelConfiguration: Equatable, Sendable {
     package let coverageQuantile: Double
     package let warmPriorWeight: Double
     package let coverageStoppingComputation: VocabularyCoverageStoppingComputation
+    package let reuseRepeatedPredictiveProbabilities: Bool
 
     package init(
         evidenceReliabilityScale: Double = 1,
         minimumEpsilonKnowledge: Double = 0.05,
         coverageQuantile: Double = 0.05,
         warmPriorWeight: Double = 0.90,
-        coverageStoppingComputation: VocabularyCoverageStoppingComputation = .fullEveryAnswer
+        coverageStoppingComputation: VocabularyCoverageStoppingComputation = .fullEveryAnswer,
+        reuseRepeatedPredictiveProbabilities: Bool = true
     ) {
         precondition(evidenceReliabilityScale.isFinite && evidenceReliabilityScale >= 0)
         precondition((0...0.25).contains(minimumEpsilonKnowledge))
@@ -32,6 +34,7 @@ package struct VocabularyAssessmentModelConfiguration: Equatable, Sendable {
         self.coverageQuantile = coverageQuantile
         self.warmPriorWeight = warmPriorWeight
         self.coverageStoppingComputation = coverageStoppingComputation
+        self.reuseRepeatedPredictiveProbabilities = reuseRepeatedPredictiveProbabilities
     }
 }
 

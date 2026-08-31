@@ -20,6 +20,9 @@ private struct BenchmarkCase: Codable {
     let stateUpdateP95MS: Double
     let nextQuestionSamplesMS: [Double]
     let nextQuestionP95MS: Double
+    let predictiveUniqueThetaCounts: [Int]
+    let predictiveUniqueThetaMedian: Double
+    let predictiveUniqueThetaMaximum: Int
 }
 
 private struct AuxiliaryBenchmark: Codable {
@@ -70,7 +73,8 @@ private func run(
     modeName: String,
     readerPrior: VocabularyReaderPrior? = nil,
     profile: String = "cold",
-    coverageStoppingComputation: VocabularyCoverageStoppingComputation = .fullEveryAnswer
+    coverageStoppingComputation: VocabularyCoverageStoppingComputation = .fullEveryAnswer,
+    reuseRepeatedPredictiveProbabilities: Bool = true
 ) -> BenchmarkCase {
     let inventory = DocumentVocabularyInventory(
         languageCode: "en",
@@ -85,6 +89,7 @@ private func run(
     var fullCoverageComputationCount = 0
     var stateUpdateSamples: [Double] = []
     var nextQuestionSamples: [Double] = []
+    var predictiveUniqueThetaCounts: [Int] = []
     var discarded = 0
     while samples.count < requestedSamples {
         var assessment = AdaptiveVocabularyAssessment(
@@ -92,7 +97,8 @@ private func run(
             mode: mode,
             readerPrior: readerPrior,
             modelConfiguration: VocabularyAssessmentModelConfiguration(
-                coverageStoppingComputation: coverageStoppingComputation
+                coverageStoppingComputation: coverageStoppingComputation,
+                reuseRepeatedPredictiveProbabilities: reuseRepeatedPredictiveProbabilities
             )
         )
         precondition(
@@ -121,6 +127,11 @@ private func run(
                 samples.append(milliseconds)
                 stateUpdateSamples.append(stateUpdateMilliseconds)
                 nextQuestionSamples.append(nextQuestionMilliseconds)
+                if mode.targetCoverage != nil {
+                    predictiveUniqueThetaCounts.append(
+                        assessment.predictiveUniqueThetaSampleCount
+                    )
+                }
             }
         }
         screeningCoverageComputationCount += assessment.screeningCoverageComputationCount
@@ -150,7 +161,13 @@ private func run(
         stateUpdateSamplesMS: stateUpdateSamples,
         stateUpdateP95MS: percentile(stateUpdateSamples.sorted(), 0.95),
         nextQuestionSamplesMS: nextQuestionSamples,
-        nextQuestionP95MS: percentile(nextQuestionSamples.sorted(), 0.95)
+        nextQuestionP95MS: percentile(nextQuestionSamples.sorted(), 0.95),
+        predictiveUniqueThetaCounts: predictiveUniqueThetaCounts,
+        predictiveUniqueThetaMedian: percentile(
+            predictiveUniqueThetaCounts.map(Double.init).sorted(),
+            0.50
+        ),
+        predictiveUniqueThetaMaximum: predictiveUniqueThetaCounts.max() ?? 0
     )
 }
 
@@ -247,19 +264,24 @@ private struct VocabularyAssessmentBenchmark {
         let stoppingComputation: VocabularyCoverageStoppingComputation = stoppingName == "staged"
             ? .staged
             : .fullEveryAnswer
+        let reusePredictiveProbabilities = environment[
+            "LEAFREADER_REUSE_REPEATED_PREDICTIVE_PROBABILITIES"
+        ] != "0"
         let cases = [100, 1_000, 5_000, 10_000].flatMap { lemmaCount in
             [
                 run(
                     lemmaCount: lemmaCount,
                     mode: .allUnknown,
                     modeName: "all-unknown",
-                    coverageStoppingComputation: stoppingComputation
+                    coverageStoppingComputation: stoppingComputation,
+                    reuseRepeatedPredictiveProbabilities: reusePredictiveProbabilities
                 ),
                 run(
                     lemmaCount: lemmaCount,
                     mode: .targetCoverage(0.98),
                     modeName: "coverage-98",
-                    coverageStoppingComputation: stoppingComputation
+                    coverageStoppingComputation: stoppingComputation,
+                    reuseRepeatedPredictiveProbabilities: reusePredictiveProbabilities
                 )
             ]
         }
@@ -279,7 +301,8 @@ private struct VocabularyAssessmentBenchmark {
             modeName: "coverage-98",
             readerPrior: warmPrior,
             profile: "warm",
-            coverageStoppingComputation: stoppingComputation
+            coverageStoppingComputation: stoppingComputation,
+            reuseRepeatedPredictiveProbabilities: reusePredictiveProbabilities
         )
         let allCases = cases + [warmCase]
         let legacyJSON = """
@@ -327,6 +350,7 @@ private struct VocabularyAssessmentBenchmark {
             metadata: [
                 "configuration": "release",
                 "coverage_stopping_computation": stoppingName,
+                "reuse_repeated_predictive_probabilities": String(reusePredictiveProbabilities),
                 "source_revision": environment["LEAFREADER_BENCHMARK_SOURCE_REVISION"] ?? "unknown",
                 "swift_version": environment["LEAFREADER_BENCHMARK_SWIFT_VERSION"] ?? "unknown",
                 "os_version": ProcessInfo.processInfo.operatingSystemVersionString,
@@ -353,6 +377,12 @@ private struct VocabularyAssessmentBenchmark {
                     format: "       next-card phases state-update p95=%8.3fms next-question p95=%8.3fms",
                     item.stateUpdateP95MS,
                     item.nextQuestionP95MS
+                ))
+                print(String(
+                    format: "       predictive theta indexes median/max=%5.1f/%d of %d samples",
+                    item.predictiveUniqueThetaMedian,
+                    item.predictiveUniqueThetaMaximum,
+                    AdaptiveVocabularyAssessment.predictiveSampleCount
                 ))
             }
             if !item.stopCheckSamplesMS.isEmpty || !item.finalResultSamplesMS.isEmpty {

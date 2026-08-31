@@ -827,6 +827,17 @@ package struct AdaptiveVocabularyAssessment: Sendable {
 
     package var thetaPosteriorSnapshot: [Double] { posterior }
 
+    package var predictiveUniqueThetaSampleCount: Int {
+        let indexes = stratifiedThetaSampleIndexes(sampleCount: Self.predictiveSampleCount)
+        guard var previous = indexes.first else { return 0 }
+        var count = 1
+        for index in indexes.dropFirst() where index != previous {
+            count += 1
+            previous = index
+        }
+        return count
+    }
+
     package var verifiedEvidenceCount: Int {
         answers.lazy.filter { $0.evidence.isVerifiedEvidence }.count
     }
@@ -1238,27 +1249,41 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 let localMaskOffset = (candidateIndex - lower) * maskWordCount
                 let curve = responseCurves[candidateIndex]
                 if let evidence {
+                    var previousThetaIndex = -1
+                    var probability = 0.0
                     for sampleIndex in 0..<sampleCount {
-                        let latentKnown = VocabularyKnowledgeModel.adjustedKnownProbability(
-                            baseKnownProbability: curve[thetaSampleIndexes[sampleIndex]],
-                            epsilonKnowledge: epsilonKnowledge
-                        )
-                        let probability = VocabularyObservationModel.posteriorKnownProbability(
-                            prior: latentKnown,
-                            evidence: evidence,
-                            reliabilityScale: modelConfiguration.evidenceReliabilityScale
-                        )
+                        let thetaIndex = thetaSampleIndexes[sampleIndex]
+                        if thetaIndex != previousThetaIndex
+                            || !modelConfiguration.reuseRepeatedPredictiveProbabilities {
+                            let latentKnown = VocabularyKnowledgeModel.adjustedKnownProbability(
+                                baseKnownProbability: curve[thetaIndex],
+                                epsilonKnowledge: epsilonKnowledge
+                            )
+                            probability = VocabularyObservationModel.posteriorKnownProbability(
+                                prior: latentKnown,
+                                evidence: evidence,
+                                reliabilityScale: modelConfiguration.evidenceReliabilityScale
+                            )
+                            previousThetaIndex = thetaIndex
+                        }
                         if Self.nextRandomUnit(state: &randomState) < probability {
                             localMasks[localMaskOffset + (sampleIndex >> 6)] |= UInt64(1) << UInt64(sampleIndex & 63)
                             localBaseline[sampleIndex] += candidate.occurrenceCount
                         }
                     }
                 } else {
+                    var previousThetaIndex = -1
+                    var probability = 0.0
                     for sampleIndex in 0..<sampleCount {
-                        let probability = VocabularyKnowledgeModel.adjustedKnownProbability(
-                            baseKnownProbability: curve[thetaSampleIndexes[sampleIndex]],
-                            epsilonKnowledge: epsilonKnowledge
-                        )
+                        let thetaIndex = thetaSampleIndexes[sampleIndex]
+                        if thetaIndex != previousThetaIndex
+                            || !modelConfiguration.reuseRepeatedPredictiveProbabilities {
+                            probability = VocabularyKnowledgeModel.adjustedKnownProbability(
+                                baseKnownProbability: curve[thetaIndex],
+                                epsilonKnowledge: epsilonKnowledge
+                            )
+                            previousThetaIndex = thetaIndex
+                        }
                         if Self.nextRandomUnit(state: &randomState) < probability {
                             localMasks[localMaskOffset + (sampleIndex >> 6)] |= UInt64(1) << UInt64(sampleIndex & 63)
                             localBaseline[sampleIndex] += candidate.occurrenceCount
