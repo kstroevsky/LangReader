@@ -16,6 +16,10 @@ private struct BenchmarkCase: Codable {
     let finalResultP95MS: Double
     let screeningCoverageComputationCount: Int
     let fullCoverageComputationCount: Int
+    let stateUpdateSamplesMS: [Double]
+    let stateUpdateP95MS: Double
+    let nextQuestionSamplesMS: [Double]
+    let nextQuestionP95MS: Double
 }
 
 private struct AuxiliaryBenchmark: Codable {
@@ -79,6 +83,8 @@ private func run(
     var finalResultSamples: [Double] = []
     var screeningCoverageComputationCount = 0
     var fullCoverageComputationCount = 0
+    var stateUpdateSamples: [Double] = []
+    var nextQuestionSamples: [Double] = []
     var discarded = 0
     while samples.count < requestedSamples {
         var assessment = AdaptiveVocabularyAssessment(
@@ -96,8 +102,16 @@ private func run(
         while !assessment.isFinished, let question = assessment.nextQuestion(), samples.count < requestedSamples {
             let known = question.difficulty < Double((assessment.answeredQuestionCount % 5) - 2) * 0.35
             let started = ProcessInfo.processInfo.systemUptime
+            let stateUpdateStarted = ProcessInfo.processInfo.systemUptime
             assessment.record(known ? .known : .unknown, for: question.canonicalKey)
+            let stateUpdateMilliseconds = (
+                ProcessInfo.processInfo.systemUptime - stateUpdateStarted
+            ) * 1_000
+            let nextQuestionStarted = ProcessInfo.processInfo.systemUptime
             let nextQuestion = assessment.nextQuestion()
+            let nextQuestionMilliseconds = (
+                ProcessInfo.processInfo.systemUptime - nextQuestionStarted
+            ) * 1_000
             let milliseconds = (ProcessInfo.processInfo.systemUptime - started) * 1_000
             if nextQuestion == nil {
                 stopCheckSamples.append(milliseconds)
@@ -105,6 +119,8 @@ private func run(
                 discarded += 1
             } else {
                 samples.append(milliseconds)
+                stateUpdateSamples.append(stateUpdateMilliseconds)
+                nextQuestionSamples.append(nextQuestionMilliseconds)
             }
         }
         screeningCoverageComputationCount += assessment.screeningCoverageComputationCount
@@ -130,7 +146,11 @@ private func run(
         finalResultSamplesMS: finalResultSamples,
         finalResultP95MS: percentile(finalResultSamples.sorted(), 0.95),
         screeningCoverageComputationCount: screeningCoverageComputationCount,
-        fullCoverageComputationCount: fullCoverageComputationCount
+        fullCoverageComputationCount: fullCoverageComputationCount,
+        stateUpdateSamplesMS: stateUpdateSamples,
+        stateUpdateP95MS: percentile(stateUpdateSamples.sorted(), 0.95),
+        nextQuestionSamplesMS: nextQuestionSamples,
+        nextQuestionP95MS: percentile(nextQuestionSamples.sorted(), 0.95)
     )
 }
 
@@ -328,6 +348,13 @@ private struct VocabularyAssessmentBenchmark {
                 item.p95MS,
                 item.maxMS
             ))
+            if item.mode == "coverage-98" {
+                print(String(
+                    format: "       next-card phases state-update p95=%8.3fms next-question p95=%8.3fms",
+                    item.stateUpdateP95MS,
+                    item.nextQuestionP95MS
+                ))
+            }
             if !item.stopCheckSamplesMS.isEmpty || !item.finalResultSamplesMS.isEmpty {
                 print(String(
                     format: "       phases stop-check p95=%8.3fms final-result p95=%8.3fms screen/full=%d/%d",
