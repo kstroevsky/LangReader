@@ -7,6 +7,7 @@ enum VocabularyPreparationTelemetryStage: String {
     case assessmentInitialization
     case assessmentAdvance
     case assessmentResults
+    case assessmentPrecomputation
     case definitionLookup
     case definitionBatch
     case importRecords
@@ -118,7 +119,7 @@ enum ReaderPerformance {
         itemCount: Int = 0,
         auxiliaryCount: Int = 0
     ) {
-        vocabularyPreparationLogger.info(
+        vocabularyPreparationLogger.notice(
             "stage=\(stage.rawValue, privacy: .public) outcome=\(outcome.rawValue, privacy: .public) duration_ms=\(milliseconds, privacy: .public) items=\(itemCount, privacy: .public) aux=\(auxiliaryCount, privacy: .public)"
         )
     }

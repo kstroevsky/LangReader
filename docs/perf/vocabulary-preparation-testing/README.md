@@ -445,6 +445,16 @@ log stream --style compact --level info \
   --predicate 'subsystem == "com.leafvocabulary.app" && category == "VocabularyPreparation"'
 ```
 
+Inspect recently completed local runs with:
+
+```sh
+/usr/bin/log show --style compact --last 1h \
+  --predicate 'subsystem == "com.leafvocabulary.app" && category == "VocabularyPreparation"'
+```
+
+Milestones use the persistent `notice` level so this retrospective query works;
+high-volume raw samples remain opt-in through `LEAFVOCAB_PERF=1`.
+
 The phase events distinguish source snapshot, inventory model construction,
 context materialization, assessment initialization, posterior/state update,
 next-question selection, result construction, definition lookup/batch, and
@@ -457,6 +467,12 @@ auxiliary aggregate count. They never contain a Document ID/title, file path,
 raw text, lemma, typed meaning, definition, or account identity. Unified logs do
 not upload data, and the performance recorder remains disabled unless the
 capture environment explicitly enables it.
+
+The retained exact next-card optimization, A/B instruction/cycle counts, raw
+reports, and rejected experiments are documented in
+`../vocabulary-assessment-optimization-2026-08-31.md`. Use
+`LEAFREADER_REUSE_REPEATED_PREDICTIVE_PROBABILITIES=0` with the Release
+benchmark to execute the same-sample recomputation baseline.
 
 Create a private manifest from:
 

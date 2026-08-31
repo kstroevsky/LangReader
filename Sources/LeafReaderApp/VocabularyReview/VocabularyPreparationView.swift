@@ -425,20 +425,28 @@ struct VocabularyPreparationView: View {
             .frame(maxHeight: 280)
             switch coordinator.interactionState {
             case .pendingKnownVerification:
-                HStack(spacing: 10) {
-                    Button(AppText.localized("我的含义正确", "My meaning was correct")) {
-                        coordinator.verifyKnown(correct: true)
+                if coordinator.isPreparingNextQuestion {
+                    ProgressView(AppText.localized("正在准备下一个词…", "Preparing the next word…"))
+                } else {
+                    HStack(spacing: 10) {
+                        Button(AppText.localized("我的含义正确", "My meaning was correct")) {
+                            coordinator.verifyKnown(correct: true)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        Button(AppText.localized("不正确/只对了一部分", "No / only partly")) {
+                            coordinator.verifyKnown(correct: false)
+                        }
                     }
-                    .buttonStyle(.borderedProminent)
-                    Button(AppText.localized("不正确/只对了一部分", "No / only partly")) {
-                        coordinator.verifyKnown(correct: false)
-                    }
-                }
-                .controlSize(.large)
-            case .learningAfterAnswer:
-                Button(AppText.localized("继续", "Continue")) { coordinator.continueAfterLearning() }
-                    .buttonStyle(.borderedProminent)
                     .controlSize(.large)
+                }
+            case .learningAfterAnswer:
+                if coordinator.isPreparingNextQuestion {
+                    ProgressView(AppText.localized("正在准备下一个词…", "Preparing the next word…"))
+                } else {
+                    Button(AppText.localized("继续", "Continue")) { coordinator.continueAfterLearning() }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                }
             case .awaitingAnswer:
                 EmptyView()
             }

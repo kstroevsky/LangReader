@@ -122,6 +122,12 @@ import materialization/persistence while preserving the existing end-to-end
 events. Only durations, outcomes, and aggregate counts are logged; document and
 lexical content is excluded. Commands and field guarantees are documented in
 `vocabulary-preparation-testing/README.md`.
+
+The exact next-word optimization and its instruction/cycle evidence are retained
+in `vocabulary-assessment-optimization-2026-08-31.md`. Repeated stratified theta
+probabilities are reused without changing samples or masks, while unknown/unsure
+updates run behind definition reading and verified-known prepares—but does not
+apply—the exact likely branch before confirmation.
 Definition skips remain uncertain but cannot be selected again, count as an
 answered question, or prevent clean exhaustion.
 
