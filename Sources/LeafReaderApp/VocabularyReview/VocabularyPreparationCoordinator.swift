@@ -64,6 +64,7 @@ private struct VocabularyAssessmentAdvance: Sendable {
     let nextQuestionMilliseconds: Double
     let resultBuildMilliseconds: Double
     let holdsAnsweredCandidate: Bool
+    let deferredCoverageStopping: Bool
 }
 
 private struct VocabularyPendingKnownScore: Equatable, Sendable {
@@ -95,6 +96,7 @@ final class VocabularyPreparationCoordinator {
     private var assessmentUpdatePending = false
     private var continueAfterPendingAssessmentUpdate = false
     private var knownAdvanceTask: Task<Void, Never>?
+    private var coverageStoppingTask: Task<Void, Never>?
     private var precomputedKnownAdvance: VocabularyAssessmentAdvance?
     private var precomputedKnownScore: VocabularyPendingKnownScore?
     private var pendingKnownScore: VocabularyPendingKnownScore?
@@ -110,6 +112,7 @@ final class VocabularyPreparationCoordinator {
     private(set) var domainDetection: VocabularyDocumentDomainDetection?
     private(set) var isPreparingNextQuestion = false
     private(set) var isKnownAnswerPrepared = false
+    var isAnswerInteractionReady: Bool { coverageStoppingTask == nil }
     var selectedKeys = Set<String>()
     var mode: VocabularyAssessmentMode = .allUnknown
     /// "auto", "en", or "de". The explicit choices support mixed-language
@@ -348,6 +351,7 @@ final class VocabularyPreparationCoordinator {
     func resetAssessment() {
         requestID = UUID()
         clearKnownAdvancePrecomputation()
+        clearDeferredCoverageStopping()
         definitionTask?.cancel()
         definitionTask = nil
         assessment = nil
@@ -388,7 +392,9 @@ final class VocabularyPreparationCoordinator {
     }
 
     func chooseKnown() {
-        guard interactionState == .awaitingAnswer, currentCandidate != nil else { return }
+        guard isAnswerInteractionReady,
+              interactionState == .awaitingAnswer,
+              currentCandidate != nil else { return }
         clearKnownAdvancePrecomputation()
         interactionState = .pendingKnownVerification
         revealCurrentQuestion()
@@ -406,7 +412,8 @@ final class VocabularyPreparationCoordinator {
     }
 
     func verifyKnown(correct: Bool) {
-        guard interactionState == .pendingKnownVerification,
+        guard isAnswerInteractionReady,
+              interactionState == .pendingKnownVerification,
               case .available = definitionState,
               let key = currentCandidate?.canonicalKey else { return }
         let typedMeaning = typedModeEnabled
@@ -440,7 +447,7 @@ final class VocabularyPreparationCoordinator {
 
     func continueAfterLearning() {
         guard interactionState == .learningAfterAnswer else { return }
-        if assessmentUpdatePending {
+        if assessmentUpdatePending || coverageStoppingTask != nil {
             continueAfterPendingAssessmentUpdate = true
             isPreparingNextQuestion = true
             return
@@ -473,7 +480,7 @@ final class VocabularyPreparationCoordinator {
     }
 
     func excludeCurrentCandidate() {
-        guard let key = currentCandidate?.canonicalKey else { return }
+        guard isAnswerInteractionReady, let key = currentCandidate?.canonicalKey else { return }
         advanceAssessment(.exclude(key), persistAnswers: true)
     }
 
@@ -566,6 +573,7 @@ final class VocabularyPreparationCoordinator {
         definitionTask?.cancel()
         definitionTask = nil
         clearKnownAdvancePrecomputation()
+        clearDeferredCoverageStopping()
         assessmentUpdatePending = false
         continueAfterPendingAssessmentUpdate = false
         isPreparingNextQuestion = false
@@ -578,6 +586,11 @@ final class VocabularyPreparationCoordinator {
         precomputedKnownScore = nil
         pendingKnownScore = nil
         isKnownAnswerPrepared = false
+    }
+
+    private func clearDeferredCoverageStopping() {
+        coverageStoppingTask?.cancel()
+        coverageStoppingTask = nil
     }
 
     private func applyPredictionAudit(
@@ -705,7 +718,9 @@ final class VocabularyPreparationCoordinator {
     }
 
     private func recordEvidenceAndReveal(_ evidence: VocabularyKnowledgeEvidence) {
-        guard interactionState == .awaitingAnswer, let key = currentCandidate?.canonicalKey else { return }
+        guard isAnswerInteractionReady,
+              interactionState == .awaitingAnswer,
+              let key = currentCandidate?.canonicalKey else { return }
         advanceAssessment(
             .score(evidence, key, typedMeaning: nil),
             persistAnswers: true,
@@ -766,9 +781,9 @@ final class VocabularyPreparationCoordinator {
         case .none:
             break
         case let .score(evidence, key, typedMeaning):
-            assessment.record(evidence, for: key, typedMeaning: typedMeaning)
+            assessment.recordPreparingNextQuestion(evidence, for: key, typedMeaning: typedMeaning)
         case let .exclude(key):
-            assessment.record(.excluded, for: key)
+            assessment.recordPreparingNextQuestion(.excluded, for: key)
         case .skipQuestion:
             assessment.skipCurrentQuestion()
         }
@@ -785,7 +800,8 @@ final class VocabularyPreparationCoordinator {
                 posteriorUpdateMilliseconds: posteriorUpdateMilliseconds,
                 nextQuestionMilliseconds: 0,
                 resultBuildMilliseconds: 0,
-                holdsAnsweredCandidate: true
+                holdsAnsweredCandidate: true,
+                deferredCoverageStopping: assessment.hasDeferredCoverageStoppingUpdate
             )
         }
         if assessment.isFinished {
@@ -802,7 +818,8 @@ final class VocabularyPreparationCoordinator {
                 resultBuildMilliseconds: (
                     ProcessInfo.processInfo.systemUptime - resultStartedAt
                 ) * 1_000,
-                holdsAnsweredCandidate: false
+                holdsAnsweredCandidate: false,
+                deferredCoverageStopping: false
             )
         }
         let nextQuestionStartedAt = ProcessInfo.processInfo.systemUptime
@@ -823,7 +840,8 @@ final class VocabularyPreparationCoordinator {
             resultBuildMilliseconds: result == nil
                 ? 0
                 : (ProcessInfo.processInfo.systemUptime - resultStartedAt) * 1_000,
-            holdsAnsweredCandidate: false
+            holdsAnsweredCandidate: false,
+            deferredCoverageStopping: assessment.hasDeferredCoverageStoppingUpdate
         )
     }
 
@@ -878,6 +896,12 @@ final class VocabularyPreparationCoordinator {
         }
         ReaderPerformance.record(.vocabularyAssessmentAdvance, milliseconds: advance.durationMilliseconds)
         assessment = advance.assessment
+        if advance.deferredCoverageStopping {
+            beginDeferredCoverageStopping(
+                for: advance.assessment,
+                requestID: requestID
+            )
+        }
         if persistAnswers { persistAssessment() }
         if advance.holdsAnsweredCandidate, assessmentUpdatePending {
             assessmentUpdatePending = false
@@ -885,7 +909,12 @@ final class VocabularyPreparationCoordinator {
             continueAfterPendingAssessmentUpdate = false
             isPreparingNextQuestion = false
             if shouldContinue {
-                advanceAssessment(.none, persistAnswers: false)
+                if coverageStoppingTask != nil {
+                    continueAfterPendingAssessmentUpdate = true
+                    isPreparingNextQuestion = true
+                } else {
+                    advanceAssessment(.none, persistAnswers: false)
+                }
             } else {
                 phase = .assessment
                 interactionState = .learningAfterAnswer
@@ -909,6 +938,61 @@ final class VocabularyPreparationCoordinator {
                 interactionState = .awaitingAnswer
                 typedMeaningDraft = ""
             }
+        }
+    }
+
+    private func beginDeferredCoverageStopping(
+        for assessment: AdaptiveVocabularyAssessment,
+        requestID activeRequestID: UUID
+    ) {
+        coverageStoppingTask?.cancel()
+        let expectedAnswers = assessment.answers
+        coverageStoppingTask = Task.detached(priority: .utility) { [weak self] in
+            let startedAt = ProcessInfo.processInfo.systemUptime
+            var completed = assessment
+            completed.completeDeferredCoverageStoppingUpdate()
+            let durationMilliseconds = (
+                ProcessInfo.processInfo.systemUptime - startedAt
+            ) * 1_000
+            guard !Task.isCancelled else { return }
+            await self?.receiveDeferredCoverageStopping(
+                completed,
+                expectedAnswers: expectedAnswers,
+                durationMilliseconds: durationMilliseconds,
+                requestID: activeRequestID
+            )
+        }
+    }
+
+    private func receiveDeferredCoverageStopping(
+        _ completed: AdaptiveVocabularyAssessment,
+        expectedAnswers: [VocabularyAssessmentAnswer],
+        durationMilliseconds: Double,
+        requestID activeRequestID: UUID
+    ) {
+        guard requestID == activeRequestID,
+              assessment?.answers == expectedAnswers,
+              let identity = activeIdentity,
+              documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
+        coverageStoppingTask = nil
+        assessment = completed
+        ReaderPerformance.record(
+            .vocabularyAssessmentCoverageStopping,
+            milliseconds: durationMilliseconds
+        )
+        if durationMilliseconds >= 100 {
+            ReaderPerformance.logVocabularyPreparation(
+                .assessmentCoverageStopping,
+                outcome: .slow,
+                milliseconds: durationMilliseconds,
+                itemCount: inventory?.candidates.count ?? 0,
+                auxiliaryCount: completed.answeredQuestionCount
+            )
+        }
+        if continueAfterPendingAssessmentUpdate {
+            continueAfterPendingAssessmentUpdate = false
+            isPreparingNextQuestion = false
+            advanceAssessment(.none, persistAnswers: false)
         }
     }
 

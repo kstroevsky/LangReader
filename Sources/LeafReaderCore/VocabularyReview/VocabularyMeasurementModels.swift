@@ -16,6 +16,8 @@ package struct VocabularyAssessmentModelConfiguration: Equatable, Sendable {
     package let warmPriorWeight: Double
     package let coverageStoppingComputation: VocabularyCoverageStoppingComputation
     package let reuseRepeatedPredictiveProbabilities: Bool
+    package let incrementalPosteriorUpdates: Bool
+    package let crossMomentQuestionScoring: Bool
 
     package init(
         evidenceReliabilityScale: Double = 1,
@@ -23,7 +25,9 @@ package struct VocabularyAssessmentModelConfiguration: Equatable, Sendable {
         coverageQuantile: Double = 0.05,
         warmPriorWeight: Double = 0.90,
         coverageStoppingComputation: VocabularyCoverageStoppingComputation = .fullEveryAnswer,
-        reuseRepeatedPredictiveProbabilities: Bool = true
+        reuseRepeatedPredictiveProbabilities: Bool = true,
+        incrementalPosteriorUpdates: Bool = true,
+        crossMomentQuestionScoring: Bool = true
     ) {
         precondition(evidenceReliabilityScale.isFinite && evidenceReliabilityScale >= 0)
         precondition((0...0.25).contains(minimumEpsilonKnowledge))
@@ -35,6 +39,8 @@ package struct VocabularyAssessmentModelConfiguration: Equatable, Sendable {
         self.warmPriorWeight = warmPriorWeight
         self.coverageStoppingComputation = coverageStoppingComputation
         self.reuseRepeatedPredictiveProbabilities = reuseRepeatedPredictiveProbabilities
+        self.incrementalPosteriorUpdates = incrementalPosteriorUpdates
+        self.crossMomentQuestionScoring = crossMomentQuestionScoring
     }
 }
 

@@ -74,7 +74,8 @@ private func run(
     readerPrior: VocabularyReaderPrior? = nil,
     profile: String = "cold",
     coverageStoppingComputation: VocabularyCoverageStoppingComputation = .fullEveryAnswer,
-    reuseRepeatedPredictiveProbabilities: Bool = true
+    reuseRepeatedPredictiveProbabilities: Bool = true,
+    crossMomentQuestionScoring: Bool = true
 ) -> BenchmarkCase {
     let inventory = DocumentVocabularyInventory(
         languageCode: "en",
@@ -98,7 +99,8 @@ private func run(
             readerPrior: readerPrior,
             modelConfiguration: VocabularyAssessmentModelConfiguration(
                 coverageStoppingComputation: coverageStoppingComputation,
-                reuseRepeatedPredictiveProbabilities: reuseRepeatedPredictiveProbabilities
+                reuseRepeatedPredictiveProbabilities: reuseRepeatedPredictiveProbabilities,
+                crossMomentQuestionScoring: crossMomentQuestionScoring
             )
         )
         precondition(
@@ -267,6 +269,9 @@ private struct VocabularyAssessmentBenchmark {
         let reusePredictiveProbabilities = environment[
             "LEAFREADER_REUSE_REPEATED_PREDICTIVE_PROBABILITIES"
         ] != "0"
+        let crossMomentQuestionScoring = environment[
+            "LEAFREADER_CROSS_MOMENT_QUESTION_SCORING"
+        ] != "0"
         let cases = [100, 1_000, 5_000, 10_000].flatMap { lemmaCount in
             [
                 run(
@@ -274,14 +279,16 @@ private struct VocabularyAssessmentBenchmark {
                     mode: .allUnknown,
                     modeName: "all-unknown",
                     coverageStoppingComputation: stoppingComputation,
-                    reuseRepeatedPredictiveProbabilities: reusePredictiveProbabilities
+                    reuseRepeatedPredictiveProbabilities: reusePredictiveProbabilities,
+                    crossMomentQuestionScoring: crossMomentQuestionScoring
                 ),
                 run(
                     lemmaCount: lemmaCount,
                     mode: .targetCoverage(0.98),
                     modeName: "coverage-98",
                     coverageStoppingComputation: stoppingComputation,
-                    reuseRepeatedPredictiveProbabilities: reusePredictiveProbabilities
+                    reuseRepeatedPredictiveProbabilities: reusePredictiveProbabilities,
+                    crossMomentQuestionScoring: crossMomentQuestionScoring
                 )
             ]
         }
@@ -302,7 +309,8 @@ private struct VocabularyAssessmentBenchmark {
             readerPrior: warmPrior,
             profile: "warm",
             coverageStoppingComputation: stoppingComputation,
-            reuseRepeatedPredictiveProbabilities: reusePredictiveProbabilities
+            reuseRepeatedPredictiveProbabilities: reusePredictiveProbabilities,
+            crossMomentQuestionScoring: crossMomentQuestionScoring
         )
         let allCases = cases + [warmCase]
         let legacyJSON = """
@@ -351,6 +359,7 @@ private struct VocabularyAssessmentBenchmark {
                 "configuration": "release",
                 "coverage_stopping_computation": stoppingName,
                 "reuse_repeated_predictive_probabilities": String(reusePredictiveProbabilities),
+                "cross_moment_question_scoring": String(crossMomentQuestionScoring),
                 "source_revision": environment["LEAFREADER_BENCHMARK_SOURCE_REVISION"] ?? "unknown",
                 "swift_version": environment["LEAFREADER_BENCHMARK_SWIFT_VERSION"] ?? "unknown",
                 "os_version": ProcessInfo.processInfo.operatingSystemVersionString,

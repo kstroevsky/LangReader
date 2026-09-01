@@ -580,9 +580,19 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         var maskWordCount: Int { sampleCount / 64 }
     }
 
+    private struct ThetaSampleRun: Sendable {
+        let thetaIndex: Int
+        let sampleRange: Range<Int>
+    }
+
     private struct CoverageDeckStabilitySnapshot: Sendable {
         let selection: Set<String>
         let selectedOccurrences: Int
+    }
+
+    private struct DeferredCoverageStoppingUpdate: Sendable {
+        let answeredKey: String?
+        let advancesStoppingStreak: Bool
     }
 
     private static let thetaGrid: [Double] = stride(from: -6.0, through: 6.0001, by: 0.1).map { $0 }
@@ -617,6 +627,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     package var errorFloor: Double { epsilonKnowledge }
     private var posterior: [Double]
     private var answerByKey: [String: VocabularyAssessmentAnswer]
+    private var evidenceByCandidateIndex: [VocabularyKnowledgeEvidence?]
     private var answeredCandidateIndexes: Set<Int>
     private var excludedCandidateIndexes: Set<Int>
     private var answeredProbabilities: [String: Double]
@@ -633,6 +644,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     private var cachedPredictiveSamples: PredictiveCoverageSamples?
     private var cachedCoverageSelection: Set<String>?
     private var cachedCoverageTargetReached: Bool
+    private var deferredCoverageStoppingUpdate: DeferredCoverageStoppingUpdate?
     private let usesEligibleReaderPrior: Bool
     private(set) package var screeningCoverageComputationCount = 0
     private(set) package var fullCoverageComputationCount = 0
@@ -675,12 +687,14 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             : genericPrior
         posterior = initialPosterior
         answerByKey = [:]
+        evidenceByCandidateIndex = Array(repeating: nil, count: inventory.candidates.count)
         answeredCandidateIndexes = []
         excludedCandidateIndexes = []
         answeredProbabilities = [:]
         currentProbabilities = []
         cachedCoverageSelection = nil
         cachedCoverageTargetReached = false
+        deferredCoverageStoppingUpdate = nil
         currentProbabilities = probabilities(for: posterior)
         for answer in restoredAnswers {
             if candidateIndexByKey[answer.canonicalKey] != nil {
@@ -732,6 +746,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     }
 
     package mutating func setMode(_ mode: VocabularyAssessmentMode) {
+        deferredCoverageStoppingUpdate = nil
         self.mode = mode
         lowValueStreak = 0
         stableCoverageDeckStreak = 0
@@ -809,7 +824,42 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         for canonicalKey: String,
         typedMeaning: String? = nil
     ) {
-        guard candidateIndexByKey[canonicalKey] != nil, answerByKey[canonicalKey] == nil else { return }
+        completeDeferredCoverageStoppingUpdate()
+        record(
+            evidence,
+            for: canonicalKey,
+            typedMeaning: typedMeaning,
+            deferCoverageStoppingWhenSafe: false
+        )
+    }
+
+    /// Records an answer using the exact posterior and exact next-question
+    /// objective, but permits the independent 512-sample coverage stopping
+    /// check to finish after the next word is already visible. The deferred
+    /// check must be completed before another answer mutates this value.
+    @discardableResult
+    package mutating func recordPreparingNextQuestion(
+        _ evidence: VocabularyKnowledgeEvidence,
+        for canonicalKey: String,
+        typedMeaning: String? = nil
+    ) -> Bool {
+        completeDeferredCoverageStoppingUpdate()
+        return record(
+            evidence,
+            for: canonicalKey,
+            typedMeaning: typedMeaning,
+            deferCoverageStoppingWhenSafe: true
+        )
+    }
+
+    @discardableResult
+    private mutating func record(
+        _ evidence: VocabularyKnowledgeEvidence,
+        for canonicalKey: String,
+        typedMeaning: String?,
+        deferCoverageStoppingWhenSafe: Bool
+    ) -> Bool {
+        guard candidateIndexByKey[canonicalKey] != nil, answerByKey[canonicalKey] == nil else { return false }
         cachedBestQuestion = nil
         let pending = pendingQuestion?.key == canonicalKey ? pendingQuestion : nil
         let answer = VocabularyAssessmentAnswer(
@@ -824,7 +874,31 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         )
         apply(answer)
         pendingQuestion = nil
+        if deferCoverageStoppingWhenSafe,
+           prepareDeferredCoverageStoppingUpdate(
+               afterAnsweredKey: evidence == .excluded ? nil : canonicalKey
+           ) {
+            return true
+        }
         refreshStoppingState(afterAnsweredKey: evidence == .excluded ? nil : canonicalKey)
+        return false
+    }
+
+    package var hasDeferredCoverageStoppingUpdate: Bool {
+        deferredCoverageStoppingUpdate != nil
+    }
+
+    package mutating func completeDeferredCoverageStoppingUpdate() {
+        guard let update = deferredCoverageStoppingUpdate else { return }
+        deferredCoverageStoppingUpdate = nil
+        let samples = predictiveCoverageSamples()
+        let deck = proposedSelection(predictiveSamples: samples)
+        commitFullCoverageStoppingUpdate(
+            samples: samples,
+            deck: deck,
+            answeredKey: update.answeredKey,
+            advancesStoppingStreak: update.advancesStoppingStreak
+        )
     }
 
     package var thetaPosteriorSnapshot: [Double] { posterior }
@@ -850,6 +924,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     /// Skips a dictionary-failure item without treating it as an answer or an
     /// exclusion. It remains an unasked posterior item in the final result.
     package mutating func skipCurrentQuestion() {
+        completeDeferredCoverageStoppingUpdate()
         guard let pendingQuestion else { return }
         skippedQuestionKeys.insert(pendingQuestion.key)
         self.pendingQuestion = nil
@@ -989,11 +1064,13 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         answerByKey[answer.canonicalKey] = answer
         if let index = candidateIndexByKey[answer.canonicalKey] {
             answeredCandidateIndexes.insert(index)
+            evidenceByCandidateIndex[index] = answer.evidence
             if answer.evidence == .excluded { excludedCandidateIndexes.insert(index) }
         }
         guard answer.evidence != .excluded,
               candidateIndexByKey[answer.canonicalKey] != nil else { return }
 
+        let previousEpsilonKnowledge = epsilonKnowledge
         if let predictedKnown = answer.predictedKnown {
             let contradiction = Self.contradictionAmount(
                 evidence: answer.evidence,
@@ -1020,7 +1097,33 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             }
         }
 
-        rebuildPosterior()
+        if modelConfiguration.incrementalPosteriorUpdates,
+           epsilonKnowledge == previousEpsilonKnowledge {
+            updatePosterior(with: answer)
+        } else {
+            rebuildPosterior()
+        }
+    }
+
+    private mutating func updatePosterior(with answer: VocabularyAssessmentAnswer) {
+        cachedPredictiveSamples = nil
+        cachedCoverageSelection = nil
+        cachedCoverageTargetReached = false
+        guard let candidateIndex = candidateIndexByKey[answer.canonicalKey] else { return }
+        for thetaIndex in posterior.indices {
+            let latentKnown = VocabularyKnowledgeModel.adjustedKnownProbability(
+                baseKnownProbability: responseCurves[candidateIndex][thetaIndex],
+                epsilonKnowledge: epsilonKnowledge
+            )
+            posterior[thetaIndex] *= VocabularyObservationModel.evidenceLikelihood(
+                evidence: answer.evidence,
+                latentKnownProbability: latentKnown,
+                reliabilityScale: modelConfiguration.evidenceReliabilityScale
+            )
+        }
+        Self.normalize(&posterior)
+        currentProbabilities = probabilities(for: posterior)
+        rebuildAnsweredProbabilities()
     }
 
     private mutating func rebuildPosterior() {
@@ -1045,6 +1148,61 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         }
         currentProbabilities = probabilities(for: posterior)
         rebuildAnsweredProbabilities()
+    }
+
+    private mutating func prepareDeferredCoverageStoppingUpdate(
+        afterAnsweredKey answeredKey: String?
+    ) -> Bool {
+        guard case .targetCoverage = mode,
+              modelConfiguration.coverageStoppingComputation == .fullEveryAnswer else { return false }
+        let remaining = answerableCandidates
+        let minimumAnswerCount = min(minimumQuestionCount, answeredQuestionCount + remaining.count)
+        guard answeredQuestionCount < 80,
+              answeredQuestionCount >= minimumAnswerCount,
+              !remaining.isEmpty else { return false }
+
+        let stoppingUpdateWasSuppressed = suppressStoppingUpdateOnce
+        let advancesStoppingStreak = answeredKey != nil && !stoppingUpdateWasSuppressed
+        guard !advancesStoppingStreak || stableCoverageDeckStreak < 2 else { return false }
+
+        suppressStoppingUpdateOnce = false
+        let best = bestQuestion(from: shortlist(from: remaining))
+        cachedBestQuestion = BestQuestionCache(key: best.candidate.canonicalKey, reduction: best.reduction)
+        deferredCoverageStoppingUpdate = DeferredCoverageStoppingUpdate(
+            answeredKey: answeredKey,
+            advancesStoppingStreak: advancesStoppingStreak
+        )
+        return true
+    }
+
+    private mutating func commitFullCoverageStoppingUpdate(
+        samples: PredictiveCoverageSamples,
+        deck: Set<String>,
+        answeredKey: String?,
+        advancesStoppingStreak: Bool
+    ) {
+        fullCoverageComputationCount += 1
+        cachedPredictiveSamples = samples
+        cachedCoverageSelection = deck
+        cachedCoverageTargetReached = true
+        let currentSnapshot = CoverageDeckStabilitySnapshot(
+            selection: deck,
+            selectedOccurrences: selectedOccurrences(in: deck)
+        )
+        if advancesStoppingStreak {
+            stableCoverageDeckStreak = previousCoverageDeck.map {
+                let isStable = usesEligibleReaderPrior
+                    ? coverageDeckIsMateriallyStable(
+                        previous: $0,
+                        current: currentSnapshot,
+                        normalizing: answeredKey,
+                        totalOccurrences: samples.totalOccurrences
+                    )
+                    : $0.selection == currentSnapshot.selection
+                return isStable ? stableCoverageDeckStreak + 1 : 0
+            } ?? 0
+        }
+        previousCoverageDeck = currentSnapshot
     }
 
     private mutating func refreshStoppingState(afterAnsweredKey answeredKey: String? = nil) {
@@ -1087,32 +1245,20 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             }
             guard let samples = samplesBox.value(), let deck = deckBox.value() else { return }
             cachedBestQuestion = questionBox.value()
+            if modelConfiguration.coverageStoppingComputation == .fullEveryAnswer {
+                commitFullCoverageStoppingUpdate(
+                    samples: samples,
+                    deck: deck,
+                    answeredKey: answeredKey,
+                    advancesStoppingStreak: advancesStoppingStreak
+                )
+                return
+            }
+
             let currentSnapshot = CoverageDeckStabilitySnapshot(
                 selection: deck,
                 selectedOccurrences: selectedOccurrences(in: deck)
             )
-            if modelConfiguration.coverageStoppingComputation == .fullEveryAnswer {
-                fullCoverageComputationCount += 1
-                cachedPredictiveSamples = samples
-                cachedCoverageSelection = deck
-                cachedCoverageTargetReached = true
-                if advancesStoppingStreak {
-                    stableCoverageDeckStreak = previousCoverageDeck.map {
-                        let isStable = usesEligibleReaderPrior
-                            ? coverageDeckIsMateriallyStable(
-                                previous: $0,
-                                current: currentSnapshot,
-                                normalizing: answeredKey,
-                                totalOccurrences: samples.totalOccurrences
-                            )
-                            : $0.selection == currentSnapshot.selection
-                        return isStable ? stableCoverageDeckStreak + 1 : 0
-                    } ?? 0
-                }
-                previousCoverageDeck = currentSnapshot
-                return
-            }
-
             screeningCoverageComputationCount += 1
             cachedCoverageTargetReached = false
             stableCoverageDeckStreak = 0
@@ -1191,16 +1337,11 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         predictiveSamples suppliedSamples: PredictiveCoverageSamples? = nil,
         pruneRedundant: Bool = false
     ) -> Set<String> {
-        let eligible = inventory.candidates.filter { candidate in
-            answerByKey[candidate.canonicalKey]?.evidence != .excluded
-        }
-        let probabilities = Dictionary(uniqueKeysWithValues: eligible.compactMap { candidate -> (String, Double)? in
-            knownProbability(for: candidate.canonicalKey).map { (candidate.canonicalKey, $0) }
-        })
         switch mode {
         case .allUnknown:
-            return Set(eligible.compactMap { candidate -> String? in
-                guard let probability = probabilities[candidate.canonicalKey] else { return nil }
+            return Set(inventory.candidates.compactMap { candidate -> String? in
+                guard answerByKey[candidate.canonicalKey]?.evidence != .excluded,
+                      let probability = knownProbability(for: candidate.canonicalKey) else { return nil }
                 return probability < 0.5 ? candidate.canonicalKey : nil
             })
         case let .targetCoverage(target):
@@ -1233,6 +1374,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         precondition(sampleCount > 0 && sampleCount.isMultiple(of: 64))
         let maskWordCount = sampleCount / 64
         let thetaSampleIndexes = stratifiedThetaSampleIndexes(sampleCount: sampleCount)
+        let thetaSampleRuns = Self.thetaSampleRuns(from: thetaSampleIndexes)
         let candidateCount = inventory.candidates.count
         let workerCount = candidateCount >= 1_000 ? 4 : 1
         let buffer = VocabularyPredictiveWorkerBuffer()
@@ -1249,51 +1391,69 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             if randomState == 0 { randomState = 0xA076_1D64_78BD_642F }
             for candidateIndex in range {
                 let candidate = inventory.candidates[candidateIndex]
-                if answerByKey[candidate.canonicalKey]?.evidence == .excluded { continue }
+                if evidenceByCandidateIndex[candidateIndex] == .excluded { continue }
                 localIncluded.append(candidateIndex)
                 localTotal += candidate.occurrenceCount
-                let evidence = answerByKey[candidate.canonicalKey]?.evidence
+                let evidence = evidenceByCandidateIndex[candidateIndex]
                 let localMaskOffset = (candidateIndex - lower) * maskWordCount
                 let curve = responseCurves[candidateIndex]
                 if let evidence {
-                    var previousThetaIndex = -1
-                    var probability = 0.0
-                    for sampleIndex in 0..<sampleCount {
-                        let thetaIndex = thetaSampleIndexes[sampleIndex]
-                        if thetaIndex != previousThetaIndex
-                            || !modelConfiguration.reuseRepeatedPredictiveProbabilities {
+                    if modelConfiguration.reuseRepeatedPredictiveProbabilities {
+                        for run in thetaSampleRuns {
                             let latentKnown = VocabularyKnowledgeModel.adjustedKnownProbability(
-                                baseKnownProbability: curve[thetaIndex],
+                                baseKnownProbability: curve[run.thetaIndex],
                                 epsilonKnowledge: epsilonKnowledge
                             )
-                            probability = VocabularyObservationModel.posteriorKnownProbability(
+                            let probability = VocabularyObservationModel.posteriorKnownProbability(
                                 prior: latentKnown,
                                 evidence: evidence,
                                 reliabilityScale: modelConfiguration.evidenceReliabilityScale
                             )
-                            previousThetaIndex = thetaIndex
+                            for sampleIndex in run.sampleRange where Self.nextRandomUnit(state: &randomState) < probability {
+                                localMasks[localMaskOffset + (sampleIndex >> 6)] |= UInt64(1) << UInt64(sampleIndex & 63)
+                                localBaseline[sampleIndex] += candidate.occurrenceCount
+                            }
                         }
-                        if Self.nextRandomUnit(state: &randomState) < probability {
-                            localMasks[localMaskOffset + (sampleIndex >> 6)] |= UInt64(1) << UInt64(sampleIndex & 63)
-                            localBaseline[sampleIndex] += candidate.occurrenceCount
-                        }
-                    }
-                } else {
-                    var previousThetaIndex = -1
-                    var probability = 0.0
-                    for sampleIndex in 0..<sampleCount {
-                        let thetaIndex = thetaSampleIndexes[sampleIndex]
-                        if thetaIndex != previousThetaIndex
-                            || !modelConfiguration.reuseRepeatedPredictiveProbabilities {
-                            probability = VocabularyKnowledgeModel.adjustedKnownProbability(
+                    } else {
+                        for sampleIndex in 0..<sampleCount {
+                            let thetaIndex = thetaSampleIndexes[sampleIndex]
+                            let latentKnown = VocabularyKnowledgeModel.adjustedKnownProbability(
                                 baseKnownProbability: curve[thetaIndex],
                                 epsilonKnowledge: epsilonKnowledge
                             )
-                            previousThetaIndex = thetaIndex
+                            let probability = VocabularyObservationModel.posteriorKnownProbability(
+                                prior: latentKnown,
+                                evidence: evidence,
+                                reliabilityScale: modelConfiguration.evidenceReliabilityScale
+                            )
+                            if Self.nextRandomUnit(state: &randomState) < probability {
+                                localMasks[localMaskOffset + (sampleIndex >> 6)] |= UInt64(1) << UInt64(sampleIndex & 63)
+                                localBaseline[sampleIndex] += candidate.occurrenceCount
+                            }
                         }
-                        if Self.nextRandomUnit(state: &randomState) < probability {
-                            localMasks[localMaskOffset + (sampleIndex >> 6)] |= UInt64(1) << UInt64(sampleIndex & 63)
-                            localBaseline[sampleIndex] += candidate.occurrenceCount
+                    }
+                } else {
+                    if modelConfiguration.reuseRepeatedPredictiveProbabilities {
+                        for run in thetaSampleRuns {
+                            let probability = VocabularyKnowledgeModel.adjustedKnownProbability(
+                                baseKnownProbability: curve[run.thetaIndex],
+                                epsilonKnowledge: epsilonKnowledge
+                            )
+                            for sampleIndex in run.sampleRange where Self.nextRandomUnit(state: &randomState) < probability {
+                                localMasks[localMaskOffset + (sampleIndex >> 6)] |= UInt64(1) << UInt64(sampleIndex & 63)
+                                localBaseline[sampleIndex] += candidate.occurrenceCount
+                            }
+                        }
+                    } else {
+                        for sampleIndex in 0..<sampleCount {
+                            let probability = VocabularyKnowledgeModel.adjustedKnownProbability(
+                                baseKnownProbability: curve[thetaSampleIndexes[sampleIndex]],
+                                epsilonKnowledge: epsilonKnowledge
+                            )
+                            if Self.nextRandomUnit(state: &randomState) < probability {
+                                localMasks[localMaskOffset + (sampleIndex >> 6)] |= UInt64(1) << UInt64(sampleIndex & 63)
+                                localBaseline[sampleIndex] += candidate.occurrenceCount
+                            }
                         }
                     }
                 }
@@ -1329,6 +1489,21 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             baselineTotals: baselineTotals,
             sampleCount: sampleCount
         )
+    }
+
+    private static func thetaSampleRuns(from indexes: [Int]) -> [ThetaSampleRun] {
+        guard let first = indexes.first else { return [] }
+        var runs: [ThetaSampleRun] = []
+        runs.reserveCapacity(thetaGrid.count)
+        var start = 0
+        var thetaIndex = first
+        for index in 1..<indexes.count where indexes[index] != thetaIndex {
+            runs.append(ThetaSampleRun(thetaIndex: thetaIndex, sampleRange: start..<index))
+            start = index
+            thetaIndex = indexes[index]
+        }
+        runs.append(ThetaSampleRun(thetaIndex: thetaIndex, sampleRange: start..<indexes.count))
+        return runs
     }
 
     private func stratifiedThetaSampleIndexes(sampleCount: Int) -> [Int] {
@@ -1372,16 +1547,24 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             1,
             Int(ceil(modelConfiguration.coverageQuantile * Double(samples.sampleCount)))
         )
-        let worstSamples = baseline.indices.sorted {
+        let worstSamples = Array(baseline.indices.sorted {
             if baseline[$0] != baseline[$1] { return baseline[$0] < baseline[$1] }
             return $0 < $1
-        }.prefix(tailCount)
+        }.prefix(tailCount))
+        var worstTailMask = Array(repeating: UInt64(0), count: samples.maskWordCount)
+        for sample in worstSamples {
+            worstTailMask[sample >> 6] |= UInt64(1) << UInt64(sample & 63)
+        }
         let ranked = samples.includedIndexes.map { index -> (Int, Int) in
             let weight = inventory.candidates[index].occurrenceCount
-            let gain = worstSamples.reduce(0) { partial, sample in
-                partial + (Self.maskContains(samples, candidateIndex: index, sample: sample) ? 0 : weight)
+            let maskOffset = index * samples.maskWordCount
+            var unknownTailCount = 0
+            for wordIndex in 0..<samples.maskWordCount {
+                unknownTailCount += (
+                    ~samples.knownMaskWords[maskOffset + wordIndex] & worstTailMask[wordIndex]
+                ).nonzeroBitCount
             }
-            return (index, gain)
+            return (index, unknownTailCount * weight)
         }.sorted {
             if $0.1 != $1.1 { return $0.1 > $1.1 }
             let lhs = inventory.candidates[$0.0]
@@ -1665,7 +1848,124 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     }
 
     private func bestQuestion(from candidates: [DocumentVocabularyCandidate]) -> (candidate: DocumentVocabularyCandidate, reduction: Double) {
-        let currentLoss = loss(posterior: posterior)
+        guard modelConfiguration.crossMomentQuestionScoring else {
+            return bestQuestionReference(from: candidates)
+        }
+        let currentLoss = inventory.candidates.enumerated().reduce(0.0) { partial, pair in
+            let (index, candidate) = pair
+            guard !excludedCandidateIndexes.contains(index) else { return partial }
+            let probability = currentProbabilities[index]
+            let weight: Double = mode == .allUnknown ? 1 : Double(candidate.occurrenceCount)
+            return partial + weight * min(probability, 1 - probability)
+        }
+        let workerCount = candidates.count >= 8 ? 4 : 1
+        let resultBox = VocabularySynchronizedBox<[Int: [ScoredQuestion]]>([:])
+        let knowledgeScale = 1 - 2 * epsilonKnowledge
+        let knownCoefficients = observationLikelihoodCoefficients(for: .verifiedKnown)
+        let unknownCoefficients = observationLikelihoodCoefficients(for: .reportedUnknown)
+        DispatchQueue.concurrentPerform(iterations: workerCount) { worker in
+            var local: [ScoredQuestion] = []
+            var candidateOffset = worker
+            while candidateOffset < candidates.count {
+                let candidate = candidates[candidateOffset]
+                if let index = candidateIndexByKey[candidate.canonicalKey] {
+                    let pKnown = currentProbabilities[index]
+                    let questionCurve = responseCurves[index]
+                    var posteriorWeightedQuestionCurve = Array(repeating: 0.0, count: posterior.count)
+                    var questionBaseMean = 0.0
+                    for thetaIndex in posterior.indices {
+                        let weighted = posterior[thetaIndex] * questionCurve[thetaIndex]
+                        posteriorWeightedQuestionCurve[thetaIndex] = weighted
+                        questionBaseMean += weighted
+                    }
+                    let knownDenominator = knownCoefficients.a
+                        + knownCoefficients.b * questionBaseMean
+                    let unknownDenominator = unknownCoefficients.a
+                        + unknownCoefficients.b * questionBaseMean
+                    var knownLoss = 0.0
+                    var unknownLoss = 0.0
+                    for itemIndex in inventory.candidates.indices where itemIndex != index
+                        && !excludedCandidateIndexes.contains(itemIndex) {
+                        let itemCurve = responseCurves[itemIndex]
+                        var crossMoment = 0.0
+                        for thetaIndex in posterior.indices {
+                            crossMoment += itemCurve[thetaIndex]
+                                * posteriorWeightedQuestionCurve[thetaIndex]
+                        }
+                        let currentBaseMean = (currentProbabilities[itemIndex] - epsilonKnowledge)
+                            / knowledgeScale
+                        let knownBaseMean = (
+                            knownCoefficients.a * currentBaseMean
+                                + knownCoefficients.b * crossMoment
+                        ) / knownDenominator
+                        let unknownBaseMean = (
+                            unknownCoefficients.a * currentBaseMean
+                                + unknownCoefficients.b * crossMoment
+                        ) / unknownDenominator
+                        let knownProbability = VocabularyKnowledgeModel.adjustedKnownProbability(
+                            baseKnownProbability: knownBaseMean,
+                            epsilonKnowledge: epsilonKnowledge
+                        )
+                        let unknownProbability = VocabularyKnowledgeModel.adjustedKnownProbability(
+                            baseKnownProbability: unknownBaseMean,
+                            epsilonKnowledge: epsilonKnowledge
+                        )
+                        let weight: Double = mode == .allUnknown
+                            ? 1
+                            : Double(inventory.candidates[itemIndex].occurrenceCount)
+                        knownLoss += weight * min(knownProbability, 1 - knownProbability)
+                        unknownLoss += weight * min(unknownProbability, 1 - unknownProbability)
+                    }
+                    let expectedLoss = pKnown * knownLoss + (1 - pKnown) * unknownLoss
+                    local.append(ScoredQuestion(
+                        candidate: candidate,
+                        reduction: max(0.0, currentLoss - expectedLoss)
+                    ))
+                }
+                candidateOffset += workerCount
+            }
+            resultBox.mutate { $0[worker] = local }
+        }
+        let scored = (0..<workerCount).flatMap { resultBox.value()[$0] ?? [] }
+        let ordered = scored.sorted {
+            if $0.reduction != $1.reduction { return $0.reduction > $1.reduction }
+            return $0.candidate.canonicalKey < $1.candidate.canonicalKey
+        }
+        if ordered.count > 1 {
+            let tieTolerance = max(1e-10, abs(ordered[0].reduction) * 1e-12)
+            if abs(ordered[0].reduction - ordered[1].reduction) <= tieTolerance
+                || abs(ordered[0].reduction - 0.25) <= tieTolerance {
+                return bestQuestionReference(from: candidates)
+            }
+        }
+        let best = ordered.first
+        return best.map { ($0.candidate, $0.reduction) } ?? (candidates[0], 0.0)
+    }
+
+    private func observationLikelihoodCoefficients(
+        for evidence: VocabularyKnowledgeEvidence
+    ) -> (a: Double, b: Double) {
+        guard let emission = VocabularyObservationModel.emission(
+            for: evidence,
+            reliabilityScale: modelConfiguration.evidenceReliabilityScale
+        ) else { return (1, 0) }
+        let delta = emission.probabilityGivenKnown - emission.probabilityGivenUnknown
+        return (
+            emission.probabilityGivenUnknown + delta * epsilonKnowledge,
+            delta * (1 - 2 * epsilonKnowledge)
+        )
+    }
+
+    private func bestQuestionReference(
+        from candidates: [DocumentVocabularyCandidate]
+    ) -> (candidate: DocumentVocabularyCandidate, reduction: Double) {
+        let currentLoss = inventory.candidates.enumerated().reduce(0.0) { partial, pair in
+            let (index, candidate) = pair
+            guard !excludedCandidateIndexes.contains(index) else { return partial }
+            let probability = currentProbabilities[index]
+            let weight: Double = mode == .allUnknown ? 1 : Double(candidate.occurrenceCount)
+            return partial + weight * min(probability, 1 - probability)
+        }
         let workerCount = candidates.count >= 8 ? 4 : 1
         let resultBox = VocabularySynchronizedBox<[Int: [ScoredQuestion]]>([:])
         DispatchQueue.concurrentPerform(iterations: workerCount) { worker in

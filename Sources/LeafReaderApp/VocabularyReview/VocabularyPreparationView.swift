@@ -387,6 +387,7 @@ struct VocabularyPreparationView: View {
                 }
             }
             .controlSize(.large)
+            .disabled(!coordinator.isAnswerInteractionReady)
         case .loading:
             ProgressView(AppText.localized("正在查询释义…", "Looking up definition…"))
         case let .unavailable(message):

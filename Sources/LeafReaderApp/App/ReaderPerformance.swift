@@ -8,6 +8,7 @@ enum VocabularyPreparationTelemetryStage: String {
     case assessmentAdvance
     case assessmentResults
     case assessmentPrecomputation
+    case assessmentCoverageStopping
     case definitionLookup
     case definitionBatch
     case importRecords

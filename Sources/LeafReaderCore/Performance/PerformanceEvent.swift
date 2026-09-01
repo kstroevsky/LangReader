@@ -51,6 +51,7 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
     case vocabularyAssessmentNextQuestion
     case vocabularyAssessmentResultBuild
     case vocabularyAssessmentKnownPrecomputation
+    case vocabularyAssessmentCoverageStopping
     case vocabularyAssessmentAdvance
     case vocabularyDefinitionLookup
     case vocabularyPreparationDefinitionBatch
@@ -128,6 +129,7 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
         case .vocabularyAssessmentNextQuestion: return "Assessment next-question selection"
         case .vocabularyAssessmentResultBuild: return "Assessment result construction"
         case .vocabularyAssessmentKnownPrecomputation: return "Assessment known-answer precomputation"
+        case .vocabularyAssessmentCoverageStopping: return "Assessment background coverage stopping"
         case .vocabularyAssessmentAdvance: return "Assessment answer to next card"
         case .vocabularyDefinitionLookup: return "Preparation definition lookup"
         case .vocabularyPreparationDefinitionBatch: return "Preparation definition batch"

@@ -67,6 +67,135 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         XCTAssertEqual(reused.result(), recomputed.result())
     }
 
+    func testIncrementalPosteriorUpdatePreservesQuestionsAndResults() throws {
+        let inventory = inventory(count: 80)
+        var incremental = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .targetCoverage(0.98)
+        )
+        var replayed = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .targetCoverage(0.98),
+            modelConfiguration: VocabularyAssessmentModelConfiguration(
+                incrementalPosteriorUpdates: false
+            )
+        )
+
+        for questionNumber in 1...30 where !incremental.isFinished && !replayed.isFinished {
+            let incrementalQuestion = try XCTUnwrap(incremental.nextQuestion())
+            let replayedQuestion = try XCTUnwrap(replayed.nextQuestion())
+            XCTAssertEqual(incrementalQuestion.canonicalKey, replayedQuestion.canonicalKey)
+            let predictedKnown = try XCTUnwrap(
+                incremental.knownProbability(for: incrementalQuestion.canonicalKey)
+            )
+            let evidence: VocabularyKnowledgeEvidence
+            if questionNumber == 15 || questionNumber == 20 || questionNumber == 25 {
+                evidence = predictedKnown >= 0.5 ? .reportedUnknown : .verifiedKnown
+            } else {
+                evidence = questionNumber.isMultiple(of: 3) ? .reportedUnknown : .verifiedKnown
+            }
+            incremental.record(evidence, for: incrementalQuestion.canonicalKey)
+            replayed.record(evidence, for: replayedQuestion.canonicalKey)
+        }
+
+        let incrementalResult = incremental.result()
+        let replayedResult = replayed.result()
+        XCTAssertEqual(incrementalResult.items.map(\.id), replayedResult.items.map(\.id))
+        XCTAssertEqual(incrementalResult.items.map(\.isSelected), replayedResult.items.map(\.isSelected))
+        XCTAssertEqual(incrementalResult.diagnostics.stopReason, replayedResult.diagnostics.stopReason)
+        XCTAssertEqual(incremental.epsilonKnowledge, replayed.epsilonKnowledge, accuracy: 1e-12)
+        for candidate in inventory.candidates {
+            XCTAssertEqual(
+                try XCTUnwrap(incremental.knownProbability(for: candidate.canonicalKey)),
+                try XCTUnwrap(replayed.knownProbability(for: candidate.canonicalKey)),
+                accuracy: 1e-12
+            )
+        }
+    }
+
+    func testCrossMomentQuestionScoringMatchesScalarReference() throws {
+        let inventory = inventory(count: 40)
+        var crossMoment = AdaptiveVocabularyAssessment(inventory: inventory, mode: .allUnknown)
+        var reference = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .allUnknown,
+            modelConfiguration: VocabularyAssessmentModelConfiguration(
+                crossMomentQuestionScoring: false
+            )
+        )
+
+        for questionNumber in 1...24 where !crossMoment.isFinished && !reference.isFinished {
+            let fastQuestion = try XCTUnwrap(crossMoment.nextQuestion())
+            let referenceQuestion = try XCTUnwrap(reference.nextQuestion())
+            XCTAssertEqual(fastQuestion.canonicalKey, referenceQuestion.canonicalKey)
+            XCTAssertEqual(
+                try XCTUnwrap(crossMoment.expectedLossReduction(for: fastQuestion.canonicalKey)),
+                try XCTUnwrap(reference.expectedLossReduction(for: referenceQuestion.canonicalKey)),
+                accuracy: 1e-8
+            )
+            let evidence: VocabularyKnowledgeEvidence = questionNumber.isMultiple(of: 3)
+                ? .reportedUnknown
+                : .verifiedKnown
+            crossMoment.record(evidence, for: fastQuestion.canonicalKey)
+            reference.record(evidence, for: referenceQuestion.canonicalKey)
+        }
+
+        let fastResult = crossMoment.result()
+        let referenceResult = reference.result()
+        XCTAssertEqual(fastResult.items.map(\.id), referenceResult.items.map(\.id))
+        XCTAssertEqual(fastResult.items.map(\.isSelected), referenceResult.items.map(\.isSelected))
+        XCTAssertEqual(
+            fastResult.items.map(\.predictiveKnownMask),
+            referenceResult.items.map(\.predictiveKnownMask)
+        )
+        XCTAssertEqual(fastResult.diagnostics.stopReason, referenceResult.diagnostics.stopReason)
+        XCTAssertEqual(
+            fastResult.diagnostics.bestExpectedLossReduction,
+            referenceResult.diagnostics.bestExpectedLossReduction,
+            accuracy: 1e-8
+        )
+    }
+
+    func testDeferredCoverageStoppingPublishesSameNextQuestionsAndFinalResult() throws {
+        let candidates = (0..<60).map { index in
+            candidate(key: String(format: "easy-%03d", index), difficulty: -4, count: 1)
+        }
+        let inventory = DocumentVocabularyInventory(languageCode: "en", candidates: candidates)
+        var synchronous = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .targetCoverage(0.98)
+        )
+        var deferred = synchronous
+        var deferredCount = 0
+
+        while !synchronous.isFinished {
+            let synchronousQuestion = try XCTUnwrap(synchronous.nextQuestion())
+            let deferredQuestion = try XCTUnwrap(deferred.nextQuestion())
+            XCTAssertEqual(synchronousQuestion.canonicalKey, deferredQuestion.canonicalKey)
+
+            synchronous.record(.verifiedKnown, for: synchronousQuestion.canonicalKey)
+            let wasDeferred = deferred.recordPreparingNextQuestion(
+                .verifiedKnown,
+                for: deferredQuestion.canonicalKey
+            )
+            if wasDeferred {
+                deferredCount += 1
+                XCTAssertTrue(deferred.hasDeferredCoverageStoppingUpdate)
+                XCTAssertFalse(synchronous.isFinished)
+                XCTAssertEqual(
+                    try XCTUnwrap(synchronous.nextQuestion()).canonicalKey,
+                    try XCTUnwrap(deferred.nextQuestion()).canonicalKey
+                )
+                deferred.completeDeferredCoverageStoppingUpdate()
+                XCTAssertFalse(deferred.hasDeferredCoverageStoppingUpdate)
+            }
+            XCTAssertEqual(synchronous.isFinished, deferred.isFinished)
+        }
+
+        XCTAssertGreaterThan(deferredCount, 0)
+        XCTAssertEqual(synchronous.result(), deferred.result())
+    }
+
     func testFirstEightQuestionsSpanAvailableDifficultyOctilesDeterministically() throws {
         var assessment = AdaptiveVocabularyAssessment(
             inventory: inventory(count: 80),
