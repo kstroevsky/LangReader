@@ -153,6 +153,20 @@ aggregate remains a machine-local release checkpoint until an operator supplies
 the manifest above. The synthetic baseline remains the checked-in measurement
 plumbing reference; it must not be presented as the representative gate.
 
+## Prepare Vocabulary quality and performance
+
+The pre-reading assessment has a separate reproducible contract covering its
+frequency-based model limits, fixed-seed synthetic quality gates, optimized
+100–10,000-lemma response-time benchmark, same-machine inventory trend, and
+private six-format/language app capture. See
+[Prepare Vocabulary: model and measurement contract](VOCABULARY_PREPARATION.md).
+
+The checked-in reports are
+`vocabulary-assessment-quality-baseline.json`,
+`vocabulary-assessment-quality-baseline.md`, and
+`vocabulary-assessment-benchmark.json`. Synthetic results are engineering
+regression evidence only; they are not empirical learner calibration.
+
 ## Notes / debt
 
 The Vocabulary Library was migrated to SwiftUI before this instrumentation

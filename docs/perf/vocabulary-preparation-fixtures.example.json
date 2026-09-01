@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    { "language": "en", "format": "pdf", "alias": "english-pdf", "path": "/absolute/private/english.pdf" },
+    { "language": "en", "format": "epub", "alias": "english-epub", "path": "/absolute/private/english.epub" },
+    { "language": "en", "format": "docx", "alias": "english-docx", "path": "/absolute/private/english.docx" },
+    { "language": "de", "format": "pdf", "alias": "german-pdf", "path": "/absolute/private/german.pdf" },
+    { "language": "de", "format": "epub", "alias": "german-epub", "path": "/absolute/private/german.epub" },
+    { "language": "de", "format": "docx", "alias": "german-docx", "path": "/absolute/private/german.docx" }
+  ]
+}

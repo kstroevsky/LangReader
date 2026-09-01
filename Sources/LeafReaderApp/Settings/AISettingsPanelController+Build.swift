@@ -38,7 +38,8 @@ extension AISettingsPanelController {
             AppText.localized("模型", "Model"),
             AppText.localized("AI 分析", "AI Analysis"),
             AppText.localized("朗读", "Read Aloud"),
-            AppText.localized("缓存", "Cache")
+            AppText.localized("缓存", "Cache"),
+            AppText.localized("词汇", "Vocabulary")
         ]
         let sidebarControl = SettingsTabsView(
             labels: tabLabels,
@@ -85,13 +86,15 @@ extension AISettingsPanelController {
         let embeddingPage = themedPage(backgroundColor: formBackground)
         let speechPage = themedPage(backgroundColor: formBackground)
         let cachePage = themedPage(backgroundColor: formBackground)
-        for page in [basicPage, modelPage, embeddingPage, speechPage, cachePage] {
+        let vocabularyPage = themedPage(backgroundColor: formBackground)
+        for page in [basicPage, modelPage, embeddingPage, speechPage, cachePage, vocabularyPage] {
             formContent.addSubview(page)
         }
         modelPage.isHidden = true
         embeddingPage.isHidden = true
         speechPage.isHidden = true
         cachePage.isHidden = true
+        vocabularyPage.isHidden = true
 
         let cancelButton = settingsActionButton(title: AppText.cancel, target: self, action: #selector(cancel(_:)))
         let saveButton = settingsActionButton(title: AppText.confirm, target: self, action: #selector(save(_:)), isPrimary: true)
@@ -107,6 +110,7 @@ extension AISettingsPanelController {
         installEmbeddingSettingsPage(in: embeddingPage)
         installSpeechSettingsPage(in: speechPage)
         installCacheSettingsPage(in: cachePage)
+        installVocabularySettingsPage(in: vocabularyPage)
 
         let formWidth = layout.formWidth
         NSLayoutConstraint.activate([
@@ -157,6 +161,10 @@ extension AISettingsPanelController {
             cachePage.leadingAnchor.constraint(equalTo: formContent.leadingAnchor),
             cachePage.trailingAnchor.constraint(equalTo: formContent.trailingAnchor),
             cachePage.bottomAnchor.constraint(equalTo: formContent.bottomAnchor),
+            vocabularyPage.topAnchor.constraint(equalTo: formContent.topAnchor),
+            vocabularyPage.leadingAnchor.constraint(equalTo: formContent.leadingAnchor),
+            vocabularyPage.trailingAnchor.constraint(equalTo: formContent.trailingAnchor),
+            vocabularyPage.bottomAnchor.constraint(equalTo: formContent.bottomAnchor),
 
             // The General and Model pages are SwiftUI now; their hosting views
             // size the pages, so the old per-control constraints are gone with
@@ -181,6 +189,7 @@ extension AISettingsPanelController {
         self.embeddingPage = embeddingPage
         self.speechPage = speechPage
         self.cachePage = cachePage
+        self.vocabularyPage = vocabularyPage
         refreshSpeechRuntimeStatus()
         settingsTabChanged(index: initialTab.rawValue)
 

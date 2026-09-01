@@ -110,4 +110,127 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         XCTAssertNil(result)
         XCTAssertLessThanOrEqual(checks, 4)
     }
+
+    func testInventorySummariesCollapseInflectionsButKeepDerivationsSeparate() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: ["They develop tools. She developed one while developing another. Development continues."],
+            language: .english
+        ))
+
+        let summaries = index.lemmaSummaries()
+        let develop = try XCTUnwrap(summaries.first { $0.lemmaKey == "develop" })
+        XCTAssertEqual(develop.occurrenceCount, 3)
+        XCTAssertEqual(Dictionary(uniqueKeysWithValues: develop.observedForms.map { ($0.surface.lowercased(), $0.occurrenceCount) }), [
+            "develop": 1,
+            "developed": 1,
+            "developing": 1
+        ])
+        XCTAssertEqual(summaries.first { $0.lemmaKey == "development" }?.occurrenceCount, 1)
+    }
+
+    func testOrdinaryEnglishWordsAreNotClassifiedAsConfidentNames() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: ["They develop tools while readers learn vocabulary."],
+            language: .english
+        ))
+
+        let summaries = index.lemmaSummaries()
+        XCTAssertFalse(try XCTUnwrap(summaries.first { $0.lemmaKey == "develop" }).isConfidentName)
+        XCTAssertFalse(try XCTUnwrap(summaries.first { $0.lemmaKey == "tool" }).isConfidentName)
+        XCTAssertFalse(try XCTUnwrap(summaries.first { $0.lemmaKey == "vocabulary" }).isConfidentName)
+    }
+
+    func testInventorySummariesAggregateAcrossUnitsAndRepairPDFLineWraps() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: ["A remark was develop-\ned here.", "Later they developed it again."],
+            language: .english
+        ))
+
+        let develop = try XCTUnwrap(index.lemmaSummaries().first { $0.lemmaKey == "develop" })
+        XCTAssertEqual(develop.occurrenceCount, 2)
+        XCTAssertEqual(develop.representativeRange.unitIndex, 0)
+        XCTAssertTrue(develop.observedForms.contains { $0.surface == "developed" && $0.occurrenceCount == 2 })
+    }
+
+    func testGermanCompoundsRemainSeparateLemmas() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: ["Das Haus steht neben dem Krankenhaus. Die Häuser sind alt."],
+            language: .german
+        ))
+        let keys = Set(index.lemmaSummaries().map(\.lemmaKey))
+
+        XCTAssertTrue(keys.contains("haus"))
+        XCTAssertTrue(keys.contains("krankenhaus"))
+        XCTAssertNotEqual("haus", "krankenhaus")
+    }
+
+    func testInventoryExcludesConfidentNamesAndNoiseButKeepsFunctionWords() {
+        let summaries = [
+            VocabularyDocumentLemmaSummary(
+                canonicalKey: "anna",
+                displayLemma: "Anna",
+                observedForms: [VocabularyDocumentObservedForm(surface: "Anna", occurrenceCount: 2)],
+                occurrenceCount: 2,
+                representativeRange: VocabularyDocumentSourceRange(unitIndex: 0, utf16Location: 0, utf16Length: 4),
+                isConfidentName: true
+            ),
+            VocabularyDocumentLemmaSummary(
+                canonicalKey: "the",
+                displayLemma: "the",
+                observedForms: [VocabularyDocumentObservedForm(surface: "the", occurrenceCount: 5)],
+                occurrenceCount: 5,
+                representativeRange: VocabularyDocumentSourceRange(unitIndex: 0, utf16Location: 5, utf16Length: 3)
+            ),
+            VocabularyDocumentLemmaSummary(
+                canonicalKey: "12345",
+                displayLemma: "12345",
+                observedForms: [VocabularyDocumentObservedForm(surface: "12345", occurrenceCount: 1)],
+                occurrenceCount: 1,
+                representativeRange: VocabularyDocumentSourceRange(unitIndex: 0, utf16Location: 9, utf16Length: 5)
+            )
+        ]
+        let inventory = DocumentVocabularyInventory(
+            summaries: summaries,
+            languageCode: "en",
+            maximumFrequencyRank: 10_000,
+            rank: { _ in nil }
+        )
+
+        XCTAssertEqual(inventory.candidates.map(\.canonicalKey), ["the"])
+        XCTAssertEqual(inventory.excludedCount, 2)
+    }
+
+    func testInventoryExcludesLinkEmailMarkupAndObviousOCRArtifacts() throws {
+        let text = """
+        Read the book at https://example.com/ReaderPath or www.example.org.
+        Mail reader@example.com. <span>Visible prose</span> &nbsp; aaaaaa foo--bar.
+        """
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(texts: [text], language: .english))
+        let keys = Set(index.lemmaSummaries().map(\.lemmaKey))
+
+        for excluded in ["https", "example", "com", "readerpath", "www", "org", "reader", "span", "nbsp", "aaaaaa", "foo", "bar"] {
+            XCTAssertFalse(keys.contains(excluded), "unexpected noise lemma: \(excluded)")
+        }
+        XCTAssertTrue(keys.contains("read"))
+        XCTAssertTrue(keys.contains("the"))
+        XCTAssertTrue(keys.contains("book"))
+        XCTAssertTrue(keys.contains("visible"))
+        XCTAssertTrue(keys.contains("prose"))
+    }
+
+    func testLexicalIdentitySeparatesPartOfSpeechAndReservesSenseKey() {
+        let noun = VocabularyLexicalItemID(language: "en", lemma: "book", partOfSpeech: .noun)
+        let verb = VocabularyLexicalItemID(language: "en", lemma: "book", partOfSpeech: .verb)
+        let futureSense = VocabularyLexicalItemID(
+            language: "en",
+            lemma: "bank",
+            partOfSpeech: .noun,
+            senseKey: "river"
+        )
+
+        XCTAssertNotEqual(noun, verb)
+        XCTAssertNotEqual(noun.canonicalKey, verb.canonicalKey)
+        XCTAssertNil(noun.senseKey)
+        XCTAssertTrue(futureSense.canonicalKey.hasSuffix("|river"))
+    }
 }

@@ -50,6 +50,24 @@ echo "==> Running regression harness"
 echo "==> Testing performance-capture validator"
 bash ./scripts/test_perf_capture_validator.sh
 
+echo "==> Testing vocabulary assessment evaluator"
+bash ./scripts/test_vocabulary_assessment_evaluator.sh
+
+echo "==> Testing vocabulary observation model and calibration fitter"
+bash ./scripts/check_vocabulary_observation_model.sh
+
+echo "==> Testing vocabulary validation-study dataset"
+python3 ./scripts/validate_vocabulary_validation_study.py --self-test
+
+echo "==> Testing vocabulary domain resource builders"
+bash ./scripts/test_vocabulary_domain_resource_builders.sh
+
+echo "==> Testing vocabulary benchmark series summarizer"
+python3 ./scripts/summarize_vocabulary_assessment_benchmarks.py --self-test
+
+echo "==> Testing vocabulary stopping comparison"
+python3 ./scripts/compare_vocabulary_stopping_reports.py --self-test
+
 if [[ "$RUN_BUILD" -eq 1 ]]; then
   echo "==> Building docs site"
   DOCS_SITE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/leafreader-docs-check.XXXXXX")"

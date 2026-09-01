@@ -79,9 +79,13 @@ extension AISettingsPanelController {
         embeddingPage?.isHidden = index != 2
         speechPage?.isHidden = index != 3
         cachePage?.isHidden = index != 4
+        vocabularyPage?.isHidden = index != 5
         cacheSettings?.refresh(currentBookStatus: currentVectorIndexStatus?() ?? AppText.noPDF)
         if index == 4 {
             refreshVectorCacheStatus()
+        }
+        if index == 5 {
+            vocabularySettings?.refresh()
         }
         if let scrollView = settingsScrollView {
             scrollView.contentView.scroll(to: NSPoint(x: 0, y: 0))

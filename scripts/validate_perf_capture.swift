@@ -36,7 +36,7 @@ enum ValidationError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .usage:
-            return "usage: validate_perf_capture.swift <synthetic|documents|docx|matrix|interactions|private> <report.json> [--not-before unix-seconds] [--expected-phase phase]"
+            return "usage: validate_perf_capture.swift <synthetic|documents|docx|matrix|interactions|vocabulary-preparation|private> <report.json> [--not-before unix-seconds] [--expected-phase phase] [--control report.json]"
         case .invalid(let message):
             return "Invalid performance capture: \(message)"
         }
@@ -134,12 +134,13 @@ func requirePercentile(
 
 do {
     guard CommandLine.arguments.count >= 3,
-          let mode = ["synthetic", "documents", "docx", "matrix", "interactions", "private"].first(where: { $0 == CommandLine.arguments[1] }) else {
+          let mode = ["synthetic", "documents", "docx", "matrix", "interactions", "vocabulary-preparation", "private"].first(where: { $0 == CommandLine.arguments[1] }) else {
         throw ValidationError.usage
     }
     let url = URL(fileURLWithPath: CommandLine.arguments[2])
     var notBefore: TimeInterval?
     var expectedPhase: String?
+    var controlURL: URL?
     var argumentIndex = 3
     while argumentIndex < CommandLine.arguments.count {
         guard argumentIndex + 1 < CommandLine.arguments.count else { throw ValidationError.usage }
@@ -149,6 +150,8 @@ do {
             notBefore = value
         case "--expected-phase":
             expectedPhase = CommandLine.arguments[argumentIndex + 1]
+        case "--control":
+            controlURL = URL(fileURLWithPath: CommandLine.arguments[argumentIndex + 1])
         default:
             throw ValidationError.usage
         }
@@ -260,6 +263,33 @@ do {
             throw ValidationError.invalid(
                 "background indexing adds \(backgroundP95 - idleP95)ms to p95 paging delay (limit 8ms)"
             )
+        }
+    case "vocabulary-preparation":
+        try require(counts, "pdfVisibleReady", atLeast: 2)
+        try require(counts, "epubVisibleReady", atLeast: 2)
+        try require(counts, "docxVisibleReady", atLeast: 2)
+        try require(counts, "documentVisibleReady", atLeast: 6)
+        try require(counts, "vocabularyPreparationInventoryBuild", atLeast: 6)
+        try require(counts, "vocabularyAssessmentAdvance", atLeast: 120)
+        try require(counts, "vocabularyPreparationResults", atLeast: 6)
+        try require(counts, "vocabularyPreparationImport", atLeast: 6)
+        try require(counts, "mainThreadUninterruptedWork", atLeast: 6)
+        try requirePercentile(rows, "mainThreadUninterruptedWork", quantile: 0.95, atMost: 16)
+        guard let controlURL else {
+            throw ValidationError.invalid("vocabulary-preparation mode requires --control")
+        }
+        let control = try JSONDecoder().decode(Report.self, from: Data(contentsOf: controlURL))
+        let controlRows = Dictionary(uniqueKeysWithValues: control.events.map { ($0.event, $0) })
+        for event in ["documentVisibleReady", "pdfVisibleReady", "epubVisibleReady", "docxVisibleReady"] {
+            guard let current = rows[event], let baseline = controlRows[event] else {
+                throw ValidationError.invalid("both preparation and control reports need \(event)")
+            }
+            let allowance = max(baseline.medianMS * 0.10, 50)
+            guard current.medianMS <= baseline.medianMS + allowance else {
+                throw ValidationError.invalid(
+                    "\(event) median \(current.medianMS)ms exceeds control \(baseline.medianMS)ms + \(allowance)ms"
+                )
+            }
         }
     case "private":
         try require(counts, "pdfOpen", atLeast: 1)

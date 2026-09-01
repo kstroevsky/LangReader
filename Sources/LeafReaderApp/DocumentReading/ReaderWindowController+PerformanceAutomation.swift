@@ -7,6 +7,7 @@ import PDFKit
 /// copies supplied by the capture script.
 extension ReaderWindowController {
     func schedulePerformanceAutomationIfNeeded(for kind: ReaderDocumentKind) {
+        scheduleVocabularyPreparationPerformanceAutomationIfNeeded()
         guard ProcessInfo.processInfo.environment["LEAFVOCAB_PERF_AUTOMATION"] == "1",
               kind != .docx,
               performanceAutomationKinds.insert(kind).inserted else { return }
@@ -20,6 +21,57 @@ extension ReaderWindowController {
             case .docx:
                 break
             }
+        }
+    }
+
+    private func scheduleVocabularyPreparationPerformanceAutomationIfNeeded() {
+        guard ProcessInfo.processInfo.environment["LEAFVOCAB_PREPARATION_AUTOMATION"] == "1",
+              let documentID = currentFileMD5,
+              performanceVocabularyPreparationDocumentIDs.insert(documentID).inserted else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+            guard let self, self.currentFileMD5 == documentID else { return }
+            self.vocabularyPreparationCoordinator.resetForCurrentDocument()
+            self.vocabularyPreparationCoordinator.startAnalysis()
+            self.driveVocabularyPreparationAutomation(documentID: documentID, answerIndex: 0)
+        }
+    }
+
+    private func driveVocabularyPreparationAutomation(documentID: String, answerIndex: Int) {
+        guard currentFileMD5 == documentID else { return }
+        let coordinator = vocabularyPreparationCoordinator!
+        var nextAnswerIndex = answerIndex
+        switch coordinator.phase {
+        case .inventory:
+            coordinator.beginAssessment()
+        case .assessment:
+            switch coordinator.definitionState {
+            case .hidden:
+                coordinator.revealCurrentQuestion()
+            case .available:
+                coordinator.score(answerIndex.isMultiple(of: 3) ? .unknown : .known)
+                nextAnswerIndex += 1
+            case .loading, .unavailable:
+                break
+            }
+        case .results:
+            if coordinator.selectedKeys.isEmpty,
+               let first = coordinator.results?.items.first(where: { !coordinator.alreadySavedKeys.contains($0.id) }) {
+                coordinator.updateSelection(first.id, selected: true)
+            }
+            coordinator.createAndReview()
+            return
+        case .error:
+            return
+        case .predictionAudit, .predictionAuditResults:
+            return
+        case .welcome, .analyzing, .importing:
+            break
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) { [weak self] in
+            self?.driveVocabularyPreparationAutomation(
+                documentID: documentID,
+                answerIndex: nextAnswerIndex
+            )
         }
     }
 

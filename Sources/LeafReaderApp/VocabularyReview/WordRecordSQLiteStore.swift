@@ -576,6 +576,8 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             canonical_key TEXT NOT NULL,
             word TEXT NOT NULL,
             lemma TEXT,
+            lexical_key TEXT,
+            part_of_speech TEXT,
             question TEXT NOT NULL,
             answer TEXT NOT NULL,
             dictionary_tags TEXT,
@@ -614,6 +616,8 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             vocabulary_id TEXT,
             word TEXT NOT NULL,
             lemma TEXT,
+            lexical_key TEXT,
+            part_of_speech TEXT,
             surface_form TEXT,
             context TEXT NOT NULL,
             occurrence_index INTEGER,
@@ -666,12 +670,16 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
         ensureColumn(table: "web_word_records", name: "occurrence_index", definition: "INTEGER")
         ensureColumn(table: "web_word_records", name: "vocabulary_id", definition: "TEXT")
         ensureColumn(table: "web_word_records", name: "lemma", definition: "TEXT")
+        ensureColumn(table: "web_word_records", name: "lexical_key", definition: "TEXT")
+        ensureColumn(table: "web_word_records", name: "part_of_speech", definition: "TEXT")
         ensureColumn(table: "web_word_records", name: "surface_form", definition: "TEXT")
         ensureColumn(table: "pdf_word_records", name: "dictionary_tags", definition: "TEXT")
         ensureColumn(table: "web_word_records", name: "dictionary_tags", definition: "TEXT")
         ensureColumn(table: "pdf_word_records", name: "dictionary_frequency", definition: "INTEGER")
         ensureColumn(table: "web_word_records", name: "dictionary_frequency", definition: "INTEGER")
         ensureColumn(table: "pdf_vocabulary_words", name: "lemma", definition: "TEXT")
+        ensureColumn(table: "pdf_vocabulary_words", name: "lexical_key", definition: "TEXT")
+        ensureColumn(table: "pdf_vocabulary_words", name: "part_of_speech", definition: "TEXT")
         ensureColumn(table: "pdf_vocabulary_occurrences", name: "surface_form", definition: "TEXT")
         ensureColumn(table: "pdf_vocabulary_occurrences", name: "text_anchor_json", definition: "TEXT")
     }
@@ -762,10 +770,18 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
     }
 
     private func insertNormalizedPDFRecord(documentID: String, record: StoredPDFWordRecord) -> Bool {
-        let canonicalKey = VocabularyTextPolicy.canonicalVocabularyKey(record.vocabularyGroupingText)
+        let lemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(record.vocabularyGroupingText)
+        let canonicalKey = record.lexicalKey ?? lemmaKey
         guard !canonicalKey.isEmpty else { return false }
+        let exactVocabularyID = existingPDFVocabularyID(documentID: documentID, canonicalKey: canonicalKey)
+        let wildcardVocabularyID = record.lexicalKey == nil
+            ? nil
+            : existingPDFVocabularyID(documentID: documentID, canonicalKey: lemmaKey)
+        let preservesLegacyWildcard = exactVocabularyID == nil && wildcardVocabularyID != nil
+        let storedLexicalKey = preservesLegacyWildcard ? nil : record.lexicalKey
+        let storedPartOfSpeech = preservesLegacyWildcard ? nil : record.partOfSpeech?.rawValue
         let vocabularyID: String
-        if let existing = existingPDFVocabularyID(documentID: documentID, canonicalKey: canonicalKey) {
+        if let existing = exactVocabularyID ?? wildcardVocabularyID {
             vocabularyID = existing
         } else if let preferred = record.vocabularyID {
             let existingKey = pdfVocabularyCanonicalKey(documentID: documentID, vocabularyID: preferred)
@@ -780,9 +796,9 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
         guard executeStatement(
             sql: """
             INSERT OR IGNORE INTO pdf_vocabulary_words(
-                document_id, id, canonical_key, word, lemma, question, answer,
+                document_id, id, canonical_key, word, lemma, lexical_key, part_of_speech, question, answer,
                 dictionary_tags, dictionary_frequency, created_at, srs_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             prepareOperation: "prepare insert PDF vocabulary word",
             stepOperation: "insert PDF vocabulary word",
@@ -792,12 +808,14 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             bindSQLiteText(canonicalKey, index: 3, statement: statement)
             bindSQLiteText(record.word, index: 4, statement: statement)
             bindSQLiteOptionalText(record.lemma, index: 5, statement: statement)
-            bindSQLiteText(record.question, index: 6, statement: statement)
-            bindSQLiteText(record.answer, index: 7, statement: statement)
-            bindSQLiteOptionalText(record.dictionaryTags, index: 8, statement: statement)
-            bindSQLiteOptionalInt(record.dictionaryFrequency, index: 9, statement: statement)
-            sqlite3_bind_double(statement, 10, record.createdAt.timeIntervalSince1970)
-            bindSQLiteOptionalText(srsJSON, index: 11, statement: statement)
+            bindSQLiteOptionalText(storedLexicalKey, index: 6, statement: statement)
+            bindSQLiteOptionalText(storedPartOfSpeech, index: 7, statement: statement)
+            bindSQLiteText(record.question, index: 8, statement: statement)
+            bindSQLiteText(record.answer, index: 9, statement: statement)
+            bindSQLiteOptionalText(record.dictionaryTags, index: 10, statement: statement)
+            bindSQLiteOptionalInt(record.dictionaryFrequency, index: 11, statement: statement)
+            sqlite3_bind_double(statement, 12, record.createdAt.timeIntervalSince1970)
+            bindSQLiteOptionalText(srsJSON, index: 13, statement: statement)
             }
         ) else {
             return false
@@ -808,12 +826,16 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
         let updateSQL = hasDefinition
             ? """
               UPDATE pdf_vocabulary_words
-              SET lemma = COALESCE(?, lemma), question = ?, answer = ?, dictionary_tags = ?, dictionary_frequency = ?, srs_json = COALESCE(?, srs_json)
+              SET lemma = COALESCE(?, lemma), lexical_key = COALESCE(?, lexical_key),
+                  part_of_speech = COALESCE(?, part_of_speech), question = ?, answer = ?,
+                  dictionary_tags = ?, dictionary_frequency = ?, srs_json = COALESCE(?, srs_json)
               WHERE document_id = ? AND id = ?
               """
             : """
               UPDATE pdf_vocabulary_words
               SET lemma = COALESCE(?, lemma),
+                  lexical_key = COALESCE(?, lexical_key),
+                  part_of_speech = COALESCE(?, part_of_speech),
                   dictionary_tags = COALESCE(?, dictionary_tags),
                   dictionary_frequency = COALESCE(?, dictionary_frequency),
                   srs_json = COALESCE(?, srs_json)
@@ -826,20 +848,24 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             bind: { statement in
             if hasDefinition {
                 bindSQLiteOptionalText(record.lemma, index: 1, statement: statement)
-                bindSQLiteText(record.question, index: 2, statement: statement)
-                bindSQLiteText(record.answer, index: 3, statement: statement)
+                bindSQLiteOptionalText(storedLexicalKey, index: 2, statement: statement)
+                bindSQLiteOptionalText(storedPartOfSpeech, index: 3, statement: statement)
+                bindSQLiteText(record.question, index: 4, statement: statement)
+                bindSQLiteText(record.answer, index: 5, statement: statement)
+                bindSQLiteOptionalText(record.dictionaryTags, index: 6, statement: statement)
+                bindSQLiteOptionalInt(record.dictionaryFrequency, index: 7, statement: statement)
+                bindSQLiteOptionalText(srsJSON, index: 8, statement: statement)
+                bindSQLiteText(documentID, index: 9, statement: statement)
+                bindSQLiteText(vocabularyID, index: 10, statement: statement)
+            } else {
+                bindSQLiteOptionalText(record.lemma, index: 1, statement: statement)
+                bindSQLiteOptionalText(storedLexicalKey, index: 2, statement: statement)
+                bindSQLiteOptionalText(storedPartOfSpeech, index: 3, statement: statement)
                 bindSQLiteOptionalText(record.dictionaryTags, index: 4, statement: statement)
                 bindSQLiteOptionalInt(record.dictionaryFrequency, index: 5, statement: statement)
                 bindSQLiteOptionalText(srsJSON, index: 6, statement: statement)
                 bindSQLiteText(documentID, index: 7, statement: statement)
                 bindSQLiteText(vocabularyID, index: 8, statement: statement)
-            } else {
-                bindSQLiteOptionalText(record.lemma, index: 1, statement: statement)
-                bindSQLiteOptionalText(record.dictionaryTags, index: 2, statement: statement)
-                bindSQLiteOptionalInt(record.dictionaryFrequency, index: 3, statement: statement)
-                bindSQLiteOptionalText(srsJSON, index: 4, statement: statement)
-                bindSQLiteText(documentID, index: 5, statement: statement)
-                bindSQLiteText(vocabularyID, index: 6, statement: statement)
             }
             }
         ) else {

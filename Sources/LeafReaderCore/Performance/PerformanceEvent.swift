@@ -42,6 +42,24 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
     case pdfTextSnapshot
     case pdfTextSnapshotCacheLoad
     case vocabularyIndexBuild
+    case vocabularyPreparationSourceSnapshot
+    case vocabularyPreparationInventoryModelBuild
+    case vocabularyPreparationContextMaterialization
+    case vocabularyPreparationInventoryBuild
+    case vocabularyAssessmentInitialization
+    case vocabularyAssessmentPosteriorUpdate
+    case vocabularyAssessmentNextQuestion
+    case vocabularyAssessmentResultBuild
+    case vocabularyAssessmentKnownPrecomputation
+    case vocabularyAssessmentCoverageStopping
+    case vocabularyAssessmentAdvance
+    case vocabularyDefinitionLookup
+    case vocabularyPreparationDefinitionBatch
+    case vocabularyPreparationResults
+    case vocabularyPreparationImportMaterialization
+    case vocabularyPreparationImportPersistence
+    case vocabularyPreparationImport
+    case vocabularyResearchExport
     case vocabularySaveAcknowledgement
     case vocabularyOccurrenceQuery
     case vocabularyOccurrencePersistence
@@ -102,6 +120,24 @@ package enum PerformanceEvent: String, CaseIterable, Sendable {
         case .pdfTextSnapshot: return "PDF text snapshot"
         case .pdfTextSnapshotCacheLoad: return "PDF text snapshot cache load"
         case .vocabularyIndexBuild: return "Vocabulary index build"
+        case .vocabularyPreparationSourceSnapshot: return "Preparation source snapshot"
+        case .vocabularyPreparationInventoryModelBuild: return "Preparation inventory model build"
+        case .vocabularyPreparationContextMaterialization: return "Preparation context materialization"
+        case .vocabularyPreparationInventoryBuild: return "Preparation inventory build"
+        case .vocabularyAssessmentInitialization: return "Assessment initialization"
+        case .vocabularyAssessmentPosteriorUpdate: return "Assessment posterior update"
+        case .vocabularyAssessmentNextQuestion: return "Assessment next-question selection"
+        case .vocabularyAssessmentResultBuild: return "Assessment result construction"
+        case .vocabularyAssessmentKnownPrecomputation: return "Assessment known-answer precomputation"
+        case .vocabularyAssessmentCoverageStopping: return "Assessment background coverage stopping"
+        case .vocabularyAssessmentAdvance: return "Assessment answer to next card"
+        case .vocabularyDefinitionLookup: return "Preparation definition lookup"
+        case .vocabularyPreparationDefinitionBatch: return "Preparation definition batch"
+        case .vocabularyPreparationResults: return "Preparation results presentation"
+        case .vocabularyPreparationImportMaterialization: return "Preparation import materialization"
+        case .vocabularyPreparationImportPersistence: return "Preparation import persistence"
+        case .vocabularyPreparationImport: return "Preparation atomic import"
+        case .vocabularyResearchExport: return "Vocabulary research export"
         case .vocabularySaveAcknowledgement: return "Vocabulary save acknowledgement"
         case .vocabularyOccurrenceQuery: return "Vocabulary occurrence query"
         case .vocabularyOccurrencePersistence: return "Vocabulary occurrence persistence"

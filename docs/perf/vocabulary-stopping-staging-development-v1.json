@@ -1,0 +1,124 @@
+{
+  "aggregate": [
+    {
+      "brierDelta": 0.0,
+      "coverageHitDelta": 0.0,
+      "deckPrecisionDelta": 0.0,
+      "eceDelta": 0.0,
+      "mode": "all-unknown",
+      "questionCountDelta": 0.0,
+      "scenario": "idiosyncratic-knowledge",
+      "stagedDeckPrecision": 0.8056665334401863
+    },
+    {
+      "brierDelta": 0.0026954793387049536,
+      "coverageHitDelta": 0.0,
+      "deckPrecisionDelta": -0.002213507530515857,
+      "eceDelta": 0.002342436499954026,
+      "mode": "coverage-98",
+      "questionCountDelta": -3.770833333333343,
+      "scenario": "idiosyncratic-knowledge",
+      "stagedDeckPrecision": 0.617103239964026
+    },
+    {
+      "brierDelta": 0.0,
+      "coverageHitDelta": 0.0,
+      "deckPrecisionDelta": 0.0,
+      "eceDelta": 0.0,
+      "mode": "all-unknown",
+      "questionCountDelta": 0.0,
+      "scenario": "item-residual",
+      "stagedDeckPrecision": 0.8594049963366176
+    },
+    {
+      "brierDelta": 0.0009459068826114525,
+      "coverageHitDelta": 0.0,
+      "deckPrecisionDelta": -0.0014006886365454108,
+      "eceDelta": 9.101593539681194e-05,
+      "mode": "coverage-98",
+      "questionCountDelta": -1.9791666666666714,
+      "scenario": "item-residual",
+      "stagedDeckPrecision": 0.624513852227126
+    },
+    {
+      "brierDelta": 0.0,
+      "coverageHitDelta": 0.0,
+      "deckPrecisionDelta": 0.0,
+      "eceDelta": 0.0,
+      "mode": "all-unknown",
+      "questionCountDelta": 0.0,
+      "scenario": "response-noise",
+      "stagedDeckPrecision": 0.8401403351264601
+    },
+    {
+      "brierDelta": 0.0003755538323604035,
+      "coverageHitDelta": 0.01041666666666663,
+      "deckPrecisionDelta": -0.0015239233680093278,
+      "eceDelta": -0.001294587908858287,
+      "mode": "coverage-98",
+      "questionCountDelta": -2.09375,
+      "scenario": "response-noise",
+      "stagedDeckPrecision": 0.6176701897073592
+    },
+    {
+      "brierDelta": 0.0,
+      "coverageHitDelta": 0.0,
+      "deckPrecisionDelta": 0.0,
+      "eceDelta": 0.0,
+      "mode": "all-unknown",
+      "questionCountDelta": 0.0,
+      "scenario": "well-specified-rasch",
+      "stagedDeckPrecision": 0.8587732581465256
+    },
+    {
+      "brierDelta": 0.0013768831428900424,
+      "coverageHitDelta": 0.0,
+      "deckPrecisionDelta": -0.0020080521758436554,
+      "eceDelta": -0.0003163343328546585,
+      "mode": "coverage-98",
+      "questionCountDelta": -3.15625,
+      "scenario": "well-specified-rasch",
+      "stagedDeckPrecision": 0.6297958199451598
+    }
+  ],
+  "confirmatoryOrReleaseHoldout": false,
+  "gates": {
+    "aggregateWarmCoverageHitDelta": 0.0,
+    "maximumBrierDegradation": 0.0026954793387049536,
+    "maximumECEDegradation": 0.002342436499954026,
+    "minimumCoverageHitDelta": 0.0,
+    "minimumStagedDeckPrecision": 0.617103239964026,
+    "minimumStagedWarmQuestionReduction": 0.727874276261373,
+    "passed": true
+  },
+  "inputSHA256": "7fb9462f0706e144219b8f85a4c3e8587c43d4710a04d6ecf868a1152402675c",
+  "perRun": [
+    {
+      "fullWarmCoverageHitRate": 0.96875,
+      "fullWarmMeanQuestionCount": 15.03125,
+      "seed": 20260830,
+      "stagedWarmCoverageHitRate": 0.96875,
+      "stagedWarmMeanQuestionCount": 18.875,
+      "stagedWarmStartQuestionReduction": 0.7495854063018241
+    },
+    {
+      "fullWarmCoverageHitRate": 1,
+      "fullWarmMeanQuestionCount": 15.71875,
+      "seed": 20260831,
+      "stagedWarmCoverageHitRate": 0.96875,
+      "stagedWarmMeanQuestionCount": 18.09375,
+      "stagedWarmStartQuestionReduction": 0.760248447204969
+    },
+    {
+      "fullWarmCoverageHitRate": 0.9375,
+      "fullWarmMeanQuestionCount": 13.96875,
+      "seed": 20260832,
+      "stagedWarmCoverageHitRate": 0.96875,
+      "stagedWarmMeanQuestionCount": 20.5625,
+      "stagedWarmStartQuestionReduction": 0.727874276261373
+    }
+  ],
+  "runCount": 3,
+  "schemaVersion": 1,
+  "suite": "development-stopping-strategy-comparison"
+}

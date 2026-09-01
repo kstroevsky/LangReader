@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "configuration": {"seed": 1, "readersPerScenario": 100, "lemmaCount": 200, "algorithmVersion": 2},
+  "qualityGates": {"eligible": true, "passed": true, "wellSpecifiedECE": 0.02, "thetaInterval90Coverage": 0.9, "coverage98HitRate": 0.97},
+  "protocolDiagnostics": {"responseProtocol":"answer-before-reveal-verified-v3","difficultyUncertaintyEnabled":true,"partOfSpeechAmbiguityShare":0.1,"coldMeanQuestionCount":60,"warmMeanQuestionCount":40,"warmStartQuestionReduction":0.3333333333,"coldCoverageHitRate":0.96,"warmCoverageHitRate":0.96},
+  "results": [
+    {"scenario":"well-specified-rasch","mode":"all-unknown","brierScore":0.1,"logLoss":0.2,"expectedCalibrationError":0.02,"thetaRMSE":0.3,"thetaInterval90Coverage":0.9,"deckPrecision":0.9,"deckRecall":0.9,"realizedTokenCoverage":0.99,"targetMissRate":0,"oracleDeckRegret":1,"meanQuestionCount":30,"stopReasons":{}},
+    {"scenario":"well-specified-rasch","mode":"coverage-98","brierScore":0.1,"logLoss":0.2,"expectedCalibrationError":0.02,"thetaRMSE":0.3,"thetaInterval90Coverage":0.9,"deckPrecision":0.9,"deckRecall":0.9,"realizedTokenCoverage":0.99,"targetMissRate":0.03,"oracleDeckRegret":1,"meanQuestionCount":30,"stopReasons":{}},
+    {"scenario":"item-residual","mode":"all-unknown","brierScore":0.1,"logLoss":0.2,"expectedCalibrationError":0.1,"thetaRMSE":0.3,"thetaInterval90Coverage":0.8,"deckPrecision":0.8,"deckRecall":0.8,"realizedTokenCoverage":0.95,"targetMissRate":0,"oracleDeckRegret":2,"meanQuestionCount":30,"stopReasons":{}},
+    {"scenario":"item-residual","mode":"coverage-98","brierScore":0.1,"logLoss":0.2,"expectedCalibrationError":0.1,"thetaRMSE":0.3,"thetaInterval90Coverage":0.8,"deckPrecision":0.8,"deckRecall":0.8,"realizedTokenCoverage":0.99,"targetMissRate":0.03,"oracleDeckRegret":2,"meanQuestionCount":30,"stopReasons":{}},
+    {"scenario":"response-noise","mode":"all-unknown","brierScore":0.2,"logLoss":0.4,"expectedCalibrationError":0.2,"thetaRMSE":0.5,"thetaInterval90Coverage":0.7,"deckPrecision":0.7,"deckRecall":0.7,"realizedTokenCoverage":0.9,"targetMissRate":0,"oracleDeckRegret":3,"meanQuestionCount":40,"stopReasons":{}},
+    {"scenario":"response-noise","mode":"coverage-98","brierScore":0.2,"logLoss":0.4,"expectedCalibrationError":0.2,"thetaRMSE":0.5,"thetaInterval90Coverage":0.7,"deckPrecision":0.7,"deckRecall":0.7,"realizedTokenCoverage":0.99,"targetMissRate":0.08,"oracleDeckRegret":3,"meanQuestionCount":40,"stopReasons":{}},
+    {"scenario":"idiosyncratic-knowledge","mode":"all-unknown","brierScore":0.2,"logLoss":0.4,"expectedCalibrationError":0.2,"thetaRMSE":0.5,"thetaInterval90Coverage":0.7,"deckPrecision":0.7,"deckRecall":0.7,"realizedTokenCoverage":0.9,"targetMissRate":0,"oracleDeckRegret":3,"meanQuestionCount":40,"stopReasons":{}},
+    {"scenario":"idiosyncratic-knowledge","mode":"coverage-98","brierScore":0.2,"logLoss":0.4,"expectedCalibrationError":0.2,"thetaRMSE":0.5,"thetaInterval90Coverage":0.7,"deckPrecision":0.7,"deckRecall":0.7,"realizedTokenCoverage":0.99,"targetMissRate":0.1,"oracleDeckRegret":3,"meanQuestionCount":40,"stopReasons":{}}
+  ]
+}

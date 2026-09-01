@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "base_sha256": "868106f57e1fa78a0b0f03c3e4e0dd29d6161500ef6b8ed8d13bc05bcc6a1671",
+  "failed_candidate_sha256": "eca0f48d81de2cbdf629e2733a583a52518b5cd575338d4a25b92cf2f921f22a",
+  "source": "independent verifier /root/verify_plan_revision_repaired",
+  "repairs": [
+    {
+      "finding_id": "VF-01",
+      "requirement_ids": ["DIFF-002", "STUDY-002"],
+      "action": "Fit on training data, tune on validation data, and evaluate on the untouched participant-and-document holdout; never train on held-out data."
+    },
+    {
+      "finding_id": "VF-02",
+      "requirement_ids": ["EVID-002", "CAL-001"],
+      "action": "Cite the immutable current Core source path/hash and exact symbols for the unchanged latent and observation functions; fail and rebaseline if the hash differs."
+    },
+    {
+      "finding_id": "VF-03",
+      "requirement_ids": ["STUDY-002"],
+      "action": "Remove the unsourced evaluate-once and numerical-gate-freeze policies while retaining an untouched confirmatory holdout."
+    },
+    {
+      "finding_id": "VF-04",
+      "requirement_ids": ["RELEASE-001", "PERF-002", "COLD-001", "MWU-001"],
+      "action": "Remove preregistration/bounded-combination, expanded exact parity, per-mode freeze, and invented MWU implementation contracts not supplied by the review."
+    },
+    {
+      "finding_id": "VF-05",
+      "requirement_ids": ["PRIOR-004"],
+      "action": "Record the required sequence: grid convolution occurs before the existing warm/local mixture."
+    }
+  ]
+}

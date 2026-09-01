@@ -96,6 +96,7 @@ excluded_logic_app_source() {
     VocabularyContextProvider.swift|\
     VocabularyDictionaryMetadataService.swift|\
     VocabularyFrequencyBackfillService.swift|\
+    VocabularyPreparation*.swift|\
     VocabularyRecordProvider.swift|\
     VocabularyLibraryBuildCache.swift|\
     VocabularyReviewCardFooterBuilder.swift|\

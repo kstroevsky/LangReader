@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "status": "canonical",
+  "accepted_on": "2026-08-25",
+  "canonical_roadmap": {
+    "path": "candidate-roadmap.md",
+    "sha256": "b218edcb4deff49af2e899553e196d562aa2de0e1a004e49b81bee134ba67512"
+  },
+  "canonical_requirement_ledger": {
+    "path": "target-ledger.json",
+    "sha256": "90851e78d7f588310c45ed1fd3d9b0c9d9cebe8ac0b74c90e0bdf93e4655f6c1",
+    "counts": {
+      "active": 42,
+      "deferred": 12,
+      "superseded": 0
+    }
+  },
+  "acceptance": {
+    "path": "acceptance-2026-08-25.md",
+    "sha256": "dd33476d8b9d3054682f1978b13803638639b943ee497b563334f24d7f97fbeb"
+  },
+  "verification": {
+    "mechanical_path": "verification.json",
+    "mechanical_sha256": "4d940031e5c76d3b1b232b4adbda3adbf7b8601185f3ca69f1fcdfc176c4f97d",
+    "independent_path": "independent-verification.md",
+    "independent_sha256": "b8d3953ebcafec8a771fe6e6eb1c18769b01148b46c3cf74b1df674308b4207e",
+    "disposition": "PASS"
+  },
+  "authorization": {
+    "path": "authorization-2026-08-25.md",
+    "sha256": "762b97c9fff039b46f13d235a9e69b0eec1f37e7dcf29c7e7b1d9bf9a46f53f1",
+    "amended_requirement_ids": ["EVID-002", "VALID-001", "CAL-001", "STUDY-002"],
+    "default_for_unmentioned_requirements": "NO_CHANGE"
+  },
+  "failed_provenance": {
+    "candidate_sha256": "1283794cae1af72d36249ad999fd52fd20f81e07f3b2df2145d31e3033de8ec3",
+    "status": "failed_only_not_canonical",
+    "lineage_path": "../vocabulary-measurement-coherence/"
+  },
+  "implementation_authorized": true,
+  "application_code_changed_by_acceptance": false,
+  "future_semantic_deviations_require_authorization_delta": true
+}
