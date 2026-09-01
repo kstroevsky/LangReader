@@ -15,12 +15,17 @@ The feature has two modes:
 
 - **Estimate all unknown words** selects confirmed unknown lemmas and unasked
   lemmas whose estimated probability of being known is below 0.5.
-- **Target 98% coverage** selects the smallest occurrence-weighted deck that
-  reaches the model's conservative lexical-token coverage target.
+- **Build a deck for 98% projected coverage** selects the smallest
+  occurrence-weighted deck that reaches the model's conservative lexical-token
+  coverage target.
 
 The result is editable before **Create & Review** performs one atomic,
 idempotent import and opens the existing Review Session. Already-saved lemmas
 are shown but never duplicated or modified.
+Results show **Estimated current coverage** separately from **Projected after
+mastering selected words** and retain the conservative posterior-predictive
+lower bound. The UI explicitly says that creating a card does not demonstrate
+mastery and lexical coverage is not comprehension.
 
 ## Personal blind prediction audit
 

@@ -457,16 +457,41 @@ struct VocabularyPreparationView: View {
         VStack(alignment: .leading, spacing: 12) {
             if let result = coordinator.results {
                 let uncertainty = String(format: "%.1f", result.residualUncertainty)
-                let coverage = String(format: "%.1f", result.expectedCoverageAfterSelection * 100)
+                let currentCoverage = String(format: "%.1f", result.expectedCurrentCoverage * 100)
+                let projectedCoverage = String(
+                    format: "%.1f",
+                    result.expectedCoverageAfterSelection * 100
+                )
                 let lowerCoverage = String(
                     format: "%.1f",
                     result.diagnostics.conservativeCoverageLowerBound * 100
                 )
                 Text(AppText.localized(
-                    "已回答 \(result.answeredQuestionCount) 题 · \(stopReasonText(result.diagnostics.stopReason)) · 剩余不确定度 \(uncertainty) · 预计覆盖率 \(coverage)%（后验预测第 5 百分位 \(lowerCoverage)%）",
-                    "\(result.answeredQuestionCount) answered · \(stopReasonText(result.diagnostics.stopReason)) · residual uncertainty \(uncertainty) · expected coverage \(coverage)% (posterior-predictive 5th percentile \(lowerCoverage)%)"
+                    "已回答 \(result.answeredQuestionCount) 题 · \(stopReasonText(result.diagnostics.stopReason)) · 剩余不确定度 \(uncertainty)",
+                    "\(result.answeredQuestionCount) answered · \(stopReasonText(result.diagnostics.stopReason)) · residual uncertainty \(uncertainty)"
                 ))
                 .font(.headline)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(AppText.localized(
+                        "当前估计词汇覆盖率：\(currentCoverage)%",
+                        "Estimated current coverage: \(currentCoverage)%"
+                    ))
+                    Text(AppText.localized(
+                        "掌握所选词后预计词汇覆盖率：\(projectedCoverage)%",
+                        "Projected after mastering selected words: \(projectedCoverage)%"
+                    ))
+                    Text(AppText.localized(
+                        "预计覆盖率的保守下界（后验预测第 5 百分位）：\(lowerCoverage)%",
+                        "Conservative projected lower bound (posterior-predictive 5th percentile): \(lowerCoverage)%"
+                    ))
+                }
+                .monospacedDigit()
+                Text(AppText.localized(
+                    "创建词卡并不表示已经掌握；词汇覆盖率也不等于阅读理解率。",
+                    "Creating a card does not demonstrate mastery; lexical coverage is not comprehension."
+                ))
+                .font(.caption)
+                .foregroundStyle(.secondary)
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(result.items) { item in
@@ -553,10 +578,13 @@ struct VocabularyPreparationView: View {
             set: { coordinator.mode = $0 == 0 ? .allUnknown : .targetCoverage(0.98) }
         )) {
             Text(AppText.localized("估计全部生词", "Estimate all unknown")).tag(0)
-            Text(AppText.localized("达到 98% 覆盖率", "Target 98% coverage")).tag(1)
+            Text(AppText.localized(
+                "为预计 98% 词汇覆盖率构建词卡",
+                "Build a deck for 98% projected coverage"
+            )).tag(1)
         }
         .pickerStyle(.segmented)
-        .frame(width: 330)
+        .frame(width: 460)
     }
 
     private var languagePicker: some View {
@@ -620,7 +648,7 @@ struct VocabularyPreparationView: View {
         case .lowExpectedValue:
             AppText.localized("继续提问的预期收益很低", "additional questions have low expected value")
         case .targetCoverageStable:
-            AppText.localized("覆盖率目标已稳定", "coverage target is stable")
+            AppText.localized("预计覆盖率词卡组已稳定", "projected-coverage deck is stable")
         case .questionLimit:
             AppText.localized("已达到 80 题上限，仍有不确定性", "80-question limit reached with residual uncertainty")
         case nil:

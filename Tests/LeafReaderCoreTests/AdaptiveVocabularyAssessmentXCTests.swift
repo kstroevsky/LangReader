@@ -134,9 +134,23 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
             mode: .targetCoverage(0.80)
         )
 
-        let selected = assessment.result().items.filter(\.isSelected).map(\.id)
+        let result = assessment.result()
+        let selected = result.items.filter(\.isSelected).map(\.id)
         XCTAssertEqual(selected, ["frequent"])
-        XCTAssertGreaterThanOrEqual(assessment.result().expectedCoverageAfterSelection, 0.80)
+        XCTAssertGreaterThanOrEqual(result.expectedCoverageAfterSelection, 0.80)
+        XCTAssertLessThan(result.expectedCurrentCoverage, result.expectedCoverageAfterSelection)
+
+        let withoutLearning = result.applyingSelection([])
+        XCTAssertEqual(
+            withoutLearning.expectedCurrentCoverage,
+            result.expectedCurrentCoverage,
+            accuracy: 0.000_000_1
+        )
+        XCTAssertEqual(
+            withoutLearning.expectedCoverageAfterSelection,
+            result.expectedCurrentCoverage,
+            accuracy: 0.000_000_1
+        )
     }
 
     func testAllUnknownModeSelectsConfirmedUnknownAndLowPosteriorItems() throws {

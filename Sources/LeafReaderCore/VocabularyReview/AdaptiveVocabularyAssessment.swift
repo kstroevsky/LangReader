@@ -465,6 +465,7 @@ package struct VocabularyAssessmentResult: Codable, Equatable, Sendable {
     package let answeredQuestionCount: Int
     package let errorFloor: Double
     package let coverageQuantile: Double
+    package let expectedCurrentCoverage: Double
     package let expectedCoverageAfterSelection: Double
     package let residualUncertainty: Double
     package let reachedQuestionLimit: Bool
@@ -497,6 +498,7 @@ package struct VocabularyAssessmentResult: Codable, Equatable, Sendable {
             answeredQuestionCount: answeredQuestionCount,
             errorFloor: errorFloor,
             coverageQuantile: coverageQuantile,
+            expectedCurrentCoverage: expectedCurrentCoverage,
             expectedCoverageAfterSelection: totalOccurrences > 0 ? expectedKnownOccurrences / totalOccurrences : 1,
             residualUncertainty: residualUncertainty,
             reachedQuestionLimit: reachedQuestionLimit,
@@ -880,6 +882,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         )
         let selection = selectionOverride ?? proposed
         var totalOccurrences = 0.0
+        var expectedCurrentKnownOccurrences = 0.0
         var expectedKnownOccurrences = 0.0
         let items = inventory.candidates.enumerated().map { index, candidate -> VocabularyAssessmentResultItem in
             let answer = answerByKey[candidate.canonicalKey]
@@ -902,6 +905,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             if classification != .excluded {
                 let weight = Double(candidate.occurrenceCount)
                 totalOccurrences += weight
+                expectedCurrentKnownOccurrences += weight * probability
                 expectedKnownOccurrences += weight * (selection.contains(candidate.canonicalKey) ? 1 : probability)
             }
             return VocabularyAssessmentResultItem(
@@ -942,6 +946,9 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             answeredQuestionCount: answeredQuestionCount,
             errorFloor: epsilonKnowledge,
             coverageQuantile: modelConfiguration.coverageQuantile,
+            expectedCurrentCoverage: totalOccurrences > 0
+                ? expectedCurrentKnownOccurrences / totalOccurrences
+                : 1,
             expectedCoverageAfterSelection: totalOccurrences > 0 ? expectedKnownOccurrences / totalOccurrences : 1,
             residualUncertainty: uncertainty,
             reachedQuestionLimit: reachedQuestionLimit,
