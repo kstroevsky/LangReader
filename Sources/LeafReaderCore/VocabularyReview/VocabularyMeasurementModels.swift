@@ -5,6 +5,23 @@ package enum VocabularyCoverageStoppingComputation: Equatable, Sendable {
     case fullEveryAnswer
 }
 
+package enum VocabularyAdaptiveLossPopulation: String, Codable, Equatable, Sendable {
+    /// Experimental objective: infer only lexical items that have not already
+    /// supplied direct evidence in this assessment.
+    case remainingUnasked
+    /// Production surrogate. Answered items remain probabilistically uncertain
+    /// because direct evidence is intentionally strong but fallible.
+    case allNonExcluded
+}
+
+package enum VocabularyQuestionObjective: String, Codable, Equatable, Sendable {
+    /// Production ranking surrogate: hypothetical verified-known versus
+    /// reported-unknown evidence, weighted by latent P(known).
+    case evidenceSurrogate
+    /// Experimental coherent expectation over the latent K=1/K=0 state.
+    case latentKnowledgeRisk
+}
+
 /// Explicit assessment parameters used by synthetic diagnostics. Production
 /// callers use `.production`; alternate values must be passed deliberately.
 package struct VocabularyAssessmentModelConfiguration: Equatable, Sendable {
@@ -18,6 +35,8 @@ package struct VocabularyAssessmentModelConfiguration: Equatable, Sendable {
     package let reuseRepeatedPredictiveProbabilities: Bool
     package let incrementalPosteriorUpdates: Bool
     package let crossMomentQuestionScoring: Bool
+    package let adaptiveLossPopulation: VocabularyAdaptiveLossPopulation
+    package let questionObjective: VocabularyQuestionObjective
 
     package init(
         evidenceReliabilityScale: Double = 1,
@@ -27,7 +46,9 @@ package struct VocabularyAssessmentModelConfiguration: Equatable, Sendable {
         coverageStoppingComputation: VocabularyCoverageStoppingComputation = .fullEveryAnswer,
         reuseRepeatedPredictiveProbabilities: Bool = true,
         incrementalPosteriorUpdates: Bool = true,
-        crossMomentQuestionScoring: Bool = true
+        crossMomentQuestionScoring: Bool = true,
+        adaptiveLossPopulation: VocabularyAdaptiveLossPopulation = .allNonExcluded,
+        questionObjective: VocabularyQuestionObjective = .evidenceSurrogate
     ) {
         precondition(evidenceReliabilityScale.isFinite && evidenceReliabilityScale >= 0)
         precondition((0...0.25).contains(minimumEpsilonKnowledge))
@@ -41,6 +62,8 @@ package struct VocabularyAssessmentModelConfiguration: Equatable, Sendable {
         self.reuseRepeatedPredictiveProbabilities = reuseRepeatedPredictiveProbabilities
         self.incrementalPosteriorUpdates = incrementalPosteriorUpdates
         self.crossMomentQuestionScoring = crossMomentQuestionScoring
+        self.adaptiveLossPopulation = adaptiveLossPopulation
+        self.questionObjective = questionObjective
     }
 }
 

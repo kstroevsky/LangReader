@@ -75,7 +75,9 @@ private func run(
     profile: String = "cold",
     coverageStoppingComputation: VocabularyCoverageStoppingComputation = .fullEveryAnswer,
     reuseRepeatedPredictiveProbabilities: Bool = true,
-    crossMomentQuestionScoring: Bool = true
+    crossMomentQuestionScoring: Bool = true,
+    adaptiveLossPopulation: VocabularyAdaptiveLossPopulation = .allNonExcluded,
+    questionObjective: VocabularyQuestionObjective = .evidenceSurrogate
 ) -> BenchmarkCase {
     let inventory = DocumentVocabularyInventory(
         languageCode: "en",
@@ -100,7 +102,9 @@ private func run(
             modelConfiguration: VocabularyAssessmentModelConfiguration(
                 coverageStoppingComputation: coverageStoppingComputation,
                 reuseRepeatedPredictiveProbabilities: reuseRepeatedPredictiveProbabilities,
-                crossMomentQuestionScoring: crossMomentQuestionScoring
+                crossMomentQuestionScoring: crossMomentQuestionScoring,
+                adaptiveLossPopulation: adaptiveLossPopulation,
+                questionObjective: questionObjective
             )
         )
         precondition(
@@ -272,6 +276,20 @@ private struct VocabularyAssessmentBenchmark {
         let crossMomentQuestionScoring = environment[
             "LEAFREADER_CROSS_MOMENT_QUESTION_SCORING"
         ] != "0"
+        let lossPopulationName = environment["LEAFREADER_ADAPTIVE_LOSS_POPULATION"]
+            ?? VocabularyAdaptiveLossPopulation.allNonExcluded.rawValue
+        guard let adaptiveLossPopulation = VocabularyAdaptiveLossPopulation(
+            rawValue: lossPopulationName
+        ) else {
+            fputs("invalid LEAFREADER_ADAPTIVE_LOSS_POPULATION\n", stderr)
+            exit(2)
+        }
+        let questionObjectiveName = environment["LEAFREADER_QUESTION_OBJECTIVE"]
+            ?? VocabularyQuestionObjective.evidenceSurrogate.rawValue
+        guard let questionObjective = VocabularyQuestionObjective(rawValue: questionObjectiveName) else {
+            fputs("invalid LEAFREADER_QUESTION_OBJECTIVE\n", stderr)
+            exit(2)
+        }
         let cases = [100, 1_000, 5_000, 10_000].flatMap { lemmaCount in
             [
                 run(
@@ -280,7 +298,9 @@ private struct VocabularyAssessmentBenchmark {
                     modeName: "all-unknown",
                     coverageStoppingComputation: stoppingComputation,
                     reuseRepeatedPredictiveProbabilities: reusePredictiveProbabilities,
-                    crossMomentQuestionScoring: crossMomentQuestionScoring
+                    crossMomentQuestionScoring: crossMomentQuestionScoring,
+                    adaptiveLossPopulation: adaptiveLossPopulation,
+                    questionObjective: questionObjective
                 ),
                 run(
                     lemmaCount: lemmaCount,
@@ -288,7 +308,9 @@ private struct VocabularyAssessmentBenchmark {
                     modeName: "coverage-98",
                     coverageStoppingComputation: stoppingComputation,
                     reuseRepeatedPredictiveProbabilities: reusePredictiveProbabilities,
-                    crossMomentQuestionScoring: crossMomentQuestionScoring
+                    crossMomentQuestionScoring: crossMomentQuestionScoring,
+                    adaptiveLossPopulation: adaptiveLossPopulation,
+                    questionObjective: questionObjective
                 )
             ]
         }
@@ -310,7 +332,9 @@ private struct VocabularyAssessmentBenchmark {
             profile: "warm",
             coverageStoppingComputation: stoppingComputation,
             reuseRepeatedPredictiveProbabilities: reusePredictiveProbabilities,
-            crossMomentQuestionScoring: crossMomentQuestionScoring
+            crossMomentQuestionScoring: crossMomentQuestionScoring,
+            adaptiveLossPopulation: adaptiveLossPopulation,
+            questionObjective: questionObjective
         )
         let allCases = cases + [warmCase]
         let legacyJSON = """
@@ -360,6 +384,8 @@ private struct VocabularyAssessmentBenchmark {
                 "coverage_stopping_computation": stoppingName,
                 "reuse_repeated_predictive_probabilities": String(reusePredictiveProbabilities),
                 "cross_moment_question_scoring": String(crossMomentQuestionScoring),
+                "adaptive_loss_population": adaptiveLossPopulation.rawValue,
+                "question_objective": questionObjective.rawValue,
                 "source_revision": environment["LEAFREADER_BENCHMARK_SOURCE_REVISION"] ?? "unknown",
                 "swift_version": environment["LEAFREADER_BENCHMARK_SWIFT_VERSION"] ?? "unknown",
                 "os_version": ProcessInfo.processInfo.operatingSystemVersionString,

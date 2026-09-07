@@ -115,44 +115,115 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
 
     func testCrossMomentQuestionScoringMatchesScalarReference() throws {
         let inventory = inventory(count: 40)
-        var crossMoment = AdaptiveVocabularyAssessment(inventory: inventory, mode: .allUnknown)
-        var reference = AdaptiveVocabularyAssessment(
+        for objective in [VocabularyQuestionObjective.evidenceSurrogate, .latentKnowledgeRisk] {
+            for population in [VocabularyAdaptiveLossPopulation.remainingUnasked, .allNonExcluded] {
+                var crossMoment = AdaptiveVocabularyAssessment(
+                    inventory: inventory,
+                    mode: .allUnknown,
+                    modelConfiguration: VocabularyAssessmentModelConfiguration(
+                        adaptiveLossPopulation: population,
+                        questionObjective: objective
+                    )
+                )
+                var reference = AdaptiveVocabularyAssessment(
+                    inventory: inventory,
+                    mode: .allUnknown,
+                    modelConfiguration: VocabularyAssessmentModelConfiguration(
+                        crossMomentQuestionScoring: false,
+                        adaptiveLossPopulation: population,
+                        questionObjective: objective
+                    )
+                )
+
+                for questionNumber in 1...24 where !crossMoment.isFinished && !reference.isFinished {
+                    let fastQuestion = try XCTUnwrap(crossMoment.nextQuestion())
+                    let referenceQuestion = try XCTUnwrap(reference.nextQuestion())
+                    XCTAssertEqual(fastQuestion.canonicalKey, referenceQuestion.canonicalKey)
+                    XCTAssertEqual(
+                        try XCTUnwrap(crossMoment.expectedLossReduction(for: fastQuestion.canonicalKey)),
+                        try XCTUnwrap(reference.expectedLossReduction(for: referenceQuestion.canonicalKey)),
+                        accuracy: 1e-8
+                    )
+                    let evidence: VocabularyKnowledgeEvidence = questionNumber.isMultiple(of: 3)
+                        ? .reportedUnknown
+                        : .verifiedKnown
+                    crossMoment.record(evidence, for: fastQuestion.canonicalKey)
+                    reference.record(evidence, for: referenceQuestion.canonicalKey)
+                }
+
+                let fastResult = crossMoment.result()
+                let referenceResult = reference.result()
+                XCTAssertEqual(fastResult.items.map(\.id), referenceResult.items.map(\.id))
+                XCTAssertEqual(fastResult.items.map(\.isSelected), referenceResult.items.map(\.isSelected))
+                XCTAssertEqual(
+                    fastResult.items.map(\.predictiveKnownMask),
+                    referenceResult.items.map(\.predictiveKnownMask)
+                )
+                XCTAssertEqual(fastResult.diagnostics.stopReason, referenceResult.diagnostics.stopReason)
+                XCTAssertEqual(
+                    fastResult.diagnostics.bestExpectedLossReduction,
+                    referenceResult.diagnostics.bestExpectedLossReduction,
+                    accuracy: 1e-8
+                )
+            }
+        }
+    }
+
+    func testRemainingUnaskedLossPopulationContainsOnlyRemainingItems() throws {
+        let inventory = inventory(count: 24)
+        var remaining = AdaptiveVocabularyAssessment(
             inventory: inventory,
             mode: .allUnknown,
             modelConfiguration: VocabularyAssessmentModelConfiguration(
-                crossMomentQuestionScoring: false
+                adaptiveLossPopulation: .remainingUnasked
             )
         )
+        var production = AdaptiveVocabularyAssessment(inventory: inventory, mode: .allUnknown)
 
-        for questionNumber in 1...24 where !crossMoment.isFinished && !reference.isFinished {
-            let fastQuestion = try XCTUnwrap(crossMoment.nextQuestion())
-            let referenceQuestion = try XCTUnwrap(reference.nextQuestion())
-            XCTAssertEqual(fastQuestion.canonicalKey, referenceQuestion.canonicalKey)
-            XCTAssertEqual(
-                try XCTUnwrap(crossMoment.expectedLossReduction(for: fastQuestion.canonicalKey)),
-                try XCTUnwrap(reference.expectedLossReduction(for: referenceQuestion.canonicalKey)),
-                accuracy: 1e-8
-            )
-            let evidence: VocabularyKnowledgeEvidence = questionNumber.isMultiple(of: 3)
-                ? .reportedUnknown
-                : .verifiedKnown
-            crossMoment.record(evidence, for: fastQuestion.canonicalKey)
-            reference.record(evidence, for: referenceQuestion.canonicalKey)
+        XCTAssertEqual(remaining.adaptiveLossPopulationCount, 24)
+        XCTAssertEqual(production.adaptiveLossPopulationCount, 24)
+        for evidence in [VocabularyKnowledgeEvidence.verifiedKnown, .excluded] {
+            let remainingQuestion = try XCTUnwrap(remaining.nextQuestion())
+            let productionQuestion = try XCTUnwrap(production.nextQuestion())
+            XCTAssertEqual(remainingQuestion.canonicalKey, productionQuestion.canonicalKey)
+            remaining.record(evidence, for: remainingQuestion.canonicalKey)
+            production.record(evidence, for: productionQuestion.canonicalKey)
         }
 
-        let fastResult = crossMoment.result()
-        let referenceResult = reference.result()
-        XCTAssertEqual(fastResult.items.map(\.id), referenceResult.items.map(\.id))
-        XCTAssertEqual(fastResult.items.map(\.isSelected), referenceResult.items.map(\.isSelected))
-        XCTAssertEqual(
-            fastResult.items.map(\.predictiveKnownMask),
-            referenceResult.items.map(\.predictiveKnownMask)
+        XCTAssertEqual(remaining.adaptiveLossPopulationCount, 22)
+        XCTAssertEqual(production.adaptiveLossPopulationCount, 23)
+    }
+
+    func testLatentKnowledgeRiskIsAnExercisedExperimentalObjective() throws {
+        let inventory = inventory(count: 40)
+        var evidence = AdaptiveVocabularyAssessment(inventory: inventory, mode: .allUnknown)
+        var latent = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .allUnknown,
+            modelConfiguration: VocabularyAssessmentModelConfiguration(
+                questionObjective: .latentKnowledgeRisk
+            )
         )
-        XCTAssertEqual(fastResult.diagnostics.stopReason, referenceResult.diagnostics.stopReason)
-        XCTAssertEqual(
-            fastResult.diagnostics.bestExpectedLossReduction,
-            referenceResult.diagnostics.bestExpectedLossReduction,
-            accuracy: 1e-8
+        for index in 0..<8 {
+            let evidenceQuestion = try XCTUnwrap(evidence.nextQuestion())
+            let latentQuestion = try XCTUnwrap(latent.nextQuestion())
+            XCTAssertEqual(evidenceQuestion.canonicalKey, latentQuestion.canonicalKey)
+            let answer: VocabularyKnowledgeEvidence = index.isMultiple(of: 3)
+                ? .reportedUnknown
+                : .verifiedKnown
+            evidence.record(answer, for: evidenceQuestion.canonicalKey)
+            latent.record(answer, for: latentQuestion.canonicalKey)
+        }
+        let candidate = try XCTUnwrap(inventory.candidates.first { candidate in
+            evidence.knownProbability(for: candidate.canonicalKey) != nil
+                && !evidence.answers.contains { answer in
+                    answer.canonicalKey == candidate.canonicalKey
+                }
+        })
+        XCTAssertNotEqual(
+            try XCTUnwrap(evidence.expectedLossReduction(for: candidate.canonicalKey)),
+            try XCTUnwrap(latent.expectedLossReduction(for: candidate.canonicalKey)),
+            accuracy: 1e-6
         )
     }
 

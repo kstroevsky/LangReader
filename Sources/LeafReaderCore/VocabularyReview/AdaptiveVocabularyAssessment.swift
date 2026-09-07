@@ -940,13 +940,21 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         return currentProbabilities[index]
     }
 
-    /// Exposes the exact decision objective for deterministic evaluator and
-    /// oracle tests without exposing the posterior representation itself.
+    /// Exposes the configured exact decision surrogate for deterministic
+    /// evaluator and oracle tests without exposing the posterior itself. The
+    /// production objective has two hypothetical evidence branches; it is not
+    /// an expectation over every observable UI response category.
     package func expectedLossReduction(for canonicalKey: String) -> Double? {
         guard answerByKey[canonicalKey] == nil,
               !skippedQuestionKeys.contains(canonicalKey),
               let candidate = candidate(for: canonicalKey) else { return nil }
         return bestQuestion(from: [candidate]).reduction
+    }
+
+    package var adaptiveLossPopulationCount: Int {
+        inventory.candidates.indices.lazy.filter {
+            isAdaptiveLossTarget($0, excludingIndex: nil)
+        }.count
     }
 
     package func result(selectionOverride: Set<String>? = nil) -> VocabularyAssessmentResult {
@@ -1853,7 +1861,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         }
         let currentLoss = inventory.candidates.enumerated().reduce(0.0) { partial, pair in
             let (index, candidate) = pair
-            guard !excludedCandidateIndexes.contains(index) else { return partial }
+            guard isAdaptiveLossTarget(index, excludingIndex: nil) else { return partial }
             let probability = currentProbabilities[index]
             let weight: Double = mode == .allUnknown ? 1 : Double(candidate.occurrenceCount)
             return partial + weight * min(probability, 1 - probability)
@@ -1861,8 +1869,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         let workerCount = candidates.count >= 8 ? 4 : 1
         let resultBox = VocabularySynchronizedBox<[Int: [ScoredQuestion]]>([:])
         let knowledgeScale = 1 - 2 * epsilonKnowledge
-        let knownCoefficients = observationLikelihoodCoefficients(for: .verifiedKnown)
-        let unknownCoefficients = observationLikelihoodCoefficients(for: .reportedUnknown)
+        let knownCoefficients = questionBranchLikelihoodCoefficients(known: true)
+        let unknownCoefficients = questionBranchLikelihoodCoefficients(known: false)
         DispatchQueue.concurrentPerform(iterations: workerCount) { worker in
             var local: [ScoredQuestion] = []
             var candidateOffset = worker
@@ -1884,8 +1892,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                         + unknownCoefficients.b * questionBaseMean
                     var knownLoss = 0.0
                     var unknownLoss = 0.0
-                    for itemIndex in inventory.candidates.indices where itemIndex != index
-                        && !excludedCandidateIndexes.contains(itemIndex) {
+                    for itemIndex in inventory.candidates.indices where
+                        isAdaptiveLossTarget(itemIndex, excludingIndex: index) {
                         let itemCurve = responseCurves[itemIndex]
                         var crossMoment = 0.0
                         for thetaIndex in posterior.indices {
@@ -1942,18 +1950,25 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         return best.map { ($0.candidate, $0.reduction) } ?? (candidates[0], 0.0)
     }
 
-    private func observationLikelihoodCoefficients(
-        for evidence: VocabularyKnowledgeEvidence
-    ) -> (a: Double, b: Double) {
-        guard let emission = VocabularyObservationModel.emission(
-            for: evidence,
-            reliabilityScale: modelConfiguration.evidenceReliabilityScale
-        ) else { return (1, 0) }
-        let delta = emission.probabilityGivenKnown - emission.probabilityGivenUnknown
-        return (
-            emission.probabilityGivenUnknown + delta * epsilonKnowledge,
-            delta * (1 - 2 * epsilonKnowledge)
-        )
+    private func questionBranchLikelihoodCoefficients(known: Bool) -> (a: Double, b: Double) {
+        let knowledgeScale = 1 - 2 * epsilonKnowledge
+        switch modelConfiguration.questionObjective {
+        case .latentKnowledgeRisk:
+            return known
+                ? (epsilonKnowledge, knowledgeScale)
+                : (1 - epsilonKnowledge, -knowledgeScale)
+        case .evidenceSurrogate:
+            let evidence: VocabularyKnowledgeEvidence = known ? .verifiedKnown : .reportedUnknown
+            guard let emission = VocabularyObservationModel.emission(
+                for: evidence,
+                reliabilityScale: modelConfiguration.evidenceReliabilityScale
+            ) else { return (1, 0) }
+            let delta = emission.probabilityGivenKnown - emission.probabilityGivenUnknown
+            return (
+                emission.probabilityGivenUnknown + delta * epsilonKnowledge,
+                delta * knowledgeScale
+            )
+        }
     }
 
     private func bestQuestionReference(
@@ -1961,7 +1976,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     ) -> (candidate: DocumentVocabularyCandidate, reduction: Double) {
         let currentLoss = inventory.candidates.enumerated().reduce(0.0) { partial, pair in
             let (index, candidate) = pair
-            guard !excludedCandidateIndexes.contains(index) else { return partial }
+            guard isAdaptiveLossTarget(index, excludingIndex: nil) else { return partial }
             let probability = currentProbabilities[index]
             let weight: Double = mode == .allUnknown ? 1 : Double(candidate.occurrenceCount)
             return partial + weight * min(probability, 1 - probability)
@@ -1975,8 +1990,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 let candidate = candidates[candidateOffset]
                 if let index = candidateIndexByKey[candidate.canonicalKey] {
                     let pKnown = currentProbabilities[index]
-                    let knownPosterior = updatedPosterior(for: candidate, known: true)
-                    let unknownPosterior = updatedPosterior(for: candidate, known: false)
+                    let knownPosterior = updatedQuestionPosterior(for: candidate, known: true)
+                    let unknownPosterior = updatedQuestionPosterior(for: candidate, known: false)
                     let expectedLoss = pKnown * loss(posterior: knownPosterior, excludingIndex: index)
                         + (1 - pKnown) * loss(posterior: unknownPosterior, excludingIndex: index)
                     local.append(ScoredQuestion(
@@ -1999,8 +2014,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     private func loss(posterior: [Double], excludingIndex: Int? = nil) -> Double {
         inventory.candidates.enumerated().reduce(0.0) { partial, pair in
             let (index, candidate) = pair
-            guard index != excludingIndex,
-                  !excludedCandidateIndexes.contains(index) else { return partial }
+            guard isAdaptiveLossTarget(index, excludingIndex: excludingIndex) else { return partial }
             let p = probability(
                 candidateIndex: index,
                 posterior: posterior,
@@ -2011,7 +2025,10 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         }
     }
 
-    private func updatedPosterior(for candidate: DocumentVocabularyCandidate, known: Bool) -> [Double] {
+    private func updatedQuestionPosterior(
+        for candidate: DocumentVocabularyCandidate,
+        known: Bool
+    ) -> [Double] {
         guard let candidateIndex = candidateIndexByKey[candidate.canonicalKey] else { return posterior }
         var result = posterior
         for index in result.indices {
@@ -2019,14 +2036,30 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 baseKnownProbability: responseCurves[candidateIndex][index],
                 epsilonKnowledge: epsilonKnowledge
             )
-            result[index] *= VocabularyObservationModel.evidenceLikelihood(
-                evidence: known ? .verifiedKnown : .reportedUnknown,
-                latentKnownProbability: latentKnown,
-                reliabilityScale: modelConfiguration.evidenceReliabilityScale
-            )
+            switch modelConfiguration.questionObjective {
+            case .latentKnowledgeRisk:
+                result[index] *= known ? latentKnown : 1 - latentKnown
+            case .evidenceSurrogate:
+                result[index] *= VocabularyObservationModel.evidenceLikelihood(
+                    evidence: known ? .verifiedKnown : .reportedUnknown,
+                    latentKnownProbability: latentKnown,
+                    reliabilityScale: modelConfiguration.evidenceReliabilityScale
+                )
+            }
         }
         Self.normalize(&result)
         return result
+    }
+
+    private func isAdaptiveLossTarget(_ index: Int, excludingIndex: Int?) -> Bool {
+        guard index != excludingIndex,
+              !excludedCandidateIndexes.contains(index) else { return false }
+        switch modelConfiguration.adaptiveLossPopulation {
+        case .remainingUnasked:
+            return !answeredCandidateIndexes.contains(index)
+        case .allNonExcluded:
+            return true
+        }
     }
 
     private func probability(

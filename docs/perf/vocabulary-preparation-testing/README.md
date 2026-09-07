@@ -37,6 +37,22 @@ that the implementation behaves as intended under declared simulated
 populations. Likewise, the 98% target is lexical-token coverage after the
 selected cards are treated as learned; it is not a comprehension percentage.
 
+### Adaptive question-objective semantics
+
+Production question ranking is deliberately described as an **exact two-branch
+decision surrogate**, not a full Bayesian expectation over every UI response
+category. Latent `P(known)` weights hypothetical verified-known and
+reported-unknown evidence branches. Because direct evidence remains fallible,
+production loss continues to include all non-excluded items, including answered
+items whose posterior uncertainty is not zero.
+
+The remaining-unasked loss population and a coherent latent `K=1/K=0` objective
+are available only as development configurations. A paired 192-reader-per-
+scenario sweep found that remaining-unasked loss exceeded the two-point
+coverage-hit regression guardrail under idiosyncratic knowledge; latent-state
+risk lost another 2.1 points there. See
+[`../vocabulary-question-objective-experiment-2026-09-07.md`](../vocabulary-question-objective-experiment-2026-09-07.md).
+
 The empirical next step is specified in
 [`../../research/VOCABULARY_VALIDATION_PILOT.md`](../../research/VOCABULARY_VALIDATION_PILOT.md):
 independent pre-reveal meaning-recall labels, participant-and-document holdouts,

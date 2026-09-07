@@ -44,6 +44,8 @@ private struct AssessmentModelParameters: Codable {
     let coverageQuantile: Double
     let warmPriorWeight: Double
     let coverageStoppingComputation: String
+    let adaptiveLossPopulation: VocabularyAdaptiveLossPopulation
+    let questionObjective: VocabularyQuestionObjective
 
     var coreConfiguration: VocabularyAssessmentModelConfiguration {
         VocabularyAssessmentModelConfiguration(
@@ -53,7 +55,9 @@ private struct AssessmentModelParameters: Codable {
             warmPriorWeight: warmPriorWeight,
             coverageStoppingComputation: coverageStoppingComputation == "full-every-answer"
                 ? .fullEveryAnswer
-                : .staged
+                : .staged,
+            adaptiveLossPopulation: adaptiveLossPopulation,
+            questionObjective: questionObjective
         )
     }
 }
@@ -638,6 +642,8 @@ private struct Arguments {
     var coverageQuantile = 0.05
     var warmPriorWeight = 0.90
     var coverageStoppingComputation = "full-every-answer"
+    var adaptiveLossPopulation = VocabularyAdaptiveLossPopulation.allNonExcluded
+    var questionObjective = VocabularyQuestionObjective.evidenceSurrogate
     var usesPairedDiagnosticSubstreams = false
     var jsonPath = "vocabulary-assessment-quality.json"
     var markdownPath = "vocabulary-assessment-quality.md"
@@ -670,6 +676,14 @@ private struct Arguments {
                 warmPriorWeight = iterator.next().flatMap(Double.init) ?? warmPriorWeight
             case "--coverage-stopping-computation":
                 coverageStoppingComputation = iterator.next() ?? coverageStoppingComputation
+            case "--adaptive-loss-population":
+                adaptiveLossPopulation = iterator.next()
+                    .flatMap(VocabularyAdaptiveLossPopulation.init(rawValue:))
+                    ?? adaptiveLossPopulation
+            case "--question-objective":
+                questionObjective = iterator.next()
+                    .flatMap(VocabularyQuestionObjective.init(rawValue:))
+                    ?? questionObjective
             case "--paired-diagnostic-substreams":
                 usesPairedDiagnosticSubstreams = true
             case "--json": jsonPath = iterator.next() ?? jsonPath
@@ -716,7 +730,9 @@ private struct Arguments {
             difficultyPriorStandardDeviationScale: difficultyPriorStandardDeviationScale,
             coverageQuantile: coverageQuantile,
             warmPriorWeight: warmPriorWeight,
-            coverageStoppingComputation: coverageStoppingComputation
+            coverageStoppingComputation: coverageStoppingComputation,
+            adaptiveLossPopulation: adaptiveLossPopulation,
+            questionObjective: questionObjective
         )
     }
 
@@ -732,13 +748,15 @@ private func markdown(for report: EvaluationReport) -> String {
         "These are synthetic cold-start diagnostics, not evidence of calibration on real learners.",
         "",
         String(
-            format: "Assumed model: reliability scale %.3f; epsilon minimum %.3f; difficulty SD scale %.3f; coverage quantile %.3f; warm-prior weight %.3f; coverage stopping %@.",
+            format: "Assumed model: reliability scale %.3f; epsilon minimum %.3f; difficulty SD scale %.3f; coverage quantile %.3f; warm-prior weight %.3f; coverage stopping %@; loss population %@; question objective %@.",
             report.configuration.assessmentModelParameters.evidenceReliabilityScale,
             report.configuration.assessmentModelParameters.minimumEpsilonKnowledge,
             report.configuration.assessmentModelParameters.difficultyPriorStandardDeviationScale,
             report.configuration.assessmentModelParameters.coverageQuantile,
             report.configuration.assessmentModelParameters.warmPriorWeight,
-            report.configuration.assessmentModelParameters.coverageStoppingComputation
+            report.configuration.assessmentModelParameters.coverageStoppingComputation,
+            report.configuration.assessmentModelParameters.adaptiveLossPopulation.rawValue,
+            report.configuration.assessmentModelParameters.questionObjective.rawValue
         ),
         "Random stream: \(report.configuration.usesPairedDiagnosticSubstreams ? "paired diagnostic substreams" : "frozen sequential evaluator stream").",
         "",

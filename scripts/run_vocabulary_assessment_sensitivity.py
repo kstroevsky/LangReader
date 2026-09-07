@@ -161,6 +161,17 @@ def main() -> int:
     parser.add_argument("--lemmas", type=int)
     parser.add_argument("--documents", type=int)
     parser.add_argument("--runs-per-profile", type=int)
+    parser.add_argument(
+        "--adaptive-loss-population",
+        choices=("remainingUnasked", "allNonExcluded"),
+        default="allNonExcluded",
+    )
+    parser.add_argument(
+        "--question-objective",
+        choices=("evidenceSurrogate", "latentKnowledgeRisk"),
+        default="evidenceSurrogate",
+    )
+    parser.add_argument("--paired-diagnostic-substreams", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
@@ -175,6 +186,11 @@ def main() -> int:
     documents = min(args.documents or default_documents, readers)
     if runs_per_profile < 1 or readers < 1 or lemmas < 20 or documents < 1:
         parser.error("runs/readers/documents must be positive and lemmas must be at least 20")
+    if args.suite == "release-holdout" and (
+        args.adaptive_loss_population != "allNonExcluded"
+        or args.question_objective != "evidenceSurrogate"
+    ):
+        parser.error("experimental selectors are development-sweep only")
 
     plan = [
         (profile, ordinal, derived_seed(args.suite, profile.name, ordinal))
@@ -204,11 +220,15 @@ def main() -> int:
                 "--item-residual-sd", str(profile.item_residual_sd),
                 "--response-noise-rate", str(profile.response_noise_rate),
                 "--idiosyncratic-flip-rate", str(profile.idiosyncratic_flip_rate),
+                "--adaptive-loss-population", args.adaptive_loss_population,
+                "--question-objective", args.question_objective,
                 "--json", str(json_path),
                 "--markdown", str(markdown_path),
             ]
             if not enforce_gates:
                 command.append("--no-gate")
+            if args.paired_diagnostic_substreams:
+                command.append("--paired-diagnostic-substreams")
             completed = subprocess.run(command, cwd=ROOT, check=False)
             if not json_path.exists():
                 raise RuntimeError(
@@ -233,6 +253,9 @@ def main() -> int:
             "readersPerScenario": readers,
             "documentsPerScenario": documents,
             "lemmaCount": lemmas,
+            "adaptiveLossPopulation": args.adaptive_loss_population,
+            "questionObjective": args.question_objective,
+            "usesPairedDiagnosticSubstreams": args.paired_diagnostic_substreams,
         },
         "runs": runs,
         "summary": summarize(runs),

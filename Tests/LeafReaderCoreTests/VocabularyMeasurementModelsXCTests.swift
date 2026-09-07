@@ -11,6 +11,10 @@ final class VocabularyMeasurementModelsXCTests: XCTestCase {
         XCTAssertEqual(configuration.warmPriorWeight, 0.90)
         XCTAssertEqual(configuration.coverageStoppingComputation, .fullEveryAnswer)
         XCTAssertTrue(configuration.reuseRepeatedPredictiveProbabilities)
+        XCTAssertTrue(configuration.incrementalPosteriorUpdates)
+        XCTAssertTrue(configuration.crossMomentQuestionScoring)
+        XCTAssertEqual(configuration.adaptiveLossPopulation, .allNonExcluded)
+        XCTAssertEqual(configuration.questionObjective, .evidenceSurrogate)
     }
 
     func testKnowledgeModelPreservesLockedRaschMathematics() {
