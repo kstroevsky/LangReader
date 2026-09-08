@@ -648,6 +648,11 @@ private struct Arguments {
     var jsonPath = "vocabulary-assessment-quality.json"
     var markdownPath = "vocabulary-assessment-quality.md"
     var enforceGates = true
+    var causalManifestPath: String?
+    var causalJSONPath: String?
+    var causalMarkdownPath: String?
+    var causalTimingPath: String?
+    var causalSelfTest = false
 
     init() {
         var iterator = CommandLine.arguments.dropFirst().makeIterator()
@@ -689,6 +694,11 @@ private struct Arguments {
             case "--json": jsonPath = iterator.next() ?? jsonPath
             case "--markdown": markdownPath = iterator.next() ?? markdownPath
             case "--no-gate": enforceGates = false
+            case "--causal-manifest": causalManifestPath = iterator.next()
+            case "--causal-json": causalJSONPath = iterator.next()
+            case "--causal-markdown": causalMarkdownPath = iterator.next()
+            case "--causal-timing": causalTimingPath = iterator.next()
+            case "--causal-self-test": causalSelfTest = true
             default:
                 fputs("unknown argument: \(argument)\n", stderr)
                 exit(2)
@@ -790,6 +800,10 @@ private func markdown(for report: EvaluationReport) -> String {
 private struct VocabularyAssessmentEvaluator {
     static func main() throws {
         let arguments = Arguments()
+        if arguments.causalSelfTest {
+            try runVocabularyCausalDiagnosticSelfTest()
+            return
+        }
         var generator = SeededGenerator(seed: arguments.seed)
         var results: [Metrics] = []
         for scenario in Scenario.allCases {
@@ -916,6 +930,20 @@ private struct VocabularyAssessmentEvaluator {
             encoding: .utf8
         )
         print(markdown(for: report))
+        if let manifestPath = arguments.causalManifestPath {
+            guard let causalJSONPath = arguments.causalJSONPath,
+                  let causalMarkdownPath = arguments.causalMarkdownPath,
+                  let causalTimingPath = arguments.causalTimingPath else {
+                fputs("causal diagnostics require --causal-json, --causal-markdown, and --causal-timing\n", stderr)
+                exit(2)
+            }
+            try runVocabularyCausalDiagnostics(
+                manifestPath: manifestPath,
+                jsonPath: causalJSONPath,
+                markdownPath: causalMarkdownPath,
+                timingPath: causalTimingPath
+            )
+        }
         if arguments.enforceGates && eligible && !passed { exit(1) }
     }
 }

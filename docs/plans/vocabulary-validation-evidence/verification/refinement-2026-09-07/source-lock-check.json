@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "canonical_files": {
+    "docs/plans/vocabulary-measurement-coherence-authorized/candidate-roadmap.md": {
+      "sha256": "b218edcb4deff49af2e899553e196d562aa2de0e1a004e49b81bee134ba67512",
+      "status": "PASS"
+    },
+    "docs/plans/vocabulary-measurement-coherence-authorized/target-ledger.json": {
+      "sha256": "90851e78d7f588310c45ed1fd3d9b0c9d9cebe8ac0b74c90e0bdf93e4655f6c1",
+      "status": "PASS"
+    },
+    "docs/plans/vocabulary-measurement-coherence-authorized/acceptance-2026-08-25.md": {
+      "sha256": "dd33476d8b9d3054682f1978b13803638639b943ee497b563334f24d7f97fbeb",
+      "status": "PASS"
+    }
+  },
+  "canonical_counts": {
+    "active": 42,
+    "deferred": 12
+  },
+  "original_verification_ledger_byte_identical": true,
+  "normalized_base_requirement_records_identical": true
+}

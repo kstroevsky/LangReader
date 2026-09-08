@@ -1,0 +1,57 @@
+{
+  "phase": "COMPLETE",
+  "base_sha256": "bd5a907c46717039a0dd9e9fccc7739637e1b1a72200950cec69fc4a1276d497",
+  "candidate_sha256": "643159fae7c981d6efab48cc0f48a2d6d176f215cd7298ee4221735976e80d15",
+  "ledger_sha256": "46d3b90737481344f5fda1635f913716e064c468ee0f215a331e78cad9abf84b",
+  "delta_sha256": "634522ef88114549a2bd4473de75bb4c7439d78eb32e3ec741bc67caecc5f34e",
+  "plan_status": "completed additive implementation plan; not a canonical roadmap amendment or study/release approval",
+  "counts": {
+    "execution_active": 25,
+    "execution_deferred": 0,
+    "execution_superseded": 0,
+    "canonical_active_unchanged": 42,
+    "canonical_deferred_unchanged": 12
+  },
+  "completed_feedback_ids": [
+    "EVIDENCE",
+    "INVARIANTS",
+    "DIAG-TRACE",
+    "DIAG-BANK",
+    "DIAG-BUDGET",
+    "DIAG-PAIR",
+    "WARM-HISTORY",
+    "WARM-STRESS",
+    "STUDY-SAMPLE",
+    "STUDY-RUBRIC",
+    "STUDY-PACKAGE",
+    "STUDY-REHEARSAL",
+    "STUDY-SAP",
+    "STUDY-VALUE",
+    "CALIBRATION",
+    "POS-FIXTURES",
+    "POS-IMPACT",
+    "UX-TIMING",
+    "GUI-FIXTURES",
+    "STATUS",
+    "AMENDMENTS",
+    "ORDER",
+    "VERIFY",
+    "HANDOFF"
+  ],
+  "validation_results": {
+    "mechanical": "PASS",
+    "delta": "PASS",
+    "preservation": "PASS",
+    "exact_contract": "PASS",
+    "negative_control": "PASS",
+    "cross_interface": "PASS",
+    "standalone": "PASS",
+    "independent": "PASS",
+    "source_locks": "PASS",
+    "document_links_and_whitespace": "PASS"
+  },
+  "repair_attempts_by_finding": {
+    "FV-001": 1
+  },
+  "open_findings": []
+}

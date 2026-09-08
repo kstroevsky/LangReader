@@ -763,10 +763,28 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     }
 
     package mutating func nextQuestion() -> DocumentVocabularyCandidate? {
+        nextQuestion(allowingDiagnosticStopBypass: false)
+    }
+
+    /// Continues question selection on a copied assessment after its natural
+    /// product stop. This is an offline diagnostic seam: it never bypasses the
+    /// 80-answer ceiling, candidate exhaustion, exclusions, skips, or duplicate
+    /// answer protection.
+    package mutating func nextQuestionForDiagnosticContinuation() -> DocumentVocabularyCandidate? {
+        nextQuestion(allowingDiagnosticStopBypass: true)
+    }
+
+    private mutating func nextQuestion(
+        allowingDiagnosticStopBypass: Bool
+    ) -> DocumentVocabularyCandidate? {
         if let pendingQuestion {
             return candidate(for: pendingQuestion.key)
         }
-        guard !isFinished else { return nil }
+        if allowingDiagnosticStopBypass {
+            guard answeredQuestionCount < 80 else { return nil }
+        } else {
+            guard !isFinished else { return nil }
+        }
         let remaining = answerableCandidates
         guard !remaining.isEmpty else { return nil }
 
@@ -817,6 +835,44 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             predictedKnownBeforeAnswer: candidateIndex.map { currentProbabilities[$0] } ?? 0.5
         )
         return selected.candidate
+    }
+
+    package var diagnosticNaturalStopReason: VocabularyAssessmentStopReason? { stopReason }
+
+    package func diagnosticSnapshot(
+        selectionOverride: Set<String>? = nil
+    ) throws -> VocabularyAssessmentDiagnosticSnapshot {
+        let predictiveSamples = cachedPredictiveSamples ?? predictiveCoverageSamples()
+        let proposed = proposedSelection(
+            predictiveSamples: predictiveSamples,
+            pruneRedundant: true
+        )
+        let selection = selectionOverride ?? proposed
+        let maskWordCount = predictiveSamples.maskWordCount
+        let items = inventory.candidates.enumerated().map { index, candidate in
+            VocabularyAssessmentDiagnosticSnapshot.Item(
+                candidate: candidate,
+                evidence: evidenceByCandidateIndex[index],
+                responseCurve: responseCurves[index],
+                productionKnownMask: Array(
+                    predictiveSamples.knownMaskWords[
+                        (index * maskWordCount)..<((index + 1) * maskWordCount)
+                    ]
+                ),
+                isIncluded: evidenceByCandidateIndex[index] != .excluded
+            )
+        }
+        return try VocabularyAssessmentDiagnosticSnapshot(
+            items: items,
+            posterior: posterior,
+            epsilonKnowledge: epsilonKnowledge,
+            evidenceReliabilityScale: modelConfiguration.evidenceReliabilityScale,
+            coverageQuantile: modelConfiguration.coverageQuantile,
+            productionSelection: selection,
+            productionThetaIndexes: stratifiedThetaSampleIndexes(
+                sampleCount: Self.predictiveSampleCount
+            )
+        )
     }
 
     package mutating func record(

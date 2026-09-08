@@ -1,0 +1,1321 @@
+{
+  "schema_version": 1,
+  "canonical_sha256": "bd5a907c46717039a0dd9e9fccc7739637e1b1a72200950cec69fc4a1276d497",
+  "requirements": [
+    {
+      "id": "SCOPE",
+      "status": "active",
+      "section": [
+        "Authority and scope"
+      ],
+      "summary": "Additive execution plan; canonical authority and task scope preserved.",
+      "normative_payload": {
+        "canonical_counts": {
+          "active": 42,
+          "deferred": 12
+        },
+        "canonical_unchanged": true,
+        "current_task": "documentation only"
+      },
+      "anchors": [
+        "All unmentioned requirements remain unchanged."
+      ]
+    },
+    {
+      "id": "EVIDENCE",
+      "status": "active",
+      "section": [
+        "Evidence baseline"
+      ],
+      "summary": "Separate four evidence classes and historical/current/final-tree claims.",
+      "normative_payload": {
+        "contract": "Separate four evidence classes and historical/current/final-tree claims.",
+        "role": "execution requirement; not canonical amendment",
+        "classes": [
+          "algorithm microbenchmark",
+          "synthetic selector comparison",
+          "frozen synthetic release holdout",
+          "human validation"
+        ],
+        "historical_not_final_tree": true,
+        "old_matrix_readers_per_seed": 8,
+        "one_hit_percentage_points": 12.5
+      },
+      "anchors": [
+        "<!-- requirement: EVIDENCE -->",
+        "A hit changes the per-seed rate by 12.5 points"
+      ],
+      "depends_on": [],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "0c818c9a986965ca96d9bc901fa69ed5502a203949b728c9fa92e75f92940d1b",
+      "numeric_tokens": [
+        "000",
+        "07",
+        "08",
+        "09",
+        "10",
+        "12.5",
+        "120",
+        "13.66",
+        "19.64",
+        "2.6",
+        "2026",
+        "22.40",
+        "3",
+        "31",
+        "4.6875",
+        "4.7",
+        "84.375%",
+        "87.5%"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "INVARIANTS",
+      "status": "active",
+      "section": [
+        "Preserved production and release contracts"
+      ],
+      "summary": "Preserve model, UX, privacy, numerical gates, and all deferred requirements.",
+      "normative_payload": {
+        "contract": "Preserve model, UX, privacy, numerical gates, and all deferred requirements.",
+        "role": "execution requirement; not canonical amendment",
+        "production": {
+          "samples": 512,
+          "theta_grid": 121,
+          "quadrature": 9,
+          "target": 0.98,
+          "quantile": 0.05,
+          "shortlist": 16,
+          "selector": [
+            "allNonExcluded",
+            "evidenceSurrogate"
+          ],
+          "cold_min": 20,
+          "warm_min": 8,
+          "max": 80
+        },
+        "gates": {
+          "ece_max": 0.05,
+          "theta_coverage": [
+            0.85,
+            0.95
+          ],
+          "coverage_hits": {
+            "well_specified": 0.95,
+            "item_residual": 0.95,
+            "response_noise": 0.9,
+            "idiosyncratic": 0.85
+          },
+          "precision_min": 0.5,
+          "brier_ece_degradation_max": 0.01,
+          "warm_question_reduction_min": 0.25,
+          "warm_hit_degradation_max": 0.02,
+          "algorithm_p95_ms": 150,
+          "main_thread_p95_ms": 16,
+          "open_control": "control + max(10% control, 50 ms)"
+        },
+        "canonical_deferred_ids": [
+          "SENSE-001",
+          "DOMAIN-003",
+          "DOMAIN-GATE-001",
+          "ASSUMP-005",
+          "PRIOR-004",
+          "DIFF-002",
+          "DOMAIN-004",
+          "L1DIFF-001",
+          "COVUX-002",
+          "COLD-001",
+          "MWU-001",
+          "RISK-001"
+        ],
+        "frozen_holdout_and_v2_golden_unchanged": true
+      },
+      "anchors": [
+        "<!-- requirement: INVARIANTS -->",
+        "The frozen three-seed/eight-document version-3 holdout and version-2 golden remain unchanged."
+      ],
+      "depends_on": [],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "df62d0f58237fae2e123eff8f773ed64b599c12581c0987a19d1b569af5ccb10",
+      "numeric_tokens": [
+        "0.01",
+        "0.05",
+        "0.15",
+        "0.25",
+        "0.35",
+        "0.50",
+        "0.75",
+        "0.85",
+        "0.95",
+        "0.97",
+        "0.98",
+        "000",
+        "001",
+        "002",
+        "003",
+        "004",
+        "005",
+        "1",
+        "10",
+        "10%",
+        "121",
+        "128",
+        "150",
+        "16",
+        "180",
+        "19",
+        "2",
+        "20",
+        "25%",
+        "3",
+        "40",
+        "50",
+        "512",
+        "6",
+        "8",
+        "80",
+        "85%",
+        "9",
+        "90%",
+        "95%",
+        "98%"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "DIAG-TRACE",
+      "status": "active",
+      "section": [
+        "Failed-deck forensic diagnostics"
+      ],
+      "summary": "Record all runs and item-level missed occurrence mass, with exact denominators and provenance.",
+      "normative_payload": {
+        "contract": "Record all runs and item-level missed occurrence mass, with exact denominators and provenance.",
+        "role": "execution requirement; not canonical amendment",
+        "unit": "synthetic reader-document-scenario",
+        "formula": "1 - sum(w_j * 1[K_j=0 and j not in D]) / sum(w_j)",
+        "additive_groups": [
+          "answered vs unasked",
+          "answered evidence category"
+        ],
+        "overlapping_flags": [
+          "noise",
+          "item residual",
+          "idiosyncratic flip"
+        ],
+        "all_runs_summary": true,
+        "truth_product_export": false
+      },
+      "anchors": [
+        "<!-- requirement: DIAG-TRACE -->",
+        "realizedProjectedCoverage = 1 - missedMass / W"
+      ],
+      "depends_on": [
+        "SCOPE",
+        "EVIDENCE",
+        "INVARIANTS"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "3a197bac00b8f95fbe770acbd9772323dd99049a31611b70bb2f545899c456b6",
+      "numeric_tokens": [
+        "0",
+        "0.98",
+        "1",
+        "31%",
+        "61%",
+        "8%"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "DIAG-BANK",
+      "status": "active",
+      "section": [
+        "Independent predictive evaluation banks"
+      ],
+      "summary": "Freeze deck from bank A; independent deterministic replicated banks evaluate without tuning or mutation.",
+      "normative_payload": {
+        "contract": "Freeze deck from bank A; independent deterministic replicated banks evaluate without tuning or mutation.",
+        "role": "execution requirement; not canonical amendment",
+        "bank_A_samples": 512,
+        "bank_B_example_sizes": [
+          4096,
+          16384
+        ],
+        "sizes_status": "candidate diagnostics only; freeze run manifest",
+        "independent_replicates": true,
+        "deck_frozen_before_B": true,
+        "B_feedback_to_production": false,
+        "controls": [
+          "fixed independent decks",
+          "small enumeration",
+          "seed variation",
+          "same-manifest replay",
+          "biased fixture"
+        ],
+        "interpretation": "systematic discrepancy beyond variability; one truth miss is insufficient"
+      },
+      "anchors": [
+        "<!-- requirement: DIAG-BANK -->",
+        "Bank A remains the exact production 512-world bank used to construct the deck."
+      ],
+      "depends_on": [
+        "DIAG-TRACE",
+        "DIAG-PAIR"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "2bb526a3b73559450fe355f89e9c5e2216c4c2d131cebfda5c3bb8302e4fb17b",
+      "numeric_tokens": [
+        "0.98",
+        "05",
+        "096",
+        "16",
+        "384",
+        "4",
+        "512"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "DIAG-BUDGET",
+      "status": "active",
+      "section": [
+        "Stopping and posterior counterfactuals"
+      ],
+      "summary": "Matched budgets plus common-question/evidence replay; distinguish causal limits.",
+      "normative_payload": {
+        "contract": "Matched budgets plus common-question/evidence replay; distinguish causal limits.",
+        "role": "execution requirement; not canonical amendment",
+        "budget_ceiling": 80,
+        "comparisons": [
+          "natural stops",
+          "common feasible budget",
+          "cold-path common evidence replay",
+          "warm-path common evidence replay"
+        ],
+        "preserve": [
+          "production stop policy",
+          "exclusions",
+          "exhaustion",
+          "validation replay semantics"
+        ],
+        "unreachable_budget": "report rather than drop",
+        "causal_limit": "matched budget leaves selection confounding"
+      },
+      "anchors": [
+        "<!-- requirement: DIAG-BUDGET -->",
+        "Predeclare replay sequences from the natural cold path and natural warm path, and report both"
+      ],
+      "depends_on": [
+        "DIAG-TRACE",
+        "DIAG-PAIR"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "b6490625e3388f672f5b3a77942b7f2732279dd583a0439c57723b894304d217",
+      "numeric_tokens": [
+        "80"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "DIAG-PAIR",
+      "status": "active",
+      "section": [
+        "Diagnostic reproducibility and attribution"
+      ],
+      "summary": "Pair truth and response potential outcomes; precision, controls, independent oracles, failed/null retention.",
+      "normative_payload": {
+        "contract": "Pair truth and response potential outcomes; precision, controls, independent oracles, failed/null retention.",
+        "role": "execution requirement; not canonical amendment",
+        "streams": [
+          "document",
+          "residual",
+          "knowledge",
+          "response",
+          "history drift",
+          "A",
+          "B",
+          "success sampling"
+        ],
+        "response_key": [
+          "learner",
+          "document/session",
+          "lexical item",
+          "response occasion"
+        ],
+        "preserve_frozen_sequential_stream": true,
+        "interval_design": "declare synthetic method before run; human SAP separately approved",
+        "retain": [
+          "failed",
+          "null",
+          "interrupted"
+        ]
+      },
+      "anchors": [
+        "<!-- requirement: DIAG-PAIR -->",
+        "verify fingerprints for both truth and the response table, not truth alone."
+      ],
+      "depends_on": [],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "4cac8bb52116e95846097a27332d365f4acbc042cacc695cb1537fec3fa6bb32",
+      "numeric_tokens": [],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "WARM-HISTORY",
+      "status": "active",
+      "section": [
+        "Longitudinal warm-start simulation"
+      ],
+      "summary": "Run completed histories through real Core store and App contribution contract; no oracle prior injection.",
+      "normative_payload": {
+        "contract": "Run completed histories through real Core store and App contribution contract; no oracle prior injection.",
+        "role": "execution requirement; not canonical amendment",
+        "owner": "VocabularyReaderPriorStore.recordCompletedSession",
+        "db": "disposable per learner/variant; never shared personal DB",
+        "store_rule": "replace supplied completed posterior; increment counts; no alternate multiplication",
+        "clock": "fixed synthetic clock",
+        "counts": "real completions and verified evidence",
+        "checks": [
+          "reload",
+          "duplicate idempotency",
+          "failed write",
+          "incomplete session",
+          "language reset",
+          "stale contribution"
+        ]
+      },
+      "anchors": [
+        "<!-- requirement: WARM-HISTORY -->",
+        "The current store replaces its posterior with the supplied completed posterior and increments counters;"
+      ],
+      "depends_on": [
+        "DIAG-TRACE",
+        "INVARIANTS"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "5a0b6a7f6b6a77028e13064290af8308d32a63f498fa82585aa2cb9f82aecae4",
+      "numeric_tokens": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "WARM-STRESS",
+      "status": "active",
+      "section": [
+        "Warm-history scenarios and comparisons"
+      ],
+      "summary": "Stable, noisy, biased, easy/hard, shift, drift, overlap, eligibility and failure cases; retain oracle reference.",
+      "normative_payload": {
+        "contract": "Stable, noisy, biased, easy/hard, shift, drift, overlap, eligibility and failure cases; retain oracle reference.",
+        "role": "execution requirement; not canonical amendment",
+        "histories": [
+          "stable",
+          "noisy",
+          "directionally biased",
+          "easy dominated",
+          "hard dominated",
+          "domain/difficulty shift",
+          "ability drift",
+          "lexical overlap",
+          "little overlap"
+        ],
+        "oracle_reference": "retained; not upper bound",
+        "production_drift_enabled": false,
+        "eligibility_edge_cases": [
+          "insufficient sessions",
+          "low verified count",
+          "freshness",
+          "future time",
+          "language/version mismatch",
+          "reset",
+          "cancellation"
+        ]
+      },
+      "anchors": [
+        "<!-- requirement: WARM-STRESS -->",
+        "not a mathematical upper bound and not a realistic history simulation."
+      ],
+      "depends_on": [
+        "WARM-HISTORY",
+        "DIAG-BUDGET"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "6ed2647b533eb662534a720eee6f64e1851364340de5329fd1263e1d3c7dc967",
+      "numeric_tokens": [],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "STUDY-SAMPLE",
+      "status": "active",
+      "section": [
+        "Study sampling and sequence amendment"
+      ],
+      "summary": "Predetermine audit before assessment, preserve positive inclusion probabilities and census, assess pretest interference.",
+      "normative_payload": {
+        "contract": "Predetermine audit before assessment, preserve positive inclusion probabilities and census, assess pretest interference.",
+        "role": "execution requirement; not canonical amendment",
+        "canonical_id": "STUDY-002",
+        "amendment": "predetermined large-document audit; selected outcome inferred from audited selected items",
+        "small_document": "census",
+        "probability": "positive over target frame or predeclare restricted estimand",
+        "sequence": [
+          "consent/split",
+          "freeze audit",
+          "pre-reveal criterion",
+          "production assessment",
+          "freeze predictions/decks",
+          "learning/retests",
+          "SAP analysis"
+        ],
+        "no_post_reveal_topup": true,
+        "pretest_interference": "developmental comparison; no automatic noninterference claim"
+      },
+      "anchors": [
+        "<!-- requirement: STUDY-SAMPLE -->",
+        "every item in the target estimand"
+      ],
+      "depends_on": [
+        "AMENDMENTS"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "4bffa6ddeb0b32fd47485e3b3bdde6695c604ffe7fd71167ff1447c3d1c8d6db",
+      "numeric_tokens": [
+        "002",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "STUDY-RUBRIC",
+      "status": "active",
+      "section": [
+        "Meaning criterion and rater workflow"
+      ],
+      "summary": "Context-free multiple meanings, hidden target context for blinded raters, ambiguity handling and adjudication.",
+      "normative_payload": {
+        "contract": "Context-free multiple meanings, hidden target context for blinded raters, ambiguity handling and adjudication.",
+        "role": "execution requirement; not canonical amendment",
+        "prompt": "Write the meanings/translations you know for this word.",
+        "participant_context": false,
+        "rater_context": "restricted consented workspace",
+        "raters": 2,
+        "blind_to": [
+          "probability",
+          "deck",
+          "warm/cold",
+          "other initial score"
+        ],
+        "ambiguity": "separate study status, not production evidence",
+        "multiple_target_senses": "freeze item/occurrence rule or ambiguity",
+        "AI_ground_truth": false
+      },
+      "anchors": [
+        "<!-- requirement: STUDY-RUBRIC -->",
+        "Write the meanings/translations you know for this word."
+      ],
+      "depends_on": [
+        "AMENDMENTS"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "01b85e181555630b1731977b57e27bb3f283b3b6619092ed18db871454e80dbe",
+      "numeric_tokens": [],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "STUDY-PACKAGE",
+      "status": "active",
+      "section": [
+        "Relational consented study package"
+      ],
+      "summary": "Versioned relational package and privacy-preserving joins cover all endpoints without giant records.",
+      "normative_payload": {
+        "contract": "Versioned relational package and privacy-preserving joins cover all endpoints without giant records.",
+        "role": "execution requirement; not canonical amendment",
+        "tables": [
+          "StudyParticipant",
+          "StudyDocument",
+          "StudyAssessment",
+          "StudyItemPrediction",
+          "StudyCriterionRecord",
+          "StudyQuestionTrace",
+          "StudyDeckSnapshot",
+          "sampling/retest manifests"
+        ],
+        "join": [
+          "participantPseudonym",
+          "opaqueStudyDocumentID",
+          "assessmentID",
+          "lexicalItemID",
+          "snapshot/phase IDs"
+        ],
+        "full_unasked_predictions": true,
+        "deck_owner": "identified immutable snapshot",
+        "privacy": "raw context/responses separated from minimized analysis; no ordinary export widening",
+        "compatibility": "version or explicit migration error"
+      },
+      "anchors": [
+        "<!-- requirement: STUDY-PACKAGE -->",
+        "finalKnownProbability for every assessable item including unasked items"
+      ],
+      "depends_on": [
+        "STUDY-SAMPLE",
+        "STUDY-RUBRIC"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "9612b2937032ff4a3252a39daa7abe763273176617495ab82f354f478f21e21c",
+      "numeric_tokens": [],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "STUDY-REHEARSAL",
+      "status": "active",
+      "section": [
+        "End-to-end study rehearsal"
+      ],
+      "summary": "Fabricated census and sampled data reproduce proposed endpoints and detect negative controls; no confirmatory claims.",
+      "normative_payload": {
+        "contract": "Fabricated census and sampled data reproduce proposed endpoints and detect negative controls; no confirmatory claims.",
+        "role": "execution requirement; not canonical amendment",
+        "data": "fabricated census and sample with immediate/delayed phases",
+        "oracle": "independent hand/reference values",
+        "metrics": [
+          "Brier",
+          "log loss",
+          "ECE/diagram",
+          "slope/intercept",
+          "precision",
+          "occurrence recall",
+          "coverage/miss",
+          "burden",
+          "warm non-inferiority",
+          "raters",
+          "DIF/subgroups",
+          "retention"
+        ],
+        "estimators": "provisional until SAP; rerun after approval",
+        "sampled_miss_event": "not plug-in threshold or lower-bound threshold by default",
+        "gaps": "block confirmation, not hide"
+      },
+      "anchors": [
+        "<!-- requirement: STUDY-REHEARSAL -->",
+        "the event “actual coverage below 98%” is not the same as a plug-in coverage estimate below 98%"
+      ],
+      "depends_on": [
+        "STUDY-PACKAGE"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "50901d6238956071b49346e6cc5f20dfb7f99fd593895be468cda79256c61702",
+      "numeric_tokens": [
+        "98%"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "STUDY-SAP",
+      "status": "active",
+      "section": [
+        "SAP precision and endpoint decisions"
+      ],
+      "summary": "Freeze estimator, variance, missingness, clustering, power/precision, theta decision and sample support before confirmation.",
+      "normative_payload": {
+        "contract": "Freeze estimator, variance, missingness, clustering, power/precision, theta decision and sample support before confirmation.",
+        "role": "execution requirement; not canonical amendment",
+        "freeze_before": [
+          "confirmatory collection",
+          "confirmatory outcome inspection"
+        ],
+        "choices": [
+          "estimands",
+          "weights",
+          "participant/document clustering",
+          "variance",
+          "missingness",
+          "multiplicity",
+          "analysis populations",
+          "numerical gates",
+          "sample size and precision"
+        ],
+        "theta_preference": "synthetic only unless justified independent reference; explicit amendment required",
+        "developmental_humans": "allowed with consent and predeclared developmental identity; never promote to holdout"
+      },
+      "anchors": [
+        "<!-- requirement: STUDY-SAP -->",
+        "SAP, protocol, scoring rules, analysis code/configuration, outcome gates and analysis populations must be reviewed/frozen before confirmatory data collection and inspection."
+      ],
+      "depends_on": [
+        "STUDY-REHEARSAL"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "a628183b2d8f3e0e0c5df5f2f1aef4be32ffbc7540fd3d5805f0fe81a2734d59",
+      "numeric_tokens": [
+        "002"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "STUDY-VALUE",
+      "status": "active",
+      "section": [
+        "Human comparison and learning outcomes"
+      ],
+      "summary": "Separate model projection, verified learning, retention and equal-time simple baselines; developmental pilot allowed.",
+      "normative_payload": {
+        "contract": "Separate model projection, verified learning, retention and equal-time simple baselines; developmental pilot allowed.",
+        "role": "execution requirement; not canonical amendment",
+        "baselines": [
+          "frequency threshold",
+          "all unranked",
+          "frequency-only/generic Rasch",
+          "warm Rasch",
+          "gated empirical items"
+        ],
+        "time": "equal total preparation plus natural-use comparison",
+        "outcomes": [
+          "projected mastery assumption",
+          "verified immediate learning",
+          "delayed retention"
+        ],
+        "comprehension": "separate exploratory",
+        "no_test_audit": "self-report only, no prior training"
+      },
+      "anchors": [
+        "<!-- requirement: STUDY-VALUE -->",
+        "equal total preparation-time budget, counting assessment, lookup/reading, review and residual waiting."
+      ],
+      "depends_on": [
+        "STUDY-SAP"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "f501dcba5db5cd6dccf6b7b56da82715af02ed0de40799372d95057a5c063595",
+      "numeric_tokens": [],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "CALIBRATION",
+      "status": "active",
+      "section": [
+        "Calibration assignment approval package"
+      ],
+      "summary": "Keep slots disabled; rate, bins, assignment reconstruction, export schema and independent item support require frozen approval.",
+      "normative_payload": {
+        "contract": "Keep slots disabled; rate, bins, assignment reconstruction, export schema and independent item support require frozen approval.",
+        "role": "execution requirement; not canonical amendment",
+        "rate_range": [
+          0.05,
+          0.1
+        ],
+        "disabled_until": "separate policy/bin/rate/schema approval",
+        "minimum_fields": [
+          "questionOrdinal",
+          "selectionType",
+          "predictedKnownBeforeAnswer",
+          "thetaBinBeforeAnswer"
+        ],
+        "separate_probabilities": [
+          "calibration assignment",
+          "criterion sampling"
+        ],
+        "pack": {
+          "independent_learners_min": 100,
+          "SE_max": 0.35,
+          "reviewed": true
+        },
+        "twoPL_log_loss_gain_min": 0.01,
+        "independent_support_feasibility": true
+      },
+      "anchors": [
+        "<!-- requirement: CALIBRATION -->",
+        "rate within the canonical 5–10% of scored questions"
+      ],
+      "depends_on": [
+        "AMENDMENTS"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "74bb2b13abf9714abf4aa3a78b593507440d9d9111617f5bd6634a486b1474a8",
+      "numeric_tokens": [
+        "0.01",
+        "0.35",
+        "001",
+        "10%",
+        "100",
+        "2",
+        "5",
+        "80"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "POS-FIXTURES",
+      "status": "active",
+      "section": [
+        "Licensed POS fixtures and annotation mapping"
+      ],
+      "summary": "Pinned EN/DE UD, mapping, morphology, provenance, genre, reviewed adversarial subset, OS metadata.",
+      "normative_payload": {
+        "contract": "Pinned EN/DE UD, mapping, morphology, provenance, genre, reviewed adversarial subset, OS metadata.",
+        "role": "execution requirement; not canonical amendment",
+        "languages": [
+          "en",
+          "de"
+        ],
+        "source": "licensed pinned UD with provenance",
+        "mapping": [
+          "AUX/VERB",
+          "PROPN/NOUN",
+          "conjunction",
+          "morphological participles",
+          "token alignment"
+        ],
+        "production_thresholds": [
+          0.65,
+          0.2
+        ],
+        "heldout_tuning": false,
+        "GSD": "usable; distinguish automated lemma provenance from POS gold"
+      },
+      "anchors": [
+        "<!-- requirement: POS-FIXTURES -->",
+        "Retain the production 0.65 leading-probability and 0.20 margin thresholds while evaluating."
+      ],
+      "depends_on": [],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "ab0ea5831a235a7556c57d3dd63db845b54ca09d0a14a0dd468537603da5ad2c",
+      "numeric_tokens": [
+        "0.20",
+        "0.65",
+        "16"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "POS-IMPACT",
+      "status": "active",
+      "section": [
+        "POS to inventory to deck validation"
+      ],
+      "summary": "Raw tags, reconciled lexical identity and consequence-weighted impact including exclusions and cross-format effects.",
+      "normative_payload": {
+        "contract": "Raw tags, reconciled lexical identity and consequence-weighted impact including exclusions and cross-format effects.",
+        "role": "execution requirement; not canonical amendment",
+        "layers": [
+          "raw token",
+          "reconciled lemma POS",
+          "occurrence/deck consequences"
+        ],
+        "errors": [
+          "noun verb",
+          "adjective participle",
+          "split merge",
+          "exclusion denominator"
+        ],
+        "fallback_reconciliation": "test unknown absorbed into single confident class",
+        "preserve": [
+          "wildcard migration",
+          "nil senseKey",
+          "PDF Web seams"
+        ]
+      },
+      "anchors": [
+        "<!-- requirement: POS-IMPACT -->",
+        "Evaluate three successive boundaries"
+      ],
+      "depends_on": [
+        "POS-FIXTURES"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "dca10494fd7a4cee7c812387f93054f92601c2ea8805884fc757f791263728e2",
+      "numeric_tokens": [
+        "1",
+        "10%",
+        "2",
+        "3"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "UX-TIMING",
+      "status": "active",
+      "section": [
+        "Usable-question latency instrumentation"
+      ],
+      "summary": "Four user-perceived spans, p50/p95/p99, enabled-state semantics, cancellation and privacy-safe local measurements.",
+      "normative_payload": {
+        "contract": "Four user-perceived spans, p50/p95/p99, enabled-state semantics, cancellation and privacy-safe local measurements.",
+        "role": "execution requirement; not canonical amendment",
+        "spans": [
+          "answerTap -> learningContentVisible",
+          "continueTap -> nextWordVisible",
+          "continueTap -> nextWordAnswerable",
+          "knownVerificationTap -> nextWordAnswerable"
+        ],
+        "percentiles": [
+          50,
+          95,
+          99
+        ],
+        "also": [
+          "raw samples",
+          "count",
+          "maximum",
+          "cancelled/terminal outcomes",
+          "overhead"
+        ],
+        "endpoint": "actual visible and enabled UI, not state assignment",
+        "p99": "support caveat; not new gate",
+        "privacy": "local bounded aggregate no automatic transmission"
+      },
+      "anchors": [
+        "<!-- requirement: UX-TIMING -->",
+        "answerTap -> learningContentVisible\ncontinueTap -> nextWordVisible\ncontinueTap -> nextWordAnswerable\nknownVerificationTap -> nextWordAnswerable"
+      ],
+      "depends_on": [
+        "INVARIANTS"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "b372e4145a3d04057e79d50aa20245e925e0def9b0f7e8aa23b47147f8ce68f6",
+      "numeric_tokens": [
+        "150",
+        "16",
+        "30"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "GUI-FIXTURES",
+      "status": "active",
+      "section": [
+        "Cross-format fixture and real-app matrix"
+      ],
+      "summary": "Reproducible texts complement private EN/DE PDF EPUB DOCX; retain 16 ms and document-open control gates.",
+      "normative_payload": {
+        "contract": "Reproducible texts complement private EN/DE PDF EPUB DOCX; retain 16 ms and document-open control gates.",
+        "role": "execution requirement; not canonical amendment",
+        "matrix": [
+          "en PDF",
+          "en EPUB",
+          "en DOCX",
+          "de PDF",
+          "de EPUB",
+          "de DOCX"
+        ],
+        "shared_text": "supplement; same content is not independent study document",
+        "private_matrix": "still required",
+        "prerequisites": [
+          "logged in",
+          "Accessibility",
+          "private manifest",
+          "explicit opt-in"
+        ],
+        "dictionary": "injected German offline",
+        "all_repetitions": true
+      },
+      "anchors": [
+        "<!-- requirement: GUI-FIXTURES -->",
+        "control + max(10%, 50 ms) tolerance and main-thread p95 ≤ 16 ms."
+      ],
+      "depends_on": [
+        "UX-TIMING"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "ee3b2439b08b4854fb97d2b6ce9038e8ae5fa08e32810548308f8a29316491e6",
+      "numeric_tokens": [
+        "10%",
+        "16",
+        "3",
+        "50"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "STATUS",
+      "status": "active",
+      "section": [
+        "Evidence register and documentation reconciliation"
+      ],
+      "summary": "Derived requirement/artifact/source/gate view, historical failures retained, PR refresh complete, no extra canonical roadmap.",
+      "normative_payload": {
+        "contract": "Derived requirement/artifact/source/gate view, historical failures retained, PR refresh complete, no extra canonical roadmap.",
+        "role": "execution requirement; not canonical amendment",
+        "view": "derived, not authoritative roadmap",
+        "fields": [
+          "requirement",
+          "prerequisite",
+          "owner",
+          "source/configuration",
+          "artifact/hash",
+          "command/environment",
+          "gate",
+          "class",
+          "status",
+          "decision"
+        ],
+        "retain": [
+          "adverse/null evidence",
+          "v2 golden",
+          "v3 holdout"
+        ],
+        "PR9": "complete per user"
+      },
+      "anchors": [
+        "<!-- requirement: STATUS -->",
+        "canonical ledger's role or counts."
+      ],
+      "depends_on": [],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "f3913ef5d791a75a655bc7c52a3edffec1c389c8f1fddf3f0a060d8f2ed59d50",
+      "numeric_tokens": [
+        "2",
+        "3",
+        "9"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "AMENDMENTS",
+      "status": "active",
+      "section": [
+        "Decisions and amendment boundary"
+      ],
+      "summary": "Explicit study sampling and theta deltas; operationalize rubric/schema and defer statistical choices to SAP.",
+      "normative_payload": {
+        "contract": "Explicit study sampling and theta deltas; operationalize rubric/schema and defer statistical choices to SAP.",
+        "role": "execution requirement; not canonical amendment",
+        "explicit": [
+          "STUDY-002 sampling",
+          "STUDY-002 human theta"
+        ],
+        "separate_freezes": [
+          "rubric/consent",
+          "package schema",
+          "SAP",
+          "slot policy",
+          "run manifest",
+          "new POS/usability criteria"
+        ],
+        "current_task": "write plan only",
+        "ordinary_reversible_diagnostics": "no invented permission gate"
+      },
+      "anchors": [
+        "<!-- requirement: AMENDMENTS -->",
+        "Explicit endpoint amendment and SAP review; preserve the existing requirement until that decision is recorded"
+      ],
+      "depends_on": [],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "8dbf40c40e80273ca80b16b034adb9712d0d8366f061da5c72a0737ecc3f66bc",
+      "numeric_tokens": [
+        "002",
+        "10%",
+        "5"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "ORDER",
+      "status": "active",
+      "section": [
+        "Delivery sequence and ownership"
+      ],
+      "summary": "Dependency-ordered independently testable slices, bounded parallel work, ownership and resources.",
+      "normative_payload": {
+        "contract": "Dependency-ordered independently testable slices, bounded parallel work, ownership and resources.",
+        "role": "execution requirement; not canonical amendment",
+        "priority": [
+          "forensic diagnostics",
+          "longitudinal warm",
+          "fabricated rehearsal",
+          "SAP decisions",
+          "POS",
+          "answerable instrumentation",
+          "evidence reconciliation",
+          "candidate/final acceptance"
+        ],
+        "parallel_allowed": [
+          "POS fixtures",
+          "study groundwork",
+          "GUI prerequisite preparation"
+        ],
+        "roles_not_named_staff": true
+      },
+      "anchors": [
+        "<!-- requirement: ORDER -->",
+        "Start with forensic diagnostics, then longitudinal warm simulation;"
+      ],
+      "depends_on": [],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "5be727a47cc40af09b9fa6e24c2aba9d6a927b2bd5b520dba7376c42fa023dc8",
+      "numeric_tokens": [],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "VERIFY",
+      "status": "active",
+      "section": [
+        "Verification and final acceptance"
+      ],
+      "summary": "Narrow tests, strict Swift 6 warnings errors, final tree checks/build/matrix, candidate freeze, no holdout tuning.",
+      "normative_payload": {
+        "contract": "Narrow tests, strict Swift 6 warnings errors, final tree checks/build/matrix, candidate freeze, no holdout tuning.",
+        "role": "execution requirement; not canonical amendment",
+        "narrow_tests_first": true,
+        "final": [
+          "frozen candidate",
+          "development checks",
+          "unchanged holdout",
+          "Release benchmarks",
+          "private GUI/control",
+          "check.sh --no-build",
+          "build_app.sh",
+          "required human evidence"
+        ],
+        "strict": "Swift 6 warnings errors",
+        "holdout": "not a tuning loop",
+        "invalidate": "relevant evidence after source/configuration change"
+      },
+      "anchors": [
+        "<!-- requirement: VERIFY -->",
+        "Run the complete evaluator and the frozen release holdout only after candidate freeze"
+      ],
+      "depends_on": [
+        "ORDER",
+        "STATUS",
+        "INVARIANTS"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "30d8216769a1193c0e9f8f4a2e1224b8e1da94a69568d9446864d8c2ed931083",
+      "numeric_tokens": [
+        "1",
+        "150",
+        "16",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "9"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    },
+    {
+      "id": "HANDOFF",
+      "status": "active",
+      "section": [
+        "Deliverables and completion checklist"
+      ],
+      "summary": "Per-slice artifacts, evidence completeness vs product readiness, stop/failure rules and unresolved owner decisions.",
+      "normative_payload": {
+        "contract": "Per-slice artifacts, evidence completeness vs product readiness, stop/failure rules and unresolved owner decisions.",
+        "role": "execution requirement; not canonical amendment",
+        "distinguish": [
+          "tooling complete",
+          "data collection ready",
+          "release accepted"
+        ],
+        "outputs": [
+          "behavior",
+          "ownership",
+          "commands/evidence",
+          "performance if measured",
+          "uncertainty/limits",
+          "next decision"
+        ],
+        "open_decisions": "explicit freeze procedures rather than invented thresholds"
+      },
+      "anchors": [
+        "<!-- requirement: HANDOFF -->",
+        "“Diagnostic tooling complete” does not mean “coverage failure fixed.”"
+      ],
+      "depends_on": [
+        "VERIFY"
+      ],
+      "dependency_semantics": "Design/data prerequisite; proposal and fabricated work may precede approval as stated in plan. This does not force human confirmation before developmental work.",
+      "section_sha256": "9adedf481717763581f7fbe1a2a0d5ec9fd3448f080cae64dd3a1abe3f294285",
+      "numeric_tokens": [
+        "12",
+        "42"
+      ],
+      "versioned_tokens": [],
+      "exact_contract_provenance": {
+        "canonical": "Unchanged numerical model/gate conditions from hash-locked canonical roadmap.",
+        "review_feedback": "User supplied independent-bank candidate sizes, four timing spans, scenario families, amended sampling preference and human-theta alternatives.",
+        "source_evidence": "Cited retained measurements and inspected production interfaces, eligibility and store behavior.",
+        "editorial": "Dates, path components, local IDs, list ordering and illustrative A/B/C/D labels are not empirical thresholds.",
+        "unresolved_values": "Experiment/SAP/POS/usability values not supplied remain explicit pre-outcome freeze procedures."
+      }
+    }
+  ]
+}

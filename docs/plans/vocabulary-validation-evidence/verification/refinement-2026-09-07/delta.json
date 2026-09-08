@@ -1,0 +1,300 @@
+{
+  "schema_version": 1,
+  "base_sha256": "643159fae7c981d6efab48cc0f48a2d6d176f215cd7298ee4221735976e80d15",
+  "scope": "Closed-world seven-item bounded refinement. F01-F05 are the five requested refinements; F06 sampling diagnostics; F07 execution boundary and latest stop-before-code instruction. All unmentioned text/contracts NO_CHANGE.",
+  "changes": [
+    {
+      "feedback_id": "F01",
+      "operation": "AMEND",
+      "requirement_ids": [
+        "DIAG-BANK",
+        "DIAG-PAIR",
+        "AMENDMENTS",
+        "ORDER",
+        "HANDOFF"
+      ],
+      "payload_source": "User bounded-refinement request; F07 additionally latest user stop-before-code instruction, recorded in feedback.md.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Independent predictive evaluation banks"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Diagnostic reproducibility and attribution"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Decisions and amendment boundary"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Delivery sequence and ownership"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Deliverables and completion checklist"
+        ]
+      ],
+      "required_literals": [
+        "**B1:** use the same deterministic theta strata/posterior positions as production A",
+        "**B2:** use independently randomized or shifted stratified posterior positions"
+      ],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": [
+        "2"
+      ],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Distinguish unchanged production A, B1 with identical deterministic theta strata and independent latent-item draws, and B2 with independent randomized/shifted stratified posterior positions and latent-item draws.",
+      "semantic_operation": "AMEND"
+    },
+    {
+      "feedback_id": "F02",
+      "operation": "AMEND",
+      "requirement_ids": [
+        "DIAG-PAIR",
+        "AMENDMENTS",
+        "VERIFY",
+        "HANDOFF"
+      ],
+      "payload_source": "User bounded-refinement request; F07 additionally latest user stop-before-code instruction, recorded in feedback.md.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Diagnostic reproducibility and attribution"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Decisions and amendment boundary"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Verification and final acceptance"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Deliverables and completion checklist"
+        ]
+      ],
+      "required_literals": [
+        "a fresh **development-confirmation** seed/document set",
+        "Use this intermediate set before any release-holdout access."
+      ],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": [
+        "2"
+      ],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Add fresh development-confirmation seeds/documents between iterative diagnostic development and the frozen release holdout; freeze before access and do not reuse consumed outcomes for iterative design.",
+      "semantic_operation": "ADD"
+    },
+    {
+      "feedback_id": "F03",
+      "operation": "AMEND",
+      "requirement_ids": [
+        "STUDY-SAMPLE",
+        "STUDY-REHEARSAL",
+        "STUDY-SAP",
+        "AMENDMENTS",
+        "VERIFY",
+        "HANDOFF"
+      ],
+      "payload_source": "User bounded-refinement request; F07 additionally latest user stop-before-code instruction, recorded in feedback.md.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Study sampling and sequence amendment"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "End-to-end study rehearsal"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "SAP precision and endpoint decisions"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Decisions and amendment boundary"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Verification and final acceptance"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Deliverables and completion checklist"
+        ]
+      ],
+      "required_literals": [
+        "**Pretest interference is an explicit blocking decision for confirmatory human collection:**"
+      ],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": [],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Make pretest interference a blocking confirmatory-collection decision resolved by evidence or a design explicitly accounting for interference; allow developmental measurement.",
+      "semantic_operation": "AMEND"
+    },
+    {
+      "feedback_id": "F04",
+      "operation": "AMEND",
+      "requirement_ids": [
+        "STUDY-RUBRIC",
+        "AMENDMENTS",
+        "VERIFY",
+        "HANDOFF"
+      ],
+      "payload_source": "User bounded-refinement request; F07 additionally latest user stop-before-code instruction, recorded in feedback.md.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Meaning criterion and rater workflow"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Decisions and amendment boundary"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Verification and final acceptance"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Deliverables and completion checklist"
+        ]
+      ],
+      "required_literals": [
+        "There is no feasibility exception."
+      ],
+      "forbidden_literals": [
+        "where feasible"
+      ],
+      "allowed_new_numeric_tokens": [],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Freeze confirmatory target-sense/context mapping and scoring rubric before inspecting confirmatory responses/model outcomes, without feasibility exception.",
+      "semantic_operation": "AMEND"
+    },
+    {
+      "feedback_id": "F05",
+      "operation": "AMEND",
+      "requirement_ids": [
+        "STUDY-VALUE",
+        "AMENDMENTS",
+        "ORDER",
+        "VERIFY",
+        "HANDOFF"
+      ],
+      "payload_source": "User bounded-refinement request; F07 additionally latest user stop-before-code instruction, recorded in feedback.md.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Human comparison and learning outcomes"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Decisions and amendment boundary"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Delivery sequence and ownership"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Verification and final acceptance"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Deliverables and completion checklist"
+        ]
+      ],
+      "required_literals": [
+        "Separate the **core human validity study** from the **broader equal-total-preparation-time product-value comparison**."
+      ],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": [],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Separate core human validity from the broader equal-total-preparation-time comparison; only a specific authoritative prerequisite may make the broader comparison block core validity.",
+      "semantic_operation": "AMEND"
+    },
+    {
+      "feedback_id": "F06",
+      "operation": "AMEND",
+      "requirement_ids": [
+        "STUDY-SAMPLE",
+        "STUDY-REHEARSAL",
+        "STUDY-SAP",
+        "AMENDMENTS",
+        "HANDOFF"
+      ],
+      "payload_source": "User bounded-refinement request; F07 additionally latest user stop-before-code instruction, recorded in feedback.md.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Study sampling and sequence amendment"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "End-to-end study rehearsal"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "SAP precision and endpoint decisions"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Decisions and amendment boundary"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Deliverables and completion checklist"
+        ]
+      ],
+      "required_literals": [
+        "This plan supplies no numerical thresholds, trimming rules or estimator defaults for them."
+      ],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": [],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Add sampling-design diagnostics for minimum inclusion probability, maximum design weight, effective sample size and expected selected-card/final-tail support; no numerical thresholds.",
+      "semantic_operation": "ADD"
+    },
+    {
+      "feedback_id": "F07",
+      "operation": "AMEND",
+      "requirement_ids": [
+        "SCOPE",
+        "AMENDMENTS",
+        "ORDER",
+        "HANDOFF"
+      ],
+      "payload_source": "User bounded-refinement request; F07 additionally latest user stop-before-code instruction, recorded in feedback.md.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Authority and scope"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Decisions and amendment boundary"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Delivery sequence and ownership"
+        ],
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Deliverables and completion checklist"
+        ]
+      ],
+      "required_literals": [
+        "The latest user instruction stops this task before code changes.",
+        "A recommendation is not permission to begin that slice."
+      ],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": [],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Record first future milestone scope, direct counterfactual dependencies, exclusions and review checkpoint. Latest user instruction stops current task before code: documentation and handoff only.",
+      "semantic_operation": "AMEND"
+    }
+  ]
+}
