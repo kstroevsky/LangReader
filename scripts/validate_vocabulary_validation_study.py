@@ -7,6 +7,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from validate_vocabulary_validation_study_v2 import self_test_v2, validate_dataset_v2
 
 SCHEMA_VERSION = 1
 TOP_LEVEL_FIELDS = {
@@ -64,6 +65,8 @@ def nonempty_string(value, location: str) -> str:
 
 
 def validate_dataset(payload: dict) -> dict:
+    if isinstance(payload, dict) and payload.get("schemaVersion") == 2:
+        return validate_dataset_v2(payload)
     if not isinstance(payload, dict):
         raise ValueError("dataset: expected object")
     reject_forbidden_fields(payload)
@@ -231,6 +234,9 @@ def self_test() -> None:
         raise AssertionError("participant split leakage was accepted")
     except ValueError as error:
         assert "participant appears in multiple" in str(error)
+    fixture = Path(__file__).parent / "fixtures" / "vocabulary-validation-study-v2-valid.json"
+    if fixture.exists():
+        self_test_v2(json.loads(fixture.read_text(encoding="utf-8")))
     print("vocabulary validation-study dataset self-test passed")
 
 
@@ -252,6 +258,8 @@ def main() -> int:
         payload = json.loads(path.read_text(encoding="utf-8"))
         summary = validate_dataset(payload)
         summaries.append({"path": str(path), **summary})
+        if payload.get("schemaVersion") == 2:
+            continue
         for record in payload["records"]:
             participant = record["participantPseudonym"].strip()
             document = record["opaqueStudyDocumentID"].strip()
