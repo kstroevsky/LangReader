@@ -424,6 +424,58 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         XCTAssertEqual(researchStore.recordedSessionCount, 0)
     }
 
+    func testFailedPriorContributionRetriesFromRestoredCompletedAssessment() async throws {
+        let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: .pdf)
+        let sessionStore = VocabularyPreparationSessionStore(documentID: source.identity.documentID)
+        defer { sessionStore.clear() }
+        let store = FakeVocabularyReaderPriorStore(failuresRemaining: 1)
+        let coordinator = VocabularyPreparationCoordinator(
+            documentSource: source,
+            library: FakeVocabularyPreparationLibrary(),
+            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            readerPriorStore: store,
+            researchEvidenceStore: FakeVocabularyResearchEvidenceStore()
+        )
+        coordinator.resetForCurrentDocument()
+        coordinator.startAnalysis()
+        try await waitUntil { coordinator.phase == .inventory }
+        try await answerEveryAvailableQuestionUnknown(in: coordinator)
+        try await waitUntil { store.recordAttemptCount == 1 }
+        XCTAssertNil(store.load(languageCode: "en"))
+        XCTAssertNotEqual(sessionStore.load()?.readerPriorContributionRecorded, true)
+
+        coordinator.beginAssessment()
+        try await waitUntil { store.recordAttemptCount == 2 }
+        try await waitUntil { sessionStore.load()?.readerPriorContributionRecorded == true }
+        XCTAssertEqual(store.load(languageCode: "en")?.completedSessionCount, 1)
+    }
+
+    func testStaleContributionCompletionRetriesIdempotentlyForCurrentRequest() async throws {
+        let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: .pdf)
+        let sessionStore = VocabularyPreparationSessionStore(documentID: source.identity.documentID)
+        defer { sessionStore.clear() }
+        let store = FakeVocabularyReaderPriorStore(delaySeconds: 0.15)
+        let coordinator = VocabularyPreparationCoordinator(
+            documentSource: source,
+            library: FakeVocabularyPreparationLibrary(),
+            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            readerPriorStore: store,
+            researchEvidenceStore: FakeVocabularyResearchEvidenceStore()
+        )
+        coordinator.resetForCurrentDocument()
+        coordinator.startAnalysis()
+        try await waitUntil { coordinator.phase == .inventory }
+        try await answerEveryAvailableQuestionUnknown(in: coordinator)
+        coordinator.cancel()
+        try await waitUntil { store.load(languageCode: "en")?.completedSessionCount == 1 }
+        XCTAssertNotEqual(sessionStore.load()?.readerPriorContributionRecorded, true)
+
+        coordinator.beginAssessment()
+        try await waitUntil { store.recordAttemptCount == 2 }
+        try await waitUntil { sessionStore.load()?.readerPriorContributionRecorded == true }
+        XCTAssertEqual(store.load(languageCode: "en")?.completedSessionCount, 1)
+    }
+
     private func answerEveryAvailableQuestionUnknown(
         in coordinator: VocabularyPreparationCoordinator
     ) async throws {
@@ -547,6 +599,16 @@ private final class FakeVocabularyReaderPriorStore: VocabularyReaderPriorStoring
     private let lock = NSLock()
     private var values: [String: VocabularyReaderPrior] = [:]
     private var contributions = Set<String>()
+    private var failuresRemaining: Int
+    private let delaySeconds: TimeInterval
+    private var _recordAttemptCount = 0
+
+    var recordAttemptCount: Int { lock.withLock { _recordAttemptCount } }
+
+    init(failuresRemaining: Int = 0, delaySeconds: TimeInterval = 0) {
+        self.failuresRemaining = failuresRemaining
+        self.delaySeconds = delaySeconds
+    }
 
     func load(languageCode: String) -> VocabularyReaderPrior? {
         lock.withLock { values[languageCode] }
@@ -573,6 +635,14 @@ private final class FakeVocabularyReaderPriorStore: VocabularyReaderPriorStoring
         completedAt: Date,
         algorithmVersion: Int
     ) -> Bool {
+        if delaySeconds > 0 { Thread.sleep(forTimeInterval: delaySeconds) }
+        let shouldFail = lock.withLock { () -> Bool in
+            _recordAttemptCount += 1
+            guard failuresRemaining > 0 else { return false }
+            failuresRemaining -= 1
+            return true
+        }
+        if shouldFail { return false }
         lock.withLock {
             guard contributions.insert(contributionID).inserted else { return }
             let existing = values[languageCode]

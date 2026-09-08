@@ -55,4 +55,22 @@ cmp "$TEMP_DIR/causal.md" "$TEMP_DIR/causal-repeat.md"
 python3 "$ROOT_DIR/scripts/validate_vocabulary_causal_diagnostic_report.py" "$TEMP_DIR/causal.json" >/dev/null
 python3 "$ROOT_DIR/scripts/validate_vocabulary_causal_diagnostic_report.py" \
   "$TEMP_DIR/causal.json" --self-test >/dev/null
+"$ROOT_DIR/scripts/evaluate_vocabulary_assessment.sh" --longitudinal-self-test >/dev/null
+for run in longitudinal-first longitudinal-second; do
+  "$ROOT_DIR/scripts/evaluate_vocabulary_assessment.sh" \
+    --seed 7 \
+    --readers 1 \
+    --lemmas 20 \
+    --no-gate \
+    --json "$TEMP_DIR/$run-standard.json" \
+    --markdown "$TEMP_DIR/$run-standard.md" \
+    --longitudinal-manifest "$ROOT_DIR/scripts/fixtures/vocabulary-longitudinal-diagnostic-manifest-v1.json" \
+    --longitudinal-json "$TEMP_DIR/$run.json" \
+    --longitudinal-markdown "$TEMP_DIR/$run.md" \
+    --longitudinal-timing "$TEMP_DIR/$run-timing.json" >/dev/null
+done
+cmp "$TEMP_DIR/longitudinal-first.json" "$TEMP_DIR/longitudinal-second.json"
+cmp "$TEMP_DIR/longitudinal-first.md" "$TEMP_DIR/longitudinal-second.md"
+python3 "$ROOT_DIR/scripts/validate_vocabulary_longitudinal_report.py" \
+  "$TEMP_DIR/longitudinal-first.json" --self-test >/dev/null
 echo "vocabulary assessment evaluator tests passed"

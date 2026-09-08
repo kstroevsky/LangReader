@@ -20,6 +20,7 @@ fi
 if [[ ! -x "$EXECUTABLE" ]] \
   || [[ "$ROOT_DIR/scripts/evaluate_vocabulary_assessment.swift" -nt "$EXECUTABLE" ]] \
   || [[ "$ROOT_DIR/scripts/vocabulary_assessment_causal_diagnostics.swift" -nt "$EXECUTABLE" ]] \
+  || [[ "$ROOT_DIR/scripts/vocabulary_assessment_longitudinal_diagnostics.swift" -nt "$EXECUTABLE" ]] \
   || [[ "$CORE_LIBRARY" -nt "$EXECUTABLE" ]]; then
   swiftc \
     -O \
@@ -32,6 +33,7 @@ if [[ ! -x "$EXECUTABLE" ]] \
     -lLeafReaderCore \
     "$ROOT_DIR/scripts/evaluate_vocabulary_assessment.swift" \
     "$ROOT_DIR/scripts/vocabulary_assessment_causal_diagnostics.swift" \
+    "$ROOT_DIR/scripts/vocabulary_assessment_longitudinal_diagnostics.swift" \
     -o "$EXECUTABLE"
 fi
 

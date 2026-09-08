@@ -653,6 +653,11 @@ private struct Arguments {
     var causalMarkdownPath: String?
     var causalTimingPath: String?
     var causalSelfTest = false
+    var longitudinalManifestPath: String?
+    var longitudinalJSONPath: String?
+    var longitudinalMarkdownPath: String?
+    var longitudinalTimingPath: String?
+    var longitudinalSelfTest = false
 
     init() {
         var iterator = CommandLine.arguments.dropFirst().makeIterator()
@@ -699,6 +704,11 @@ private struct Arguments {
             case "--causal-markdown": causalMarkdownPath = iterator.next()
             case "--causal-timing": causalTimingPath = iterator.next()
             case "--causal-self-test": causalSelfTest = true
+            case "--longitudinal-manifest": longitudinalManifestPath = iterator.next()
+            case "--longitudinal-json": longitudinalJSONPath = iterator.next()
+            case "--longitudinal-markdown": longitudinalMarkdownPath = iterator.next()
+            case "--longitudinal-timing": longitudinalTimingPath = iterator.next()
+            case "--longitudinal-self-test": longitudinalSelfTest = true
             default:
                 fputs("unknown argument: \(argument)\n", stderr)
                 exit(2)
@@ -802,6 +812,10 @@ private struct VocabularyAssessmentEvaluator {
         let arguments = Arguments()
         if arguments.causalSelfTest {
             try runVocabularyCausalDiagnosticSelfTest()
+            return
+        }
+        if arguments.longitudinalSelfTest {
+            try runVocabularyLongitudinalSelfTest()
             return
         }
         var generator = SeededGenerator(seed: arguments.seed)
@@ -942,6 +956,20 @@ private struct VocabularyAssessmentEvaluator {
                 jsonPath: causalJSONPath,
                 markdownPath: causalMarkdownPath,
                 timingPath: causalTimingPath
+            )
+        }
+        if let manifestPath = arguments.longitudinalManifestPath {
+            guard let longitudinalJSONPath = arguments.longitudinalJSONPath,
+                  let longitudinalMarkdownPath = arguments.longitudinalMarkdownPath,
+                  let longitudinalTimingPath = arguments.longitudinalTimingPath else {
+                fputs("longitudinal diagnostics require --longitudinal-json, --longitudinal-markdown, and --longitudinal-timing\n", stderr)
+                exit(2)
+            }
+            try runVocabularyLongitudinalDiagnostics(
+                manifestPath: manifestPath,
+                jsonPath: longitudinalJSONPath,
+                markdownPath: longitudinalMarkdownPath,
+                timingPath: longitudinalTimingPath
             )
         }
         if arguments.enforceGates && eligible && !passed { exit(1) }

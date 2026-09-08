@@ -120,4 +120,75 @@ final class VocabularyReaderPriorStoreXCTests: XCTestCase {
         XCTAssertGreaterThan(storedOnly[90], production[90])
         XCTAssertEqual(production[90], storedOnly[90] * 0.9 + generic[90] * 0.1, accuracy: 1e-12)
     }
+
+    func testFailedWriteCanRetryThroughReopenedIsolatedStoreWithoutDoubleCounting() throws {
+        let posterior = Array(repeating: 1.0 / 121.0, count: 121)
+        let unavailable = VocabularyReaderPriorStore(databaseURL: nil)
+        XCTAssertFalse(unavailable.recordCompletedSession(
+            contributionID: "retry-session",
+            languageCode: "en",
+            thetaPosterior: posterior,
+            verifiedEvidenceCount: 24,
+            completedAt: Date(timeIntervalSince1970: 100),
+            algorithmVersion: 3
+        ))
+
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("reader-prior-retry-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let databaseURL = directory.appendingPathComponent("isolated.sqlite3")
+        XCTAssertTrue(VocabularyReaderPriorStore(databaseURL: databaseURL).recordCompletedSession(
+            contributionID: "retry-session",
+            languageCode: "en",
+            thetaPosterior: posterior,
+            verifiedEvidenceCount: 24,
+            completedAt: Date(timeIntervalSince1970: 100),
+            algorithmVersion: 3
+        ))
+        XCTAssertTrue(VocabularyReaderPriorStore(databaseURL: databaseURL).recordCompletedSession(
+            contributionID: "retry-session",
+            languageCode: "en",
+            thetaPosterior: posterior,
+            verifiedEvidenceCount: 24,
+            completedAt: Date(timeIntervalSince1970: 100),
+            algorithmVersion: 3
+        ))
+
+        let reopened = try XCTUnwrap(
+            VocabularyReaderPriorStore(databaseURL: databaseURL).load(languageCode: "en")
+        )
+        XCTAssertEqual(reopened.completedSessionCount, 1)
+        XCTAssertEqual(reopened.verifiedEvidenceCount, 24)
+        XCTAssertTrue(zip(reopened.thetaPosterior, posterior).allSatisfy {
+            abs($0 - $1) < 1e-15
+        })
+    }
+
+    func testFutureTimestampAndIncompatibleVersionRemainIneligible() {
+        let now = Date(timeIntervalSince1970: 2_000_000_000)
+        let posterior = Array(repeating: 1.0 / 121.0, count: 121)
+        XCTAssertFalse(VocabularyReaderPrior(
+            languageCode: "en",
+            thetaPosterior: posterior,
+            completedSessionCount: 2,
+            verifiedEvidenceCount: 40,
+            lastUpdatedAt: now.addingTimeInterval(1),
+            algorithmVersion: 3
+        ).isEligible(at: now))
+        let incompatible = VocabularyReaderPrior(
+            languageCode: "en",
+            thetaPosterior: posterior,
+            completedSessionCount: 2,
+            verifiedEvidenceCount: 40,
+            lastUpdatedAt: now,
+            algorithmVersion: 2
+        )
+        XCTAssertTrue(incompatible.isEligible(at: now))
+        XCTAssertFalse(AdaptiveVocabularyAssessment(
+            inventory: DocumentVocabularyInventory(languageCode: "en", candidates: []),
+            mode: .targetCoverage(0.98),
+            readerPrior: incompatible,
+            currentDate: now
+        ).usedEligibleReaderPrior)
+    }
 }

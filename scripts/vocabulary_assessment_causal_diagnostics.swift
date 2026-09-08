@@ -1148,7 +1148,9 @@ private func buildReplayControls(
 
 private func sourceProvenance() throws -> CausalSourceProvenance {
     let revision = try checkedShellOutput("git rev-parse HEAD")
-    let status = try checkedShellOutput("git status --short --untracked-files=normal")
+    let status = try checkedShellOutput(
+        "git status --short --untracked-files=normal -- Sources Tests scripts Package.swift"
+    )
     var statusFingerprint = CausalFingerprint()
     statusFingerprint.mix(status)
     return CausalSourceProvenance(
@@ -1156,8 +1158,9 @@ private func sourceProvenance() throws -> CausalSourceProvenance {
         dirtyTree: !status.isEmpty,
         dirtyStatusFingerprint: statusFingerprint.hex,
         sourceContentFingerprint: try checkedShellOutput(
-            "git ls-files -co --exclude-standard -- Sources Tests scripts Package.swift "
-                + "| LC_ALL=C sort | while IFS= read -r file; do shasum -a 256 \"$file\"; done "
+            "{ git diff --binary -- Sources Tests scripts Package.swift; "
+                + "git ls-files --others --exclude-standard -- Sources Tests scripts Package.swift "
+                + "| LC_ALL=C sort | while IFS= read -r file; do shasum -a 256 \"$file\"; done; } "
                 + "| shasum -a 256 | awk '{print $1}'"
         ),
         swiftVersion: shellOutput("swift --version").split(separator: "\n").first.map(String.init) ?? "unknown",
