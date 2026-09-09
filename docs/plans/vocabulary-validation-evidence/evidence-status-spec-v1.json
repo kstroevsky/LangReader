@@ -1,0 +1,299 @@
+{
+  "schema_version": 1,
+  "candidate_revision": "848013f",
+  "canonical_ledger": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+  "retained_artifacts": [
+    {
+      "path": "docs/perf/vocabulary-assessment-quality-baseline.json",
+      "evidence_class": "version-2 synthetic golden",
+      "status": "retained_stale",
+      "interpretation": "Compatibility baseline only; not accepted as the version-3 golden."
+    },
+    {
+      "path": "docs/perf/vocabulary-assessment-holdout-v1.json",
+      "evidence_class": "version-3 frozen release holdout",
+      "status": "failed",
+      "interpretation": "All seeds and adverse coverage/warm results remain retained."
+    },
+    {
+      "path": "docs/perf/vocabulary-assessment-diagnostic-matrix-v1.json",
+      "evidence_class": "development synthetic diagnostic",
+      "status": "historically_measured",
+      "interpretation": "Sensitivity evidence only; small per-seed support is explicit."
+    },
+    {
+      "path": "docs/perf/vocabulary-assessment-benchmark-series.json",
+      "evidence_class": "full-path Release repetition series",
+      "status": "mixed_with_failure",
+      "interpretation": "All repetitions are retained, including warm p95 and post-build failures."
+    },
+    {
+      "path": "docs/perf/vocabulary-assessment-benchmark-staged-series.json",
+      "evidence_class": "staged Release repetition series",
+      "status": "timing_pass_quality_rejected",
+      "interpretation": "Passing ordinary next-card rows do not approve the rejected candidate."
+    },
+    {
+      "path": "docs/perf/vocabulary-assessment-holdout-staged-v1.json",
+      "evidence_class": "staged frozen release holdout",
+      "status": "failed",
+      "interpretation": "Quality degradation is retained and keeps staged stopping out of production."
+    },
+    {
+      "path": "docs/perf/vocabulary-question-objective-experiment-2026-09-07.md",
+      "evidence_class": "rejected selector experiments",
+      "status": "rejected",
+      "interpretation": "Remaining-unasked and latent-state alternatives remain accessible with their adverse results."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/diagnostic-development-report-v1.json",
+      "evidence_class": "causal diagnostic development run",
+      "status": "completed_with_failed_and_null_records",
+      "interpretation": "Detailed failed/null deck records and mass decompositions remain in the report."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/longitudinal-development-report-v1.json",
+      "evidence_class": "longitudinal prior development run",
+      "status": "completed_with_adverse_records",
+      "interpretation": "Cold/warm/fixed-budget/replay histories and unfavorable outcomes remain retained."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/vocabulary-pos-fixture-report-v1.json",
+      "evidence_class": "licensed POS fixture evaluation",
+      "status": "completed_with_adverse_records",
+      "interpretation": "Raw, abstained, reconciled, occurrence, and deck consequences remain retained."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-analysis-v1.json",
+      "evidence_class": "fabricated study rehearsal",
+      "status": "completed_not_human_evidence",
+      "interpretation": "Executable analysis and negative controls only; no human-validity claim."
+    }
+  ],
+  "groups": [
+    {
+      "name": "architecture-and-tests",
+      "ids": ["ARCH-001", "PRIV-001", "TEST-001", "TEST-002"],
+      "prerequisite": "No additional implementation prerequisite; empirical and release claims remain separately gated.",
+      "responsible_capability": "Core/App maintainers and verification owner",
+      "source_revision_configuration": "848013f; Swift 6 warnings-as-errors; macOS deterministic repository checks",
+      "artifact": "docs/perf/VOCABULARY_PREPARATION.md",
+      "command_environment": "./scripts/check.sh --no-build on the local macOS development host",
+      "gate": "Architecture, privacy, Core/App, native-boundary, and regression checks pass; no human-validity inference.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Repeat the full checks after any source change and preserve the no-upload/privacy contract.",
+      "decision_history": "Retained baseline architecture; current integrated candidate passed deterministic checks on 2026-09-09."
+    },
+    {
+      "name": "core-model",
+      "ids": ["EVID-001", "EVID-002", "EVID-003", "VALID-001", "DIFF-001", "COV-001"],
+      "prerequisite": "Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.",
+      "responsible_capability": "LeafReaderCore assessment/model owner",
+      "source_revision_configuration": "848013f; production full 512-sample coverage path and versioned observation contract",
+      "artifact": "docs/perf/VOCABULARY_PREPARATION.md",
+      "command_environment": "Swift Core/App tests plus evaluator and observation-model self-tests in ./scripts/check.sh --no-build",
+      "gate": "Deterministic mathematical and migration tests pass; real calibration remains absent.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Keep production defaults fixed while collecting independently consented criterion evidence.",
+      "decision_history": "Core ownership and cold-start assumptions retained; diagnostic work did not alter production defaults."
+    },
+    {
+      "name": "lexical-and-ux",
+      "ids": ["LEX-001", "LEX-002", "UX-001", "MIG-001", "COVUX-001"],
+      "prerequisite": "Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.",
+      "responsible_capability": "Core lexical owner and App preparation-flow owner",
+      "source_revision_configuration": "848013f; English/German PDF and Web reader paths; algorithm version 3",
+      "artifact": "docs/perf/VOCABULARY_PREPARATION.md",
+      "command_environment": "VocabularyPreparationCoordinatorXCTests, Core assessment tests, and full repository checks",
+      "gate": "Quick/typed answer-before-reveal, compatibility, editable deck, and PDF/Web behavior remain green.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Run the private GUI matrix without changing the 98% projected-coverage wording or defaults.",
+      "decision_history": "Answer-before-reveal and lemma+POS identity retained; same-POS sense splitting remains disabled."
+    },
+    {
+      "name": "local-prior",
+      "ids": ["PRIOR-001", "PRIOR-002", "PRIOR-003"],
+      "prerequisite": "Completed-session evidence in the isolated real SQLite store; no passive exposure.",
+      "responsible_capability": "Core prior/store owner with App integration review",
+      "source_revision_configuration": "bb04366 and verified through 848013f; fixed-clock longitudinal development manifest v1",
+      "artifact": "docs/plans/vocabulary-validation-evidence/longitudinal-warm-checkpoint-2026-09-08.md",
+      "command_environment": "Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build",
+      "gate": "Persistence/idempotency/history behavior verified; human drift and warm non-inferiority claims remain separate.",
+      "evidence_class": "current-candidate longitudinal diagnostic",
+      "current_status": "verified_current_candidate",
+      "next_action": "Retain the 180-day rule until real longitudinal data supports a reviewed diffusion model.",
+      "decision_history": "Cold/warm/fixed-budget/replay scenarios retained, including adverse results and failed writes."
+    },
+    {
+      "name": "domain-infrastructure",
+      "ids": ["DOMAIN-001", "DOMAIN-002"],
+      "prerequisite": "Checksummed licensed domain resources; production difficulty must remain general-language.",
+      "responsible_capability": "Vocabulary domain resource/evaluation owner",
+      "source_revision_configuration": "848013f; pinned 200,000-row English/German resource builds",
+      "artifact": "docs/perf/vocabulary-preparation-testing/README.md",
+      "command_environment": "./scripts/test_vocabulary_domain_resource_builders.sh via ./scripts/check.sh --no-build",
+      "gate": "Resource integrity and metadata behavior pass; production domain blending remains disabled.",
+      "evidence_class": "resource verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Do not activate blending until real held-out residual and detector-uncertainty gates pass.",
+      "decision_history": "Literary resources completed; domain metadata remains non-causal in production."
+    },
+    {
+      "name": "research-export-and-fitter",
+      "ids": ["EXPORT-001", "CAL-001", "CAL-002", "ASSUMP-006", "ASSUMP-007"],
+      "prerequisite": "Explicit local export and separate review before any fitted pack can affect production.",
+      "responsible_capability": "Research export, calibration fitter, and privacy reviewers",
+      "source_revision_configuration": "8f7091b and verified through 848013f; fabricated schema/rehearsal v2",
+      "artifact": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
+      "command_environment": "Validation-study rehearsal, calibration self-test, privacy tests, and full repository checks",
+      "gate": "Fabricated package and tooling pass; no real learner calibration or reviewed production pack exists.",
+      "evidence_class": "code verification and fabricated rehearsal",
+      "current_status": "verified_current_candidate",
+      "next_action": "Freeze the real SAP/privacy/assignment contract before collection or outcome inspection.",
+      "decision_history": "Schema v2 stayed additive, ordinary export stayed narrow, and fitter defaults were not changed."
+    },
+    {
+      "name": "retained-assumptions",
+      "ids": ["ASSUMP-001", "ASSUMP-002", "ASSUMP-003", "ASSUMP-004", "PRIORITY-001"],
+      "prerequisite": "A separately reviewed empirical finding is required to replace any retained assumption.",
+      "responsible_capability": "Model/release owner",
+      "source_revision_configuration": "848013f; one-dimensional production model and editable projected-coverage deck",
+      "artifact": "docs/perf/VOCABULARY_PREPARATION.md",
+      "command_environment": "Source inspection and ./scripts/check.sh --no-build",
+      "gate": "Current implementation matches the retained assumptions; this is not evidence that they are true for humans.",
+      "evidence_class": "implementation conformance",
+      "current_status": "verified_current_candidate",
+      "next_action": "Keep the assumptions explicit in all synthetic and human reports.",
+      "decision_history": "Measurement coherence remains ahead of new production dimensions."
+    },
+    {
+      "name": "pos-validation",
+      "ids": ["POSVAL-001"],
+      "prerequisite": "Pinned licensed English/German UD fixture and declared raw/reconciled denominators.",
+      "responsible_capability": "NLP fixture engineer and bilingual reviewer",
+      "source_revision_configuration": "4f11ecd and verified through 848013f; UD 2.18 selected fixture",
+      "artifact": "docs/plans/vocabulary-validation-evidence/pos-fixture-checkpoint-2026-09-09.md",
+      "command_environment": "./scripts/test_vocabulary_pos_fixtures.sh and full repository checks on macOS",
+      "gate": "Evaluation pipeline and consequence accounting pass; observed errors are retained and no production threshold was changed.",
+      "evidence_class": "current-candidate licensed fixture evaluation",
+      "current_status": "verified_current_candidate",
+      "next_action": "Review adverse homograph/participle consequences before proposing any bounded POS policy change.",
+      "decision_history": "Raw accuracy, abstention, reconciled identity, and deck changes were retained without silent tuning."
+    },
+    {
+      "name": "exact-performance-history",
+      "ids": ["PERF-001"],
+      "prerequisite": "Controlled Release repetitions on an unchanged candidate and host state.",
+      "responsible_capability": "Core performance owner",
+      "source_revision_configuration": "Historical exact optimization report (2026-09-01) and later retained repetition series",
+      "artifact": "docs/perf/vocabulary-assessment-optimization-2026-08-31.md",
+      "command_environment": "Historical same-executable Release A/B and 10,000-item benchmark commands",
+      "gate": "Historical exact microbenchmark rows passed at their revisions; current final-tree acceptance is not inferred.",
+      "evidence_class": "historical microbenchmark",
+      "current_status": "historically_measured",
+      "next_action": "Repeat all controlled Release repetitions after candidate freeze and retain every run.",
+      "decision_history": "Exact probability reuse and cross-moment scorer retained; favorable historical rows are not cherry-picked."
+    },
+    {
+      "name": "synthetic-release-adverse",
+      "ids": ["EVAL-001", "RELEASE-001"],
+      "prerequisite": "A newly frozen candidate and untouched development-confirmation decision before reusing the release holdout.",
+      "responsible_capability": "Evaluation and release owners",
+      "source_revision_configuration": "Frozen version-3 three-seed/eight-document holdout",
+      "artifact": "docs/perf/vocabulary-assessment-holdout-v1.json",
+      "command_environment": "Frozen evaluator/validator configuration recorded in the holdout artifact",
+      "gate": "Failed: one seed misses response-noise/idiosyncratic coverage gates and warm degradation exceeds two points.",
+      "evidence_class": "adverse frozen synthetic holdout",
+      "current_status": "failed",
+      "next_action": "Diagnose only on development material; preserve the holdout and do not weaken thresholds.",
+      "decision_history": "Version-2 golden retained; version-3 adverse and null results remain authoritative release evidence."
+    },
+    {
+      "name": "staged-performance-adverse",
+      "ids": ["PERF-002"],
+      "prerequisite": "A staged candidate must preserve release decisions within frozen quality tolerances.",
+      "responsible_capability": "Core performance/evaluation owners",
+      "source_revision_configuration": "152b47b Release benchmark series plus untouched staged holdout",
+      "artifact": "docs/perf/vocabulary-assessment-holdout-staged-v1.json",
+      "command_environment": "Paired stopping comparison and staged holdout commands recorded beside the artifact",
+      "gate": "Failed quality holdout despite passing ordinary next-card timing; production remains full-every-answer.",
+      "evidence_class": "rejected performance experiment",
+      "current_status": "failed",
+      "next_action": "Keep staged stopping diagnostic-only unless a new frozen candidate passes both quality and latency gates.",
+      "decision_history": "Rejected after response-noise and idiosyncratic coverage degraded; timings remain retained."
+    },
+    {
+      "name": "real-app-performance",
+      "ids": ["PERF-GATE-001"],
+      "prerequisite": "Private representative six-document manifest, logged-in macOS, Accessibility, frozen build, and controlled repetitions.",
+      "responsible_capability": "App performance operator and release owner",
+      "source_revision_configuration": "3ac6939 instrumentation verified through 848013f; measurement candidate not frozen",
+      "artifact": "docs/plans/vocabulary-validation-evidence/usable-question-latency-checkpoint-2026-09-09.md",
+      "command_environment": "LEAFVOCAB_UI_SMOKE=1 check_vocabulary_preparation_smoke.sh with private manifest",
+      "gate": "Awaiting 150 ms algorithm, 16 ms main-thread, document-open control, and diagnostic usable-question evidence on one frozen candidate.",
+      "evidence_class": "external GUI/performance prerequisite",
+      "current_status": "awaiting_external_input",
+      "next_action": "Supply the private manifest, freeze the candidate, and retain control plus all raw preparation repetitions.",
+      "decision_history": "Instrumentation and supplemental fixtures are ready; no private GUI run or final-tree latency claim exists."
+    },
+    {
+      "name": "final-delivery",
+      "ids": ["DELIV-001"],
+      "prerequisite": "All mandatory evidence, decisions, external inputs, and candidate-freeze steps resolved.",
+      "responsible_capability": "Release owner/reviewer",
+      "source_revision_configuration": "Integrated development branch through 848013f; not a frozen release candidate",
+      "artifact": "docs/plans/vocabulary-validation-evidence/implementation-plan.md",
+      "command_environment": "Final evaluator, all Release repetitions, private GUI matrix, ./scripts/check.sh --no-build, ./scripts/build_app.sh",
+      "gate": "Awaiting final-tree evidence and explicit release decision.",
+      "evidence_class": "release orchestration",
+      "current_status": "awaiting_external_input",
+      "next_action": "Resolve blockers, freeze one candidate, run the ordered final commands, and record pass/fail/blocked honestly.",
+      "decision_history": "Green implementation commits exist, but incremental checks do not equal final acceptance."
+    },
+    {
+      "name": "human-study-and-assignment",
+      "ids": ["CALDATA-001", "DIF-001", "STUDY-001", "STUDY-002"],
+      "prerequisite": "Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.",
+      "responsible_capability": "Study owner, statistical reviewer, bilingual raters, and privacy reviewer",
+      "source_revision_configuration": "Fabricated rehearsal v2 only; no real outcome dataset",
+      "artifact": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
+      "command_environment": "Fabricated rehearsal self-test; real protocol execution environment not yet supplied",
+      "gate": "Awaiting external review, consent, data, and execution; schema validation is not human evidence.",
+      "evidence_class": "external human-study prerequisite",
+      "current_status": "awaiting_external_input",
+      "next_action": "Approve/freeze the SAP and assignment/privacy contract before recruitment or confirmatory outcome inspection.",
+      "decision_history": "Fabricated package proved executability and negative controls only; calibration slots remain disabled."
+    },
+    {
+      "name": "pr-description",
+      "ids": ["PRBODY-001"],
+      "prerequisite": "None unless new evidence requires a factual correction.",
+      "responsible_capability": "Repository maintainer",
+      "source_revision_configuration": "User-confirmed PR #9 description refresh",
+      "artifact": "docs/plans/vocabulary-validation-evidence/implementation-plan.md",
+      "command_environment": "Administrative verification recorded in the accepted implementation plan",
+      "gate": "Complete; do not republish solely to repeat finished work.",
+      "evidence_class": "administrative completion",
+      "current_status": "implemented",
+      "next_action": "Change only if later evidence makes the description factually stale.",
+      "decision_history": "The user confirmed the refresh complete before this implementation sequence."
+    },
+    {
+      "name": "deferred-policy",
+      "ids": ["SENSE-001", "DOMAIN-003", "DOMAIN-GATE-001", "ASSUMP-005", "PRIOR-004", "DIFF-002", "DOMAIN-004", "L1DIFF-001", "COVUX-002", "COLD-001", "MWU-001", "RISK-001"],
+      "prerequisite": "The exact empirical and approval conditions in the canonical requirement must be met.",
+      "responsible_capability": "Relevant model/study owner plus explicit reviewer approval",
+      "source_revision_configuration": "Canonical measurement-coherence target ledger; production feature remains disabled",
+      "artifact": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+      "command_environment": "No activation command is authorized; development diagnostics may run under frozen manifests",
+      "gate": "Deferred and disabled until its canonical gate and separate approval pass.",
+      "evidence_class": "deferred policy decision",
+      "current_status": "deferred",
+      "next_action": "Collect the named prerequisite evidence and prepare a bounded reviewed amendment; do not auto-enable.",
+      "decision_history": "All twelve deferred IDs and their original conditions are preserved without substitution."
+    }
+  ]
+}

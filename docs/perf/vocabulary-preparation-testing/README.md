@@ -4,6 +4,11 @@ This document explains how LeafReader tests and measures **Prepare Vocabulary**.
 It is both a runbook and an interpretation guide: a green command is useful only
 when it is clear which risk that command exercises.
 
+The derived per-requirement execution view is
+[`evidence-status-register-v1.md`](../../plans/vocabulary-validation-evidence/evidence-status-register-v1.md).
+It reports evidence state without changing canonical requirements or treating
+the canonical word `active` as completion.
+
 ## Current acceptance status
 
 The version 3 implementation is **not release-accepted yet**.

@@ -3,6 +3,10 @@
 For the complete test-layer map, metric definitions, run commands, acceptance
 gates, and current blocker-remediation plan, see
 [`vocabulary-preparation-testing/README.md`](vocabulary-preparation-testing/README.md).
+The derived per-requirement execution view is
+[`evidence-status-register-v1.md`](../plans/vocabulary-validation-evidence/evidence-status-register-v1.md);
+it reports implementation and evidence state without replacing the canonical
+ledger.
 
 `Prepare Vocabulary` is an optional pre-reading workflow for English and German
 PDF, EPUB, and DOCX documents. It builds a lemma+part-of-speech inventory, asks
@@ -248,6 +252,11 @@ The first post-build capture was more unstable still, with cold coverage p95 at
 `vocabulary-assessment-benchmark.json` and
 `vocabulary-assessment-benchmark-series.json`; favorable repetitions are not
 selected in isolation.
+
+The earlier 2026-09-01 same-executable exact-optimization result remains a
+passing historical measurement at its recorded revision. It does not override
+the later repeated-series failure above, certify the integrated final tree, or
+stand in for usable-question and main-thread measurements from the real app.
 
 The experimental staged path keeps ordinary answer processing on a 128-sample
 screen after the applicable question minimum and constructs the full 512-sample

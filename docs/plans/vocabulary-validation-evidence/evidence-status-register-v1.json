@@ -1,0 +1,1072 @@
+{
+  "schema_version": 1,
+  "derived_view": true,
+  "candidate_revision": "848013f",
+  "canonical_ledger": {
+    "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+    "file_sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4",
+    "declared_canonical_sha256": "868106f57e1fa78a0b0f03c3e4e0dd29d6161500ef6b8ed8d13bc05bcc6a1671",
+    "requirement_count": 54
+  },
+  "status_inventory": {
+    "awaiting_external_input": 6,
+    "deferred": 12,
+    "failed": 3,
+    "historically_measured": 1,
+    "implemented": 1,
+    "verified_current_candidate": 31
+  },
+  "retained_artifacts": [
+    {
+      "path": "docs/perf/vocabulary-assessment-quality-baseline.json",
+      "evidence_class": "version-2 synthetic golden",
+      "status": "retained_stale",
+      "interpretation": "Compatibility baseline only; not accepted as the version-3 golden.",
+      "sha256": "20bc9b27c9cf96a7d6620c132e7126f28a58c5a1390bf9076c3795c8acc0f9e3"
+    },
+    {
+      "path": "docs/perf/vocabulary-assessment-holdout-v1.json",
+      "evidence_class": "version-3 frozen release holdout",
+      "status": "failed",
+      "interpretation": "All seeds and adverse coverage/warm results remain retained.",
+      "sha256": "678940289319c6e2b2f06915e7ddc52f3123acc87a8ab3c44b784590ec9ede31"
+    },
+    {
+      "path": "docs/perf/vocabulary-assessment-diagnostic-matrix-v1.json",
+      "evidence_class": "development synthetic diagnostic",
+      "status": "historically_measured",
+      "interpretation": "Sensitivity evidence only; small per-seed support is explicit.",
+      "sha256": "30198ac27d0c9c5a6e789328706f1a6d6305936d442169fa06a2f2aac3570542"
+    },
+    {
+      "path": "docs/perf/vocabulary-assessment-benchmark-series.json",
+      "evidence_class": "full-path Release repetition series",
+      "status": "mixed_with_failure",
+      "interpretation": "All repetitions are retained, including warm p95 and post-build failures.",
+      "sha256": "0b57c3d74e91f075591006de45f982885704e9f281662384717f350df82e0015"
+    },
+    {
+      "path": "docs/perf/vocabulary-assessment-benchmark-staged-series.json",
+      "evidence_class": "staged Release repetition series",
+      "status": "timing_pass_quality_rejected",
+      "interpretation": "Passing ordinary next-card rows do not approve the rejected candidate.",
+      "sha256": "108a76e15e48016a745a22236ff83644acdec65a5dfcb71d63a90d22d60db74f"
+    },
+    {
+      "path": "docs/perf/vocabulary-assessment-holdout-staged-v1.json",
+      "evidence_class": "staged frozen release holdout",
+      "status": "failed",
+      "interpretation": "Quality degradation is retained and keeps staged stopping out of production.",
+      "sha256": "b5d0b37c3aeefee9a14ab93753eaafc18929b1b8fad76467656ae87598031714"
+    },
+    {
+      "path": "docs/perf/vocabulary-question-objective-experiment-2026-09-07.md",
+      "evidence_class": "rejected selector experiments",
+      "status": "rejected",
+      "interpretation": "Remaining-unasked and latent-state alternatives remain accessible with their adverse results.",
+      "sha256": "e94a2d325f9d5a01a9f2d34b8170ed70e569bfad333c7c5f5e84e1b8f6099ac3"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/diagnostic-development-report-v1.json",
+      "evidence_class": "causal diagnostic development run",
+      "status": "completed_with_failed_and_null_records",
+      "interpretation": "Detailed failed/null deck records and mass decompositions remain in the report.",
+      "sha256": "ead10efb51def1dc07e93831672b4f9ea102c643dd23466384b7fe9862647f65"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/longitudinal-development-report-v1.json",
+      "evidence_class": "longitudinal prior development run",
+      "status": "completed_with_adverse_records",
+      "interpretation": "Cold/warm/fixed-budget/replay histories and unfavorable outcomes remain retained.",
+      "sha256": "53eff35085229369ebc9221d6f22c2d083526824a641dc6c889fc4090d2d253f"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/vocabulary-pos-fixture-report-v1.json",
+      "evidence_class": "licensed POS fixture evaluation",
+      "status": "completed_with_adverse_records",
+      "interpretation": "Raw, abstained, reconciled, occurrence, and deck consequences remain retained.",
+      "sha256": "bd0d631ab9ff1b51adb7f67527edd3cd0885c7ee21e0bf6277facd136a02f57e"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-analysis-v1.json",
+      "evidence_class": "fabricated study rehearsal",
+      "status": "completed_not_human_evidence",
+      "interpretation": "Executable analysis and negative controls only; no human-validity claim.",
+      "sha256": "1922a525e83e2be8afc685bb34ad58b101c05ab1db968c9aa3a1b6868ab02b25"
+    }
+  ],
+  "records": [
+    {
+      "id": "ARCH-001",
+      "canonical_status": "active",
+      "behavior_claim": "Preserve stages 1–6 as completed baseline capabilities and use the new priority list for next-stage ordering.",
+      "prerequisite": "No additional implementation prerequisite; empirical and release claims remain separately gated.",
+      "responsible_capability": "Core/App maintainers and verification owner",
+      "source_revision_configuration": "848013f; Swift 6 warnings-as-errors; macOS deterministic repository checks",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "./scripts/check.sh --no-build on the local macOS development host",
+      "gate": "Architecture, privacy, Core/App, native-boundary, and regression checks pass; no human-validity inference.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Repeat the full checks after any source change and preserve the no-upload/privacy contract.",
+      "decision_history": "Retained baseline architecture; current integrated candidate passed deterministic checks on 2026-09-09."
+    },
+    {
+      "id": "PRIV-001",
+      "canonical_status": "active",
+      "behavior_claim": "No response telemetry or automatic upload.",
+      "prerequisite": "No additional implementation prerequisite; empirical and release claims remain separately gated.",
+      "responsible_capability": "Core/App maintainers and verification owner",
+      "source_revision_configuration": "848013f; Swift 6 warnings-as-errors; macOS deterministic repository checks",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "./scripts/check.sh --no-build on the local macOS development host",
+      "gate": "Architecture, privacy, Core/App, native-boundary, and regression checks pass; no human-validity inference.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Repeat the full checks after any source change and preserve the no-upload/privacy contract.",
+      "decision_history": "Retained baseline architecture; current integrated candidate passed deterministic checks on 2026-09-09."
+    },
+    {
+      "id": "EVID-001",
+      "canonical_status": "active",
+      "behavior_claim": "Versioned evidence categories and cold-start reliabilities.",
+      "prerequisite": "Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.",
+      "responsible_capability": "LeafReaderCore assessment/model owner",
+      "source_revision_configuration": "848013f; production full 512-sample coverage path and versioned observation contract",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "Swift Core/App tests plus evaluator and observation-model self-tests in ./scripts/check.sh --no-build",
+      "gate": "Deterministic mathematical and migration tests pass; real calibration remains absent.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Keep production defaults fixed while collecting independently consented criterion evidence.",
+      "decision_history": "Core ownership and cold-start assumptions retained; diagnostic work did not alter production defaults."
+    },
+    {
+      "id": "EVID-002",
+      "canonical_status": "active",
+      "behavior_claim": "Latent knowledge misspecification and evidence reliability are separate parameter families.",
+      "prerequisite": "Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.",
+      "responsible_capability": "LeafReaderCore assessment/model owner",
+      "source_revision_configuration": "848013f; production full 512-sample coverage path and versioned observation contract",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "Swift Core/App tests plus evaluator and observation-model self-tests in ./scripts/check.sh --no-build",
+      "gate": "Deterministic mathematical and migration tests pass; real calibration remains absent.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Keep production defaults fixed while collecting independently consented criterion evidence.",
+      "decision_history": "Core ownership and cold-start assumptions retained; diagnostic work did not alter production defaults."
+    },
+    {
+      "id": "EVID-003",
+      "canonical_status": "active",
+      "behavior_claim": "Answered probabilities remain soft and classifications use fixed thresholds.",
+      "prerequisite": "Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.",
+      "responsible_capability": "LeafReaderCore assessment/model owner",
+      "source_revision_configuration": "848013f; production full 512-sample coverage path and versioned observation contract",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "Swift Core/App tests plus evaluator and observation-model self-tests in ./scripts/check.sh --no-build",
+      "gate": "Deterministic mathematical and migration tests pass; real calibration remains absent.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Keep production defaults fixed while collecting independently consented criterion evidence.",
+      "decision_history": "Core ownership and cold-start assumptions retained; diagnostic work did not alter production defaults."
+    },
+    {
+      "id": "VALID-001",
+      "canonical_status": "active",
+      "behavior_claim": "Tail validation cadence and bounded knowledge-misspecification estimate.",
+      "prerequisite": "Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.",
+      "responsible_capability": "LeafReaderCore assessment/model owner",
+      "source_revision_configuration": "848013f; production full 512-sample coverage path and versioned observation contract",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "Swift Core/App tests plus evaluator and observation-model self-tests in ./scripts/check.sh --no-build",
+      "gate": "Deterministic mathematical and migration tests pass; real calibration remains absent.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Keep production defaults fixed while collecting independently consented criterion evidence.",
+      "decision_history": "Core ownership and cold-start assumptions retained; diagnostic work did not alter production defaults."
+    },
+    {
+      "id": "DIFF-001",
+      "canonical_status": "active",
+      "behavior_claim": "Uncertain item-difficulty prior and quadrature.",
+      "prerequisite": "Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.",
+      "responsible_capability": "LeafReaderCore assessment/model owner",
+      "source_revision_configuration": "848013f; production full 512-sample coverage path and versioned observation contract",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "Swift Core/App tests plus evaluator and observation-model self-tests in ./scripts/check.sh --no-build",
+      "gate": "Deterministic mathematical and migration tests pass; real calibration remains absent.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Keep production defaults fixed while collecting independently consented criterion evidence.",
+      "decision_history": "Core ownership and cold-start assumptions retained; diagnostic work did not alter production defaults."
+    },
+    {
+      "id": "COV-001",
+      "canonical_status": "active",
+      "behavior_claim": "Deterministic posterior-predictive coverage and locally minimal deck.",
+      "prerequisite": "Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.",
+      "responsible_capability": "LeafReaderCore assessment/model owner",
+      "source_revision_configuration": "848013f; production full 512-sample coverage path and versioned observation contract",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "Swift Core/App tests plus evaluator and observation-model self-tests in ./scripts/check.sh --no-build",
+      "gate": "Deterministic mathematical and migration tests pass; real calibration remains absent.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Keep production defaults fixed while collecting independently consented criterion evidence.",
+      "decision_history": "Core ownership and cold-start assumptions retained; diagnostic work did not alter production defaults."
+    },
+    {
+      "id": "PERF-001",
+      "canonical_status": "active",
+      "behavior_claim": "Bound adaptive question scoring and retain exact global loss.",
+      "prerequisite": "Controlled Release repetitions on an unchanged candidate and host state.",
+      "responsible_capability": "Core performance owner",
+      "source_revision_configuration": "Historical exact optimization report (2026-09-01) and later retained repetition series",
+      "artifact": {
+        "path": "docs/perf/vocabulary-assessment-optimization-2026-08-31.md",
+        "sha256": "771cb275b7cafab1d97cdcc4969c4f30ab1f6337c6c4e4b295e6389186f3c3bb"
+      },
+      "command_environment": "Historical same-executable Release A/B and 10,000-item benchmark commands",
+      "gate": "Historical exact microbenchmark rows passed at their revisions; current final-tree acceptance is not inferred.",
+      "evidence_class": "historical microbenchmark",
+      "current_status": "historically_measured",
+      "next_action": "Repeat all controlled Release repetitions after candidate freeze and retain every run.",
+      "decision_history": "Exact probability reuse and cross-moment scorer retained; favorable historical rows are not cherry-picked."
+    },
+    {
+      "id": "LEX-001",
+      "canonical_status": "active",
+      "behavior_claim": "Language+lemma+POS identity with conservative POS abstention.",
+      "prerequisite": "Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.",
+      "responsible_capability": "Core lexical owner and App preparation-flow owner",
+      "source_revision_configuration": "848013f; English/German PDF and Web reader paths; algorithm version 3",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "VocabularyPreparationCoordinatorXCTests, Core assessment tests, and full repository checks",
+      "gate": "Quick/typed answer-before-reveal, compatibility, editable deck, and PDF/Web behavior remain green.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Run the private GUI matrix without changing the 98% projected-coverage wording or defaults.",
+      "decision_history": "Answer-before-reveal and lemma+POS identity retained; same-POS sense splitting remains disabled."
+    },
+    {
+      "id": "LEX-002",
+      "canonical_status": "active",
+      "behavior_claim": "Group by lemma+POS and preserve wildcard compatibility.",
+      "prerequisite": "Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.",
+      "responsible_capability": "Core lexical owner and App preparation-flow owner",
+      "source_revision_configuration": "848013f; English/German PDF and Web reader paths; algorithm version 3",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "VocabularyPreparationCoordinatorXCTests, Core assessment tests, and full repository checks",
+      "gate": "Quick/typed answer-before-reveal, compatibility, editable deck, and PDF/Web behavior remain green.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Run the private GUI matrix without changing the 98% projected-coverage wording or defaults.",
+      "decision_history": "Answer-before-reveal and lemma+POS identity retained; same-POS sense splitting remains disabled."
+    },
+    {
+      "id": "SENSE-001",
+      "canonical_status": "deferred",
+      "behavior_claim": "Book-local same-POS sense clustering follows MWUs and remains disabled pending labeled gates.",
+      "prerequisite": "The exact empirical and approval conditions in the canonical requirement must be met.",
+      "responsible_capability": "Relevant model/study owner plus explicit reviewer approval",
+      "source_revision_configuration": "Canonical measurement-coherence target ledger; production feature remains disabled",
+      "artifact": {
+        "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+        "sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4"
+      },
+      "command_environment": "No activation command is authorized; development diagnostics may run under frozen manifests",
+      "gate": "Deferred and disabled until its canonical gate and separate approval pass.",
+      "evidence_class": "deferred policy decision",
+      "current_status": "deferred",
+      "next_action": "Collect the named prerequisite evidence and prepare a bounded reviewed amendment; do not auto-enable.",
+      "decision_history": "All twelve deferred IDs and their original conditions are preserved without substitution."
+    },
+    {
+      "id": "UX-001",
+      "canonical_status": "active",
+      "behavior_claim": "Answer-before-reveal UX and typed local self-verification.",
+      "prerequisite": "Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.",
+      "responsible_capability": "Core lexical owner and App preparation-flow owner",
+      "source_revision_configuration": "848013f; English/German PDF and Web reader paths; algorithm version 3",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "VocabularyPreparationCoordinatorXCTests, Core assessment tests, and full repository checks",
+      "gate": "Quick/typed answer-before-reveal, compatibility, editable deck, and PDF/Web behavior remain green.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Run the private GUI matrix without changing the 98% projected-coverage wording or defaults.",
+      "decision_history": "Answer-before-reveal and lemma+POS identity retained; same-POS sense splitting remains disabled."
+    },
+    {
+      "id": "MIG-001",
+      "canonical_status": "active",
+      "behavior_claim": "Version 3 session migration preserves direct/user-owned state.",
+      "prerequisite": "Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.",
+      "responsible_capability": "Core lexical owner and App preparation-flow owner",
+      "source_revision_configuration": "848013f; English/German PDF and Web reader paths; algorithm version 3",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "VocabularyPreparationCoordinatorXCTests, Core assessment tests, and full repository checks",
+      "gate": "Quick/typed answer-before-reveal, compatibility, editable deck, and PDF/Web behavior remain green.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Run the private GUI matrix without changing the 98% projected-coverage wording or defaults.",
+      "decision_history": "Answer-before-reveal and lemma+POS identity retained; same-POS sense splitting remains disabled."
+    },
+    {
+      "id": "PRIOR-001",
+      "canonical_status": "active",
+      "behavior_claim": "Language-scoped local prior uses only completed assessment evidence.",
+      "prerequisite": "Completed-session evidence in the isolated real SQLite store; no passive exposure.",
+      "responsible_capability": "Core prior/store owner with App integration review",
+      "source_revision_configuration": "bb04366 and verified through 848013f; fixed-clock longitudinal development manifest v1",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/longitudinal-warm-checkpoint-2026-09-08.md",
+        "sha256": "23b9eb3237569cb84369192154df0dedf61e9079699b7b0f25f43e4c59900128"
+      },
+      "command_environment": "Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build",
+      "gate": "Persistence/idempotency/history behavior verified; human drift and warm non-inferiority claims remain separate.",
+      "evidence_class": "current-candidate longitudinal diagnostic",
+      "current_status": "verified_current_candidate",
+      "next_action": "Retain the 180-day rule until real longitudinal data supports a reviewed diffusion model.",
+      "decision_history": "Cold/warm/fixed-budget/replay scenarios retained, including adverse results and failed writes."
+    },
+    {
+      "id": "PRIOR-002",
+      "canonical_status": "active",
+      "behavior_claim": "Warm prior mixture and eligibility.",
+      "prerequisite": "Completed-session evidence in the isolated real SQLite store; no passive exposure.",
+      "responsible_capability": "Core prior/store owner with App integration review",
+      "source_revision_configuration": "bb04366 and verified through 848013f; fixed-clock longitudinal development manifest v1",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/longitudinal-warm-checkpoint-2026-09-08.md",
+        "sha256": "23b9eb3237569cb84369192154df0dedf61e9079699b7b0f25f43e4c59900128"
+      },
+      "command_environment": "Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build",
+      "gate": "Persistence/idempotency/history behavior verified; human drift and warm non-inferiority claims remain separate.",
+      "evidence_class": "current-candidate longitudinal diagnostic",
+      "current_status": "verified_current_candidate",
+      "next_action": "Retain the 180-day rule until real longitudinal data supports a reviewed diffusion model.",
+      "decision_history": "Cold/warm/fixed-budget/replay scenarios retained, including adverse results and failed writes."
+    },
+    {
+      "id": "PRIOR-003",
+      "canonical_status": "active",
+      "behavior_claim": "Cross-book adaptation defaults on and is independently resettable.",
+      "prerequisite": "Completed-session evidence in the isolated real SQLite store; no passive exposure.",
+      "responsible_capability": "Core prior/store owner with App integration review",
+      "source_revision_configuration": "bb04366 and verified through 848013f; fixed-clock longitudinal development manifest v1",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/longitudinal-warm-checkpoint-2026-09-08.md",
+        "sha256": "23b9eb3237569cb84369192154df0dedf61e9079699b7b0f25f43e4c59900128"
+      },
+      "command_environment": "Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build",
+      "gate": "Persistence/idempotency/history behavior verified; human drift and warm non-inferiority claims remain separate.",
+      "evidence_class": "current-candidate longitudinal diagnostic",
+      "current_status": "verified_current_candidate",
+      "next_action": "Retain the 180-day rule until real longitudinal data supports a reviewed diffusion model.",
+      "decision_history": "Cold/warm/fixed-budget/replay scenarios retained, including adverse results and failed writes."
+    },
+    {
+      "id": "DOMAIN-001",
+      "canonical_status": "active",
+      "behavior_claim": "Record domain metadata without production difficulty effect.",
+      "prerequisite": "Checksummed licensed domain resources; production difficulty must remain general-language.",
+      "responsible_capability": "Vocabulary domain resource/evaluation owner",
+      "source_revision_configuration": "848013f; pinned 200,000-row English/German resource builds",
+      "artifact": {
+        "path": "docs/perf/vocabulary-preparation-testing/README.md",
+        "sha256": "ae421d1ba1cc896f11d54e92fc2ee93c091ad1729e090c1c736a3e79bff4d4e7"
+      },
+      "command_environment": "./scripts/test_vocabulary_domain_resource_builders.sh via ./scripts/check.sh --no-build",
+      "gate": "Resource integrity and metadata behavior pass; production domain blending remains disabled.",
+      "evidence_class": "resource verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Do not activate blending until real held-out residual and detector-uncertainty gates pass.",
+      "decision_history": "Literary resources completed; domain metadata remains non-causal in production."
+    },
+    {
+      "id": "DOMAIN-002",
+      "canonical_status": "active",
+      "behavior_claim": "Pinned English/German literary, news, and reference resources.",
+      "prerequisite": "Checksummed licensed domain resources; production difficulty must remain general-language.",
+      "responsible_capability": "Vocabulary domain resource/evaluation owner",
+      "source_revision_configuration": "848013f; pinned 200,000-row English/German resource builds",
+      "artifact": {
+        "path": "docs/perf/vocabulary-preparation-testing/README.md",
+        "sha256": "ae421d1ba1cc896f11d54e92fc2ee93c091ad1729e090c1c736a3e79bff4d4e7"
+      },
+      "command_environment": "./scripts/test_vocabulary_domain_resource_builders.sh via ./scripts/check.sh --no-build",
+      "gate": "Resource integrity and metadata behavior pass; production domain blending remains disabled.",
+      "evidence_class": "resource verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Do not activate blending until real held-out residual and detector-uncertainty gates pass.",
+      "decision_history": "Literary resources completed; domain metadata remains non-causal in production."
+    },
+    {
+      "id": "DOMAIN-003",
+      "canonical_status": "deferred",
+      "behavior_claim": "Developer-gated domain detection and disabled production blending.",
+      "prerequisite": "The exact empirical and approval conditions in the canonical requirement must be met.",
+      "responsible_capability": "Relevant model/study owner plus explicit reviewer approval",
+      "source_revision_configuration": "Canonical measurement-coherence target ledger; production feature remains disabled",
+      "artifact": {
+        "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+        "sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4"
+      },
+      "command_environment": "No activation command is authorized; development diagnostics may run under frozen manifests",
+      "gate": "Deferred and disabled until its canonical gate and separate approval pass.",
+      "evidence_class": "deferred policy decision",
+      "current_status": "deferred",
+      "next_action": "Collect the named prerequisite evidence and prepare a bounded reviewed amendment; do not auto-enable.",
+      "decision_history": "All twelve deferred IDs and their original conditions are preserved without substitution."
+    },
+    {
+      "id": "EXPORT-001",
+      "canonical_status": "active",
+      "behavior_claim": "Explicit privacy-minimized research export.",
+      "prerequisite": "Explicit local export and separate review before any fitted pack can affect production.",
+      "responsible_capability": "Research export, calibration fitter, and privacy reviewers",
+      "source_revision_configuration": "8f7091b and verified through 848013f; fabricated schema/rehearsal v2",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
+        "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
+      },
+      "command_environment": "Validation-study rehearsal, calibration self-test, privacy tests, and full repository checks",
+      "gate": "Fabricated package and tooling pass; no real learner calibration or reviewed production pack exists.",
+      "evidence_class": "code verification and fabricated rehearsal",
+      "current_status": "verified_current_candidate",
+      "next_action": "Freeze the real SAP/privacy/assignment contract before collection or outcome inspection.",
+      "decision_history": "Schema v2 stayed additive, ordinary export stayed narrow, and fitter defaults were not changed."
+    },
+    {
+      "id": "CAL-001",
+      "canonical_status": "active",
+      "behavior_claim": "Offline calibration consumes the Core-owned production categorical evidence likelihood contract.",
+      "prerequisite": "Explicit local export and separate review before any fitted pack can affect production.",
+      "responsible_capability": "Research export, calibration fitter, and privacy reviewers",
+      "source_revision_configuration": "8f7091b and verified through 848013f; fabricated schema/rehearsal v2",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
+        "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
+      },
+      "command_environment": "Validation-study rehearsal, calibration self-test, privacy tests, and full repository checks",
+      "gate": "Fabricated package and tooling pass; no real learner calibration or reviewed production pack exists.",
+      "evidence_class": "code verification and fabricated rehearsal",
+      "current_status": "verified_current_candidate",
+      "next_action": "Freeze the real SAP/privacy/assignment contract before collection or outcome inspection.",
+      "decision_history": "Schema v2 stayed additive, ordinary export stayed narrow, and fitter defaults were not changed."
+    },
+    {
+      "id": "CAL-002",
+      "canonical_status": "active",
+      "behavior_claim": "Reviewed calibration-pack eligibility and disabled 2PL.",
+      "prerequisite": "Explicit local export and separate review before any fitted pack can affect production.",
+      "responsible_capability": "Research export, calibration fitter, and privacy reviewers",
+      "source_revision_configuration": "8f7091b and verified through 848013f; fabricated schema/rehearsal v2",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
+        "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
+      },
+      "command_environment": "Validation-study rehearsal, calibration self-test, privacy tests, and full repository checks",
+      "gate": "Fabricated package and tooling pass; no real learner calibration or reviewed production pack exists.",
+      "evidence_class": "code verification and fabricated rehearsal",
+      "current_status": "verified_current_candidate",
+      "next_action": "Freeze the real SAP/privacy/assignment contract before collection or outcome inspection.",
+      "decision_history": "Schema v2 stayed additive, ordinary export stayed narrow, and fitter defaults were not changed."
+    },
+    {
+      "id": "TEST-001",
+      "canonical_status": "active",
+      "behavior_claim": "Core coverage includes model, migration, coverage, POS, prior, and question limits.",
+      "prerequisite": "No additional implementation prerequisite; empirical and release claims remain separately gated.",
+      "responsible_capability": "Core/App maintainers and verification owner",
+      "source_revision_configuration": "848013f; Swift 6 warnings-as-errors; macOS deterministic repository checks",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "./scripts/check.sh --no-build on the local macOS development host",
+      "gate": "Architecture, privacy, Core/App, native-boundary, and regression checks pass; no human-validity inference.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Repeat the full checks after any source change and preserve the no-upload/privacy contract.",
+      "decision_history": "Retained baseline architecture; current integrated candidate passed deterministic checks on 2026-09-09."
+    },
+    {
+      "id": "TEST-002",
+      "canonical_status": "active",
+      "behavior_claim": "App integration covers quick/typed flow, failures, persistence, privacy, and reader seams.",
+      "prerequisite": "No additional implementation prerequisite; empirical and release claims remain separately gated.",
+      "responsible_capability": "Core/App maintainers and verification owner",
+      "source_revision_configuration": "848013f; Swift 6 warnings-as-errors; macOS deterministic repository checks",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "./scripts/check.sh --no-build on the local macOS development host",
+      "gate": "Architecture, privacy, Core/App, native-boundary, and regression checks pass; no human-validity inference.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Repeat the full checks after any source change and preserve the no-upload/privacy contract.",
+      "decision_history": "Retained baseline architecture; current integrated candidate passed deterministic checks on 2026-09-09."
+    },
+    {
+      "id": "EVAL-001",
+      "canonical_status": "active",
+      "behavior_claim": "Synthetic simulator scenarios and probability/coverage gates.",
+      "prerequisite": "A newly frozen candidate and untouched development-confirmation decision before reusing the release holdout.",
+      "responsible_capability": "Evaluation and release owners",
+      "source_revision_configuration": "Frozen version-3 three-seed/eight-document holdout",
+      "artifact": {
+        "path": "docs/perf/vocabulary-assessment-holdout-v1.json",
+        "sha256": "678940289319c6e2b2f06915e7ddc52f3123acc87a8ab3c44b784590ec9ede31"
+      },
+      "command_environment": "Frozen evaluator/validator configuration recorded in the holdout artifact",
+      "gate": "Failed: one seed misses response-noise/idiosyncratic coverage gates and warm degradation exceeds two points.",
+      "evidence_class": "adverse frozen synthetic holdout",
+      "current_status": "failed",
+      "next_action": "Diagnose only on development material; preserve the holdout and do not weaken thresholds.",
+      "decision_history": "Version-2 golden retained; version-3 adverse and null results remain authoritative release evidence."
+    },
+    {
+      "id": "DOMAIN-GATE-001",
+      "canonical_status": "deferred",
+      "behavior_claim": "Domain blending real-response held-out gates.",
+      "prerequisite": "The exact empirical and approval conditions in the canonical requirement must be met.",
+      "responsible_capability": "Relevant model/study owner plus explicit reviewer approval",
+      "source_revision_configuration": "Canonical measurement-coherence target ledger; production feature remains disabled",
+      "artifact": {
+        "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+        "sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4"
+      },
+      "command_environment": "No activation command is authorized; development diagnostics may run under frozen manifests",
+      "gate": "Deferred and disabled until its canonical gate and separate approval pass.",
+      "evidence_class": "deferred policy decision",
+      "current_status": "deferred",
+      "next_action": "Collect the named prerequisite evidence and prepare a bounded reviewed amendment; do not auto-enable.",
+      "decision_history": "All twelve deferred IDs and their original conditions are preserved without substitution."
+    },
+    {
+      "id": "PERF-GATE-001",
+      "canonical_status": "active",
+      "behavior_claim": "Release and real-app latency gates plus named benchmarks.",
+      "prerequisite": "Private representative six-document manifest, logged-in macOS, Accessibility, frozen build, and controlled repetitions.",
+      "responsible_capability": "App performance operator and release owner",
+      "source_revision_configuration": "3ac6939 instrumentation verified through 848013f; measurement candidate not frozen",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/usable-question-latency-checkpoint-2026-09-09.md",
+        "sha256": "d9c560320d3e2d71b43cf28503acd696b7053309ec3ec9f7945649402d8ead3e"
+      },
+      "command_environment": "LEAFVOCAB_UI_SMOKE=1 check_vocabulary_preparation_smoke.sh with private manifest",
+      "gate": "Awaiting 150 ms algorithm, 16 ms main-thread, document-open control, and diagnostic usable-question evidence on one frozen candidate.",
+      "evidence_class": "external GUI/performance prerequisite",
+      "current_status": "awaiting_external_input",
+      "next_action": "Supply the private manifest, freeze the candidate, and retain control plus all raw preparation repetitions.",
+      "decision_history": "Instrumentation and supplemental fixtures are ready; no private GUI run or final-tree latency claim exists."
+    },
+    {
+      "id": "DELIV-001",
+      "canonical_status": "active",
+      "behavior_claim": "Ordered green commits and final verification commands.",
+      "prerequisite": "All mandatory evidence, decisions, external inputs, and candidate-freeze steps resolved.",
+      "responsible_capability": "Release owner/reviewer",
+      "source_revision_configuration": "Integrated development branch through 848013f; not a frozen release candidate",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/implementation-plan.md",
+        "sha256": "93100e889355145526f75f0347ee9b835185a7aa9458929db951d2f24607e05f"
+      },
+      "command_environment": "Final evaluator, all Release repetitions, private GUI matrix, ./scripts/check.sh --no-build, ./scripts/build_app.sh",
+      "gate": "Awaiting final-tree evidence and explicit release decision.",
+      "evidence_class": "release orchestration",
+      "current_status": "awaiting_external_input",
+      "next_action": "Resolve blockers, freeze one candidate, run the ordered final commands, and record pass/fail/blocked honestly.",
+      "decision_history": "Green implementation commits exist, but incremental checks do not equal final acceptance."
+    },
+    {
+      "id": "ASSUMP-001",
+      "canonical_status": "active",
+      "behavior_claim": "One-dimensional Rasch-like expected-loss CAT remains until real residual evidence.",
+      "prerequisite": "A separately reviewed empirical finding is required to replace any retained assumption.",
+      "responsible_capability": "Model/release owner",
+      "source_revision_configuration": "848013f; one-dimensional production model and editable projected-coverage deck",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "Source inspection and ./scripts/check.sh --no-build",
+      "gate": "Current implementation matches the retained assumptions; this is not evidence that they are true for humans.",
+      "evidence_class": "implementation conformance",
+      "current_status": "verified_current_candidate",
+      "next_action": "Keep the assumptions explicit in all synthetic and human reports.",
+      "decision_history": "Measurement coherence remains ahead of new production dimensions."
+    },
+    {
+      "id": "ASSUMP-002",
+      "canonical_status": "active",
+      "behavior_claim": "Selected cards are treated as learned only for projected lexical coverage.",
+      "prerequisite": "A separately reviewed empirical finding is required to replace any retained assumption.",
+      "responsible_capability": "Model/release owner",
+      "source_revision_configuration": "848013f; one-dimensional production model and editable projected-coverage deck",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "Source inspection and ./scripts/check.sh --no-build",
+      "gate": "Current implementation matches the retained assumptions; this is not evidence that they are true for humans.",
+      "evidence_class": "implementation conformance",
+      "current_status": "verified_current_candidate",
+      "next_action": "Keep the assumptions explicit in all synthetic and human reports.",
+      "decision_history": "Measurement coherence remains ahead of new production dimensions."
+    },
+    {
+      "id": "ASSUMP-003",
+      "canonical_status": "active",
+      "behavior_claim": "Residual uncertainty can select soft verified-known items and remains editable.",
+      "prerequisite": "A separately reviewed empirical finding is required to replace any retained assumption.",
+      "responsible_capability": "Model/release owner",
+      "source_revision_configuration": "848013f; one-dimensional production model and editable projected-coverage deck",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "Source inspection and ./scripts/check.sh --no-build",
+      "gate": "Current implementation matches the retained assumptions; this is not evidence that they are true for humans.",
+      "evidence_class": "implementation conformance",
+      "current_status": "verified_current_candidate",
+      "next_action": "Keep the assumptions explicit in all synthetic and human reports.",
+      "decision_history": "Measurement coherence remains ahead of new production dimensions."
+    },
+    {
+      "id": "ASSUMP-004",
+      "canonical_status": "active",
+      "behavior_claim": "Cross-book adaptation excludes passive exposure.",
+      "prerequisite": "A separately reviewed empirical finding is required to replace any retained assumption.",
+      "responsible_capability": "Model/release owner",
+      "source_revision_configuration": "848013f; one-dimensional production model and editable projected-coverage deck",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "Source inspection and ./scripts/check.sh --no-build",
+      "gate": "Current implementation matches the retained assumptions; this is not evidence that they are true for humans.",
+      "evidence_class": "implementation conformance",
+      "current_status": "verified_current_candidate",
+      "next_action": "Keep the assumptions explicit in all synthetic and human reports.",
+      "decision_history": "Measurement coherence remains ahead of new production dimensions."
+    },
+    {
+      "id": "ASSUMP-005",
+      "canonical_status": "deferred",
+      "behavior_claim": "Real calibration, domains, sense splitting, and 2PL stay inactive until gates pass.",
+      "prerequisite": "The exact empirical and approval conditions in the canonical requirement must be met.",
+      "responsible_capability": "Relevant model/study owner plus explicit reviewer approval",
+      "source_revision_configuration": "Canonical measurement-coherence target ledger; production feature remains disabled",
+      "artifact": {
+        "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+        "sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4"
+      },
+      "command_environment": "No activation command is authorized; development diagnostics may run under frozen manifests",
+      "gate": "Deferred and disabled until its canonical gate and separate approval pass.",
+      "evidence_class": "deferred policy decision",
+      "current_status": "deferred",
+      "next_action": "Collect the named prerequisite evidence and prepare a bounded reviewed amendment; do not auto-enable.",
+      "decision_history": "All twelve deferred IDs and their original conditions are preserved without substitution."
+    },
+    {
+      "id": "PRIOR-004",
+      "canonical_status": "deferred",
+      "behavior_claim": "Replace abrupt prior expiry with empirically gated time diffusion.",
+      "prerequisite": "The exact empirical and approval conditions in the canonical requirement must be met.",
+      "responsible_capability": "Relevant model/study owner plus explicit reviewer approval",
+      "source_revision_configuration": "Canonical measurement-coherence target ledger; production feature remains disabled",
+      "artifact": {
+        "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+        "sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4"
+      },
+      "command_environment": "No activation command is authorized; development diagnostics may run under frozen manifests",
+      "gate": "Deferred and disabled until its canonical gate and separate approval pass.",
+      "evidence_class": "deferred policy decision",
+      "current_status": "deferred",
+      "next_action": "Collect the named prerequisite evidence and prepare a bounded reviewed amendment; do not auto-enable.",
+      "decision_history": "All twelve deferred IDs and their original conditions are preserved without substitution."
+    },
+    {
+      "id": "CALDATA-001",
+      "canonical_status": "active",
+      "behavior_claim": "Research mode reserves protocol-frozen calibration assignments and exports assignment context.",
+      "prerequisite": "Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.",
+      "responsible_capability": "Study owner, statistical reviewer, bilingual raters, and privacy reviewer",
+      "source_revision_configuration": "Fabricated rehearsal v2 only; no real outcome dataset",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
+        "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
+      },
+      "command_environment": "Fabricated rehearsal self-test; real protocol execution environment not yet supplied",
+      "gate": "Awaiting external review, consent, data, and execution; schema validation is not human evidence.",
+      "evidence_class": "external human-study prerequisite",
+      "current_status": "awaiting_external_input",
+      "next_action": "Approve/freeze the SAP and assignment/privacy contract before recruitment or confirmatory outcome inspection.",
+      "decision_history": "Fabricated package proved executability and negative controls only; calibration slots remain disabled."
+    },
+    {
+      "id": "DIF-001",
+      "canonical_status": "active",
+      "behavior_claim": "Replace residual-mean DIF with established uniform/non-uniform methods and reporting.",
+      "prerequisite": "Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.",
+      "responsible_capability": "Study owner, statistical reviewer, bilingual raters, and privacy reviewer",
+      "source_revision_configuration": "Fabricated rehearsal v2 only; no real outcome dataset",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
+        "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
+      },
+      "command_environment": "Fabricated rehearsal self-test; real protocol execution environment not yet supplied",
+      "gate": "Awaiting external review, consent, data, and execution; schema validation is not human evidence.",
+      "evidence_class": "external human-study prerequisite",
+      "current_status": "awaiting_external_input",
+      "next_action": "Approve/freeze the SAP and assignment/privacy contract before recruitment or confirmatory outcome inspection.",
+      "decision_history": "Fabricated package proved executability and negative controls only; calibration slots remain disabled."
+    },
+    {
+      "id": "STUDY-001",
+      "canonical_status": "active",
+      "behavior_claim": "Use a separate consented validation dataset for independent criterion and document holdout.",
+      "prerequisite": "Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.",
+      "responsible_capability": "Study owner, statistical reviewer, bilingual raters, and privacy reviewer",
+      "source_revision_configuration": "Fabricated rehearsal v2 only; no real outcome dataset",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
+        "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
+      },
+      "command_environment": "Fabricated rehearsal self-test; real protocol execution environment not yet supplied",
+      "gate": "Awaiting external review, consent, data, and execution; schema validation is not human evidence.",
+      "evidence_class": "external human-study prerequisite",
+      "current_status": "awaiting_external_input",
+      "next_action": "Approve/freeze the SAP and assignment/privacy contract before recruitment or confirmatory outcome inspection.",
+      "decision_history": "Fabricated package proved executability and negative controls only; calibration slots remain disabled."
+    },
+    {
+      "id": "STUDY-002",
+      "canonical_status": "active",
+      "behavior_claim": "Execute an independently scored participant-and-document held-out learner pilot.",
+      "prerequisite": "Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.",
+      "responsible_capability": "Study owner, statistical reviewer, bilingual raters, and privacy reviewer",
+      "source_revision_configuration": "Fabricated rehearsal v2 only; no real outcome dataset",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
+        "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
+      },
+      "command_environment": "Fabricated rehearsal self-test; real protocol execution environment not yet supplied",
+      "gate": "Awaiting external review, consent, data, and execution; schema validation is not human evidence.",
+      "evidence_class": "external human-study prerequisite",
+      "current_status": "awaiting_external_input",
+      "next_action": "Approve/freeze the SAP and assignment/privacy contract before recruitment or confirmatory outcome inspection.",
+      "decision_history": "Fabricated package proved executability and negative controls only; calibration slots remain disabled."
+    },
+    {
+      "id": "DIFF-002",
+      "canonical_status": "deferred",
+      "behavior_claim": "Hierarchical partial-pooling difficulty model follows sufficient real data.",
+      "prerequisite": "The exact empirical and approval conditions in the canonical requirement must be met.",
+      "responsible_capability": "Relevant model/study owner plus explicit reviewer approval",
+      "source_revision_configuration": "Canonical measurement-coherence target ledger; production feature remains disabled",
+      "artifact": {
+        "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+        "sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4"
+      },
+      "command_environment": "No activation command is authorized; development diagnostics may run under frozen manifests",
+      "gate": "Deferred and disabled until its canonical gate and separate approval pass.",
+      "evidence_class": "deferred policy decision",
+      "current_status": "deferred",
+      "next_action": "Collect the named prerequisite evidence and prepare a bounded reviewed amendment; do not auto-enable.",
+      "decision_history": "All twelve deferred IDs and their original conditions are preserved without substitution."
+    },
+    {
+      "id": "DOMAIN-004",
+      "canonical_status": "deferred",
+      "behavior_claim": "Domain features must predict residual difficulty and integrate detector uncertainty.",
+      "prerequisite": "The exact empirical and approval conditions in the canonical requirement must be met.",
+      "responsible_capability": "Relevant model/study owner plus explicit reviewer approval",
+      "source_revision_configuration": "Canonical measurement-coherence target ledger; production feature remains disabled",
+      "artifact": {
+        "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+        "sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4"
+      },
+      "command_environment": "No activation command is authorized; development diagnostics may run under frozen manifests",
+      "gate": "Deferred and disabled until its canonical gate and separate approval pass.",
+      "evidence_class": "deferred policy decision",
+      "current_status": "deferred",
+      "next_action": "Collect the named prerequisite evidence and prepare a bounded reviewed amendment; do not auto-enable.",
+      "decision_history": "All twelve deferred IDs and their original conditions are preserved without substitution."
+    },
+    {
+      "id": "L1DIFF-001",
+      "canonical_status": "deferred",
+      "behavior_claim": "Evaluate L1-conditioned item residuals only after proper DIF evidence.",
+      "prerequisite": "The exact empirical and approval conditions in the canonical requirement must be met.",
+      "responsible_capability": "Relevant model/study owner plus explicit reviewer approval",
+      "source_revision_configuration": "Canonical measurement-coherence target ledger; production feature remains disabled",
+      "artifact": {
+        "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+        "sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4"
+      },
+      "command_environment": "No activation command is authorized; development diagnostics may run under frozen manifests",
+      "gate": "Deferred and disabled until its canonical gate and separate approval pass.",
+      "evidence_class": "deferred policy decision",
+      "current_status": "deferred",
+      "next_action": "Collect the named prerequisite evidence and prepare a bounded reviewed amendment; do not auto-enable.",
+      "decision_history": "All twelve deferred IDs and their original conditions are preserved without substitution."
+    },
+    {
+      "id": "RELEASE-001",
+      "canonical_status": "active",
+      "behavior_claim": "Diagnose the frozen failing holdout without weakening gates or tuning on it.",
+      "prerequisite": "A newly frozen candidate and untouched development-confirmation decision before reusing the release holdout.",
+      "responsible_capability": "Evaluation and release owners",
+      "source_revision_configuration": "Frozen version-3 three-seed/eight-document holdout",
+      "artifact": {
+        "path": "docs/perf/vocabulary-assessment-holdout-v1.json",
+        "sha256": "678940289319c6e2b2f06915e7ddc52f3123acc87a8ab3c44b784590ec9ede31"
+      },
+      "command_environment": "Frozen evaluator/validator configuration recorded in the holdout artifact",
+      "gate": "Failed: one seed misses response-noise/idiosyncratic coverage gates and warm degradation exceeds two points.",
+      "evidence_class": "adverse frozen synthetic holdout",
+      "current_status": "failed",
+      "next_action": "Diagnose only on development material; preserve the holdout and do not weaken thresholds.",
+      "decision_history": "Version-2 golden retained; version-3 adverse and null results remain authoritative release evidence."
+    },
+    {
+      "id": "POSVAL-001",
+      "canonical_status": "active",
+      "behavior_claim": "Validate Apple POS identity on licensed English/German UD fixtures.",
+      "prerequisite": "Pinned licensed English/German UD fixture and declared raw/reconciled denominators.",
+      "responsible_capability": "NLP fixture engineer and bilingual reviewer",
+      "source_revision_configuration": "4f11ecd and verified through 848013f; UD 2.18 selected fixture",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/pos-fixture-checkpoint-2026-09-09.md",
+        "sha256": "2830f9e875978a1ffe5181a1c5f25cc9a8fa0c07c9f9a9bf014a8137f1ccf1fc"
+      },
+      "command_environment": "./scripts/test_vocabulary_pos_fixtures.sh and full repository checks on macOS",
+      "gate": "Evaluation pipeline and consequence accounting pass; observed errors are retained and no production threshold was changed.",
+      "evidence_class": "current-candidate licensed fixture evaluation",
+      "current_status": "verified_current_candidate",
+      "next_action": "Review adverse homograph/participle consequences before proposing any bounded POS policy change.",
+      "decision_history": "Raw accuracy, abstention, reconciled identity, and deck changes were retained without silent tuning."
+    },
+    {
+      "id": "PERF-002",
+      "canonical_status": "active",
+      "behavior_claim": "Stage cheap answer updates and full posterior-predictive stop/final computation.",
+      "prerequisite": "A staged candidate must preserve release decisions within frozen quality tolerances.",
+      "responsible_capability": "Core performance/evaluation owners",
+      "source_revision_configuration": "152b47b Release benchmark series plus untouched staged holdout",
+      "artifact": {
+        "path": "docs/perf/vocabulary-assessment-holdout-staged-v1.json",
+        "sha256": "b5d0b37c3aeefee9a14ab93753eaafc18929b1b8fad76467656ae87598031714"
+      },
+      "command_environment": "Paired stopping comparison and staged holdout commands recorded beside the artifact",
+      "gate": "Failed quality holdout despite passing ordinary next-card timing; production remains full-every-answer.",
+      "evidence_class": "rejected performance experiment",
+      "current_status": "failed",
+      "next_action": "Keep staged stopping diagnostic-only unless a new frozen candidate passes both quality and latency gates.",
+      "decision_history": "Rejected after response-noise and idiosyncratic coverage degraded; timings remain retained."
+    },
+    {
+      "id": "COVUX-001",
+      "canonical_status": "active",
+      "behavior_claim": "Clarify projected post-mastery coverage without changing the default target.",
+      "prerequisite": "Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.",
+      "responsible_capability": "Core lexical owner and App preparation-flow owner",
+      "source_revision_configuration": "848013f; English/German PDF and Web reader paths; algorithm version 3",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "VocabularyPreparationCoordinatorXCTests, Core assessment tests, and full repository checks",
+      "gate": "Quick/typed answer-before-reveal, compatibility, editable deck, and PDF/Web behavior remain green.",
+      "evidence_class": "code verification",
+      "current_status": "verified_current_candidate",
+      "next_action": "Run the private GUI matrix without changing the 98% projected-coverage wording or defaults.",
+      "decision_history": "Answer-before-reveal and lemma+POS identity retained; same-POS sense splitting remains disabled."
+    },
+    {
+      "id": "COVUX-002",
+      "canonical_status": "deferred",
+      "behavior_claim": "Evaluate three user-selected projected coverage goals after empirical validation.",
+      "prerequisite": "The exact empirical and approval conditions in the canonical requirement must be met.",
+      "responsible_capability": "Relevant model/study owner plus explicit reviewer approval",
+      "source_revision_configuration": "Canonical measurement-coherence target ledger; production feature remains disabled",
+      "artifact": {
+        "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+        "sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4"
+      },
+      "command_environment": "No activation command is authorized; development diagnostics may run under frozen manifests",
+      "gate": "Deferred and disabled until its canonical gate and separate approval pass.",
+      "evidence_class": "deferred policy decision",
+      "current_status": "deferred",
+      "next_action": "Collect the named prerequisite evidence and prepare a bounded reviewed amendment; do not auto-enable.",
+      "decision_history": "All twelve deferred IDs and their original conditions are preserved without substitution."
+    },
+    {
+      "id": "COLD-001",
+      "canonical_status": "deferred",
+      "behavior_claim": "Evaluate explicit cold burden/uncertainty modes without prematurely lowering the ceiling.",
+      "prerequisite": "The exact empirical and approval conditions in the canonical requirement must be met.",
+      "responsible_capability": "Relevant model/study owner plus explicit reviewer approval",
+      "source_revision_configuration": "Canonical measurement-coherence target ledger; production feature remains disabled",
+      "artifact": {
+        "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+        "sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4"
+      },
+      "command_environment": "No activation command is authorized; development diagnostics may run under frozen manifests",
+      "gate": "Deferred and disabled until its canonical gate and separate approval pass.",
+      "evidence_class": "deferred policy decision",
+      "current_status": "deferred",
+      "next_action": "Collect the named prerequisite evidence and prepare a bounded reviewed amendment; do not auto-enable.",
+      "decision_history": "All twelve deferred IDs and their original conditions are preserved without substitution."
+    },
+    {
+      "id": "MWU-001",
+      "canonical_status": "deferred",
+      "behavior_claim": "Add high-value multi-word lexical items before same-POS sense splitting.",
+      "prerequisite": "The exact empirical and approval conditions in the canonical requirement must be met.",
+      "responsible_capability": "Relevant model/study owner plus explicit reviewer approval",
+      "source_revision_configuration": "Canonical measurement-coherence target ledger; production feature remains disabled",
+      "artifact": {
+        "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+        "sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4"
+      },
+      "command_environment": "No activation command is authorized; development diagnostics may run under frozen manifests",
+      "gate": "Deferred and disabled until its canonical gate and separate approval pass.",
+      "evidence_class": "deferred policy decision",
+      "current_status": "deferred",
+      "next_action": "Collect the named prerequisite evidence and prepare a bounded reviewed amendment; do not auto-enable.",
+      "decision_history": "All twelve deferred IDs and their original conditions are preserved without substitution."
+    },
+    {
+      "id": "RISK-001",
+      "canonical_status": "deferred",
+      "behavior_claim": "Empirical conformal/risk calibration is post-pilot only.",
+      "prerequisite": "The exact empirical and approval conditions in the canonical requirement must be met.",
+      "responsible_capability": "Relevant model/study owner plus explicit reviewer approval",
+      "source_revision_configuration": "Canonical measurement-coherence target ledger; production feature remains disabled",
+      "artifact": {
+        "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+        "sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4"
+      },
+      "command_environment": "No activation command is authorized; development diagnostics may run under frozen manifests",
+      "gate": "Deferred and disabled until its canonical gate and separate approval pass.",
+      "evidence_class": "deferred policy decision",
+      "current_status": "deferred",
+      "next_action": "Collect the named prerequisite evidence and prepare a bounded reviewed amendment; do not auto-enable.",
+      "decision_history": "All twelve deferred IDs and their original conditions are preserved without substitution."
+    },
+    {
+      "id": "PRBODY-001",
+      "canonical_status": "active",
+      "behavior_claim": "Replace the stale PR body with the supplied complete updated description.",
+      "prerequisite": "None unless new evidence requires a factual correction.",
+      "responsible_capability": "Repository maintainer",
+      "source_revision_configuration": "User-confirmed PR #9 description refresh",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/implementation-plan.md",
+        "sha256": "93100e889355145526f75f0347ee9b835185a7aa9458929db951d2f24607e05f"
+      },
+      "command_environment": "Administrative verification recorded in the accepted implementation plan",
+      "gate": "Complete; do not republish solely to repeat finished work.",
+      "evidence_class": "administrative completion",
+      "current_status": "implemented",
+      "next_action": "Change only if later evidence makes the description factually stale.",
+      "decision_history": "The user confirmed the refresh complete before this implementation sequence."
+    },
+    {
+      "id": "ASSUMP-006",
+      "canonical_status": "active",
+      "behavior_claim": "Typed recall remains optional in production and independent in validation.",
+      "prerequisite": "Explicit local export and separate review before any fitted pack can affect production.",
+      "responsible_capability": "Research export, calibration fitter, and privacy reviewers",
+      "source_revision_configuration": "8f7091b and verified through 848013f; fabricated schema/rehearsal v2",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
+        "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
+      },
+      "command_environment": "Validation-study rehearsal, calibration self-test, privacy tests, and full repository checks",
+      "gate": "Fabricated package and tooling pass; no real learner calibration or reviewed production pack exists.",
+      "evidence_class": "code verification and fabricated rehearsal",
+      "current_status": "verified_current_candidate",
+      "next_action": "Freeze the real SAP/privacy/assignment contract before collection or outcome inspection.",
+      "decision_history": "Schema v2 stayed additive, ordinary export stayed narrow, and fitter defaults were not changed."
+    },
+    {
+      "id": "ASSUMP-007",
+      "canonical_status": "active",
+      "behavior_claim": "Self-rated proficiency remains a research covariate.",
+      "prerequisite": "Explicit local export and separate review before any fitted pack can affect production.",
+      "responsible_capability": "Research export, calibration fitter, and privacy reviewers",
+      "source_revision_configuration": "8f7091b and verified through 848013f; fabricated schema/rehearsal v2",
+      "artifact": {
+        "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
+        "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
+      },
+      "command_environment": "Validation-study rehearsal, calibration self-test, privacy tests, and full repository checks",
+      "gate": "Fabricated package and tooling pass; no real learner calibration or reviewed production pack exists.",
+      "evidence_class": "code verification and fabricated rehearsal",
+      "current_status": "verified_current_candidate",
+      "next_action": "Freeze the real SAP/privacy/assignment contract before collection or outcome inspection.",
+      "decision_history": "Schema v2 stayed additive, ordinary export stayed narrow, and fitter defaults were not changed."
+    },
+    {
+      "id": "PRIORITY-001",
+      "canonical_status": "active",
+      "behavior_claim": "Prioritize measurement coherence over new production dimensions.",
+      "prerequisite": "A separately reviewed empirical finding is required to replace any retained assumption.",
+      "responsible_capability": "Model/release owner",
+      "source_revision_configuration": "848013f; one-dimensional production model and editable projected-coverage deck",
+      "artifact": {
+        "path": "docs/perf/VOCABULARY_PREPARATION.md",
+        "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
+      },
+      "command_environment": "Source inspection and ./scripts/check.sh --no-build",
+      "gate": "Current implementation matches the retained assumptions; this is not evidence that they are true for humans.",
+      "evidence_class": "implementation conformance",
+      "current_status": "verified_current_candidate",
+      "next_action": "Keep the assumptions explicit in all synthetic and human reports.",
+      "decision_history": "Measurement coherence remains ahead of new production dimensions."
+    }
+  ]
+}
