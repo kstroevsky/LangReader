@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "calibration-assignment-proposal-v1",
+  "supportSnapshotVersion": "fabricated-support-v1",
+  "supportSnapshotSHA256": "fabricated-support-sha256",
+  "rngStreamID": "fabricated-stream-1",
+  "opportunities": [
+    {
+      "questionOrdinal": 14,
+      "posteriorMeanBeforeQuestion": -0.7,
+      "slotDrawIndex": 12,
+      "slotDrawUniform": 0.05,
+      "itemDrawIndex": 13,
+      "itemDrawUniform": 0.75,
+      "candidatePoolSnapshotID": "pool-14",
+      "candidatePoolSHA256": "8642fc7c624ecdb1b09e02ec95d747f1584dea8390718cd5282dc5a640fd4867",
+      "strata": [
+        {"predictedKnownBin": "p00-20", "supportCount": 4, "candidateIDs": ["en|archive|noun"]},
+        {"predictedKnownBin": "p20-40", "supportCount": 1, "candidateIDs": ["en|record|noun", "en|record|verb"]},
+        {"predictedKnownBin": "p40-60", "supportCount": 7, "candidateIDs": ["en|present|verb"]}
+      ],
+      "exportedTrace": {
+        "questionOrdinal": 14,
+        "selectionType": "calibration",
+        "predictedKnownBeforeAnswer": 0.37,
+        "thetaBinBeforeAnswer": "theta-1.5-to-0.5",
+        "assignmentPolicyVersion": "calibration-assignment-proposal-v1",
+        "assignmentOpportunityProbability": 0.075,
+        "candidatePoolSnapshotID": "pool-14",
+        "candidatePoolSHA256": "8642fc7c624ecdb1b09e02ec95d747f1584dea8390718cd5282dc5a640fd4867",
+        "eligibleCandidateCount": 4,
+        "chosenPredictedKnownBin": "p20-40",
+        "chosenStratumCandidateCount": 2,
+        "candidateSelectionProbability": 0.5,
+        "jointAssignmentProbability": 0.0375,
+        "selectedLexicalItemID": "en|record|verb",
+        "supportSnapshotVersion": "fabricated-support-v1",
+        "supportSnapshotSHA256": "fabricated-support-sha256",
+        "rngStreamID": "fabricated-stream-1",
+        "slotDrawIndex": 12,
+        "slotDrawUniform": 0.05,
+        "itemDrawIndex": 13,
+        "itemDrawUniform": 0.75,
+        "assignmentOutcome": "assigned"
+      }
+    },
+    {
+      "questionOrdinal": 15,
+      "posteriorMeanBeforeQuestion": -0.4,
+      "slotDrawIndex": 14,
+      "slotDrawUniform": 0.01,
+      "itemDrawIndex": null,
+      "itemDrawUniform": null,
+      "candidatePoolSnapshotID": "pool-15",
+      "candidatePoolSHA256": "7b694ba0bc2c1d9521388c849c3e99d222e08d300504a4528660626ade74617a",
+      "strata": [
+        {"predictedKnownBin": "p40-60", "supportCount": 0, "candidateIDs": ["en|conduct|verb"]}
+      ],
+      "exportedTrace": {
+        "questionOrdinal": 15,
+        "selectionType": "tailValidation",
+        "predictedKnownBeforeAnswer": 0.52,
+        "thetaBinBeforeAnswer": "theta-0.5-to-0.5",
+        "assignmentPolicyVersion": "calibration-assignment-proposal-v1",
+        "assignmentOpportunityProbability": 0.0,
+        "candidatePoolSnapshotID": "pool-15",
+        "candidatePoolSHA256": "7b694ba0bc2c1d9521388c849c3e99d222e08d300504a4528660626ade74617a",
+        "eligibleCandidateCount": 1,
+        "supportSnapshotVersion": "fabricated-support-v1",
+        "supportSnapshotSHA256": "fabricated-support-sha256",
+        "rngStreamID": "fabricated-stream-1",
+        "slotDrawIndex": 14,
+        "slotDrawUniform": 0.01,
+        "assignmentOutcome": "tailValidationReserved"
+      }
+    },
+    {
+      "questionOrdinal": 16,
+      "posteriorMeanBeforeQuestion": 0.2,
+      "slotDrawIndex": 15,
+      "slotDrawUniform": 0.8,
+      "itemDrawIndex": null,
+      "itemDrawUniform": null,
+      "candidatePoolSnapshotID": "pool-16",
+      "candidatePoolSHA256": "1a531a73c3fd95029c1defc9b45128c2235e3852bba7bbf9e0e1fa4fb33a53a0",
+      "strata": [
+        {"predictedKnownBin": "p60-80", "supportCount": 2, "candidateIDs": ["en|lead|verb"]}
+      ],
+      "exportedTrace": {
+        "questionOrdinal": 16,
+        "selectionType": "adaptiveLoss",
+        "predictedKnownBeforeAnswer": 0.68,
+        "thetaBinBeforeAnswer": "theta-0.5-to-0.5",
+        "assignmentPolicyVersion": "calibration-assignment-proposal-v1",
+        "assignmentOpportunityProbability": 0.075,
+        "candidatePoolSnapshotID": "pool-16",
+        "candidatePoolSHA256": "1a531a73c3fd95029c1defc9b45128c2235e3852bba7bbf9e0e1fa4fb33a53a0",
+        "eligibleCandidateCount": 1,
+        "supportSnapshotVersion": "fabricated-support-v1",
+        "supportSnapshotSHA256": "fabricated-support-sha256",
+        "rngStreamID": "fabricated-stream-1",
+        "slotDrawIndex": 15,
+        "slotDrawUniform": 0.8,
+        "assignmentOutcome": "regularSelection"
+      }
+    },
+    {
+      "questionOrdinal": 17,
+      "posteriorMeanBeforeQuestion": 0.8,
+      "slotDrawIndex": 16,
+      "slotDrawUniform": 0.02,
+      "itemDrawIndex": 17,
+      "itemDrawUniform": 0.4,
+      "candidatePoolSnapshotID": "pool-17",
+      "candidatePoolSHA256": "daca099c267d59c95f020e0957acd100d8cee87bbe6bb28435ca937c89d14b0c",
+      "strata": [
+        {"predictedKnownBin": "p40-60", "supportCount": 0, "candidateIDs": ["en|object|noun"]},
+        {"predictedKnownBin": "p60-80", "supportCount": 0, "candidateIDs": ["en|object|verb", "en|permit|verb"]}
+      ],
+      "exportedTrace": {
+        "questionOrdinal": 17,
+        "selectionType": "calibration",
+        "predictedKnownBeforeAnswer": 0.54,
+        "thetaBinBeforeAnswer": "theta-0.5-to-1.5",
+        "assignmentPolicyVersion": "calibration-assignment-proposal-v1",
+        "assignmentOpportunityProbability": 0.075,
+        "candidatePoolSnapshotID": "pool-17",
+        "candidatePoolSHA256": "daca099c267d59c95f020e0957acd100d8cee87bbe6bb28435ca937c89d14b0c",
+        "eligibleCandidateCount": 3,
+        "chosenPredictedKnownBin": "p40-60",
+        "chosenStratumCandidateCount": 1,
+        "candidateSelectionProbability": 1.0,
+        "jointAssignmentProbability": 0.075,
+        "selectedLexicalItemID": "en|object|noun",
+        "supportSnapshotVersion": "fabricated-support-v1",
+        "supportSnapshotSHA256": "fabricated-support-sha256",
+        "rngStreamID": "fabricated-stream-1",
+        "slotDrawIndex": 16,
+        "slotDrawUniform": 0.02,
+        "itemDrawIndex": 17,
+        "itemDrawUniform": 0.4,
+        "assignmentOutcome": "assigned"
+      }
+    }
+  ]
+}

@@ -640,6 +640,20 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         XCTAssertNotEqual(validations[0].predictedKnown, validations[1].predictedKnown)
     }
 
+    func testReservedCalibrationSelectionTypeIsNeverChosenByProductionAssessment() throws {
+        for mode in [VocabularyAssessmentMode.allUnknown, .targetCoverage(0.98)] {
+            var assessment = AdaptiveVocabularyAssessment(inventory: inventory(count: 100), mode: mode)
+            while !assessment.isFinished {
+                let question = try XCTUnwrap(assessment.nextQuestion())
+                assessment.record(
+                    assessment.answeredQuestionCount.isMultiple(of: 3) ? .unknown : .known,
+                    for: question.canonicalKey
+                )
+                XCTAssertNotEqual(assessment.answers.last?.selectionType, .calibration)
+            }
+        }
+    }
+
     func testRestoredDirectAnswersRecomputeSamePosterior() throws {
         let inventory = inventory(count: 40)
         var original = AdaptiveVocabularyAssessment(inventory: inventory, mode: .allUnknown)
