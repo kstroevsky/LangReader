@@ -61,6 +61,9 @@ python3 ./scripts/validate_vocabulary_validation_study.py --self-test
 python3 ./scripts/run_vocabulary_validation_study_rehearsal.py --self-test
 ./scripts/test_vocabulary_pos_fixtures.sh
 
+echo "==> Testing vocabulary cross-format fixtures"
+python3 ./scripts/generate_vocabulary_preparation_fixtures.py --check
+
 echo "==> Testing vocabulary domain resource builders"
 bash ./scripts/test_vocabulary_domain_resource_builders.sh
 
