@@ -46,10 +46,26 @@ extension ReaderWindowController {
         case .assessment:
             switch coordinator.definitionState {
             case .hidden:
-                coordinator.revealCurrentQuestion()
+                if answerIndex.isMultiple(of: 3) {
+                    coordinator.chooseReportedUnknown()
+                } else {
+                    coordinator.chooseKnown()
+                }
             case .available:
-                coordinator.score(answerIndex.isMultiple(of: 3) ? .unknown : .known)
-                nextAnswerIndex += 1
+                switch coordinator.interactionState {
+                case .pendingKnownVerification:
+                    coordinator.verifyKnown(correct: true)
+                    nextAnswerIndex += 1
+                case .learningAfterAnswer:
+                    coordinator.continueAfterLearning()
+                    nextAnswerIndex += 1
+                case .awaitingAnswer:
+                    if answerIndex.isMultiple(of: 3) {
+                        coordinator.chooseReportedUnknown()
+                    } else {
+                        coordinator.chooseKnown()
+                    }
+                }
             case .loading, .unavailable:
                 break
             }

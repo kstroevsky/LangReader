@@ -230,6 +230,42 @@
             ]
         },
         {
+            "event": "vocabularyAnswerToLearningContentVisible",
+            "count": 1,
+            "min_ms": 3,
+            "median_ms": 3,
+            "mean_ms": 3,
+            "max_ms": 3,
+            "samples_ms": [3]
+        },
+        {
+            "event": "vocabularyContinueToNextWordVisible",
+            "count": 1,
+            "min_ms": 4,
+            "median_ms": 4,
+            "mean_ms": 4,
+            "max_ms": 4,
+            "samples_ms": [4]
+        },
+        {
+            "event": "vocabularyContinueToNextWordAnswerable",
+            "count": 1,
+            "min_ms": 5,
+            "median_ms": 5,
+            "mean_ms": 5,
+            "max_ms": 5,
+            "samples_ms": [5]
+        },
+        {
+            "event": "vocabularyKnownVerificationToNextWordAnswerable",
+            "count": 1,
+            "min_ms": 6,
+            "median_ms": 6,
+            "mean_ms": 6,
+            "max_ms": 6,
+            "samples_ms": [6]
+        },
+        {
             "event": "vocabularyPreparationResults",
             "count": 6,
             "min_ms": 1,

@@ -212,6 +212,10 @@ struct VocabularyPreparationView: View {
                         .textSelection(.enabled)
                     partOfSpeech(candidate)
                 }
+                .id(candidate.canonicalKey)
+                .onAppear {
+                    coordinator.questionBecameVisible(candidateKey: candidate.canonicalKey)
+                }
                 if coordinator.interactionState == .awaitingAnswer {
                     Toggle(
                         AppText.localized("输入含义再核对（可选）", "Type a meaning before checking (optional)"),
@@ -388,6 +392,12 @@ struct VocabularyPreparationView: View {
             }
             .controlSize(.large)
             .disabled(!coordinator.isAnswerInteractionReady)
+            .onAppear {
+                coordinator.answerControlsBecameUsable(candidateKey: candidate.canonicalKey)
+            }
+            .onChange(of: coordinator.isAnswerInteractionReady) { _, _ in
+                coordinator.answerControlsBecameUsable(candidateKey: candidate.canonicalKey)
+            }
         case .loading:
             ProgressView(AppText.localized("正在查询释义…", "Looking up definition…"))
         case let .unavailable(message):
@@ -424,6 +434,9 @@ struct VocabularyPreparationView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(maxHeight: 280)
+            .onAppear {
+                coordinator.learningContentBecameVisible(candidateKey: candidate.canonicalKey)
+            }
             switch coordinator.interactionState {
             case .pendingKnownVerification:
                 if coordinator.isPreparingNextQuestion {

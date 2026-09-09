@@ -478,6 +478,21 @@ import materialization/persistence. The existing total inventory, answer-to-next
 card, results-presentation, and atomic-import events remain for end-to-end
 comparison.
 
+Opt-in preparation captures also record four user-visible spans separately:
+
+- `vocabularyAnswerToLearningContentVisible`;
+- `vocabularyContinueToNextWordVisible`;
+- `vocabularyContinueToNextWordAnswerable`;
+- `vocabularyKnownVerificationToNextWordAnswerable`.
+
+The coordinator owns the monotonic start and validates candidate/state identity;
+SwiftUI presentation callbacks acknowledge the visible and enabled-control
+milestones. Completed spans enter the deterministic performance JSON; failed
+definition lookup, terminal results, and cancellation/reset emit bounded
+outcome-only unified-log records and never invent a zero-duration success.
+The capture validator requires support for every completed span but does not
+invent a latency threshold before a representative run is available.
+
 Milestones contain only a fixed stage/outcome, duration, item count, and an
 auxiliary aggregate count. They never contain a Document ID/title, file path,
 raw text, lemma, typed meaning, definition, or account identity. Unified logs do

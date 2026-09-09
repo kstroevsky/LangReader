@@ -271,6 +271,14 @@ do {
         try require(counts, "documentVisibleReady", atLeast: 6)
         try require(counts, "vocabularyPreparationInventoryBuild", atLeast: 6)
         try require(counts, "vocabularyAssessmentAdvance", atLeast: 120)
+        for event in [
+            "vocabularyAnswerToLearningContentVisible",
+            "vocabularyContinueToNextWordVisible",
+            "vocabularyContinueToNextWordAnswerable",
+            "vocabularyKnownVerificationToNextWordAnswerable"
+        ] {
+            try require(counts, event, atLeast: 1)
+        }
         try require(counts, "vocabularyPreparationResults", atLeast: 6)
         try require(counts, "vocabularyPreparationImport", atLeast: 6)
         try require(counts, "mainThreadUninterruptedWork", atLeast: 6)

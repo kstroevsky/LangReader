@@ -20,6 +20,35 @@ enum VocabularyPreparationTelemetryOutcome: String {
     case slow
 }
 
+enum VocabularyPreparationInteractionTimingKind: String, CaseIterable {
+    case answerToLearningContentVisible
+    case continueToNextWordVisible
+    case continueToNextWordAnswerable
+    case knownVerificationToNextWordAnswerable
+
+    var performanceEvent: PerformanceEvent {
+        switch self {
+        case .answerToLearningContentVisible: .vocabularyAnswerToLearningContentVisible
+        case .continueToNextWordVisible: .vocabularyContinueToNextWordVisible
+        case .continueToNextWordAnswerable: .vocabularyContinueToNextWordAnswerable
+        case .knownVerificationToNextWordAnswerable: .vocabularyKnownVerificationToNextWordAnswerable
+        }
+    }
+}
+
+enum VocabularyPreparationInteractionTimingOutcome: String {
+    case completed
+    case failed
+    case terminal
+    case cancelled
+}
+
+struct VocabularyPreparationInteractionTimingObservation: Equatable {
+    let kind: VocabularyPreparationInteractionTimingKind
+    let outcome: VocabularyPreparationInteractionTimingOutcome
+    let milliseconds: Double?
+}
+
 /// One open measurement on the app side: the core span plus the matching
 /// `os_signpost` interval, so Instruments and the committed baseline stay in
 /// step. Opaque on purpose — call sites hold it and hand it back, nothing else.
@@ -123,6 +152,21 @@ enum ReaderPerformance {
         vocabularyPreparationLogger.notice(
             "stage=\(stage.rawValue, privacy: .public) outcome=\(outcome.rawValue, privacy: .public) duration_ms=\(milliseconds, privacy: .public) items=\(itemCount, privacy: .public) aux=\(auxiliaryCount, privacy: .public)"
         )
+    }
+
+    static func recordVocabularyInteraction(
+        _ observation: VocabularyPreparationInteractionTimingObservation
+    ) {
+        if let milliseconds = observation.milliseconds {
+            record(observation.kind.performanceEvent, milliseconds: milliseconds)
+            vocabularyPreparationLogger.notice(
+                "interaction=\(observation.kind.rawValue, privacy: .public) outcome=\(observation.outcome.rawValue, privacy: .public) duration_ms=\(milliseconds, privacy: .public)"
+            )
+        } else {
+            vocabularyPreparationLogger.notice(
+                "interaction=\(observation.kind.rawValue, privacy: .public) outcome=\(observation.outcome.rawValue, privacy: .public)"
+            )
+        }
     }
 
     /// Folds the launch tracker's marks into the recorder so the baseline has

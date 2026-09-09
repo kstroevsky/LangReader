@@ -101,6 +101,7 @@ final class VocabularyPreparationCoordinator {
     private var precomputedKnownScore: VocabularyPendingKnownScore?
     private var pendingKnownScore: VocabularyPendingKnownScore?
     private var revealedDefinitionKey: String?
+    private var interactionTiming = VocabularyPreparationInteractionTiming.live
     private var activeIdentity: VocabularyPreparationDocumentIdentity?
     private var activeDocumentKind: ReaderDocumentKind?
     private(set) var inventory: DocumentVocabularyInventory?
@@ -349,6 +350,7 @@ final class VocabularyPreparationCoordinator {
     }
 
     func resetAssessment() {
+        interactionTiming.cancel()
         requestID = UUID()
         clearKnownAdvancePrecomputation()
         clearDeferredCoverageStopping()
@@ -385,6 +387,9 @@ final class VocabularyPreparationCoordinator {
         }
         if let failure = definitionFailures[candidate.canonicalKey] {
             definitionState = .unavailable(failure)
+            if interactionState == .learningAfterAnswer {
+                interactionTiming.learningContentFailed()
+            }
             return
         }
         definitionState = .loading
@@ -416,6 +421,7 @@ final class VocabularyPreparationCoordinator {
               interactionState == .pendingKnownVerification,
               case .available = definitionState,
               let key = currentCandidate?.canonicalKey else { return }
+        interactionTiming.knownVerificationTapped()
         let typedMeaning = typedModeEnabled
             ? typedMeaningDraft.trimmingCharacters(in: .whitespacesAndNewlines)
             : ""
@@ -447,12 +453,35 @@ final class VocabularyPreparationCoordinator {
 
     func continueAfterLearning() {
         guard interactionState == .learningAfterAnswer else { return }
+        interactionTiming.continueTapped()
         if assessmentUpdatePending || coverageStoppingTask != nil {
             continueAfterPendingAssessmentUpdate = true
             isPreparingNextQuestion = true
             return
         }
         advanceAssessment(.none, persistAnswers: false)
+    }
+
+    func questionBecameVisible(candidateKey: String) {
+        guard phase == .assessment,
+              currentCandidate?.canonicalKey == candidateKey else { return }
+        interactionTiming.nextWordVisible()
+    }
+
+    func answerControlsBecameUsable(candidateKey: String) {
+        guard phase == .assessment,
+              currentCandidate?.canonicalKey == candidateKey,
+              interactionState == .awaitingAnswer,
+              isAnswerInteractionReady else { return }
+        interactionTiming.nextWordAnswerable()
+    }
+
+    func learningContentBecameVisible(candidateKey: String) {
+        guard phase == .assessment,
+              currentCandidate?.canonicalKey == candidateKey,
+              interactionState == .learningAfterAnswer,
+              case .available = definitionState else { return }
+        interactionTiming.learningContentVisible()
     }
 
     func retryDefinition() {
@@ -566,6 +595,7 @@ final class VocabularyPreparationCoordinator {
     }
 
     func cancel() {
+        interactionTiming.cancel()
         requestID = UUID()
         cancellationToken.cancel()
         workflowTask?.cancel()
@@ -721,6 +751,7 @@ final class VocabularyPreparationCoordinator {
         guard isAnswerInteractionReady,
               interactionState == .awaitingAnswer,
               let key = currentCandidate?.canonicalKey else { return }
+        interactionTiming.answerTapped()
         advanceAssessment(
             .score(evidence, key, typedMeaning: nil),
             persistAnswers: true,
@@ -923,6 +954,7 @@ final class VocabularyPreparationCoordinator {
             return
         }
         if let result = advance.result {
+            interactionTiming.terminalResult()
             showResults(result)
             return
         }
@@ -1131,6 +1163,9 @@ final class VocabularyPreparationCoordinator {
                 self.definitionTask = nil
                 if self.revealedDefinitionKey == key {
                     self.definitionState = .unavailable(error.localizedDescription)
+                    if self.interactionState == .learningAfterAnswer {
+                        self.interactionTiming.learningContentFailed()
+                    }
                 }
             }
         }
