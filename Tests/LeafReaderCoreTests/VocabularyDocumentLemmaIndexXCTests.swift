@@ -3,6 +3,41 @@ import XCTest
 import LeafReaderCore
 
 final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
+    func testPartOfSpeechConfidencePolicyPreservesProductionThresholds() {
+        XCTAssertEqual(
+            VocabularyPartOfSpeechConfidencePolicy.classify(hypotheses: ["Noun": 0.80, "Verb": 0.20]),
+            .noun
+        )
+        XCTAssertEqual(
+            VocabularyPartOfSpeechConfidencePolicy.classify(hypotheses: ["Noun": 0.64, "Verb": 0.10]),
+            .unknown
+        )
+        XCTAssertEqual(
+            VocabularyPartOfSpeechConfidencePolicy.classify(hypotheses: ["Noun": 0.70, "Verb": 0.51]),
+            .unknown
+        )
+    }
+
+    func testUnknownPOSReconciliationRequiresExactlyOneConfidentClass() {
+        let noun = VocabularyLexicalItemID(language: "en", lemma: "record", partOfSpeech: .noun)
+        let verb = VocabularyLexicalItemID(language: "en", lemma: "record", partOfSpeech: .verb)
+        let unknown = VocabularyLexicalItemID(language: "en", lemma: "record", partOfSpeech: .unknown)
+
+        XCTAssertEqual(
+            VocabularyPartOfSpeechReconciliationPolicy.soleConfidentPartByLemma([noun, unknown])["record"],
+            .noun
+        )
+        XCTAssertEqual(
+            VocabularyPartOfSpeechReconciliationPolicy.soleConfidentPartByLemma([verb, unknown])["record"],
+            .verb
+        )
+        XCTAssertNil(
+            VocabularyPartOfSpeechReconciliationPolicy.soleConfidentPartByLemma([noun, verb, unknown])["record"]
+        )
+        XCTAssertNil(
+            VocabularyPartOfSpeechReconciliationPolicy.soleConfidentPartByLemma([unknown])["record"]
+        )
+    }
     func testPrioritySliceSeedsCompleteIndexWithoutChangingMatches() throws {
         let pages = [
             "Er ist gestern nach Hause gegangen. Wir gehen heute wieder.",

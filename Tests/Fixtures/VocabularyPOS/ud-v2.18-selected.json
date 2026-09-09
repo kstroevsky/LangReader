@@ -1,0 +1,138 @@
+{
+  "cases": [
+    {
+      "caseID": "en_ewt:weblog-blogspot.com_floppingaces_20050313182621_ENG_20050313_182621-0011:33",
+      "goldFeatures": "Tense=Pres|VerbForm=Part",
+      "goldLemma": "run",
+      "goldUPOS": "VERB",
+      "goldXPOS": "VBG",
+      "languageCode": "en",
+      "occurrenceWeight": 30,
+      "sourceID": "en_ewt",
+      "sourceSentenceID": "weblog-blogspot.com_floppingaces_20050313182621_ENG_20050313_182621-0011",
+      "surface": "running",
+      "text": "I've been fuming over this fact for a few weeks now, ever since some organizations and governments suggested we need to accept the fact that Hezbollah will get involved in running Lebanon.",
+      "tokenID": "33"
+    },
+    {
+      "caseID": "en_ewt:email-enronsent28_01-0013:13",
+      "goldFeatures": "Degree=Pos",
+      "goldLemma": "record",
+      "goldUPOS": "ADJ",
+      "goldXPOS": "JJ",
+      "languageCode": "en",
+      "occurrenceWeight": 25,
+      "sourceID": "en_ewt",
+      "sourceSentenceID": "email-enronsent28_01-0013",
+      "surface": "record",
+      "text": "A big rally then took the Dow (unconfirmed) to a record high of 1051 in January of '73, turning everyone bullish.",
+      "tokenID": "13"
+    },
+    {
+      "caseID": "en_ewt:email-enronsent32_01-0032:18",
+      "goldFeatures": "Number=Plur",
+      "goldLemma": "bank",
+      "goldUPOS": "NOUN",
+      "goldXPOS": "NNS",
+      "languageCode": "en",
+      "occurrenceWeight": 40,
+      "sourceID": "en_ewt",
+      "sourceSentenceID": "email-enronsent32_01-0032",
+      "surface": "banks",
+      "text": "The guaranty for the PPA is blacklined against the Enron EPC Contract guaranty in favor of the banks which was granted in connection with our Cabazon Wind Power Project (the project most recently financed by EWC) and the GPSA guaranty is blacklined against the PPA guaranty.",
+      "tokenID": "18"
+    },
+    {
+      "caseID": "en_ewt:answers-20111108081911AAy6QeW_ans-0001:23",
+      "goldFeatures": "Tense=Pres|VerbForm=Part",
+      "goldLemma": "record",
+      "goldUPOS": "VERB",
+      "goldXPOS": "VBG",
+      "languageCode": "en",
+      "occurrenceWeight": 20,
+      "sourceID": "en_ewt",
+      "sourceSentenceID": "answers-20111108081911AAy6QeW_ans-0001",
+      "surface": "recording",
+      "text": "I have a Kodak Camera (10.2 Megapixels)... Kodak AF 5x OPTICAL LENS... how do I pause it while recording?",
+      "tokenID": "23"
+    },
+    {
+      "caseID": "de_gsd:test-s255:5",
+      "goldFeatures": "Case=Acc|Gender=Fem|Number=Plur",
+      "goldLemma": "Bank",
+      "goldUPOS": "NOUN",
+      "goldXPOS": "NN",
+      "languageCode": "de",
+      "occurrenceWeight": 45,
+      "sourceID": "de_gsd",
+      "sourceSentenceID": "test-s255",
+      "surface": "Banken",
+      "text": "Sicherlich gibt es viele Banken, die billigere Konzepte zu Finanzen, KOnten uvm anbieten, aber der persönlich Service und die Hilfe, die einem in finanziellen Fragen gegeben wird, bietet nur die Sparkasse.",
+      "tokenID": "5"
+    },
+    {
+      "caseID": "de_gsd:test-s255:30",
+      "goldFeatures": "VerbForm=Part",
+      "goldLemma": "geben",
+      "goldUPOS": "VERB",
+      "goldXPOS": "VVPP",
+      "languageCode": "de",
+      "occurrenceWeight": 15,
+      "sourceID": "de_gsd",
+      "sourceSentenceID": "test-s255",
+      "surface": "gegeben",
+      "text": "Sicherlich gibt es viele Banken, die billigere Konzepte zu Finanzen, KOnten uvm anbieten, aber der persönlich Service und die Hilfe, die einem in finanziellen Fragen gegeben wird, bietet nur die Sparkasse.",
+      "tokenID": "30"
+    },
+    {
+      "caseID": "de_gsd:test-s422:6",
+      "goldFeatures": "Mood=Ind|Number=Plur|Person=3|Tense=Pres|VerbForm=Fin",
+      "goldLemma": "laufen",
+      "goldUPOS": "VERB",
+      "goldXPOS": "VVFIN",
+      "languageCode": "de",
+      "occurrenceWeight": 30,
+      "sourceID": "de_gsd",
+      "sourceSentenceID": "test-s422",
+      "surface": "laufen",
+      "text": "Viele Göttinger ``Autonome'' laufen zur Zeit mit einem unguten Gefühl durch die Stadt.",
+      "tokenID": "6"
+    },
+    {
+      "caseID": "de_gsd:test-s447:19",
+      "goldFeatures": "Case=Dat|Gender=Fem|Number=Sing",
+      "goldLemma": "Bank",
+      "goldUPOS": "PROPN",
+      "goldXPOS": "NE",
+      "languageCode": "de",
+      "occurrenceWeight": 20,
+      "sourceID": "de_gsd",
+      "sourceSentenceID": "test-s447",
+      "surface": "Bank",
+      "text": "Die Johannesburger Tageszeitung Beeld berichtete jedoch am Donnerstag, daß die Villa Ende September von der Allied Bank gepfändet wurde, weil Frau Mandela die Zinsen für die Hypothek nicht mehr zahlen konnte.",
+      "tokenID": "19"
+    }
+  ],
+  "release": "UD 2.18",
+  "schemaVersion": 1,
+  "sources": {
+    "de_gsd": {
+      "language": "de",
+      "license": "Annotations CC BY-SA 4.0; underlying-text terms in upstream LICENSE.txt",
+      "path": "de_gsd-ud-test.conllu",
+      "repository": "https://github.com/UniversalDependencies/UD_German-GSD",
+      "revision": "81d8c3612a88f5867fd089e9c0a5466ef230078b",
+      "sha256": "595070aa50b706a91dc66f17c296f7a9a25cbc75269f177c27680fb1c21528ab",
+      "tag": "r2.18"
+    },
+    "en_ewt": {
+      "language": "en",
+      "license": "CC BY-SA 4.0",
+      "path": "en_ewt-ud-test.conllu",
+      "repository": "https://github.com/UniversalDependencies/UD_English-EWT",
+      "revision": "b7711cce01cdd4f5fcc0a8199b8a50d951b16c0c",
+      "sha256": "fa024f43dc5da3c5ac02563bc9bd0e974f46cbb1560823976a8f342a37dc494a",
+      "tag": "r2.18"
+    }
+  }
+}

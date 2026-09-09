@@ -57,6 +57,54 @@ package struct VocabularyDocumentLemmaSummary: Codable, Equatable, Sendable {
     }
 }
 
+/// The production confidence boundary for lexical-class hypotheses. Offline
+/// POS fixtures call this same owner instead of reproducing its thresholds.
+package enum VocabularyPartOfSpeechConfidencePolicy {
+    package static let minimumLeadingProbability = 0.65
+    package static let minimumMargin = 0.20
+
+    package static func classify(hypotheses: [String: Double]) -> VocabularyPartOfSpeech {
+        let ordered = hypotheses
+            .filter { $0.value.isFinite && $0.value >= 0 }
+            .sorted {
+                if $0.value != $1.value { return $0.value > $1.value }
+                return $0.key < $1.key
+            }
+        guard let leading = ordered.first,
+              leading.value >= minimumLeadingProbability,
+              leading.value - (ordered.dropFirst().first?.value ?? 0) >= minimumMargin else {
+            return .unknown
+        }
+        switch NLTag(rawValue: leading.key) {
+        case .noun: return .noun
+        case .verb: return .verb
+        case .adjective: return .adjective
+        case .adverb: return .adverb
+        case .pronoun: return .pronoun
+        case .determiner: return .determiner
+        case .preposition: return .preposition
+        case .conjunction: return .conjunction
+        case .interjection: return .interjection
+        case .particle: return .particle
+        default: return .other
+        }
+    }
+}
+
+package enum VocabularyPartOfSpeechReconciliationPolicy {
+    /// Returns the sole confident POS for each lemma. Unknown occurrences may
+    /// join only that one class; multiple confident classes remain split.
+    package static func soleConfidentPartByLemma(
+        _ items: [VocabularyLexicalItemID]
+    ) -> [String: VocabularyPartOfSpeech] {
+        Dictionary(grouping: items.filter { $0.partOfSpeech != .unknown }, by: \.lemma)
+            .compactMapValues { values in
+                let parts = Set(values.map(\.partOfSpeech))
+                return parts.count == 1 ? parts.first : nil
+            }
+    }
+}
+
 /// A small, already-built page slice that can seed a whole-document index.
 /// The page mapping is explicit because the slice is ordered for latency (the
 /// current page first), not necessarily in document order.
@@ -259,13 +307,11 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         }
 
         let lexicalItems = pages.flatMap { $0.lexicalItemByKey.values }
-        let confidentPartsByLemma = Dictionary(grouping: lexicalItems.filter {
-            $0.partOfSpeech != .unknown
-        }, by: \.lemma).mapValues { Set($0.map(\.partOfSpeech)) }
+        let soleConfidentPartByLemma = VocabularyPartOfSpeechReconciliationPolicy
+            .soleConfidentPartByLemma(lexicalItems)
         var resolvedKeyByKey: [String: String] = [:]
         for item in lexicalItems where item.partOfSpeech == .unknown {
-            guard let confidentParts = confidentPartsByLemma[item.lemma], confidentParts.count == 1,
-                  let partOfSpeech = confidentParts.first else { continue }
+            guard let partOfSpeech = soleConfidentPartByLemma[item.lemma] else { continue }
             resolvedKeyByKey[item.canonicalKey] = VocabularyLexicalItemID(
                 language: item.language,
                 lemma: item.lemma,
@@ -598,25 +644,8 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             unit: .word,
             scheme: .lexicalClass,
             maximumCount: 2
-        ).0.sorted { $0.value > $1.value }
-        guard let leading = hypotheses.first,
-              leading.value >= 0.65,
-              leading.value - (hypotheses.dropFirst().first?.value ?? 0) >= 0.20 else {
-            return .unknown
-        }
-        switch NLTag(rawValue: leading.key) {
-        case .noun: return .noun
-        case .verb: return .verb
-        case .adjective: return .adjective
-        case .adverb: return .adverb
-        case .pronoun: return .pronoun
-        case .determiner: return .determiner
-        case .preposition: return .preposition
-        case .conjunction: return .conjunction
-        case .interjection: return .interjection
-        case .particle: return .particle
-        default: return .other
-        }
+        ).0
+        return VocabularyPartOfSpeechConfidencePolicy.classify(hypotheses: hypotheses)
     }
 
     private static func exactSurfaceKey(_ value: String) -> String {
