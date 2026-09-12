@@ -68,11 +68,16 @@ python3 ./scripts/generate_vocabulary_preparation_fixtures.py --check
 echo "==> Checking vocabulary evidence status register"
 python3 ./scripts/build_vocabulary_evidence_register.py --check
 
-echo "==> Testing disabled calibration assignment proposal"
+echo "==> Testing approved disabled calibration assignment design"
 python3 ./scripts/validate_vocabulary_calibration_assignment_package.py --self-test
 
 echo "==> Checking sealed vocabulary development-confirmation reservation"
 python3 ./scripts/validate_vocabulary_development_confirmation_reservation.py --self-test
+
+echo "==> Checking frozen vocabulary warm-compatibility development reservation"
+python3 ./scripts/validate_vocabulary_longitudinal_compatibility_manifest.py \
+  ./docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-development-manifest-v1.json \
+  --self-test
 
 echo "==> Testing vocabulary domain resource builders"
 bash ./scripts/test_vocabulary_domain_resource_builders.sh
