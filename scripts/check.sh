@@ -70,6 +70,9 @@ python3 ./scripts/build_vocabulary_evidence_register.py --check
 echo "==> Testing disabled calibration assignment proposal"
 python3 ./scripts/validate_vocabulary_calibration_assignment_package.py --self-test
 
+echo "==> Checking sealed vocabulary development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation.py --self-test
+
 echo "==> Testing vocabulary domain resource builders"
 bash ./scripts/test_vocabulary_domain_resource_builders.sh
 
