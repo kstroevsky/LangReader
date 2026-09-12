@@ -1,7 +1,16 @@
 {
   "schema_version": 1,
   "derived_view": true,
-  "candidate_revision": "e24c377",
+  "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
+  "repository_head_reviewed": "ad84055061023d360d68d7e061d114ef7dec0ff8",
+  "head_since_production_evidence": [
+    "9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only",
+    "52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only",
+    "7a196180eea430a3645d4f89e8690a40864f2f71: SAP template/readiness checks only",
+    "76624ab19e6b1517d947280f111101f831209f0b: first frozen representative POS reservation only",
+    "455cd59786c7815a97465e527fc50249e4b0360e: invalid v1 provenance plus fresh unscored v2 POS reservation only",
+    "ad84055061023d360d68d7e061d114ef7dec0ff8: offline representative POS scoring/reporting evidence only"
+  ],
   "canonical_ledger": {
     "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
     "file_sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4",
@@ -14,7 +23,8 @@
     "failed": 3,
     "historically_measured": 1,
     "implemented": 1,
-    "verified_current_candidate": 31
+    "implemented_evidence_adverse": 1,
+    "verified_current_candidate": 30
   },
   "retained_artifacts": [
     {
@@ -107,6 +117,41 @@
       "status": "fabricated_rehearsal",
       "interpretation": "Exercises tail priority, regular fallback, assigned items, RNG provenance, and joint propensities.",
       "sha256": "d2a383ede41bdb1d01dfc9a68a955817ac05e8dcaf3d50053049247174d2fe6e"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v1.json",
+      "evidence_class": "sealed synthetic development-confirmation reservation",
+      "status": "reserved_not_executed",
+      "interpretation": "Three seeds and 24 document derivation identities are committed; no candidate, outcomes, consumption, or release access exists.",
+      "sha256": "a43e45a5fef43367b20e36e0f41684186901af325e2e597a994857591015303a"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/cross-format-fixture-checkpoint-2026-09-09.md",
+      "evidence_class": "host-local final vocabulary pipeline parity",
+      "status": "verified_current_candidate",
+      "interpretation": "PDF/EPUB/DOCX lemma+POS inventory, denominator, difficulty, ordering, and first-question parity pass on the recorded macOS runtime.",
+      "sha256": "b54101ea2c9fcb1f7b254f0fa095df25f4023f14217b3790a708ab9b553e61f1"
+    },
+    {
+      "path": "docs/research/VOCABULARY_VALIDATION_SAP_TEMPLATE.md",
+      "evidence_class": "unapproved confirmatory SAP template",
+      "status": "readiness_template_expanded",
+      "interpretation": "Precision/support/interference/meaning/theta fields are mandatory, but no value, method, approval, or collection authority is supplied.",
+      "sha256": "a9ede553798fc32565c40e9b0e4c9a118384eedd464d3d52603da346e1101cc4"
+    },
+    {
+      "path": "Tests/Fixtures/VocabularyPOS/ud-v2.18-validation-v2.json",
+      "evidence_class": "frozen representative POS development/held-out fixture",
+      "status": "consumed",
+      "interpretation": "480 unique sentences with zero v1 held-out overlap; v2 outcomes are now retained and may not be used as a tuning loop.",
+      "sha256": "80dc8345871f55e0034432fbea1a1c2d4ef399c5af788c93fb0fea08908b19b5"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/vocabulary-pos-validation-report-v2.json",
+      "evidence_class": "representative POS development/held-out result",
+      "status": "completed_adverse",
+      "interpretation": "74.58% raw POS, 9.58% abstention, and 69.38% final identity; thresholds remain unchanged.",
+      "sha256": "742ce6af001563e001056ed4c9bcbe57a0262fbd0d4862e29776c17023a85140"
     }
   ],
   "records": [
@@ -116,7 +161,7 @@
       "behavior_claim": "Preserve stages 1–6 as completed baseline capabilities and use the new priority list for next-stage ordering.",
       "prerequisite": "No additional implementation prerequisite; empirical and release claims remain separately gated.",
       "responsible_capability": "Core/App maintainers and verification owner",
-      "source_revision_configuration": "e24c377; Swift 6 warnings-as-errors; macOS deterministic repository checks",
+      "source_revision_configuration": "cfb5468; Swift 6 warnings-as-errors; macOS deterministic repository checks",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -134,7 +179,7 @@
       "behavior_claim": "No response telemetry or automatic upload.",
       "prerequisite": "No additional implementation prerequisite; empirical and release claims remain separately gated.",
       "responsible_capability": "Core/App maintainers and verification owner",
-      "source_revision_configuration": "e24c377; Swift 6 warnings-as-errors; macOS deterministic repository checks",
+      "source_revision_configuration": "cfb5468; Swift 6 warnings-as-errors; macOS deterministic repository checks",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -152,7 +197,7 @@
       "behavior_claim": "Versioned evidence categories and cold-start reliabilities.",
       "prerequisite": "Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.",
       "responsible_capability": "LeafReaderCore assessment/model owner",
-      "source_revision_configuration": "e24c377; production full 512-sample coverage path and versioned observation contract",
+      "source_revision_configuration": "cfb5468; production full 512-sample coverage path and versioned observation contract",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -170,7 +215,7 @@
       "behavior_claim": "Latent knowledge misspecification and evidence reliability are separate parameter families.",
       "prerequisite": "Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.",
       "responsible_capability": "LeafReaderCore assessment/model owner",
-      "source_revision_configuration": "e24c377; production full 512-sample coverage path and versioned observation contract",
+      "source_revision_configuration": "cfb5468; production full 512-sample coverage path and versioned observation contract",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -188,7 +233,7 @@
       "behavior_claim": "Answered probabilities remain soft and classifications use fixed thresholds.",
       "prerequisite": "Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.",
       "responsible_capability": "LeafReaderCore assessment/model owner",
-      "source_revision_configuration": "e24c377; production full 512-sample coverage path and versioned observation contract",
+      "source_revision_configuration": "cfb5468; production full 512-sample coverage path and versioned observation contract",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -206,7 +251,7 @@
       "behavior_claim": "Tail validation cadence and bounded knowledge-misspecification estimate.",
       "prerequisite": "Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.",
       "responsible_capability": "LeafReaderCore assessment/model owner",
-      "source_revision_configuration": "e24c377; production full 512-sample coverage path and versioned observation contract",
+      "source_revision_configuration": "cfb5468; production full 512-sample coverage path and versioned observation contract",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -224,7 +269,7 @@
       "behavior_claim": "Uncertain item-difficulty prior and quadrature.",
       "prerequisite": "Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.",
       "responsible_capability": "LeafReaderCore assessment/model owner",
-      "source_revision_configuration": "e24c377; production full 512-sample coverage path and versioned observation contract",
+      "source_revision_configuration": "cfb5468; production full 512-sample coverage path and versioned observation contract",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -242,7 +287,7 @@
       "behavior_claim": "Deterministic posterior-predictive coverage and locally minimal deck.",
       "prerequisite": "Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.",
       "responsible_capability": "LeafReaderCore assessment/model owner",
-      "source_revision_configuration": "e24c377; production full 512-sample coverage path and versioned observation contract",
+      "source_revision_configuration": "cfb5468; production full 512-sample coverage path and versioned observation contract",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -278,7 +323,7 @@
       "behavior_claim": "Language+lemma+POS identity with conservative POS abstention.",
       "prerequisite": "Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.",
       "responsible_capability": "Core lexical owner and App preparation-flow owner",
-      "source_revision_configuration": "e24c377; English/German PDF and Web reader paths; algorithm version 3",
+      "source_revision_configuration": "cfb5468; English/German PDF and Web reader paths; algorithm version 3",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -296,7 +341,7 @@
       "behavior_claim": "Group by lemma+POS and preserve wildcard compatibility.",
       "prerequisite": "Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.",
       "responsible_capability": "Core lexical owner and App preparation-flow owner",
-      "source_revision_configuration": "e24c377; English/German PDF and Web reader paths; algorithm version 3",
+      "source_revision_configuration": "cfb5468; English/German PDF and Web reader paths; algorithm version 3",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -332,7 +377,7 @@
       "behavior_claim": "Answer-before-reveal UX and typed local self-verification.",
       "prerequisite": "Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.",
       "responsible_capability": "Core lexical owner and App preparation-flow owner",
-      "source_revision_configuration": "e24c377; English/German PDF and Web reader paths; algorithm version 3",
+      "source_revision_configuration": "cfb5468; English/German PDF and Web reader paths; algorithm version 3",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -350,7 +395,7 @@
       "behavior_claim": "Version 3 session migration preserves direct/user-owned state.",
       "prerequisite": "Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.",
       "responsible_capability": "Core lexical owner and App preparation-flow owner",
-      "source_revision_configuration": "e24c377; English/German PDF and Web reader paths; algorithm version 3",
+      "source_revision_configuration": "cfb5468; English/German PDF and Web reader paths; algorithm version 3",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -368,7 +413,7 @@
       "behavior_claim": "Language-scoped local prior uses only completed assessment evidence.",
       "prerequisite": "Completed-session evidence in the isolated real SQLite store; no passive exposure.",
       "responsible_capability": "Core prior/store owner with App integration review",
-      "source_revision_configuration": "bb04366 and verified through e24c377; fixed-clock longitudinal development manifest v1",
+      "source_revision_configuration": "bb04366 and verified through cfb5468; fixed-clock longitudinal development manifest v1",
       "artifact": {
         "path": "docs/plans/vocabulary-validation-evidence/longitudinal-warm-checkpoint-2026-09-08.md",
         "sha256": "23b9eb3237569cb84369192154df0dedf61e9079699b7b0f25f43e4c59900128"
@@ -386,7 +431,7 @@
       "behavior_claim": "Warm prior mixture and eligibility.",
       "prerequisite": "Completed-session evidence in the isolated real SQLite store; no passive exposure.",
       "responsible_capability": "Core prior/store owner with App integration review",
-      "source_revision_configuration": "bb04366 and verified through e24c377; fixed-clock longitudinal development manifest v1",
+      "source_revision_configuration": "bb04366 and verified through cfb5468; fixed-clock longitudinal development manifest v1",
       "artifact": {
         "path": "docs/plans/vocabulary-validation-evidence/longitudinal-warm-checkpoint-2026-09-08.md",
         "sha256": "23b9eb3237569cb84369192154df0dedf61e9079699b7b0f25f43e4c59900128"
@@ -404,7 +449,7 @@
       "behavior_claim": "Cross-book adaptation defaults on and is independently resettable.",
       "prerequisite": "Completed-session evidence in the isolated real SQLite store; no passive exposure.",
       "responsible_capability": "Core prior/store owner with App integration review",
-      "source_revision_configuration": "bb04366 and verified through e24c377; fixed-clock longitudinal development manifest v1",
+      "source_revision_configuration": "bb04366 and verified through cfb5468; fixed-clock longitudinal development manifest v1",
       "artifact": {
         "path": "docs/plans/vocabulary-validation-evidence/longitudinal-warm-checkpoint-2026-09-08.md",
         "sha256": "23b9eb3237569cb84369192154df0dedf61e9079699b7b0f25f43e4c59900128"
@@ -422,7 +467,7 @@
       "behavior_claim": "Record domain metadata without production difficulty effect.",
       "prerequisite": "Checksummed licensed domain resources; production difficulty must remain general-language.",
       "responsible_capability": "Vocabulary domain resource/evaluation owner",
-      "source_revision_configuration": "e24c377; pinned 200,000-row English/German resource builds",
+      "source_revision_configuration": "cfb5468; pinned 200,000-row English/German resource builds",
       "artifact": {
         "path": "docs/perf/vocabulary-preparation-testing/README.md",
         "sha256": "ae421d1ba1cc896f11d54e92fc2ee93c091ad1729e090c1c736a3e79bff4d4e7"
@@ -440,7 +485,7 @@
       "behavior_claim": "Pinned English/German literary, news, and reference resources.",
       "prerequisite": "Checksummed licensed domain resources; production difficulty must remain general-language.",
       "responsible_capability": "Vocabulary domain resource/evaluation owner",
-      "source_revision_configuration": "e24c377; pinned 200,000-row English/German resource builds",
+      "source_revision_configuration": "cfb5468; pinned 200,000-row English/German resource builds",
       "artifact": {
         "path": "docs/perf/vocabulary-preparation-testing/README.md",
         "sha256": "ae421d1ba1cc896f11d54e92fc2ee93c091ad1729e090c1c736a3e79bff4d4e7"
@@ -476,7 +521,7 @@
       "behavior_claim": "Explicit privacy-minimized research export.",
       "prerequisite": "Explicit local export and separate review before any fitted pack can affect production.",
       "responsible_capability": "Research export, calibration fitter, and privacy reviewers",
-      "source_revision_configuration": "8f7091b and verified through e24c377; fabricated schema/rehearsal v2",
+      "source_revision_configuration": "8f7091b and verified through cfb5468; fabricated schema/rehearsal v2",
       "artifact": {
         "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
         "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
@@ -494,7 +539,7 @@
       "behavior_claim": "Offline calibration consumes the Core-owned production categorical evidence likelihood contract.",
       "prerequisite": "Explicit local export and separate review before any fitted pack can affect production.",
       "responsible_capability": "Research export, calibration fitter, and privacy reviewers",
-      "source_revision_configuration": "8f7091b and verified through e24c377; fabricated schema/rehearsal v2",
+      "source_revision_configuration": "8f7091b and verified through cfb5468; fabricated schema/rehearsal v2",
       "artifact": {
         "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
         "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
@@ -512,7 +557,7 @@
       "behavior_claim": "Reviewed calibration-pack eligibility and disabled 2PL.",
       "prerequisite": "Explicit local export and separate review before any fitted pack can affect production.",
       "responsible_capability": "Research export, calibration fitter, and privacy reviewers",
-      "source_revision_configuration": "8f7091b and verified through e24c377; fabricated schema/rehearsal v2",
+      "source_revision_configuration": "8f7091b and verified through cfb5468; fabricated schema/rehearsal v2",
       "artifact": {
         "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
         "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
@@ -530,7 +575,7 @@
       "behavior_claim": "Core coverage includes model, migration, coverage, POS, prior, and question limits.",
       "prerequisite": "No additional implementation prerequisite; empirical and release claims remain separately gated.",
       "responsible_capability": "Core/App maintainers and verification owner",
-      "source_revision_configuration": "e24c377; Swift 6 warnings-as-errors; macOS deterministic repository checks",
+      "source_revision_configuration": "cfb5468; Swift 6 warnings-as-errors; macOS deterministic repository checks",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -548,7 +593,7 @@
       "behavior_claim": "App integration covers quick/typed flow, failures, persistence, privacy, and reader seams.",
       "prerequisite": "No additional implementation prerequisite; empirical and release claims remain separately gated.",
       "responsible_capability": "Core/App maintainers and verification owner",
-      "source_revision_configuration": "e24c377; Swift 6 warnings-as-errors; macOS deterministic repository checks",
+      "source_revision_configuration": "cfb5468; Swift 6 warnings-as-errors; macOS deterministic repository checks",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -602,7 +647,7 @@
       "behavior_claim": "Release and real-app latency gates plus named benchmarks.",
       "prerequisite": "Private representative six-document manifest, logged-in macOS, Accessibility, frozen build, and controlled repetitions.",
       "responsible_capability": "App performance operator and release owner",
-      "source_revision_configuration": "3ac6939 instrumentation verified through e24c377; measurement candidate not frozen",
+      "source_revision_configuration": "3ac6939 instrumentation verified through cfb5468; measurement candidate not frozen",
       "artifact": {
         "path": "docs/plans/vocabulary-validation-evidence/usable-question-latency-checkpoint-2026-09-09.md",
         "sha256": "d9c560320d3e2d71b43cf28503acd696b7053309ec3ec9f7945649402d8ead3e"
@@ -620,7 +665,7 @@
       "behavior_claim": "Ordered green commits and final verification commands.",
       "prerequisite": "All mandatory evidence, decisions, external inputs, and candidate-freeze steps resolved.",
       "responsible_capability": "Release owner/reviewer",
-      "source_revision_configuration": "Integrated development branch through e24c377; not a frozen release candidate",
+      "source_revision_configuration": "Integrated development branch through ad84055; production evidence candidate cfb5468; not a frozen release candidate",
       "artifact": {
         "path": "docs/plans/vocabulary-validation-evidence/implementation-plan.md",
         "sha256": "93100e889355145526f75f0347ee9b835185a7aa9458929db951d2f24607e05f"
@@ -638,7 +683,7 @@
       "behavior_claim": "One-dimensional Rasch-like expected-loss CAT remains until real residual evidence.",
       "prerequisite": "A separately reviewed empirical finding is required to replace any retained assumption.",
       "responsible_capability": "Model/release owner",
-      "source_revision_configuration": "e24c377; one-dimensional production model and editable projected-coverage deck",
+      "source_revision_configuration": "cfb5468; one-dimensional production model and editable projected-coverage deck",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -656,7 +701,7 @@
       "behavior_claim": "Selected cards are treated as learned only for projected lexical coverage.",
       "prerequisite": "A separately reviewed empirical finding is required to replace any retained assumption.",
       "responsible_capability": "Model/release owner",
-      "source_revision_configuration": "e24c377; one-dimensional production model and editable projected-coverage deck",
+      "source_revision_configuration": "cfb5468; one-dimensional production model and editable projected-coverage deck",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -674,7 +719,7 @@
       "behavior_claim": "Residual uncertainty can select soft verified-known items and remains editable.",
       "prerequisite": "A separately reviewed empirical finding is required to replace any retained assumption.",
       "responsible_capability": "Model/release owner",
-      "source_revision_configuration": "e24c377; one-dimensional production model and editable projected-coverage deck",
+      "source_revision_configuration": "cfb5468; one-dimensional production model and editable projected-coverage deck",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -692,7 +737,7 @@
       "behavior_claim": "Cross-book adaptation excludes passive exposure.",
       "prerequisite": "A separately reviewed empirical finding is required to replace any retained assumption.",
       "responsible_capability": "Model/release owner",
-      "source_revision_configuration": "e24c377; one-dimensional production model and editable projected-coverage deck",
+      "source_revision_configuration": "cfb5468; one-dimensional production model and editable projected-coverage deck",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -890,17 +935,17 @@
       "behavior_claim": "Validate Apple POS identity on licensed English/German UD fixtures.",
       "prerequisite": "Pinned licensed English/German UD fixture and declared raw/reconciled denominators.",
       "responsible_capability": "NLP fixture engineer and bilingual reviewer",
-      "source_revision_configuration": "4f11ecd and verified through e24c377; UD 2.18 selected fixture",
+      "source_revision_configuration": "ad84055; frozen UD 2.18 v2 development/held-out report on macOS 15.7.9",
       "artifact": {
-        "path": "docs/plans/vocabulary-validation-evidence/pos-fixture-checkpoint-2026-09-09.md",
-        "sha256": "2830f9e875978a1ffe5181a1c5f25cc9a8fa0c07c9f9a9bf014a8137f1ccf1fc"
+        "path": "docs/plans/vocabulary-validation-evidence/representative-pos-validation-checkpoint-2026-09-12.md",
+        "sha256": "58c7d48985c24f7fa9bfab52405fb8918580affb0285a853be75766edd85b348"
       },
       "command_environment": "./scripts/test_vocabulary_pos_fixtures.sh and full repository checks on macOS",
-      "gate": "Evaluation pipeline and consequence accounting pass; observed errors are retained and no production threshold was changed.",
-      "evidence_class": "current-candidate licensed fixture evaluation",
-      "current_status": "verified_current_candidate",
-      "next_action": "Review adverse homograph/participle consequences before proposing any bounded POS policy change.",
-      "decision_history": "Raw accuracy, abstention, reconciled identity, and deck changes were retained without silent tuning."
+      "gate": "Representative UD development/held-out machinery passes, but the evidence is adverse and does not validate private reader documents or justify a release claim.",
+      "evidence_class": "implemented representative diagnostic with adverse held-out evidence",
+      "current_status": "implemented_evidence_adverse",
+      "next_action": "Diagnose only on the consumed fixture's development partition; require regression coverage and a fresh held-out reservation for any bounded fix.",
+      "decision_history": "The eight-token warning was confirmed at 480 cases: 74.58% raw POS and 69.38% final identity. German held-out final identity is 65.62%; no threshold was tuned."
     },
     {
       "id": "PERF-002",
@@ -926,7 +971,7 @@
       "behavior_claim": "Clarify projected post-mastery coverage without changing the default target.",
       "prerequisite": "Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.",
       "responsible_capability": "Core lexical owner and App preparation-flow owner",
-      "source_revision_configuration": "e24c377; English/German PDF and Web reader paths; algorithm version 3",
+      "source_revision_configuration": "cfb5468; English/German PDF and Web reader paths; algorithm version 3",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"
@@ -1034,7 +1079,7 @@
       "behavior_claim": "Typed recall remains optional in production and independent in validation.",
       "prerequisite": "Explicit local export and separate review before any fitted pack can affect production.",
       "responsible_capability": "Research export, calibration fitter, and privacy reviewers",
-      "source_revision_configuration": "8f7091b and verified through e24c377; fabricated schema/rehearsal v2",
+      "source_revision_configuration": "8f7091b and verified through cfb5468; fabricated schema/rehearsal v2",
       "artifact": {
         "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
         "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
@@ -1052,7 +1097,7 @@
       "behavior_claim": "Self-rated proficiency remains a research covariate.",
       "prerequisite": "Explicit local export and separate review before any fitted pack can affect production.",
       "responsible_capability": "Research export, calibration fitter, and privacy reviewers",
-      "source_revision_configuration": "8f7091b and verified through e24c377; fabricated schema/rehearsal v2",
+      "source_revision_configuration": "8f7091b and verified through cfb5468; fabricated schema/rehearsal v2",
       "artifact": {
         "path": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
         "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
@@ -1070,7 +1115,7 @@
       "behavior_claim": "Prioritize measurement coherence over new production dimensions.",
       "prerequisite": "A separately reviewed empirical finding is required to replace any retained assumption.",
       "responsible_capability": "Model/release owner",
-      "source_revision_configuration": "e24c377; one-dimensional production model and editable projected-coverage deck",
+      "source_revision_configuration": "cfb5468; one-dimensional production model and editable projected-coverage deck",
       "artifact": {
         "path": "docs/perf/VOCABULARY_PREPARATION.md",
         "sha256": "0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4"

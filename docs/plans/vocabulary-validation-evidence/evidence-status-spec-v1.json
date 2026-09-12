@@ -1,6 +1,15 @@
 {
   "schema_version": 1,
-  "candidate_revision": "e24c377",
+  "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
+  "repository_head_reviewed": "ad84055061023d360d68d7e061d114ef7dec0ff8",
+  "head_since_production_evidence": [
+    "9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only",
+    "52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only",
+    "7a196180eea430a3645d4f89e8690a40864f2f71: SAP template/readiness checks only",
+    "76624ab19e6b1517d947280f111101f831209f0b: first frozen representative POS reservation only",
+    "455cd59786c7815a97465e527fc50249e4b0360e: invalid v1 provenance plus fresh unscored v2 POS reservation only",
+    "ad84055061023d360d68d7e061d114ef7dec0ff8: offline representative POS scoring/reporting evidence only"
+  ],
   "canonical_ledger": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
   "retained_artifacts": [
     {
@@ -80,6 +89,36 @@
       "evidence_class": "offline assignment reconstruction fixture",
       "status": "fabricated_rehearsal",
       "interpretation": "Exercises tail priority, regular fallback, assigned items, RNG provenance, and joint propensities."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v1.json",
+      "evidence_class": "sealed synthetic development-confirmation reservation",
+      "status": "reserved_not_executed",
+      "interpretation": "Three seeds and 24 document derivation identities are committed; no candidate, outcomes, consumption, or release access exists."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/cross-format-fixture-checkpoint-2026-09-09.md",
+      "evidence_class": "host-local final vocabulary pipeline parity",
+      "status": "verified_current_candidate",
+      "interpretation": "PDF/EPUB/DOCX lemma+POS inventory, denominator, difficulty, ordering, and first-question parity pass on the recorded macOS runtime."
+    },
+    {
+      "path": "docs/research/VOCABULARY_VALIDATION_SAP_TEMPLATE.md",
+      "evidence_class": "unapproved confirmatory SAP template",
+      "status": "readiness_template_expanded",
+      "interpretation": "Precision/support/interference/meaning/theta fields are mandatory, but no value, method, approval, or collection authority is supplied."
+    },
+    {
+      "path": "Tests/Fixtures/VocabularyPOS/ud-v2.18-validation-v2.json",
+      "evidence_class": "frozen representative POS development/held-out fixture",
+      "status": "consumed",
+      "interpretation": "480 unique sentences with zero v1 held-out overlap; v2 outcomes are now retained and may not be used as a tuning loop."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/vocabulary-pos-validation-report-v2.json",
+      "evidence_class": "representative POS development/held-out result",
+      "status": "completed_adverse",
+      "interpretation": "74.58% raw POS, 9.58% abstention, and 69.38% final identity; thresholds remain unchanged."
     }
   ],
   "groups": [
@@ -88,7 +127,7 @@
       "ids": ["ARCH-001", "PRIV-001", "TEST-001", "TEST-002"],
       "prerequisite": "No additional implementation prerequisite; empirical and release claims remain separately gated.",
       "responsible_capability": "Core/App maintainers and verification owner",
-      "source_revision_configuration": "e24c377; Swift 6 warnings-as-errors; macOS deterministic repository checks",
+      "source_revision_configuration": "cfb5468; Swift 6 warnings-as-errors; macOS deterministic repository checks",
       "artifact": "docs/perf/VOCABULARY_PREPARATION.md",
       "command_environment": "./scripts/check.sh --no-build on the local macOS development host",
       "gate": "Architecture, privacy, Core/App, native-boundary, and regression checks pass; no human-validity inference.",
@@ -102,7 +141,7 @@
       "ids": ["EVID-001", "EVID-002", "EVID-003", "VALID-001", "DIFF-001", "COV-001"],
       "prerequisite": "Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.",
       "responsible_capability": "LeafReaderCore assessment/model owner",
-      "source_revision_configuration": "e24c377; production full 512-sample coverage path and versioned observation contract",
+      "source_revision_configuration": "cfb5468; production full 512-sample coverage path and versioned observation contract",
       "artifact": "docs/perf/VOCABULARY_PREPARATION.md",
       "command_environment": "Swift Core/App tests plus evaluator and observation-model self-tests in ./scripts/check.sh --no-build",
       "gate": "Deterministic mathematical and migration tests pass; real calibration remains absent.",
@@ -116,7 +155,7 @@
       "ids": ["LEX-001", "LEX-002", "UX-001", "MIG-001", "COVUX-001"],
       "prerequisite": "Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.",
       "responsible_capability": "Core lexical owner and App preparation-flow owner",
-      "source_revision_configuration": "e24c377; English/German PDF and Web reader paths; algorithm version 3",
+      "source_revision_configuration": "cfb5468; English/German PDF and Web reader paths; algorithm version 3",
       "artifact": "docs/perf/VOCABULARY_PREPARATION.md",
       "command_environment": "VocabularyPreparationCoordinatorXCTests, Core assessment tests, and full repository checks",
       "gate": "Quick/typed answer-before-reveal, compatibility, editable deck, and PDF/Web behavior remain green.",
@@ -130,7 +169,7 @@
       "ids": ["PRIOR-001", "PRIOR-002", "PRIOR-003"],
       "prerequisite": "Completed-session evidence in the isolated real SQLite store; no passive exposure.",
       "responsible_capability": "Core prior/store owner with App integration review",
-      "source_revision_configuration": "bb04366 and verified through e24c377; fixed-clock longitudinal development manifest v1",
+      "source_revision_configuration": "bb04366 and verified through cfb5468; fixed-clock longitudinal development manifest v1",
       "artifact": "docs/plans/vocabulary-validation-evidence/longitudinal-warm-checkpoint-2026-09-08.md",
       "command_environment": "Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build",
       "gate": "Persistence/idempotency/history behavior verified; human drift and warm non-inferiority claims remain separate.",
@@ -144,7 +183,7 @@
       "ids": ["DOMAIN-001", "DOMAIN-002"],
       "prerequisite": "Checksummed licensed domain resources; production difficulty must remain general-language.",
       "responsible_capability": "Vocabulary domain resource/evaluation owner",
-      "source_revision_configuration": "e24c377; pinned 200,000-row English/German resource builds",
+      "source_revision_configuration": "cfb5468; pinned 200,000-row English/German resource builds",
       "artifact": "docs/perf/vocabulary-preparation-testing/README.md",
       "command_environment": "./scripts/test_vocabulary_domain_resource_builders.sh via ./scripts/check.sh --no-build",
       "gate": "Resource integrity and metadata behavior pass; production domain blending remains disabled.",
@@ -158,7 +197,7 @@
       "ids": ["EXPORT-001", "CAL-001", "CAL-002", "ASSUMP-006", "ASSUMP-007"],
       "prerequisite": "Explicit local export and separate review before any fitted pack can affect production.",
       "responsible_capability": "Research export, calibration fitter, and privacy reviewers",
-      "source_revision_configuration": "8f7091b and verified through e24c377; fabricated schema/rehearsal v2",
+      "source_revision_configuration": "8f7091b and verified through cfb5468; fabricated schema/rehearsal v2",
       "artifact": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
       "command_environment": "Validation-study rehearsal, calibration self-test, privacy tests, and full repository checks",
       "gate": "Fabricated package and tooling pass; no real learner calibration or reviewed production pack exists.",
@@ -172,7 +211,7 @@
       "ids": ["ASSUMP-001", "ASSUMP-002", "ASSUMP-003", "ASSUMP-004", "PRIORITY-001"],
       "prerequisite": "A separately reviewed empirical finding is required to replace any retained assumption.",
       "responsible_capability": "Model/release owner",
-      "source_revision_configuration": "e24c377; one-dimensional production model and editable projected-coverage deck",
+      "source_revision_configuration": "cfb5468; one-dimensional production model and editable projected-coverage deck",
       "artifact": "docs/perf/VOCABULARY_PREPARATION.md",
       "command_environment": "Source inspection and ./scripts/check.sh --no-build",
       "gate": "Current implementation matches the retained assumptions; this is not evidence that they are true for humans.",
@@ -186,14 +225,14 @@
       "ids": ["POSVAL-001"],
       "prerequisite": "Pinned licensed English/German UD fixture and declared raw/reconciled denominators.",
       "responsible_capability": "NLP fixture engineer and bilingual reviewer",
-      "source_revision_configuration": "4f11ecd and verified through e24c377; UD 2.18 selected fixture",
-      "artifact": "docs/plans/vocabulary-validation-evidence/pos-fixture-checkpoint-2026-09-09.md",
+      "source_revision_configuration": "ad84055; frozen UD 2.18 v2 development/held-out report on macOS 15.7.9",
+      "artifact": "docs/plans/vocabulary-validation-evidence/representative-pos-validation-checkpoint-2026-09-12.md",
       "command_environment": "./scripts/test_vocabulary_pos_fixtures.sh and full repository checks on macOS",
-      "gate": "Evaluation pipeline and consequence accounting pass; observed errors are retained and no production threshold was changed.",
-      "evidence_class": "current-candidate licensed fixture evaluation",
-      "current_status": "verified_current_candidate",
-      "next_action": "Review adverse homograph/participle consequences before proposing any bounded POS policy change.",
-      "decision_history": "Raw accuracy, abstention, reconciled identity, and deck changes were retained without silent tuning."
+      "gate": "Representative UD development/held-out machinery passes, but the evidence is adverse and does not validate private reader documents or justify a release claim.",
+      "evidence_class": "implemented representative diagnostic with adverse held-out evidence",
+      "current_status": "implemented_evidence_adverse",
+      "next_action": "Diagnose only on the consumed fixture's development partition; require regression coverage and a fresh held-out reservation for any bounded fix.",
+      "decision_history": "The eight-token warning was confirmed at 480 cases: 74.58% raw POS and 69.38% final identity. German held-out final identity is 65.62%; no threshold was tuned."
     },
     {
       "name": "exact-performance-history",
@@ -242,7 +281,7 @@
       "ids": ["PERF-GATE-001"],
       "prerequisite": "Private representative six-document manifest, logged-in macOS, Accessibility, frozen build, and controlled repetitions.",
       "responsible_capability": "App performance operator and release owner",
-      "source_revision_configuration": "3ac6939 instrumentation verified through e24c377; measurement candidate not frozen",
+      "source_revision_configuration": "3ac6939 instrumentation verified through cfb5468; measurement candidate not frozen",
       "artifact": "docs/plans/vocabulary-validation-evidence/usable-question-latency-checkpoint-2026-09-09.md",
       "command_environment": "LEAFVOCAB_UI_SMOKE=1 check_vocabulary_preparation_smoke.sh with private manifest",
       "gate": "Awaiting 150 ms algorithm, 16 ms main-thread, document-open control, and diagnostic usable-question evidence on one frozen candidate.",
@@ -256,7 +295,7 @@
       "ids": ["DELIV-001"],
       "prerequisite": "All mandatory evidence, decisions, external inputs, and candidate-freeze steps resolved.",
       "responsible_capability": "Release owner/reviewer",
-      "source_revision_configuration": "Integrated development branch through e24c377; not a frozen release candidate",
+      "source_revision_configuration": "Integrated development branch through ad84055; production evidence candidate cfb5468; not a frozen release candidate",
       "artifact": "docs/plans/vocabulary-validation-evidence/implementation-plan.md",
       "command_environment": "Final evaluator, all Release repetitions, private GUI matrix, ./scripts/check.sh --no-build, ./scripts/build_app.sh",
       "gate": "Awaiting final-tree evidence and explicit release decision.",

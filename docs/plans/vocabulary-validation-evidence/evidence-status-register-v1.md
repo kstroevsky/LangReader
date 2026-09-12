@@ -2,9 +2,20 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Candidate evidence revision: `e24c377`. Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `ad84055061023d360d68d7e061d114ef7dec0ff8`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
-The status inventory is descriptive, not a completion percentage: `awaiting_external_input` 6, `deferred` 12, `failed` 3, `historically_measured` 1, `implemented` 1, `verified_current_candidate` 31.
+Head-only changes since the production evidence candidate:
+
+- 9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only
+- 52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only
+- 7a196180eea430a3645d4f89e8690a40864f2f71: SAP template/readiness checks only
+- 76624ab19e6b1517d947280f111101f831209f0b: first frozen representative POS reservation only
+- 455cd59786c7815a97465e527fc50249e4b0360e: invalid v1 provenance plus fresh unscored v2 POS reservation only
+- ad84055061023d360d68d7e061d114ef7dec0ff8: offline representative POS scoring/reporting evidence only
+
+Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
+
+The status inventory is descriptive, not a completion percentage: `awaiting_external_input` 6, `deferred` 12, `failed` 3, `historically_measured` 1, `implemented` 1, `implemented_evidence_adverse` 1, `verified_current_candidate` 30.
 
 ## Retained evidence artifact index
 
@@ -99,6 +110,41 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Status: `fabricated_rehearsal`
 - Interpretation: Exercises tail priority, regular fallback, assigned items, RNG provenance, and joint propensities.
 
+### docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v1.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v1.json`](development-confirmation-reservation-v1.json); SHA-256 `a43e45a5fef43367b20e36e0f41684186901af325e2e597a994857591015303a`
+- Evidence class: sealed synthetic development-confirmation reservation
+- Status: `reserved_not_executed`
+- Interpretation: Three seeds and 24 document derivation identities are committed; no candidate, outcomes, consumption, or release access exists.
+
+### docs/plans/vocabulary-validation-evidence/cross-format-fixture-checkpoint-2026-09-09.md
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/cross-format-fixture-checkpoint-2026-09-09.md`](cross-format-fixture-checkpoint-2026-09-09.md); SHA-256 `b54101ea2c9fcb1f7b254f0fa095df25f4023f14217b3790a708ab9b553e61f1`
+- Evidence class: host-local final vocabulary pipeline parity
+- Status: `verified_current_candidate`
+- Interpretation: PDF/EPUB/DOCX lemma+POS inventory, denominator, difficulty, ordering, and first-question parity pass on the recorded macOS runtime.
+
+### docs/research/VOCABULARY_VALIDATION_SAP_TEMPLATE.md
+
+- Artifact/checksum: [`docs/research/VOCABULARY_VALIDATION_SAP_TEMPLATE.md`](../../research/VOCABULARY_VALIDATION_SAP_TEMPLATE.md); SHA-256 `a9ede553798fc32565c40e9b0e4c9a118384eedd464d3d52603da346e1101cc4`
+- Evidence class: unapproved confirmatory SAP template
+- Status: `readiness_template_expanded`
+- Interpretation: Precision/support/interference/meaning/theta fields are mandatory, but no value, method, approval, or collection authority is supplied.
+
+### Tests/Fixtures/VocabularyPOS/ud-v2.18-validation-v2.json
+
+- Artifact/checksum: [`Tests/Fixtures/VocabularyPOS/ud-v2.18-validation-v2.json`](../../../Tests/Fixtures/VocabularyPOS/ud-v2.18-validation-v2.json); SHA-256 `80dc8345871f55e0034432fbea1a1c2d4ef399c5af788c93fb0fea08908b19b5`
+- Evidence class: frozen representative POS development/held-out fixture
+- Status: `consumed`
+- Interpretation: 480 unique sentences with zero v1 held-out overlap; v2 outcomes are now retained and may not be used as a tuning loop.
+
+### docs/plans/vocabulary-validation-evidence/vocabulary-pos-validation-report-v2.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/vocabulary-pos-validation-report-v2.json`](vocabulary-pos-validation-report-v2.json); SHA-256 `742ce6af001563e001056ed4c9bcbe57a0262fbd0d4862e29776c17023a85140`
+- Evidence class: representative POS development/held-out result
+- Status: `completed_adverse`
+- Interpretation: 74.58% raw POS, 9.58% abstention, and 69.38% final identity; thresholds remain unchanged.
+
 ## Failed evidence or gate
 
 ### EVAL-001 — Synthetic simulator scenarios and probability/coverage gates.
@@ -143,6 +189,22 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Next action: Keep staged stopping diagnostic-only unless a new frozen candidate passes both quality and latency gates.
 - Decision history: Rejected after response-noise and idiosyncratic coverage degraded; timings remain retained.
 
+## Implemented with adverse evidence
+
+### POSVAL-001 — Validate Apple POS identity on licensed English/German UD fixtures.
+
+- Canonical status: `active`
+- Current status: `implemented_evidence_adverse`
+- Prerequisite: Pinned licensed English/German UD fixture and declared raw/reconciled denominators.
+- Responsible capability: NLP fixture engineer and bilingual reviewer
+- Source revision/configuration: ad84055; frozen UD 2.18 v2 development/held-out report on macOS 15.7.9
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/representative-pos-validation-checkpoint-2026-09-12.md`](representative-pos-validation-checkpoint-2026-09-12.md); SHA-256 `58c7d48985c24f7fa9bfab52405fb8918580affb0285a853be75766edd85b348`
+- Command/environment: ./scripts/test_vocabulary_pos_fixtures.sh and full repository checks on macOS
+- Gate: Representative UD development/held-out machinery passes, but the evidence is adverse and does not validate private reader documents or justify a release claim.
+- Evidence class: implemented representative diagnostic with adverse held-out evidence
+- Next action: Diagnose only on the consumed fixture's development partition; require regression coverage and a fresh held-out reservation for any bounded fix.
+- Decision history: The eight-token warning was confirmed at 480 cases: 74.58% raw POS and 69.38% final identity. German held-out final identity is 65.62%; no threshold was tuned.
+
 ## Awaiting external input
 
 ### PERF-GATE-001 — Release and real-app latency gates plus named benchmarks.
@@ -151,7 +213,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `awaiting_external_input`
 - Prerequisite: Private representative six-document manifest, logged-in macOS, Accessibility, frozen build, and controlled repetitions.
 - Responsible capability: App performance operator and release owner
-- Source revision/configuration: 3ac6939 instrumentation verified through e24c377; measurement candidate not frozen
+- Source revision/configuration: 3ac6939 instrumentation verified through cfb5468; measurement candidate not frozen
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/usable-question-latency-checkpoint-2026-09-09.md`](usable-question-latency-checkpoint-2026-09-09.md); SHA-256 `d9c560320d3e2d71b43cf28503acd696b7053309ec3ec9f7945649402d8ead3e`
 - Command/environment: LEAFVOCAB_UI_SMOKE=1 check_vocabulary_preparation_smoke.sh with private manifest
 - Gate: Awaiting 150 ms algorithm, 16 ms main-thread, document-open control, and diagnostic usable-question evidence on one frozen candidate.
@@ -165,7 +227,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `awaiting_external_input`
 - Prerequisite: All mandatory evidence, decisions, external inputs, and candidate-freeze steps resolved.
 - Responsible capability: Release owner/reviewer
-- Source revision/configuration: Integrated development branch through e24c377; not a frozen release candidate
+- Source revision/configuration: Integrated development branch through ad84055; production evidence candidate cfb5468; not a frozen release candidate
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/implementation-plan.md`](implementation-plan.md); SHA-256 `93100e889355145526f75f0347ee9b835185a7aa9458929db951d2f24607e05f`
 - Command/environment: Final evaluator, all Release repetitions, private GUI matrix, ./scripts/check.sh --no-build, ./scripts/build_app.sh
 - Gate: Awaiting final-tree evidence and explicit release decision.
@@ -407,7 +469,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: No additional implementation prerequisite; empirical and release claims remain separately gated.
 - Responsible capability: Core/App maintainers and verification owner
-- Source revision/configuration: e24c377; Swift 6 warnings-as-errors; macOS deterministic repository checks
+- Source revision/configuration: cfb5468; Swift 6 warnings-as-errors; macOS deterministic repository checks
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: ./scripts/check.sh --no-build on the local macOS development host
 - Gate: Architecture, privacy, Core/App, native-boundary, and regression checks pass; no human-validity inference.
@@ -421,7 +483,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: No additional implementation prerequisite; empirical and release claims remain separately gated.
 - Responsible capability: Core/App maintainers and verification owner
-- Source revision/configuration: e24c377; Swift 6 warnings-as-errors; macOS deterministic repository checks
+- Source revision/configuration: cfb5468; Swift 6 warnings-as-errors; macOS deterministic repository checks
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: ./scripts/check.sh --no-build on the local macOS development host
 - Gate: Architecture, privacy, Core/App, native-boundary, and regression checks pass; no human-validity inference.
@@ -435,7 +497,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.
 - Responsible capability: LeafReaderCore assessment/model owner
-- Source revision/configuration: e24c377; production full 512-sample coverage path and versioned observation contract
+- Source revision/configuration: cfb5468; production full 512-sample coverage path and versioned observation contract
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: Swift Core/App tests plus evaluator and observation-model self-tests in ./scripts/check.sh --no-build
 - Gate: Deterministic mathematical and migration tests pass; real calibration remains absent.
@@ -449,7 +511,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.
 - Responsible capability: LeafReaderCore assessment/model owner
-- Source revision/configuration: e24c377; production full 512-sample coverage path and versioned observation contract
+- Source revision/configuration: cfb5468; production full 512-sample coverage path and versioned observation contract
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: Swift Core/App tests plus evaluator and observation-model self-tests in ./scripts/check.sh --no-build
 - Gate: Deterministic mathematical and migration tests pass; real calibration remains absent.
@@ -463,7 +525,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.
 - Responsible capability: LeafReaderCore assessment/model owner
-- Source revision/configuration: e24c377; production full 512-sample coverage path and versioned observation contract
+- Source revision/configuration: cfb5468; production full 512-sample coverage path and versioned observation contract
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: Swift Core/App tests plus evaluator and observation-model self-tests in ./scripts/check.sh --no-build
 - Gate: Deterministic mathematical and migration tests pass; real calibration remains absent.
@@ -477,7 +539,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.
 - Responsible capability: LeafReaderCore assessment/model owner
-- Source revision/configuration: e24c377; production full 512-sample coverage path and versioned observation contract
+- Source revision/configuration: cfb5468; production full 512-sample coverage path and versioned observation contract
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: Swift Core/App tests plus evaluator and observation-model self-tests in ./scripts/check.sh --no-build
 - Gate: Deterministic mathematical and migration tests pass; real calibration remains absent.
@@ -491,7 +553,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.
 - Responsible capability: LeafReaderCore assessment/model owner
-- Source revision/configuration: e24c377; production full 512-sample coverage path and versioned observation contract
+- Source revision/configuration: cfb5468; production full 512-sample coverage path and versioned observation contract
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: Swift Core/App tests plus evaluator and observation-model self-tests in ./scripts/check.sh --no-build
 - Gate: Deterministic mathematical and migration tests pass; real calibration remains absent.
@@ -505,7 +567,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Real learner evidence is required before interpreting engineering coefficients as calibrated human parameters.
 - Responsible capability: LeafReaderCore assessment/model owner
-- Source revision/configuration: e24c377; production full 512-sample coverage path and versioned observation contract
+- Source revision/configuration: cfb5468; production full 512-sample coverage path and versioned observation contract
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: Swift Core/App tests plus evaluator and observation-model self-tests in ./scripts/check.sh --no-build
 - Gate: Deterministic mathematical and migration tests pass; real calibration remains absent.
@@ -519,7 +581,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.
 - Responsible capability: Core lexical owner and App preparation-flow owner
-- Source revision/configuration: e24c377; English/German PDF and Web reader paths; algorithm version 3
+- Source revision/configuration: cfb5468; English/German PDF and Web reader paths; algorithm version 3
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: VocabularyPreparationCoordinatorXCTests, Core assessment tests, and full repository checks
 - Gate: Quick/typed answer-before-reveal, compatibility, editable deck, and PDF/Web behavior remain green.
@@ -533,7 +595,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.
 - Responsible capability: Core lexical owner and App preparation-flow owner
-- Source revision/configuration: e24c377; English/German PDF and Web reader paths; algorithm version 3
+- Source revision/configuration: cfb5468; English/German PDF and Web reader paths; algorithm version 3
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: VocabularyPreparationCoordinatorXCTests, Core assessment tests, and full repository checks
 - Gate: Quick/typed answer-before-reveal, compatibility, editable deck, and PDF/Web behavior remain green.
@@ -547,7 +609,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.
 - Responsible capability: Core lexical owner and App preparation-flow owner
-- Source revision/configuration: e24c377; English/German PDF and Web reader paths; algorithm version 3
+- Source revision/configuration: cfb5468; English/German PDF and Web reader paths; algorithm version 3
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: VocabularyPreparationCoordinatorXCTests, Core assessment tests, and full repository checks
 - Gate: Quick/typed answer-before-reveal, compatibility, editable deck, and PDF/Web behavior remain green.
@@ -561,7 +623,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.
 - Responsible capability: Core lexical owner and App preparation-flow owner
-- Source revision/configuration: e24c377; English/German PDF and Web reader paths; algorithm version 3
+- Source revision/configuration: cfb5468; English/German PDF and Web reader paths; algorithm version 3
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: VocabularyPreparationCoordinatorXCTests, Core assessment tests, and full repository checks
 - Gate: Quick/typed answer-before-reveal, compatibility, editable deck, and PDF/Web behavior remain green.
@@ -575,7 +637,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Completed-session evidence in the isolated real SQLite store; no passive exposure.
 - Responsible capability: Core prior/store owner with App integration review
-- Source revision/configuration: bb04366 and verified through e24c377; fixed-clock longitudinal development manifest v1
+- Source revision/configuration: bb04366 and verified through cfb5468; fixed-clock longitudinal development manifest v1
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-warm-checkpoint-2026-09-08.md`](longitudinal-warm-checkpoint-2026-09-08.md); SHA-256 `23b9eb3237569cb84369192154df0dedf61e9079699b7b0f25f43e4c59900128`
 - Command/environment: Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build
 - Gate: Persistence/idempotency/history behavior verified; human drift and warm non-inferiority claims remain separate.
@@ -589,7 +651,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Completed-session evidence in the isolated real SQLite store; no passive exposure.
 - Responsible capability: Core prior/store owner with App integration review
-- Source revision/configuration: bb04366 and verified through e24c377; fixed-clock longitudinal development manifest v1
+- Source revision/configuration: bb04366 and verified through cfb5468; fixed-clock longitudinal development manifest v1
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-warm-checkpoint-2026-09-08.md`](longitudinal-warm-checkpoint-2026-09-08.md); SHA-256 `23b9eb3237569cb84369192154df0dedf61e9079699b7b0f25f43e4c59900128`
 - Command/environment: Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build
 - Gate: Persistence/idempotency/history behavior verified; human drift and warm non-inferiority claims remain separate.
@@ -603,7 +665,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Completed-session evidence in the isolated real SQLite store; no passive exposure.
 - Responsible capability: Core prior/store owner with App integration review
-- Source revision/configuration: bb04366 and verified through e24c377; fixed-clock longitudinal development manifest v1
+- Source revision/configuration: bb04366 and verified through cfb5468; fixed-clock longitudinal development manifest v1
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-warm-checkpoint-2026-09-08.md`](longitudinal-warm-checkpoint-2026-09-08.md); SHA-256 `23b9eb3237569cb84369192154df0dedf61e9079699b7b0f25f43e4c59900128`
 - Command/environment: Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build
 - Gate: Persistence/idempotency/history behavior verified; human drift and warm non-inferiority claims remain separate.
@@ -617,7 +679,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Checksummed licensed domain resources; production difficulty must remain general-language.
 - Responsible capability: Vocabulary domain resource/evaluation owner
-- Source revision/configuration: e24c377; pinned 200,000-row English/German resource builds
+- Source revision/configuration: cfb5468; pinned 200,000-row English/German resource builds
 - Artifact/checksum: [`docs/perf/vocabulary-preparation-testing/README.md`](../../perf/vocabulary-preparation-testing/README.md); SHA-256 `ae421d1ba1cc896f11d54e92fc2ee93c091ad1729e090c1c736a3e79bff4d4e7`
 - Command/environment: ./scripts/test_vocabulary_domain_resource_builders.sh via ./scripts/check.sh --no-build
 - Gate: Resource integrity and metadata behavior pass; production domain blending remains disabled.
@@ -631,7 +693,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Checksummed licensed domain resources; production difficulty must remain general-language.
 - Responsible capability: Vocabulary domain resource/evaluation owner
-- Source revision/configuration: e24c377; pinned 200,000-row English/German resource builds
+- Source revision/configuration: cfb5468; pinned 200,000-row English/German resource builds
 - Artifact/checksum: [`docs/perf/vocabulary-preparation-testing/README.md`](../../perf/vocabulary-preparation-testing/README.md); SHA-256 `ae421d1ba1cc896f11d54e92fc2ee93c091ad1729e090c1c736a3e79bff4d4e7`
 - Command/environment: ./scripts/test_vocabulary_domain_resource_builders.sh via ./scripts/check.sh --no-build
 - Gate: Resource integrity and metadata behavior pass; production domain blending remains disabled.
@@ -645,7 +707,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Explicit local export and separate review before any fitted pack can affect production.
 - Responsible capability: Research export, calibration fitter, and privacy reviewers
-- Source revision/configuration: 8f7091b and verified through e24c377; fabricated schema/rehearsal v2
+- Source revision/configuration: 8f7091b and verified through cfb5468; fabricated schema/rehearsal v2
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md`](fabricated-study-rehearsal-checkpoint-2026-09-08.md); SHA-256 `dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e`
 - Command/environment: Validation-study rehearsal, calibration self-test, privacy tests, and full repository checks
 - Gate: Fabricated package and tooling pass; no real learner calibration or reviewed production pack exists.
@@ -659,7 +721,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Explicit local export and separate review before any fitted pack can affect production.
 - Responsible capability: Research export, calibration fitter, and privacy reviewers
-- Source revision/configuration: 8f7091b and verified through e24c377; fabricated schema/rehearsal v2
+- Source revision/configuration: 8f7091b and verified through cfb5468; fabricated schema/rehearsal v2
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md`](fabricated-study-rehearsal-checkpoint-2026-09-08.md); SHA-256 `dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e`
 - Command/environment: Validation-study rehearsal, calibration self-test, privacy tests, and full repository checks
 - Gate: Fabricated package and tooling pass; no real learner calibration or reviewed production pack exists.
@@ -673,7 +735,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Explicit local export and separate review before any fitted pack can affect production.
 - Responsible capability: Research export, calibration fitter, and privacy reviewers
-- Source revision/configuration: 8f7091b and verified through e24c377; fabricated schema/rehearsal v2
+- Source revision/configuration: 8f7091b and verified through cfb5468; fabricated schema/rehearsal v2
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md`](fabricated-study-rehearsal-checkpoint-2026-09-08.md); SHA-256 `dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e`
 - Command/environment: Validation-study rehearsal, calibration self-test, privacy tests, and full repository checks
 - Gate: Fabricated package and tooling pass; no real learner calibration or reviewed production pack exists.
@@ -687,7 +749,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: No additional implementation prerequisite; empirical and release claims remain separately gated.
 - Responsible capability: Core/App maintainers and verification owner
-- Source revision/configuration: e24c377; Swift 6 warnings-as-errors; macOS deterministic repository checks
+- Source revision/configuration: cfb5468; Swift 6 warnings-as-errors; macOS deterministic repository checks
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: ./scripts/check.sh --no-build on the local macOS development host
 - Gate: Architecture, privacy, Core/App, native-boundary, and regression checks pass; no human-validity inference.
@@ -701,7 +763,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: No additional implementation prerequisite; empirical and release claims remain separately gated.
 - Responsible capability: Core/App maintainers and verification owner
-- Source revision/configuration: e24c377; Swift 6 warnings-as-errors; macOS deterministic repository checks
+- Source revision/configuration: cfb5468; Swift 6 warnings-as-errors; macOS deterministic repository checks
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: ./scripts/check.sh --no-build on the local macOS development host
 - Gate: Architecture, privacy, Core/App, native-boundary, and regression checks pass; no human-validity inference.
@@ -715,7 +777,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: A separately reviewed empirical finding is required to replace any retained assumption.
 - Responsible capability: Model/release owner
-- Source revision/configuration: e24c377; one-dimensional production model and editable projected-coverage deck
+- Source revision/configuration: cfb5468; one-dimensional production model and editable projected-coverage deck
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: Source inspection and ./scripts/check.sh --no-build
 - Gate: Current implementation matches the retained assumptions; this is not evidence that they are true for humans.
@@ -729,7 +791,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: A separately reviewed empirical finding is required to replace any retained assumption.
 - Responsible capability: Model/release owner
-- Source revision/configuration: e24c377; one-dimensional production model and editable projected-coverage deck
+- Source revision/configuration: cfb5468; one-dimensional production model and editable projected-coverage deck
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: Source inspection and ./scripts/check.sh --no-build
 - Gate: Current implementation matches the retained assumptions; this is not evidence that they are true for humans.
@@ -743,7 +805,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: A separately reviewed empirical finding is required to replace any retained assumption.
 - Responsible capability: Model/release owner
-- Source revision/configuration: e24c377; one-dimensional production model and editable projected-coverage deck
+- Source revision/configuration: cfb5468; one-dimensional production model and editable projected-coverage deck
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: Source inspection and ./scripts/check.sh --no-build
 - Gate: Current implementation matches the retained assumptions; this is not evidence that they are true for humans.
@@ -757,7 +819,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: A separately reviewed empirical finding is required to replace any retained assumption.
 - Responsible capability: Model/release owner
-- Source revision/configuration: e24c377; one-dimensional production model and editable projected-coverage deck
+- Source revision/configuration: cfb5468; one-dimensional production model and editable projected-coverage deck
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: Source inspection and ./scripts/check.sh --no-build
 - Gate: Current implementation matches the retained assumptions; this is not evidence that they are true for humans.
@@ -765,27 +827,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Next action: Keep the assumptions explicit in all synthetic and human reports.
 - Decision history: Measurement coherence remains ahead of new production dimensions.
 
-### POSVAL-001 — Validate Apple POS identity on licensed English/German UD fixtures.
-
-- Canonical status: `active`
-- Current status: `verified_current_candidate`
-- Prerequisite: Pinned licensed English/German UD fixture and declared raw/reconciled denominators.
-- Responsible capability: NLP fixture engineer and bilingual reviewer
-- Source revision/configuration: 4f11ecd and verified through e24c377; UD 2.18 selected fixture
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/pos-fixture-checkpoint-2026-09-09.md`](pos-fixture-checkpoint-2026-09-09.md); SHA-256 `2830f9e875978a1ffe5181a1c5f25cc9a8fa0c07c9f9a9bf014a8137f1ccf1fc`
-- Command/environment: ./scripts/test_vocabulary_pos_fixtures.sh and full repository checks on macOS
-- Gate: Evaluation pipeline and consequence accounting pass; observed errors are retained and no production threshold was changed.
-- Evidence class: current-candidate licensed fixture evaluation
-- Next action: Review adverse homograph/participle consequences before proposing any bounded POS policy change.
-- Decision history: Raw accuracy, abstention, reconciled identity, and deck changes were retained without silent tuning.
-
 ### COVUX-001 — Clarify projected post-mastery coverage without changing the default target.
 
 - Canonical status: `active`
 - Current status: `verified_current_candidate`
 - Prerequisite: Any production POS, sense, or target-choice change requires its separately reviewed evidence gate.
 - Responsible capability: Core lexical owner and App preparation-flow owner
-- Source revision/configuration: e24c377; English/German PDF and Web reader paths; algorithm version 3
+- Source revision/configuration: cfb5468; English/German PDF and Web reader paths; algorithm version 3
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: VocabularyPreparationCoordinatorXCTests, Core assessment tests, and full repository checks
 - Gate: Quick/typed answer-before-reveal, compatibility, editable deck, and PDF/Web behavior remain green.
@@ -799,7 +847,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Explicit local export and separate review before any fitted pack can affect production.
 - Responsible capability: Research export, calibration fitter, and privacy reviewers
-- Source revision/configuration: 8f7091b and verified through e24c377; fabricated schema/rehearsal v2
+- Source revision/configuration: 8f7091b and verified through cfb5468; fabricated schema/rehearsal v2
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md`](fabricated-study-rehearsal-checkpoint-2026-09-08.md); SHA-256 `dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e`
 - Command/environment: Validation-study rehearsal, calibration self-test, privacy tests, and full repository checks
 - Gate: Fabricated package and tooling pass; no real learner calibration or reviewed production pack exists.
@@ -813,7 +861,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Explicit local export and separate review before any fitted pack can affect production.
 - Responsible capability: Research export, calibration fitter, and privacy reviewers
-- Source revision/configuration: 8f7091b and verified through e24c377; fabricated schema/rehearsal v2
+- Source revision/configuration: 8f7091b and verified through cfb5468; fabricated schema/rehearsal v2
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md`](fabricated-study-rehearsal-checkpoint-2026-09-08.md); SHA-256 `dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e`
 - Command/environment: Validation-study rehearsal, calibration self-test, privacy tests, and full repository checks
 - Gate: Fabricated package and tooling pass; no real learner calibration or reviewed production pack exists.
@@ -827,7 +875,7 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: A separately reviewed empirical finding is required to replace any retained assumption.
 - Responsible capability: Model/release owner
-- Source revision/configuration: e24c377; one-dimensional production model and editable projected-coverage deck
+- Source revision/configuration: cfb5468; one-dimensional production model and editable projected-coverage deck
 - Artifact/checksum: [`docs/perf/VOCABULARY_PREPARATION.md`](../../perf/VOCABULARY_PREPARATION.md); SHA-256 `0d0c18945f5aacc26b64d130c7686d1b672251aeebc6fcf6d6fafc08054f49f4`
 - Command/environment: Source inspection and ./scripts/check.sh --no-build
 - Gate: Current implementation matches the retained assumptions; this is not evidence that they are true for humans.

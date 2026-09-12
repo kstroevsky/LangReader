@@ -19,6 +19,7 @@ VALID_STATUSES = {
     "implemented",
     "historically_measured",
     "verified_current_candidate",
+    "implemented_evidence_adverse",
     "failed",
     "awaiting_external_input",
     "deferred",
@@ -116,7 +117,9 @@ def build() -> dict:
     return {
         "schema_version": 1,
         "derived_view": True,
-        "candidate_revision": spec["candidate_revision"],
+        "production_evidence_candidate": spec["production_evidence_candidate"],
+        "repository_head_reviewed": spec["repository_head_reviewed"],
+        "head_since_production_evidence": spec["head_since_production_evidence"],
         "canonical_ledger": {
             "path": spec["canonical_ledger"],
             "file_sha256": sha256(ledger_path),
@@ -136,7 +139,13 @@ def markdown(register: dict) -> str:
         "",
         "This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.",
         "",
-        f"Candidate evidence revision: `{register['candidate_revision']}`. Canonical ledger: `{ledger['path']}` (`{ledger['requirement_count']}` requirements; file SHA-256 `{ledger['file_sha256']}`).",
+        f"Production evidence candidate: `{register['production_evidence_candidate']}`. Repository head reviewed: `{register['repository_head_reviewed']}`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.",
+        "",
+        "Head-only changes since the production evidence candidate:",
+        "",
+        *[f"- {item}" for item in register["head_since_production_evidence"]],
+        "",
+        f"Canonical ledger: `{ledger['path']}` (`{ledger['requirement_count']}` requirements; file SHA-256 `{ledger['file_sha256']}`).",
         "",
         "The status inventory is descriptive, not a completion percentage: "
         + ", ".join(f"`{key}` {value}" for key, value in register["status_inventory"].items())
@@ -157,6 +166,7 @@ def markdown(register: dict) -> str:
         ])
     order = [
         "failed",
+        "implemented_evidence_adverse",
         "awaiting_external_input",
         "deferred",
         "verified_current_candidate",
@@ -165,6 +175,7 @@ def markdown(register: dict) -> str:
     ]
     labels = {
         "failed": "Failed evidence or gate",
+        "implemented_evidence_adverse": "Implemented with adverse evidence",
         "awaiting_external_input": "Awaiting external input",
         "deferred": "Deferred and disabled",
         "verified_current_candidate": "Verified on the current candidate",
