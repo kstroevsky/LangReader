@@ -100,7 +100,9 @@ def validate_run(run: dict[str, Any], manifest: dict[str, Any]) -> None:
     require(run["warmNatural"]["usedEligiblePrior"] == expected, "warm natural eligibility mismatch")
     require(run["warmFixedBudget"]["usedEligiblePrior"] == expected, "warm fixed eligibility mismatch")
     if expected:
-        require(run["warmNatural"]["requiredMinimumQuestionCount"] == 8, "eligible warm path lacked validations/eight minimum")
+        required_minimum = run["warmNatural"]["requiredMinimumQuestionCount"]
+        require(required_minimum in (8, 20), "eligible warm path has an invalid conditional minimum")
+        require(run["warmNatural"]["questionCount"] >= required_minimum, "warm path stopped before its conditional minimum")
     else:
         parity_fields = (
             "questionCount", "requiredMinimumQuestionCount", "stopReason",
