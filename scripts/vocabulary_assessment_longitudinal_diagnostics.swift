@@ -75,6 +75,8 @@ private struct LongitudinalRun: Codable {
     let warmFixedBudget: LongitudinalPath
     let coldPathUnderWarmPrior: LongitudinalReplay
     let warmPathUnderColdPrior: LongitudinalReplay
+    let coldFixedPathUnderWarmPrior: LongitudinalReplay
+    let warmFixedPathUnderColdPrior: LongitudinalReplay
     let naturalQuestionReduction: Double
     let naturalCoverageDifference: Double
     let fixedBudgetCoverageDifference: Double
@@ -171,7 +173,11 @@ private struct LongitudinalReplay: Codable {
     let answerPathFingerprint: String
     let posteriorFingerprint: String
     let estimatedTheta: Double
+    let selectedCount: Int
     let selectedFingerprint: String
+    let assessableOccurrenceMass: Int
+    let missedOccurrenceMass: Int
+    let realizedProjectedCoverage: Double
     let conservativeCoverageLowerBound: Double
     let interpretation: String
 }
@@ -526,6 +532,7 @@ func runVocabularyLongitudinalDiagnostics(
                 destinationPrior: "accumulated-warm",
                 source: coldNatural.assessment,
                 inventory: evaluationDocument.inventory,
+                truths: evaluationTruth,
                 readerPrior: prior,
                 currentDate: evaluationDate,
                 target: manifest.targetCoverage
@@ -535,6 +542,27 @@ func runVocabularyLongitudinalDiagnostics(
                 destinationPrior: "cold",
                 source: warmNatural.assessment,
                 inventory: evaluationDocument.inventory,
+                truths: evaluationTruth,
+                readerPrior: nil,
+                currentDate: evaluationDate,
+                target: manifest.targetCoverage
+            )
+            let coldFixedUnderWarm = longitudinalReplay(
+                sourcePath: "cold-fixed-budget",
+                destinationPrior: "accumulated-warm",
+                source: coldFixed.assessment,
+                inventory: evaluationDocument.inventory,
+                truths: evaluationTruth,
+                readerPrior: prior,
+                currentDate: evaluationDate,
+                target: manifest.targetCoverage
+            )
+            let warmFixedUnderCold = longitudinalReplay(
+                sourcePath: "accumulated-warm-fixed-budget",
+                destinationPrior: "cold",
+                source: warmFixed.assessment,
+                inventory: evaluationDocument.inventory,
+                truths: evaluationTruth,
                 readerPrior: nil,
                 currentDate: evaluationDate,
                 target: manifest.targetCoverage
@@ -571,6 +599,8 @@ func runVocabularyLongitudinalDiagnostics(
                 warmFixedBudget: warmFixed.path,
                 coldPathUnderWarmPrior: coldUnderWarm,
                 warmPathUnderColdPrior: warmUnderCold,
+                coldFixedPathUnderWarmPrior: coldFixedUnderWarm,
+                warmFixedPathUnderColdPrior: warmFixedUnderCold,
                 naturalQuestionReduction: coldNatural.path.questionCount > 0
                     ? 1 - Double(warmNatural.path.questionCount) / Double(coldNatural.path.questionCount)
                     : 0,
@@ -593,7 +623,7 @@ func runVocabularyLongitudinalDiagnostics(
         }
     }
     let report = LongitudinalReport(
-        schemaVersion: 1,
+        schemaVersion: 2,
         interpretation: "Development-only synthetic longitudinal evidence using the production SQLite prior store and completion contract. Oracle-informed warm diagnostics remain separate; this report is not real-learner calibration or release acceptance.",
         manifest: manifest,
         source: source,
@@ -633,7 +663,7 @@ func runVocabularyLongitudinalDiagnostics(
             "historyAssessmentMilliseconds": historyTimings,
             "storeRoundTripMilliseconds": storeTimings,
             "fourEvaluationPathsMilliseconds": evaluationTimings,
-            "bidirectionalReplayMilliseconds": replayTimings,
+            "fourReplayPathsMilliseconds": replayTimings,
             "semanticSerializationMilliseconds": serializationTimings
         ],
         units: "milliseconds",
@@ -922,6 +952,7 @@ private func longitudinalReplay(
     destinationPrior: String,
     source: AdaptiveVocabularyAssessment,
     inventory: DocumentVocabularyInventory,
+    truths: [String: LongitudinalTruth],
     readerPrior: VocabularyReaderPrior?,
     currentDate: Date,
     target: Double
@@ -934,6 +965,15 @@ private func longitudinalReplay(
         currentDate: currentDate
     )
     let result = replay.result()
+    let selected = Set(result.items.filter(\.isSelected).map(\.id))
+    let included = result.items.filter { $0.classification != .excluded }
+    let denominator = included.reduce(0) { $0 + $1.candidate.occurrenceCount }
+    let missed = included.reduce(0) { partial, item in
+        partial + (truths[item.id]?.known == false && !selected.contains(item.id)
+            ? item.candidate.occurrenceCount
+            : 0)
+    }
+    let coverage = denominator == 0 ? 1 : 1 - Double(missed) / Double(denominator)
     return LongitudinalReplay(
         sourcePath: sourcePath,
         destinationPrior: destinationPrior,
@@ -941,7 +981,11 @@ private func longitudinalReplay(
         answerPathFingerprint: longitudinalAnswerFingerprint(source.answers),
         posteriorFingerprint: longitudinalFingerprint(replay.thetaPosteriorSnapshot),
         estimatedTheta: result.diagnostics.estimatedTheta,
-        selectedFingerprint: longitudinalFingerprint(result.items.filter(\.isSelected).map(\.id).sorted()),
+        selectedCount: selected.count,
+        selectedFingerprint: longitudinalFingerprint(selected.sorted()),
+        assessableOccurrenceMass: denominator,
+        missedOccurrenceMass: missed,
+        realizedProjectedCoverage: coverage,
         conservativeCoverageLowerBound: result.diagnostics.conservativeCoverageLowerBound,
         interpretation: "Conditional on the fixed source question/evidence order and validation metadata; not an authentic destination-prior serving path."
     )

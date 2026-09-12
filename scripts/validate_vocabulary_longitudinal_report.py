@@ -49,6 +49,26 @@ def validate_path(path: dict[str, Any], manifest: dict[str, Any], fixed: bool) -
         require(bank["thetaPositionFingerprint"] and bank["latentItemDrawFingerprint"], "missing bank fingerprint")
 
 
+def validate_replay(replay: dict[str, Any], source: dict[str, Any]) -> None:
+    require(replay["questionCount"] == source["questionCount"], "replay question count changed")
+    require(
+        replay["assessableOccurrenceMass"] == source["assessableOccurrenceMass"],
+        "replay assessable mass changed",
+    )
+    require(
+        replay["assessableOccurrenceMass"] >= replay["missedOccurrenceMass"] >= 0,
+        "invalid replay occurrence mass",
+    )
+    denominator = replay["assessableOccurrenceMass"]
+    expected_coverage = 1.0 if denominator == 0 else 1.0 - replay["missedOccurrenceMass"] / denominator
+    require(
+        math.isclose(replay["realizedProjectedCoverage"], expected_coverage, abs_tol=1e-12),
+        "replay coverage mass mismatch",
+    )
+    require(replay["selectedCount"] >= 0, "invalid replay selected count")
+    require(replay["selectedFingerprint"], "missing replay selection fingerprint")
+
+
 def production_eligible(prior: dict[str, Any] | None, evaluation_time: float) -> bool:
     if prior is None:
         return False
@@ -62,7 +82,7 @@ def production_eligible(prior: dict[str, Any] | None, evaluation_time: float) ->
     )
 
 
-def validate_run(run: dict[str, Any], manifest: dict[str, Any]) -> None:
+def validate_run(run: dict[str, Any], manifest: dict[str, Any], report_schema: int) -> None:
     scenario = run["scenario"]
     completed_count = 0
     verified_count = 0
@@ -129,6 +149,21 @@ def validate_run(run: dict[str, Any], manifest: dict[str, Any]) -> None:
     require(run["evaluationPotentialResponseFingerprint"], "missing potential-response fingerprint")
     require(run["coldPathUnderWarmPrior"]["answerPathFingerprint"] == run["coldNatural"]["answerPathFingerprint"], "cold replay path changed evidence")
     require(run["warmPathUnderColdPrior"]["answerPathFingerprint"] == run["warmNatural"]["answerPathFingerprint"], "warm replay path changed evidence")
+    if report_schema >= 2:
+        replay_pairs = (
+            ("coldPathUnderWarmPrior", "coldNatural"),
+            ("warmPathUnderColdPrior", "warmNatural"),
+            ("coldFixedPathUnderWarmPrior", "coldFixedBudget"),
+            ("warmFixedPathUnderColdPrior", "warmFixedBudget"),
+        )
+        for replay_key, source_key in replay_pairs:
+            replay = run[replay_key]
+            source = run[source_key]
+            require(
+                replay["answerPathFingerprint"] == source["answerPathFingerprint"],
+                f"{replay_key} changed source evidence",
+            )
+            validate_replay(replay, source)
 
     if scenario == "failed-write-retry":
         first = next(event for event in run["historyEvents"] if event["disposition"] == "completed")
@@ -138,7 +173,8 @@ def validate_run(run: dict[str, Any], manifest: dict[str, Any]) -> None:
 
 
 def validate_report(report: dict[str, Any]) -> None:
-    require(report.get("schemaVersion") == 1, "unsupported report schema")
+    report_schema = report.get("schemaVersion")
+    require(report_schema in (1, 2), "unsupported report schema")
     manifest = report["manifest"]
     require(manifest["schemaVersion"] == 1, "unsupported manifest schema")
     require(manifest["dataRole"] == "diagnostic-development", "confirmation/holdout role forbidden")
@@ -148,7 +184,7 @@ def validate_report(report: dict[str, Any]) -> None:
     require(len(ids) == len(set(ids)), "duplicate run ID")
     require({run["scenario"] for run in runs} == set(manifest["scenarios"]), "scenario support mismatch")
     for run in runs:
-        validate_run(run, manifest)
+        validate_run(run, manifest, report_schema)
     eligible = sum(run["expectedWarmEligibility"] for run in runs)
     require(report["support"]["runs"] == len(runs), "run support mismatch")
     require(report["support"]["eligibleWarmRuns"] == eligible, "eligible support mismatch")
@@ -172,6 +208,10 @@ def self_test(path: Path) -> None:
     broken_replay = copy.deepcopy(report)
     broken_replay["runs"][0]["coldPathUnderWarmPrior"]["answerPathFingerprint"] = "broken"
     mutations.append(broken_replay)
+    if report.get("schemaVersion") == 2:
+        broken_replay_mass = copy.deepcopy(report)
+        broken_replay_mass["runs"][0]["coldFixedPathUnderWarmPrior"]["missedOccurrenceMass"] += 1
+        mutations.append(broken_replay_mass)
     for mutation in mutations:
         try:
             validate_report(mutation)
