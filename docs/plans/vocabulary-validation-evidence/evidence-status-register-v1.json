@@ -2,7 +2,7 @@
   "schema_version": 1,
   "derived_view": true,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "25197de8aa9c1b55e1f01b61b5d74ddc39d4447b",
+  "repository_head_reviewed": "54ccaafae6db7d60253bfe46e0092e1885ef577d",
   "head_since_production_evidence": [
     "9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only",
     "52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only",
@@ -13,7 +13,12 @@
     "f23fe7649141d633ab3bbc2a5951fb73ecf621e2: derived evidence-register correction only",
     "fc80f5c7a4e27007bb96f28ecfb2ee07ac95a06f: generated documentation refresh only",
     "eeaf3579245f35df8a9624b6fd13a99293b77d5c: frozen replicated longitudinal development manifest only",
-    "25197de8aa9c1b55e1f01b61b5d74ddc39d4447b: replicated longitudinal development evidence and validator correction only"
+    "25197de8aa9c1b55e1f01b61b5d74ddc39d4447b: replicated longitudinal development evidence and validator correction only",
+    "e5c837b9add7b6b1866782f8639d6ab0decf948d: derived replicated-evidence register refresh only",
+    "9fe53171e4822b992960142cbe2ab1653b4bd3c3: locale-stable native-access CI guard only",
+    "ad26fde9edcd0c672504c503e776e76fa11a8bd4: development-only POS error decomposition only",
+    "abf913cb0df95a83019514b0ee8f0a5caf522066: development-only longitudinal tail decomposition only",
+    "54ccaafae6db7d60253bfe46e0092e1885ef577d: approved study/calibration design documents; production activation remains disabled"
   ],
   "canonical_ledger": {
     "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
@@ -110,10 +115,10 @@
     },
     {
       "path": "docs/plans/vocabulary-validation-evidence/calibration-assignment-policy-proposal-v1.json",
-      "evidence_class": "calibration assignment policy proposal",
-      "status": "proposed_not_approved",
-      "interpretation": "Reconstructible proposal only; every production activation mechanism remains false.",
-      "sha256": "b839b2fd7d1a10790760013e68e685b518f4ca2f29bf9f465757ef327f821b32"
+      "evidence_class": "approved calibration assignment design with disabled activation",
+      "status": "approved_design_not_activated",
+      "interpretation": "Expected-rate and document-occurring anchor-bank semantics are approved; every production activation mechanism remains false pending separate operational approval.",
+      "sha256": "1163ccb1d9b8d774a1b70afcad4ab66cfec2a94b987edd0b4134fcd7a23d86c2"
     },
     {
       "path": "docs/plans/vocabulary-validation-evidence/calibration-assignment-reconstruction-fixture-v1.json",
@@ -163,6 +168,27 @@
       "status": "completed_mixed_with_adverse_tails",
       "interpretation": "512 rows retain 72.36% mean question reduction and -0.27-point mean coverage change, plus two roughly -13-point tail failures.",
       "sha256": "0b73fdd8478e31ea8376e4a70851e0e749d83aad12d78dbf1ec7e0b886dd6bc6"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/vocabulary-pos-development-errors-v1.json",
+      "evidence_class": "development-only POS mechanism decomposition",
+      "status": "completed_no_tuning",
+      "interpretation": "160 development cases separate raw POS, lemma, abstention/reconciliation, name exclusion, and final content-word errors.",
+      "sha256": "14d1cf4de268c13fd915e28955d99934759fa1394a214e44bf8cd4c501368a2c"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/longitudinal-tail-decomposition-v1.json",
+      "evidence_class": "development-only warm-tail causal decomposition",
+      "status": "completed_with_instrumentation_gap",
+      "interpretation": "11/13 material tails implicate stopping; two persist at fixed budget and replay lacks realized coverage for further attribution.",
+      "sha256": "5a748ee94aa4602ab20e86b7cdcf24dfeefb0cfbea244896b0645b4945870c3b"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/study-protocol-decisions-2026-09-12.md",
+      "evidence_class": "approved study design direction",
+      "status": "approved_design_collection_blocked",
+      "interpretation": "Sampling, meaning, ambiguity, theta, interference, expected-rate calibration, and anchor-bank directions are adopted; SAP methods and activation remain unresolved.",
+      "sha256": "fe68e4a2c610566df346b5593fff59f6821a63930001367adb5cc68310be8e54"
     }
   ],
   "records": [
@@ -802,17 +828,17 @@
       "behavior_claim": "Research mode reserves protocol-frozen calibration assignments and exports assignment context.",
       "prerequisite": "Explicit review and approval of the proposed assignment, reconstruction, privacy, and support design before collection or activation.",
       "responsible_capability": "Research/statistical reviewer and export engineer",
-      "source_revision_configuration": "calibration-assignment-proposal-v1; 7.5% eligible-opportunity probability; production disabled",
+      "source_revision_configuration": "54ccaaf; approved 7.5% expected eligible-opportunity design with document-occurring anchor bank; production disabled",
       "artifact": {
         "path": "docs/plans/vocabulary-validation-evidence/calibration-assignment-policy-proposal-v1.json",
-        "sha256": "b839b2fd7d1a10790760013e68e685b518f4ca2f29bf9f465757ef327f821b32"
+        "sha256": "1163ccb1d9b8d774a1b70afcad4ab66cfec2a94b987edd0b4134fcd7a23d86c2"
       },
       "command_environment": "validate_vocabulary_calibration_assignment_package.py self-test plus Core no-production-selection regression",
-      "gate": "Awaiting separate approval; executable reconstruction passes but sparse support is materially adverse.",
-      "evidence_class": "reviewable disabled policy/schema proposal",
+      "gate": "Design direction approved; activation awaits separate schema/operational freeze, adequate anchor support, and consented study readiness.",
+      "evidence_class": "approved design with disabled production activation",
       "current_status": "awaiting_external_input",
-      "next_action": "Review, revise, approve, or reject the exact CALDATA-001 delta; do not activate from this artifact.",
-      "decision_history": "Concrete policy/schema prepared with no quota, preserved tail cadence, explicit propensities, and unchanged pack/DIF/2PL gates."
+      "next_action": "Freeze the anchor inventory/support operations and consented schema, then obtain separate activation approval; do not activate from this design artifact.",
+      "decision_history": "Expected-rate semantics and anchor-bank direction approved; no quota, tail/question contracts, propensities, and pack/DIF/2PL gates remain unchanged."
     },
     {
       "id": "DIF-001",
@@ -826,11 +852,11 @@
         "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
       },
       "command_environment": "Fabricated rehearsal self-test; real protocol execution environment not yet supplied",
-      "gate": "Awaiting external review, consent, data, and execution; schema validation is not human evidence.",
+      "gate": "Core protocol directions are adopted, but interference evidence, reviewed SAP methods/numbers, consent, data, and execution remain absent; schema validation is not human evidence.",
       "evidence_class": "external human-study prerequisite",
       "current_status": "awaiting_external_input",
       "next_action": "Approve/freeze the SAP and assignment/privacy contract before recruitment or confirmatory outcome inspection.",
-      "decision_history": "Fabricated package proved executability and negative controls only; calibration slots remain disabled."
+      "decision_history": "Predetermined audit sampling, context-free multi-meaning prompts, hidden rater context, separate ambiguity, and synthetic-only theta coverage are adopted; confirmatory collection remains blocked."
     },
     {
       "id": "STUDY-001",
@@ -844,11 +870,11 @@
         "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
       },
       "command_environment": "Fabricated rehearsal self-test; real protocol execution environment not yet supplied",
-      "gate": "Awaiting external review, consent, data, and execution; schema validation is not human evidence.",
+      "gate": "Core protocol directions are adopted, but interference evidence, reviewed SAP methods/numbers, consent, data, and execution remain absent; schema validation is not human evidence.",
       "evidence_class": "external human-study prerequisite",
       "current_status": "awaiting_external_input",
       "next_action": "Approve/freeze the SAP and assignment/privacy contract before recruitment or confirmatory outcome inspection.",
-      "decision_history": "Fabricated package proved executability and negative controls only; calibration slots remain disabled."
+      "decision_history": "Predetermined audit sampling, context-free multi-meaning prompts, hidden rater context, separate ambiguity, and synthetic-only theta coverage are adopted; confirmatory collection remains blocked."
     },
     {
       "id": "STUDY-002",
@@ -862,11 +888,11 @@
         "sha256": "dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e"
       },
       "command_environment": "Fabricated rehearsal self-test; real protocol execution environment not yet supplied",
-      "gate": "Awaiting external review, consent, data, and execution; schema validation is not human evidence.",
+      "gate": "Core protocol directions are adopted, but interference evidence, reviewed SAP methods/numbers, consent, data, and execution remain absent; schema validation is not human evidence.",
       "evidence_class": "external human-study prerequisite",
       "current_status": "awaiting_external_input",
       "next_action": "Approve/freeze the SAP and assignment/privacy contract before recruitment or confirmatory outcome inspection.",
-      "decision_history": "Fabricated package proved executability and negative controls only; calibration slots remain disabled."
+      "decision_history": "Predetermined audit sampling, context-free multi-meaning prompts, hidden rater context, separate ambiguity, and synthetic-only theta coverage are adopted; confirmatory collection remains blocked."
     },
     {
       "id": "DIFF-002",

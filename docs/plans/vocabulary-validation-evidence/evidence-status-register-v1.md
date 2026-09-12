@@ -2,7 +2,7 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `25197de8aa9c1b55e1f01b61b5d74ddc39d4447b`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `54ccaafae6db7d60253bfe46e0092e1885ef577d`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
 Head-only changes since the production evidence candidate:
 
@@ -16,6 +16,11 @@ Head-only changes since the production evidence candidate:
 - fc80f5c7a4e27007bb96f28ecfb2ee07ac95a06f: generated documentation refresh only
 - eeaf3579245f35df8a9624b6fd13a99293b77d5c: frozen replicated longitudinal development manifest only
 - 25197de8aa9c1b55e1f01b61b5d74ddc39d4447b: replicated longitudinal development evidence and validator correction only
+- e5c837b9add7b6b1866782f8639d6ab0decf948d: derived replicated-evidence register refresh only
+- 9fe53171e4822b992960142cbe2ab1653b4bd3c3: locale-stable native-access CI guard only
+- ad26fde9edcd0c672504c503e776e76fa11a8bd4: development-only POS error decomposition only
+- abf913cb0df95a83019514b0ee8f0a5caf522066: development-only longitudinal tail decomposition only
+- 54ccaafae6db7d60253bfe46e0092e1885ef577d: approved study/calibration design documents; production activation remains disabled
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 
@@ -102,10 +107,10 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 
 ### docs/plans/vocabulary-validation-evidence/calibration-assignment-policy-proposal-v1.json
 
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/calibration-assignment-policy-proposal-v1.json`](calibration-assignment-policy-proposal-v1.json); SHA-256 `b839b2fd7d1a10790760013e68e685b518f4ca2f29bf9f465757ef327f821b32`
-- Evidence class: calibration assignment policy proposal
-- Status: `proposed_not_approved`
-- Interpretation: Reconstructible proposal only; every production activation mechanism remains false.
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/calibration-assignment-policy-proposal-v1.json`](calibration-assignment-policy-proposal-v1.json); SHA-256 `1163ccb1d9b8d774a1b70afcad4ab66cfec2a94b987edd0b4134fcd7a23d86c2`
+- Evidence class: approved calibration assignment design with disabled activation
+- Status: `approved_design_not_activated`
+- Interpretation: Expected-rate and document-occurring anchor-bank semantics are approved; every production activation mechanism remains false pending separate operational approval.
 
 ### docs/plans/vocabulary-validation-evidence/calibration-assignment-reconstruction-fixture-v1.json
 
@@ -155,6 +160,27 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Evidence class: replicated real-store longitudinal development diagnostic
 - Status: `completed_mixed_with_adverse_tails`
 - Interpretation: 512 rows retain 72.36% mean question reduction and -0.27-point mean coverage change, plus two roughly -13-point tail failures.
+
+### docs/plans/vocabulary-validation-evidence/vocabulary-pos-development-errors-v1.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/vocabulary-pos-development-errors-v1.json`](vocabulary-pos-development-errors-v1.json); SHA-256 `14d1cf4de268c13fd915e28955d99934759fa1394a214e44bf8cd4c501368a2c`
+- Evidence class: development-only POS mechanism decomposition
+- Status: `completed_no_tuning`
+- Interpretation: 160 development cases separate raw POS, lemma, abstention/reconciliation, name exclusion, and final content-word errors.
+
+### docs/plans/vocabulary-validation-evidence/longitudinal-tail-decomposition-v1.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-tail-decomposition-v1.json`](longitudinal-tail-decomposition-v1.json); SHA-256 `5a748ee94aa4602ab20e86b7cdcf24dfeefb0cfbea244896b0645b4945870c3b`
+- Evidence class: development-only warm-tail causal decomposition
+- Status: `completed_with_instrumentation_gap`
+- Interpretation: 11/13 material tails implicate stopping; two persist at fixed budget and replay lacks realized coverage for further attribution.
+
+### docs/plans/vocabulary-validation-evidence/study-protocol-decisions-2026-09-12.md
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/study-protocol-decisions-2026-09-12.md`](study-protocol-decisions-2026-09-12.md); SHA-256 `fe68e4a2c610566df346b5593fff59f6821a63930001367adb5cc68310be8e54`
+- Evidence class: approved study design direction
+- Status: `approved_design_collection_blocked`
+- Interpretation: Sampling, meaning, ambiguity, theta, interference, expected-rate calibration, and anchor-bank directions are adopted; SAP methods and activation remain unresolved.
 
 ## Failed evidence or gate
 
@@ -252,13 +278,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `awaiting_external_input`
 - Prerequisite: Explicit review and approval of the proposed assignment, reconstruction, privacy, and support design before collection or activation.
 - Responsible capability: Research/statistical reviewer and export engineer
-- Source revision/configuration: calibration-assignment-proposal-v1; 7.5% eligible-opportunity probability; production disabled
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/calibration-assignment-policy-proposal-v1.json`](calibration-assignment-policy-proposal-v1.json); SHA-256 `b839b2fd7d1a10790760013e68e685b518f4ca2f29bf9f465757ef327f821b32`
+- Source revision/configuration: 54ccaaf; approved 7.5% expected eligible-opportunity design with document-occurring anchor bank; production disabled
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/calibration-assignment-policy-proposal-v1.json`](calibration-assignment-policy-proposal-v1.json); SHA-256 `1163ccb1d9b8d774a1b70afcad4ab66cfec2a94b987edd0b4134fcd7a23d86c2`
 - Command/environment: validate_vocabulary_calibration_assignment_package.py self-test plus Core no-production-selection regression
-- Gate: Awaiting separate approval; executable reconstruction passes but sparse support is materially adverse.
-- Evidence class: reviewable disabled policy/schema proposal
-- Next action: Review, revise, approve, or reject the exact CALDATA-001 delta; do not activate from this artifact.
-- Decision history: Concrete policy/schema prepared with no quota, preserved tail cadence, explicit propensities, and unchanged pack/DIF/2PL gates.
+- Gate: Design direction approved; activation awaits separate schema/operational freeze, adequate anchor support, and consented study readiness.
+- Evidence class: approved design with disabled production activation
+- Next action: Freeze the anchor inventory/support operations and consented schema, then obtain separate activation approval; do not activate from this design artifact.
+- Decision history: Expected-rate semantics and anchor-bank direction approved; no quota, tail/question contracts, propensities, and pack/DIF/2PL gates remain unchanged.
 
 ### DIF-001 — Replace residual-mean DIF with established uniform/non-uniform methods and reporting.
 
@@ -269,10 +295,10 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Source revision/configuration: Fabricated rehearsal v2 only; no real outcome dataset
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md`](fabricated-study-rehearsal-checkpoint-2026-09-08.md); SHA-256 `dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e`
 - Command/environment: Fabricated rehearsal self-test; real protocol execution environment not yet supplied
-- Gate: Awaiting external review, consent, data, and execution; schema validation is not human evidence.
+- Gate: Core protocol directions are adopted, but interference evidence, reviewed SAP methods/numbers, consent, data, and execution remain absent; schema validation is not human evidence.
 - Evidence class: external human-study prerequisite
 - Next action: Approve/freeze the SAP and assignment/privacy contract before recruitment or confirmatory outcome inspection.
-- Decision history: Fabricated package proved executability and negative controls only; calibration slots remain disabled.
+- Decision history: Predetermined audit sampling, context-free multi-meaning prompts, hidden rater context, separate ambiguity, and synthetic-only theta coverage are adopted; confirmatory collection remains blocked.
 
 ### STUDY-001 — Use a separate consented validation dataset for independent criterion and document holdout.
 
@@ -283,10 +309,10 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Source revision/configuration: Fabricated rehearsal v2 only; no real outcome dataset
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md`](fabricated-study-rehearsal-checkpoint-2026-09-08.md); SHA-256 `dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e`
 - Command/environment: Fabricated rehearsal self-test; real protocol execution environment not yet supplied
-- Gate: Awaiting external review, consent, data, and execution; schema validation is not human evidence.
+- Gate: Core protocol directions are adopted, but interference evidence, reviewed SAP methods/numbers, consent, data, and execution remain absent; schema validation is not human evidence.
 - Evidence class: external human-study prerequisite
 - Next action: Approve/freeze the SAP and assignment/privacy contract before recruitment or confirmatory outcome inspection.
-- Decision history: Fabricated package proved executability and negative controls only; calibration slots remain disabled.
+- Decision history: Predetermined audit sampling, context-free multi-meaning prompts, hidden rater context, separate ambiguity, and synthetic-only theta coverage are adopted; confirmatory collection remains blocked.
 
 ### STUDY-002 — Execute an independently scored participant-and-document held-out learner pilot.
 
@@ -297,10 +323,10 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Source revision/configuration: Fabricated rehearsal v2 only; no real outcome dataset
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md`](fabricated-study-rehearsal-checkpoint-2026-09-08.md); SHA-256 `dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e`
 - Command/environment: Fabricated rehearsal self-test; real protocol execution environment not yet supplied
-- Gate: Awaiting external review, consent, data, and execution; schema validation is not human evidence.
+- Gate: Core protocol directions are adopted, but interference evidence, reviewed SAP methods/numbers, consent, data, and execution remain absent; schema validation is not human evidence.
 - Evidence class: external human-study prerequisite
 - Next action: Approve/freeze the SAP and assignment/privacy contract before recruitment or confirmatory outcome inspection.
-- Decision history: Fabricated package proved executability and negative controls only; calibration slots remain disabled.
+- Decision history: Predetermined audit sampling, context-free multi-meaning prompts, hidden rater context, separate ambiguity, and synthetic-only theta coverage are adopted; confirmatory collection remains blocked.
 
 ## Deferred and disabled
 
