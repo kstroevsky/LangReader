@@ -2,7 +2,7 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `ad84055061023d360d68d7e061d114ef7dec0ff8`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `25197de8aa9c1b55e1f01b61b5d74ddc39d4447b`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
 Head-only changes since the production evidence candidate:
 
@@ -12,6 +12,10 @@ Head-only changes since the production evidence candidate:
 - 76624ab19e6b1517d947280f111101f831209f0b: first frozen representative POS reservation only
 - 455cd59786c7815a97465e527fc50249e4b0360e: invalid v1 provenance plus fresh unscored v2 POS reservation only
 - ad84055061023d360d68d7e061d114ef7dec0ff8: offline representative POS scoring/reporting evidence only
+- f23fe7649141d633ab3bbc2a5951fb73ecf621e2: derived evidence-register correction only
+- fc80f5c7a4e27007bb96f28ecfb2ee07ac95a06f: generated documentation refresh only
+- eeaf3579245f35df8a9624b6fd13a99293b77d5c: frozen replicated longitudinal development manifest only
+- 25197de8aa9c1b55e1f01b61b5d74ddc39d4447b: replicated longitudinal development evidence and validator correction only
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 
@@ -144,6 +148,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Evidence class: representative POS development/held-out result
 - Status: `completed_adverse`
 - Interpretation: 74.58% raw POS, 9.58% abstention, and 69.38% final identity; thresholds remain unchanged.
+
+### docs/plans/vocabulary-validation-evidence/longitudinal-development-report-v2.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-development-report-v2.json`](longitudinal-development-report-v2.json); SHA-256 `0b73fdd8478e31ea8376e4a70851e0e749d83aad12d78dbf1ec7e0b886dd6bc6`
+- Evidence class: replicated real-store longitudinal development diagnostic
+- Status: `completed_mixed_with_adverse_tails`
+- Interpretation: 512 rows retain 72.36% mean question reduction and -0.27-point mean coverage change, plus two roughly -13-point tail failures.
 
 ## Failed evidence or gate
 
@@ -637,13 +648,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Completed-session evidence in the isolated real SQLite store; no passive exposure.
 - Responsible capability: Core prior/store owner with App integration review
-- Source revision/configuration: bb04366 and verified through cfb5468; fixed-clock longitudinal development manifest v1
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-warm-checkpoint-2026-09-08.md`](longitudinal-warm-checkpoint-2026-09-08.md); SHA-256 `23b9eb3237569cb84369192154df0dedf61e9079699b7b0f25f43e4c59900128`
+- Source revision/configuration: 25197de; fixed-clock real-store longitudinal development manifest v2 with 32 learners per scenario
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-replication-checkpoint-2026-09-12.md`](longitudinal-replication-checkpoint-2026-09-12.md); SHA-256 `352625b53e564d4b124ce4c22219c5d97d39542cf1c101bd3c98f7512ae6f9a6`
 - Command/environment: Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build
-- Gate: Persistence/idempotency/history behavior verified; human drift and warm non-inferiority claims remain separate.
+- Gate: Persistence/idempotency/history behavior is verified; replicated evidence has material adverse tails and cannot establish two-point or human warm non-inferiority.
 - Evidence class: current-candidate longitudinal diagnostic
-- Next action: Retain the 180-day rule until real longitudinal data supports a reviewed diffusion model.
-- Decision history: Cold/warm/fixed-budget/replay scenarios retained, including adverse results and failed writes.
+- Next action: Diagnose large negative-tail families on development data and retain the 180-day rule; bind confirmation only after a new candidate/decision freeze.
+- Decision history: V2 retained all 512 rows: 319 eligible, 150 adverse, mean coverage change -0.2703 points, with biased/noisy tails near -13 points.
 
 ### PRIOR-002 — Warm prior mixture and eligibility.
 
@@ -651,13 +662,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Completed-session evidence in the isolated real SQLite store; no passive exposure.
 - Responsible capability: Core prior/store owner with App integration review
-- Source revision/configuration: bb04366 and verified through cfb5468; fixed-clock longitudinal development manifest v1
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-warm-checkpoint-2026-09-08.md`](longitudinal-warm-checkpoint-2026-09-08.md); SHA-256 `23b9eb3237569cb84369192154df0dedf61e9079699b7b0f25f43e4c59900128`
+- Source revision/configuration: 25197de; fixed-clock real-store longitudinal development manifest v2 with 32 learners per scenario
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-replication-checkpoint-2026-09-12.md`](longitudinal-replication-checkpoint-2026-09-12.md); SHA-256 `352625b53e564d4b124ce4c22219c5d97d39542cf1c101bd3c98f7512ae6f9a6`
 - Command/environment: Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build
-- Gate: Persistence/idempotency/history behavior verified; human drift and warm non-inferiority claims remain separate.
+- Gate: Persistence/idempotency/history behavior is verified; replicated evidence has material adverse tails and cannot establish two-point or human warm non-inferiority.
 - Evidence class: current-candidate longitudinal diagnostic
-- Next action: Retain the 180-day rule until real longitudinal data supports a reviewed diffusion model.
-- Decision history: Cold/warm/fixed-budget/replay scenarios retained, including adverse results and failed writes.
+- Next action: Diagnose large negative-tail families on development data and retain the 180-day rule; bind confirmation only after a new candidate/decision freeze.
+- Decision history: V2 retained all 512 rows: 319 eligible, 150 adverse, mean coverage change -0.2703 points, with biased/noisy tails near -13 points.
 
 ### PRIOR-003 — Cross-book adaptation defaults on and is independently resettable.
 
@@ -665,13 +676,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Completed-session evidence in the isolated real SQLite store; no passive exposure.
 - Responsible capability: Core prior/store owner with App integration review
-- Source revision/configuration: bb04366 and verified through cfb5468; fixed-clock longitudinal development manifest v1
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-warm-checkpoint-2026-09-08.md`](longitudinal-warm-checkpoint-2026-09-08.md); SHA-256 `23b9eb3237569cb84369192154df0dedf61e9079699b7b0f25f43e4c59900128`
+- Source revision/configuration: 25197de; fixed-clock real-store longitudinal development manifest v2 with 32 learners per scenario
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-replication-checkpoint-2026-09-12.md`](longitudinal-replication-checkpoint-2026-09-12.md); SHA-256 `352625b53e564d4b124ce4c22219c5d97d39542cf1c101bd3c98f7512ae6f9a6`
 - Command/environment: Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build
-- Gate: Persistence/idempotency/history behavior verified; human drift and warm non-inferiority claims remain separate.
+- Gate: Persistence/idempotency/history behavior is verified; replicated evidence has material adverse tails and cannot establish two-point or human warm non-inferiority.
 - Evidence class: current-candidate longitudinal diagnostic
-- Next action: Retain the 180-day rule until real longitudinal data supports a reviewed diffusion model.
-- Decision history: Cold/warm/fixed-budget/replay scenarios retained, including adverse results and failed writes.
+- Next action: Diagnose large negative-tail families on development data and retain the 180-day rule; bind confirmation only after a new candidate/decision freeze.
+- Decision history: V2 retained all 512 rows: 319 eligible, 150 adverse, mean coverage change -0.2703 points, with biased/noisy tails near -13 points.
 
 ### DOMAIN-001 — Record domain metadata without production difficulty effect.
 

@@ -1,14 +1,18 @@
 {
   "schema_version": 1,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "ad84055061023d360d68d7e061d114ef7dec0ff8",
+  "repository_head_reviewed": "25197de8aa9c1b55e1f01b61b5d74ddc39d4447b",
   "head_since_production_evidence": [
     "9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only",
     "52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only",
     "7a196180eea430a3645d4f89e8690a40864f2f71: SAP template/readiness checks only",
     "76624ab19e6b1517d947280f111101f831209f0b: first frozen representative POS reservation only",
     "455cd59786c7815a97465e527fc50249e4b0360e: invalid v1 provenance plus fresh unscored v2 POS reservation only",
-    "ad84055061023d360d68d7e061d114ef7dec0ff8: offline representative POS scoring/reporting evidence only"
+    "ad84055061023d360d68d7e061d114ef7dec0ff8: offline representative POS scoring/reporting evidence only",
+    "f23fe7649141d633ab3bbc2a5951fb73ecf621e2: derived evidence-register correction only",
+    "fc80f5c7a4e27007bb96f28ecfb2ee07ac95a06f: generated documentation refresh only",
+    "eeaf3579245f35df8a9624b6fd13a99293b77d5c: frozen replicated longitudinal development manifest only",
+    "25197de8aa9c1b55e1f01b61b5d74ddc39d4447b: replicated longitudinal development evidence and validator correction only"
   ],
   "canonical_ledger": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
   "retained_artifacts": [
@@ -119,6 +123,12 @@
       "evidence_class": "representative POS development/held-out result",
       "status": "completed_adverse",
       "interpretation": "74.58% raw POS, 9.58% abstention, and 69.38% final identity; thresholds remain unchanged."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/longitudinal-development-report-v2.json",
+      "evidence_class": "replicated real-store longitudinal development diagnostic",
+      "status": "completed_mixed_with_adverse_tails",
+      "interpretation": "512 rows retain 72.36% mean question reduction and -0.27-point mean coverage change, plus two roughly -13-point tail failures."
     }
   ],
   "groups": [
@@ -169,14 +179,14 @@
       "ids": ["PRIOR-001", "PRIOR-002", "PRIOR-003"],
       "prerequisite": "Completed-session evidence in the isolated real SQLite store; no passive exposure.",
       "responsible_capability": "Core prior/store owner with App integration review",
-      "source_revision_configuration": "bb04366 and verified through cfb5468; fixed-clock longitudinal development manifest v1",
-      "artifact": "docs/plans/vocabulary-validation-evidence/longitudinal-warm-checkpoint-2026-09-08.md",
+      "source_revision_configuration": "25197de; fixed-clock real-store longitudinal development manifest v2 with 32 learners per scenario",
+      "artifact": "docs/plans/vocabulary-validation-evidence/longitudinal-replication-checkpoint-2026-09-12.md",
       "command_environment": "Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build",
-      "gate": "Persistence/idempotency/history behavior verified; human drift and warm non-inferiority claims remain separate.",
+      "gate": "Persistence/idempotency/history behavior is verified; replicated evidence has material adverse tails and cannot establish two-point or human warm non-inferiority.",
       "evidence_class": "current-candidate longitudinal diagnostic",
       "current_status": "verified_current_candidate",
-      "next_action": "Retain the 180-day rule until real longitudinal data supports a reviewed diffusion model.",
-      "decision_history": "Cold/warm/fixed-budget/replay scenarios retained, including adverse results and failed writes."
+      "next_action": "Diagnose large negative-tail families on development data and retain the 180-day rule; bind confirmation only after a new candidate/decision freeze.",
+      "decision_history": "V2 retained all 512 rows: 319 eligible, 150 adverse, mean coverage change -0.2703 points, with biased/noisy tails near -13 points."
     },
     {
       "name": "domain-infrastructure",
