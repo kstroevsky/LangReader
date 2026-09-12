@@ -40,6 +40,53 @@ confirmatory data collection and before anyone inspects confirmatory outcomes.
 The approved SAP must select these methods. This roadmap and template do not
 select Horvitz–Thompson, Hájek, or any other estimator in advance.
 
+## Sample size and precision planning to freeze
+
+- Planned participants by language, proficiency stratum, L1 stratum, cohort,
+  and analysis split:
+- Planned independent documents and near-duplicate groups by language, genre,
+  format, and split:
+- Anticipated participant, document, item, and repeated-item cluster sizes:
+- Expected observations per participant, document, lexical item, and
+  item-by-ability/L1/proficiency cell:
+- Expected small-document census size and large-document audit sample size:
+- Expected audited selected-card support and unselected final-tail support:
+- Anticipated refusal, abandonment, criterion nonresponse, ambiguous criteria,
+  failed lookup, and delayed-retest attrition:
+- Minimum expected nonzero inclusion probability and its source:
+- Maximum expected design weight before and after any proposed trimming or
+  normalization:
+- Expected effective sample size overall and for each primary/subgroup
+  estimand, including the exact ESS definition:
+- Desired interval precision for calibration, deck precision/recall, realized
+  lexical coverage, and nominal-target miss rate:
+- Warm non-inferiority margin, expected cold/warm support, and power or precision
+  calculation under participant/document dependence:
+- Independent learners per lexical item for calibration-pack eligibility and
+  expected support for uniform/non-uniform DIF by each frozen group axis:
+- Sensitivity of every calculation to the developmental assumptions above,
+  including document overlap and short-session calibration sparsity:
+- Decision when projected support or weight stability is inadequate:
+
+The completed SAP must provide justified values and calculations for every
+applicable field before confirmatory collection. This template deliberately
+does not invent a participant count, precision target, non-inferiority margin,
+minimum inclusion probability, maximum weight, or effective-sample-size gate.
+Total response rows cannot substitute for independent learners per item.
+
+## Blocking study-design decisions to freeze
+
+- Large-document audit amendment and proof that its sampling frame exists
+  before assessment/deck exposure:
+- Pretest-interference evidence or randomized/order/carryover design that
+  explicitly accounts for interference:
+- Meaning prompt, hidden target-sense/context mapping, ambiguity status, and
+  bilingual adjudication rubric version:
+- Human theta-interval endpoint decision and independent latent reference, if
+  literal human theta coverage is retained:
+- Confirmation that developmental interference/rubric work cannot enter the
+  untouched confirmatory population:
+
 ## Dependence and uncertainty to freeze
 
 - Participant clustering structure:
@@ -61,6 +108,8 @@ bootstrap, sandwich, design-based, Bayesian, or another construction.
 - Subgroup analyses and minimum support:
 - Multiplicity family/families and control procedure:
 - Model comparison and non-inferiority margins:
+- Human theta-interval coverage: synthetic-only, independently anchored, jointly
+  modeled with reference uncertainty, or omitted from confirmatory human claims:
 - Rules for exploratory comprehension outcomes:
 
 Lexical coverage must remain distinct from comprehension. Any comprehension
@@ -95,6 +144,10 @@ analysis.
 
 - [ ] The estimands and analysis populations are frozen.
 - [ ] Sampling weights and inclusion-probability treatment are frozen.
+- [ ] Sample-size, support, attrition, design-weight, effective-sample-size, and
+      precision calculations are reviewed and frozen.
+- [ ] Large-document sampling, pretest interference, target-sense/ambiguity, and
+      human-theta endpoint decisions are approved.
 - [ ] Participant/document clustering and the variance/interval method are frozen.
 - [ ] Missing-data and multiplicity policies are frozen.
 - [ ] Outcomes and confirmatory gates are frozen.

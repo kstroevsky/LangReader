@@ -59,6 +59,7 @@ bash ./scripts/check_vocabulary_observation_model.sh
 echo "==> Testing vocabulary validation-study dataset"
 python3 ./scripts/validate_vocabulary_validation_study.py --self-test
 python3 ./scripts/run_vocabulary_validation_study_rehearsal.py --self-test
+python3 ./scripts/check_vocabulary_sap_template.py --self-test
 ./scripts/test_vocabulary_pos_fixtures.sh
 
 echo "==> Testing vocabulary cross-format fixtures"
