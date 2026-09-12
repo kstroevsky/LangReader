@@ -187,6 +187,22 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         XCTAssertTrue(develop.observedForms.contains { $0.surface == "developed" && $0.occurrenceCount == 2 })
     }
 
+    func testRendererWhitespaceDoesNotChangeLemmasPOSOrSourceRanges() throws {
+        let inline = "The careful curator opened the archive and recorded each record."
+        let wrapped = "The careful\ncurator opened\t the archive and recorded each record."
+        let inlineIndex = try XCTUnwrap(VocabularyDocumentLemmaIndex(texts: [inline], language: .english))
+        let wrappedIndex = try XCTUnwrap(VocabularyDocumentLemmaIndex(texts: [wrapped], language: .english))
+
+        let projection: (VocabularyDocumentLemmaSummary) -> String = {
+            "\($0.canonicalKey)#\($0.occurrenceCount)"
+        }
+        XCTAssertEqual(wrappedIndex.lemmaSummaries().map(projection), inlineIndex.lemmaSummaries().map(projection))
+
+        let match = try XCTUnwrap(wrappedIndex.matches(lemma: "curator", selectedForm: "curator").first?.first)
+        XCTAssertEqual(match.range, (wrapped as NSString).range(of: "curator"))
+        XCTAssertEqual(match.matchedText, "curator")
+    }
+
     func testGermanCompoundsRemainSeparateLemmas() throws {
         let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
             texts: ["Das Haus steht neben dem Krankenhaus. Die Häuser sind alt."],

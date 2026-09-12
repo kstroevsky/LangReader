@@ -19,6 +19,13 @@ complete case-normalized surface-token inventory for each source. Regeneration
 uses fixed ZIP timestamps and a deterministic minimal PDF writer. Review changes
 to a source, its complete inventory, and all three representations together.
 
+The App test suite also runs every extracted representation through the actual
+NaturalLanguage lemma/POS index, unknown-POS reconciliation, production
+difficulty provider, final assessability filter/order, and the first eight cold
+assessment questions. Equality is required across PDF, EPUB, and DOCX within
+the executing macOS version; the test does not claim NaturalLanguage output is
+stable across different OS releases.
+
 These fixtures supplement but do not replace the private English/German
 PDF/EPUB/DOCX performance manifest required for the real-app matrix. The source
 and generated artifacts are licensed under CC0 1.0; see `LICENSE.md`.

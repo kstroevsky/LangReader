@@ -38,10 +38,18 @@ temporary directory and rejects any byte-level drift. This check is wired into
 
 - A clean generation followed by `--check` reproduced all six committed
   artifacts byte for byte.
-- `VocabularyPreparationFixtureXCTests` passed two tests. They verify the
+- `VocabularyPreparationFixtureXCTests` verify the
   manifest shape, all source/artifact hashes and byte counts, then extract each
   PDF with PDFKit and each EPUB/DOCX through the production Web document loader.
   Every format reproduced its language's complete expected inventory exactly.
+- A later pipeline-parity extension runs all six extracted documents through
+  the real NaturalLanguage lemma/POS index, unknown-POS reconciliation,
+  production difficulty provider, final inventory filter/order, and eight fixed
+  cold answers. PDF, EPUB, and DOCX must match exactly for candidate identity,
+  occurrence mass, exclusions, difficulty source/version/rank, ordering, and
+  first-question identities within the executing macOS runtime. Core tags an
+  equal-length whitespace-normalized view so renderer line wrapping cannot
+  change linguistic context while source/highlight ranges remain unchanged.
 - `unzip -t` passed for both EPUB and both DOCX packages.
 - Both DOCX files were rendered with the bundled LibreOffice pipeline and every
   resulting page was visually inspected. Both are clean, readable one-page

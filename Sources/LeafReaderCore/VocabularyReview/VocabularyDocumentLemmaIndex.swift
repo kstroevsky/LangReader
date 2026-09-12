@@ -530,9 +530,16 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         var formCountsByLexicalKey: [String: [String: Int]] = [:]
         var nameOccurrenceCountsByLexicalKey: [String: Int] = [:]
 
-        tagger.string = text
-        nameTagger.string = text
-        let fullRange = text.startIndex..<text.endIndex
+        // Renderer line wrapping is presentation geometry, not linguistic
+        // structure. PDFKit commonly inserts newlines at visual wraps while
+        // Web/DOCX extraction uses spaces or paragraph separators. Tag an
+        // equal-UTF16-length whitespace-normalized view so those renderer
+        // choices cannot change lemmas/POS, then translate ranges back to the
+        // untouched source text for selections and highlights.
+        let taggingText = linguisticTaggingText(text)
+        tagger.string = taggingText
+        nameTagger.string = taggingText
+        let fullRange = taggingText.startIndex..<taggingText.endIndex
         tagger.setLanguage(language, range: fullRange)
         nameTagger.setLanguage(language, range: fullRange)
         tagger.enumerateTags(
@@ -541,11 +548,12 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             scheme: .lemma,
             options: [.omitWhitespace, .omitPunctuation]
         ) { tag, tokenRange in
-            let range = NSRange(tokenRange, in: text)
+            let range = NSRange(tokenRange, in: taggingText)
+            guard let sourceRange = Range(range, in: text) else { return true }
             if lineWrapSpans.contains(where: { NSIntersectionRange(range, $0).length > 0 }) {
                 return true
             }
-            let surface = String(text[tokenRange])
+            let surface = String(text[sourceRange])
             if ignoredRanges.contains(where: { NSIntersectionRange(range, $0).length > 0 })
                 || isObviousArtifact(surface) {
                 return true
@@ -650,6 +658,13 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
 
     private static func exactSurfaceKey(_ value: String) -> String {
         VocabularyTextPolicy.normalizedVocabularyText(value).precomposedStringWithCanonicalMapping
+    }
+
+    private static func linguisticTaggingText(_ text: String) -> String {
+        let space = Unicode.Scalar(32)!
+        return String(String.UnicodeScalarView(text.unicodeScalars.map {
+            CharacterSet.whitespacesAndNewlines.contains($0) ? space : $0
+        }))
     }
 
     private static func isObviousArtifact(_ value: String) -> Bool {
