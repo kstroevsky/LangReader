@@ -1219,8 +1219,13 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/AIConversation/AITranscriptModel.swift</code></td>
-<td style="text-align: right;">79</td>
+<td style="text-align: right;">80</td>
 <td><code>final class AITranscriptModel {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/AIConversation/DocumentAgentPromptCoordinator.swift</code></td>
+<td style="text-align: right;">10</td>
+<td><code>final class DocumentAgentPromptCoordinator {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/AIConversation/LLMAnswerProvider.swift</code></td>
@@ -1259,7 +1264,7 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/AIConversation/ReaderWindowController+AI.swift</code></td>
-<td style="text-align: right;">6</td>
+<td style="text-align: right;">4</td>
 <td><code>extension ReaderWindowController {</code></td>
 </tr>
 <tr>
@@ -1404,13 +1409,38 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/App/ReaderPerformance.swift</code></td>
-<td style="text-align: right;">26</td>
-<td><code>enum ReaderPerformance {</code></td>
+<td style="text-align: right;">17</td>
+<td><code>enum VocabularyPreparationTelemetryOutcome</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/App/ReaderPerformance.swift</code></td>
-<td style="text-align: right;">9</td>
+<td style="text-align: right;">23</td>
+<td><code>enum VocabularyPreparationInteractionTimingKind</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/App/ReaderPerformance.swift</code></td>
+<td style="text-align: right;">39</td>
+<td><code>enum VocabularyPreparationInteractionTimingOutcome</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/App/ReaderPerformance.swift</code></td>
+<td style="text-align: right;">46</td>
+<td><code>struct VocabularyPreparationInteractionTimingObservation</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/App/ReaderPerformance.swift</code></td>
+<td style="text-align: right;">56</td>
 <td><code>struct ReaderPerformanceSpan {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/App/ReaderPerformance.swift</code></td>
+<td style="text-align: right;">5</td>
+<td><code>enum VocabularyPreparationTelemetryStage</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/App/ReaderPerformance.swift</code></td>
+<td style="text-align: right;">73</td>
+<td><code>enum ReaderPerformance {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/App/UpdateFailureClassifier.swift</code></td>
@@ -1438,6 +1468,11 @@
 <td><code>struct DocumentSession {</code></td>
 </tr>
 <tr>
+<td><code>Sources/LeafReaderApp/DocumentReading/PDFDocumentTextSnapshotCache.swift</code></td>
+<td style="text-align: right;">8</td>
+<td><code>struct PDFDocumentTextSnapshotCache</code></td>
+</tr>
+<tr>
 <td><code>Sources/LeafReaderApp/DocumentReading/PDFPageLayoutPolicy.swift</code></td>
 <td style="text-align: right;">3</td>
 <td><code>enum PDFPageLayoutPolicy {</code></td>
@@ -1454,28 +1489,63 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/DocumentReading/ReaderBackendAdapters.swift</code></td>
-<td style="text-align: right;">20</td>
-<td><code>protocol ReaderContentBackend</code></td>
+<td style="text-align: right;">167</td>
+<td><code>final class WebKitReaderAdapter</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/DocumentReading/ReaderBackendAdapters.swift</code></td>
+<td style="text-align: right;">19</td>
+<td><code>enum ReaderPageScrollDirection {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/DocumentReading/ReaderBackendAdapters.swift</code></td>
+<td style="text-align: right;">24</td>
+<td><code>struct ReaderPagedViewportAnchor</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/DocumentReading/ReaderBackendAdapters.swift</code></td>
 <td style="text-align: right;">30</td>
+<td><code>protocol ReaderContentBackend</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/DocumentReading/ReaderBackendAdapters.swift</code></td>
+<td style="text-align: right;">41</td>
 <td><code>protocol ReaderPagedBackend</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/DocumentReading/ReaderBackendAdapters.swift</code></td>
-<td style="text-align: right;">37</td>
-<td><code>final class PDFKitReaderAdapter</code></td>
+<td style="text-align: right;">51</td>
+<td><code>protocol ReaderContinuousBackend</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/DocumentReading/ReaderBackendAdapters.swift</code></td>
-<td style="text-align: right;">91</td>
-<td><code>final class WebKitReaderAdapter</code></td>
+<td style="text-align: right;">58</td>
+<td><code>final class PDFKitReaderAdapter</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/DocumentReading/ReaderBackendAdapters.swift</code></td>
 <td style="text-align: right;">9</td>
 <td><code>enum ReaderContentBackendKind</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/DocumentReading/ReaderDocumentTextState.swift</code></td>
+<td style="text-align: right;">13</td>
+<td><code>struct PDFVocabularyPriorityIndexResult</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/DocumentReading/ReaderDocumentTextState.swift</code></td>
+<td style="text-align: right;">28</td>
+<td><code>final class PDFDocumentTextCancellationToken</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/DocumentReading/ReaderDocumentTextState.swift</code></td>
+<td style="text-align: right;">4</td>
+<td><code>struct PDFDocumentTextSnapshot</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/DocumentReading/ReaderDocumentTextState.swift</code></td>
+<td style="text-align: right;">69</td>
+<td><code>struct ReaderDocumentTextState {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/DocumentReading/ReaderDropContentView.swift</code></td>
@@ -1488,9 +1558,19 @@
 <td><code>enum ReaderFileDrop {</code></td>
 </tr>
 <tr>
+<td><code>Sources/LeafReaderApp/DocumentReading/ReaderPresentationState.swift</code></td>
+<td style="text-align: right;">20</td>
+<td><code>package struct ReaderPresentationState</code></td>
+</tr>
+<tr>
 <td><code>Sources/LeafReaderApp/DocumentReading/ReaderTOCHelper.swift</code></td>
 <td style="text-align: right;">5</td>
 <td><code>struct ReaderTOCHelper {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/DocumentReading/ReaderWebPresentation.swift</code></td>
+<td style="text-align: right;">9</td>
+<td><code>package struct ReaderWebPresentation</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/DocumentReading/ReaderWebView.swift</code></td>
@@ -1509,7 +1589,7 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/DocumentReading/ReaderWindowController+DocumentLoading.swift</code></td>
-<td style="text-align: right;">5</td>
+<td style="text-align: right;">12</td>
 <td><code>extension ReaderWindowController {</code></td>
 </tr>
 <tr>
@@ -1520,6 +1600,11 @@
 <tr>
 <td><code>Sources/LeafReaderApp/DocumentReading/ReaderWindowController+DocumentTOC.swift</code></td>
 <td style="text-align: right;">5</td>
+<td><code>extension ReaderWindowController {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/DocumentReading/ReaderWindowController+DocumentText.swift</code></td>
+<td style="text-align: right;">6</td>
 <td><code>extension ReaderWindowController {</code></td>
 </tr>
 <tr>
@@ -1535,6 +1620,11 @@
 <tr>
 <td><code>Sources/LeafReaderApp/DocumentReading/ReaderWindowController+PDFPageLayout.swift</code></td>
 <td style="text-align: right;">3</td>
+<td><code>extension ReaderWindowController {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/DocumentReading/ReaderWindowController+PerformanceAutomation.swift</code></td>
+<td style="text-align: right;">8</td>
 <td><code>extension ReaderWindowController {</code></td>
 </tr>
 <tr>
@@ -1601,6 +1691,16 @@
 <td><code>Sources/LeafReaderApp/Platform/SpeechRuntime/KokoroVoiceResourceManager.swift</code></td>
 <td style="text-align: right;">32</td>
 <td><code>enum KokoroVoiceResourceManager {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/Platform/SpeechRuntime/LocalRuntimeStatusPresenter.swift</code></td>
+<td style="text-align: right;">33</td>
+<td><code>package enum LocalRuntimeStatusPresenter {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/Platform/SpeechRuntime/LocalRuntimeStatusPresenter.swift</code></td>
+<td style="text-align: right;">4</td>
+<td><code>package struct LocalRuntimeStatusContext {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/Platform/SpeechRuntime/PiperTTSBackend+WorkerSupport.swift</code></td>
@@ -1873,13 +1973,23 @@
 <td><code>enum WebReadAloudBatchParser {</code></td>
 </tr>
 <tr>
+<td><code>Sources/LeafReaderApp/ReaderShell/ReaderBottomBarItem.swift</code></td>
+<td style="text-align: right;">14</td>
+<td><code>package struct ReaderBottomBarItem</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/ReaderShell/ReaderBottomBarItem.swift</code></td>
+<td style="text-align: right;">57</td>
+<td><code>package enum ReaderBottomBarLayout {</code></td>
+</tr>
+<tr>
 <td><code>Sources/LeafReaderApp/ReaderShell/ReaderBottomBarView.swift</code></td>
 <td style="text-align: right;">12</td>
 <td><code>final class ReaderBottomBarModel {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/ReaderShell/ReaderBottomBarView.swift</code></td>
-<td style="text-align: right;">168</td>
+<td style="text-align: right;">165</td>
 <td><code>enum ReaderBottomBarTitles {</code></td>
 </tr>
 <tr>
@@ -1896,6 +2006,16 @@
 <td><code>Sources/LeafReaderApp/ReaderShell/ReaderProgressFormatter.swift</code></td>
 <td style="text-align: right;">3</td>
 <td><code>enum ReaderProgressFormatter {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/ReaderShell/ReaderSelectionPresentation.swift</code></td>
+<td style="text-align: right;">23</td>
+<td><code>package struct ReaderSelectionPresentation</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/ReaderShell/ReaderSelectionPresentation.swift</code></td>
+<td style="text-align: right;">9</td>
+<td><code>package enum SelectionToolbarEdge {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/ReaderShell/ReaderSessionPolicy.swift</code></td>
@@ -1924,7 +2044,7 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/ReaderShell/ReaderToolbarItem.swift</code></td>
-<td style="text-align: right;">71</td>
+<td style="text-align: right;">69</td>
 <td><code>enum ReaderToolbarLayout {</code></td>
 </tr>
 <tr>
@@ -1934,32 +2054,32 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/ReaderShell/ReaderTopBarView.swift</code></td>
-<td style="text-align: right;">261</td>
+<td style="text-align: right;">256</td>
 <td><code>extension ReaderTopBarButton {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/ReaderShell/ReaderTopBarView.swift</code></td>
-<td style="text-align: right;">277</td>
+<td style="text-align: right;">271</td>
 <td><code>struct ChromeViewBridge</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/ReaderShell/ReaderTopBarView.swift</code></td>
-<td style="text-align: right;">297</td>
+<td style="text-align: right;">291</td>
 <td><code>struct FlexibleTitleBridge</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/ReaderShell/ReaderTopBarView.swift</code></td>
-<td style="text-align: right;">315</td>
+<td style="text-align: right;">309</td>
 <td><code>enum ReaderTopBarTitles {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/ReaderShell/ReaderTopBarView.swift</code></td>
-<td style="text-align: right;">50</td>
+<td style="text-align: right;">49</td>
 <td><code>enum ReaderTopBarButton {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/ReaderShell/ReaderTopBarView.swift</code></td>
-<td style="text-align: right;">71</td>
+<td style="text-align: right;">69</td>
 <td><code>struct ReaderTopBarView</code></td>
 </tr>
 <tr>
@@ -2034,7 +2154,7 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/ReaderShell/ReaderWindowController+UILayout.swift</code></td>
-<td style="text-align: right;">86</td>
+<td style="text-align: right;">81</td>
 <td><code>extension ReaderWindowController {</code></td>
 </tr>
 <tr>
@@ -2206,6 +2326,16 @@
 <td><code>Sources/LeafReaderApp/ReadingNotes/ReadingNoteInlineStylePolicy.swift</code></td>
 <td style="text-align: right;">3</td>
 <td><code>enum ReadingNoteInlineStylePolicy {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/ReadingNotes/ReadingNoteListPresenter.swift</code></td>
+<td style="text-align: right;">11</td>
+<td><code>package enum ReadingNoteListPresenter {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/ReadingNotes/ReadingNoteListPresenter.swift</code></td>
+<td style="text-align: right;">4</td>
+<td><code>package struct ReadingNoteListRowViewModel</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/ReadingNotes/ReadingNoteMarkdownSerializer.swift</code></td>
@@ -2588,6 +2718,21 @@
 <td><code>final class ThemedSettingsPopUpButton</code></td>
 </tr>
 <tr>
+<td><code>Sources/LeafReaderApp/Settings/VocabularySettingsModel.swift</code></td>
+<td style="text-align: right;">25</td>
+<td><code>final class VocabularySettingsModel {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/Settings/VocabularySettingsModel.swift</code></td>
+<td style="text-align: right;">7</td>
+<td><code>protocol VocabularyResearchExportSaving {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/Settings/VocabularySettingsView.swift</code></td>
+<td style="text-align: right;">4</td>
+<td><code>struct VocabularySettingsView</code></td>
+</tr>
+<tr>
 <td><code>Sources/LeafReaderApp/SharedUI/AppFont.swift</code></td>
 <td style="text-align: right;">3</td>
 <td><code>enum AppFont {</code></td>
@@ -2739,7 +2884,7 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/SharedUI/SelectionActionToolbar.swift</code></td>
-<td style="text-align: right;">385</td>
+<td style="text-align: right;">412</td>
 <td><code>final class SelectionActionButton</code></td>
 </tr>
 <tr>
@@ -2849,17 +2994,17 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/VocabularyReview/PDFWordRecordStore.swift</code></td>
-<td style="text-align: right;">41</td>
+<td style="text-align: right;">31</td>
 <td><code>struct PDFWordRecordStore {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/VocabularyReview/PDFWordRecordStore.swift</code></td>
-<td style="text-align: right;">4</td>
-<td><code>struct StoredPDFWordRecord</code></td>
+<td style="text-align: right;">5</td>
+<td><code>enum PDFTextQuoteAnchorBuilder {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/VocabularyReview/ReaderVocabularyState.swift</code></td>
-<td style="text-align: right;">5</td>
+<td style="text-align: right;">6</td>
 <td><code>struct ReaderVocabularyState {</code></td>
 </tr>
 <tr>
@@ -2929,7 +3074,7 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyHighlights.swift</code></td>
-<td style="text-align: right;">4</td>
+<td style="text-align: right;">5</td>
 <td><code>extension ReaderWindowController {</code></td>
 </tr>
 <tr>
@@ -2973,6 +3118,21 @@
 <td><code>extension ReaderWindowController {</code></td>
 </tr>
 <tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyPreparation.swift</code></td>
+<td style="text-align: right;">132</td>
+<td><code>extension ReaderWindowController</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyPreparation.swift</code></td>
+<td style="text-align: right;">53</td>
+<td><code>extension ReaderWindowController</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyPreparation.swift</code></td>
+<td style="text-align: right;">5</td>
+<td><code>extension ReaderWindowController {</code></td>
+</tr>
+<tr>
 <td><code>Sources/LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularyReviewQueue.swift</code></td>
 <td style="text-align: right;">4</td>
 <td><code>extension ReaderWindowController {</code></td>
@@ -2989,7 +3149,7 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/VocabularyReview/ReaderWindowController+VocabularySaving.swift</code></td>
-<td style="text-align: right;">28</td>
+<td style="text-align: right;">96</td>
 <td><code>extension ReaderWindowController {</code></td>
 </tr>
 <tr>
@@ -3068,6 +3228,16 @@
 <td><code>struct VocabularyFrequencyBackfillProgress {</code></td>
 </tr>
 <tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyLearningStatsPresenter.swift</code></td>
+<td style="text-align: right;">12</td>
+<td><code>package enum VocabularyLearningStatsPresenter {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyLearningStatsPresenter.swift</code></td>
+<td style="text-align: right;">4</td>
+<td><code>package struct VocabularyLearningStatDisplayItem</code></td>
+</tr>
+<tr>
 <td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyLibraryBuildCache.swift</code></td>
 <td style="text-align: right;">19</td>
 <td><code>final class VocabularyLibraryBuildCache</code></td>
@@ -3081,6 +3251,11 @@
 <td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyLibraryListView.swift</code></td>
 <td style="text-align: right;">50</td>
 <td><code>struct VocabularyLibraryListView</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyLibraryRowPresenter.swift</code></td>
+<td style="text-align: right;">9</td>
+<td><code>package enum VocabularyLibraryRowPresenter {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyLibraryWindowController.swift</code></td>
@@ -3106,6 +3281,101 @@
 <td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPanelController.swift</code></td>
 <td style="text-align: right;">5</td>
 <td><code>final class VocabularyPanelController {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationCoordinator.swift</code></td>
+<td style="text-align: right;">18</td>
+<td><code>enum VocabularyPreparationDefinitionState</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationCoordinator.swift</code></td>
+<td style="text-align: right;">25</td>
+<td><code>enum VocabularyAssessmentInteractionState</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationCoordinator.swift</code></td>
+<td style="text-align: right;">31</td>
+<td><code>struct VocabularyPreparationInventoryPayload</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationCoordinator.swift</code></td>
+<td style="text-align: right;">6</td>
+<td><code>enum VocabularyPreparationPhase</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationCoordinator.swift</code></td>
+<td style="text-align: right;">78</td>
+<td><code>final class VocabularyPreparationCoordinator {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationInteractionTiming.swift</code></td>
+<td style="text-align: right;">5</td>
+<td><code>struct VocabularyPreparationInteractionTiming {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationPanelController.swift</code></td>
+<td style="text-align: right;">6</td>
+<td><code>final class VocabularyPreparationPanelController</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationServices.swift</code></td>
+<td style="text-align: right;">106</td>
+<td><code>enum VocabularyPreparationImportBatch</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationServices.swift</code></td>
+<td style="text-align: right;">11</td>
+<td><code>struct VocabularyPreparationSourceSnapshot</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationServices.swift</code></td>
+<td style="text-align: right;">136</td>
+<td><code>protocol VocabularyPreparationLibraryAccess</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationServices.swift</code></td>
+<td style="text-align: right;">19</td>
+<td><code>enum VocabularyPreparationSourceError</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationServices.swift</code></td>
+<td style="text-align: right;">40</td>
+<td><code>protocol VocabularyPreparationDocumentSource</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationServices.swift</code></td>
+<td style="text-align: right;">46</td>
+<td><code>struct VocabularyPreparedDefinition</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationServices.swift</code></td>
+<td style="text-align: right;">52</td>
+<td><code>protocol VocabularyPreparationDefinitionProviding</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationServices.swift</code></td>
+<td style="text-align: right;">5</td>
+<td><code>struct VocabularyPreparationDocumentIdentity</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationServices.swift</code></td>
+<td style="text-align: right;">60</td>
+<td><code>struct LiveVocabularyPreparationDefinitionProvider</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationServices.swift</code></td>
+<td style="text-align: right;">92</td>
+<td><code>struct FixtureVocabularyPreparationDefinitionProvider</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationSessionStore.swift</code></td>
+<td style="text-align: right;">4</td>
+<td><code>struct VocabularyPreparationSessionStore {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationView.swift</code></td>
+<td style="text-align: right;">4</td>
+<td><code>struct VocabularyPreparationView</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/VocabularyReview/VocabularyRecordProvider.swift</code></td>
@@ -3199,7 +3469,12 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/VocabularyReview/WebWordRecordStore.swift</code></td>
-<td style="text-align: right;">34</td>
+<td style="text-align: right;">100</td>
+<td><code>struct WebWordRecordStore {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderApp/VocabularyReview/WebWordRecordStore.swift</code></td>
+<td style="text-align: right;">36</td>
 <td><code>struct WebWordRecordMetadataRepair {</code></td>
 </tr>
 <tr>
@@ -3208,18 +3483,13 @@
 <td><code>struct StoredWebWordRecord</code></td>
 </tr>
 <tr>
-<td><code>Sources/LeafReaderApp/VocabularyReview/WebWordRecordStore.swift</code></td>
-<td style="text-align: right;">98</td>
-<td><code>struct WebWordRecordStore {</code></td>
-</tr>
-<tr>
 <td><code>Sources/LeafReaderApp/VocabularyReview/WordRecordSQLiteRowMapper.swift</code></td>
 <td style="text-align: right;">106</td>
 <td><code>struct PDFVocabularySQLiteMapper {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderApp/VocabularyReview/WordRecordSQLiteRowMapper.swift</code></td>
-<td style="text-align: right;">167</td>
+<td style="text-align: right;">175</td>
 <td><code>struct WebWordRecordSQLiteMapper {</code></td>
 </tr>
 <tr>
@@ -3413,6 +3683,11 @@
 <td><code>package struct ChatMessage</code></td>
 </tr>
 <tr>
+<td><code>Sources/LeafReaderCore/DocumentReading/DocumentContentFingerprint.swift</code></td>
+<td style="text-align: right;">8</td>
+<td><code>package enum DocumentContentFingerprint {</code></td>
+</tr>
+<tr>
 <td><code>Sources/LeafReaderCore/DocumentReading/DocumentIdentity.swift</code></td>
 <td style="text-align: right;">4</td>
 <td><code>package enum DocumentIdentity {</code></td>
@@ -3429,13 +3704,48 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading+DOCX.swift</code></td>
-<td style="text-align: right;">11</td>
+<td style="text-align: right;">12</td>
+<td><code>package struct DOCXRenderedContent {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading+DOCX.swift</code></td>
+<td style="text-align: right;">17</td>
+<td><code>package struct DOCXInlineContent {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading+DOCX.swift</code></td>
+<td style="text-align: right;">22</td>
 <td><code>extension WebDocumentLoader {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading+DOCX.swift</code></td>
 <td style="text-align: right;">3</td>
 <td><code>package struct DOCXParagraph {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading+DOCXCache.swift</code></td>
+<td style="text-align: right;">295</td>
+<td><code>extension WebDocumentLoader {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading+DOCXCache.swift</code></td>
+<td style="text-align: right;">4</td>
+<td><code>package struct DOCXPreparedCachePolicy</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading+DOCXStreaming.swift</code></td>
+<td style="text-align: right;">3</td>
+<td><code>package struct DOCXStreamingResult {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading+DOCXStreaming.swift</code></td>
+<td style="text-align: right;">435</td>
+<td><code>extension WebDocumentLoader {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading+DOCXStreaming.swift</code></td>
+<td style="text-align: right;">9</td>
+<td><code>package enum DOCXMediaReferenceStyle {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading+EPUB.swift</code></td>
@@ -3449,28 +3759,38 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading.swift</code></td>
-<td style="text-align: right;">14</td>
-<td><code>package struct ReaderTOCItem {</code></td>
+<td style="text-align: right;">101</td>
+<td><code>package enum WebDocumentLoader {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading.swift</code></td>
-<td style="text-align: right;">26</td>
-<td><code>package struct HTMLBodyFragment {</code></td>
-</tr>
-<tr>
-<td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading.swift</code></td>
-<td style="text-align: right;">39</td>
-<td><code>package final class RegexCache</code></td>
-</tr>
-<tr>
-<td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading.swift</code></td>
-<td style="text-align: right;">3</td>
+<td style="text-align: right;">28</td>
 <td><code>package struct WebReadableDocument {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading.swift</code></td>
-<td style="text-align: right;">65</td>
-<td><code>package enum WebDocumentLoader {</code></td>
+<td style="text-align: right;">3</td>
+<td><code>package final class DocumentLoadCancellationToken</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading.swift</code></td>
+<td style="text-align: right;">40</td>
+<td><code>package struct DocumentLoadMeasurement</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading.swift</code></td>
+<td style="text-align: right;">50</td>
+<td><code>package struct ReaderTOCItem {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading.swift</code></td>
+<td style="text-align: right;">62</td>
+<td><code>package struct HTMLBodyFragment {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/DocumentReading/DocumentLoading.swift</code></td>
+<td style="text-align: right;">75</td>
+<td><code>package final class RegexCache</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/DocumentReading/EPUBHTMLSanitizer.swift</code></td>
@@ -3513,16 +3833,6 @@
 <td><code>package enum PDFBrightnessPolicy {</code></td>
 </tr>
 <tr>
-<td><code>Sources/LeafReaderCore/DocumentReading/ReaderBottomBarItem.swift</code></td>
-<td style="text-align: right;">14</td>
-<td><code>package struct ReaderBottomBarItem</code></td>
-</tr>
-<tr>
-<td><code>Sources/LeafReaderCore/DocumentReading/ReaderBottomBarItem.swift</code></td>
-<td style="text-align: right;">61</td>
-<td><code>package enum ReaderBottomBarLayout {</code></td>
-</tr>
-<tr>
 <td><code>Sources/LeafReaderCore/DocumentReading/ReaderDocumentKind.swift</code></td>
 <td style="text-align: right;">3</td>
 <td><code>package enum ReaderDocumentKind {</code></td>
@@ -3533,9 +3843,9 @@
 <td><code>package enum ReaderFieldInput {</code></td>
 </tr>
 <tr>
-<td><code>Sources/LeafReaderCore/DocumentReading/ReaderPresentationState.swift</code></td>
-<td style="text-align: right;">20</td>
-<td><code>package struct ReaderPresentationState</code></td>
+<td><code>Sources/LeafReaderCore/DocumentReading/ReaderReadingPosition.swift</code></td>
+<td style="text-align: right;">7</td>
+<td><code>package struct ReaderReadingPosition</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/DocumentReading/ReaderSearchCursor.swift</code></td>
@@ -3543,29 +3853,14 @@
 <td><code>package struct ReaderSearchCursor</code></td>
 </tr>
 <tr>
-<td><code>Sources/LeafReaderCore/DocumentReading/ReaderSelectionPresentation.swift</code></td>
-<td style="text-align: right;">23</td>
-<td><code>package struct ReaderSelectionPresentation</code></td>
-</tr>
-<tr>
-<td><code>Sources/LeafReaderCore/DocumentReading/ReaderSelectionPresentation.swift</code></td>
-<td style="text-align: right;">9</td>
-<td><code>package enum SelectionToolbarEdge {</code></td>
-</tr>
-<tr>
 <td><code>Sources/LeafReaderCore/DocumentReading/ReaderSelectionState.swift</code></td>
 <td style="text-align: right;">15</td>
 <td><code>package struct ReaderSelectionState</code></td>
 </tr>
 <tr>
-<td><code>Sources/LeafReaderCore/DocumentReading/ReaderWebPresentation.swift</code></td>
-<td style="text-align: right;">77</td>
-<td><code>package struct ReaderReadingPosition</code></td>
-</tr>
-<tr>
-<td><code>Sources/LeafReaderCore/DocumentReading/ReaderWebPresentation.swift</code></td>
-<td style="text-align: right;">9</td>
-<td><code>package struct ReaderWebPresentation</code></td>
+<td><code>Sources/LeafReaderCore/DocumentReading/TextQuoteAnchor.swift</code></td>
+<td style="text-align: right;">5</td>
+<td><code>package struct TextQuoteAnchor</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/Performance/PerformanceEvent.swift</code></td>
@@ -3646,16 +3941,6 @@
 <td><code>Sources/LeafReaderCore/Platform/SpeechRuntime/LocalRuntime.swift</code></td>
 <td style="text-align: right;">156</td>
 <td><code>package struct LocalRuntimeRegistry {</code></td>
-</tr>
-<tr>
-<td><code>Sources/LeafReaderCore/Platform/SpeechRuntime/LocalRuntime.swift</code></td>
-<td style="text-align: right;">176</td>
-<td><code>package struct LocalRuntimeStatusContext {</code></td>
-</tr>
-<tr>
-<td><code>Sources/LeafReaderCore/Platform/SpeechRuntime/LocalRuntime.swift</code></td>
-<td style="text-align: right;">204</td>
-<td><code>package enum LocalRuntimeStatusPresenter {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/Platform/SpeechRuntime/LocalRuntime.swift</code></td>
@@ -3858,16 +4143,6 @@
 <td><code>package enum ReadingNoteLinePrefixPolicy {</code></td>
 </tr>
 <tr>
-<td><code>Sources/LeafReaderCore/ReadingNotes/ReadingNoteListPresenter.swift</code></td>
-<td style="text-align: right;">10</td>
-<td><code>package enum ReadingNoteListPresenter {</code></td>
-</tr>
-<tr>
-<td><code>Sources/LeafReaderCore/ReadingNotes/ReadingNoteListPresenter.swift</code></td>
-<td style="text-align: right;">3</td>
-<td><code>package struct ReadingNoteListRowViewModel</code></td>
-</tr>
-<tr>
 <td><code>Sources/LeafReaderCore/ReadingNotes/ReadingNoteMarkdownInputPolicy.swift</code></td>
 <td style="text-align: right;">3</td>
 <td><code>package enum ReadingNoteMarkdownInputPolicy {</code></td>
@@ -3913,8 +4188,8 @@
 <td><code>package enum ReadingNoteTextReplacementPolicy {</code></td>
 </tr>
 <tr>
-<td><code>Sources/LeafReaderCore/SharedUI/MarkdownHTMLExporter.swift</code></td>
-<td style="text-align: right;">3</td>
+<td><code>Sources/LeafReaderCore/Support/MarkdownHTMLExporter.swift</code></td>
+<td style="text-align: right;">4</td>
 <td><code>package enum MarkdownHTMLExporter {</code></td>
 </tr>
 <tr>
@@ -3926,6 +4201,76 @@
 <td><code>Sources/LeafReaderCore/Support/ProcessRunner.swift</code></td>
 <td style="text-align: right;">4</td>
 <td><code>package struct ProcessRunResult {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift</code></td>
+<td style="text-align: right;">156</td>
+<td><code>package struct DocumentVocabularyInventory</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift</code></td>
+<td style="text-align: right;">265</td>
+<td><code>package enum VocabularyQuestionSelectionType</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift</code></td>
+<td style="text-align: right;">272</td>
+<td><code>package struct VocabularyAssessmentAnswer</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift</code></td>
+<td style="text-align: right;">35</td>
+<td><code>package enum VocabularyAssessmentMode</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift</code></td>
+<td style="text-align: right;">368</td>
+<td><code>package enum VocabularyPreparationInvitationState</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift</code></td>
+<td style="text-align: right;">376</td>
+<td><code>package struct VocabularyPreparationSession</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift</code></td>
+<td style="text-align: right;">412</td>
+<td><code>package enum VocabularyAssessmentClassification</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift</code></td>
+<td style="text-align: right;">422</td>
+<td><code>package enum VocabularyAssessmentStopReason</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift</code></td>
+<td style="text-align: right;">429</td>
+<td><code>package struct VocabularyAssessmentDiagnostics</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift</code></td>
+<td style="text-align: right;">440</td>
+<td><code>package struct VocabularyAssessmentResultItem</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift</code></td>
+<td style="text-align: right;">45</td>
+<td><code>package enum VocabularyKnowledgeEvidence</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift</code></td>
+<td style="text-align: right;">463</td>
+<td><code>package struct VocabularyAssessmentResult</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift</code></td>
+<td style="text-align: right;">554</td>
+<td><code>package struct AdaptiveVocabularyAssessment</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift</code></td>
+<td style="text-align: right;">88</td>
+<td><code>package struct DocumentVocabularyCandidate</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/VocabularyReview/DictionaryLookupService.swift</code></td>
@@ -3959,7 +4304,7 @@
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/VocabularyReview/ECDICTDictionary.swift</code></td>
-<td style="text-align: right;">394</td>
+<td style="text-align: right;">422</td>
 <td><code>package enum ECDICTAnswerFormatter {</code></td>
 </tr>
 <tr>
@@ -3991,6 +4336,56 @@
 <td><code>Sources/LeafReaderCore/VocabularyReview/GermanFormLabeler.swift</code></td>
 <td style="text-align: right;">82</td>
 <td><code>package enum GermanFormLabeler {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/GermanFrequencyRankTable.swift</code></td>
+<td style="text-align: right;">110</td>
+<td><code>package enum VocabularyItemDifficultySource</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/GermanFrequencyRankTable.swift</code></td>
+<td style="text-align: right;">117</td>
+<td><code>package struct VocabularyItemDifficultyPrior</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/GermanFrequencyRankTable.swift</code></td>
+<td style="text-align: right;">171</td>
+<td><code>package protocol DocumentVocabularyDifficultyProviding</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/GermanFrequencyRankTable.swift</code></td>
+<td style="text-align: right;">177</td>
+<td><code>package extension DocumentVocabularyDifficultyProviding {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/GermanFrequencyRankTable.swift</code></td>
+<td style="text-align: right;">183</td>
+<td><code>package struct ECDICTDocumentVocabularyDifficultyProvider</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/GermanFrequencyRankTable.swift</code></td>
+<td style="text-align: right;">203</td>
+<td><code>package struct GermanCorpusDocumentVocabularyDifficultyProvider</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/GermanFrequencyRankTable.swift</code></td>
+<td style="text-align: right;">220</td>
+<td><code>package struct CalibratedDocumentVocabularyDifficultyProvider</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/GermanFrequencyRankTable.swift</code></td>
+<td style="text-align: right;">246</td>
+<td><code>package enum DocumentVocabularyFrequencyProvider {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/GermanFrequencyRankTable.swift</code></td>
+<td style="text-align: right;">98</td>
+<td><code>package struct VocabularyFrequencyScale</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/GermanFrequencyRankTable.swift</code></td>
+<td style="text-align: right;">9</td>
+<td><code>package final class GermanFrequencyRankTable</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/VocabularyReview/GermanLabelCacheGeneration.swift</code></td>
@@ -4058,6 +4453,11 @@
 <td><code>package final class PersonalVocabularyProfileStore</code></td>
 </tr>
 <tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/StoredPDFWordRecord.swift</code></td>
+<td style="text-align: right;">8</td>
+<td><code>package struct StoredPDFWordRecord</code></td>
+</tr>
+<tr>
 <td><code>Sources/LeafReaderCore/VocabularyReview/StoredPDFWordRect.swift</code></td>
 <td style="text-align: right;">4</td>
 <td><code>package struct StoredPDFWordRect</code></td>
@@ -4073,6 +4473,56 @@
 <td><code>package enum VocabularyAnswerSanitizer {</code></td>
 </tr>
 <tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyAssessmentCausalDiagnostics.swift</code></td>
+<td style="text-align: right;">172</td>
+<td><code>package struct VocabularyDiagnosticBankConfiguration</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyAssessmentCausalDiagnostics.swift</code></td>
+<td style="text-align: right;">194</td>
+<td><code>package struct VocabularyDiagnosticBankResult</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyAssessmentCausalDiagnostics.swift</code></td>
+<td style="text-align: right;">206</td>
+<td><code>package struct VocabularyDiagnosticThetaPositionCount</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyAssessmentCausalDiagnostics.swift</code></td>
+<td style="text-align: right;">216</td>
+<td><code>package struct VocabularyAssessmentDiagnosticSnapshot</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyAssessmentCausalDiagnostics.swift</code></td>
+<td style="text-align: right;">23</td>
+<td><code>package struct VocabularyDiagnosticCoverageMassCount</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyAssessmentCausalDiagnostics.swift</code></td>
+<td style="text-align: right;">33</td>
+<td><code>package struct VocabularyDiagnosticFixedBankItem</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyAssessmentCausalDiagnostics.swift</code></td>
+<td style="text-align: right;">3</td>
+<td><code>package enum VocabularyDiagnosticBankKind</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyAssessmentCausalDiagnostics.swift</code></td>
+<td style="text-align: right;">52</td>
+<td><code>package struct VocabularyDiagnosticFixedBankResult</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyAssessmentCausalDiagnostics.swift</code></td>
+<td style="text-align: right;">62</td>
+<td><code>package enum VocabularyDiagnosticFixedBank {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyAssessmentCausalDiagnostics.swift</code></td>
+<td style="text-align: right;">9</td>
+<td><code>package enum VocabularyDiagnosticInputError</code></td>
+</tr>
+<tr>
 <td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyAudioCache.swift</code></td>
 <td style="text-align: right;">4</td>
 <td><code>package enum VocabularyAudioCache {</code></td>
@@ -4081,6 +4531,91 @@
 <td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDailyGoalPolicy.swift</code></td>
 <td style="text-align: right;">3</td>
 <td><code>package enum VocabularyDailyGoalPolicy {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDictionaryMetadataEnrichmentPolicy.swift</code></td>
+<td style="text-align: right;">8</td>
+<td><code>package enum VocabularyDictionaryMetadataEnrichmentPolicy {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentDomain.swift</code></td>
+<td style="text-align: right;">135</td>
+<td><code>package struct VocabularyDocumentDomainScore</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentDomain.swift</code></td>
+<td style="text-align: right;">13</td>
+<td><code>package struct VocabularyDomainResourceMetadata</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentDomain.swift</code></td>
+<td style="text-align: right;">140</td>
+<td><code>package struct VocabularyDocumentDomainDetection</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentDomain.swift</code></td>
+<td style="text-align: right;">149</td>
+<td><code>package struct VocabularyDocumentDomainDetector</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentDomain.swift</code></td>
+<td style="text-align: right;">206</td>
+<td><code>package enum VocabularyDocumentDomainResources {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentDomain.swift</code></td>
+<td style="text-align: right;">290</td>
+<td><code>package struct ExperimentalDomainBlendedDifficultyProvider</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentDomain.swift</code></td>
+<td style="text-align: right;">48</td>
+<td><code>package final class VocabularyDomainRankTable</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentDomain.swift</code></td>
+<td style="text-align: right;">6</td>
+<td><code>package enum VocabularyDocumentDomain</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentLemmaIndex.swift</code></td>
+<td style="text-align: right;">111</td>
+<td><code>package struct VocabularyDocumentLemmaIndexSeed</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentLemmaIndex.swift</code></td>
+<td style="text-align: right;">124</td>
+<td><code>package enum VocabularyIndexPriorityPlanner {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentLemmaIndex.swift</code></td>
+<td style="text-align: right;">165</td>
+<td><code>package final class VocabularyDocumentLemmaIndex</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentLemmaIndex.swift</code></td>
+<td style="text-align: right;">16</td>
+<td><code>package struct VocabularyDocumentObservedForm</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentLemmaIndex.swift</code></td>
+<td style="text-align: right;">26</td>
+<td><code>package struct VocabularyDocumentLemmaSummary</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentLemmaIndex.swift</code></td>
+<td style="text-align: right;">4</td>
+<td><code>package struct VocabularyDocumentSourceRange</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentLemmaIndex.swift</code></td>
+<td style="text-align: right;">62</td>
+<td><code>package enum VocabularyPartOfSpeechConfidencePolicy {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyDocumentLemmaIndex.swift</code></td>
+<td style="text-align: right;">94</td>
+<td><code>package enum VocabularyPartOfSpeechReconciliationPolicy {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyExportRecord.swift</code></td>
@@ -4120,11 +4655,6 @@
 <tr>
 <td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyLearningStats.swift</code></td>
 <td style="text-align: right;">11</td>
-<td><code>package struct VocabularyLearningStatDisplayItem</code></td>
-</tr>
-<tr>
-<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyLearningStats.swift</code></td>
-<td style="text-align: right;">17</td>
 <td><code>package enum VocabularyLearningStatsCalculator {</code></td>
 </tr>
 <tr>
@@ -4133,9 +4663,19 @@
 <td><code>package struct VocabularyLearningStats</code></td>
 </tr>
 <tr>
-<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyLearningStats.swift</code></td>
-<td style="text-align: right;">64</td>
-<td><code>package enum VocabularyLearningStatsPresenter {</code></td>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyLexicalItemID.swift</code></td>
+<td style="text-align: right;">37</td>
+<td><code>package enum VocabularyPartOfSpeech</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyLexicalItemID.swift</code></td>
+<td style="text-align: right;">58</td>
+<td><code>package protocol VocabularySenseDisambiguating</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyLexicalItemID.swift</code></td>
+<td style="text-align: right;">6</td>
+<td><code>package struct VocabularyLexicalItemID</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyLibraryFilter.swift</code></td>
@@ -4163,9 +4703,49 @@
 <td><code>package enum VocabularyLibraryRecordProvider {</code></td>
 </tr>
 <tr>
-<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyLibraryRowPresenter.swift</code></td>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyMeasurementModels.swift</code></td>
+<td style="text-align: right;">102</td>
+<td><code>package struct VocabularyObservationEmission</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyMeasurementModels.swift</code></td>
+<td style="text-align: right;">109</td>
+<td><code>package struct VocabularyObservationGoldenFixture</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyMeasurementModels.swift</code></td>
+<td style="text-align: right;">119</td>
+<td><code>package struct VocabularyObservationModelManifest</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyMeasurementModels.swift</code></td>
+<td style="text-align: right;">135</td>
+<td><code>package enum VocabularyObservationModel {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyMeasurementModels.swift</code></td>
+<td style="text-align: right;">17</td>
+<td><code>package enum VocabularyQuestionObjective</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyMeasurementModels.swift</code></td>
+<td style="text-align: right;">27</td>
+<td><code>package struct VocabularyAssessmentModelConfiguration</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyMeasurementModels.swift</code></td>
+<td style="text-align: right;">3</td>
+<td><code>package enum VocabularyCoverageStoppingComputation</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyMeasurementModels.swift</code></td>
+<td style="text-align: right;">75</td>
+<td><code>package enum VocabularyKnowledgeModel {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyMeasurementModels.swift</code></td>
 <td style="text-align: right;">8</td>
-<td><code>package enum VocabularyLibraryRowPresenter {</code></td>
+<td><code>package enum VocabularyAdaptiveLossPopulation</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyOccurrenceGrouping.swift</code></td>
@@ -4188,6 +4768,61 @@
 <td><code>package enum VocabularyOccurrenceMatcher {</code></td>
 </tr>
 <tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyOccurrenceSavePlanner.swift</code></td>
+<td style="text-align: right;">1</td>
+<td><code>package struct VocabularyOccurrenceSavePlan {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyOccurrenceSavePlanner.swift</code></td>
+<td style="text-align: right;">9</td>
+<td><code>package enum VocabularyOccurrenceSavePlanner {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyPredictionAudit.swift</code></td>
+<td style="text-align: right;">34</td>
+<td><code>package struct VocabularyPredictionAuditScoredItem</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyPredictionAudit.swift</code></td>
+<td style="text-align: right;">39</td>
+<td><code>package struct VocabularyPredictionAuditResult</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyPredictionAudit.swift</code></td>
+<td style="text-align: right;">3</td>
+<td><code>package enum VocabularyPredictionAuditAnswer</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyPredictionAudit.swift</code></td>
+<td style="text-align: right;">58</td>
+<td><code>package struct VocabularyPredictionAuditSession</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyPredictionAudit.swift</code></td>
+<td style="text-align: right;">8</td>
+<td><code>package struct VocabularyPredictionAuditItem</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyReaderPrior.swift</code></td>
+<td style="text-align: right;">102</td>
+<td><code>package final class VocabularyReaderPriorStore</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyReaderPrior.swift</code></td>
+<td style="text-align: right;">4</td>
+<td><code>package struct VocabularyReaderPrior</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyReaderPrior.swift</code></td>
+<td style="text-align: right;">68</td>
+<td><code>package struct VocabularyReaderPriorSummary</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyReaderPrior.swift</code></td>
+<td style="text-align: right;">87</td>
+<td><code>package protocol VocabularyReaderPriorStoring</code></td>
+</tr>
+<tr>
 <td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyRecordDeletionPlanner.swift</code></td>
 <td style="text-align: right;">13</td>
 <td><code>package enum VocabularyRecordDeletionPlanner {</code></td>
@@ -4198,6 +4833,46 @@
 <td><code>package struct VocabularyDeletionRecord {</code></td>
 </tr>
 <tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyResearchExport.swift</code></td>
+<td style="text-align: right;">103</td>
+<td><code>package final class VocabularyResearchEvidenceStore</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyResearchExport.swift</code></td>
+<td style="text-align: right;">13</td>
+<td><code>package struct VocabularyResearchProfile</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyResearchExport.swift</code></td>
+<td style="text-align: right;">29</td>
+<td><code>package struct VocabularyResearchEvidenceRecord</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyResearchExport.swift</code></td>
+<td style="text-align: right;">359</td>
+<td><code>package struct VocabularyItemCalibrationPack</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyResearchExport.swift</code></td>
+<td style="text-align: right;">406</td>
+<td><code>package enum VocabularyItemCalibrationPackLoader {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyResearchExport.swift</code></td>
+<td style="text-align: right;">66</td>
+<td><code>package struct VocabularyResearchExport</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyResearchExport.swift</code></td>
+<td style="text-align: right;">6</td>
+<td><code>package enum VocabularySelfRatedProficiency</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyResearchExport.swift</code></td>
+<td style="text-align: right;">89</td>
+<td><code>package protocol VocabularyResearchEvidenceStoring</code></td>
+</tr>
+<tr>
 <td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyReviewCardSelector.swift</code></td>
 <td style="text-align: right;">3</td>
 <td><code>package struct VocabularyReviewCardSelection {</code></td>
@@ -4206,11 +4881,6 @@
 <td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyReviewCardSelector.swift</code></td>
 <td style="text-align: right;">9</td>
 <td><code>package enum VocabularyReviewCardSelector {</code></td>
-</tr>
-<tr>
-<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyReviewDisplayRecordLoader.swift</code></td>
-<td style="text-align: right;">3</td>
-<td><code>package enum VocabularyReviewDisplayRecordLoader {</code></td>
 </tr>
 <tr>
 <td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyReviewModels.swift</code></td>
@@ -4251,6 +4921,116 @@
 <td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyTextPolicy.swift</code></td>
 <td style="text-align: right;">3</td>
 <td><code>package enum VocabularyTextPolicy {</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyDataset.swift</code></td>
+<td style="text-align: right;">105</td>
+<td><code>package struct ConsentedValidationStudyDataset</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyDataset.swift</code></td>
+<td style="text-align: right;">15</td>
+<td><code>package enum VocabularyValidationCriterionLabel</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyDataset.swift</code></td>
+<td style="text-align: right;">20</td>
+<td><code>package struct VocabularyValidationQuestionAssignment</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyDataset.swift</code></td>
+<td style="text-align: right;">3</td>
+<td><code>package enum VocabularyValidationStudySplit</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyDataset.swift</code></td>
+<td style="text-align: right;">42</td>
+<td><code>package struct VocabularyValidationStudyRecord</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyDataset.swift</code></td>
+<td style="text-align: right;">88</td>
+<td><code>package enum VocabularyValidationStudyDatasetError</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyDataset.swift</code></td>
+<td style="text-align: right;">9</td>
+<td><code>package enum VocabularyValidationStudyPhase</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyPackageV2.swift</code></td>
+<td style="text-align: right;">10</td>
+<td><code>package enum VocabularyStudyAssessmentConditionV2</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyPackageV2.swift</code></td>
+<td style="text-align: right;">110</td>
+<td><code>package struct VocabularyStudyDeckSnapshotV2</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyPackageV2.swift</code></td>
+<td style="text-align: right;">121</td>
+<td><code>package struct VocabularyStudySamplingManifestV2</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyPackageV2.swift</code></td>
+<td style="text-align: right;">135</td>
+<td><code>package struct VocabularyStudyRetestManifestV2</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyPackageV2.swift</code></td>
+<td style="text-align: right;">143</td>
+<td><code>package enum VocabularyValidationStudyPackageV2Error</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyPackageV2.swift</code></td>
+<td style="text-align: right;">15</td>
+<td><code>package enum VocabularyStudyItemStatusV2</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyPackageV2.swift</code></td>
+<td style="text-align: right;">162</td>
+<td><code>package struct ConsentedValidationStudyPackageV2</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyPackageV2.swift</code></td>
+<td style="text-align: right;">22</td>
+<td><code>package enum VocabularyStudyDeckRoleV2</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyPackageV2.swift</code></td>
+<td style="text-align: right;">27</td>
+<td><code>package struct VocabularyStudyParticipantV2</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyPackageV2.swift</code></td>
+<td style="text-align: right;">38</td>
+<td><code>package struct VocabularyStudyDocumentV2</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyPackageV2.swift</code></td>
+<td style="text-align: right;">3</td>
+<td><code>package enum VocabularyStudyCriterionStatusV2</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyPackageV2.swift</code></td>
+<td style="text-align: right;">50</td>
+<td><code>package struct VocabularyStudyAssessmentV2</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyPackageV2.swift</code></td>
+<td style="text-align: right;">71</td>
+<td><code>package struct VocabularyStudyItemPredictionV2</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyPackageV2.swift</code></td>
+<td style="text-align: right;">82</td>
+<td><code>package struct VocabularyStudyCriterionRecordV2</code></td>
+</tr>
+<tr>
+<td><code>Sources/LeafReaderCore/VocabularyReview/VocabularyValidationStudyPackageV2.swift</code></td>
+<td style="text-align: right;">99</td>
+<td><code>package struct VocabularyStudyQuestionTraceV2</code></td>
 </tr>
 </tbody>
 </table>
