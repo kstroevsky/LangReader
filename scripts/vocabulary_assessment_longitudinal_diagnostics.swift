@@ -77,6 +77,7 @@ private struct LongitudinalRun: Codable {
     let warmPathUnderColdPrior: LongitudinalReplay
     let coldFixedPathUnderWarmPrior: LongitudinalReplay
     let warmFixedPathUnderColdPrior: LongitudinalReplay
+    let warmCompatibility: LongitudinalWarmCompatibility
     let naturalQuestionReduction: Double
     let naturalCoverageDifference: Double
     let fixedBudgetCoverageDifference: Double
@@ -179,6 +180,21 @@ private struct LongitudinalReplay: Codable {
     let missedOccurrenceMass: Int
     let realizedProjectedCoverage: Double
     let conservativeCoverageLowerBound: Double
+    let interpretation: String
+}
+
+private struct LongitudinalWarmCompatibility: Codable {
+    let applicable: Bool
+    let validationQuestionOrdinals: [Int]
+    let nonExcludedValidationAnswerCount: Int
+    let warmEvidenceLogLikelihood: Double?
+    let coldEvidenceLogLikelihood: Double?
+    let evidenceLogLikelihoodRatio: Double?
+    let supportsEightQuestionMinimum: Bool?
+    let counterfactualMinimumApplied: Bool
+    let candidatePath: LongitudinalReplay
+    let candidateQuestionReduction: Double
+    let candidateCoverageDifference: Double
     let interpretation: String
 }
 
@@ -567,6 +583,16 @@ func runVocabularyLongitudinalDiagnostics(
                 currentDate: evaluationDate,
                 target: manifest.targetCoverage
             )
+            let compatibility = longitudinalWarmCompatibility(
+                coldNatural: coldNatural,
+                warmNatural: warmNatural,
+                warmFixed: warmFixed,
+                inventory: evaluationDocument.inventory,
+                truths: evaluationTruth,
+                readerPrior: prior,
+                currentDate: evaluationDate,
+                target: manifest.targetCoverage
+            )
             replayTimings.append(longitudinalMilliseconds(since: replayStart))
             let stored = prior.map { value in
                 LongitudinalStoredPrior(
@@ -601,6 +627,7 @@ func runVocabularyLongitudinalDiagnostics(
                 warmPathUnderColdPrior: warmUnderCold,
                 coldFixedPathUnderWarmPrior: coldFixedUnderWarm,
                 warmFixedPathUnderColdPrior: warmFixedUnderCold,
+                warmCompatibility: compatibility,
                 naturalQuestionReduction: coldNatural.path.questionCount > 0
                     ? 1 - Double(warmNatural.path.questionCount) / Double(coldNatural.path.questionCount)
                     : 0,
@@ -623,7 +650,7 @@ func runVocabularyLongitudinalDiagnostics(
         }
     }
     let report = LongitudinalReport(
-        schemaVersion: 2,
+        schemaVersion: 3,
         interpretation: "Development-only synthetic longitudinal evidence using the production SQLite prior store and completion contract. Oracle-informed warm diagnostics remain separate; this report is not real-learner calibration or release acceptance.",
         manifest: manifest,
         source: source,
@@ -988,6 +1015,116 @@ private func longitudinalReplay(
         realizedProjectedCoverage: coverage,
         conservativeCoverageLowerBound: result.diagnostics.conservativeCoverageLowerBound,
         interpretation: "Conditional on the fixed source question/evidence order and validation metadata; not an authentic destination-prior serving path."
+    )
+}
+
+private func longitudinalWarmCompatibility(
+    coldNatural: LongitudinalPathBuild,
+    warmNatural: LongitudinalPathBuild,
+    warmFixed: LongitudinalPathBuild,
+    inventory: DocumentVocabularyInventory,
+    truths: [String: LongitudinalTruth],
+    readerPrior: VocabularyReaderPrior?,
+    currentDate: Date,
+    target: Double
+) -> LongitudinalWarmCompatibility {
+    let validationOrdinals = [4, 8]
+    let applicable = warmNatural.assessment.usedEligibleReaderPrior
+    var answerPrefix: [VocabularyAssessmentAnswer] = []
+    var validationCount = 0
+    var warmLogLikelihood = 0.0
+    var coldLogLikelihood = 0.0
+    for answer in warmFixed.assessment.answers {
+        if applicable,
+           answer.wasValidation,
+           answer.evidence != .excluded,
+           let ordinal = answer.questionOrdinal,
+           validationOrdinals.contains(ordinal),
+           let warmProbability = answer.predictedKnownBeforeAnswer {
+            let coldPrefix = AdaptiveVocabularyAssessment(
+                inventory: inventory,
+                mode: .targetCoverage(target),
+                restoredAnswers: answerPrefix,
+                readerPrior: nil,
+                currentDate: currentDate
+            )
+            if let coldProbability = coldPrefix.diagnosticKnownProbability(
+                for: answer.canonicalKey
+            ) {
+                let warmLikelihood = VocabularyObservationModel.evidenceLikelihood(
+                    evidence: answer.evidence,
+                    latentKnownProbability: warmProbability
+                )
+                let coldLikelihood = VocabularyObservationModel.evidenceLikelihood(
+                    evidence: answer.evidence,
+                    latentKnownProbability: coldProbability
+                )
+                warmLogLikelihood += log(max(warmLikelihood, Double.leastNormalMagnitude))
+                coldLogLikelihood += log(max(coldLikelihood, Double.leastNormalMagnitude))
+                validationCount += 1
+            }
+        }
+        answerPrefix.append(answer)
+        if (answer.questionOrdinal ?? 0) >= (validationOrdinals.last ?? 8) {
+            break
+        }
+    }
+
+    let likelihoodRatio = applicable && validationCount == validationOrdinals.count
+        ? warmLogLikelihood - coldLogLikelihood
+        : nil
+    let supported = likelihoodRatio.map { $0 >= 0 }
+    let applyCounterfactual = applicable
+        && supported != true
+        && warmNatural.assessment.answeredQuestionCount < 20
+    let candidateAssessment: AdaptiveVocabularyAssessment
+    if applyCounterfactual {
+        var prefix: [VocabularyAssessmentAnswer] = []
+        var answered = 0
+        for answer in warmFixed.assessment.answers {
+            prefix.append(answer)
+            if answer.evidence != .excluded { answered += 1 }
+            if answered >= 20 { break }
+        }
+        candidateAssessment = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .targetCoverage(target),
+            restoredAnswers: prefix,
+            readerPrior: readerPrior,
+            currentDate: currentDate
+        )
+    } else {
+        candidateAssessment = warmNatural.assessment
+    }
+    let candidatePath = longitudinalReplay(
+        sourcePath: applyCounterfactual
+            ? "accumulated-warm-compatibility-minimum-20"
+            : "accumulated-warm-natural",
+        destinationPrior: "accumulated-warm",
+        source: candidateAssessment,
+        inventory: inventory,
+        truths: truths,
+        readerPrior: readerPrior,
+        currentDate: currentDate,
+        target: target
+    )
+    let questionReduction = coldNatural.path.questionCount > 0
+        ? 1 - Double(candidatePath.questionCount) / Double(coldNatural.path.questionCount)
+        : 0
+    return LongitudinalWarmCompatibility(
+        applicable: applicable,
+        validationQuestionOrdinals: validationOrdinals,
+        nonExcludedValidationAnswerCount: validationCount,
+        warmEvidenceLogLikelihood: applicable ? warmLogLikelihood : nil,
+        coldEvidenceLogLikelihood: applicable ? coldLogLikelihood : nil,
+        evidenceLogLikelihoodRatio: likelihoodRatio,
+        supportsEightQuestionMinimum: supported,
+        counterfactualMinimumApplied: applyCounterfactual,
+        candidatePath: candidatePath,
+        candidateQuestionReduction: questionReduction,
+        candidateCoverageDifference: candidatePath.realizedProjectedCoverage
+            - coldNatural.path.realizedProjectedCoverage,
+        interpretation: "Development-only conditional compatibility signal on identical validation questions/evidence; production stopping remains unchanged."
     )
 }
 

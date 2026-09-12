@@ -78,6 +78,7 @@ echo "==> Checking frozen vocabulary warm-compatibility development reservation"
 python3 ./scripts/validate_vocabulary_longitudinal_compatibility_manifest.py \
   ./docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-development-manifest-v1.json \
   --self-test
+python3 ./scripts/build_vocabulary_longitudinal_compatibility_run_manifest.py --check
 
 echo "==> Testing vocabulary domain resource builders"
 bash ./scripts/test_vocabulary_domain_resource_builders.sh

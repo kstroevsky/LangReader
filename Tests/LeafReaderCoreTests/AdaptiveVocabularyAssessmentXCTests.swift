@@ -773,6 +773,49 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         XCTAssertEqual(assessment.requiredMinimumAnsweredQuestionCount, 8)
     }
 
+    func testDiagnosticKnownProbabilityReadsCurrentPosteriorWithoutMutatingAssessment() throws {
+        var assessment = AdaptiveVocabularyAssessment(
+            inventory: inventory(count: 40),
+            mode: .targetCoverage(0.98)
+        )
+        let question = try XCTUnwrap(assessment.nextQuestion())
+        let before = try XCTUnwrap(
+            assessment.diagnosticKnownProbability(for: question.canonicalKey)
+        )
+        XCTAssertEqual(assessment.answeredQuestionCount, 0)
+        XCTAssertNil(assessment.diagnosticKnownProbability(for: "missing"))
+
+        assessment.record(.verifiedKnown, for: question.canonicalKey)
+        let after = try XCTUnwrap(
+            assessment.diagnosticKnownProbability(for: question.canonicalKey)
+        )
+        XCTAssertEqual(assessment.answeredQuestionCount, 1)
+        XCTAssertNotEqual(before, after)
+    }
+
+    func testCompatibilityDiagnosticDoesNotChangeProductionWarmMinimumRule() throws {
+        let prior = VocabularyReaderPrior(
+            languageCode: "en",
+            thetaPosterior: Array(repeating: 1.0 / 121.0, count: 121),
+            completedSessionCount: 2,
+            verifiedEvidenceCount: 40,
+            lastUpdatedAt: Date(timeIntervalSince1970: 1_000),
+            algorithmVersion: 3
+        )
+        var assessment = AdaptiveVocabularyAssessment(
+            inventory: inventory(count: 40),
+            mode: .allUnknown,
+            readerPrior: prior,
+            currentDate: Date(timeIntervalSince1970: 1_001)
+        )
+        for _ in 0..<8 {
+            let question = try XCTUnwrap(assessment.nextQuestion())
+            assessment.record(.unsure, for: question.canonicalKey)
+        }
+        XCTAssertEqual(assessment.answers.filter(\.wasValidation).count, 2)
+        XCTAssertEqual(assessment.requiredMinimumAnsweredQuestionCount, 8)
+    }
+
     func testEligibleWarmPriorMateriallyReducesCoverageQuestionCount() throws {
         let inventory = inventory(count: 40)
         let thetaGrid = (0...120).map { -6.0 + Double($0) * 0.1 }

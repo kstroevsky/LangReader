@@ -49,10 +49,9 @@ def validate_path(path: dict[str, Any], manifest: dict[str, Any], fixed: bool) -
         require(bank["thetaPositionFingerprint"] and bank["latentItemDrawFingerprint"], "missing bank fingerprint")
 
 
-def validate_replay(replay: dict[str, Any], source: dict[str, Any]) -> None:
-    require(replay["questionCount"] == source["questionCount"], "replay question count changed")
+def validate_replay_mass(replay: dict[str, Any], assessable_mass: int) -> None:
     require(
-        replay["assessableOccurrenceMass"] == source["assessableOccurrenceMass"],
+        replay["assessableOccurrenceMass"] == assessable_mass,
         "replay assessable mass changed",
     )
     require(
@@ -67,6 +66,73 @@ def validate_replay(replay: dict[str, Any], source: dict[str, Any]) -> None:
     )
     require(replay["selectedCount"] >= 0, "invalid replay selected count")
     require(replay["selectedFingerprint"], "missing replay selection fingerprint")
+
+
+def validate_replay(replay: dict[str, Any], source: dict[str, Any]) -> None:
+    require(replay["questionCount"] == source["questionCount"], "replay question count changed")
+    validate_replay_mass(replay, source["assessableOccurrenceMass"])
+
+
+def validate_compatibility(run: dict[str, Any]) -> None:
+    diagnostic = run["warmCompatibility"]
+    applicable = run["expectedWarmEligibility"]
+    require(diagnostic["applicable"] == applicable, "compatibility applicability mismatch")
+    require(diagnostic["validationQuestionOrdinals"] == [4, 8], "compatibility ordinals changed")
+    count = diagnostic["nonExcludedValidationAnswerCount"]
+    require(0 <= count <= 2, "invalid compatibility validation count")
+    ratio = diagnostic.get("evidenceLogLikelihoodRatio")
+    supported = diagnostic.get("supportsEightQuestionMinimum")
+    if applicable:
+        warm = diagnostic.get("warmEvidenceLogLikelihood")
+        cold = diagnostic.get("coldEvidenceLogLikelihood")
+        require(warm is not None and cold is not None, "applicable compatibility lacks likelihoods")
+        if count == 2:
+            require(ratio is not None, "supported compatibility lacks likelihood ratio")
+            require(math.isclose(ratio, warm - cold, abs_tol=1e-12), "compatibility ratio mismatch")
+            require(supported == (ratio >= 0), "compatibility threshold mismatch")
+        else:
+            require(ratio is None and supported is None, "unsupported validation count acquired decision")
+    else:
+        require(
+            diagnostic.get("warmEvidenceLogLikelihood") is None
+            and diagnostic.get("coldEvidenceLogLikelihood") is None
+            and ratio is None
+            and supported is None,
+            "inapplicable compatibility acquired likelihood evidence",
+        )
+
+    expected_applied = applicable and supported is not True and run["warmNatural"]["questionCount"] < 20
+    require(
+        diagnostic["counterfactualMinimumApplied"] == expected_applied,
+        "compatibility counterfactual application mismatch",
+    )
+    candidate = diagnostic["candidatePath"]
+    validate_replay_mass(candidate, run["warmNatural"]["assessableOccurrenceMass"])
+    if expected_applied:
+        require(candidate["questionCount"] == 20, "compatibility path did not reach ordinary minimum")
+        require(
+            candidate["sourcePath"] == "accumulated-warm-compatibility-minimum-20",
+            "compatibility counterfactual source mismatch",
+        )
+    else:
+        require(
+            candidate["answerPathFingerprint"] == run["warmNatural"]["answerPathFingerprint"],
+            "non-applied compatibility path differs from warm natural",
+        )
+    cold_questions = run["coldNatural"]["questionCount"]
+    expected_reduction = 0 if cold_questions == 0 else 1 - candidate["questionCount"] / cold_questions
+    require(
+        math.isclose(diagnostic["candidateQuestionReduction"], expected_reduction, abs_tol=1e-12),
+        "compatibility question reduction mismatch",
+    )
+    require(
+        math.isclose(
+            diagnostic["candidateCoverageDifference"],
+            candidate["realizedProjectedCoverage"] - run["coldNatural"]["realizedProjectedCoverage"],
+            abs_tol=1e-12,
+        ),
+        "compatibility coverage difference mismatch",
+    )
 
 
 def production_eligible(prior: dict[str, Any] | None, evaluation_time: float) -> bool:
@@ -164,6 +230,8 @@ def validate_run(run: dict[str, Any], manifest: dict[str, Any], report_schema: i
                 f"{replay_key} changed source evidence",
             )
             validate_replay(replay, source)
+    if report_schema >= 3:
+        validate_compatibility(run)
 
     if scenario == "failed-write-retry":
         first = next(event for event in run["historyEvents"] if event["disposition"] == "completed")
@@ -174,7 +242,7 @@ def validate_run(run: dict[str, Any], manifest: dict[str, Any], report_schema: i
 
 def validate_report(report: dict[str, Any]) -> None:
     report_schema = report.get("schemaVersion")
-    require(report_schema in (1, 2), "unsupported report schema")
+    require(report_schema in (1, 2, 3), "unsupported report schema")
     manifest = report["manifest"]
     require(manifest["schemaVersion"] == 1, "unsupported manifest schema")
     require(manifest["dataRole"] == "diagnostic-development", "confirmation/holdout role forbidden")
@@ -208,10 +276,14 @@ def self_test(path: Path) -> None:
     broken_replay = copy.deepcopy(report)
     broken_replay["runs"][0]["coldPathUnderWarmPrior"]["answerPathFingerprint"] = "broken"
     mutations.append(broken_replay)
-    if report.get("schemaVersion") == 2:
+    if report.get("schemaVersion") >= 2:
         broken_replay_mass = copy.deepcopy(report)
         broken_replay_mass["runs"][0]["coldFixedPathUnderWarmPrior"]["missedOccurrenceMass"] += 1
         mutations.append(broken_replay_mass)
+    if report.get("schemaVersion") >= 3:
+        broken_compatibility = copy.deepcopy(report)
+        broken_compatibility["runs"][0]["warmCompatibility"]["candidateCoverageDifference"] += 0.1
+        mutations.append(broken_compatibility)
     for mutation in mutations:
         try:
             validate_report(mutation)

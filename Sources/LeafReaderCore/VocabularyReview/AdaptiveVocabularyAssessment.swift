@@ -977,6 +977,13 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     package var usedEligibleReaderPrior: Bool { usesEligibleReaderPrior }
     package var requiredMinimumAnsweredQuestionCount: Int { minimumQuestionCount }
 
+    /// Exposes the assessment's current item probability to package-owned
+    /// offline diagnostics. Production question selection and stopping do not
+    /// call this seam.
+    package func diagnosticKnownProbability(for canonicalKey: String) -> Double? {
+        candidateIndexByKey[canonicalKey].map { currentProbabilities[$0] }
+    }
+
     /// Skips a dictionary-failure item without treating it as an answer or an
     /// exclusion. It remains an unasked posterior item in the final result.
     package mutating func skipCurrentQuestion() {
