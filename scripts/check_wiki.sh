@@ -104,9 +104,13 @@ check_english_only() {
     fi
     fail "$file contains Chinese text"
   done < <(
+    # graphify-out is an internal, generated code-analysis workspace. It is not
+    # published by MkDocs or synchronized to the GitHub wiki, so its captured
+    # source-language snippets are outside this user-facing English contract.
     find "$ROOT_DIR" -name '*.md' \
       -not -path '*/.git/*' \
       -not -path '*/.venv-docs/*' \
+      -not -path '*/graphify-out/*' \
       -print | sort
   )
 }
