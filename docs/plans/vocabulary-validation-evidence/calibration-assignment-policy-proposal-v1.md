@@ -2,10 +2,11 @@
 
 ## Decision requested
 
-Review the proposed 7.5% calibration-assignment mechanism and its linked study
-trace schema. This document is a proposal, not approval. The reserved
-`calibration` selection path remains disabled in production, default settings,
-diagnostic flags, and fabricated rehearsals.
+The 7.5% mechanism is approved as a protocol design using an expected eligible-
+opportunity rate, not a per-session quota. This is not production activation.
+The reserved `calibration` path remains disabled in production, default
+settings, diagnostic flags, and fabricated rehearsals pending a separate
+schema/operational freeze.
 
 ## Assignment mechanism
 
@@ -63,6 +64,12 @@ This makes a broad per-document calibration frame implausible without substantia
 document overlap. Approval should narrow or reuse a protocol-frozen calibration
 bank, or justify the larger support, before collection. The at-least-100-learner,
 SE <= 0.35, reviewed-pack, DIF, and 2PL gates are not lowered.
+
+The adopted design therefore requires a reusable protocol-frozen anchor bank.
+Ordinary Prepare Vocabulary may assign an anchor only when that lexical item
+occurs in the current document. A dedicated consented calibration study may use
+a broader frozen anchor block. Pool/support snapshots and propensities remain
+mandatory.
 
 ## Exact proposed canonical delta
 

@@ -42,12 +42,17 @@ The criterion is collected before LeafReader reveals a definition or book
 context.
 
 1. Show lemma and POS only.
-2. Ask the participant to type the book-relevant meaning or a translation.
+2. Ask the participant to type one or more context-free meanings or
+   translations. Do not show book context or identify a target sense.
 3. Store the response only in the consented study dataset, never in the normal
    privacy-preserving product export.
 4. Score against a frozen bilingual rubric using two trained human raters who
-   cannot see LeafReader's probability or deck decision.
-5. Resolve disagreements by adjudication and report inter-rater agreement.
+   can see the restricted target sense/context but cannot see LeafReader's
+   probability or deck decision. Credit the response when any supplied meaning
+   matches that target.
+5. Preserve `criterion-ambiguous` separately from missing and from
+   unknown-or-partial. Resolve disagreements by adjudication and report
+   agreement before adjudication plus ambiguity/missingness rates.
 
 Self-verification remains the production interaction, but it is not the
 independent ground truth for this study. Automatic AI grading may be studied
@@ -65,15 +70,29 @@ two cohorts:
 
 - **Small-document audit:** verify every assessable lexical item, providing a
   direct realized-coverage and deck-regret measure.
-- **Large-document stratified audit:** test every selected card plus a
-  probability-, frequency-, POS-, and occurrence-stratified sample of unselected
-  items. Retain inclusion probabilities and use weighted estimates with
-  confidence intervals. Do not treat the sampled fraction as a complete item
-  census.
+- **Large-document stratified audit:** before assessment or deck exposure,
+  select a probability sample from the complete eligible inventory using frozen
+  positive inclusion probabilities and probability-, frequency-, POS-, and
+  occurrence-based strata. Use the selected cards that fall inside this
+  predetermined audit sample to estimate deck precision/recall with the frozen
+  design weights. Do not post-hoc add every selected card or treat the sampled
+  fraction as a complete item census.
 
 The unselected audit must include high-confidence predicted-known and
 predicted-unknown tails. Otherwise calibration errors in the exact regions used
 for early stopping remain invisible.
+
+## Pretest interference gate
+
+Confirmatory collection remains blocked until an explicitly developmental,
+consented interference study is complete. Within participant/document, randomly
+assign otherwise eligible audit items to criterion-before-product versus no-
+criterion-before-product, stratified by frozen frequency/POS features. Compare
+the first unaided production response before reveal. Freeze the estimator,
+dependence treatment, missingness rules, and practically meaningful interference
+margin before inspecting results. Material interference requires split-sample,
+order, or carryover handling in the confirmatory design; the criterion must not
+simply be assumed inert.
 
 ## Study sequence
 
@@ -96,7 +115,10 @@ participant-clustered uncertainty intervals.
 
 - Brier score, log loss, reliability diagram, and ECE for pre-reading
   `P(known)`.
-- Calibration slope/intercept and coverage of the reported theta interval.
+- Calibration slope/intercept. Literal theta-interval coverage remains a
+  synthetic model-recovery gate and is omitted from confirmatory human claims
+  unless an independently defensible latent reference instrument is approved
+  and its uncertainty is modeled.
 - Deck precision and occurrence-weighted recall against verified unknown items.
 - Realized lexical-token coverage after verified learning, with a lower
   confidence bound for sampled large inventories.
@@ -109,6 +131,21 @@ participant-clustered uncertainty intervals.
 Before data collection, freeze numerical product gates in a timestamped study
 protocol. Do not derive them from the confirmatory results. Synthetic thresholds
 remain engineering regression gates and are reported separately.
+
+## Calibration assignment design
+
+The approved design interpretation is a 7.5% independent Bernoulli opportunity
+at each eligible non-tail scored ordinal, in expectation—not a forced 5–10%
+quota in every session. Short sessions may contain zero assignments. Tail
+validation and existing question limits remain unchanged, and production
+activation remains disabled pending the separate schema/operational freeze.
+
+Use a protocol-frozen reusable anchor bank to create item overlap. In ordinary
+Prepare Vocabulary an anchor is eligible only when that lexical item occurs in
+the current document. A separately consented calibration study may use a broader
+anchor block. Preserve the recorded pool/support snapshots and conditional/joint
+propensities; do not sample arbitrary book vocabulary uniformly or lower pack,
+DIF, or 2PL gates.
 
 Confirmatory collection also requires a separately reviewed and approved
 [Statistical Analysis Plan](VOCABULARY_VALIDATION_SAP_TEMPLATE.md). It must

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "proposalStatus": "proposedNotApproved",
+  "proposalStatus": "approvedDesignNotActivated",
   "canonicalRequirementIDs": ["CALDATA-001"],
   "policyVersion": "calibration-assignment-proposal-v1",
   "activation": {
@@ -8,7 +8,7 @@
     "defaultSetting": false,
     "diagnosticFlag": false,
     "rehearsalFixture": false,
-    "requiresSeparateApproval": true
+    "requiresSeparateActivationApproval": true
   },
   "slotPolicy": {
     "baseOpportunityProbability": 0.075,
@@ -48,6 +48,13 @@
     "excludes": ["alreadyAsked", "explicitlyExcluded", "knownUnanswerableDefinitionFailure"],
     "exhaustionFallback": "recordNoEligibleCandidatesAndUseOrdinaryAdaptiveSelection",
     "postAssignmentDefinitionFailure": "record definitionFailure outcome, preserve existing evidence semantics, and do not force a replacement calibration item at the same ordinal"
+  },
+  "anchorBank": {
+    "required": true,
+    "policy": "protocol-frozen reusable lexical-item bank with versioned support snapshot",
+    "ordinaryPrepareVocabularyEligibility": "anchor lexical item must occur in the current document",
+    "dedicatedConsentedStudyEligibility": "a broader frozen anchor block may be administered under the approved calibration-study protocol",
+    "uniformArbitraryBookVocabularySampling": false
   },
   "assignmentProbability": {
     "slotProbability": "0.075 conditional on an eligible non-tail opportunity",

@@ -42,13 +42,13 @@ def is_tail_ordinal(policy: dict, ordinal: int) -> bool:
 
 
 def validate_policy(policy: dict) -> None:
-    if policy.get("schemaVersion") != 1 or policy.get("proposalStatus") != "proposedNotApproved":
-        raise ValueError("policy must remain a schema-v1 unapproved proposal")
+    if policy.get("schemaVersion") != 1 or policy.get("proposalStatus") != "approvedDesignNotActivated":
+        raise ValueError("policy must remain an approved-but-not-activated schema-v1 design")
     if policy.get("canonicalRequirementIDs") != ["CALDATA-001"]:
         raise ValueError("policy may propose a delta only for CALDATA-001")
     activation = policy.get("activation", {})
-    if activation.get("enabled") is not False or activation.get("requiresSeparateApproval") is not True:
-        raise ValueError("calibration assignment must remain disabled pending separate approval")
+    if activation.get("enabled") is not False or activation.get("requiresSeparateActivationApproval") is not True:
+        raise ValueError("calibration assignment must remain disabled pending separate activation approval")
     for field in ("defaultSetting", "diagnosticFlag", "rehearsalFixture"):
         if activation.get(field) is not False:
             raise ValueError(f"activation.{field} must remain false")
@@ -75,6 +75,11 @@ def validate_policy(policy: dict) -> None:
         raise ValueError("minimum canonical trace fields changed")
     if policy["privacy"]["ordinaryProductExportUnchanged"] is not True or policy["privacy"]["automaticTransmission"] is not False:
         raise ValueError("ordinary export/privacy behavior changed")
+    anchor = policy.get("anchorBank", {})
+    if anchor.get("required") is not True or anchor.get("uniformArbitraryBookVocabularySampling") is not False:
+        raise ValueError("approved design requires a frozen anchor bank")
+    if "must occur in the current document" not in anchor.get("ordinaryPrepareVocabularyEligibility", ""):
+        raise ValueError("ordinary anchor eligibility must remain document-occurrence scoped")
 
     expected_by_questions = {}
     for scenario in policy["feasibility"]["questionScenarios"]:
