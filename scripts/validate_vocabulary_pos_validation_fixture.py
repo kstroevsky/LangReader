@@ -11,19 +11,23 @@ from pathlib import Path
 
 
 def validate(fixture: dict) -> dict:
-    if fixture.get("schemaVersion") != 1 or fixture.get("fixtureID") != "ud-v2.18-pos-validation-v1":
+    if fixture.get("schemaVersion") != 1 or fixture.get("fixtureID") != "ud-v2.18-pos-validation-v2":
         raise ValueError("unexpected POS validation fixture version")
     if fixture.get("dataRole") != "development-and-heldout" or fixture.get("heldoutStatus") != "frozenNotScored":
         raise ValueError("held-out POS sample was not preserved as unscored")
     policy = fixture.get("selectionPolicy", {})
     if policy.get("productionThresholdsTunedFromFixture") is not False:
         raise ValueError("fixture may not authorize production threshold tuning")
+    if policy.get("surfaceMustOccurExactlyOnceInSentenceText") is not True:
+        raise ValueError("fixture must require one verbatim target surface")
     cases = fixture.get("cases", [])
     if len(cases) != 480 or len({row["caseID"] for row in cases}) != 480:
         raise ValueError("fixture must contain 480 unique cases")
     sentence_keys = {(row["sourceID"], row["sourceSentenceID"]) for row in cases}
     if len(sentence_keys) != len(cases):
         raise ValueError("fixture must select at most one token per sentence")
+    if any(row["text"].count(row["surface"]) != 1 for row in cases):
+        raise ValueError("fixture contains a non-verbatim or repeated target surface")
     expected_cells = {(language, split): 80 if split == "development" else 160 for language in ("en", "de") for split in ("development", "heldout")}
     actual_cells = Counter((row["languageCode"], row["evaluationSplit"]) for row in cases)
     if actual_cells != expected_cells:

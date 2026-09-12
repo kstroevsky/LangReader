@@ -7,7 +7,7 @@ The selected token/sentence excerpts in `ud-v2.18-selected.json` come from Unive
 
 The fixture preserves upstream sentence IDs, token IDs, UPOS/XPOS, morphological features, and immutable source hashes. It is a small engineering diagnostic, not a representative corpus or a claim that German GSD's automatically assigned lemmas are unquestionable sense/lemma ground truth.
 
-`ud-v2.18-validation-v1.json` additionally freezes deterministic samples from
+`ud-v2.18-validation-v1.json` and its replacement v2 additionally freeze deterministic samples from
 the same repositories' dev and test files. English EWT dev SHA-256 is
 `39239e0a60db3ae68f4b7036189f11b6692741d10ff8240dd91f74f2760d90f8`;
 German GSD dev SHA-256 is
@@ -17,3 +17,9 @@ unchanged. The dev sample is for development diagnosis; the separately sourced
 test sample is held out until its frozen scoring step. German GSD exposes one
 declared mixed-web corpus stratum rather than multiple reliable genre labels,
 which remains a reporting limitation.
+
+The v1 scoring attempt was invalidated before any report was written because an
+upstream token surface was absent from reconstructed sentence text. V1 remains
+committed as consumed provenance. V2 requires each target surface to occur once
+verbatim, excludes every v1 held-out case, and uses a new selection hash; see
+`docs/plans/vocabulary-validation-evidence/pos-validation-reservation-v1-invalidation-2026-09-12.md`.

@@ -90,7 +90,9 @@ def cases(source_id: str, source: dict, data: bytes) -> list[dict]:
                 tokens.append(columns)
         surface_counts = Counter(token[1].casefold() for token in tokens)
         for token in tokens:
-            if surface_counts[token[1].casefold()] != 1 or not any(character.isalpha() for character in token[1]):
+            if surface_counts[token[1].casefold()] != 1 \
+                    or text.count(token[1]) != 1 \
+                    or not any(character.isalpha() for character in token[1]):
                 continue
             case_id = f"{source_id}:{sentence_id}:{token[0]}"
             values.append({
@@ -109,7 +111,7 @@ def cases(source_id: str, source: dict, data: bytes) -> list[dict]:
                 "goldFeatures": token[5],
                 "isParticiple": "VerbForm=Part" in token[5],
                 "occurrenceWeight": 1,
-                "selectionHash": hashlib.sha256(case_id.encode()).hexdigest(),
+                "selectionHash": hashlib.sha256(f"v2|{case_id}".encode()).hexdigest(),
             })
     return values
 
@@ -159,7 +161,7 @@ def support(selected: list[dict]) -> dict:
     }
 
 
-def build() -> dict:
+def build(excluded_heldout_ids: set[str], excluded_fixture_sha256: str) -> dict:
     all_cases = []
     for source_id, source in SOURCES.items():
         all_cases.extend(cases(source_id, source, download(source)))
@@ -169,22 +171,26 @@ def build() -> dict:
             selected.extend(select([
                 row for row in all_cases
                 if row["languageCode"] == language and row["evaluationSplit"] == split
+                and (split != "heldout" or row["caseID"] not in excluded_heldout_ids)
             ], target))
     for row in selected:
         row.pop("selectionHash")
     selected.sort(key=lambda row: row["caseID"])
     return {
         "schemaVersion": 1,
-        "fixtureID": "ud-v2.18-pos-validation-v1",
+        "fixtureID": "ud-v2.18-pos-validation-v2",
         "release": "UD 2.18",
         "dataRole": "development-and-heldout",
         "heldoutStatus": "frozenNotScored",
         "selectionPolicy": {
-            "version": "unique-sentence-stratified-sha256-v1",
+            "version": "unique-verbatim-surface-sentence-stratified-sha256-v2",
             "targetsPerLanguage": TARGETS,
             "strata": ["declared genre/source", "UPOS", "VerbForm=Part"],
             "withinStratumOrder": "SHA256(caseID), then caseID",
             "oneSelectedTokenPerSentence": True,
+            "surfaceMustOccurExactlyOnceInSentenceText": True,
+            "excludedPriorHeldoutFixtureSHA256": excluded_fixture_sha256,
+            "excludedPriorHeldoutCaseCount": len(excluded_heldout_ids),
             "productionThresholdsTunedFromFixture": False,
         },
         "sources": SOURCES,
@@ -196,9 +202,24 @@ def build() -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--exclude-heldout-fixture", required=True, type=Path)
     args = parser.parse_args()
+    excluded_data = args.exclude_heldout_fixture.read_bytes()
+    excluded_fixture = json.loads(excluded_data)
+    excluded_ids = {
+        row["caseID"] for row in excluded_fixture["cases"]
+        if row["evaluationSplit"] == "heldout"
+    }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(build(), indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+    args.output.write_text(
+        json.dumps(
+            build(excluded_ids, hashlib.sha256(excluded_data).hexdigest()),
+            indent=2,
+            sort_keys=True,
+            ensure_ascii=False
+        ) + "\n",
+        encoding="utf-8"
+    )
 
 
 if __name__ == "__main__":
