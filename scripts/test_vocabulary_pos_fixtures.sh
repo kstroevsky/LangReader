@@ -11,4 +11,10 @@ for run in first second; do
 done
 cmp "$TEMP_DIR/first.json" "$TEMP_DIR/second.json"
 python3 "$ROOT_DIR/scripts/validate_vocabulary_pos_report.py" "$FIXTURE" "$TEMP_DIR/first.json" --self-test >/dev/null
+python3 "$ROOT_DIR/scripts/validate_vocabulary_pos_validation_fixture.py" \
+  "$ROOT_DIR/Tests/Fixtures/VocabularyPOS/ud-v2.18-validation-v2.json" --self-test >/dev/null
+python3 "$ROOT_DIR/scripts/validate_vocabulary_pos_validation_report.py" \
+  "$ROOT_DIR/Tests/Fixtures/VocabularyPOS/ud-v2.18-validation-v2.json" \
+  "$ROOT_DIR/docs/plans/vocabulary-validation-evidence/vocabulary-pos-validation-report-v2.json" \
+  --self-test >/dev/null
 echo "vocabulary POS fixture tests passed"
