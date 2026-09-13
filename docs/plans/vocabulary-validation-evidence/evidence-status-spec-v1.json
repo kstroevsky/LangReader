@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "6a6c7b51162714c443d4085c947da0df3e590c61",
+  "repository_head_reviewed": "d9f495e08d22b21d1c75ba72154c009884516518",
   "head_since_production_evidence": [
     "9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only",
     "52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only",
@@ -23,7 +23,9 @@
     "76d7d4e403115894b0562f1fa7ae9f6aa3d39f8c: realized replay development evidence and conditional tail decomposition only",
     "605f842de9c48060f3a5627537f2fa78afc419c4: frozen unexecuted warm compatibility development reservation only",
     "c77f732367d2c75dea45fd36e1b13d1a99d2c92b: development-only warm compatibility diagnostics; production minimum unchanged",
-    "6a6c7b51162714c443d4085c947da0df3e590c61: consumed adverse warm compatibility evidence; candidate rejected"
+    "6a6c7b51162714c443d4085c947da0df3e590c61: consumed adverse warm compatibility evidence; candidate rejected",
+    "a3c1c624faaed2ff67ba9cc7dd5f5bab17feadd3: derived rejected-candidate evidence-register refresh only",
+    "d9f495e08d22b21d1c75ba72154c009884516518: generated code-map refresh only"
   ],
   "canonical_ledger": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
   "retained_artifacts": [
