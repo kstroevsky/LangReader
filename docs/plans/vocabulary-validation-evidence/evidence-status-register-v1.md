@@ -2,7 +2,7 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `d9f495e08d22b21d1c75ba72154c009884516518`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `5fec9ea54b4b0c0bd9af189b3965599a51ace280`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
 Head-only changes since the production evidence candidate:
 
@@ -29,6 +29,12 @@ Head-only changes since the production evidence candidate:
 - 6a6c7b51162714c443d4085c947da0df3e590c61: consumed adverse warm compatibility evidence; candidate rejected
 - a3c1c624faaed2ff67ba9cc7dd5f5bab17feadd3: derived rejected-candidate evidence-register refresh only
 - d9f495e08d22b21d1c75ba72154c009884516518: generated code-map refresh only
+- dd7a506e959a0d4f008c05bb9361ebb25e72323c: frozen selected-case warm question-path forensic reservation only
+- 11844ebeb714a638b81d115f6898c3059dc994a8: development-only optional warm question trace instrumentation
+- 2b2b9c4669145450269972be3959b81e509f7b7d: retained incomplete forensic reporting attempt and provenance
+- da44870dde9333d071c042882026ebc22acbaaa1: frozen reporting-only forensic repair reservation
+- fada5088511535a5b2301c79b1ba74faa3c7663e: final-inventory forensic instrumentation only; production unchanged
+- 5fec9ea54b4b0c0bd9af189b3965599a51ace280: repaired selected-case forensic evidence and mechanism analysis
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 
@@ -210,6 +216,20 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Evidence class: consumed frozen warm-compatibility development result
 - Status: `completed_candidate_rejected`
 - Interpretation: The zero-threshold two-validation likelihood ratio left 54 material tails and the -15.99-point worst case; production remains unchanged and the threshold may not be tuned from this result.
+
+### docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-report-v1.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-report-v1.json`](warm-question-path-forensic-report-v1.json); SHA-256 `14bd07c1c2cd0a2df97b4e2b683169411cb5d59eb13cd43fad6db406adb364bf`
+- Evidence class: consumed selected-case forensic reporting attempt
+- Status: `completed_reporting_incomplete`
+- Interpretation: All selected paths matched source evidence, but missing unasked final rows prevented the frozen deck symmetric-difference mass calculation.
+
+### docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-analysis-v2.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-analysis-v2.json`](warm-question-path-forensic-analysis-v2.json); SHA-256 `a0d89e116959c49980c9a9070485659eacd74d1a9b9bcac87e53bb68ec245f09`
+- Evidence class: repaired selected-case warm question-path mechanism evidence
+- Status: `completed_mechanism_only`
+- Interpretation: Across seven outcome-selected severe paths, 89% of missed mass was asked truly unknown vocabulary carrying known-supporting evidence; no prevalence or mitigation claim is authorized.
 
 ## Failed evidence or gate
 
@@ -703,13 +723,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Completed-session evidence in the isolated real SQLite store; no passive exposure.
 - Responsible capability: Core prior/store owner with App integration review
-- Source revision/configuration: c77f732; fixed zero-threshold compatibility reservation with 1,024 retained development rows; production policy unchanged
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-checkpoint-2026-09-13.md`](longitudinal-compatibility-checkpoint-2026-09-13.md); SHA-256 `37b939ce02afe0e79708c9c2ead60205e18cc145a46087bc7de3eca784007b81`
-- Command/environment: Schema-3 longitudinal diagnostic, isolated SQLite histories, four realized replay paths, frozen compatibility analyzer, and deterministic validators
-- Gate: Persistence/idempotency/history behavior is verified; the frozen compatibility candidate failed the zero-tail rule and cannot establish two-point or human warm non-inferiority.
+- Source revision/configuration: fada508; selected-case schema-5 question/final-inventory forensics; production policy unchanged
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-checkpoint-2026-09-13.md`](warm-question-path-forensic-checkpoint-2026-09-13.md); SHA-256 `09da6952d83364c1ac2faa3eea679764c1cc10fab96d424a684947a32f85dbc2`
+- Command/environment: Isolated SQLite histories, realized replay paths, selected-case question/final-inventory traces, mass-conserving analyzers, and deterministic validators
+- Gate: Persistence behavior is verified, but warm safety remains adverse: the likelihood candidate failed and severe selected cases show high-consequence erroneous known evidence; human non-inferiority is absent.
 - Evidence class: current-candidate longitudinal diagnostic
-- Next action: Investigate harmful early warm question/evidence paths on development data without tuning the consumed compatibility threshold; retain the 180-day rule and do not bind confirmation.
-- Decision history: Realized replay attribution found stopping, selection, and path-dependent prior effects. A separately frozen 1,024-row compatibility candidate was rejected after leaving 54 material tails and the -15.99-point worst case.
+- Next action: Design a fresh high-consequence evidence safeguard feasibility experiment without reusing the selected 11 cases for acceptance; retain production and do not bind confirmation.
+- Decision history: The likelihood candidate was rejected. Repaired forensics retained a reporting failure and found 5,518/6,200 severe warm missed mass on asked unknown items carrying known-supporting evidence; the selected cases support mechanism diagnosis only.
 
 ### PRIOR-002 — Warm prior mixture and eligibility.
 
@@ -717,13 +737,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Completed-session evidence in the isolated real SQLite store; no passive exposure.
 - Responsible capability: Core prior/store owner with App integration review
-- Source revision/configuration: c77f732; fixed zero-threshold compatibility reservation with 1,024 retained development rows; production policy unchanged
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-checkpoint-2026-09-13.md`](longitudinal-compatibility-checkpoint-2026-09-13.md); SHA-256 `37b939ce02afe0e79708c9c2ead60205e18cc145a46087bc7de3eca784007b81`
-- Command/environment: Schema-3 longitudinal diagnostic, isolated SQLite histories, four realized replay paths, frozen compatibility analyzer, and deterministic validators
-- Gate: Persistence/idempotency/history behavior is verified; the frozen compatibility candidate failed the zero-tail rule and cannot establish two-point or human warm non-inferiority.
+- Source revision/configuration: fada508; selected-case schema-5 question/final-inventory forensics; production policy unchanged
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-checkpoint-2026-09-13.md`](warm-question-path-forensic-checkpoint-2026-09-13.md); SHA-256 `09da6952d83364c1ac2faa3eea679764c1cc10fab96d424a684947a32f85dbc2`
+- Command/environment: Isolated SQLite histories, realized replay paths, selected-case question/final-inventory traces, mass-conserving analyzers, and deterministic validators
+- Gate: Persistence behavior is verified, but warm safety remains adverse: the likelihood candidate failed and severe selected cases show high-consequence erroneous known evidence; human non-inferiority is absent.
 - Evidence class: current-candidate longitudinal diagnostic
-- Next action: Investigate harmful early warm question/evidence paths on development data without tuning the consumed compatibility threshold; retain the 180-day rule and do not bind confirmation.
-- Decision history: Realized replay attribution found stopping, selection, and path-dependent prior effects. A separately frozen 1,024-row compatibility candidate was rejected after leaving 54 material tails and the -15.99-point worst case.
+- Next action: Design a fresh high-consequence evidence safeguard feasibility experiment without reusing the selected 11 cases for acceptance; retain production and do not bind confirmation.
+- Decision history: The likelihood candidate was rejected. Repaired forensics retained a reporting failure and found 5,518/6,200 severe warm missed mass on asked unknown items carrying known-supporting evidence; the selected cases support mechanism diagnosis only.
 
 ### PRIOR-003 — Cross-book adaptation defaults on and is independently resettable.
 
@@ -731,13 +751,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Completed-session evidence in the isolated real SQLite store; no passive exposure.
 - Responsible capability: Core prior/store owner with App integration review
-- Source revision/configuration: c77f732; fixed zero-threshold compatibility reservation with 1,024 retained development rows; production policy unchanged
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-checkpoint-2026-09-13.md`](longitudinal-compatibility-checkpoint-2026-09-13.md); SHA-256 `37b939ce02afe0e79708c9c2ead60205e18cc145a46087bc7de3eca784007b81`
-- Command/environment: Schema-3 longitudinal diagnostic, isolated SQLite histories, four realized replay paths, frozen compatibility analyzer, and deterministic validators
-- Gate: Persistence/idempotency/history behavior is verified; the frozen compatibility candidate failed the zero-tail rule and cannot establish two-point or human warm non-inferiority.
+- Source revision/configuration: fada508; selected-case schema-5 question/final-inventory forensics; production policy unchanged
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-checkpoint-2026-09-13.md`](warm-question-path-forensic-checkpoint-2026-09-13.md); SHA-256 `09da6952d83364c1ac2faa3eea679764c1cc10fab96d424a684947a32f85dbc2`
+- Command/environment: Isolated SQLite histories, realized replay paths, selected-case question/final-inventory traces, mass-conserving analyzers, and deterministic validators
+- Gate: Persistence behavior is verified, but warm safety remains adverse: the likelihood candidate failed and severe selected cases show high-consequence erroneous known evidence; human non-inferiority is absent.
 - Evidence class: current-candidate longitudinal diagnostic
-- Next action: Investigate harmful early warm question/evidence paths on development data without tuning the consumed compatibility threshold; retain the 180-day rule and do not bind confirmation.
-- Decision history: Realized replay attribution found stopping, selection, and path-dependent prior effects. A separately frozen 1,024-row compatibility candidate was rejected after leaving 54 material tails and the -15.99-point worst case.
+- Next action: Design a fresh high-consequence evidence safeguard feasibility experiment without reusing the selected 11 cases for acceptance; retain production and do not bind confirmation.
+- Decision history: The likelihood candidate was rejected. Repaired forensics retained a reporting failure and found 5,518/6,200 severe warm missed mass on asked unknown items carrying known-supporting evidence; the selected cases support mechanism diagnosis only.
 
 ### DOMAIN-001 — Record domain metadata without production difficulty effect.
 
