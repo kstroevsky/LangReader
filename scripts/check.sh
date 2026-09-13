@@ -86,6 +86,11 @@ python3 ./scripts/validate_warm_question_path_forensic_manifest.py \
   --self-test
 python3 ./scripts/build_warm_question_path_forensic_run_manifest.py --check
 
+echo "==> Checking frozen warm question-path forensic repair"
+python3 ./scripts/validate_warm_question_path_forensic_repair_manifest.py \
+  ./docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-repair-manifest-v2.json \
+  --self-test
+
 echo "==> Testing vocabulary domain resource builders"
 bash ./scripts/test_vocabulary_domain_resource_builders.sh
 
