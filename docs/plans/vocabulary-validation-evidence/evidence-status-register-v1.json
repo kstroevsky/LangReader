@@ -2,7 +2,7 @@
   "schema_version": 1,
   "derived_view": true,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "5fec9ea54b4b0c0bd9af189b3965599a51ace280",
+  "repository_head_reviewed": "ef872a7318b4a8d5ecb763ebd3d88fccb465058a",
   "head_since_production_evidence": [
     "9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only",
     "52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only",
@@ -32,7 +32,9 @@
     "2b2b9c4669145450269972be3959b81e509f7b7d: retained incomplete forensic reporting attempt and provenance",
     "da44870dde9333d071c042882026ebc22acbaaa1: frozen reporting-only forensic repair reservation",
     "fada5088511535a5b2301c79b1ba74faa3c7663e: final-inventory forensic instrumentation only; production unchanged",
-    "5fec9ea54b4b0c0bd9af189b3965599a51ace280: repaired selected-case forensic evidence and mechanism analysis"
+    "5fec9ea54b4b0c0bd9af189b3965599a51ace280: repaired selected-case forensic evidence and mechanism analysis",
+    "e234491f95d7d259ebef424ab8ca6ffb09e2fae0: derived warm question-path evidence-register refresh only",
+    "ef872a7318b4a8d5ecb763ebd3d88fccb465058a: generated code-map refresh only"
   ],
   "canonical_ledger": {
     "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
