@@ -209,6 +209,7 @@ private struct LongitudinalForensicTrace: Codable {
 private struct LongitudinalForensicPath: Codable {
     let path: String
     let questions: [LongitudinalForensicQuestion]
+    let finalItems: [LongitudinalForensicItem]
 }
 
 private struct LongitudinalForensicQuestion: Codable {
@@ -223,6 +224,18 @@ private struct LongitudinalForensicQuestion: Codable {
     let selectionType: String?
     let wasValidation: Bool
     let predictedKnownBeforeAnswer: Double?
+    let finalKnownProbability: Double
+    let finalClassification: String
+    let selectedInFinalDeck: Bool
+}
+
+private struct LongitudinalForensicItem: Codable {
+    let canonicalKey: String
+    let occurrenceCount: Int
+    let truthKnown: Bool
+    let learnerItemException: Bool
+    let asked: Bool
+    let evidence: String?
     let finalKnownProbability: Double
     let finalClassification: String
     let selectedInFinalDeck: Bool
@@ -699,7 +712,7 @@ func runVocabularyLongitudinalDiagnostics(
         }
     }
     let report = LongitudinalReport(
-        schemaVersion: traceRunIDs.isEmpty ? 3 : 4,
+        schemaVersion: traceRunIDs.isEmpty ? 3 : 5,
         interpretation: "Development-only synthetic longitudinal evidence using the production SQLite prior store and completion contract. Oracle-informed warm diagnostics remain separate; this report is not real-learner calibration or release acceptance.",
         manifest: manifest,
         source: source,
@@ -1212,8 +1225,12 @@ private func longitudinalForensicTrace(
         ($0.canonicalKey, $0)
     })
     let pathTraces = try paths.map { path, assessment -> LongitudinalForensicPath in
-        let resultItems = Dictionary(uniqueKeysWithValues: assessment.result().items.map {
+        let result = assessment.result()
+        let resultItems = Dictionary(uniqueKeysWithValues: result.items.map {
             ($0.id, $0)
+        })
+        let answers = Dictionary(uniqueKeysWithValues: assessment.answers.map {
+            ($0.canonicalKey, $0)
         })
         let questions = try assessment.answers.enumerated().map { offset, answer in
             guard let candidate = candidates[answer.canonicalKey],
@@ -1238,7 +1255,27 @@ private func longitudinalForensicTrace(
                 selectedInFinalDeck: item.isSelected
             )
         }
-        return LongitudinalForensicPath(path: path, questions: questions)
+        let finalItems = try result.items.map { item -> LongitudinalForensicItem in
+            guard let truth = truths[item.id] else {
+                throw LongitudinalFailure.missingValue("forensic final item \(path):\(item.id)")
+            }
+            return LongitudinalForensicItem(
+                canonicalKey: item.id,
+                occurrenceCount: item.candidate.occurrenceCount,
+                truthKnown: truth.known,
+                learnerItemException: truth.learnerItemException,
+                asked: answers[item.id] != nil,
+                evidence: answers[item.id]?.evidence.rawValue,
+                finalKnownProbability: item.knownProbability,
+                finalClassification: item.classification.rawValue,
+                selectedInFinalDeck: item.isSelected
+            )
+        }
+        return LongitudinalForensicPath(
+            path: path,
+            questions: questions,
+            finalItems: finalItems
+        )
     }
     return LongitudinalForensicTrace(
         paths: pathTraces,

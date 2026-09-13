@@ -135,7 +135,7 @@ def validate_compatibility(run: dict[str, Any]) -> None:
     )
 
 
-def validate_forensic_trace(run: dict[str, Any]) -> None:
+def validate_forensic_trace(run: dict[str, Any], require_final_items: bool) -> None:
     trace = run.get("forensicTrace")
     require(trace is not None, "selected forensic run lacks trace")
     paths = {item["path"]: item for item in trace["paths"]}
@@ -180,6 +180,54 @@ def validate_forensic_trace(run: dict[str, Any]) -> None:
                     0 <= question["predictedKnownBeforeAnswer"] <= 1,
                     "invalid forensic pre-answer probability",
                 )
+        if not require_final_items:
+            continue
+        final_items = path_trace.get("finalItems")
+        require(isinstance(final_items, list) and final_items, "forensic final inventory missing")
+        require(
+            len({item["canonicalKey"] for item in final_items}) == len(final_items),
+            "forensic final inventory identity repeated",
+        )
+        included = [item for item in final_items if item["finalClassification"] != "excluded"]
+        require(
+            sum(item["occurrenceCount"] for item in included)
+            == run[path_name]["assessableOccurrenceMass"],
+            "forensic final inventory assessable mass mismatch",
+        )
+        require(
+            sum(
+                item["occurrenceCount"] for item in included
+                if not item["truthKnown"] and not item["selectedInFinalDeck"]
+            ) == run[path_name]["missedOccurrenceMass"],
+            "forensic final inventory missed mass mismatch",
+        )
+        require(
+            sum(item["selectedInFinalDeck"] for item in final_items)
+            == run[path_name]["selectedCount"],
+            "forensic final inventory selected count mismatch",
+        )
+        by_key = {item["canonicalKey"]: item for item in final_items}
+        require(
+            sum(item["asked"] and item.get("evidence") != "excluded" for item in final_items)
+            == run[path_name]["questionCount"],
+            "forensic final inventory asked count mismatch",
+        )
+        for item in final_items:
+            require(item["occurrenceCount"] > 0, "invalid forensic final occurrence mass")
+            require(item["finalClassification"] in classification_values, "invalid forensic final classification")
+            require(0 <= item["finalKnownProbability"] <= 1, "invalid forensic final probability")
+            require(item.get("evidence") in evidence_values | {None}, "invalid forensic final evidence")
+            require(item["asked"] == (item.get("evidence") is not None), "forensic asked/evidence mismatch")
+        for question in questions:
+            item = by_key[question["canonicalKey"]]
+            require(item["asked"], "forensic question absent from final inventory")
+            require(item["evidence"] == question["evidence"], "forensic question evidence mismatch")
+            require(
+                item["finalKnownProbability"] == question["finalKnownProbability"]
+                and item["finalClassification"] == question["finalClassification"]
+                and item["selectedInFinalDeck"] == question["selectedInFinalDeck"],
+                "forensic question/final-item mismatch",
+            )
 
 
 def production_eligible(prior: dict[str, Any] | None, evaluation_time: float) -> bool:
@@ -280,7 +328,7 @@ def validate_run(run: dict[str, Any], manifest: dict[str, Any], report_schema: i
     if report_schema >= 3:
         validate_compatibility(run)
     if report_schema >= 4 and run.get("forensicTrace") is not None:
-        validate_forensic_trace(run)
+        validate_forensic_trace(run, require_final_items=report_schema >= 5)
 
     if scenario == "failed-write-retry":
         first = next(event for event in run["historyEvents"] if event["disposition"] == "completed")
@@ -291,7 +339,7 @@ def validate_run(run: dict[str, Any], manifest: dict[str, Any], report_schema: i
 
 def validate_report(report: dict[str, Any]) -> None:
     report_schema = report.get("schemaVersion")
-    require(report_schema in (1, 2, 3, 4), "unsupported report schema")
+    require(report_schema in (1, 2, 3, 4, 5), "unsupported report schema")
     manifest = report["manifest"]
     require(manifest["schemaVersion"] == 1, "unsupported manifest schema")
     require(manifest["dataRole"] == "diagnostic-development", "confirmation/holdout role forbidden")
@@ -345,6 +393,11 @@ def self_test(path: Path) -> None:
         traced_run = next(run for run in broken_trace["runs"] if run.get("forensicTrace") is not None)
         traced_run["forensicTrace"]["paths"][0]["questions"][0]["evidence"] = "invented"
         mutations.append(broken_trace)
+    if report.get("schemaVersion") >= 5:
+        broken_final_mass = copy.deepcopy(report)
+        traced_run = next(run for run in broken_final_mass["runs"] if run.get("forensicTrace") is not None)
+        traced_run["forensicTrace"]["paths"][0]["finalItems"][0]["occurrenceCount"] += 1
+        mutations.append(broken_final_mass)
     for mutation in mutations:
         try:
             validate_report(mutation)
