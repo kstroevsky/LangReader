@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "dataRole": "diagnostic-development-feasibility",
-  "reservationStatus": "frozen-not-executed",
+  "reservationStatus": "consumed-candidate-rejected",
   "seed": 20260914,
   "sourceMechanismEvidence": {
     "analysis": "docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-analysis-v2.json",
@@ -65,6 +65,23 @@
     "privateGUIFixtures": true,
     "userDatabases": true
   },
-  "outcomes": null,
-  "consumedAtRevision": null
+  "outcomes": {
+    "executionSourceRevision": "edf5106de2c45b680e8f9a0e9e4177798496c1bb",
+    "semanticReport": "docs/plans/vocabulary-validation-evidence/high-consequence-known-confirmation-report-v1.json",
+    "semanticReportSHA256": "a3b8ce50ed4baed22c9da656615d8f3a8a12f241f8684a3d4acba3dd1afb2b19",
+    "analysis": "docs/plans/vocabulary-validation-evidence/high-consequence-known-confirmation-analysis-v1.json",
+    "analysisSHA256": "5870bcbe34734a473b794294e96d2c48c523ec5aba73b8ab41346e38ed650d35",
+    "retainedRuns": 1024,
+    "eligibleRuns": 1013,
+    "productionMaterialTailCount": 40,
+    "independentArmMaterialTailCount": 32,
+    "independentArmWorstCoverageDifference": -0.042226221791499374,
+    "independentArmMeanQuestionReduction": 0.6259641610852745,
+    "meanConfirmationCount": 5.350444225074037,
+    "addedKnownCardCount": 274,
+    "addedUnknownCardCount": 31,
+    "candidatePass": false,
+    "decision": "reject-feasibility-candidate"
+  },
+  "consumedAtRevision": "edf5106de2c45b680e8f9a0e9e4177798496c1bb"
 }

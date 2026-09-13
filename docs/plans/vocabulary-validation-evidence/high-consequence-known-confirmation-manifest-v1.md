@@ -1,6 +1,6 @@
 # High-consequence known confirmation feasibility manifest v1
 
-Status: **frozen, not executed**.
+Status: **consumed; feasibility candidate rejected**.
 
 The selected-case forensics found that 89% of severe warm missed occurrence
 mass came from asked, truly unknown items carrying known-supporting evidence.
@@ -35,3 +35,12 @@ Even a passing independent arm cannot authorize production: repeat-response
 correlation, burden acceptability, and real-learner coverage/precision remain
 external evidence requirements. Failure consumes the reservation and cannot be
 used to tune the occurrence rule or confirmation semantics.
+
+The single fresh-seed run completed from clean revision `edf5106`. The
+independent arm reduced material tails from 40 to 32 and improved the worst loss
+from -15.05 to -4.22 percentage points, but it failed the frozen zero-tail gate.
+It also required 5.35 confirmations on average and added 274 truly known cards
+versus 31 truly unknown cards across eligible rows. The fully correlated arm
+preserved production coverage exactly, demonstrating dependence on the unknown
+repeat-response correlation. The candidate is rejected; see the
+[retained analysis](high-consequence-known-confirmation-analysis-v1.md).

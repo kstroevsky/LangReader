@@ -22,9 +22,34 @@ def require(condition, message):
 def validate(manifest, root):
     require(manifest.get("schemaVersion") == 1, "unsupported schema")
     require(manifest.get("dataRole") == "diagnostic-development-feasibility", "invalid data role")
-    require(manifest.get("reservationStatus") == "frozen-not-executed", "reservation is not sealed")
-    require(manifest.get("outcomes") is None, "unexecuted reservation contains outcomes")
-    require(manifest.get("consumedAtRevision") is None, "unexecuted reservation is marked consumed")
+    status = manifest.get("reservationStatus")
+    require(
+        status in {"frozen-not-executed", "consumed-candidate-rejected"},
+        "invalid reservation status",
+    )
+    if status == "frozen-not-executed":
+        require(manifest.get("outcomes") is None, "unexecuted reservation contains outcomes")
+        require(manifest.get("consumedAtRevision") is None, "unexecuted reservation is marked consumed")
+    else:
+        outcomes = manifest.get("outcomes")
+        revision = manifest.get("consumedAtRevision")
+        require(isinstance(outcomes, dict), "consumed reservation lacks outcomes")
+        require(outcomes["executionSourceRevision"] == revision, "execution revision mismatch")
+        for path_key, hash_key in (
+            ("semanticReport", "semanticReportSHA256"),
+            ("analysis", "analysisSHA256"),
+        ):
+            path = root / outcomes[path_key]
+            require(path.is_file(), f"consumed {path_key} missing")
+            require(
+                hashlib.sha256(path.read_bytes()).hexdigest() == outcomes[hash_key],
+                f"consumed {path_key} checksum mismatch",
+            )
+        require(outcomes["retainedRuns"] == 1024 and outcomes["eligibleRuns"] == 1013, "result support changed")
+        require(outcomes["productionMaterialTailCount"] == 40, "baseline tail count changed")
+        require(outcomes["independentArmMaterialTailCount"] == 32, "candidate tail count changed")
+        require(outcomes["candidatePass"] is False, "rejected candidate marked passing")
+        require(outcomes["decision"] == "reject-feasibility-candidate", "decision changed")
 
     source = manifest["sourceMechanismEvidence"]
     source_path = root / source["analysis"]
@@ -72,6 +97,9 @@ def self_test(manifest, root):
     relaxed = copy.deepcopy(manifest)
     relaxed["forbiddenAccess"]["developmentConfirmation"] = False
     mutations.append(relaxed)
+    invalid_status = copy.deepcopy(manifest)
+    invalid_status["reservationStatus"] = "available-again"
+    mutations.append(invalid_status)
     for mutation in mutations:
         try:
             validate(mutation, root)
