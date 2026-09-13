@@ -35,9 +35,32 @@ def selected_ids(report, boundary):
 def validate(manifest, root):
     require(manifest.get("schemaVersion") == 1, "unsupported schema")
     require(manifest.get("dataRole") == "diagnostic-development-forensic", "invalid data role")
-    require(manifest.get("reservationStatus") == "frozen-not-executed", "reservation is not sealed")
-    require(manifest.get("outcomes") is None, "unexecuted reservation contains outcomes")
-    require(manifest.get("consumedAtRevision") is None, "unexecuted reservation is marked consumed")
+    status = manifest.get("reservationStatus")
+    require(
+        status in {"frozen-not-executed", "consumed-reporting-incomplete"},
+        "invalid reservation status",
+    )
+    if status == "frozen-not-executed":
+        require(manifest.get("outcomes") is None, "unexecuted reservation contains outcomes")
+        require(manifest.get("consumedAtRevision") is None, "unexecuted reservation is marked consumed")
+    else:
+        outcomes = manifest.get("outcomes")
+        revision = manifest.get("consumedAtRevision")
+        require(isinstance(outcomes, dict), "consumed reservation lacks outcomes")
+        require(outcomes["executionSourceRevision"] == revision, "execution revision mismatch")
+        report_path = root / outcomes["semanticReport"]
+        require(report_path.is_file(), "retained failed report missing")
+        require(
+            hashlib.sha256(report_path.read_bytes()).hexdigest()
+            == outcomes["semanticReportSHA256"],
+            "retained failed report checksum mismatch",
+        )
+        require(outcomes["retainedRuns"] == 11, "retained support changed")
+        require(outcomes["pathParityPassed"] is True, "path parity failure hidden")
+        require(
+            outcomes["resultStatus"] == "reporting-contract-incomplete",
+            "reporting failure status changed",
+        )
 
     source = manifest["sourceEvidence"]
     report_path = root / source["report"]
@@ -79,6 +102,9 @@ def self_test(manifest, root):
     relaxed = copy.deepcopy(manifest)
     relaxed["forbiddenAccess"]["releaseHoldout"] = False
     mutations.append(relaxed)
+    invalid_status = copy.deepcopy(manifest)
+    invalid_status["reservationStatus"] = "available-again"
+    mutations.append(invalid_status)
     for mutation in mutations:
         try:
             validate(mutation, root)

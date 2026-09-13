@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "dataRole": "diagnostic-development-forensic",
-  "reservationStatus": "frozen-not-executed",
+  "reservationStatus": "consumed-reporting-incomplete",
   "sourceEvidence": {
     "report": "docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-development-report-v1.json",
     "reportSHA256": "789542ee581b315a4e6ed330c9dd855e2f7eef276f95481289a9a2f8db8a5e41"
@@ -72,6 +72,14 @@
     "privateGUIFixtures": true,
     "userDatabases": true
   },
-  "outcomes": null,
-  "consumedAtRevision": null
+  "outcomes": {
+    "executionSourceRevision": "11844ebeb714a638b81d115f6898c3059dc994a8",
+    "semanticReport": "docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-report-v1.json",
+    "semanticReportSHA256": "14bd07c1c2cd0a2df97b4e2b683169411cb5d59eb13cd43fad6db406adb364bf",
+    "retainedRuns": 11,
+    "pathParityPassed": true,
+    "resultStatus": "reporting-contract-incomplete",
+    "missingEvidence": "unasked final-item identities and occurrence masses required for final-deck symmetric-difference mass"
+  },
+  "consumedAtRevision": "11844ebeb714a638b81d115f6898c3059dc994a8"
 }

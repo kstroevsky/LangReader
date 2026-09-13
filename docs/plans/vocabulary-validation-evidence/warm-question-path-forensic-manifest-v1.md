@@ -1,6 +1,6 @@
 # Warm question-path forensic manifest v1
 
-Status: **frozen, not executed**.
+Status: **consumed; reporting contract incomplete**.
 
 This is a deliberately biased mechanism study, not another candidate policy.
 It selects every eligible run in the consumed 1,024-row development report with
@@ -30,3 +30,10 @@ No result from this selected case set estimates a population failure rate or a
 mitigation effect. It cannot authorize a production change, select a threshold,
 bind development-confirmation, access the release holdout, reuse consumed POS
 held-out data, inspect private GUI fixtures, or touch a user database.
+
+The single execution from clean revision `11844eb` retained all 11 cases and
+matched the source report on every original path metric. However, the schema
+stored question-level rows only. Because a final deck can contain unasked items,
+it cannot reconstruct the frozen final-deck symmetric-difference occurrence
+mass. The attempt is retained as a reporting failure and must not be silently
+completed by changing this consumed manifest.
