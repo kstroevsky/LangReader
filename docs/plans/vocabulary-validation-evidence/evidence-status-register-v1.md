@@ -2,7 +2,7 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `b772a3e0fea8374a81807789e3fd104aad8c7152`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `8d4f22bdbabc2ea9923d07d5f77e63c1205ce317`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
 Head-only changes since the production evidence candidate:
 
@@ -42,6 +42,8 @@ Head-only changes since the production evidence candidate:
 - edf5106de2c45b680e8f9a0e9e4177798496c1bb: development-only high-consequence confirmation arms; production unchanged
 - 956049220296519fe953b3db2d807770de3ef786: schema-feature validator correction only
 - b772a3e0fea8374a81807789e3fd104aad8c7152: consumed adverse high-consequence confirmation evidence; candidate rejected
+- f3543f65b1682d83190a2a73824da240a05feb74: derived rejected-confirmation evidence-register refresh only
+- 8d4f22bdbabc2ea9923d07d5f77e63c1205ce317: generated code-map refresh only
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 

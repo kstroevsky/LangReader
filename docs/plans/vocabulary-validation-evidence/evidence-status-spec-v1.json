@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "b772a3e0fea8374a81807789e3fd104aad8c7152",
+  "repository_head_reviewed": "8d4f22bdbabc2ea9923d07d5f77e63c1205ce317",
   "head_since_production_evidence": [
     "9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only",
     "52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only",
@@ -38,7 +38,9 @@
     "bc831fe597ef89c0d697d95971ae8df60cfed84b: frozen high-consequence confirmation feasibility reservation only",
     "edf5106de2c45b680e8f9a0e9e4177798496c1bb: development-only high-consequence confirmation arms; production unchanged",
     "956049220296519fe953b3db2d807770de3ef786: schema-feature validator correction only",
-    "b772a3e0fea8374a81807789e3fd104aad8c7152: consumed adverse high-consequence confirmation evidence; candidate rejected"
+    "b772a3e0fea8374a81807789e3fd104aad8c7152: consumed adverse high-consequence confirmation evidence; candidate rejected",
+    "f3543f65b1682d83190a2a73824da240a05feb74: derived rejected-confirmation evidence-register refresh only",
+    "8d4f22bdbabc2ea9923d07d5f77e63c1205ce317: generated code-map refresh only"
   ],
   "canonical_ledger": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
   "retained_artifacts": [
