@@ -23,5 +23,8 @@
   "seed": 17,
   "stableOverlapShare": 0.65,
   "targetCoverage": 0.98,
-  "timingRepetitions": 1
+  "timingRepetitions": 1,
+  "traceRunIDs": [
+    "stable-overlap:learner-0"
+  ]
 }

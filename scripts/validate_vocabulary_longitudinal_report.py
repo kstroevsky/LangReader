@@ -135,6 +135,53 @@ def validate_compatibility(run: dict[str, Any]) -> None:
     )
 
 
+def validate_forensic_trace(run: dict[str, Any]) -> None:
+    trace = run.get("forensicTrace")
+    require(trace is not None, "selected forensic run lacks trace")
+    paths = {item["path"]: item for item in trace["paths"]}
+    expected_paths = {"coldNatural", "warmNatural", "coldFixedBudget", "warmFixedBudget"}
+    require(set(paths) == expected_paths, "forensic trace path mismatch")
+    evidence_values = {
+        "verifiedKnown", "typedVerifiedKnown", "verifiedUnknownOrPartial",
+        "reportedUnknown", "unsure", "legacyKnown", "legacyUnknown", "excluded",
+    }
+    classification_values = {
+        "verifiedKnown", "reportedUnknown", "notSure", "estimatedKnown",
+        "uncertain", "estimatedUnknown", "excluded",
+    }
+    selection_values = {"initialCalibration", "adaptiveLoss", "tailValidation", "calibration"}
+    for path_name, path_trace in paths.items():
+        questions = path_trace["questions"]
+        require(
+            sum(question["evidence"] != "excluded" for question in questions)
+            == run[path_name]["questionCount"],
+            "forensic question support mismatch",
+        )
+        require(
+            [question["ordinal"] for question in questions] == sorted(question["ordinal"] for question in questions),
+            "forensic ordinals are not ordered",
+        )
+        require(
+            len({question["canonicalKey"] for question in questions}) == len(questions),
+            "forensic question identity repeated",
+        )
+        for question in questions:
+            require(question["occurrenceCount"] > 0, "invalid forensic occurrence mass")
+            require(question["difficultyStandardDeviation"] >= 0, "invalid forensic difficulty uncertainty")
+            require(question["evidence"] in evidence_values, "invalid forensic evidence")
+            require(question["finalClassification"] in classification_values, "invalid forensic classification")
+            require(question.get("selectionType") in selection_values, "invalid forensic selection type")
+            require(
+                0 <= question["finalKnownProbability"] <= 1,
+                "invalid forensic final probability",
+            )
+            if question.get("predictedKnownBeforeAnswer") is not None:
+                require(
+                    0 <= question["predictedKnownBeforeAnswer"] <= 1,
+                    "invalid forensic pre-answer probability",
+                )
+
+
 def production_eligible(prior: dict[str, Any] | None, evaluation_time: float) -> bool:
     if prior is None:
         return False
@@ -232,6 +279,8 @@ def validate_run(run: dict[str, Any], manifest: dict[str, Any], report_schema: i
             validate_replay(replay, source)
     if report_schema >= 3:
         validate_compatibility(run)
+    if report_schema >= 4 and run.get("forensicTrace") is not None:
+        validate_forensic_trace(run)
 
     if scenario == "failed-write-retry":
         first = next(event for event in run["historyEvents"] if event["disposition"] == "completed")
@@ -242,7 +291,7 @@ def validate_run(run: dict[str, Any], manifest: dict[str, Any], report_schema: i
 
 def validate_report(report: dict[str, Any]) -> None:
     report_schema = report.get("schemaVersion")
-    require(report_schema in (1, 2, 3), "unsupported report schema")
+    require(report_schema in (1, 2, 3, 4), "unsupported report schema")
     manifest = report["manifest"]
     require(manifest["schemaVersion"] == 1, "unsupported manifest schema")
     require(manifest["dataRole"] == "diagnostic-development", "confirmation/holdout role forbidden")
@@ -251,6 +300,13 @@ def validate_report(report: dict[str, Any]) -> None:
     ids = [run["runID"] for run in runs]
     require(len(ids) == len(set(ids)), "duplicate run ID")
     require({run["scenario"] for run in runs} == set(manifest["scenarios"]), "scenario support mismatch")
+    if manifest.get("includedRunIDs") is not None:
+        require(set(ids) == set(manifest["includedRunIDs"]), "included-run support mismatch")
+    if manifest.get("traceRunIDs") is not None:
+        require(
+            all((run.get("forensicTrace") is not None) == (run["runID"] in manifest["traceRunIDs"]) for run in runs),
+            "forensic trace inclusion mismatch",
+        )
     for run in runs:
         validate_run(run, manifest, report_schema)
     eligible = sum(run["expectedWarmEligibility"] for run in runs)
@@ -284,6 +340,11 @@ def self_test(path: Path) -> None:
         broken_compatibility = copy.deepcopy(report)
         broken_compatibility["runs"][0]["warmCompatibility"]["candidateCoverageDifference"] += 0.1
         mutations.append(broken_compatibility)
+    if report.get("schemaVersion") >= 4:
+        broken_trace = copy.deepcopy(report)
+        traced_run = next(run for run in broken_trace["runs"] if run.get("forensicTrace") is not None)
+        traced_run["forensicTrace"]["paths"][0]["questions"][0]["evidence"] = "invented"
+        mutations.append(broken_trace)
     for mutation in mutations:
         try:
             validate_report(mutation)

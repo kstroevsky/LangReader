@@ -42,6 +42,8 @@ private struct LongitudinalManifest: Codable {
     let b2SampleCount: Int
     let timingRepetitions: Int
     let decisionRule: String
+    let includedRunIDs: [String]?
+    let traceRunIDs: [String]?
 }
 
 private struct LongitudinalSource: Codable {
@@ -78,6 +80,7 @@ private struct LongitudinalRun: Codable {
     let coldFixedPathUnderWarmPrior: LongitudinalReplay
     let warmFixedPathUnderColdPrior: LongitudinalReplay
     let warmCompatibility: LongitudinalWarmCompatibility
+    let forensicTrace: LongitudinalForensicTrace?
     let naturalQuestionReduction: Double
     let naturalCoverageDifference: Double
     let fixedBudgetCoverageDifference: Double
@@ -196,6 +199,33 @@ private struct LongitudinalWarmCompatibility: Codable {
     let candidateQuestionReduction: Double
     let candidateCoverageDifference: Double
     let interpretation: String
+}
+
+private struct LongitudinalForensicTrace: Codable {
+    let paths: [LongitudinalForensicPath]
+    let interpretation: String
+}
+
+private struct LongitudinalForensicPath: Codable {
+    let path: String
+    let questions: [LongitudinalForensicQuestion]
+}
+
+private struct LongitudinalForensicQuestion: Codable {
+    let ordinal: Int
+    let canonicalKey: String
+    let occurrenceCount: Int
+    let difficultyMean: Double
+    let difficultyStandardDeviation: Double
+    let truthKnown: Bool
+    let learnerItemException: Bool
+    let evidence: String
+    let selectionType: String?
+    let wasValidation: Bool
+    let predictedKnownBeforeAnswer: Double?
+    let finalKnownProbability: Double
+    let finalClassification: String
+    let selectedInFinalDeck: Bool
 }
 
 private struct LongitudinalTimingReport: Codable {
@@ -335,9 +365,12 @@ func runVocabularyLongitudinalDiagnostics(
     var storeTimings: [Double] = []
     var evaluationTimings: [Double] = []
     var replayTimings: [Double] = []
+    let includedRunIDs = manifest.includedRunIDs.map(Set.init)
+    let traceRunIDs = Set(manifest.traceRunIDs ?? [])
     for scenario in scenarios {
         for learnerIndex in 0..<manifest.learnersPerScenario {
             let runID = "\(scenario.rawValue):learner-\(learnerIndex)"
+            if let includedRunIDs, !includedRunIDs.contains(runID) { continue }
             let databaseURL = root.appendingPathComponent("\(derivedLongitudinalSeed(manifest.seed, runID)).sqlite3")
             let evaluationDate = Date(timeIntervalSince1970: 2_000_000_000)
             let baseTheta = clippedNormal(seed: derivedLongitudinalSeed(manifest.seed, "theta:\(runID)"))
@@ -608,6 +641,21 @@ func runVocabularyLongitudinalDiagnostics(
             let coldKeys = Set(coldNatural.assessment.answers.map(\.canonicalKey))
             let warmKeys = Set(warmNatural.assessment.answers.map(\.canonicalKey))
             let union = coldKeys.union(warmKeys)
+            let forensicTrace: LongitudinalForensicTrace?
+            if traceRunIDs.contains(runID) {
+                forensicTrace = try longitudinalForensicTrace(
+                    paths: [
+                        ("coldNatural", coldNatural.assessment),
+                        ("warmNatural", warmNatural.assessment),
+                        ("coldFixedBudget", coldFixed.assessment),
+                        ("warmFixedBudget", warmFixed.assessment)
+                    ],
+                    inventory: evaluationDocument.inventory,
+                    truths: evaluationTruth
+                )
+            } else {
+                forensicTrace = nil
+            }
             runs.append(LongitudinalRun(
                 runID: runID,
                 scenario: scenario.rawValue,
@@ -628,6 +676,7 @@ func runVocabularyLongitudinalDiagnostics(
                 coldFixedPathUnderWarmPrior: coldFixedUnderWarm,
                 warmFixedPathUnderColdPrior: warmFixedUnderCold,
                 warmCompatibility: compatibility,
+                forensicTrace: forensicTrace,
                 naturalQuestionReduction: coldNatural.path.questionCount > 0
                     ? 1 - Double(warmNatural.path.questionCount) / Double(coldNatural.path.questionCount)
                     : 0,
@@ -650,7 +699,7 @@ func runVocabularyLongitudinalDiagnostics(
         }
     }
     let report = LongitudinalReport(
-        schemaVersion: 3,
+        schemaVersion: traceRunIDs.isEmpty ? 3 : 4,
         interpretation: "Development-only synthetic longitudinal evidence using the production SQLite prior store and completion contract. Oracle-informed warm diagnostics remain separate; this report is not real-learner calibration or release acceptance.",
         manifest: manifest,
         source: source,
@@ -712,6 +761,32 @@ private func validateLongitudinalManifest(_ manifest: LongitudinalManifest) thro
           manifest.b2SampleCount.isMultiple(of: 64),
           manifest.timingRepetitions > 0 else {
         throw LongitudinalFailure.invalidManifest("counts or probabilities")
+    }
+    let scenarios = Set(manifest.scenarios)
+    func validateRunID(_ runID: String) -> Bool {
+        let parts = runID.components(separatedBy: ":learner-")
+        guard parts.count == 2,
+              scenarios.contains(parts[0]),
+              let learner = Int(parts[1]),
+              (0..<manifest.learnersPerScenario).contains(learner) else {
+            return false
+        }
+        return true
+    }
+    if let included = manifest.includedRunIDs {
+        guard !included.isEmpty,
+              Set(included).count == included.count,
+              included.allSatisfy(validateRunID) else {
+            throw LongitudinalFailure.invalidManifest("included run IDs")
+        }
+    }
+    if let traced = manifest.traceRunIDs {
+        let allowed = Set(manifest.includedRunIDs ?? traced)
+        guard Set(traced).count == traced.count,
+              traced.allSatisfy(validateRunID),
+              Set(traced).isSubset(of: allowed) else {
+            throw LongitudinalFailure.invalidManifest("trace run IDs")
+        }
     }
 }
 
@@ -1125,6 +1200,49 @@ private func longitudinalWarmCompatibility(
         candidateCoverageDifference: candidatePath.realizedProjectedCoverage
             - coldNatural.path.realizedProjectedCoverage,
         interpretation: "Development-only conditional compatibility signal on identical validation questions/evidence; production stopping remains unchanged."
+    )
+}
+
+private func longitudinalForensicTrace(
+    paths: [(String, AdaptiveVocabularyAssessment)],
+    inventory: DocumentVocabularyInventory,
+    truths: [String: LongitudinalTruth]
+) throws -> LongitudinalForensicTrace {
+    let candidates = Dictionary(uniqueKeysWithValues: inventory.candidates.map {
+        ($0.canonicalKey, $0)
+    })
+    let pathTraces = try paths.map { path, assessment -> LongitudinalForensicPath in
+        let resultItems = Dictionary(uniqueKeysWithValues: assessment.result().items.map {
+            ($0.id, $0)
+        })
+        let questions = try assessment.answers.enumerated().map { offset, answer in
+            guard let candidate = candidates[answer.canonicalKey],
+                  let truth = truths[answer.canonicalKey],
+                  let item = resultItems[answer.canonicalKey] else {
+                throw LongitudinalFailure.missingValue("forensic trace \(path):\(answer.canonicalKey)")
+            }
+            return LongitudinalForensicQuestion(
+                ordinal: answer.questionOrdinal ?? offset + 1,
+                canonicalKey: answer.canonicalKey,
+                occurrenceCount: candidate.occurrenceCount,
+                difficultyMean: candidate.difficultyPrior.mean,
+                difficultyStandardDeviation: candidate.difficultyPrior.standardDeviation,
+                truthKnown: truth.known,
+                learnerItemException: truth.learnerItemException,
+                evidence: answer.evidence.rawValue,
+                selectionType: answer.selectionType?.rawValue,
+                wasValidation: answer.wasValidation,
+                predictedKnownBeforeAnswer: answer.predictedKnownBeforeAnswer,
+                finalKnownProbability: item.knownProbability,
+                finalClassification: item.classification.rawValue,
+                selectedInFinalDeck: item.isSelected
+            )
+        }
+        return LongitudinalForensicPath(path: path, questions: questions)
+    }
+    return LongitudinalForensicTrace(
+        paths: pathTraces,
+        interpretation: "Selected-case development trace only; hidden truth is synthetic and the case set is outcome-biased."
     )
 }
 
