@@ -2,7 +2,7 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `ef872a7318b4a8d5ecb763ebd3d88fccb465058a`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `b772a3e0fea8374a81807789e3fd104aad8c7152`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
 Head-only changes since the production evidence candidate:
 
@@ -37,6 +37,11 @@ Head-only changes since the production evidence candidate:
 - 5fec9ea54b4b0c0bd9af189b3965599a51ace280: repaired selected-case forensic evidence and mechanism analysis
 - e234491f95d7d259ebef424ab8ca6ffb09e2fae0: derived warm question-path evidence-register refresh only
 - ef872a7318b4a8d5ecb763ebd3d88fccb465058a: generated code-map refresh only
+- 7e462b7c612812d10ccd1f9cf3f539fd1dec02c3: derived forensic evidence-register refresh only
+- bc831fe597ef89c0d697d95971ae8df60cfed84b: frozen high-consequence confirmation feasibility reservation only
+- edf5106de2c45b680e8f9a0e9e4177798496c1bb: development-only high-consequence confirmation arms; production unchanged
+- 956049220296519fe953b3db2d807770de3ef786: schema-feature validator correction only
+- b772a3e0fea8374a81807789e3fd104aad8c7152: consumed adverse high-consequence confirmation evidence; candidate rejected
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 
@@ -232,6 +237,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Evidence class: repaired selected-case warm question-path mechanism evidence
 - Status: `completed_mechanism_only`
 - Interpretation: Across seven outcome-selected severe paths, 89% of missed mass was asked truly unknown vocabulary carrying known-supporting evidence; no prevalence or mitigation claim is authorized.
+
+### docs/plans/vocabulary-validation-evidence/high-consequence-known-confirmation-analysis-v1.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/high-consequence-known-confirmation-analysis-v1.json`](high-consequence-known-confirmation-analysis-v1.json); SHA-256 `5870bcbe34734a473b794294e96d2c48c523ec5aba73b8ab41346e38ed650d35`
+- Evidence class: consumed fresh-seed high-consequence confirmation feasibility result
+- Status: `completed_candidate_rejected`
+- Interpretation: The optimistic independent arm reduced tails 40 to 32 but failed the zero-tail gate, required 5.35 confirmations on average, and added 274 truly known versus 31 truly unknown cards; production remains unchanged.
 
 ## Failed evidence or gate
 
@@ -725,13 +737,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Completed-session evidence in the isolated real SQLite store; no passive exposure.
 - Responsible capability: Core prior/store owner with App integration review
-- Source revision/configuration: fada508; selected-case schema-5 question/final-inventory forensics; production policy unchanged
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-checkpoint-2026-09-13.md`](warm-question-path-forensic-checkpoint-2026-09-13.md); SHA-256 `09da6952d83364c1ac2faa3eea679764c1cc10fab96d424a684947a32f85dbc2`
-- Command/environment: Isolated SQLite histories, realized replay paths, selected-case question/final-inventory traces, mass-conserving analyzers, and deterministic validators
-- Gate: Persistence behavior is verified, but warm safety remains adverse: the likelihood candidate failed and severe selected cases show high-consequence erroneous known evidence; human non-inferiority is absent.
+- Source revision/configuration: edf5106; fresh 1,024-row high-consequence confirmation feasibility run with independent and fully correlated response arms; production unchanged
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/high-consequence-known-confirmation-checkpoint-2026-09-13.md`](high-consequence-known-confirmation-checkpoint-2026-09-13.md); SHA-256 `f79fd3f585e0efc233648b693750902bf713305c82440732da23006a82aab824`
+- Command/environment: Isolated SQLite histories, schema-6 confirmation diagnostics, independent/correlated controls, mass-conserving analyzers, and deterministic validators
+- Gate: Persistence behavior is verified, but warm safety remains adverse: two frozen mitigation candidates failed, and the optimistic confirmation arm retained 32 material tails plus substantial burden; human non-inferiority is absent.
 - Evidence class: current-candidate longitudinal diagnostic
-- Next action: Design a fresh high-consequence evidence safeguard feasibility experiment without reusing the selected 11 cases for acceptance; retain production and do not bind confirmation.
-- Decision history: The likelihood candidate was rejected. Repaired forensics retained a reporting failure and found 5,518/6,200 severe warm missed mass on asked unknown items carrying known-supporting evidence; the selected cases support mechanism diagnosis only.
+- Next action: Do not iterate another synthetic safeguard without external evidence on repeat-response correlation and acceptable burden; retain production, the 180-day rule, and the sealed confirmation boundary.
+- Decision history: Likelihood gating was rejected; forensics identified high-consequence erroneous known evidence; an independently frozen confirmation safeguard was then rejected after leaving 32 tails and adding 274 truly known cards under its optimistic arm.
 
 ### PRIOR-002 — Warm prior mixture and eligibility.
 
@@ -739,13 +751,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Completed-session evidence in the isolated real SQLite store; no passive exposure.
 - Responsible capability: Core prior/store owner with App integration review
-- Source revision/configuration: fada508; selected-case schema-5 question/final-inventory forensics; production policy unchanged
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-checkpoint-2026-09-13.md`](warm-question-path-forensic-checkpoint-2026-09-13.md); SHA-256 `09da6952d83364c1ac2faa3eea679764c1cc10fab96d424a684947a32f85dbc2`
-- Command/environment: Isolated SQLite histories, realized replay paths, selected-case question/final-inventory traces, mass-conserving analyzers, and deterministic validators
-- Gate: Persistence behavior is verified, but warm safety remains adverse: the likelihood candidate failed and severe selected cases show high-consequence erroneous known evidence; human non-inferiority is absent.
+- Source revision/configuration: edf5106; fresh 1,024-row high-consequence confirmation feasibility run with independent and fully correlated response arms; production unchanged
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/high-consequence-known-confirmation-checkpoint-2026-09-13.md`](high-consequence-known-confirmation-checkpoint-2026-09-13.md); SHA-256 `f79fd3f585e0efc233648b693750902bf713305c82440732da23006a82aab824`
+- Command/environment: Isolated SQLite histories, schema-6 confirmation diagnostics, independent/correlated controls, mass-conserving analyzers, and deterministic validators
+- Gate: Persistence behavior is verified, but warm safety remains adverse: two frozen mitigation candidates failed, and the optimistic confirmation arm retained 32 material tails plus substantial burden; human non-inferiority is absent.
 - Evidence class: current-candidate longitudinal diagnostic
-- Next action: Design a fresh high-consequence evidence safeguard feasibility experiment without reusing the selected 11 cases for acceptance; retain production and do not bind confirmation.
-- Decision history: The likelihood candidate was rejected. Repaired forensics retained a reporting failure and found 5,518/6,200 severe warm missed mass on asked unknown items carrying known-supporting evidence; the selected cases support mechanism diagnosis only.
+- Next action: Do not iterate another synthetic safeguard without external evidence on repeat-response correlation and acceptable burden; retain production, the 180-day rule, and the sealed confirmation boundary.
+- Decision history: Likelihood gating was rejected; forensics identified high-consequence erroneous known evidence; an independently frozen confirmation safeguard was then rejected after leaving 32 tails and adding 274 truly known cards under its optimistic arm.
 
 ### PRIOR-003 — Cross-book adaptation defaults on and is independently resettable.
 
@@ -753,13 +765,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Completed-session evidence in the isolated real SQLite store; no passive exposure.
 - Responsible capability: Core prior/store owner with App integration review
-- Source revision/configuration: fada508; selected-case schema-5 question/final-inventory forensics; production policy unchanged
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-checkpoint-2026-09-13.md`](warm-question-path-forensic-checkpoint-2026-09-13.md); SHA-256 `09da6952d83364c1ac2faa3eea679764c1cc10fab96d424a684947a32f85dbc2`
-- Command/environment: Isolated SQLite histories, realized replay paths, selected-case question/final-inventory traces, mass-conserving analyzers, and deterministic validators
-- Gate: Persistence behavior is verified, but warm safety remains adverse: the likelihood candidate failed and severe selected cases show high-consequence erroneous known evidence; human non-inferiority is absent.
+- Source revision/configuration: edf5106; fresh 1,024-row high-consequence confirmation feasibility run with independent and fully correlated response arms; production unchanged
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/high-consequence-known-confirmation-checkpoint-2026-09-13.md`](high-consequence-known-confirmation-checkpoint-2026-09-13.md); SHA-256 `f79fd3f585e0efc233648b693750902bf713305c82440732da23006a82aab824`
+- Command/environment: Isolated SQLite histories, schema-6 confirmation diagnostics, independent/correlated controls, mass-conserving analyzers, and deterministic validators
+- Gate: Persistence behavior is verified, but warm safety remains adverse: two frozen mitigation candidates failed, and the optimistic confirmation arm retained 32 material tails plus substantial burden; human non-inferiority is absent.
 - Evidence class: current-candidate longitudinal diagnostic
-- Next action: Design a fresh high-consequence evidence safeguard feasibility experiment without reusing the selected 11 cases for acceptance; retain production and do not bind confirmation.
-- Decision history: The likelihood candidate was rejected. Repaired forensics retained a reporting failure and found 5,518/6,200 severe warm missed mass on asked unknown items carrying known-supporting evidence; the selected cases support mechanism diagnosis only.
+- Next action: Do not iterate another synthetic safeguard without external evidence on repeat-response correlation and acceptable burden; retain production, the 180-day rule, and the sealed confirmation boundary.
+- Decision history: Likelihood gating was rejected; forensics identified high-consequence erroneous known evidence; an independently frozen confirmation safeguard was then rejected after leaving 32 tails and adding 274 truly known cards under its optimistic arm.
 
 ### DOMAIN-001 — Record domain metadata without production difficulty effect.
 
