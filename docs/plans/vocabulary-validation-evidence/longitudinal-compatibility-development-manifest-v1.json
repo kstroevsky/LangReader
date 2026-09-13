@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "dataRole": "diagnostic-development",
-  "reservationStatus": "frozen-not-executed",
+  "reservationStatus": "consumed",
   "seed": 20260913,
   "sourceEvidence": {
     "report": "docs/plans/vocabulary-validation-evidence/longitudinal-development-report-v3.json",
@@ -67,6 +67,19 @@
     "consumedPOSHeldout": true,
     "productionActivation": true
   },
-  "outcomes": null,
-  "consumedAtRevision": null
+  "outcomes": {
+    "executionSourceRevision": "c77f732367d2c75dea45fd36e1b13d1a99d2c92b",
+    "semanticReport": "docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-development-report-v1.json",
+    "semanticReportSHA256": "789542ee581b315a4e6ed330c9dd855e2f7eef276f95481289a9a2f8db8a5e41",
+    "retainedRuns": 1024,
+    "eligibleRuns": 1020,
+    "productionMaterialTailCount": 55,
+    "candidateMaterialTailCount": 54,
+    "candidateWorstCoverageDifference": -0.15990585629239928,
+    "candidateMeanCoverageDifference": -0.001390981423719978,
+    "candidateMeanQuestionReduction": 0.6893399068745387,
+    "candidatePass": false,
+    "decision": "reject-candidate-retain-production"
+  },
+  "consumedAtRevision": "c77f732367d2c75dea45fd36e1b13d1a99d2c92b"
 }

@@ -23,9 +23,30 @@ def require(condition: bool, message: str) -> None:
 def validate(manifest: dict, root: Path) -> None:
     require(manifest.get("schemaVersion") == 1, "unsupported schema")
     require(manifest.get("dataRole") == "diagnostic-development", "non-development role forbidden")
-    require(manifest.get("reservationStatus") == "frozen-not-executed", "reservation is not sealed")
-    require(manifest.get("outcomes") is None, "reservation already contains outcomes")
-    require(manifest.get("consumedAtRevision") is None, "reservation already consumed")
+    status = manifest.get("reservationStatus")
+    require(status in {"frozen-not-executed", "consumed"}, "invalid reservation status")
+    if status == "frozen-not-executed":
+        require(manifest.get("outcomes") is None, "unexecuted reservation contains outcomes")
+        require(manifest.get("consumedAtRevision") is None, "unexecuted reservation is marked consumed")
+    else:
+        outcomes = manifest.get("outcomes")
+        revision = manifest.get("consumedAtRevision")
+        require(isinstance(outcomes, dict), "consumed reservation lacks outcomes")
+        require(isinstance(revision, str) and len(revision) == 40, "invalid consumption revision")
+        require(outcomes["executionSourceRevision"] == revision, "execution revision mismatch")
+        outcome_report = root / outcomes["semanticReport"]
+        require(outcome_report.is_file(), "consumed semantic report is missing")
+        require(
+            hashlib.sha256(outcome_report.read_bytes()).hexdigest()
+            == outcomes["semanticReportSHA256"],
+            "consumed semantic report checksum mismatch",
+        )
+        require(outcomes["retainedRuns"] == 1024, "consumed run support mismatch")
+        require(outcomes["candidatePass"] is False, "rejected candidate marked passing")
+        require(
+            outcomes["decision"] == "reject-candidate-retain-production",
+            "consumed decision mismatch",
+        )
 
     source = manifest["sourceEvidence"]
     report_path = root / source["report"]
@@ -82,15 +103,19 @@ def validate(manifest: dict, root: Path) -> None:
 def self_test(manifest: dict, root: Path) -> None:
     validate(manifest, root)
     mutations = []
-    with_outcome = copy.deepcopy(manifest)
-    with_outcome["outcomes"] = {"peeked": True}
-    mutations.append(with_outcome)
+    invalid_status = copy.deepcopy(manifest)
+    invalid_status["reservationStatus"] = "available-again"
+    mutations.append(invalid_status)
     changed_threshold = copy.deepcopy(manifest)
     changed_threshold["candidateCompatibilitySignal"]["supportThreshold"] = -0.1
     mutations.append(changed_threshold)
     relaxed_access = copy.deepcopy(manifest)
     relaxed_access["forbiddenAccess"]["developmentConfirmation"] = False
     mutations.append(relaxed_access)
+    if manifest["reservationStatus"] == "consumed":
+        changed_outcome = copy.deepcopy(manifest)
+        changed_outcome["outcomes"]["semanticReportSHA256"] = "0" * 64
+        mutations.append(changed_outcome)
     for mutation in mutations:
         try:
             validate(mutation, root)

@@ -1,6 +1,6 @@
 # Longitudinal current-document compatibility development manifest v1
 
-Status: **frozen, not executed**.
+Status: **consumed; candidate rejected**.
 
 The realized replay evidence shows that most material warm tails implicate early
 stopping, while two biased-self-verification tails retain question-path and
@@ -53,7 +53,14 @@ threshold requires a newly frozen development experiment.
 
 ## Access boundary
 
-This run must not inspect or bind the sealed development-confirmation set,
+The single frozen run was executed from clean source revision `c77f732`. It
+retained 1,024 rows (1,020 eligible), and the candidate failed the zero-tail
+gate: material tails changed from 55 to 54 and the -15.99-point worst case
+remained. Mean coverage and efficiency passed their development screens, but
+the candidate is rejected under the conjunction rule. The zero threshold must
+not be tuned from this consumed evidence.
+
+The run did not inspect or bind the sealed development-confirmation set,
 access the failed release holdout, reuse consumed POS held-out data, or activate
-any production policy. `outcomes` and `consumedAtRevision` remain null until the
-single planned execution.
+any production policy. Full results are in
+[the retained analysis](longitudinal-compatibility-development-analysis-v1.md).
