@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "dataRole": "diagnostic-development-forensic-repair",
-  "reservationStatus": "frozen-not-executed",
+  "reservationStatus": "consumed-complete",
   "failedAttempt": {
     "manifest": "docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-manifest-v1.json",
     "manifestSHA256": "cfcb181ff6026443373e8cfc3d303ab9c1ba94dd798d98f1ba01c30f7b030ded",
@@ -41,6 +41,19 @@
     "privateGUIFixtures": true,
     "userDatabases": true
   },
-  "outcomes": null,
-  "consumedAtRevision": null
+  "outcomes": {
+    "executionSourceRevision": "fada5088511535a5b2301c79b1ba74faa3c7663e",
+    "semanticReport": "docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-report-v2.json",
+    "semanticReportSHA256": "44a583a775760030eb22fd89dc5e30ec4f4a969d2ed8a0a7cd181e818fc103c5",
+    "analysis": "docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-analysis-v2.json",
+    "analysisSHA256": "a0d89e116959c49980c9a9070485659eacd74d1a9b9bcac87e53bb68ec245f09",
+    "selectedRuns": 11,
+    "severeCases": 7,
+    "v1PathAndQuestionTraceParityPassed": true,
+    "severeWarmMissedOccurrenceMass": 6200,
+    "knownSupportingEvidenceOnMissedUnknownMass": 5518,
+    "unaskedMissedOccurrenceMass": 682,
+    "resultStatus": "complete-selected-case-mechanism-evidence"
+  },
+  "consumedAtRevision": "fada5088511535a5b2301c79b1ba74faa3c7663e"
 }

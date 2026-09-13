@@ -1,6 +1,6 @@
 # Warm question-path forensic repair manifest v2
 
-Status: **frozen, not executed**.
+Status: **consumed; repair complete**.
 
 Attempt v1 completed with exact path parity but could not calculate final-deck
 symmetric-difference occurrence mass because it omitted unasked final inventory
@@ -18,3 +18,10 @@ supported and falsified hypotheses, but it cannot estimate failure prevalence,
 select a threshold, choose or activate a production change, bind confirmation,
 access the release holdout, reuse POS held-out data, inspect private GUI files,
 or touch user databases.
+
+The single repaired run completed from clean revision `fada508`. All 11 case
+identities, original path metrics, and question traces match v1. The final rows
+conserve assessable and missed occurrence mass. Across the seven selected severe
+warm-natural paths, 5,518 of 6,200 missed occurrence mass (89%) belonged to
+asked truly unknown items carrying known-supporting evidence; only 682 (11%) was
+never asked. See the [frozen analysis](warm-question-path-forensic-analysis-v2.md).

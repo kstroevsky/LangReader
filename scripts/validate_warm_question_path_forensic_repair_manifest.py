@@ -29,9 +29,27 @@ def checked_file(root, path, expected_hash, label):
 def validate(manifest, root):
     require(manifest.get("schemaVersion") == 2, "unsupported schema")
     require(manifest.get("dataRole") == "diagnostic-development-forensic-repair", "invalid data role")
-    require(manifest.get("reservationStatus") == "frozen-not-executed", "repair reservation is not sealed")
-    require(manifest.get("outcomes") is None, "unexecuted repair contains outcomes")
-    require(manifest.get("consumedAtRevision") is None, "unexecuted repair is marked consumed")
+    status = manifest.get("reservationStatus")
+    require(status in {"frozen-not-executed", "consumed-complete"}, "invalid repair status")
+    if status == "frozen-not-executed":
+        require(manifest.get("outcomes") is None, "unexecuted repair contains outcomes")
+        require(manifest.get("consumedAtRevision") is None, "unexecuted repair is marked consumed")
+    else:
+        outcomes = manifest.get("outcomes")
+        revision = manifest.get("consumedAtRevision")
+        require(isinstance(outcomes, dict), "consumed repair lacks outcomes")
+        require(outcomes["executionSourceRevision"] == revision, "execution revision mismatch")
+        checked_file(root, outcomes["semanticReport"], outcomes["semanticReportSHA256"], "v2 report")
+        checked_file(root, outcomes["analysis"], outcomes["analysisSHA256"], "v2 analysis")
+        require(outcomes["selectedRuns"] == 11 and outcomes["severeCases"] == 7, "result support changed")
+        require(outcomes["v1PathAndQuestionTraceParityPassed"] is True, "repair parity hidden")
+        require(outcomes["severeWarmMissedOccurrenceMass"] == 6200, "missed mass changed")
+        require(outcomes["knownSupportingEvidenceOnMissedUnknownMass"] == 5518, "known-evidence mass changed")
+        require(outcomes["unaskedMissedOccurrenceMass"] == 682, "unasked mass changed")
+        require(
+            outcomes["resultStatus"] == "complete-selected-case-mechanism-evidence",
+            "result status changed",
+        )
 
     failed = manifest["failedAttempt"]
     original_manifest_path = checked_file(root, failed["manifest"], failed["manifestSHA256"], "v1 manifest")
@@ -64,6 +82,9 @@ def self_test(manifest, root):
     relaxed = copy.deepcopy(manifest)
     relaxed["forbiddenAccess"]["developmentConfirmation"] = False
     mutations.append(relaxed)
+    invalid_status = copy.deepcopy(manifest)
+    invalid_status["reservationStatus"] = "available-again"
+    mutations.append(invalid_status)
     for mutation in mutations:
         try:
             validate(mutation, root)
