@@ -91,6 +91,11 @@ python3 ./scripts/validate_warm_question_path_forensic_repair_manifest.py \
   ./docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-repair-manifest-v2.json \
   --self-test
 
+echo "==> Checking frozen high-consequence known-confirmation reservation"
+python3 ./scripts/validate_high_consequence_known_confirmation_manifest.py \
+  ./docs/plans/vocabulary-validation-evidence/high-consequence-known-confirmation-manifest-v1.json \
+  --self-test
+
 echo "==> Testing vocabulary domain resource builders"
 bash ./scripts/test_vocabulary_domain_resource_builders.sh
 

@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "dataRole": "diagnostic-development-feasibility",
+  "reservationStatus": "frozen-not-executed",
+  "seed": 20260914,
+  "sourceMechanismEvidence": {
+    "analysis": "docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-analysis-v2.json",
+    "analysisSHA256": "a0d89e116959c49980c9a9070485659eacd74d1a9b9bcac87e53bb68ec245f09",
+    "interpretation": "selected-case mechanism evidence only; acceptance cases use a fresh seed"
+  },
+  "candidate": {
+    "name": "high-consequence-known-double-confirmation-v1",
+    "eligibility": "an answered item has known-supporting evidence and its occurrence count alone exceeds the target miss-mass budget",
+    "missMassBudget": "floor((1 - targetCoverage) * assessableOccurrenceMass)",
+    "confirmationTiming": "after the natural assessment path and before final deck publication",
+    "independentArm": "draw occasion-1 evidence from the frozen response model using an independent deterministic seed",
+    "fullyCorrelatedArm": "reuse the original evidence as a negative control",
+    "selectionRule": "retain the production deck; additionally select an eligible item when its confirmation is missing, excluded, or does not support known",
+    "posteriorAndThetaUpdated": false,
+    "questionPathUpdated": false,
+    "maximumTotalQuestions": 80,
+    "productionActivation": false
+  },
+  "workload": {
+    "scenarios": [
+      "stable-overlap",
+      "noisy-history",
+      "biased-self-verification",
+      "easy-history-hard-evaluation",
+      "hard-history-easy-evaluation",
+      "changed-difficulty-distribution",
+      "ability-drift",
+      "low-lexical-overlap"
+    ],
+    "learnersPerScenario": 128,
+    "plannedRows": 1024,
+    "historyDocumentCount": 3,
+    "lemmaCount": 60,
+    "fixedBudget": 60,
+    "targetCoverage": 0.98,
+    "retainEveryRow": true
+  },
+  "decisionRule": {
+    "materialCoverageDegradation": -0.02,
+    "independentArmMaximumMaterialTailCount": 0,
+    "independentArmMinimumMeanCoverageDifference": -0.005,
+    "independentArmMinimumMeanQuestionReduction": 0.5,
+    "fullyCorrelatedArmIsNegativeControl": true,
+    "reportConfirmationCountDistribution": true,
+    "reportAddedKnownCardCountAndMass": true,
+    "noApprovedUXCostThreshold": true,
+    "passingDoesNotAuthorizeProduction": true,
+    "failureAction": "retain adverse evidence; do not tune occurrence eligibility or confirmation semantics from this run"
+  },
+  "requiredExternalEvidence": {
+    "repeatResponseCorrelation": true,
+    "userBurdenAcceptability": true,
+    "realLearnerCoverageAndPrecision": true
+  },
+  "forbiddenAccess": {
+    "selectedForensicCasesAsAcceptanceSet": true,
+    "developmentConfirmation": true,
+    "releaseHoldout": true,
+    "consumedPOSHeldout": true,
+    "privateGUIFixtures": true,
+    "userDatabases": true
+  },
+  "outcomes": null,
+  "consumedAtRevision": null
+}
