@@ -493,12 +493,13 @@ def self_test(path: Path) -> None:
         broken_compatibility = copy.deepcopy(report)
         broken_compatibility["runs"][0]["warmCompatibility"]["candidateCoverageDifference"] += 0.1
         mutations.append(broken_compatibility)
-    if report.get("schemaVersion") >= 4:
+    has_forensic_trace = any(run.get("forensicTrace") is not None for run in report["runs"])
+    if report.get("schemaVersion") >= 4 and has_forensic_trace:
         broken_trace = copy.deepcopy(report)
         traced_run = next(run for run in broken_trace["runs"] if run.get("forensicTrace") is not None)
         traced_run["forensicTrace"]["paths"][0]["questions"][0]["evidence"] = "invented"
         mutations.append(broken_trace)
-    if report.get("schemaVersion") >= 5:
+    if report.get("schemaVersion") >= 5 and has_forensic_trace:
         broken_final_mass = copy.deepcopy(report)
         traced_run = next(run for run in broken_final_mass["runs"] if run.get("forensicTrace") is not None)
         traced_run["forensicTrace"]["paths"][0]["finalItems"][0]["occurrenceCount"] += 1
