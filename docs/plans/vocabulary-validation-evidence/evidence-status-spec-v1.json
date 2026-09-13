@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "54ccaafae6db7d60253bfe46e0092e1885ef577d",
+  "repository_head_reviewed": "6a6c7b51162714c443d4085c947da0df3e590c61",
   "head_since_production_evidence": [
     "9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only",
     "52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only",
@@ -17,7 +17,13 @@
     "9fe53171e4822b992960142cbe2ab1653b4bd3c3: locale-stable native-access CI guard only",
     "ad26fde9edcd0c672504c503e776e76fa11a8bd4: development-only POS error decomposition only",
     "abf913cb0df95a83019514b0ee8f0a5caf522066: development-only longitudinal tail decomposition only",
-    "54ccaafae6db7d60253bfe46e0092e1885ef577d: approved study/calibration design documents; production activation remains disabled"
+    "54ccaafae6db7d60253bfe46e0092e1885ef577d: approved study/calibration design documents; production activation remains disabled",
+    "4d5544516ac2c3cd1cfc0bc064fba3dfd305cc3c: derived approved-design evidence-register refresh only",
+    "7fbc12a22fd0e9096ecd3221b9c82d4f7a5dbb3b: development-only realized replay coverage instrumentation; production policy unchanged",
+    "76d7d4e403115894b0562f1fa7ae9f6aa3d39f8c: realized replay development evidence and conditional tail decomposition only",
+    "605f842de9c48060f3a5627537f2fa78afc419c4: frozen unexecuted warm compatibility development reservation only",
+    "c77f732367d2c75dea45fd36e1b13d1a99d2c92b: development-only warm compatibility diagnostics; production minimum unchanged",
+    "6a6c7b51162714c443d4085c947da0df3e590c61: consumed adverse warm compatibility evidence; candidate rejected"
   ],
   "canonical_ledger": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
   "retained_artifacts": [
@@ -152,6 +158,24 @@
       "evidence_class": "approved study design direction",
       "status": "approved_design_collection_blocked",
       "interpretation": "Sampling, meaning, ambiguity, theta, interference, expected-rate calibration, and anchor-bank directions are adopted; SAP methods and activation remain unresolved."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/longitudinal-development-report-v3.json",
+      "evidence_class": "replicated real-store longitudinal replay-coverage diagnostic",
+      "status": "completed_adverse_with_realized_replays",
+      "interpretation": "All v2 paths remain identical; realized common-evidence coverage implicates stopping in 11/13 tails, question/evidence selection in two, and prior sensitivity in one of those two."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/longitudinal-tail-decomposition-v2.json",
+      "evidence_class": "development-only realized warm-tail decomposition",
+      "status": "completed_conditional_attribution",
+      "interpretation": "One fixed-budget failure is question-path driven; one has a path-dependent selection/prior interaction."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-development-analysis-v1.json",
+      "evidence_class": "consumed frozen warm-compatibility development result",
+      "status": "completed_candidate_rejected",
+      "interpretation": "The zero-threshold two-validation likelihood ratio left 54 material tails and the -15.99-point worst case; production remains unchanged and the threshold may not be tuned from this result."
     }
   ],
   "groups": [
@@ -202,14 +226,14 @@
       "ids": ["PRIOR-001", "PRIOR-002", "PRIOR-003"],
       "prerequisite": "Completed-session evidence in the isolated real SQLite store; no passive exposure.",
       "responsible_capability": "Core prior/store owner with App integration review",
-      "source_revision_configuration": "25197de; fixed-clock real-store longitudinal development manifest v2 with 32 learners per scenario",
-      "artifact": "docs/plans/vocabulary-validation-evidence/longitudinal-replication-checkpoint-2026-09-12.md",
-      "command_environment": "Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build",
-      "gate": "Persistence/idempotency/history behavior is verified; replicated evidence has material adverse tails and cannot establish two-point or human warm non-inferiority.",
+      "source_revision_configuration": "c77f732; fixed zero-threshold compatibility reservation with 1,024 retained development rows; production policy unchanged",
+      "artifact": "docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-checkpoint-2026-09-13.md",
+      "command_environment": "Schema-3 longitudinal diagnostic, isolated SQLite histories, four realized replay paths, frozen compatibility analyzer, and deterministic validators",
+      "gate": "Persistence/idempotency/history behavior is verified; the frozen compatibility candidate failed the zero-tail rule and cannot establish two-point or human warm non-inferiority.",
       "evidence_class": "current-candidate longitudinal diagnostic",
       "current_status": "verified_current_candidate",
-      "next_action": "Diagnose large negative-tail families on development data and retain the 180-day rule; bind confirmation only after a new candidate/decision freeze.",
-      "decision_history": "V2 retained all 512 rows: 319 eligible, 150 adverse, mean coverage change -0.2703 points, with biased/noisy tails near -13 points."
+      "next_action": "Investigate harmful early warm question/evidence paths on development data without tuning the consumed compatibility threshold; retain the 180-day rule and do not bind confirmation.",
+      "decision_history": "Realized replay attribution found stopping, selection, and path-dependent prior effects. A separately frozen 1,024-row compatibility candidate was rejected after leaving 54 material tails and the -15.99-point worst case."
     },
     {
       "name": "domain-infrastructure",

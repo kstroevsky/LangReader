@@ -2,7 +2,7 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `54ccaafae6db7d60253bfe46e0092e1885ef577d`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `6a6c7b51162714c443d4085c947da0df3e590c61`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
 Head-only changes since the production evidence candidate:
 
@@ -21,6 +21,12 @@ Head-only changes since the production evidence candidate:
 - ad26fde9edcd0c672504c503e776e76fa11a8bd4: development-only POS error decomposition only
 - abf913cb0df95a83019514b0ee8f0a5caf522066: development-only longitudinal tail decomposition only
 - 54ccaafae6db7d60253bfe46e0092e1885ef577d: approved study/calibration design documents; production activation remains disabled
+- 4d5544516ac2c3cd1cfc0bc064fba3dfd305cc3c: derived approved-design evidence-register refresh only
+- 7fbc12a22fd0e9096ecd3221b9c82d4f7a5dbb3b: development-only realized replay coverage instrumentation; production policy unchanged
+- 76d7d4e403115894b0562f1fa7ae9f6aa3d39f8c: realized replay development evidence and conditional tail decomposition only
+- 605f842de9c48060f3a5627537f2fa78afc419c4: frozen unexecuted warm compatibility development reservation only
+- c77f732367d2c75dea45fd36e1b13d1a99d2c92b: development-only warm compatibility diagnostics; production minimum unchanged
+- 6a6c7b51162714c443d4085c947da0df3e590c61: consumed adverse warm compatibility evidence; candidate rejected
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 
@@ -181,6 +187,27 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Evidence class: approved study design direction
 - Status: `approved_design_collection_blocked`
 - Interpretation: Sampling, meaning, ambiguity, theta, interference, expected-rate calibration, and anchor-bank directions are adopted; SAP methods and activation remain unresolved.
+
+### docs/plans/vocabulary-validation-evidence/longitudinal-development-report-v3.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-development-report-v3.json`](longitudinal-development-report-v3.json); SHA-256 `feebe929620967caa4359b3f0f430399c18d9f3069e5690d61fe892c1337ff49`
+- Evidence class: replicated real-store longitudinal replay-coverage diagnostic
+- Status: `completed_adverse_with_realized_replays`
+- Interpretation: All v2 paths remain identical; realized common-evidence coverage implicates stopping in 11/13 tails, question/evidence selection in two, and prior sensitivity in one of those two.
+
+### docs/plans/vocabulary-validation-evidence/longitudinal-tail-decomposition-v2.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-tail-decomposition-v2.json`](longitudinal-tail-decomposition-v2.json); SHA-256 `c0551f071c67821da2388b63a18c7702b37edf2dc894ca603af051a8e68517ba`
+- Evidence class: development-only realized warm-tail decomposition
+- Status: `completed_conditional_attribution`
+- Interpretation: One fixed-budget failure is question-path driven; one has a path-dependent selection/prior interaction.
+
+### docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-development-analysis-v1.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-development-analysis-v1.json`](longitudinal-compatibility-development-analysis-v1.json); SHA-256 `3e9d83f345d6c8cfaf6aee164d7d81c131e488162aaf15a91c9c1702a05e7323`
+- Evidence class: consumed frozen warm-compatibility development result
+- Status: `completed_candidate_rejected`
+- Interpretation: The zero-threshold two-validation likelihood ratio left 54 material tails and the -15.99-point worst case; production remains unchanged and the threshold may not be tuned from this result.
 
 ## Failed evidence or gate
 
@@ -674,13 +701,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Completed-session evidence in the isolated real SQLite store; no passive exposure.
 - Responsible capability: Core prior/store owner with App integration review
-- Source revision/configuration: 25197de; fixed-clock real-store longitudinal development manifest v2 with 32 learners per scenario
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-replication-checkpoint-2026-09-12.md`](longitudinal-replication-checkpoint-2026-09-12.md); SHA-256 `352625b53e564d4b124ce4c22219c5d97d39542cf1c101bd3c98f7512ae6f9a6`
-- Command/environment: Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build
-- Gate: Persistence/idempotency/history behavior is verified; replicated evidence has material adverse tails and cannot establish two-point or human warm non-inferiority.
+- Source revision/configuration: c77f732; fixed zero-threshold compatibility reservation with 1,024 retained development rows; production policy unchanged
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-checkpoint-2026-09-13.md`](longitudinal-compatibility-checkpoint-2026-09-13.md); SHA-256 `37b939ce02afe0e79708c9c2ead60205e18cc145a46087bc7de3eca784007b81`
+- Command/environment: Schema-3 longitudinal diagnostic, isolated SQLite histories, four realized replay paths, frozen compatibility analyzer, and deterministic validators
+- Gate: Persistence/idempotency/history behavior is verified; the frozen compatibility candidate failed the zero-tail rule and cannot establish two-point or human warm non-inferiority.
 - Evidence class: current-candidate longitudinal diagnostic
-- Next action: Diagnose large negative-tail families on development data and retain the 180-day rule; bind confirmation only after a new candidate/decision freeze.
-- Decision history: V2 retained all 512 rows: 319 eligible, 150 adverse, mean coverage change -0.2703 points, with biased/noisy tails near -13 points.
+- Next action: Investigate harmful early warm question/evidence paths on development data without tuning the consumed compatibility threshold; retain the 180-day rule and do not bind confirmation.
+- Decision history: Realized replay attribution found stopping, selection, and path-dependent prior effects. A separately frozen 1,024-row compatibility candidate was rejected after leaving 54 material tails and the -15.99-point worst case.
 
 ### PRIOR-002 — Warm prior mixture and eligibility.
 
@@ -688,13 +715,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Completed-session evidence in the isolated real SQLite store; no passive exposure.
 - Responsible capability: Core prior/store owner with App integration review
-- Source revision/configuration: 25197de; fixed-clock real-store longitudinal development manifest v2 with 32 learners per scenario
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-replication-checkpoint-2026-09-12.md`](longitudinal-replication-checkpoint-2026-09-12.md); SHA-256 `352625b53e564d4b124ce4c22219c5d97d39542cf1c101bd3c98f7512ae6f9a6`
-- Command/environment: Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build
-- Gate: Persistence/idempotency/history behavior is verified; replicated evidence has material adverse tails and cannot establish two-point or human warm non-inferiority.
+- Source revision/configuration: c77f732; fixed zero-threshold compatibility reservation with 1,024 retained development rows; production policy unchanged
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-checkpoint-2026-09-13.md`](longitudinal-compatibility-checkpoint-2026-09-13.md); SHA-256 `37b939ce02afe0e79708c9c2ead60205e18cc145a46087bc7de3eca784007b81`
+- Command/environment: Schema-3 longitudinal diagnostic, isolated SQLite histories, four realized replay paths, frozen compatibility analyzer, and deterministic validators
+- Gate: Persistence/idempotency/history behavior is verified; the frozen compatibility candidate failed the zero-tail rule and cannot establish two-point or human warm non-inferiority.
 - Evidence class: current-candidate longitudinal diagnostic
-- Next action: Diagnose large negative-tail families on development data and retain the 180-day rule; bind confirmation only after a new candidate/decision freeze.
-- Decision history: V2 retained all 512 rows: 319 eligible, 150 adverse, mean coverage change -0.2703 points, with biased/noisy tails near -13 points.
+- Next action: Investigate harmful early warm question/evidence paths on development data without tuning the consumed compatibility threshold; retain the 180-day rule and do not bind confirmation.
+- Decision history: Realized replay attribution found stopping, selection, and path-dependent prior effects. A separately frozen 1,024-row compatibility candidate was rejected after leaving 54 material tails and the -15.99-point worst case.
 
 ### PRIOR-003 — Cross-book adaptation defaults on and is independently resettable.
 
@@ -702,13 +729,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `verified_current_candidate`
 - Prerequisite: Completed-session evidence in the isolated real SQLite store; no passive exposure.
 - Responsible capability: Core prior/store owner with App integration review
-- Source revision/configuration: 25197de; fixed-clock real-store longitudinal development manifest v2 with 32 learners per scenario
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-replication-checkpoint-2026-09-12.md`](longitudinal-replication-checkpoint-2026-09-12.md); SHA-256 `352625b53e564d4b124ce4c22219c5d97d39542cf1c101bd3c98f7512ae6f9a6`
-- Command/environment: Longitudinal diagnostic script, isolated SQLite tests, and ./scripts/check.sh --no-build
-- Gate: Persistence/idempotency/history behavior is verified; replicated evidence has material adverse tails and cannot establish two-point or human warm non-inferiority.
+- Source revision/configuration: c77f732; fixed zero-threshold compatibility reservation with 1,024 retained development rows; production policy unchanged
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-checkpoint-2026-09-13.md`](longitudinal-compatibility-checkpoint-2026-09-13.md); SHA-256 `37b939ce02afe0e79708c9c2ead60205e18cc145a46087bc7de3eca784007b81`
+- Command/environment: Schema-3 longitudinal diagnostic, isolated SQLite histories, four realized replay paths, frozen compatibility analyzer, and deterministic validators
+- Gate: Persistence/idempotency/history behavior is verified; the frozen compatibility candidate failed the zero-tail rule and cannot establish two-point or human warm non-inferiority.
 - Evidence class: current-candidate longitudinal diagnostic
-- Next action: Diagnose large negative-tail families on development data and retain the 180-day rule; bind confirmation only after a new candidate/decision freeze.
-- Decision history: V2 retained all 512 rows: 319 eligible, 150 adverse, mean coverage change -0.2703 points, with biased/noisy tails near -13 points.
+- Next action: Investigate harmful early warm question/evidence paths on development data without tuning the consumed compatibility threshold; retain the 180-day rule and do not bind confirmation.
+- Decision history: Realized replay attribution found stopping, selection, and path-dependent prior effects. A separately frozen 1,024-row compatibility candidate was rejected after leaving 54 material tails and the -15.99-point worst case.
 
 ### DOMAIN-001 — Record domain metadata without production difficulty effect.
 
