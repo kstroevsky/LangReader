@@ -44,6 +44,8 @@ private struct LongitudinalManifest: Codable {
     let decisionRule: String
     let includedRunIDs: [String]?
     let traceRunIDs: [String]?
+    let diagnosticHighConsequenceConfirmation: Bool?
+    let confirmationOccasionIndex: Int?
 }
 
 private struct LongitudinalSource: Codable {
@@ -81,6 +83,7 @@ private struct LongitudinalRun: Codable {
     let warmFixedPathUnderColdPrior: LongitudinalReplay
     let warmCompatibility: LongitudinalWarmCompatibility
     let forensicTrace: LongitudinalForensicTrace?
+    let highConsequenceConfirmation: LongitudinalHighConsequenceConfirmation?
     let naturalQuestionReduction: Double
     let naturalCoverageDifference: Double
     let fixedBudgetCoverageDifference: Double
@@ -239,6 +242,43 @@ private struct LongitudinalForensicItem: Codable {
     let finalKnownProbability: Double
     let finalClassification: String
     let selectedInFinalDeck: Bool
+}
+
+private struct LongitudinalHighConsequenceConfirmation: Codable {
+    let applicable: Bool
+    let missMassBudget: Int
+    let confirmations: [LongitudinalConfirmationItem]
+    let independentArm: LongitudinalConfirmationArm
+    let fullyCorrelatedArm: LongitudinalConfirmationArm
+    let interpretation: String
+}
+
+private struct LongitudinalConfirmationItem: Codable {
+    let canonicalKey: String
+    let occurrenceCount: Int
+    let truthKnown: Bool
+    let originalEvidence: String
+    let independentConfirmationEvidence: String
+    let fullyCorrelatedConfirmationEvidence: String
+    let selectedInProductionDeck: Bool
+    let selectedByIndependentSafeguard: Bool
+    let selectedByFullyCorrelatedSafeguard: Bool
+}
+
+private struct LongitudinalConfirmationArm: Codable {
+    let confirmationCount: Int
+    let totalQuestionCount: Int
+    let questionCeilingExceeded: Bool
+    let addedSelectedCount: Int
+    let addedKnownCardCount: Int
+    let addedKnownOccurrenceMass: Int
+    let addedUnknownCardCount: Int
+    let addedUnknownOccurrenceMass: Int
+    let selectedCount: Int
+    let missedOccurrenceMass: Int
+    let realizedProjectedCoverage: Double
+    let coverageDifferenceFromCold: Double
+    let questionReductionFromCold: Double
 }
 
 private struct LongitudinalTimingReport: Codable {
@@ -669,6 +709,19 @@ func runVocabularyLongitudinalDiagnostics(
             } else {
                 forensicTrace = nil
             }
+            let highConsequenceConfirmation: LongitudinalHighConsequenceConfirmation?
+            if manifest.diagnosticHighConsequenceConfirmation == true {
+                highConsequenceConfirmation = try longitudinalHighConsequenceConfirmation(
+                    coldNatural: coldNatural,
+                    warmNatural: warmNatural,
+                    truths: evaluationTruth,
+                    manifest: manifest,
+                    scenario: scenario,
+                    runID: runID
+                )
+            } else {
+                highConsequenceConfirmation = nil
+            }
             runs.append(LongitudinalRun(
                 runID: runID,
                 scenario: scenario.rawValue,
@@ -690,6 +743,7 @@ func runVocabularyLongitudinalDiagnostics(
                 warmFixedPathUnderColdPrior: warmFixedUnderCold,
                 warmCompatibility: compatibility,
                 forensicTrace: forensicTrace,
+                highConsequenceConfirmation: highConsequenceConfirmation,
                 naturalQuestionReduction: coldNatural.path.questionCount > 0
                     ? 1 - Double(warmNatural.path.questionCount) / Double(coldNatural.path.questionCount)
                     : 0,
@@ -712,7 +766,9 @@ func runVocabularyLongitudinalDiagnostics(
         }
     }
     let report = LongitudinalReport(
-        schemaVersion: traceRunIDs.isEmpty ? 3 : 5,
+        schemaVersion: manifest.diagnosticHighConsequenceConfirmation == true
+            ? 6
+            : (traceRunIDs.isEmpty ? 3 : 5),
         interpretation: "Development-only synthetic longitudinal evidence using the production SQLite prior store and completion contract. Oracle-informed warm diagnostics remain separate; this report is not real-learner calibration or release acceptance.",
         manifest: manifest,
         source: source,
@@ -800,6 +856,10 @@ private func validateLongitudinalManifest(_ manifest: LongitudinalManifest) thro
               Set(traced).isSubset(of: allowed) else {
             throw LongitudinalFailure.invalidManifest("trace run IDs")
         }
+    }
+    if manifest.diagnosticHighConsequenceConfirmation == true,
+       manifest.confirmationOccasionIndex != 1 {
+        throw LongitudinalFailure.invalidManifest("high-consequence confirmation occasion")
     }
 }
 
@@ -902,24 +962,40 @@ private func longitudinalResponses(
         )
         let draw = generator.unit()
         let known = truths[candidate.canonicalKey]?.known == true
-        let evidence: VocabularyKnowledgeEvidence
-        if scenario == .lowVerifiedHistory, sessionID.hasPrefix("history") {
-            evidence = known ? .legacyKnown : .legacyUnknown
-        } else if scenario == .biasedSelfVerification, !known, draw < manifest.biasedKnownResponseRate {
-            evidence = .verifiedKnown
-        } else if known {
-            let noise = scenario == .noisyHistory && sessionID.hasPrefix("history")
-                ? manifest.responseNoiseRate
-                : 0.03
-            evidence = draw < noise ? .verifiedUnknownOrPartial : (draw < noise + 0.03 ? .unsure : .verifiedKnown)
-        } else {
-            let noise = scenario == .noisyHistory && sessionID.hasPrefix("history")
-                ? manifest.responseNoiseRate
-                : 0.02
-            evidence = draw < noise ? .verifiedKnown : (draw < noise + 0.04 ? .unsure : .reportedUnknown)
-        }
+        let evidence = longitudinalResponseEvidence(
+            known: known,
+            draw: draw,
+            manifest: manifest,
+            scenario: scenario,
+            sessionID: sessionID
+        )
         return (candidate.canonicalKey, LongitudinalResponse(evidence: evidence, draw: draw))
     })
+}
+
+private func longitudinalResponseEvidence(
+    known: Bool,
+    draw: Double,
+    manifest: LongitudinalManifest,
+    scenario: LongitudinalScenario,
+    sessionID: String
+) -> VocabularyKnowledgeEvidence {
+    if scenario == .lowVerifiedHistory, sessionID.hasPrefix("history") {
+        return known ? .legacyKnown : .legacyUnknown
+    }
+    if scenario == .biasedSelfVerification, !known, draw < manifest.biasedKnownResponseRate {
+        return .verifiedKnown
+    }
+    if known {
+        let noise = scenario == .noisyHistory && sessionID.hasPrefix("history")
+            ? manifest.responseNoiseRate
+            : 0.03
+        return draw < noise ? .verifiedUnknownOrPartial : (draw < noise + 0.03 ? .unsure : .verifiedKnown)
+    }
+    let noise = scenario == .noisyHistory && sessionID.hasPrefix("history")
+        ? manifest.responseNoiseRate
+        : 0.02
+    return draw < noise ? .verifiedKnown : (draw < noise + 0.04 ? .unsure : .reportedUnknown)
 }
 
 private func runNaturalLongitudinalAssessment(
@@ -1280,6 +1356,123 @@ private func longitudinalForensicTrace(
     return LongitudinalForensicTrace(
         paths: pathTraces,
         interpretation: "Selected-case development trace only; hidden truth is synthetic and the case set is outcome-biased."
+    )
+}
+
+private func longitudinalHighConsequenceConfirmation(
+    coldNatural: LongitudinalPathBuild,
+    warmNatural: LongitudinalPathBuild,
+    truths: [String: LongitudinalTruth],
+    manifest: LongitudinalManifest,
+    scenario: LongitudinalScenario,
+    runID: String
+) throws -> LongitudinalHighConsequenceConfirmation {
+    let result = warmNatural.assessment.result()
+    let included = result.items.filter { $0.classification != .excluded }
+    let denominator = included.reduce(0) { $0 + $1.candidate.occurrenceCount }
+    let missMassBudget = Int(floor((1 - manifest.targetCoverage) * Double(denominator)))
+    let answers = Dictionary(uniqueKeysWithValues: warmNatural.assessment.answers.map {
+        ($0.canonicalKey, $0)
+    })
+    let applicable = warmNatural.assessment.usedEligibleReaderPrior
+    var confirmationEvidence: [String: (
+        item: VocabularyAssessmentResultItem,
+        truth: LongitudinalTruth,
+        original: VocabularyKnowledgeEvidence,
+        independent: VocabularyKnowledgeEvidence
+    )] = [:]
+    if applicable {
+        for item in included {
+            guard item.candidate.occurrenceCount > missMassBudget,
+                  let original = answers[item.id]?.evidence,
+                  original.supportsKnown,
+                  let truth = truths[item.id] else {
+                continue
+            }
+            let occasion = manifest.confirmationOccasionIndex ?? 1
+            var generator = LongitudinalGenerator(
+                seed: derivedLongitudinalSeed(
+                    manifest.seed,
+                    "response:\(runID):evaluation:\(item.id):occasion-\(occasion)"
+                )
+            )
+            let independent = longitudinalResponseEvidence(
+                known: truth.known,
+                draw: generator.unit(),
+                manifest: manifest,
+                scenario: scenario,
+                sessionID: "evaluation"
+            )
+            confirmationEvidence[item.id] = (item, truth, original, independent)
+        }
+    }
+    let confirmations = confirmationEvidence.values.sorted {
+        $0.item.id < $1.item.id
+    }.map { value in
+        LongitudinalConfirmationItem(
+            canonicalKey: value.item.id,
+            occurrenceCount: value.item.candidate.occurrenceCount,
+            truthKnown: value.truth.known,
+            originalEvidence: value.original.rawValue,
+            independentConfirmationEvidence: value.independent.rawValue,
+            fullyCorrelatedConfirmationEvidence: value.original.rawValue,
+            selectedInProductionDeck: value.item.isSelected,
+            selectedByIndependentSafeguard: !value.independent.supportsKnown,
+            selectedByFullyCorrelatedSafeguard: !value.original.supportsKnown
+        )
+    }
+    let productionSelection = Set(result.items.filter(\.isSelected).map(\.id))
+
+    func arm(confirmation: (VocabularyKnowledgeEvidence, VocabularyKnowledgeEvidence) -> VocabularyKnowledgeEvidence) throws -> LongitudinalConfirmationArm {
+        var selected = productionSelection
+        for value in confirmationEvidence.values {
+            if !confirmation(value.original, value.independent).supportsKnown {
+                selected.insert(value.item.id)
+            }
+        }
+        let added = selected.subtracting(productionSelection)
+        let addedItems = try added.map { key -> VocabularyAssessmentResultItem in
+            guard let item = result.items.first(where: { $0.id == key }) else {
+                throw LongitudinalFailure.missingValue("confirmation item \(key)")
+            }
+            return item
+        }
+        let missed = included.reduce(0) { partial, item in
+            partial + (truths[item.id]?.known == false && !selected.contains(item.id)
+                ? item.candidate.occurrenceCount
+                : 0)
+        }
+        let coverage = denominator == 0 ? 1 : 1 - Double(missed) / Double(denominator)
+        let totalQuestions = warmNatural.path.questionCount + confirmations.count
+        return LongitudinalConfirmationArm(
+            confirmationCount: confirmations.count,
+            totalQuestionCount: totalQuestions,
+            questionCeilingExceeded: totalQuestions > 80,
+            addedSelectedCount: addedItems.count,
+            addedKnownCardCount: addedItems.filter { truths[$0.id]?.known == true }.count,
+            addedKnownOccurrenceMass: addedItems.reduce(0) { partial, item in
+                partial + (truths[item.id]?.known == true ? item.candidate.occurrenceCount : 0)
+            },
+            addedUnknownCardCount: addedItems.filter { truths[$0.id]?.known == false }.count,
+            addedUnknownOccurrenceMass: addedItems.reduce(0) { partial, item in
+                partial + (truths[item.id]?.known == false ? item.candidate.occurrenceCount : 0)
+            },
+            selectedCount: selected.count,
+            missedOccurrenceMass: missed,
+            realizedProjectedCoverage: coverage,
+            coverageDifferenceFromCold: coverage - coldNatural.path.realizedProjectedCoverage,
+            questionReductionFromCold: coldNatural.path.questionCount > 0
+                ? 1 - Double(totalQuestions) / Double(coldNatural.path.questionCount)
+                : 0
+        )
+    }
+    return LongitudinalHighConsequenceConfirmation(
+        applicable: applicable,
+        missMassBudget: missMassBudget,
+        confirmations: confirmations,
+        independentArm: try arm { _, independent in independent },
+        fullyCorrelatedArm: try arm { original, _ in original },
+        interpretation: "Development-only post-path feasibility overlay. Independent and fully correlated repeat-response arms bracket an unknown human correlation; production is unchanged."
     )
 }
 

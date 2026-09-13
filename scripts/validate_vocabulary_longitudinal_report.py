@@ -230,6 +230,99 @@ def validate_forensic_trace(run: dict[str, Any], require_final_items: bool) -> N
             )
 
 
+def validate_high_consequence_confirmation(run: dict[str, Any], manifest: dict[str, Any]) -> None:
+    diagnostic = run.get("highConsequenceConfirmation")
+    require(diagnostic is not None, "high-consequence diagnostic missing")
+    require(diagnostic["applicable"] == run["expectedWarmEligibility"], "confirmation applicability mismatch")
+    denominator = run["warmNatural"]["assessableOccurrenceMass"]
+    expected_budget = math.floor((1 - manifest["targetCoverage"]) * denominator)
+    require(diagnostic["missMassBudget"] == expected_budget, "confirmation miss budget mismatch")
+    confirmations = diagnostic["confirmations"]
+    require(
+        len({item["canonicalKey"] for item in confirmations}) == len(confirmations),
+        "confirmation identity repeated",
+    )
+    evidence_values = {
+        "verifiedKnown", "typedVerifiedKnown", "verifiedUnknownOrPartial",
+        "reportedUnknown", "unsure", "legacyKnown", "legacyUnknown", "excluded",
+    }
+    known_supporting = {"verifiedKnown", "typedVerifiedKnown", "legacyKnown"}
+    for item in confirmations:
+        require(item["occurrenceCount"] > expected_budget, "confirmation item is not high consequence")
+        require(item["originalEvidence"] in known_supporting, "confirmation original evidence is not known-supporting")
+        require(item["independentConfirmationEvidence"] in evidence_values, "invalid independent confirmation evidence")
+        require(
+            item["fullyCorrelatedConfirmationEvidence"] == item["originalEvidence"],
+            "fully correlated confirmation changed evidence",
+        )
+        require(
+            item["selectedByIndependentSafeguard"]
+            == (item["independentConfirmationEvidence"] not in known_supporting),
+            "independent safeguard decision mismatch",
+        )
+        require(item["selectedByFullyCorrelatedSafeguard"] is False, "correlated safeguard selected item")
+    if not diagnostic["applicable"]:
+        require(not confirmations, "inapplicable confirmation produced questions")
+
+    def validate_arm(arm: dict[str, Any], selection_field: str) -> None:
+        added = [
+            item for item in confirmations
+            if item[selection_field] and not item["selectedInProductionDeck"]
+        ]
+        added_known = [item for item in added if item["truthKnown"]]
+        added_unknown = [item for item in added if not item["truthKnown"]]
+        require(arm["confirmationCount"] == len(confirmations), "confirmation count mismatch")
+        expected_questions = run["warmNatural"]["questionCount"] + len(confirmations)
+        require(arm["totalQuestionCount"] == expected_questions, "confirmation question count mismatch")
+        require(arm["questionCeilingExceeded"] == (expected_questions > 80), "question ceiling flag mismatch")
+        require(arm["addedSelectedCount"] == len(added), "added selected count mismatch")
+        require(arm["addedKnownCardCount"] == len(added_known), "added known-card count mismatch")
+        require(
+            arm["addedKnownOccurrenceMass"] == sum(item["occurrenceCount"] for item in added_known),
+            "added known mass mismatch",
+        )
+        require(arm["addedUnknownCardCount"] == len(added_unknown), "added unknown-card count mismatch")
+        added_unknown_mass = sum(item["occurrenceCount"] for item in added_unknown)
+        require(arm["addedUnknownOccurrenceMass"] == added_unknown_mass, "added unknown mass mismatch")
+        require(
+            arm["selectedCount"] == run["warmNatural"]["selectedCount"] + len(added),
+            "confirmation selected count mismatch",
+        )
+        require(
+            arm["missedOccurrenceMass"]
+            == run["warmNatural"]["missedOccurrenceMass"] - added_unknown_mass,
+            "confirmation missed mass mismatch",
+        )
+        expected_coverage = 1 if denominator == 0 else 1 - arm["missedOccurrenceMass"] / denominator
+        require(
+            math.isclose(arm["realizedProjectedCoverage"], expected_coverage, abs_tol=1e-12),
+            "confirmation coverage mismatch",
+        )
+        require(
+            math.isclose(
+                arm["coverageDifferenceFromCold"],
+                arm["realizedProjectedCoverage"] - run["coldNatural"]["realizedProjectedCoverage"],
+                abs_tol=1e-12,
+            ),
+            "confirmation cold coverage difference mismatch",
+        )
+        cold_questions = run["coldNatural"]["questionCount"]
+        expected_reduction = 0 if cold_questions == 0 else 1 - expected_questions / cold_questions
+        require(
+            math.isclose(arm["questionReductionFromCold"], expected_reduction, abs_tol=1e-12),
+            "confirmation question reduction mismatch",
+        )
+
+    validate_arm(diagnostic["independentArm"], "selectedByIndependentSafeguard")
+    validate_arm(diagnostic["fullyCorrelatedArm"], "selectedByFullyCorrelatedSafeguard")
+    correlated = diagnostic["fullyCorrelatedArm"]
+    require(correlated["addedSelectedCount"] == 0, "correlated negative control changed deck")
+    require(
+        correlated["missedOccurrenceMass"] == run["warmNatural"]["missedOccurrenceMass"],
+        "correlated negative control changed missed mass",
+    )
+
+
 def production_eligible(prior: dict[str, Any] | None, evaluation_time: float) -> bool:
     if prior is None:
         return False
@@ -329,6 +422,8 @@ def validate_run(run: dict[str, Any], manifest: dict[str, Any], report_schema: i
         validate_compatibility(run)
     if report_schema >= 4 and run.get("forensicTrace") is not None:
         validate_forensic_trace(run, require_final_items=report_schema >= 5)
+    if report_schema >= 6:
+        validate_high_consequence_confirmation(run, manifest)
 
     if scenario == "failed-write-retry":
         first = next(event for event in run["historyEvents"] if event["disposition"] == "completed")
@@ -339,7 +434,7 @@ def validate_run(run: dict[str, Any], manifest: dict[str, Any], report_schema: i
 
 def validate_report(report: dict[str, Any]) -> None:
     report_schema = report.get("schemaVersion")
-    require(report_schema in (1, 2, 3, 4, 5), "unsupported report schema")
+    require(report_schema in (1, 2, 3, 4, 5, 6), "unsupported report schema")
     manifest = report["manifest"]
     require(manifest["schemaVersion"] == 1, "unsupported manifest schema")
     require(manifest["dataRole"] == "diagnostic-development", "confirmation/holdout role forbidden")
@@ -354,6 +449,16 @@ def validate_report(report: dict[str, Any]) -> None:
         require(
             all((run.get("forensicTrace") is not None) == (run["runID"] in manifest["traceRunIDs"]) for run in runs),
             "forensic trace inclusion mismatch",
+        )
+    if report_schema >= 6:
+        require(
+            manifest.get("diagnosticHighConsequenceConfirmation") is True
+            and manifest.get("confirmationOccasionIndex") == 1,
+            "high-consequence report manifest mismatch",
+        )
+        require(
+            all(run.get("highConsequenceConfirmation") is not None for run in runs),
+            "high-consequence run output missing",
         )
     for run in runs:
         validate_run(run, manifest, report_schema)
@@ -398,6 +503,10 @@ def self_test(path: Path) -> None:
         traced_run = next(run for run in broken_final_mass["runs"] if run.get("forensicTrace") is not None)
         traced_run["forensicTrace"]["paths"][0]["finalItems"][0]["occurrenceCount"] += 1
         mutations.append(broken_final_mass)
+    if report.get("schemaVersion") >= 6:
+        broken_confirmation = copy.deepcopy(report)
+        broken_confirmation["runs"][0]["highConsequenceConfirmation"]["independentArm"]["missedOccurrenceMass"] += 1
+        mutations.append(broken_confirmation)
     for mutation in mutations:
         try:
             validate_report(mutation)

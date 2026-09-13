@@ -95,6 +95,7 @@ echo "==> Checking frozen high-consequence known-confirmation reservation"
 python3 ./scripts/validate_high_consequence_known_confirmation_manifest.py \
   ./docs/plans/vocabulary-validation-evidence/high-consequence-known-confirmation-manifest-v1.json \
   --self-test
+python3 ./scripts/build_high_consequence_known_confirmation_run_manifest.py --check
 
 echo "==> Testing vocabulary domain resource builders"
 bash ./scripts/test_vocabulary_domain_resource_builders.sh

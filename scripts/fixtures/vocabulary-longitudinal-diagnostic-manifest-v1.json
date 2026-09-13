@@ -6,6 +6,7 @@
   "dataRole": "diagnostic-development",
   "decisionRule": "Retain eligible, ineligible, adverse and null histories; do not treat this fixture as release evidence.",
   "difficultyShift": 1.25,
+  "diagnosticHighConsequenceConfirmation": true,
   "fixedBudget": 60,
   "historyDocumentCount": 3,
   "itemResidualStandardDeviation": 0.5,
@@ -24,6 +25,7 @@
   "stableOverlapShare": 0.65,
   "targetCoverage": 0.98,
   "timingRepetitions": 1,
+  "confirmationOccasionIndex": 1,
   "traceRunIDs": [
     "stable-overlap:learner-0"
   ]
