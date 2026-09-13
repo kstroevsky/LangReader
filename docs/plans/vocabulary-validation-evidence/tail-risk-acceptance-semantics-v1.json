@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "status": "definitions-frozen-release-decision-blocked",
+  "sourceLock": "docs/plans/vocabulary-validation-evidence/tail-risk-acceptance-source-lock-v1.json",
+  "delta": "docs/plans/vocabulary-validation-evidence/tail-risk-acceptance-delta-v1.json",
+  "ledger": "docs/plans/vocabulary-validation-evidence/tail-risk-acceptance-ledger-v1.json",
+  "claimBoundary": {
+    "posteriorPredictive": {
+      "formula": "Q_0.05(C | E) >= 0.98",
+      "interpretation": "approximately 95% of posterior-predictive coverage worlds meet 0.98 under the fitted model and evidence",
+      "doesNotPromise": "absence of rare consequential realized evidence errors"
+    },
+    "realizedTailRisk": {
+      "unit": "learner-document assessment",
+      "targetCoverage": 0.98,
+      "coverageSource": "independently scored criterion audit under the approved sampling estimator",
+      "shortfall": "L = max(0, 0.98 - C_realized)"
+    }
+  },
+  "tailMetrics": {
+    "severeMissRate": {
+      "formula": "P_severe(c_severe) = Pr(C_realized < c_severe)",
+      "releaseSevereCoverageThreshold": null,
+      "developmentReferenceCoverage": 0.96,
+      "developmentReferenceRole": "illustrative continuation of the existing two-percentage-point development materiality boundary; not a release gate"
+    },
+    "conditionalSevereExpectedShortfall": {
+      "formula": "ES_severe(c_severe) = E[L | C_realized < c_severe]",
+      "zeroSevereEventConvention": "not estimable; report event support and the frequency upper bound"
+    },
+    "unconditionalMeanShortfall": {
+      "formula": "E[L]",
+      "role": "frequency-severity guardrail"
+    },
+    "worstObservedShortfall": {
+      "role": "descriptive diagnostic only",
+      "reason": "sample-size dependent and not a standalone probability claim"
+    }
+  },
+  "humanEstimationContract": {
+    "weights": "use approved item inclusion probabilities for the criterion-audit estimand",
+    "dependence": ["participant", "opaque study document", "repeated lexical item when applicable"],
+    "zeroObservedSevereMisses": "never report as zero risk; report a one-sided upper uncertainty bound under the approved method",
+    "requiredStrataSupport": ["language", "genre", "document format", "cold/warm condition"],
+    "retainStatuses": ["missing", "criterion-ambiguous", "abandoned", "failed lookup", "protocol deviation"],
+    "rowCountMayReplaceIndependentSupport": false
+  },
+  "warmComparisonContract": {
+    "pairedContrasts": [
+      "warm-minus-cold severe-miss rate",
+      "warm-minus-cold conditional severe expected shortfall",
+      "warm-minus-cold unconditional mean shortfall",
+      "warm-minus-cold question burden"
+    ],
+    "pooledMeanCoverageAloneSufficient": false,
+    "tailNonInferiorityMargins": null
+  },
+  "releaseDecisionFields": {
+    "tailComponentsRequiredForRelease": null,
+    "releaseSevereCoverageThreshold": null,
+    "maximumSevereMissRate": null,
+    "maximumConditionalSevereExpectedShortfall": null,
+    "maximumUnconditionalMeanShortfall": null,
+    "estimator": null,
+    "intervalConstruction": null,
+    "confidenceLevel": null,
+    "multiplicityRule": null,
+    "approvers": [],
+    "approvalRevision": null
+  },
+  "evidenceRoles": {
+    "syntheticDevelopment": "mechanism diagnosis and candidate-specific screens only",
+    "developmentConfirmation": "one-time evaluation after candidate and numerical decision fields are frozen",
+    "releaseHoldout": "last synthetic release gate after development-confirmation progression",
+    "realLearnerHoldout": "required source for human severe-tail frequency/severity claims",
+    "priorZeroMaterialTailRules": "candidate-specific development rules; not retrospective release semantics"
+  },
+  "preservedBoundaries": {
+    "productionCATChanged": false,
+    "canonicalEVAL001Changed": false,
+    "canonicalRISK001Status": "deferred",
+    "empiricalRiskCalibrationProductionEnabled": false,
+    "nextSyntheticSafeguardAllowed": false,
+    "developmentConfirmationAccessAllowed": false,
+    "releaseHoldoutAccessAllowed": false
+  },
+  "unblockRule": "An authorized statistical/release review must fill every applicable releaseDecisionFields value before another safeguard receives an acceptance run or the development-confirmation reservation is bound."
+}

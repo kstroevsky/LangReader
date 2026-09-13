@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-09-14",
+  "baseRevision": "5d3ef1411b98f82659ed3c74008f9a307b6486c1",
+  "baseArtifacts": {
+    "implementationPlanSHA256": "93100e889355145526f75f0347ee9b835185a7aa9458929db951d2f24607e05f",
+    "canonicalLedgerSHA256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4",
+    "sapTemplateSHA256": "a9ede553798fc32565c40e9b0e4c9a118384eedd464d3d52603da346e1101cc4"
+  },
+  "candidateArtifacts": {
+    "sourceLockSHA256": "fce81424564ea85dd17c0c68fbf8d38321084146e51ba5db28b6729a8e43c987",
+    "deltaSHA256": "b58a86cd0cc39905ec0014193eb6eda47080cb61c3d273aad6e6ae05d817f8d9",
+    "ledgerSHA256": "efac08e96f676f9d648e43a1dd52ab6df84f0409d89e430567535605c9a7c7aa",
+    "contractJSONSHA256": "d8f6dcf9bcb46e55105977e6c839c056d940b3107b25622395512e125c8ab69e",
+    "contractMarkdownSHA256": "0813f09e339a10b994a1ab9113fc156f7afdf036e153ac1893ab8dba04423aaa"
+  },
+  "deltaItems": {
+    "implemented": 3,
+    "total": 3
+  },
+  "requirements": {
+    "activePresent": 10,
+    "activeTotal": 10,
+    "deferredExplicit": 2,
+    "deferredTotal": 2
+  },
+  "preservation": {
+    "existingPlanSectionsChanged": 0,
+    "canonicalRequirementChanges": 0,
+    "sapTemplateChanges": 0,
+    "exactContractChangesOutsideDelta": 0,
+    "risk001StillDeferred": true,
+    "productionCATChanged": false,
+    "developmentConfirmationAccessed": false,
+    "releaseHoldoutAccessed": false
+  },
+  "validation": {
+    "sourceLock": "passed",
+    "deltaCoverage": "passed",
+    "formulaAndUnitAnchors": "passed",
+    "nullApprovalFields": "passed",
+    "negativeControls": "passed",
+    "crossInterfaceReview": "passed",
+    "standaloneReview": "passed",
+    "independentForwardReview": "not-performed-no-subagent-authority"
+  },
+  "disposition": "definitions-verified-independent-review-pending-release-values-blocked"
+}

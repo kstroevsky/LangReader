@@ -97,6 +97,9 @@ python3 ./scripts/validate_high_consequence_known_confirmation_manifest.py \
   --self-test
 python3 ./scripts/build_high_consequence_known_confirmation_run_manifest.py --check
 
+echo "==> Checking vocabulary tail-risk acceptance definitions"
+python3 ./scripts/validate_vocabulary_tail_risk_contract.py --self-test
+
 echo "==> Testing vocabulary domain resource builders"
 bash ./scripts/test_vocabulary_domain_resource_builders.sh
 
