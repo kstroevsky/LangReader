@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "023d0c46d59da6b368f9420643017befd7232066",
+  "repository_head_reviewed": "683e147af1249129488fea3fdb159d4990fa7a14",
   "head_since_production_evidence": [
     "9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only",
     "52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only",
@@ -42,7 +42,9 @@
     "f3543f65b1682d83190a2a73824da240a05feb74: derived rejected-confirmation evidence-register refresh only",
     "8d4f22bdbabc2ea9923d07d5f77e63c1205ce317: generated code-map refresh only",
     "5d3ef1411b98f82659ed3c74008f9a307b6486c1: derived rejected-confirmation evidence-register refresh only",
-    "023d0c46d59da6b368f9420643017befd7232066: additive tail-risk definitions and validator; numerical release decisions remain blocked"
+    "023d0c46d59da6b368f9420643017befd7232066: additive tail-risk definitions and validator; numerical release decisions remain blocked",
+    "4ccd96107d034a0d630c3521b9b262323a5da62d: derived tail-risk evidence-register refresh only",
+    "683e147af1249129488fea3fdb159d4990fa7a14: generated code-map refresh only"
   ],
   "canonical_ledger": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
   "retained_artifacts": [
