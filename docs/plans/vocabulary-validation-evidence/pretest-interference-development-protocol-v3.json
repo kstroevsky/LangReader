@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 3,
+  "status": "distribution-guardrail-required-collection-blocked",
+  "supersedesForFutureCollection": {
+    "path": "docs/plans/vocabulary-validation-evidence/pretest-interference-development-protocol-v2.json",
+    "sha256": "5ab3967e0fa73a287919d24d22156e94702c10cee90cc37576facb50ac0fa414"
+  },
+  "inheritAllV2Contracts": true,
+  "primaryEndpoint": {
+    "name": "firstStageKnownClaimRateDifference",
+    "formula": "Pr(known claim | criterion first) - Pr(known claim | product first)",
+    "role": "primary equivalence endpoint",
+    "margin": null
+  },
+  "categoricalDistributionGuardrail": {
+    "role": "decision-relevant equivalence guardrail",
+    "population": "non-exclusion first-stage product responses",
+    "categories": ["I know it", "Not sure", "I don’t know"],
+    "exclusionAction": "Not a word/name is reported separately and is not renormalized into the knowledge-response distribution",
+    "allowedMethodFamiliesForReview": [
+      "total-variation-distance",
+      "predeclared-category-specific-margins",
+      "another-statistically-reviewed-equivalence formulation"
+    ],
+    "selectedMethod": null,
+    "totalVariationFormulaIfSelected": "TV = 0.5 * sum_k |P_k(criterion first) - P_k(product first)|",
+    "totalVariationMargin": null,
+    "categorySpecificMargins": {
+      "I know it": null,
+      "Not sure": null,
+      "I don’t know": null
+    },
+    "estimator": null,
+    "intervalOrJointRegion": null,
+    "confidenceLevel": null,
+    "multiplicityRelationToPrimary": null
+  },
+  "jointDecisionRule": {
+    "equivalenceSupported": "primary endpoint and categorical-distribution guardrail both satisfy their separately approved equivalence criteria",
+    "primaryPassGuardrailFail": "interference not ruled out; confirmatory collection remains blocked",
+    "primaryPassGuardrailInconclusive": "interference not ruled out; confirmatory collection remains blocked",
+    "primaryFail": "material or inconclusive primary interference; confirmatory collection remains blocked",
+    "guardrailMayBeDescriptiveOnly": false
+  },
+  "requiredData": {
+    "completeFirstStageCategoryForEveryAssignedItem": true,
+    "missingProductResponseRetained": true,
+    "exclusionRetainedSeparately": true,
+    "conditioningOnObservedNonmissingResponseForPrimary": false
+  },
+  "actualStudyDecisionFieldsAddedByV3": {
+    "categoricalGuardrailMethod": null,
+    "categoricalGuardrailMarginOrMargins": null,
+    "categoricalGuardrailEstimator": null,
+    "categoricalGuardrailIntervalOrJointRegion": null,
+    "categoricalGuardrailConfidenceLevel": null,
+    "primaryGuardrailMultiplicityRule": null,
+    "distributionalMinimumCellSupport": null
+  },
+  "accessBoundary": {
+    "realParticipantCollectionAuthorized": false,
+    "confirmatoryCollectionAuthorized": false,
+    "developmentConfirmationAccessAuthorized": false,
+    "releaseHoldoutAccessAuthorized": false,
+    "productionChangeAuthorized": false
+  },
+  "unblockRule": "independent statistical review must select and freeze the primary margin and a decision-relevant categorical-distribution equivalence guardrail, including estimator, uncertainty, multiplicity, and support, before real developmental collection"
+}

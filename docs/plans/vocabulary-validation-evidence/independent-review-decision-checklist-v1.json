@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "status": "ready-for-independent-review-decisions-unapproved",
+  "sourceRevision": "415fe54c05a6bfb812ed5e7a981b1e3d51145617",
+  "lockedInputs": {
+    "pretestProtocolV2": {
+      "path": "docs/plans/vocabulary-validation-evidence/pretest-interference-development-protocol-v2.json",
+      "sha256": "5ab3967e0fa73a287919d24d22156e94702c10cee90cc37576facb50ac0fa414"
+    },
+    "repeatProtocolV2": {
+      "path": "docs/plans/vocabulary-validation-evidence/repeat-response-dependence-protocol-v2.json",
+      "sha256": "4c6883f431253903513c328c7ce5ffd7c662ef859d0ad17e030972da91f31eb3"
+    },
+    "tailNomenclature": {
+      "path": "docs/plans/vocabulary-validation-evidence/tail-risk-nomenclature-amendment-v1.json",
+      "sha256": "5a49cfcebfbad73c105e214dcc867c32e3f851eabf47fb99fd6448917fb6a5d4"
+    },
+    "alignmentCheckpoint": {
+      "path": "docs/plans/vocabulary-validation-evidence/protocol-alignment-checkpoint-2026-09-14.md",
+      "sha256": "d42ce6337099a68ec026547716c882674cf4652979f8a2f681da225a32a91bdd"
+    }
+  },
+  "decisions": [
+    {
+      "id": "REVIEW-001",
+      "topic": "primary pretest interference",
+      "requiredDecision": "practical known-claim equivalence margin and inferential method",
+      "value": null
+    },
+    {
+      "id": "REVIEW-002",
+      "topic": "complete categorical evidence stream",
+      "requiredDecision": "decision-relevant distributional guardrail method, margin or margins, estimator, joint uncertainty, multiplicity, and support",
+      "value": null
+    },
+    {
+      "id": "REVIEW-003",
+      "topic": "baseline criterion K",
+      "requiredDecision": "criterion acquisition protocol, misclassification/error treatment, rater uncertainty, and sensitivity analysis for conditioning on K=unknown",
+      "value": null
+    },
+    {
+      "id": "REVIEW-004",
+      "topic": "production contract binding",
+      "requiredDecision": "immutable product UI and evidence-mapping revisions used by the studies",
+      "value": null
+    },
+    {
+      "id": "REVIEW-005",
+      "topic": "repeat-response operational protocol",
+      "requiredDecision": "confirmation prompt, definition presentation, distractor count, maximum delay, and target precision/support for distinct K=unknown plus known-supporting-E1 records",
+      "value": null
+    },
+    {
+      "id": "REVIEW-006",
+      "topic": "formal conditional tail severity",
+      "requiredDecision": "choose one formal release severity endpoint: conditionalTargetShortfall or conditionalThresholdExcessSeverity",
+      "value": null,
+      "identity": "conditionalTargetShortfall = (0.98 - c_severe) + conditionalThresholdExcessSeverity when c_severe < 0.98"
+    },
+    {
+      "id": "REVIEW-007",
+      "topic": "support and governance",
+      "requiredDecision": "sample size, clustering, missingness, consent, retention/deletion, named approvers, and approval revision",
+      "value": null
+    }
+  ],
+  "authorization": {
+    "independentReviewCompleted": false,
+    "realDevelopmentalCollectionAuthorized": false,
+    "confirmatoryCollectionAuthorized": false,
+    "developmentConfirmationAccessAuthorized": false,
+    "releaseHoldoutAccessAuthorized": false,
+    "productionChangeAuthorized": false
+  },
+  "completionRule": "every decision value must be supplied in a separately versioned approved review record; this checklist is not itself approval"
+}
