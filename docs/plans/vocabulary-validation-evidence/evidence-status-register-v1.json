@@ -2,7 +2,7 @@
   "schema_version": 1,
   "derived_view": true,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "e558bd71fda364fb4f44c8b59aad2b0a92333c28",
+  "repository_head_reviewed": "dbbc3b2a84c3c1af31fa640b0c0666be5e699a0f",
   "head_since_production_evidence": [
     "9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only",
     "52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only",
@@ -52,7 +52,10 @@
     "4f647a81d27f4a00b92ba9919639985a31221871: blocked repeat-response dependence protocol definition",
     "f28b08f86e38b064387cca38446ff275c52bff65: no-outcome repeat-response schedule rehearsal",
     "1ea93487cd554774604ab82896d6581a28db4b5c: derived human-study readiness evidence-register refresh only",
-    "e558bd71fda364fb4f44c8b59aad2b0a92333c28: generated code-map refresh only"
+    "e558bd71fda364fb4f44c8b59aad2b0a92333c28: generated code-map refresh only",
+    "5943ca9291fd8ed91e0c1b1b2e9bc1e813ca8a9d: derived study-readiness evidence-register refresh only",
+    "f330b7c4c6c14951a0dbd255563de5bf37339c0b: response-modality, production-event, denominator, and tail-name protocol amendments",
+    "dbbc3b2a84c3c1af31fa640b0c0666be5e699a0f: no-outcome aligned protocol rehearsals and checkpoint"
   ],
   "canonical_ledger": {
     "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
@@ -286,6 +289,13 @@
       "status": "design_ready_collection_blocked",
       "interpretation": "The p_persist estimand and five-event schedule are executable; prompt/delay, precision/support, consent, and real collection remain unapproved.",
       "sha256": "512219d929b3bb122849da5b5a6d27b32944bbdd7a42d930f12f7283f1375c69"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/protocol-alignment-checkpoint-2026-09-14.md",
+      "evidence_class": "audit-driven response-protocol alignment and no-outcome v2 rehearsals",
+      "status": "alignment_implemented_independent_approval_pending",
+      "interpretation": "Pretest uses the actual categorical first stage; E1/E2 use the complete production event; denominator wording and tail-risk naming are corrected without changing formulas or authorization.",
+      "sha256": "d42ce6337099a68ec026547716c882674cf4652979f8a2f681da225a32a91bdd"
     }
   ],
   "records": [
@@ -943,17 +953,17 @@
       "behavior_claim": "Replace residual-mean DIF with established uniform/non-uniform methods and reporting.",
       "prerequisite": "Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.",
       "responsible_capability": "Study owner, statistical reviewer, bilingual raters, and privacy reviewer",
-      "source_revision_configuration": "6ca7888 and f28b08f; blocked developmental interference and repeat-response protocols with no-outcome rehearsals",
+      "source_revision_configuration": "f330b7c and dbbc3b2; modality-aligned pretest and production-event-aligned repeat-response v2 protocols with no-outcome rehearsals",
       "artifact": {
-        "path": "docs/plans/vocabulary-validation-evidence/pretest-interference-readiness-checkpoint-2026-09-14.md",
-        "sha256": "c722c6e64e99392b4c5129a36f1ed13c390e1b5636442bdb25deabfed7327c63"
+        "path": "docs/plans/vocabulary-validation-evidence/protocol-alignment-checkpoint-2026-09-14.md",
+        "sha256": "d42ce6337099a68ec026547716c882674cf4652979f8a2f681da225a32a91bdd"
       },
-      "command_environment": "Protocol source-lock validators plus deterministic fabricated assignment/schedule rehearsals; no real collection environment",
-      "gate": "Protocol and schedule mechanics are ready, but interference margin/analysis/support, repeat-response prompt/delay/precision, consent, approval, real data, and execution remain absent; schema validation is not human evidence.",
+      "command_environment": "Production source-lock validation, v1/v2 protocol amendment checks, and deterministic no-outcome aligned rehearsals; no real collection environment",
+      "gate": "Response modality and E1/E2 event alignment are resolved in v2, but independent approval, interference margin/analysis/support, criterion-K acquisition, repeat prompt/delay/precision, consent, real data, and execution remain absent; schema validation is not human evidence.",
       "evidence_class": "external human-study prerequisite",
       "current_status": "awaiting_external_input",
-      "next_action": "Obtain statistical/research/privacy review of the null protocol fields, then run explicitly developmental consented studies before any confirmatory recruitment.",
-      "decision_history": "Approved study directions now have executable no-outcome interference and repeat-response rehearsals. No estimator, practical margin, sample size, consent operation, participant response, or human claim has been supplied; confirmatory collection remains blocked."
+      "next_action": "Obtain independent statistical/research/privacy approval of v2 and freeze its null operational/analysis fields, then run explicitly developmental consented studies before confirmatory recruitment.",
+      "decision_history": "V1 readiness exposed response-modality and evidence-event gaps. V2 now aligns the product probe to actual first-stage actions and E1/E2 to the complete production evidence mapping, while retaining no-outcome rehearsals and all collection blocks."
     },
     {
       "id": "STUDY-001",
@@ -961,17 +971,17 @@
       "behavior_claim": "Use a separate consented validation dataset for independent criterion and document holdout.",
       "prerequisite": "Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.",
       "responsible_capability": "Study owner, statistical reviewer, bilingual raters, and privacy reviewer",
-      "source_revision_configuration": "6ca7888 and f28b08f; blocked developmental interference and repeat-response protocols with no-outcome rehearsals",
+      "source_revision_configuration": "f330b7c and dbbc3b2; modality-aligned pretest and production-event-aligned repeat-response v2 protocols with no-outcome rehearsals",
       "artifact": {
-        "path": "docs/plans/vocabulary-validation-evidence/pretest-interference-readiness-checkpoint-2026-09-14.md",
-        "sha256": "c722c6e64e99392b4c5129a36f1ed13c390e1b5636442bdb25deabfed7327c63"
+        "path": "docs/plans/vocabulary-validation-evidence/protocol-alignment-checkpoint-2026-09-14.md",
+        "sha256": "d42ce6337099a68ec026547716c882674cf4652979f8a2f681da225a32a91bdd"
       },
-      "command_environment": "Protocol source-lock validators plus deterministic fabricated assignment/schedule rehearsals; no real collection environment",
-      "gate": "Protocol and schedule mechanics are ready, but interference margin/analysis/support, repeat-response prompt/delay/precision, consent, approval, real data, and execution remain absent; schema validation is not human evidence.",
+      "command_environment": "Production source-lock validation, v1/v2 protocol amendment checks, and deterministic no-outcome aligned rehearsals; no real collection environment",
+      "gate": "Response modality and E1/E2 event alignment are resolved in v2, but independent approval, interference margin/analysis/support, criterion-K acquisition, repeat prompt/delay/precision, consent, real data, and execution remain absent; schema validation is not human evidence.",
       "evidence_class": "external human-study prerequisite",
       "current_status": "awaiting_external_input",
-      "next_action": "Obtain statistical/research/privacy review of the null protocol fields, then run explicitly developmental consented studies before any confirmatory recruitment.",
-      "decision_history": "Approved study directions now have executable no-outcome interference and repeat-response rehearsals. No estimator, practical margin, sample size, consent operation, participant response, or human claim has been supplied; confirmatory collection remains blocked."
+      "next_action": "Obtain independent statistical/research/privacy approval of v2 and freeze its null operational/analysis fields, then run explicitly developmental consented studies before confirmatory recruitment.",
+      "decision_history": "V1 readiness exposed response-modality and evidence-event gaps. V2 now aligns the product probe to actual first-stage actions and E1/E2 to the complete production evidence mapping, while retaining no-outcome rehearsals and all collection blocks."
     },
     {
       "id": "STUDY-002",
@@ -979,17 +989,17 @@
       "behavior_claim": "Execute an independently scored participant-and-document held-out learner pilot.",
       "prerequisite": "Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.",
       "responsible_capability": "Study owner, statistical reviewer, bilingual raters, and privacy reviewer",
-      "source_revision_configuration": "6ca7888 and f28b08f; blocked developmental interference and repeat-response protocols with no-outcome rehearsals",
+      "source_revision_configuration": "f330b7c and dbbc3b2; modality-aligned pretest and production-event-aligned repeat-response v2 protocols with no-outcome rehearsals",
       "artifact": {
-        "path": "docs/plans/vocabulary-validation-evidence/pretest-interference-readiness-checkpoint-2026-09-14.md",
-        "sha256": "c722c6e64e99392b4c5129a36f1ed13c390e1b5636442bdb25deabfed7327c63"
+        "path": "docs/plans/vocabulary-validation-evidence/protocol-alignment-checkpoint-2026-09-14.md",
+        "sha256": "d42ce6337099a68ec026547716c882674cf4652979f8a2f681da225a32a91bdd"
       },
-      "command_environment": "Protocol source-lock validators plus deterministic fabricated assignment/schedule rehearsals; no real collection environment",
-      "gate": "Protocol and schedule mechanics are ready, but interference margin/analysis/support, repeat-response prompt/delay/precision, consent, approval, real data, and execution remain absent; schema validation is not human evidence.",
+      "command_environment": "Production source-lock validation, v1/v2 protocol amendment checks, and deterministic no-outcome aligned rehearsals; no real collection environment",
+      "gate": "Response modality and E1/E2 event alignment are resolved in v2, but independent approval, interference margin/analysis/support, criterion-K acquisition, repeat prompt/delay/precision, consent, real data, and execution remain absent; schema validation is not human evidence.",
       "evidence_class": "external human-study prerequisite",
       "current_status": "awaiting_external_input",
-      "next_action": "Obtain statistical/research/privacy review of the null protocol fields, then run explicitly developmental consented studies before any confirmatory recruitment.",
-      "decision_history": "Approved study directions now have executable no-outcome interference and repeat-response rehearsals. No estimator, practical margin, sample size, consent operation, participant response, or human claim has been supplied; confirmatory collection remains blocked."
+      "next_action": "Obtain independent statistical/research/privacy approval of v2 and freeze its null operational/analysis fields, then run explicitly developmental consented studies before confirmatory recruitment.",
+      "decision_history": "V1 readiness exposed response-modality and evidence-event gaps. V2 now aligns the product probe to actual first-stage actions and E1/E2 to the complete production evidence mapping, while retaining no-outcome rehearsals and all collection blocks."
     },
     {
       "id": "DIFF-002",

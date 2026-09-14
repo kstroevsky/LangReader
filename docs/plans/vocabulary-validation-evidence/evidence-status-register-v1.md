@@ -2,7 +2,7 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `e558bd71fda364fb4f44c8b59aad2b0a92333c28`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `dbbc3b2a84c3c1af31fa640b0c0666be5e699a0f`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
 Head-only changes since the production evidence candidate:
 
@@ -55,6 +55,9 @@ Head-only changes since the production evidence candidate:
 - f28b08f86e38b064387cca38446ff275c52bff65: no-outcome repeat-response schedule rehearsal
 - 1ea93487cd554774604ab82896d6581a28db4b5c: derived human-study readiness evidence-register refresh only
 - e558bd71fda364fb4f44c8b59aad2b0a92333c28: generated code-map refresh only
+- 5943ca9291fd8ed91e0c1b1b2e9bc1e813ca8a9d: derived study-readiness evidence-register refresh only
+- f330b7c4c6c14951a0dbd255563de5bf37339c0b: response-modality, production-event, denominator, and tail-name protocol amendments
+- dbbc3b2a84c3c1af31fa640b0c0666be5e699a0f: no-outcome aligned protocol rehearsals and checkpoint
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 
@@ -279,6 +282,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Status: `design_ready_collection_blocked`
 - Interpretation: The p_persist estimand and five-event schedule are executable; prompt/delay, precision/support, consent, and real collection remain unapproved.
 
+### docs/plans/vocabulary-validation-evidence/protocol-alignment-checkpoint-2026-09-14.md
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/protocol-alignment-checkpoint-2026-09-14.md`](protocol-alignment-checkpoint-2026-09-14.md); SHA-256 `d42ce6337099a68ec026547716c882674cf4652979f8a2f681da225a32a91bdd`
+- Evidence class: audit-driven response-protocol alignment and no-outcome v2 rehearsals
+- Status: `alignment_implemented_independent_approval_pending`
+- Interpretation: Pretest uses the actual categorical first stage; E1/E2 use the complete production event; denominator wording and tail-risk naming are corrected without changing formulas or authorization.
+
 ## Failed evidence or gate
 
 ### EVAL-001 — Synthetic simulator scenarios and probability/coverage gates.
@@ -389,13 +399,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `awaiting_external_input`
 - Prerequisite: Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.
 - Responsible capability: Study owner, statistical reviewer, bilingual raters, and privacy reviewer
-- Source revision/configuration: 6ca7888 and f28b08f; blocked developmental interference and repeat-response protocols with no-outcome rehearsals
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/pretest-interference-readiness-checkpoint-2026-09-14.md`](pretest-interference-readiness-checkpoint-2026-09-14.md); SHA-256 `c722c6e64e99392b4c5129a36f1ed13c390e1b5636442bdb25deabfed7327c63`
-- Command/environment: Protocol source-lock validators plus deterministic fabricated assignment/schedule rehearsals; no real collection environment
-- Gate: Protocol and schedule mechanics are ready, but interference margin/analysis/support, repeat-response prompt/delay/precision, consent, approval, real data, and execution remain absent; schema validation is not human evidence.
+- Source revision/configuration: f330b7c and dbbc3b2; modality-aligned pretest and production-event-aligned repeat-response v2 protocols with no-outcome rehearsals
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/protocol-alignment-checkpoint-2026-09-14.md`](protocol-alignment-checkpoint-2026-09-14.md); SHA-256 `d42ce6337099a68ec026547716c882674cf4652979f8a2f681da225a32a91bdd`
+- Command/environment: Production source-lock validation, v1/v2 protocol amendment checks, and deterministic no-outcome aligned rehearsals; no real collection environment
+- Gate: Response modality and E1/E2 event alignment are resolved in v2, but independent approval, interference margin/analysis/support, criterion-K acquisition, repeat prompt/delay/precision, consent, real data, and execution remain absent; schema validation is not human evidence.
 - Evidence class: external human-study prerequisite
-- Next action: Obtain statistical/research/privacy review of the null protocol fields, then run explicitly developmental consented studies before any confirmatory recruitment.
-- Decision history: Approved study directions now have executable no-outcome interference and repeat-response rehearsals. No estimator, practical margin, sample size, consent operation, participant response, or human claim has been supplied; confirmatory collection remains blocked.
+- Next action: Obtain independent statistical/research/privacy approval of v2 and freeze its null operational/analysis fields, then run explicitly developmental consented studies before confirmatory recruitment.
+- Decision history: V1 readiness exposed response-modality and evidence-event gaps. V2 now aligns the product probe to actual first-stage actions and E1/E2 to the complete production evidence mapping, while retaining no-outcome rehearsals and all collection blocks.
 
 ### STUDY-001 — Use a separate consented validation dataset for independent criterion and document holdout.
 
@@ -403,13 +413,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `awaiting_external_input`
 - Prerequisite: Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.
 - Responsible capability: Study owner, statistical reviewer, bilingual raters, and privacy reviewer
-- Source revision/configuration: 6ca7888 and f28b08f; blocked developmental interference and repeat-response protocols with no-outcome rehearsals
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/pretest-interference-readiness-checkpoint-2026-09-14.md`](pretest-interference-readiness-checkpoint-2026-09-14.md); SHA-256 `c722c6e64e99392b4c5129a36f1ed13c390e1b5636442bdb25deabfed7327c63`
-- Command/environment: Protocol source-lock validators plus deterministic fabricated assignment/schedule rehearsals; no real collection environment
-- Gate: Protocol and schedule mechanics are ready, but interference margin/analysis/support, repeat-response prompt/delay/precision, consent, approval, real data, and execution remain absent; schema validation is not human evidence.
+- Source revision/configuration: f330b7c and dbbc3b2; modality-aligned pretest and production-event-aligned repeat-response v2 protocols with no-outcome rehearsals
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/protocol-alignment-checkpoint-2026-09-14.md`](protocol-alignment-checkpoint-2026-09-14.md); SHA-256 `d42ce6337099a68ec026547716c882674cf4652979f8a2f681da225a32a91bdd`
+- Command/environment: Production source-lock validation, v1/v2 protocol amendment checks, and deterministic no-outcome aligned rehearsals; no real collection environment
+- Gate: Response modality and E1/E2 event alignment are resolved in v2, but independent approval, interference margin/analysis/support, criterion-K acquisition, repeat prompt/delay/precision, consent, real data, and execution remain absent; schema validation is not human evidence.
 - Evidence class: external human-study prerequisite
-- Next action: Obtain statistical/research/privacy review of the null protocol fields, then run explicitly developmental consented studies before any confirmatory recruitment.
-- Decision history: Approved study directions now have executable no-outcome interference and repeat-response rehearsals. No estimator, practical margin, sample size, consent operation, participant response, or human claim has been supplied; confirmatory collection remains blocked.
+- Next action: Obtain independent statistical/research/privacy approval of v2 and freeze its null operational/analysis fields, then run explicitly developmental consented studies before confirmatory recruitment.
+- Decision history: V1 readiness exposed response-modality and evidence-event gaps. V2 now aligns the product probe to actual first-stage actions and E1/E2 to the complete production evidence mapping, while retaining no-outcome rehearsals and all collection blocks.
 
 ### STUDY-002 — Execute an independently scored participant-and-document held-out learner pilot.
 
@@ -417,13 +427,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `awaiting_external_input`
 - Prerequisite: Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.
 - Responsible capability: Study owner, statistical reviewer, bilingual raters, and privacy reviewer
-- Source revision/configuration: 6ca7888 and f28b08f; blocked developmental interference and repeat-response protocols with no-outcome rehearsals
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/pretest-interference-readiness-checkpoint-2026-09-14.md`](pretest-interference-readiness-checkpoint-2026-09-14.md); SHA-256 `c722c6e64e99392b4c5129a36f1ed13c390e1b5636442bdb25deabfed7327c63`
-- Command/environment: Protocol source-lock validators plus deterministic fabricated assignment/schedule rehearsals; no real collection environment
-- Gate: Protocol and schedule mechanics are ready, but interference margin/analysis/support, repeat-response prompt/delay/precision, consent, approval, real data, and execution remain absent; schema validation is not human evidence.
+- Source revision/configuration: f330b7c and dbbc3b2; modality-aligned pretest and production-event-aligned repeat-response v2 protocols with no-outcome rehearsals
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/protocol-alignment-checkpoint-2026-09-14.md`](protocol-alignment-checkpoint-2026-09-14.md); SHA-256 `d42ce6337099a68ec026547716c882674cf4652979f8a2f681da225a32a91bdd`
+- Command/environment: Production source-lock validation, v1/v2 protocol amendment checks, and deterministic no-outcome aligned rehearsals; no real collection environment
+- Gate: Response modality and E1/E2 event alignment are resolved in v2, but independent approval, interference margin/analysis/support, criterion-K acquisition, repeat prompt/delay/precision, consent, real data, and execution remain absent; schema validation is not human evidence.
 - Evidence class: external human-study prerequisite
-- Next action: Obtain statistical/research/privacy review of the null protocol fields, then run explicitly developmental consented studies before any confirmatory recruitment.
-- Decision history: Approved study directions now have executable no-outcome interference and repeat-response rehearsals. No estimator, practical margin, sample size, consent operation, participant response, or human claim has been supplied; confirmatory collection remains blocked.
+- Next action: Obtain independent statistical/research/privacy approval of v2 and freeze its null operational/analysis fields, then run explicitly developmental consented studies before confirmatory recruitment.
+- Decision history: V1 readiness exposed response-modality and evidence-event gaps. V2 now aligns the product probe to actual first-stage actions and E1/E2 to the complete production evidence mapping, while retaining no-outcome rehearsals and all collection blocks.
 
 ## Deferred and disabled
 
