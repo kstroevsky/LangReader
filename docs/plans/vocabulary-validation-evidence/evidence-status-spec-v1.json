@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "683e147af1249129488fea3fdb159d4990fa7a14",
+  "repository_head_reviewed": "f28b08f86e38b064387cca38446ff275c52bff65",
   "head_since_production_evidence": [
     "9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only",
     "52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only",
@@ -44,7 +44,12 @@
     "5d3ef1411b98f82659ed3c74008f9a307b6486c1: derived rejected-confirmation evidence-register refresh only",
     "023d0c46d59da6b368f9420643017befd7232066: additive tail-risk definitions and validator; numerical release decisions remain blocked",
     "4ccd96107d034a0d630c3521b9b262323a5da62d: derived tail-risk evidence-register refresh only",
-    "683e147af1249129488fea3fdb159d4990fa7a14: generated code-map refresh only"
+    "683e147af1249129488fea3fdb159d4990fa7a14: generated code-map refresh only",
+    "4c886281aa35daacac0a47bea4ee2e315e1e70b4: derived tail-risk evidence-register refresh only",
+    "81b9496b8494066cf59d2956b0cb92cbc03f4697: blocked developmental pretest-interference protocol definition",
+    "6ca78887432d0452ac37d5345aeb1925919edb25: no-outcome pretest-interference assignment rehearsal",
+    "4f647a81d27f4a00b92ba9919639985a31221871: blocked repeat-response dependence protocol definition",
+    "f28b08f86e38b064387cca38446ff275c52bff65: no-outcome repeat-response schedule rehearsal"
   ],
   "canonical_ledger": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
   "retained_artifacts": [
@@ -221,6 +226,18 @@
       "evidence_class": "additive realized tail-risk definition contract",
       "status": "definitions_frozen_release_values_blocked",
       "interpretation": "Posterior-predictive and realized-tail claims are separated; frequency/severity formulas and evidence roles are fixed, while every numerical release tolerance and interval choice remains unapproved and blocks another candidate."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/pretest-interference-readiness-checkpoint-2026-09-14.md",
+      "evidence_class": "developmental pretest-interference protocol and no-outcome assignment rehearsal",
+      "status": "design_ready_collection_blocked",
+      "interpretation": "Item-level randomized order and universal product-probe capture are executable; the practical margin, analysis, support, consent, and real collection remain unapproved."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/repeat-response-dependence-readiness-checkpoint-2026-09-14.md",
+      "evidence_class": "developmental repeat-response dependence protocol and no-outcome schedule rehearsal",
+      "status": "design_ready_collection_blocked",
+      "interpretation": "The p_persist estimand and five-event schedule are executable; prompt/delay, precision/support, consent, and real collection remain unapproved."
     }
   ],
   "groups": [
@@ -411,14 +428,14 @@
       "ids": ["DIF-001", "STUDY-001", "STUDY-002"],
       "prerequisite": "Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.",
       "responsible_capability": "Study owner, statistical reviewer, bilingual raters, and privacy reviewer",
-      "source_revision_configuration": "Fabricated rehearsal v2 only; no real outcome dataset",
-      "artifact": "docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md",
-      "command_environment": "Fabricated rehearsal self-test; real protocol execution environment not yet supplied",
-      "gate": "Core protocol directions are adopted, but interference evidence, reviewed SAP methods/numbers, consent, data, and execution remain absent; schema validation is not human evidence.",
+      "source_revision_configuration": "6ca7888 and f28b08f; blocked developmental interference and repeat-response protocols with no-outcome rehearsals",
+      "artifact": "docs/plans/vocabulary-validation-evidence/pretest-interference-readiness-checkpoint-2026-09-14.md",
+      "command_environment": "Protocol source-lock validators plus deterministic fabricated assignment/schedule rehearsals; no real collection environment",
+      "gate": "Protocol and schedule mechanics are ready, but interference margin/analysis/support, repeat-response prompt/delay/precision, consent, approval, real data, and execution remain absent; schema validation is not human evidence.",
       "evidence_class": "external human-study prerequisite",
       "current_status": "awaiting_external_input",
-      "next_action": "Approve/freeze the SAP and assignment/privacy contract before recruitment or confirmatory outcome inspection.",
-      "decision_history": "Predetermined audit sampling, context-free multi-meaning prompts, hidden rater context, separate ambiguity, and synthetic-only theta coverage are adopted; confirmatory collection remains blocked."
+      "next_action": "Obtain statistical/research/privacy review of the null protocol fields, then run explicitly developmental consented studies before any confirmatory recruitment.",
+      "decision_history": "Approved study directions now have executable no-outcome interference and repeat-response rehearsals. No estimator, practical margin, sample size, consent operation, participant response, or human claim has been supplied; confirmatory collection remains blocked."
     },
     {
       "name": "calibration-assignment-proposal",

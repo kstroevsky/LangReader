@@ -2,7 +2,7 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `683e147af1249129488fea3fdb159d4990fa7a14`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `f28b08f86e38b064387cca38446ff275c52bff65`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
 Head-only changes since the production evidence candidate:
 
@@ -48,6 +48,11 @@ Head-only changes since the production evidence candidate:
 - 023d0c46d59da6b368f9420643017befd7232066: additive tail-risk definitions and validator; numerical release decisions remain blocked
 - 4ccd96107d034a0d630c3521b9b262323a5da62d: derived tail-risk evidence-register refresh only
 - 683e147af1249129488fea3fdb159d4990fa7a14: generated code-map refresh only
+- 4c886281aa35daacac0a47bea4ee2e315e1e70b4: derived tail-risk evidence-register refresh only
+- 81b9496b8494066cf59d2956b0cb92cbc03f4697: blocked developmental pretest-interference protocol definition
+- 6ca78887432d0452ac37d5345aeb1925919edb25: no-outcome pretest-interference assignment rehearsal
+- 4f647a81d27f4a00b92ba9919639985a31221871: blocked repeat-response dependence protocol definition
+- f28b08f86e38b064387cca38446ff275c52bff65: no-outcome repeat-response schedule rehearsal
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 
@@ -258,6 +263,20 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Status: `definitions_frozen_release_values_blocked`
 - Interpretation: Posterior-predictive and realized-tail claims are separated; frequency/severity formulas and evidence roles are fixed, while every numerical release tolerance and interval choice remains unapproved and blocks another candidate.
 
+### docs/plans/vocabulary-validation-evidence/pretest-interference-readiness-checkpoint-2026-09-14.md
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/pretest-interference-readiness-checkpoint-2026-09-14.md`](pretest-interference-readiness-checkpoint-2026-09-14.md); SHA-256 `c722c6e64e99392b4c5129a36f1ed13c390e1b5636442bdb25deabfed7327c63`
+- Evidence class: developmental pretest-interference protocol and no-outcome assignment rehearsal
+- Status: `design_ready_collection_blocked`
+- Interpretation: Item-level randomized order and universal product-probe capture are executable; the practical margin, analysis, support, consent, and real collection remain unapproved.
+
+### docs/plans/vocabulary-validation-evidence/repeat-response-dependence-readiness-checkpoint-2026-09-14.md
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/repeat-response-dependence-readiness-checkpoint-2026-09-14.md`](repeat-response-dependence-readiness-checkpoint-2026-09-14.md); SHA-256 `512219d929b3bb122849da5b5a6d27b32944bbdd7a42d930f12f7283f1375c69`
+- Evidence class: developmental repeat-response dependence protocol and no-outcome schedule rehearsal
+- Status: `design_ready_collection_blocked`
+- Interpretation: The p_persist estimand and five-event schedule are executable; prompt/delay, precision/support, consent, and real collection remain unapproved.
+
 ## Failed evidence or gate
 
 ### EVAL-001 — Synthetic simulator scenarios and probability/coverage gates.
@@ -368,13 +387,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `awaiting_external_input`
 - Prerequisite: Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.
 - Responsible capability: Study owner, statistical reviewer, bilingual raters, and privacy reviewer
-- Source revision/configuration: Fabricated rehearsal v2 only; no real outcome dataset
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md`](fabricated-study-rehearsal-checkpoint-2026-09-08.md); SHA-256 `dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e`
-- Command/environment: Fabricated rehearsal self-test; real protocol execution environment not yet supplied
-- Gate: Core protocol directions are adopted, but interference evidence, reviewed SAP methods/numbers, consent, data, and execution remain absent; schema validation is not human evidence.
+- Source revision/configuration: 6ca7888 and f28b08f; blocked developmental interference and repeat-response protocols with no-outcome rehearsals
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/pretest-interference-readiness-checkpoint-2026-09-14.md`](pretest-interference-readiness-checkpoint-2026-09-14.md); SHA-256 `c722c6e64e99392b4c5129a36f1ed13c390e1b5636442bdb25deabfed7327c63`
+- Command/environment: Protocol source-lock validators plus deterministic fabricated assignment/schedule rehearsals; no real collection environment
+- Gate: Protocol and schedule mechanics are ready, but interference margin/analysis/support, repeat-response prompt/delay/precision, consent, approval, real data, and execution remain absent; schema validation is not human evidence.
 - Evidence class: external human-study prerequisite
-- Next action: Approve/freeze the SAP and assignment/privacy contract before recruitment or confirmatory outcome inspection.
-- Decision history: Predetermined audit sampling, context-free multi-meaning prompts, hidden rater context, separate ambiguity, and synthetic-only theta coverage are adopted; confirmatory collection remains blocked.
+- Next action: Obtain statistical/research/privacy review of the null protocol fields, then run explicitly developmental consented studies before any confirmatory recruitment.
+- Decision history: Approved study directions now have executable no-outcome interference and repeat-response rehearsals. No estimator, practical margin, sample size, consent operation, participant response, or human claim has been supplied; confirmatory collection remains blocked.
 
 ### STUDY-001 — Use a separate consented validation dataset for independent criterion and document holdout.
 
@@ -382,13 +401,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `awaiting_external_input`
 - Prerequisite: Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.
 - Responsible capability: Study owner, statistical reviewer, bilingual raters, and privacy reviewer
-- Source revision/configuration: Fabricated rehearsal v2 only; no real outcome dataset
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md`](fabricated-study-rehearsal-checkpoint-2026-09-08.md); SHA-256 `dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e`
-- Command/environment: Fabricated rehearsal self-test; real protocol execution environment not yet supplied
-- Gate: Core protocol directions are adopted, but interference evidence, reviewed SAP methods/numbers, consent, data, and execution remain absent; schema validation is not human evidence.
+- Source revision/configuration: 6ca7888 and f28b08f; blocked developmental interference and repeat-response protocols with no-outcome rehearsals
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/pretest-interference-readiness-checkpoint-2026-09-14.md`](pretest-interference-readiness-checkpoint-2026-09-14.md); SHA-256 `c722c6e64e99392b4c5129a36f1ed13c390e1b5636442bdb25deabfed7327c63`
+- Command/environment: Protocol source-lock validators plus deterministic fabricated assignment/schedule rehearsals; no real collection environment
+- Gate: Protocol and schedule mechanics are ready, but interference margin/analysis/support, repeat-response prompt/delay/precision, consent, approval, real data, and execution remain absent; schema validation is not human evidence.
 - Evidence class: external human-study prerequisite
-- Next action: Approve/freeze the SAP and assignment/privacy contract before recruitment or confirmatory outcome inspection.
-- Decision history: Predetermined audit sampling, context-free multi-meaning prompts, hidden rater context, separate ambiguity, and synthetic-only theta coverage are adopted; confirmatory collection remains blocked.
+- Next action: Obtain statistical/research/privacy review of the null protocol fields, then run explicitly developmental consented studies before any confirmatory recruitment.
+- Decision history: Approved study directions now have executable no-outcome interference and repeat-response rehearsals. No estimator, practical margin, sample size, consent operation, participant response, or human claim has been supplied; confirmatory collection remains blocked.
 
 ### STUDY-002 — Execute an independently scored participant-and-document held-out learner pilot.
 
@@ -396,13 +415,13 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Current status: `awaiting_external_input`
 - Prerequisite: Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.
 - Responsible capability: Study owner, statistical reviewer, bilingual raters, and privacy reviewer
-- Source revision/configuration: Fabricated rehearsal v2 only; no real outcome dataset
-- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/fabricated-study-rehearsal-checkpoint-2026-09-08.md`](fabricated-study-rehearsal-checkpoint-2026-09-08.md); SHA-256 `dbd43ddf96839d7f03f45308d2cd6753d7e11991ddbfe76de46e41732ca90c9e`
-- Command/environment: Fabricated rehearsal self-test; real protocol execution environment not yet supplied
-- Gate: Core protocol directions are adopted, but interference evidence, reviewed SAP methods/numbers, consent, data, and execution remain absent; schema validation is not human evidence.
+- Source revision/configuration: 6ca7888 and f28b08f; blocked developmental interference and repeat-response protocols with no-outcome rehearsals
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/pretest-interference-readiness-checkpoint-2026-09-14.md`](pretest-interference-readiness-checkpoint-2026-09-14.md); SHA-256 `c722c6e64e99392b4c5129a36f1ed13c390e1b5636442bdb25deabfed7327c63`
+- Command/environment: Protocol source-lock validators plus deterministic fabricated assignment/schedule rehearsals; no real collection environment
+- Gate: Protocol and schedule mechanics are ready, but interference margin/analysis/support, repeat-response prompt/delay/precision, consent, approval, real data, and execution remain absent; schema validation is not human evidence.
 - Evidence class: external human-study prerequisite
-- Next action: Approve/freeze the SAP and assignment/privacy contract before recruitment or confirmatory outcome inspection.
-- Decision history: Predetermined audit sampling, context-free multi-meaning prompts, hidden rater context, separate ambiguity, and synthetic-only theta coverage are adopted; confirmatory collection remains blocked.
+- Next action: Obtain statistical/research/privacy review of the null protocol fields, then run explicitly developmental consented studies before any confirmatory recruitment.
+- Decision history: Approved study directions now have executable no-outcome interference and repeat-response rehearsals. No estimator, practical margin, sample size, consent operation, participant response, or human claim has been supplied; confirmatory collection remains blocked.
 
 ## Deferred and disabled
 
