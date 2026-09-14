@@ -114,6 +114,7 @@ python3 ./scripts/build_protocol_alignment_rehearsals.py --check --self-test
 
 echo "==> Checking vocabulary independent-review decision packet"
 python3 ./scripts/validate_independent_review_decision_packet.py --self-test
+python3 ./scripts/build_independent_review_rehearsal.py --check --self-test
 
 echo "==> Testing vocabulary domain resource builders"
 bash ./scripts/test_vocabulary_domain_resource_builders.sh
