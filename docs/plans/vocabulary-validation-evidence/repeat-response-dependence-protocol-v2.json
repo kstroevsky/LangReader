@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 2,
+  "status": "production-event-aligned-collection-blocked",
+  "supersedesForFutureCollection": {
+    "path": "docs/plans/vocabulary-validation-evidence/repeat-response-dependence-protocol-v1.json",
+    "sha256": "19adbe493b85ae820b70dec06f41a711d9a7aef7aef1811e3717784e03732c05"
+  },
+  "alignmentReview": "docs/plans/vocabulary-validation-evidence/protocol-alignment-forward-review-v1.json",
+  "inheritUnchangedV1Sections": [
+    "rater blinding and baseline K principle",
+    "full transition reporting",
+    "dependence and missingness",
+    "synthetic-arm interpretation boundary",
+    "privacy and access boundary",
+    "all null actual-study decision fields"
+  ],
+  "productionEventContract": {
+    "firstStageActions": ["I know it", "Not sure", "I don’t know", "Not a word/name"],
+    "typedMeaning": "optional before reveal",
+    "knownClaimState": "pendingKnownVerification; no evidence is recorded before verification",
+    "knownClaimReveal": "show the frozen product definition",
+    "verificationActions": ["My meaning was correct", "No / only partly"],
+    "evidenceMapping": [
+      {"condition": "I know it; correct verification; typed meaning empty", "evidence": "verifiedKnown"},
+      {"condition": "I know it; correct verification; typed meaning nonempty", "evidence": "typedVerifiedKnown"},
+      {"condition": "I know it; incorrect/partial verification", "evidence": "verifiedUnknownOrPartial"},
+      {"condition": "Not sure", "evidence": "unsure"},
+      {"condition": "I don’t know", "evidence": "reportedUnknown"},
+      {"condition": "Not a word/name", "evidence": "excluded"}
+    ]
+  },
+  "repeatContract": {
+    "E1": "complete first production event through final evidence mapping",
+    "E2": "complete repeated production event through final evidence mapping after the frozen distractor/delay protocol",
+    "preSecondRevealIsNotUnaidedBaseline": true,
+    "reason": "E2 occurs after the E1 definition reveal and estimates operational persistence, including learning/cueing/carryover"
+  },
+  "baselineKnowledgeReference": {
+    "K": "two-rater adjudicated target-meaning correctness from the approved independent pre-reveal criterion path",
+    "pretestInterferenceDependency": "the v2 interference study must support equivalence or the design must use approved split-sample/order/carryover handling",
+    "baselineKAcquisitionProtocolVersion": null,
+    "selfVerificationDefinesK": false
+  },
+  "primaryEstimand": {
+    "formula": "p_persist = Pr(E2 supports known | E1 supports known, K = unknown, production-aligned protocol)",
+    "primaryDenominator": "distinct eligible participant-item records with K = unknown and known-supporting E1",
+    "independenceAssumed": false,
+    "participantDocumentItemDependenceRequired": true
+  },
+  "actualStudyDecisionFieldsAddedByV2": {
+    "productionUIContractRevision": null,
+    "evidenceMappingRevision": null,
+    "baselineKAcquisitionProtocolVersion": null,
+    "E2FullInteractionVersion": null
+  },
+  "accessBoundary": {
+    "realParticipantCollectionAuthorized": false,
+    "confirmatoryCollectionAuthorized": false,
+    "developmentConfirmationAccessAuthorized": false,
+    "releaseHoldoutAccessAuthorized": false,
+    "productionChangeAuthorized": false
+  },
+  "unblockRule": "resolve the pretest-interference dependency, freeze every v1/v2 operational and analysis field, and receive independent statistical/research/privacy approval before real developmental collection"
+}

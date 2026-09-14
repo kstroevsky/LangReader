@@ -108,6 +108,9 @@ echo "==> Checking blocked repeat-response dependence protocol"
 python3 ./scripts/validate_repeat_response_dependence_protocol.py --self-test
 python3 ./scripts/build_repeat_response_dependence_rehearsal.py --check --self-test
 
+echo "==> Checking vocabulary protocol alignment amendments"
+python3 ./scripts/validate_protocol_alignment_amendments.py --self-test
+
 echo "==> Testing vocabulary domain resource builders"
 bash ./scripts/test_vocabulary_domain_resource_builders.sh
 
