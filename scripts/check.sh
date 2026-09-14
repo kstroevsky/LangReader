@@ -102,6 +102,7 @@ python3 ./scripts/validate_vocabulary_tail_risk_contract.py --self-test
 
 echo "==> Checking blocked pretest-interference development protocol"
 python3 ./scripts/validate_pretest_interference_protocol.py --self-test
+python3 ./scripts/build_pretest_interference_rehearsal.py --check --self-test
 
 echo "==> Testing vocabulary domain resource builders"
 bash ./scripts/test_vocabulary_domain_resource_builders.sh
