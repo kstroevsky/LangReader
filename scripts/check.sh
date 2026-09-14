@@ -104,6 +104,9 @@ echo "==> Checking blocked pretest-interference development protocol"
 python3 ./scripts/validate_pretest_interference_protocol.py --self-test
 python3 ./scripts/build_pretest_interference_rehearsal.py --check --self-test
 
+echo "==> Checking blocked repeat-response dependence protocol"
+python3 ./scripts/validate_repeat_response_dependence_protocol.py --self-test
+
 echo "==> Testing vocabulary domain resource builders"
 bash ./scripts/test_vocabulary_domain_resource_builders.sh
 

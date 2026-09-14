@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "status": "design-defined-collection-blocked",
+  "dataRole": "developmental-human-response-dependence-design",
+  "sourceLock": {
+    "revision": "6ca78887432d0452ac37d5345aeb1925919edb25",
+    "confirmationEvidence": {
+      "path": "docs/plans/vocabulary-validation-evidence/high-consequence-known-confirmation-checkpoint-2026-09-13.md",
+      "sha256": "f79fd3f585e0efc233648b693750902bf713305c82440732da23006a82aab824"
+    },
+    "pilot": {
+      "path": "docs/research/VOCABULARY_VALIDATION_PILOT.md",
+      "sha256": "7c47706f0d296b40506bcf2dbf2c3f6851aa7f7a15b802b3cb7b43559657516b"
+    },
+    "interferenceProtocol": {
+      "path": "docs/plans/vocabulary-validation-evidence/pretest-interference-development-protocol-v1.json",
+      "sha256": "2c33c932cba9cf2172be2b8f9f99c9efc6b731dcf056cedbf6dbeb9aebfd3418"
+    }
+  },
+  "objective": "estimate persistence of a known-supporting self-verification error when the same participant confirms the same item again under a specified same-session protocol",
+  "unit": "participant-document-lexical-item",
+  "sequence": [
+    {
+      "step": 1,
+      "event": "first unaided product-style meaning response",
+      "definitionOrCorrectnessFeedbackAvailable": false
+    },
+    {
+      "step": 2,
+      "event": "seal first response for blinded target-sense scoring",
+      "definitionOrCorrectnessFeedbackAvailable": false
+    },
+    {
+      "step": 3,
+      "event": "show the frozen product definition and collect first self-verification E1",
+      "definitionOrCorrectnessFeedbackAvailable": true
+    },
+    {
+      "step": 4,
+      "event": "present the frozen number of intervening distractor items without target-item feedback",
+      "definitionOrCorrectnessFeedbackAvailable": true
+    },
+    {
+      "step": 5,
+      "event": "repeat the frozen target confirmation prompt and collect E2 before any further target feedback",
+      "definitionOrCorrectnessFeedbackAvailable": true
+    }
+  ],
+  "baselineKnowledgeReference": {
+    "K": "two-rater adjudicated target-meaning correctness of the sealed step-1 response",
+    "targetSenseContextHiddenFromParticipant": true,
+    "targetSenseContextAvailableToBlindedRaters": true,
+    "raters": 2,
+    "adjudicationRequired": true,
+    "criterionAmbiguousSeparateFromMissing": true,
+    "selfVerificationDefinesK": false
+  },
+  "evidence": {
+    "E1": "first post-reveal self-verification category",
+    "E2": "repeated same-session self-verification category under the frozen confirmation prompt and distractor schedule",
+    "knownSupportingCategories": ["verifiedKnown", "typedVerifiedKnown"],
+    "retainFullTransitionCategories": true
+  },
+  "estimands": {
+    "primary": "p_persist = Pr(E2 supports known | E1 supports known, K = unknown, protocol)",
+    "derivedDetection": "p_detect = 1 - p_persist",
+    "secondary": [
+      "E1-by-E2 transition matrix conditional on K",
+      "Pr(E2 supports known | K = unknown)",
+      "Pr(E2 does not support known | K = known)",
+      "within-item E1/E2 association conditional on K when estimable"
+    ],
+    "primaryDenominator": "independent participant-item records with K = unknown and E1 supporting known",
+    "overallRowCountSubstitutesForPrimaryDenominator": false
+  },
+  "analysisBoundaries": {
+    "sameSessionProtocolSpecific": true,
+    "independenceAssumed": false,
+    "firstRevealMayTeachOrCue": true,
+    "estimateMayTransferToDifferentDelayOrPrompt": false,
+    "conditioningOnE1RequiresJointTransitionReporting": true,
+    "participantDocumentAndItemDependenceRequired": true
+  },
+  "missingnessStatuses": [
+    "observed",
+    "missing-first-response",
+    "criterion-ambiguous",
+    "missing-E1",
+    "missing-E2",
+    "abandoned-block",
+    "protocol-deviation"
+  ],
+  "fabricatedRehearsal": {
+    "seed": 20260914,
+    "records": 24,
+    "outcomesIncluded": false,
+    "realCollectionAuthorized": false
+  },
+  "actualStudyDecisionFields": {
+    "confirmationPromptVersion": null,
+    "definitionPresentationVersion": null,
+    "minimumDistractorItems": null,
+    "maximumConfirmationDelayMinutes": null,
+    "estimator": null,
+    "intervalConstruction": null,
+    "confidenceLevel": null,
+    "targetPrecisionForPrimaryEstimand": null,
+    "requiredPrimaryDenominatorSupport": null,
+    "sampleSizeAndAttritionPlan": null,
+    "missingDataRule": null,
+    "consentVersion": null,
+    "retentionAndDeletionProtocol": null,
+    "namedApprovers": [],
+    "approvalRevision": null
+  },
+  "decisionUse": {
+    "productionConfirmationMayBeConsideredOnlyIf": "p_persist and burden are estimated with approved precision under a protocol matching the proposed product interaction",
+    "syntheticIndependentArmMayBeTreatedAsHumanEstimate": false,
+    "fullyCorrelatedSyntheticArmMayBeTreatedAsHumanEstimate": false,
+    "automaticProductionActivation": false
+  },
+  "privacy": {
+    "separateExplicitConsentRequired": true,
+    "normalProductExportUsed": false,
+    "automaticUpload": false,
+    "rawDocumentTextTitlePathStored": false,
+    "exactProductTimestampStored": false,
+    "ordinaryUserDatabaseAccess": false
+  },
+  "accessBoundary": {
+    "realParticipantCollectionAuthorized": false,
+    "confirmatoryCollectionAuthorized": false,
+    "developmentConfirmationAccessAuthorized": false,
+    "releaseHoldoutAccessAuthorized": false,
+    "productionChangeAuthorized": false
+  },
+  "unblockRule": "freeze the exact prompt/definition/distractor timing, analysis and precision fields, sample support, consent/privacy operations, and named approval before real developmental collection"
+}
