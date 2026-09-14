@@ -2,7 +2,7 @@
   "schema_version": 1,
   "derived_view": true,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "2f0135a77869162a10863667437d42f0d09f3cd8",
+  "repository_head_reviewed": "f98f622e47bd76a6ef8f7604051c312626636833",
   "head_since_production_evidence": [
     "9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only",
     "52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only",
@@ -60,7 +60,9 @@
     "0f97aa39d73a6fc27385ee3dea76a3a0ec54b4a3: generated code-map refresh only",
     "415fe54c05a6bfb812ed5e7a981b1e3d51145617: derived protocol-alignment evidence-register refresh only",
     "83f343ccbcd6d0d513b3c19739af27db28ee0083: categorical-distribution guardrail and independent-review checklist definition",
-    "2f0135a77869162a10863667437d42f0d09f3cd8: no-outcome categorical guardrail rehearsal and readiness checkpoint"
+    "2f0135a77869162a10863667437d42f0d09f3cd8: no-outcome categorical guardrail rehearsal and readiness checkpoint",
+    "e100bcdf5d548b6424703729c9c865f83628fe6f: derived independent-review readiness evidence-register refresh only",
+    "f98f622e47bd76a6ef8f7604051c312626636833: generated code-map refresh only"
   ],
   "canonical_ledger": {
     "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
