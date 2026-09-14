@@ -2,7 +2,7 @@
   "schema_version": 1,
   "derived_view": true,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "0f97aa39d73a6fc27385ee3dea76a3a0ec54b4a3",
+  "repository_head_reviewed": "2f0135a77869162a10863667437d42f0d09f3cd8",
   "head_since_production_evidence": [
     "9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only",
     "52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only",
@@ -57,7 +57,10 @@
     "f330b7c4c6c14951a0dbd255563de5bf37339c0b: response-modality, production-event, denominator, and tail-name protocol amendments",
     "dbbc3b2a84c3c1af31fa640b0c0666be5e699a0f: no-outcome aligned protocol rehearsals and checkpoint",
     "b79642fd8ca639d85aec5d5ec757dd815c7926d5: derived protocol-alignment evidence-register refresh only",
-    "0f97aa39d73a6fc27385ee3dea76a3a0ec54b4a3: generated code-map refresh only"
+    "0f97aa39d73a6fc27385ee3dea76a3a0ec54b4a3: generated code-map refresh only",
+    "415fe54c05a6bfb812ed5e7a981b1e3d51145617: derived protocol-alignment evidence-register refresh only",
+    "83f343ccbcd6d0d513b3c19739af27db28ee0083: categorical-distribution guardrail and independent-review checklist definition",
+    "2f0135a77869162a10863667437d42f0d09f3cd8: no-outcome categorical guardrail rehearsal and readiness checkpoint"
   ],
   "canonical_ledger": {
     "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
@@ -298,6 +301,13 @@
       "status": "alignment_implemented_independent_approval_pending",
       "interpretation": "Pretest uses the actual categorical first stage; E1/E2 use the complete production event; denominator wording and tail-risk naming are corrected without changing formulas or authorization.",
       "sha256": "d42ce6337099a68ec026547716c882674cf4652979f8a2f681da225a32a91bdd"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/independent-review-readiness-checkpoint-2026-09-14.md",
+      "evidence_class": "blocked independent-review decision packet and no-outcome categorical guardrail rehearsal",
+      "status": "ready_for_independent_review_decisions_unapproved",
+      "interpretation": "Known-claim equivalence now requires a decision-relevant full categorical-distribution guardrail; all seven statistical/research/privacy decisions and authorizations remain null or false.",
+      "sha256": "9d932f819dbd48502b922becfa2cb279ae1094d1bd0339c65de6ad3eff884227"
     }
   ],
   "records": [
@@ -955,17 +965,17 @@
       "behavior_claim": "Replace residual-mean DIF with established uniform/non-uniform methods and reporting.",
       "prerequisite": "Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.",
       "responsible_capability": "Study owner, statistical reviewer, bilingual raters, and privacy reviewer",
-      "source_revision_configuration": "f330b7c and dbbc3b2; modality-aligned pretest and production-event-aligned repeat-response v2 protocols with no-outcome rehearsals",
+      "source_revision_configuration": "83f343c and 2f0135a; v3 categorical-distribution guardrail plus seven-item independent-review checklist and no-outcome rehearsal",
       "artifact": {
-        "path": "docs/plans/vocabulary-validation-evidence/protocol-alignment-checkpoint-2026-09-14.md",
-        "sha256": "d42ce6337099a68ec026547716c882674cf4652979f8a2f681da225a32a91bdd"
+        "path": "docs/plans/vocabulary-validation-evidence/independent-review-readiness-checkpoint-2026-09-14.md",
+        "sha256": "9d932f819dbd48502b922becfa2cb279ae1094d1bd0339c65de6ad3eff884227"
       },
-      "command_environment": "Production source-lock validation, v1/v2 protocol amendment checks, and deterministic no-outcome aligned rehearsals; no real collection environment",
-      "gate": "Response modality and E1/E2 event alignment are resolved in v2, but independent approval, interference margin/analysis/support, criterion-K acquisition, repeat prompt/delay/precision, consent, real data, and execution remain absent; schema validation is not human evidence.",
+      "command_environment": "V1/v2 production-alignment source locks, v3 joint-decision validator, and deterministic no-outcome categorical rehearsal; no real collection environment",
+      "gate": "Protocol architecture is ready for independent review, but primary/distributional margins and inference, criterion-K error treatment, UI/event versions, repeat timing/precision, severity endpoint, support/governance approval, real data, and execution remain absent; schema validation is not human evidence.",
       "evidence_class": "external human-study prerequisite",
       "current_status": "awaiting_external_input",
-      "next_action": "Obtain independent statistical/research/privacy approval of v2 and freeze its null operational/analysis fields, then run explicitly developmental consented studies before confirmatory recruitment.",
-      "decision_history": "V1 readiness exposed response-modality and evidence-event gaps. V2 now aligns the product probe to actual first-stage actions and E1/E2 to the complete production evidence mapping, while retaining no-outcome rehearsals and all collection blocks."
+      "next_action": "Submit the seven-item checklist and v3 guardrail contract for independent statistical/research/privacy decisions; only a separately versioned approved record may authorize developmental collection.",
+      "decision_history": "V2 resolved modality/event alignment. V3 makes the complete non-exclusion categorical distribution decision-relevant, retains exclusion separately, records criterion-K error and single-severity-endpoint decisions, and keeps all values/authorizations unapproved."
     },
     {
       "id": "STUDY-001",
@@ -973,17 +983,17 @@
       "behavior_claim": "Use a separate consented validation dataset for independent criterion and document holdout.",
       "prerequisite": "Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.",
       "responsible_capability": "Study owner, statistical reviewer, bilingual raters, and privacy reviewer",
-      "source_revision_configuration": "f330b7c and dbbc3b2; modality-aligned pretest and production-event-aligned repeat-response v2 protocols with no-outcome rehearsals",
+      "source_revision_configuration": "83f343c and 2f0135a; v3 categorical-distribution guardrail plus seven-item independent-review checklist and no-outcome rehearsal",
       "artifact": {
-        "path": "docs/plans/vocabulary-validation-evidence/protocol-alignment-checkpoint-2026-09-14.md",
-        "sha256": "d42ce6337099a68ec026547716c882674cf4652979f8a2f681da225a32a91bdd"
+        "path": "docs/plans/vocabulary-validation-evidence/independent-review-readiness-checkpoint-2026-09-14.md",
+        "sha256": "9d932f819dbd48502b922becfa2cb279ae1094d1bd0339c65de6ad3eff884227"
       },
-      "command_environment": "Production source-lock validation, v1/v2 protocol amendment checks, and deterministic no-outcome aligned rehearsals; no real collection environment",
-      "gate": "Response modality and E1/E2 event alignment are resolved in v2, but independent approval, interference margin/analysis/support, criterion-K acquisition, repeat prompt/delay/precision, consent, real data, and execution remain absent; schema validation is not human evidence.",
+      "command_environment": "V1/v2 production-alignment source locks, v3 joint-decision validator, and deterministic no-outcome categorical rehearsal; no real collection environment",
+      "gate": "Protocol architecture is ready for independent review, but primary/distributional margins and inference, criterion-K error treatment, UI/event versions, repeat timing/precision, severity endpoint, support/governance approval, real data, and execution remain absent; schema validation is not human evidence.",
       "evidence_class": "external human-study prerequisite",
       "current_status": "awaiting_external_input",
-      "next_action": "Obtain independent statistical/research/privacy approval of v2 and freeze its null operational/analysis fields, then run explicitly developmental consented studies before confirmatory recruitment.",
-      "decision_history": "V1 readiness exposed response-modality and evidence-event gaps. V2 now aligns the product probe to actual first-stage actions and E1/E2 to the complete production evidence mapping, while retaining no-outcome rehearsals and all collection blocks."
+      "next_action": "Submit the seven-item checklist and v3 guardrail contract for independent statistical/research/privacy decisions; only a separately versioned approved record may authorize developmental collection.",
+      "decision_history": "V2 resolved modality/event alignment. V3 makes the complete non-exclusion categorical distribution decision-relevant, retains exclusion separately, records criterion-K error and single-severity-endpoint decisions, and keeps all values/authorizations unapproved."
     },
     {
       "id": "STUDY-002",
@@ -991,17 +1001,17 @@
       "behavior_claim": "Execute an independently scored participant-and-document held-out learner pilot.",
       "prerequisite": "Reviewed consent, bilingual rubric, target-sense mapping, pretest-interference decision, assignment policy, SAP, and real participants/documents.",
       "responsible_capability": "Study owner, statistical reviewer, bilingual raters, and privacy reviewer",
-      "source_revision_configuration": "f330b7c and dbbc3b2; modality-aligned pretest and production-event-aligned repeat-response v2 protocols with no-outcome rehearsals",
+      "source_revision_configuration": "83f343c and 2f0135a; v3 categorical-distribution guardrail plus seven-item independent-review checklist and no-outcome rehearsal",
       "artifact": {
-        "path": "docs/plans/vocabulary-validation-evidence/protocol-alignment-checkpoint-2026-09-14.md",
-        "sha256": "d42ce6337099a68ec026547716c882674cf4652979f8a2f681da225a32a91bdd"
+        "path": "docs/plans/vocabulary-validation-evidence/independent-review-readiness-checkpoint-2026-09-14.md",
+        "sha256": "9d932f819dbd48502b922becfa2cb279ae1094d1bd0339c65de6ad3eff884227"
       },
-      "command_environment": "Production source-lock validation, v1/v2 protocol amendment checks, and deterministic no-outcome aligned rehearsals; no real collection environment",
-      "gate": "Response modality and E1/E2 event alignment are resolved in v2, but independent approval, interference margin/analysis/support, criterion-K acquisition, repeat prompt/delay/precision, consent, real data, and execution remain absent; schema validation is not human evidence.",
+      "command_environment": "V1/v2 production-alignment source locks, v3 joint-decision validator, and deterministic no-outcome categorical rehearsal; no real collection environment",
+      "gate": "Protocol architecture is ready for independent review, but primary/distributional margins and inference, criterion-K error treatment, UI/event versions, repeat timing/precision, severity endpoint, support/governance approval, real data, and execution remain absent; schema validation is not human evidence.",
       "evidence_class": "external human-study prerequisite",
       "current_status": "awaiting_external_input",
-      "next_action": "Obtain independent statistical/research/privacy approval of v2 and freeze its null operational/analysis fields, then run explicitly developmental consented studies before confirmatory recruitment.",
-      "decision_history": "V1 readiness exposed response-modality and evidence-event gaps. V2 now aligns the product probe to actual first-stage actions and E1/E2 to the complete production evidence mapping, while retaining no-outcome rehearsals and all collection blocks."
+      "next_action": "Submit the seven-item checklist and v3 guardrail contract for independent statistical/research/privacy decisions; only a separately versioned approved record may authorize developmental collection.",
+      "decision_history": "V2 resolved modality/event alignment. V3 makes the complete non-exclusion categorical distribution decision-relevant, retains exclusion separately, records criterion-K error and single-severity-endpoint decisions, and keeps all values/authorizations unapproved."
     },
     {
       "id": "DIFF-002",
