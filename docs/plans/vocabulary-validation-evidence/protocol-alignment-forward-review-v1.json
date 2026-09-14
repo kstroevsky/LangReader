@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "status": "audit-delta-implemented-independent-approval-pending",
+  "sourceRevision": "5943ca9291fd8ed91e0c1b1b2e9bc1e813ca8a9d",
+  "lockedSources": {
+    "pretestProtocolV1": {
+      "path": "docs/plans/vocabulary-validation-evidence/pretest-interference-development-protocol-v1.json",
+      "sha256": "2c33c932cba9cf2172be2b8f9f99c9efc6b731dcf056cedbf6dbeb9aebfd3418"
+    },
+    "repeatProtocolV1": {
+      "path": "docs/plans/vocabulary-validation-evidence/repeat-response-dependence-protocol-v1.json",
+      "sha256": "19adbe493b85ae820b70dec06f41a711d9a7aef7aef1811e3717784e03732c05"
+    },
+    "tailRiskContractV1": {
+      "path": "docs/plans/vocabulary-validation-evidence/tail-risk-acceptance-semantics-v1.json",
+      "sha256": "d8f6dcf9bcb46e55105977e6c839c056d940b3107b25622395512e125c8ab69e"
+    },
+    "productionCoordinator": {
+      "path": "Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationCoordinator.swift",
+      "sha256": "f0bf03d88d53cdcad2a4b57b839f0a3f8cdcc2dddcf319979c1ecc3d79cc99cb"
+    },
+    "productionView": {
+      "path": "Sources/LeafReaderApp/VocabularyReview/VocabularyPreparationView.swift",
+      "sha256": "3e78391c5053f5a7a39f09eac4e91f2a5c978c29cffeaa8c64c4d321f75cd6db"
+    },
+    "productionTests": {
+      "path": "Tests/LeafReaderAppTests/VocabularyPreparationCoordinatorXCTests.swift",
+      "sha256": "165741697880025250d5c185ef63debb81b714a17d6914f688cd3aa7354354b4"
+    }
+  },
+  "findings": [
+    {
+      "id": "ALIGN-001",
+      "severity": "substantive",
+      "finding": "pretest product probe used recall/translation instead of the default categorical first-stage UI",
+      "resolution": "v2 uses the actual default first-stage actions and keeps typed meaning optional; criterion remains the separate recall/translation task"
+    },
+    {
+      "id": "ALIGN-002",
+      "severity": "substantive",
+      "finding": "repeat E1 did not fully specify the production known-claim, reveal, and verification mapping",
+      "resolution": "v2 defines E1 and E2 as the complete production event and pins every evidence-category mapping"
+    },
+    {
+      "id": "ALIGN-003",
+      "severity": "wording",
+      "finding": "primary denominator incorrectly called participant-item records independent",
+      "resolution": "v2 uses distinct eligible participant-item records while retaining clustered dependence"
+    },
+    {
+      "id": "ALIGN-004",
+      "severity": "wording-and-metric-clarity",
+      "finding": "conditional severe expected shortfall is target shortfall conditional on a severe miss",
+      "resolution": "retain the frozen formula and identifier, add display alias conditionalTargetShortfall, and define thresholdExcessSeverity separately without activating it"
+    }
+  ],
+  "unchanged": [
+    "no real collection authorization",
+    "no production change",
+    "no development-confirmation access",
+    "no release-holdout access",
+    "all statistical margins and estimators remain null",
+    "tail-risk mathematical definition remains unchanged",
+    "RISK-001 remains deferred"
+  ]
+}

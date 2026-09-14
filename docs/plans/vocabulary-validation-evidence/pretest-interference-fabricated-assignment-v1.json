@@ -1,0 +1,593 @@
+{
+  "assignments": [
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-01-stratum-01-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-01-lexical-01-01",
+      "opaqueStudyDocumentID": "fabricated-document-01",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-01",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-01-stratum-01-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-01-lexical-01-02",
+      "opaqueStudyDocumentID": "fabricated-document-01",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-01",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    },
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-01-stratum-02-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-01-lexical-02-01",
+      "opaqueStudyDocumentID": "fabricated-document-01",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-01",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-01-stratum-02-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-01-lexical-02-02",
+      "opaqueStudyDocumentID": "fabricated-document-01",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-01",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    },
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-01-stratum-03-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-01-lexical-03-01",
+      "opaqueStudyDocumentID": "fabricated-document-01",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-01",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-01-stratum-03-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-01-lexical-03-02",
+      "opaqueStudyDocumentID": "fabricated-document-01",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-01",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    },
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-01-stratum-04-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-01-lexical-04-01",
+      "opaqueStudyDocumentID": "fabricated-document-01",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-01",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-01-stratum-04-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-01-lexical-04-02",
+      "opaqueStudyDocumentID": "fabricated-document-01",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-01",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-02-stratum-01-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-02-lexical-01-01",
+      "opaqueStudyDocumentID": "fabricated-document-02",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-02",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    },
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-02-stratum-01-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-02-lexical-01-02",
+      "opaqueStudyDocumentID": "fabricated-document-02",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-02",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-02-stratum-02-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-02-lexical-02-01",
+      "opaqueStudyDocumentID": "fabricated-document-02",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-02",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    },
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-02-stratum-02-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-02-lexical-02-02",
+      "opaqueStudyDocumentID": "fabricated-document-02",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-02",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-02-stratum-03-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-02-lexical-03-01",
+      "opaqueStudyDocumentID": "fabricated-document-02",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-02",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-02-stratum-03-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-02-lexical-03-02",
+      "opaqueStudyDocumentID": "fabricated-document-02",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-02",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    },
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-02-stratum-04-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-02-lexical-04-01",
+      "opaqueStudyDocumentID": "fabricated-document-02",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-02",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-02-stratum-04-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "en",
+      "opaqueLexicalItemID": "fabricated-document-02-lexical-04-02",
+      "opaqueStudyDocumentID": "fabricated-document-02",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-02",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    },
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-03-stratum-01-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-03-lexical-01-01",
+      "opaqueStudyDocumentID": "fabricated-document-03",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-03",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-03-stratum-01-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-03-lexical-01-02",
+      "opaqueStudyDocumentID": "fabricated-document-03",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-03",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-03-stratum-02-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-03-lexical-02-01",
+      "opaqueStudyDocumentID": "fabricated-document-03",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-03",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    },
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-03-stratum-02-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-03-lexical-02-02",
+      "opaqueStudyDocumentID": "fabricated-document-03",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-03",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-03-stratum-03-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-03-lexical-03-01",
+      "opaqueStudyDocumentID": "fabricated-document-03",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-03",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-03-stratum-03-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-03-lexical-03-02",
+      "opaqueStudyDocumentID": "fabricated-document-03",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-03",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    },
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-03-stratum-04-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-03-lexical-04-01",
+      "opaqueStudyDocumentID": "fabricated-document-03",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-03",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-03-stratum-04-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-03-lexical-04-02",
+      "opaqueStudyDocumentID": "fabricated-document-03",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-03",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    },
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-04-stratum-01-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-04-lexical-01-01",
+      "opaqueStudyDocumentID": "fabricated-document-04",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-04",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-04-stratum-01-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-04-lexical-01-02",
+      "opaqueStudyDocumentID": "fabricated-document-04",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-04",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    },
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-04-stratum-02-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-04-lexical-02-01",
+      "opaqueStudyDocumentID": "fabricated-document-04",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-04",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-04-stratum-02-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "high",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-04-lexical-02-02",
+      "opaqueStudyDocumentID": "fabricated-document-04",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-04",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-04-stratum-03-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-04-lexical-03-01",
+      "opaqueStudyDocumentID": "fabricated-document-04",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-04",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    },
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-04-stratum-03-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-04-lexical-03-02",
+      "opaqueStudyDocumentID": "fabricated-document-04",
+      "partOfSpeech": "noun",
+      "participantPseudonym": "fabricated-participant-04",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "criterion-before-product",
+      "assignmentID": "block-04-stratum-04-item-01",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-04-lexical-04-01",
+      "opaqueStudyDocumentID": "fabricated-document-04",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-04",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "criterion response",
+        "product-style response"
+      ]
+    },
+    {
+      "arm": "product-before-criterion",
+      "assignmentID": "block-04-stratum-04-item-02",
+      "definitionContextOrFeedbackBeforeBothResponses": false,
+      "eligibleFrameFrozenBeforeAssignment": true,
+      "frequencyBand": "low",
+      "futureAssignmentsDisclosedToParticipant": false,
+      "languageCode": "de",
+      "opaqueLexicalItemID": "fabricated-document-04-lexical-04-02",
+      "opaqueStudyDocumentID": "fabricated-document-04",
+      "partOfSpeech": "verb",
+      "participantPseudonym": "fabricated-participant-04",
+      "strataFrozenBeforeAssignment": true,
+      "taskOrder": [
+        "product-style response",
+        "criterion response"
+      ]
+    }
+  ],
+  "dataRole": "fabricated-assignment-rehearsal",
+  "outcomesIncluded": false,
+  "protocol": "docs/plans/vocabulary-validation-evidence/pretest-interference-development-protocol-v1.json",
+  "protocolSHA256": "2c33c932cba9cf2172be2b8f9f99c9efc6b731dcf056cedbf6dbeb9aebfd3418",
+  "realCollectionAuthorized": false,
+  "schemaVersion": 1,
+  "seed": 20260914,
+  "support": {
+    "assignments": 32,
+    "itemsPerStratum": 2,
+    "participantDocumentBlocks": 4,
+    "strataPerBlock": 4
+  }
+}

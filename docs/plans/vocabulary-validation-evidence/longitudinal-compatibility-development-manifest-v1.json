@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "dataRole": "diagnostic-development",
+  "reservationStatus": "consumed",
+  "seed": 20260913,
+  "sourceEvidence": {
+    "report": "docs/plans/vocabulary-validation-evidence/longitudinal-development-report-v3.json",
+    "reportSHA256": "feebe929620967caa4359b3f0f430399c18d9f3069e5690d61fe892c1337ff49",
+    "tailDecomposition": "docs/plans/vocabulary-validation-evidence/longitudinal-tail-decomposition-v2.json"
+  },
+  "productionBaseline": {
+    "algorithmVersion": 3,
+    "warmPriorWeight": 0.9,
+    "ordinaryMinimumQuestionCount": 20,
+    "eligibleWarmMinimumQuestionCount": 8,
+    "warmValidationOrdinals": [4, 8],
+    "currentRelaxationRule": "two non-excluded validation answers; agreement is not currently required"
+  },
+  "candidateCompatibilitySignal": {
+    "name": "paired-validation-evidence-log-likelihood-ratio-v1",
+    "definition": "sum over the two fixed warm-path validation items of log P(observed evidence | warm prefix posterior) minus log P(observed evidence | cold prefix posterior)",
+    "commonEvidenceContract": "warm and cold probabilities use the identical question identity, observed evidence, preceding answer order, and validation metadata",
+    "observationModelVersion": "categorical-evidence-v1",
+    "evidenceReliabilityScale": 1.0,
+    "minimumNonExcludedValidationAnswers": 2,
+    "supportThreshold": 0.0,
+    "supportRule": "relax to eight only when the cumulative log-likelihood ratio is at least zero",
+    "excludedOrMissingRule": "retain the ordinary 20-question minimum",
+    "counterfactualAction": "when unsupported, keep the eligible warm prior but continue the exact diagnostic warm question path to at least 20 answers before applying ordinary stopping rules"
+  },
+  "workload": {
+    "scenarios": [
+      "stable-overlap",
+      "noisy-history",
+      "biased-self-verification",
+      "easy-history-hard-evaluation",
+      "hard-history-easy-evaluation",
+      "changed-difficulty-distribution",
+      "ability-drift",
+      "low-lexical-overlap"
+    ],
+    "learnersPerScenario": 128,
+    "plannedEligibleRuns": 1024,
+    "historyDocumentCount": 3,
+    "lemmaCount": 60,
+    "fixedBudget": 60,
+    "targetCoverage": 0.98,
+    "retainEveryRow": true
+  },
+  "precisionPlan": {
+    "purpose": "tail-sensitive development screen, not confirmatory non-inferiority",
+    "zeroEventOneSided95UpperBoundOverall": 0.0029212446353880095,
+    "zeroEventOneSided95UpperBoundPerScenario": 0.023132405251746757,
+    "independenceLimitation": "bounds treat deterministic synthetic learner draws as independent and do not establish real-learner safety"
+  },
+  "decisionRule": {
+    "materialCoverageDegradation": -0.02,
+    "maximumMaterialTailCount": 0,
+    "minimumMeanWarmMinusColdCoverage": -0.005,
+    "minimumMeanQuestionReduction": 0.5,
+    "noThresholdTuningAfterOutcome": true,
+    "failureAction": "retain adverse evidence and reserve a new future development experiment before testing a different threshold or signal"
+  },
+  "forbiddenAccess": {
+    "developmentConfirmation": true,
+    "releaseHoldout": true,
+    "consumedPOSHeldout": true,
+    "productionActivation": true
+  },
+  "outcomes": {
+    "executionSourceRevision": "c77f732367d2c75dea45fd36e1b13d1a99d2c92b",
+    "semanticReport": "docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-development-report-v1.json",
+    "semanticReportSHA256": "789542ee581b315a4e6ed330c9dd855e2f7eef276f95481289a9a2f8db8a5e41",
+    "retainedRuns": 1024,
+    "eligibleRuns": 1020,
+    "productionMaterialTailCount": 55,
+    "candidateMaterialTailCount": 54,
+    "candidateWorstCoverageDifference": -0.15990585629239928,
+    "candidateMeanCoverageDifference": -0.001390981423719978,
+    "candidateMeanQuestionReduction": 0.6893399068745387,
+    "candidatePass": false,
+    "decision": "reject-candidate-retain-production"
+  },
+  "consumedAtRevision": "c77f732367d2c75dea45fd36e1b13d1a99d2c92b"
+}

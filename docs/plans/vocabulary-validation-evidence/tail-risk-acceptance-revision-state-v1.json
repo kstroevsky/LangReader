@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "phase": "SEMANTIC_VERIFIED",
+  "baseRevision": "5d3ef1411b98f82659ed3c74008f9a307b6486c1",
+  "sourceLockSHA256": "fce81424564ea85dd17c0c68fbf8d38321084146e51ba5db28b6729a8e43c987",
+  "deltaSHA256": "b58a86cd0cc39905ec0014193eb6eda47080cb61c3d273aad6e6ae05d817f8d9",
+  "ledgerSHA256": "efac08e96f676f9d648e43a1dd52ab6df84f0409d89e430567535605c9a7c7aa",
+  "candidateSHA256": "d8f6dcf9bcb46e55105977e6c839c056d940b3107b25622395512e125c8ab69e",
+  "completedFeedbackIDs": ["TAIL-RISK-01", "TAIL-RISK-02", "TAIL-RISK-03"],
+  "validationResults": {
+    "mechanical": "passed",
+    "semantic": "passed",
+    "independent": "not-performed-no-subagent-authority"
+  },
+  "repairAttemptsByFinding": {},
+  "openFindings": [
+    "authorized statistical/release review must choose the applicable release decision fields",
+    "independent forward review remains pending"
+  ]
+}

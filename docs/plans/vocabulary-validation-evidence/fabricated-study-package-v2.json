@@ -1,0 +1,915 @@
+{
+  "analysisConfigurationVersion": "descriptive-rehearsal-v1",
+  "assessments": [
+    {
+      "abandoned": false,
+      "algorithmVersion": 3,
+      "assessmentID": "assessment-en-cold",
+      "condition": "cold",
+      "conservativeCoverage": 0.98,
+      "expectedCurrentCoverage": 0.65,
+      "lookupFailureCount": 0,
+      "modelVersion": "rasch-knowledge-v1",
+      "observationVersion": "categorical-evidence-v1",
+      "opaqueStudyDocumentID": "fabricated-en-small",
+      "participantPseudonym": "fabricated-en-1",
+      "priorEligible": false,
+      "priorUsed": false,
+      "projectedCoverage": 0.99,
+      "questionCount": 4,
+      "resourceVersion": "fabricated-resource-v1",
+      "sessionOrder": 1,
+      "stopReason": "exhaustedCandidates"
+    },
+    {
+      "abandoned": false,
+      "algorithmVersion": 3,
+      "assessmentID": "assessment-en-warm",
+      "condition": "warm",
+      "conservativeCoverage": 0.98,
+      "expectedCurrentCoverage": 0.65,
+      "lookupFailureCount": 0,
+      "modelVersion": "rasch-knowledge-v1",
+      "observationVersion": "categorical-evidence-v1",
+      "opaqueStudyDocumentID": "fabricated-en-small",
+      "participantPseudonym": "fabricated-en-1",
+      "priorEligible": true,
+      "priorUsed": true,
+      "projectedCoverage": 0.99,
+      "questionCount": 2,
+      "resourceVersion": "fabricated-resource-v1",
+      "sessionOrder": 2,
+      "stopReason": "exhaustedCandidates"
+    },
+    {
+      "abandoned": false,
+      "algorithmVersion": 3,
+      "assessmentID": "assessment-de-cold",
+      "condition": "cold",
+      "conservativeCoverage": 0.98,
+      "expectedCurrentCoverage": 0.65,
+      "lookupFailureCount": 1,
+      "modelVersion": "rasch-knowledge-v1",
+      "observationVersion": "categorical-evidence-v1",
+      "opaqueStudyDocumentID": "fabricated-de-large",
+      "participantPseudonym": "fabricated-de-1",
+      "priorEligible": false,
+      "priorUsed": false,
+      "projectedCoverage": 0.99,
+      "questionCount": 4,
+      "resourceVersion": "fabricated-resource-v1",
+      "sessionOrder": 1,
+      "stopReason": "exhaustedCandidates"
+    },
+    {
+      "abandoned": false,
+      "algorithmVersion": 3,
+      "assessmentID": "assessment-de-warm",
+      "condition": "warm",
+      "conservativeCoverage": 0.98,
+      "expectedCurrentCoverage": 0.65,
+      "lookupFailureCount": 1,
+      "modelVersion": "rasch-knowledge-v1",
+      "observationVersion": "categorical-evidence-v1",
+      "opaqueStudyDocumentID": "fabricated-de-large",
+      "participantPseudonym": "fabricated-de-1",
+      "priorEligible": true,
+      "priorUsed": true,
+      "projectedCoverage": 0.99,
+      "questionCount": 2,
+      "resourceVersion": "fabricated-resource-v1",
+      "sessionOrder": 2,
+      "stopReason": "exhaustedCandidates"
+    },
+    {
+      "abandoned": true,
+      "algorithmVersion": 3,
+      "assessmentID": "assessment-abandoned",
+      "condition": "cold",
+      "conservativeCoverage": 0.2,
+      "expectedCurrentCoverage": 0.5,
+      "lookupFailureCount": 1,
+      "modelVersion": "rasch-knowledge-v1",
+      "observationVersion": "categorical-evidence-v1",
+      "opaqueStudyDocumentID": "fabricated-en-small",
+      "participantPseudonym": "fabricated-en-1",
+      "priorEligible": false,
+      "priorUsed": false,
+      "projectedCoverage": 0.5,
+      "questionCount": 1,
+      "resourceVersion": "fabricated-resource-v1",
+      "sessionOrder": 3
+    }
+  ],
+  "criterionRecords": [
+    {
+      "assessmentID": "assessment-en-cold",
+      "collectedBeforeReveal": true,
+      "firstRaterStatus": "known",
+      "inclusionProbability": 1.0,
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "bank",
+        "partOfSpeech": "noun"
+      },
+      "phase": "preReading",
+      "rubricVersion": "fabricated-rubric-v1",
+      "samplingStageID": "sample-en",
+      "secondRaterStatus": "known",
+      "status": "known"
+    },
+    {
+      "assessmentID": "assessment-en-cold",
+      "collectedBeforeReveal": true,
+      "firstRaterStatus": "unknownOrPartial",
+      "inclusionProbability": 1.0,
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "current",
+        "partOfSpeech": "adjective"
+      },
+      "phase": "preReading",
+      "rubricVersion": "fabricated-rubric-v1",
+      "samplingStageID": "sample-en",
+      "secondRaterStatus": "unknownOrPartial",
+      "status": "unknownOrPartial"
+    },
+    {
+      "adjudicatedStatus": "ambiguous",
+      "ambiguityReason": "context-free multiple meanings",
+      "assessmentID": "assessment-en-cold",
+      "collectedBeforeReveal": true,
+      "firstRaterStatus": "known",
+      "inclusionProbability": 1.0,
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "record",
+        "partOfSpeech": "verb"
+      },
+      "phase": "preReading",
+      "rubricVersion": "fabricated-rubric-v1",
+      "samplingStageID": "sample-en",
+      "secondRaterStatus": "unknownOrPartial",
+      "status": "ambiguous"
+    },
+    {
+      "assessmentID": "assessment-en-cold",
+      "collectedBeforeReveal": true,
+      "firstRaterStatus": "known",
+      "inclusionProbability": 1.0,
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "quiet",
+        "partOfSpeech": "adjective"
+      },
+      "phase": "preReading",
+      "rubricVersion": "fabricated-rubric-v1",
+      "samplingStageID": "sample-en",
+      "secondRaterStatus": "known",
+      "status": "known"
+    },
+    {
+      "assessmentID": "assessment-en-cold",
+      "collectedBeforeReveal": false,
+      "firstRaterStatus": "known",
+      "inclusionProbability": 1.0,
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "current",
+        "partOfSpeech": "adjective"
+      },
+      "phase": "immediatePostLearning",
+      "rubricVersion": "fabricated-rubric-v1",
+      "samplingStageID": "sample-en",
+      "secondRaterStatus": "known",
+      "status": "known"
+    },
+    {
+      "assessmentID": "assessment-en-cold",
+      "collectedBeforeReveal": false,
+      "firstRaterStatus": "known",
+      "inclusionProbability": 1.0,
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "current",
+        "partOfSpeech": "adjective"
+      },
+      "phase": "delayedRetest",
+      "retestLinkageID": "retest-en",
+      "rubricVersion": "fabricated-rubric-v1",
+      "samplingStageID": "sample-en",
+      "secondRaterStatus": "known",
+      "status": "known"
+    },
+    {
+      "assessmentID": "assessment-de-cold",
+      "collectedBeforeReveal": true,
+      "firstRaterStatus": "known",
+      "inclusionProbability": 0.5,
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "Bank",
+        "partOfSpeech": "noun"
+      },
+      "phase": "preReading",
+      "rubricVersion": "fabricated-rubric-v1",
+      "samplingStageID": "sample-de",
+      "secondRaterStatus": "known",
+      "status": "known"
+    },
+    {
+      "assessmentID": "assessment-de-cold",
+      "collectedBeforeReveal": true,
+      "firstRaterStatus": "unknownOrPartial",
+      "inclusionProbability": 0.5,
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "laufen",
+        "partOfSpeech": "verb"
+      },
+      "phase": "preReading",
+      "rubricVersion": "fabricated-rubric-v1",
+      "samplingStageID": "sample-de",
+      "secondRaterStatus": "unknownOrPartial",
+      "status": "unknownOrPartial"
+    },
+    {
+      "adjudicatedStatus": "ambiguous",
+      "ambiguityReason": "context-free multiple meanings",
+      "assessmentID": "assessment-de-cold",
+      "collectedBeforeReveal": true,
+      "firstRaterStatus": "known",
+      "inclusionProbability": 0.5,
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "Schloss",
+        "partOfSpeech": "noun"
+      },
+      "phase": "preReading",
+      "rubricVersion": "fabricated-rubric-v1",
+      "samplingStageID": "sample-de",
+      "secondRaterStatus": "unknownOrPartial",
+      "status": "ambiguous"
+    },
+    {
+      "assessmentID": "assessment-de-cold",
+      "collectedBeforeReveal": false,
+      "firstRaterStatus": "known",
+      "inclusionProbability": 0.5,
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "laufen",
+        "partOfSpeech": "verb"
+      },
+      "phase": "immediatePostLearning",
+      "rubricVersion": "fabricated-rubric-v1",
+      "samplingStageID": "sample-de",
+      "secondRaterStatus": "known",
+      "status": "known"
+    },
+    {
+      "assessmentID": "assessment-de-cold",
+      "collectedBeforeReveal": false,
+      "inclusionProbability": 0.5,
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "laufen",
+        "partOfSpeech": "verb"
+      },
+      "missingnessReason": "fabricated attrition",
+      "phase": "delayedRetest",
+      "retestLinkageID": "retest-de",
+      "rubricVersion": "fabricated-rubric-v1",
+      "samplingStageID": "sample-de",
+      "status": "missing"
+    }
+  ],
+  "dataRole": "fabricated-rehearsal",
+  "deckSnapshots": [
+    {
+      "assessmentID": "assessment-en-cold",
+      "conservativeCoverage": 0.98,
+      "expectedCoverage": 0.99,
+      "inventorySnapshotID": "inventory-en-v1",
+      "role": "proposed",
+      "selectedLexicalItemIDs": [
+        {
+          "language": "en",
+          "lemma": "current",
+          "partOfSpeech": "adjective"
+        }
+      ],
+      "snapshotID": "deck-en-cold-proposed",
+      "targetCoverage": 0.98
+    },
+    {
+      "assessmentID": "assessment-en-cold",
+      "conservativeCoverage": 0.99,
+      "expectedCoverage": 1.0,
+      "inventorySnapshotID": "inventory-en-v1",
+      "role": "edited",
+      "selectedLexicalItemIDs": [
+        {
+          "language": "en",
+          "lemma": "current",
+          "partOfSpeech": "adjective"
+        },
+        {
+          "language": "en",
+          "lemma": "record",
+          "partOfSpeech": "verb"
+        }
+      ],
+      "snapshotID": "deck-en-cold-edited",
+      "targetCoverage": 0.98
+    },
+    {
+      "assessmentID": "assessment-en-warm",
+      "conservativeCoverage": 0.98,
+      "expectedCoverage": 0.99,
+      "inventorySnapshotID": "inventory-en-v1",
+      "role": "proposed",
+      "selectedLexicalItemIDs": [
+        {
+          "language": "en",
+          "lemma": "current",
+          "partOfSpeech": "adjective"
+        }
+      ],
+      "snapshotID": "deck-en-warm-proposed",
+      "targetCoverage": 0.98
+    },
+    {
+      "assessmentID": "assessment-en-warm",
+      "conservativeCoverage": 0.99,
+      "expectedCoverage": 1.0,
+      "inventorySnapshotID": "inventory-en-v1",
+      "role": "edited",
+      "selectedLexicalItemIDs": [
+        {
+          "language": "en",
+          "lemma": "current",
+          "partOfSpeech": "adjective"
+        }
+      ],
+      "snapshotID": "deck-en-warm-edited",
+      "targetCoverage": 0.98
+    },
+    {
+      "assessmentID": "assessment-de-cold",
+      "conservativeCoverage": 0.98,
+      "expectedCoverage": 0.99,
+      "inventorySnapshotID": "inventory-de-v1",
+      "role": "proposed",
+      "selectedLexicalItemIDs": [
+        {
+          "language": "de",
+          "lemma": "laufen",
+          "partOfSpeech": "verb"
+        }
+      ],
+      "snapshotID": "deck-de-cold-proposed",
+      "targetCoverage": 0.98
+    },
+    {
+      "assessmentID": "assessment-de-cold",
+      "conservativeCoverage": 0.99,
+      "expectedCoverage": 1.0,
+      "inventorySnapshotID": "inventory-de-v1",
+      "role": "edited",
+      "selectedLexicalItemIDs": [
+        {
+          "language": "de",
+          "lemma": "laufen",
+          "partOfSpeech": "verb"
+        },
+        {
+          "language": "de",
+          "lemma": "Schloss",
+          "partOfSpeech": "noun"
+        }
+      ],
+      "snapshotID": "deck-de-cold-edited",
+      "targetCoverage": 0.98
+    },
+    {
+      "assessmentID": "assessment-de-warm",
+      "conservativeCoverage": 0.98,
+      "expectedCoverage": 0.99,
+      "inventorySnapshotID": "inventory-de-v1",
+      "role": "proposed",
+      "selectedLexicalItemIDs": [
+        {
+          "language": "de",
+          "lemma": "laufen",
+          "partOfSpeech": "verb"
+        }
+      ],
+      "snapshotID": "deck-de-warm-proposed",
+      "targetCoverage": 0.98
+    },
+    {
+      "assessmentID": "assessment-de-warm",
+      "conservativeCoverage": 0.99,
+      "expectedCoverage": 1.0,
+      "inventorySnapshotID": "inventory-de-v1",
+      "role": "edited",
+      "selectedLexicalItemIDs": [
+        {
+          "language": "de",
+          "lemma": "laufen",
+          "partOfSpeech": "verb"
+        }
+      ],
+      "snapshotID": "deck-de-warm-edited",
+      "targetCoverage": 0.98
+    }
+  ],
+  "documents": [
+    {
+      "analysisSplit": "training",
+      "eligibleLexicalItemCount": 4,
+      "eligibleOccurrenceMass": 100,
+      "format": "pdf",
+      "genre": "news",
+      "inventorySnapshotID": "inventory-en-v1",
+      "languageCode": "en",
+      "nearDuplicateGroupID": "near-en-1",
+      "opaqueStudyDocumentID": "fabricated-en-small"
+    },
+    {
+      "analysisSplit": "validation",
+      "eligibleLexicalItemCount": 4,
+      "eligibleOccurrenceMass": 100,
+      "format": "epub",
+      "genre": "literary",
+      "inventorySnapshotID": "inventory-de-v1",
+      "languageCode": "de",
+      "nearDuplicateGroupID": "near-de-1",
+      "opaqueStudyDocumentID": "fabricated-de-large"
+    }
+  ],
+  "estimatorStatus": "provisional-not-approved",
+  "itemPredictions": [
+    {
+      "assessmentID": "assessment-en-cold",
+      "classification": "uncertain",
+      "evidence": "verifiedKnown",
+      "finalKnownProbability": 0.85,
+      "inventorySnapshotID": "inventory-en-v1",
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "bank",
+        "partOfSpeech": "noun"
+      },
+      "occurrenceCount": 40,
+      "status": "asked"
+    },
+    {
+      "assessmentID": "assessment-en-cold",
+      "classification": "uncertain",
+      "evidence": "reportedUnknown",
+      "finalKnownProbability": 0.2,
+      "inventorySnapshotID": "inventory-en-v1",
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "current",
+        "partOfSpeech": "adjective"
+      },
+      "occurrenceCount": 30,
+      "status": "asked"
+    },
+    {
+      "assessmentID": "assessment-en-cold",
+      "classification": "uncertain",
+      "evidence": "verifiedKnown",
+      "finalKnownProbability": 0.55,
+      "inventorySnapshotID": "inventory-en-v1",
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "record",
+        "partOfSpeech": "verb"
+      },
+      "occurrenceCount": 20,
+      "status": "asked"
+    },
+    {
+      "assessmentID": "assessment-en-cold",
+      "classification": "uncertain",
+      "evidence": "verifiedKnown",
+      "finalKnownProbability": 0.75,
+      "inventorySnapshotID": "inventory-en-v1",
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "quiet",
+        "partOfSpeech": "adjective"
+      },
+      "occurrenceCount": 10,
+      "status": "asked"
+    },
+    {
+      "assessmentID": "assessment-en-warm",
+      "classification": "uncertain",
+      "evidence": "verifiedKnown",
+      "finalKnownProbability": 0.85,
+      "inventorySnapshotID": "inventory-en-v1",
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "bank",
+        "partOfSpeech": "noun"
+      },
+      "occurrenceCount": 40,
+      "status": "asked"
+    },
+    {
+      "assessmentID": "assessment-en-warm",
+      "classification": "uncertain",
+      "evidence": "reportedUnknown",
+      "finalKnownProbability": 0.2,
+      "inventorySnapshotID": "inventory-en-v1",
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "current",
+        "partOfSpeech": "adjective"
+      },
+      "occurrenceCount": 30,
+      "status": "asked"
+    },
+    {
+      "assessmentID": "assessment-en-warm",
+      "classification": "uncertain",
+      "finalKnownProbability": 0.55,
+      "inventorySnapshotID": "inventory-en-v1",
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "record",
+        "partOfSpeech": "verb"
+      },
+      "occurrenceCount": 20,
+      "status": "unasked"
+    },
+    {
+      "assessmentID": "assessment-en-warm",
+      "classification": "uncertain",
+      "finalKnownProbability": 0.75,
+      "inventorySnapshotID": "inventory-en-v1",
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "quiet",
+        "partOfSpeech": "adjective"
+      },
+      "occurrenceCount": 10,
+      "status": "unasked"
+    },
+    {
+      "assessmentID": "assessment-de-cold",
+      "classification": "uncertain",
+      "evidence": "verifiedKnown",
+      "finalKnownProbability": 0.7,
+      "inventorySnapshotID": "inventory-de-v1",
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "Bank",
+        "partOfSpeech": "noun"
+      },
+      "occurrenceCount": 45,
+      "status": "asked"
+    },
+    {
+      "assessmentID": "assessment-de-cold",
+      "classification": "uncertain",
+      "evidence": "reportedUnknown",
+      "finalKnownProbability": 0.25,
+      "inventorySnapshotID": "inventory-de-v1",
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "laufen",
+        "partOfSpeech": "verb"
+      },
+      "occurrenceCount": 25,
+      "status": "asked"
+    },
+    {
+      "assessmentID": "assessment-de-cold",
+      "classification": "uncertain",
+      "evidence": "verifiedKnown",
+      "finalKnownProbability": 0.5,
+      "inventorySnapshotID": "inventory-de-v1",
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "Schloss",
+        "partOfSpeech": "noun"
+      },
+      "occurrenceCount": 20,
+      "status": "asked"
+    },
+    {
+      "assessmentID": "assessment-de-cold",
+      "classification": "uncertain",
+      "evidence": "reportedUnknown",
+      "finalKnownProbability": 0.4,
+      "inventorySnapshotID": "inventory-de-v1",
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "selten",
+        "partOfSpeech": "adjective"
+      },
+      "occurrenceCount": 10,
+      "status": "asked"
+    },
+    {
+      "assessmentID": "assessment-de-warm",
+      "classification": "uncertain",
+      "evidence": "verifiedKnown",
+      "finalKnownProbability": 0.7,
+      "inventorySnapshotID": "inventory-de-v1",
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "Bank",
+        "partOfSpeech": "noun"
+      },
+      "occurrenceCount": 45,
+      "status": "asked"
+    },
+    {
+      "assessmentID": "assessment-de-warm",
+      "classification": "uncertain",
+      "evidence": "reportedUnknown",
+      "finalKnownProbability": 0.25,
+      "inventorySnapshotID": "inventory-de-v1",
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "laufen",
+        "partOfSpeech": "verb"
+      },
+      "occurrenceCount": 25,
+      "status": "asked"
+    },
+    {
+      "assessmentID": "assessment-de-warm",
+      "classification": "uncertain",
+      "finalKnownProbability": 0.5,
+      "inventorySnapshotID": "inventory-de-v1",
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "Schloss",
+        "partOfSpeech": "noun"
+      },
+      "occurrenceCount": 20,
+      "status": "unasked"
+    },
+    {
+      "assessmentID": "assessment-de-warm",
+      "classification": "uncertain",
+      "finalKnownProbability": 0.4,
+      "inventorySnapshotID": "inventory-de-v1",
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "selten",
+        "partOfSpeech": "adjective"
+      },
+      "occurrenceCount": 10,
+      "status": "unasked"
+    }
+  ],
+  "participants": [
+    {
+      "analysisSplit": "training",
+      "cohort": "fabricated-census",
+      "consentProtocolVersion": "fabricated-consent-v1",
+      "consentRecorded": true,
+      "l1LanguageCode": "de",
+      "languageCode": "en",
+      "participantPseudonym": "fabricated-en-1",
+      "proficiencyBand": "B1/B2"
+    },
+    {
+      "analysisSplit": "validation",
+      "cohort": "fabricated-sample",
+      "consentProtocolVersion": "fabricated-consent-v1",
+      "consentRecorded": true,
+      "l1LanguageCode": "en",
+      "languageCode": "de",
+      "participantPseudonym": "fabricated-de-1",
+      "proficiencyBand": "B1/B2"
+    }
+  ],
+  "questionTraces": [
+    {
+      "assessmentID": "assessment-en-cold",
+      "elapsedMilliseconds": 101,
+      "evidence": "verifiedKnown",
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "bank",
+        "partOfSpeech": "noun"
+      },
+      "predictedKnownBeforeAnswer": 0.5,
+      "questionOrdinal": 1,
+      "revealedAfterResponse": true,
+      "selectionType": "initialCalibration"
+    },
+    {
+      "assessmentID": "assessment-en-cold",
+      "elapsedMilliseconds": 102,
+      "evidence": "reportedUnknown",
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "current",
+        "partOfSpeech": "adjective"
+      },
+      "predictedKnownBeforeAnswer": 0.5,
+      "questionOrdinal": 2,
+      "revealedAfterResponse": true,
+      "selectionType": "initialCalibration"
+    },
+    {
+      "assessmentID": "assessment-en-cold",
+      "elapsedMilliseconds": 103,
+      "evidence": "verifiedKnown",
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "record",
+        "partOfSpeech": "verb"
+      },
+      "predictedKnownBeforeAnswer": 0.5,
+      "questionOrdinal": 3,
+      "revealedAfterResponse": true,
+      "selectionType": "initialCalibration"
+    },
+    {
+      "assessmentID": "assessment-en-cold",
+      "elapsedMilliseconds": 104,
+      "evidence": "verifiedKnown",
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "quiet",
+        "partOfSpeech": "adjective"
+      },
+      "predictedKnownBeforeAnswer": 0.5,
+      "questionOrdinal": 4,
+      "revealedAfterResponse": true,
+      "selectionType": "initialCalibration"
+    },
+    {
+      "assessmentID": "assessment-en-warm",
+      "elapsedMilliseconds": 101,
+      "evidence": "verifiedKnown",
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "bank",
+        "partOfSpeech": "noun"
+      },
+      "predictedKnownBeforeAnswer": 0.5,
+      "questionOrdinal": 1,
+      "revealedAfterResponse": true,
+      "selectionType": "initialCalibration"
+    },
+    {
+      "assessmentID": "assessment-en-warm",
+      "elapsedMilliseconds": 102,
+      "evidence": "reportedUnknown",
+      "lexicalItemID": {
+        "language": "en",
+        "lemma": "current",
+        "partOfSpeech": "adjective"
+      },
+      "predictedKnownBeforeAnswer": 0.5,
+      "questionOrdinal": 2,
+      "revealedAfterResponse": true,
+      "selectionType": "initialCalibration"
+    },
+    {
+      "assessmentID": "assessment-de-cold",
+      "elapsedMilliseconds": 101,
+      "evidence": "verifiedKnown",
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "Bank",
+        "partOfSpeech": "noun"
+      },
+      "predictedKnownBeforeAnswer": 0.5,
+      "questionOrdinal": 1,
+      "revealedAfterResponse": true,
+      "selectionType": "initialCalibration"
+    },
+    {
+      "assessmentID": "assessment-de-cold",
+      "elapsedMilliseconds": 102,
+      "evidence": "reportedUnknown",
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "laufen",
+        "partOfSpeech": "verb"
+      },
+      "predictedKnownBeforeAnswer": 0.5,
+      "questionOrdinal": 2,
+      "revealedAfterResponse": true,
+      "selectionType": "initialCalibration"
+    },
+    {
+      "assessmentID": "assessment-de-cold",
+      "elapsedMilliseconds": 103,
+      "evidence": "verifiedKnown",
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "Schloss",
+        "partOfSpeech": "noun"
+      },
+      "predictedKnownBeforeAnswer": 0.5,
+      "questionOrdinal": 3,
+      "revealedAfterResponse": true,
+      "selectionType": "initialCalibration"
+    },
+    {
+      "assessmentID": "assessment-de-cold",
+      "elapsedMilliseconds": 104,
+      "evidence": "reportedUnknown",
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "selten",
+        "partOfSpeech": "adjective"
+      },
+      "predictedKnownBeforeAnswer": 0.5,
+      "questionOrdinal": 4,
+      "revealedAfterResponse": true,
+      "selectionType": "initialCalibration"
+    },
+    {
+      "assessmentID": "assessment-de-warm",
+      "elapsedMilliseconds": 101,
+      "evidence": "verifiedKnown",
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "Bank",
+        "partOfSpeech": "noun"
+      },
+      "predictedKnownBeforeAnswer": 0.5,
+      "questionOrdinal": 1,
+      "revealedAfterResponse": true,
+      "selectionType": "initialCalibration"
+    },
+    {
+      "assessmentID": "assessment-de-warm",
+      "elapsedMilliseconds": 102,
+      "evidence": "reportedUnknown",
+      "lexicalItemID": {
+        "language": "de",
+        "lemma": "laufen",
+        "partOfSpeech": "verb"
+      },
+      "predictedKnownBeforeAnswer": 0.5,
+      "questionOrdinal": 2,
+      "revealedAfterResponse": true,
+      "selectionType": "initialCalibration"
+    }
+  ],
+  "realCollectionAuthorized": false,
+  "retestManifests": [
+    {
+      "assessmentID": "assessment-en-cold",
+      "elapsedHours": 168,
+      "missingnessStatus": "observed",
+      "retestLinkageID": "retest-en",
+      "windowVersion": "week-1-v1"
+    },
+    {
+      "assessmentID": "assessment-de-cold",
+      "elapsedHours": 168,
+      "missingnessStatus": "missing",
+      "retestLinkageID": "retest-de",
+      "windowVersion": "week-1-v1"
+    }
+  ],
+  "rubricVersion": "fabricated-rubric-v1",
+  "samplingManifests": [
+    {
+      "census": true,
+      "designVersion": "census-v1",
+      "expectedFinalTailSupport": 2.0,
+      "expectedSelectedCardSupport": 1.0,
+      "frameHash": "frame-en",
+      "maximumDesignWeight": 1.0,
+      "minimumInclusionProbability": 1.0,
+      "opaqueStudyDocumentID": "fabricated-en-small",
+      "samplingStageID": "sample-en",
+      "seed": 1,
+      "weightBasedEffectiveSampleSize": 4.0
+    },
+    {
+      "census": false,
+      "designVersion": "stratified-probability-v1",
+      "expectedFinalTailSupport": 1.0,
+      "expectedSelectedCardSupport": 0.5,
+      "frameHash": "frame-de",
+      "maximumDesignWeight": 4.0,
+      "minimumInclusionProbability": 0.25,
+      "opaqueStudyDocumentID": "fabricated-de-large",
+      "samplingStageID": "sample-de",
+      "seed": 2,
+      "weightBasedEffectiveSampleSize": 2.0
+    }
+  ],
+  "schemaVersion": 2,
+  "studyProtocolVersion": "fabricated-protocol-v2"
+}

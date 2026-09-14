@@ -50,6 +50,81 @@ echo "==> Running regression harness"
 echo "==> Testing performance-capture validator"
 bash ./scripts/test_perf_capture_validator.sh
 
+echo "==> Testing vocabulary assessment evaluator"
+bash ./scripts/test_vocabulary_assessment_evaluator.sh
+
+echo "==> Testing vocabulary observation model and calibration fitter"
+bash ./scripts/check_vocabulary_observation_model.sh
+
+echo "==> Testing vocabulary validation-study dataset"
+python3 ./scripts/validate_vocabulary_validation_study.py --self-test
+python3 ./scripts/run_vocabulary_validation_study_rehearsal.py --self-test
+python3 ./scripts/check_vocabulary_sap_template.py --self-test
+./scripts/test_vocabulary_pos_fixtures.sh
+
+echo "==> Testing vocabulary cross-format fixtures"
+python3 ./scripts/generate_vocabulary_preparation_fixtures.py --check
+
+echo "==> Checking vocabulary evidence status register"
+python3 ./scripts/build_vocabulary_evidence_register.py --check
+
+echo "==> Testing approved disabled calibration assignment design"
+python3 ./scripts/validate_vocabulary_calibration_assignment_package.py --self-test
+
+echo "==> Checking sealed vocabulary development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation.py --self-test
+
+echo "==> Checking frozen vocabulary warm-compatibility development reservation"
+python3 ./scripts/validate_vocabulary_longitudinal_compatibility_manifest.py \
+  ./docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-development-manifest-v1.json \
+  --self-test
+python3 ./scripts/build_vocabulary_longitudinal_compatibility_run_manifest.py --check
+
+echo "==> Checking frozen warm question-path forensic reservation"
+python3 ./scripts/validate_warm_question_path_forensic_manifest.py \
+  ./docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-manifest-v1.json \
+  --self-test
+python3 ./scripts/build_warm_question_path_forensic_run_manifest.py --check
+
+echo "==> Checking frozen warm question-path forensic repair"
+python3 ./scripts/validate_warm_question_path_forensic_repair_manifest.py \
+  ./docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-repair-manifest-v2.json \
+  --self-test
+
+echo "==> Checking frozen high-consequence known-confirmation reservation"
+python3 ./scripts/validate_high_consequence_known_confirmation_manifest.py \
+  ./docs/plans/vocabulary-validation-evidence/high-consequence-known-confirmation-manifest-v1.json \
+  --self-test
+python3 ./scripts/build_high_consequence_known_confirmation_run_manifest.py --check
+
+echo "==> Checking vocabulary tail-risk acceptance definitions"
+python3 ./scripts/validate_vocabulary_tail_risk_contract.py --self-test
+
+echo "==> Checking blocked pretest-interference development protocol"
+python3 ./scripts/validate_pretest_interference_protocol.py --self-test
+python3 ./scripts/build_pretest_interference_rehearsal.py --check --self-test
+
+echo "==> Checking blocked repeat-response dependence protocol"
+python3 ./scripts/validate_repeat_response_dependence_protocol.py --self-test
+python3 ./scripts/build_repeat_response_dependence_rehearsal.py --check --self-test
+
+echo "==> Checking vocabulary protocol alignment amendments"
+python3 ./scripts/validate_protocol_alignment_amendments.py --self-test
+python3 ./scripts/build_protocol_alignment_rehearsals.py --check --self-test
+
+echo "==> Checking vocabulary independent-review decision packet"
+python3 ./scripts/validate_independent_review_decision_packet.py --self-test
+python3 ./scripts/build_independent_review_rehearsal.py --check --self-test
+
+echo "==> Testing vocabulary domain resource builders"
+bash ./scripts/test_vocabulary_domain_resource_builders.sh
+
+echo "==> Testing vocabulary benchmark series summarizer"
+python3 ./scripts/summarize_vocabulary_assessment_benchmarks.py --self-test
+
+echo "==> Testing vocabulary stopping comparison"
+python3 ./scripts/compare_vocabulary_stopping_reports.py --self-test
+
 if [[ "$RUN_BUILD" -eq 1 ]]; then
   echo "==> Building docs site"
   DOCS_SITE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/leafreader-docs-check.XXXXXX")"

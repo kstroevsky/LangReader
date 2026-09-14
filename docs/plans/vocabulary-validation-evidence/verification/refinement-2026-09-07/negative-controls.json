@@ -1,0 +1,31 @@
+[
+  {
+    "case": "production-sample-count",
+    "status": "PASS: invalid candidate rejected",
+    "errors": [
+      "unapproved section change: Vocabulary validation and release-evidence implementation plan / Preserved production and release contracts",
+      "unauthorized numeric contract token in Vocabulary validation and release-evidence implementation plan / Preserved production and release contracts: 511"
+    ]
+  },
+  {
+    "case": "rubric-freeze-anchor",
+    "status": "PASS: invalid candidate rejected",
+    "errors": [
+      "F04: required literal 'There is no feasibility exception.' occurs 0 times in mapped sections; expected 1"
+    ]
+  },
+  {
+    "case": "unapproved-ledger-change",
+    "status": "PASS: invalid candidate rejected",
+    "errors": [
+      "unauthorized ledger change: INVARIANTS"
+    ]
+  },
+  {
+    "case": "deferred-contract-loss",
+    "status": "PASS: invalid candidate rejected",
+    "errors": [
+      "unapproved section change: Vocabulary validation and release-evidence implementation plan / Preserved production and release contracts"
+    ]
+  }
+]

@@ -1,0 +1,314 @@
+{
+  "candidatePass": false,
+  "confirmationCountDistribution": {
+    "maximum": 11,
+    "mean": 5.350444225074037,
+    "median": 5,
+    "p95": 9
+  },
+  "dataRole": "diagnostic-development-feasibility",
+  "decision": "reject-feasibility-candidate",
+  "eligibleRuns": 1013,
+  "fullyCorrelatedArm": {
+    "addedKnownCardCount": 0,
+    "addedKnownOccurrenceMass": 0,
+    "addedUnknownCardCount": 0,
+    "addedUnknownOccurrenceMass": 0,
+    "materialTailCount": 40,
+    "meanCoverageDifference": -0.0011759079905298662,
+    "meanQuestionReduction": 0.6259641610852745,
+    "questionCeilingExceededCount": 0,
+    "worstCoverageDifference": -0.15049148553232727
+  },
+  "gateResults": {
+    "materialTailCount": false,
+    "meanCoverageDifference": true,
+    "meanQuestionReduction": true,
+    "questionCeiling": true
+  },
+  "independentArm": {
+    "addedKnownCardCount": 274,
+    "addedKnownOccurrenceMass": 116304,
+    "addedUnknownCardCount": 31,
+    "addedUnknownOccurrenceMass": 12017,
+    "materialTailCount": 32,
+    "meanCoverageDifference": 0.00046645443650377566,
+    "meanQuestionReduction": 0.6259641610852745,
+    "questionCeilingExceededCount": 0,
+    "worstCoverageDifference": -0.042226221791499374
+  },
+  "ineligibleRuns": 11,
+  "interpretation": "The independent arm is an optimistic synthetic bound and the fully correlated arm is a negative control. Neither establishes human repeat-response correlation, burden acceptability, or real-learner validity.",
+  "materialTailsEliminated": 8,
+  "materialTailsIntroduced": 0,
+  "productionBaseline": {
+    "materialTailCount": 40,
+    "meanCoverageDifference": -0.0011759079905298662,
+    "meanQuestionReduction": 0.7250268823950571,
+    "worstCoverageDifference": -0.15049148553232727
+  },
+  "productionConfigurationChanged": false,
+  "retainedRuns": 1024,
+  "scenarioResults": [
+    {
+      "eligibleRuns": 128,
+      "fullyCorrelatedArm": {
+        "addedKnownCardCount": 0,
+        "addedKnownOccurrenceMass": 0,
+        "addedUnknownCardCount": 0,
+        "addedUnknownOccurrenceMass": 0,
+        "materialTailCount": 7,
+        "meanCoverageDifference": -0.004685553094282145,
+        "meanQuestionReduction": 0.6215164800325689,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.13844662882458814
+      },
+      "independentArm": {
+        "addedKnownCardCount": 45,
+        "addedKnownOccurrenceMass": 16374,
+        "addedUnknownCardCount": 4,
+        "addedUnknownOccurrenceMass": 1698,
+        "materialTailCount": 6,
+        "meanCoverageDifference": -0.0028489720337809676,
+        "meanQuestionReduction": 0.6215164800325689,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.025751072961373356
+      },
+      "productionBaseline": {
+        "materialTailCount": 7,
+        "meanCoverageDifference": -0.004685553094282145,
+        "meanQuestionReduction": 0.7267352817933156,
+        "worstCoverageDifference": -0.13844662882458814
+      },
+      "scenario": "stable-overlap"
+    },
+    {
+      "eligibleRuns": 126,
+      "fullyCorrelatedArm": {
+        "addedKnownCardCount": 0,
+        "addedKnownOccurrenceMass": 0,
+        "addedUnknownCardCount": 0,
+        "addedUnknownOccurrenceMass": 0,
+        "materialTailCount": 3,
+        "meanCoverageDifference": -0.002352493907249549,
+        "meanQuestionReduction": 0.6378638294826471,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.03156583137200608
+      },
+      "independentArm": {
+        "addedKnownCardCount": 29,
+        "addedKnownOccurrenceMass": 10495,
+        "addedUnknownCardCount": 1,
+        "addedUnknownOccurrenceMass": 285,
+        "materialTailCount": 3,
+        "meanCoverageDifference": -0.002039340818241553,
+        "meanQuestionReduction": 0.6378638294826471,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.03156583137200608
+      },
+      "productionBaseline": {
+        "materialTailCount": 3,
+        "meanCoverageDifference": -0.002352493907249549,
+        "meanQuestionReduction": 0.7385857960877303,
+        "worstCoverageDifference": -0.03156583137200608
+      },
+      "scenario": "noisy-history"
+    },
+    {
+      "eligibleRuns": 128,
+      "fullyCorrelatedArm": {
+        "addedKnownCardCount": 0,
+        "addedKnownOccurrenceMass": 0,
+        "addedUnknownCardCount": 0,
+        "addedUnknownOccurrenceMass": 0,
+        "materialTailCount": 4,
+        "meanCoverageDifference": 0.01653139277308598,
+        "meanQuestionReduction": 0.6335668095178384,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.10674235082375738
+      },
+      "independentArm": {
+        "addedKnownCardCount": 31,
+        "addedKnownOccurrenceMass": 11722,
+        "addedUnknownCardCount": 13,
+        "addedUnknownOccurrenceMass": 5092,
+        "materialTailCount": 0,
+        "meanCoverageDifference": 0.02203897272601412,
+        "meanQuestionReduction": 0.6335668095178384,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.019797867921916068
+      },
+      "productionBaseline": {
+        "materialTailCount": 4,
+        "meanCoverageDifference": 0.01653139277308598,
+        "meanQuestionReduction": 0.7303408870789447,
+        "worstCoverageDifference": -0.10674235082375738
+      },
+      "scenario": "biased-self-verification"
+    },
+    {
+      "eligibleRuns": 128,
+      "fullyCorrelatedArm": {
+        "addedKnownCardCount": 0,
+        "addedKnownOccurrenceMass": 0,
+        "addedUnknownCardCount": 0,
+        "addedUnknownOccurrenceMass": 0,
+        "materialTailCount": 5,
+        "meanCoverageDifference": -0.005270706423923577,
+        "meanQuestionReduction": 0.6021302386852008,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.042226221791499374
+      },
+      "independentArm": {
+        "addedKnownCardCount": 34,
+        "addedKnownOccurrenceMass": 15686,
+        "addedUnknownCardCount": 3,
+        "addedUnknownOccurrenceMass": 735,
+        "materialTailCount": 5,
+        "meanCoverageDifference": -0.0044757199224698865,
+        "meanQuestionReduction": 0.6021302386852008,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.042226221791499374
+      },
+      "productionBaseline": {
+        "materialTailCount": 5,
+        "meanCoverageDifference": -0.005270706423923577,
+        "meanQuestionReduction": 0.7047447745558186,
+        "worstCoverageDifference": -0.042226221791499374
+      },
+      "scenario": "easy-history-hard-evaluation"
+    },
+    {
+      "eligibleRuns": 124,
+      "fullyCorrelatedArm": {
+        "addedKnownCardCount": 0,
+        "addedKnownOccurrenceMass": 0,
+        "addedUnknownCardCount": 0,
+        "addedUnknownOccurrenceMass": 0,
+        "materialTailCount": 3,
+        "meanCoverageDifference": -0.00035169909741730016,
+        "meanQuestionReduction": 0.6314597504075867,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.022428353869583306
+      },
+      "independentArm": {
+        "addedKnownCardCount": 37,
+        "addedKnownOccurrenceMass": 13265,
+        "addedUnknownCardCount": 2,
+        "addedUnknownOccurrenceMass": 762,
+        "materialTailCount": 3,
+        "meanCoverageDifference": 0.0004990777668112177,
+        "meanQuestionReduction": 0.6314597504075867,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.022428353869583306
+      },
+      "productionBaseline": {
+        "materialTailCount": 3,
+        "meanCoverageDifference": -0.00035169909741730016,
+        "meanQuestionReduction": 0.7323133551892591,
+        "worstCoverageDifference": -0.022428353869583306
+      },
+      "scenario": "hard-history-easy-evaluation"
+    },
+    {
+      "eligibleRuns": 126,
+      "fullyCorrelatedArm": {
+        "addedKnownCardCount": 0,
+        "addedKnownOccurrenceMass": 0,
+        "addedUnknownCardCount": 0,
+        "addedUnknownOccurrenceMass": 0,
+        "materialTailCount": 15,
+        "meanCoverageDifference": -0.007943100633118625,
+        "meanQuestionReduction": 0.6197835597972946,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.05897826387927452
+      },
+      "independentArm": {
+        "addedKnownCardCount": 30,
+        "addedKnownOccurrenceMass": 13473,
+        "addedUnknownCardCount": 2,
+        "addedUnknownOccurrenceMass": 558,
+        "materialTailCount": 14,
+        "meanCoverageDifference": -0.00732997984832402,
+        "meanQuestionReduction": 0.6197835597972946,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.036134570123217524
+      },
+      "productionBaseline": {
+        "materialTailCount": 15,
+        "meanCoverageDifference": -0.007943100633118625,
+        "meanQuestionReduction": 0.7162903076029681,
+        "worstCoverageDifference": -0.05897826387927452
+      },
+      "scenario": "changed-difficulty-distribution"
+    },
+    {
+      "eligibleRuns": 125,
+      "fullyCorrelatedArm": {
+        "addedKnownCardCount": 0,
+        "addedKnownOccurrenceMass": 0,
+        "addedUnknownCardCount": 0,
+        "addedUnknownOccurrenceMass": 0,
+        "materialTailCount": 1,
+        "meanCoverageDifference": -0.0014664266925100353,
+        "meanQuestionReduction": 0.649872141355355,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.025751072961373356
+      },
+      "independentArm": {
+        "addedKnownCardCount": 41,
+        "addedKnownOccurrenceMass": 18403,
+        "addedUnknownCardCount": 3,
+        "addedUnknownOccurrenceMass": 1086,
+        "materialTailCount": 1,
+        "meanCoverageDifference": -0.00026360238128201365,
+        "meanQuestionReduction": 0.649872141355355,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.025751072961373356
+      },
+      "productionBaseline": {
+        "materialTailCount": 1,
+        "meanCoverageDifference": -0.0014664266925100353,
+        "meanQuestionReduction": 0.7476183736744446,
+        "worstCoverageDifference": -0.025751072961373356
+      },
+      "scenario": "ability-drift"
+    },
+    {
+      "eligibleRuns": 128,
+      "fullyCorrelatedArm": {
+        "addedKnownCardCount": 0,
+        "addedKnownOccurrenceMass": 0,
+        "addedUnknownCardCount": 0,
+        "addedUnknownOccurrenceMass": 0,
+        "materialTailCount": 2,
+        "meanCoverageDifference": -0.003973850892980761,
+        "meanQuestionReduction": 0.6123419202811997,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.15049148553232727
+      },
+      "independentArm": {
+        "addedKnownCardCount": 27,
+        "addedKnownOccurrenceMass": 16886,
+        "addedUnknownCardCount": 3,
+        "addedUnknownOccurrenceMass": 1801,
+        "materialTailCount": 0,
+        "meanCoverageDifference": -0.0020258635608472976,
+        "meanQuestionReduction": 0.6123419202811997,
+        "questionCeilingExceededCount": 0,
+        "worstCoverageDifference": -0.01827495500484566
+      },
+      "productionBaseline": {
+        "materialTailCount": 2,
+        "meanCoverageDifference": -0.003973850892980761,
+        "meanQuestionReduction": 0.7044188225749541,
+        "worstCoverageDifference": -0.15049148553232727
+      },
+      "scenario": "low-lexical-overlap"
+    }
+  ],
+  "schemaVersion": 1,
+  "sourceReport": "docs/plans/vocabulary-validation-evidence/high-consequence-known-confirmation-report-v1.json",
+  "sourceReportSHA256": "a3b8ce50ed4baed22c9da656615d8f3a8a12f241f8684a3d4acba3dd1afb2b19",
+  "sourceRevision": "edf5106de2c45b680e8f9a0e9e4177798496c1bb"
+}

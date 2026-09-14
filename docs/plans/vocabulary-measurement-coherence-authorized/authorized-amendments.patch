@@ -1,0 +1,41 @@
+--- failed-candidate-1283794c/candidate-roadmap.md
++++ authorized-candidate/candidate-roadmap.md
+@@ -43,10 +43,13 @@
+   - `εknowledge` represents person-item exceptions and other misspecification in `P(K_j | θ, b_j)`.
+   - `ρverifiedKnown`, `ρtypedVerifiedKnown`, `ρverifiedUnknownOrPartial`, `ρreportedUnknown`, `ρunsure`, `ρlegacyKnown`, and `ρlegacyUnknown` represent `P(E | K_j, evidenceType)`.
+   - Extract the production latent-knowledge function from `Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift` symbols `adjustedProbability` and `baseItemProbability` at source SHA-256 `5ff417329db82f4ad655e444927f51adaa07f7d79b674121a028107a9b990166` into a versioned `VocabularyKnowledgeModel`; rename only its model-misspecification parameter to `εknowledge` and do not change the function’s mathematical form in this separation stage. If the source hash differs before implementation, stop and rebaseline this requirement against the reviewed code rather than inferring a replacement formula.
+-  - Use the evidence-specific `ρ` values only in the observation likelihood. Do not flatten latent knowledge and cap response reliability with one shared parameter.
++  - **Authorized mathematical change** from `authorization-2026-08-25.md` (SHA-256 `762b97c9fff039b46f13d235a9e69b0eec1f37e7dcf29c7e7b1d9bf9a46f53f1`): in the revised observation model, remove `min(reliability, 1 - errorFloor)` from both current source symbols `evidenceLikelihood` and `posteriorKnownProbability`. Evidence-specific `ρ` values are used directly and never capped by `εknowledge`.
++  - Do not flatten latent knowledge and cap response reliability with one shared parameter.
++  - For latent known probability `p`, evidence supporting known has likelihood `ρE × p + (1 - ρE) × (1 - p)`; evidence supporting unknown has likelihood `ρE × (1 - p) + (1 - ρE) × p`. Answered-item Bayes reconstruction uses this same likelihood implementation rather than a second reliability rule.
++  - Tail-validation contradictions update only `εknowledge`. They do not automatically reduce any evidence-specific `ρ`. Future independently scored evidence that a response protocol is noisy updates the corresponding `ρ`, not `εknowledge`.
+   - Preserve the existing evidence coefficients as versioned synthetic priors until independently scored pilot responses estimate or supersede them.
+ 
+-- Make a versioned Core `VocabularyObservationModel.evidenceLikelihood(evidence, latentKnownProbability)` the single normative implementation of the categorical observation likelihood, extracted without mathematical change from `AdaptiveVocabularyAssessment.swift` symbol `evidenceLikelihood` at the same source SHA-256. Runtime posterior updates and answered-item reconstruction call it directly. The offline fitter consumes a generated observation-model manifest plus golden likelihood fixtures produced from that same Core implementation; it must not maintain an independently authored hard/fractional mapping or formula.
++- Make a versioned Core `VocabularyObservationModel.evidenceLikelihood(evidence, latentKnownProbability)` the single normative implementation of the newly authorized categorical observation likelihood. The hash-locked `AdaptiveVocabularyAssessment.swift` symbols `evidenceLikelihood` and `posteriorKnownProbability` are pre-change provenance, not a requirement to preserve their shared cap. Runtime posterior updates and answered-item reconstruction call the new Core owner directly. The offline fitter consumes a generated observation-model manifest plus golden likelihood fixtures produced from that same Core implementation; it must not maintain an independently authored hard/fractional mapping or formula.
+ 
+ - Calculate an answered item’s displayed `P(known)` by Bayes-updating its item prior with its evidence. Preserve evidence labels separately from estimated classifications; use:
+ 
+@@ -57,7 +60,7 @@
+   - Estimated unknown only at `P ≤ 0.15`.
+   - Otherwise uncertain.
+ 
+-- Keep validation questions at 15, 20, 25, and so on. Compute fractional contradiction evidence for `unsure`; retain the Beta(1,19) estimate and `0.05...0.25` clamp for `εknowledge`. Tail-validation mismatches update `εknowledge`; independently criterion-scored responses estimate evidence-specific `ρ` values. A tail mismatch must not directly redefine every evidence category’s reliability.
++- Keep validation questions at 15, 20, 25, and so on. Compute fractional contradiction evidence for `unsure`; retain the Beta(1,19) estimate and `0.05...0.25` clamp for `εknowledge`. Tail-validation mismatches update `εknowledge`; independently criterion-scored responses estimate evidence-specific `ρ` values. A tail mismatch must not directly redefine any evidence category’s reliability.
+ 
+ - Introduce `VocabularyItemDifficultyPrior` containing mean, standard deviation, source, and version. Change `DocumentVocabularyDifficultyProviding` to return this prior instead of a fixed scalar.
+ 
+@@ -177,10 +180,12 @@
+ 
+ - Recruit multiple English/German learner, L1, and proficiency strata and multiple genres/formats. Freeze an untouched confirmatory set. The final split must be disjoint by participant and opaque study document ID.
+ 
+-- Use complete lexical audits for small documents. For large documents, test every selected card plus a probability/frequency/POS/occurrence-stratified sample of unselected items. Store each item’s audit inclusion probability and use weighted estimates with uncertainty intervals. Add a delayed stability/retention retest.
++- Use complete lexical audits for small documents. For large documents, test every selected card plus a probability/frequency/POS/occurrence-stratified sample of unselected items. Store each item’s audit inclusion probability, preserve participant/document clustering, and require weighted estimation appropriate to the sampling design. Add a delayed stability/retention retest. This roadmap deliberately does not choose the weighting estimator or variance/interval construction.
+ 
+ - Report Brier score, log loss, calibration plot/ECE, calibration slope/intercept, θ-interval coverage, deck precision, occurrence-weighted unknown-item recall, realized post-learning lexical-token coverage, nominal-98% miss rate, question/time burden, warm-versus-cold non-inferiority, inter-rater agreement, DIF, and subgroup calibration. Reading comprehension is a separate exploratory outcome and is never inferred from lexical coverage.
+ 
++- **Statistical Analysis Plan gate**, authorized by the same hash-locked authorization artifact: before confirmatory data collection begins, a separately reviewed and approved SAP must freeze the estimand, weighting estimator, treatment of inclusion probabilities, participant/document clustering structure, variance/interval method, missing-data rules, multiplicity policy where applicable, confirmatory outcomes and acceptance gates, and confirmatory analysis populations. The SAP must be approved before inspecting confirmatory outcomes; estimator or interval choices must not be selected retrospectively to improve the observed result. The roadmap does not select Horvitz–Thompson versus Hájek estimation, bootstrap versus sandwich versus design-based intervals, or another method.
++
+ - Fit and tune only on training/validation participants and documents. Keep the participant-and-document confirmatory holdout untouched during fitting and tuning, then use it for final evaluation. Synthetic gates remain separately labeled engineering diagnostics.
+ 
+ ## Testing, measurements, and rollout gates

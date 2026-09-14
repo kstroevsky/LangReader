@@ -1,0 +1,470 @@
+{
+  "schema_version": 1,
+  "canonical_sha256": "868106f57e1fa78a0b0f03c3e4e0dd29d6161500ef6b8ed8d13bc05bcc6a1671",
+  "requirements": [
+    {
+      "id": "ARCH-001",
+      "status": "active",
+      "section": ["Summary"],
+      "summary": "Preserve stages 1–6 as completed baseline capabilities and use the new priority list for next-stage ordering.",
+      "normative_payload": {
+        "ordering": ["answer validity", "difficulty and coverage", "lemma+POS and local prior", "experimental domains", "research export and calibration"],
+        "disabled_until_gated": ["same-POS sense splitting", "domain blending", "empirical parameters"],
+        "stages_1_through_6": "retained implemented baseline and prerequisites",
+        "next_stage_order": "measurement-coherence priority list"
+      },
+      "anchors": ["Evolve Prepare Vocabulary without replacing its adaptive CAT architecture.", "Stages 1–6 are the retained, already implemented baseline capabilities and constraints."]
+    },
+    {
+      "id": "PRIV-001",
+      "status": "active",
+      "section": ["Summary"],
+      "summary": "No response telemetry or automatic upload.",
+      "normative_payload": {"automatic_upload": false, "response_telemetry": false},
+      "anchors": ["No response telemetry or automatic upload is added."]
+    },
+    {
+      "id": "EVID-001",
+      "status": "active",
+      "section": ["Core model and assessment changes"],
+      "summary": "Versioned evidence categories and cold-start reliabilities.",
+      "normative_payload": {
+        "verifiedKnown": 0.97,
+        "typedVerifiedKnown": 0.98,
+        "verifiedUnknownOrPartial_toward_unknown": 0.98,
+        "reportedUnknown_toward_unknown": 0.95,
+        "unsure_toward_unknown": 0.75,
+        "legacyKnown": 0.75,
+        "legacyUnknown": 0.85,
+        "excluded_updates_ability": false
+      },
+      "anchors": ["`verifiedKnown`, reliability 0.97.", "`legacyUnknown`, reliability 0.85."]
+    },
+    {
+      "id": "EVID-002",
+      "status": "active",
+      "section": ["Core model and assessment changes"],
+      "summary": "Latent knowledge misspecification and evidence reliability are separate parameter families.",
+      "normative_payload": {
+        "coefficients_are_calibrated_claims": false,
+        "hard_zero_one_updates": false,
+        "latent_probability": "preserve AdaptiveVocabularyAssessment.adjustedProbability/baseItemProbability unchanged while extracting and versioning it",
+        "source_path": "Sources/LeafReaderCore/VocabularyReview/AdaptiveVocabularyAssessment.swift",
+        "source_sha256": "5ff417329db82f4ad655e444927f51adaa07f7d79b674121a028107a9b990166",
+        "knowledge_parameter": "epsilonKnowledge",
+        "observation_parameters": ["rhoVerifiedKnown", "rhoTypedVerifiedKnown", "rhoVerifiedUnknownOrPartial", "rhoReportedUnknown", "rhoUnsure", "rhoLegacyKnown", "rhoLegacyUnknown"],
+        "shared_flattening_parameter": false,
+        "cold_start_evidence_values_preserved_until_criterion_calibration": true,
+        "single_observation_model_owner": "Core VocabularyObservationModel.evidenceLikelihood extracted from AdaptiveVocabularyAssessment.evidenceLikelihood at the same source SHA-256",
+        "offline_contract": "generated versioned manifest and golden likelihood fixtures"
+      },
+      "anchors": ["Split the current `errorFloor` role into two explicit parameter families", "Do not flatten latent knowledge and cap response reliability with one shared parameter.", "VocabularyObservationModel.evidenceLikelihood"]
+    },
+    {
+      "id": "EVID-003",
+      "status": "active",
+      "section": ["Core model and assessment changes"],
+      "summary": "Answered probabilities remain soft and classifications use fixed thresholds.",
+      "normative_payload": {"estimated_known_min": 0.85, "estimated_unknown_max": 0.15, "middle": "uncertain"},
+      "anchors": ["Estimated known only at `P ≥ 0.85`.", "Estimated unknown only at `P ≤ 0.15`."]
+    },
+    {
+      "id": "VALID-001",
+      "status": "active",
+      "section": ["Core model and assessment changes"],
+      "summary": "Tail validation cadence and bounded knowledge-misspecification estimate.",
+      "normative_payload": {"question_ordinals": "15, 20, 25, ...", "prior": "Beta(1,19)", "clamp": [0.05, 0.25], "unsure": "fractional contradiction", "updates": "epsilonKnowledge", "does_not_update": "all evidence reliabilities"},
+      "anchors": ["Keep validation questions at 15, 20, 25, and so on.", "Beta(1,19)"]
+    },
+    {
+      "id": "DIFF-001",
+      "status": "active",
+      "section": ["Core model and assessment changes"],
+      "summary": "Uncertain item-difficulty prior and quadrature.",
+      "normative_payload": {
+        "ranked_sd": "0.35 + 0.40 × rankPercentile",
+        "unranked_mean": 4,
+        "unranked_sd": 1.5,
+        "empirical_sd": "max(0.15, standardError)",
+        "quadrature_points": 9
+      },
+      "anchors": ["`σ = 0.35 + 0.40 × rankPercentile`", "fixed nine-point Gaussian quadrature"]
+    },
+    {
+      "id": "COV-001",
+      "status": "active",
+      "section": ["Core model and assessment changes"],
+      "summary": "Deterministic posterior-predictive coverage and locally minimal deck.",
+      "normative_payload": {"theta_grid_points": 121, "samples": 512, "reported_quantile": 0.05, "large_deck_claim": "locally minimal, not globally minimal", "small_fixture_oracle": "exact enumeration/branch-and-bound"},
+      "anchors": ["Use 512 stratified samples from the 121-point θ posterior.", "never claim global minimality for large inventories"]
+    },
+    {
+      "id": "PERF-001",
+      "status": "active",
+      "section": ["Core model and assessment changes"],
+      "summary": "Bound adaptive question scoring and retain exact global loss.",
+      "normative_payload": {"shortlist_size": 16, "global_loss": "exact", "target_inventory": 10000, "p95_ms": 150},
+      "anchors": ["Retain the 16-item expected-loss shortlist", "10,000-lemma answer-to-next-card p95 remains within 150 ms"]
+    },
+    {
+      "id": "LEX-001",
+      "status": "active",
+      "section": ["Lexical identity, personalization, and app flow"],
+      "summary": "Language+lemma+POS identity with conservative POS abstention.",
+      "normative_payload": {"top_probability_min": 0.65, "margin_min": 0.20, "fallback": "unknown", "sense_key": "reserved optional"},
+      "anchors": ["`VocabularyLexicalItemID(language, lemma, partOfSpeech, senseKey?)`", "at least 0.65 and exceeds the next hypothesis by 0.20"]
+    },
+    {
+      "id": "LEX-002",
+      "status": "active",
+      "section": ["Lexical identity, personalization, and app flow"],
+      "summary": "Group by lemma+POS and preserve wildcard compatibility.",
+      "normative_payload": {"production_sense_key": null, "legacy_lemma_match": "wildcard", "destructive_split": false, "schema_compatibility": true},
+      "anchors": ["Group by lemma+POS.", "Existing lemma-only Vocabulary Records act as wildcard matches"]
+    },
+    {
+      "id": "SENSE-001",
+      "status": "deferred",
+      "section": ["Deferred lexical and risk extensions"],
+      "summary": "Book-local same-POS sense clustering follows MWUs and remains disabled pending labeled gates.",
+      "normative_payload": {"macro_f1_min": 0.85, "oversplitting_max": 0.02, "languages": ["English", "German"], "ordering": "after high-value multi-word lexical items", "scope": "book-local incompatible contextual clusters", "global_dictionary_mapping": false},
+      "anchors": ["Add high-value multi-word lexical items before enabling same-POS sense clustering.", "make it book-local"]
+    },
+    {
+      "id": "UX-001",
+      "status": "active",
+      "section": ["Lexical identity, personalization, and app flow"],
+      "summary": "Answer-before-reveal UX and typed local self-verification.",
+      "normative_payload": {"known_requires_verification": true, "unknown_unsure_record_before_reveal": true, "typed_ai_grading": false, "failed_known_lookup_consumes_answer": false},
+      "anchors": ["`I know it` reveals meaning/context and requires `My meaning was correct`", "no AI grading occurs"]
+    },
+    {
+      "id": "MIG-001",
+      "status": "active",
+      "section": ["Lexical identity, personalization, and app flow"],
+      "summary": "Version 3 session migration preserves direct/user-owned state.",
+      "normative_payload": {"algorithm_version": 3, "old_answers": "weak legacy evidence", "recompute": ["posterior", "classification", "deck"], "preserve": ["exclusions", "manual selection", "created records"]},
+      "anchors": ["Migrate existing sessions to algorithm version 3", "Keep Start Over available."]
+    },
+    {
+      "id": "PRIOR-001",
+      "status": "active",
+      "section": ["Lexical identity, personalization, and app flow"],
+      "summary": "Language-scoped local prior uses only completed assessment evidence.",
+      "normative_payload": {"database": "personal-vocabulary.sqlite3", "passive_exposure": false, "likely_known_status": false},
+      "anchors": ["Only completed assessment evidence updates them", "exposure counts and current “likely known” statuses remain excluded"]
+    },
+    {
+      "id": "PRIOR-002",
+      "status": "active",
+      "section": ["Lexical identity, personalization, and app flow"],
+      "summary": "Warm prior mixture and eligibility.",
+      "normative_payload": {"local_weight": 0.90, "generic_weight": 0.10, "smoothing_sd": 0.35, "age_days_max": 180, "sessions_min": 2, "verified_answers_min": 40, "current_tail_validations_min": 2, "warm_question_min": 8, "cold_question_min": 20},
+      "anchors": ["mixing 90% of a Gaussian-smoothed stored posterior (`σ = 0.35`) with 10% of the generic prior", "no older than 180 days"]
+    },
+    {
+      "id": "PRIOR-003",
+      "status": "active",
+      "section": ["Lexical identity, personalization, and app flow"],
+      "summary": "Cross-book adaptation defaults on and is independently resettable.",
+      "normative_payload": {"enabled_by_default": true, "shelf_removal_clears_profile": false, "settings_reset": true},
+      "anchors": ["Enable local cross-book adaptation by default.", "Shelf removal clears document preparation state but not the language profile."]
+    },
+    {
+      "id": "DOMAIN-001",
+      "status": "active",
+      "section": ["Domain and empirical calibration infrastructure"],
+      "summary": "Record domain metadata without production difficulty effect.",
+      "normative_payload": {"domains": ["general", "literary", "news", "technical/reference"], "production_uses_domain": false},
+      "anchors": ["Production difficulty continues ignoring this field."]
+    },
+    {
+      "id": "DOMAIN-002",
+      "status": "active",
+      "section": ["Domain and empirical calibration infrastructure"],
+      "summary": "Pinned English/German literary, news, and reference resources.",
+      "normative_payload": {"rows_per_domain": 200000, "checksummed": true, "attribution": true},
+      "anchors": ["Retain top 200,000 valid forms per domain"]
+    },
+    {
+      "id": "DOMAIN-003",
+      "status": "deferred",
+      "section": ["Domain and empirical calibration infrastructure"],
+      "summary": "Developer-gated domain detection and disabled production blending.",
+      "normative_payload": {"fallback_margin_below": 0.05, "production_blending": false, "detector": "normalized document cross-entropy"},
+      "anchors": ["fall back to general when the best-vs-second score margin is below 5%", "Do not enable production blending until empirical held-out gates pass."]
+    },
+    {
+      "id": "EXPORT-001",
+      "status": "active",
+      "section": ["Domain and empirical calibration infrastructure"],
+      "summary": "Explicit privacy-minimized research export.",
+      "normative_payload": {"automatic_transmission": false, "pseudonym_resettable": true, "optional_covariates": ["L1 language code", "A1/A2", "B1/B2", "C1/C2", "Unknown / prefer not to say"], "research_assignment_fields": ["questionOrdinal", "selectionType", "predictedKnownBeforeAnswer", "thetaBinBeforeAnswer"], "selection_types": ["initialCalibration", "adaptiveLoss", "tailValidation", "calibration"], "excluded": ["document ID/title", "context", "file path", "exact timestamps", "typed meanings", "definitions", "identity/account data"]},
+      "anchors": ["Never transmit automatically.", "Exclude document ID/title, context, file path, exact timestamps, typed meanings, definitions, and identity/account data."]
+    },
+    {
+      "id": "CAL-001",
+      "status": "active",
+      "section": ["Domain and empirical calibration infrastructure"],
+      "summary": "Offline calibration consumes the Core-owned production categorical evidence likelihood contract.",
+      "normative_payload": {"outputs": ["VocabularyItemCalibrationPack", "standard errors", "item fit", "DIF", "held-out comparison"], "likelihood_concept": "P(Eij | theta_i, b_j, rho_E)", "implementation_source": "generated VocabularyObservationModel manifest and golden likelihood fixtures", "independent_formula": false, "hard_fractional_targets": false, "reliability_source_version_required": true},
+      "anchors": ["Make the offline fitter use the same categorical observation likelihood as production"]
+    },
+    {
+      "id": "CAL-002",
+      "status": "active",
+      "section": ["Domain and empirical calibration infrastructure"],
+      "summary": "Reviewed calibration-pack eligibility and disabled 2PL.",
+      "normative_payload": {"learners_min": 100, "standard_error_max": 0.35, "material_dif": "flag or exclude", "two_pl_log_loss_improvement_min": 0.01, "review_required": true},
+      "anchors": ["at least 100 independent pseudonymous learners", "standard error no greater than 0.35", "log loss improves by at least 0.01"]
+    },
+    {
+      "id": "TEST-001",
+      "status": "active",
+      "section": ["Testing, measurements, and rollout gates"],
+      "summary": "Core coverage includes model, migration, coverage, POS, prior, and question limits.",
+      "normative_payload": {"question_limits": [8, 20, 80], "oracle_tests": true, "determinism_tests": true},
+      "anchors": ["Core tests cover evidence likelihoods", "8/20/80 limits"]
+    },
+    {
+      "id": "TEST-002",
+      "status": "active",
+      "section": ["Testing, measurements, and rollout gates"],
+      "summary": "App integration covers quick/typed flow, failures, persistence, privacy, and reader seams.",
+      "normative_payload": {"pdf_web_boundaries_unchanged": true, "transactional_import": true, "research_export_privacy": true},
+      "anchors": ["App tests cover both quick and typed flows"]
+    },
+    {
+      "id": "EVAL-001",
+      "status": "active",
+      "section": ["Testing, measurements, and rollout gates"],
+      "summary": "Synthetic simulator scenarios and probability/coverage gates.",
+      "normative_payload": {"well_ece_max": 0.05, "theta_interval_coverage": [0.85, 0.95], "well_coverage_hit_min": 0.95, "item_residual_hit_min": 0.95, "response_noise_hit_min": 0.90, "idiosyncratic_hit_min": 0.85, "deck_precision_min": 0.50, "brier_ece_regression_max": 0.01, "warm_question_reduction_min": 0.25, "warm_coverage_degradation_max_pp": 2},
+      "anchors": ["Well-specified ECE ≤ 0.05", "Warm-start question count improves by at least 25%"]
+    },
+    {
+      "id": "DOMAIN-GATE-001",
+      "status": "deferred",
+      "section": ["Testing, measurements, and rollout gates"],
+      "summary": "Domain blending real-response held-out gates.",
+      "normative_payload": {"brier_improvement_min": 0.005, "ece_worsening_max": 0.005, "coverage_hit_reduction_max_pp": 2, "languages": ["English", "German"]},
+      "anchors": ["improves Brier by at least 0.005", "worsens ECE by no more than 0.005"]
+    },
+    {
+      "id": "PERF-GATE-001",
+      "status": "active",
+      "section": ["Testing, measurements, and rollout gates"],
+      "summary": "Release and real-app latency gates plus named benchmarks.",
+      "normative_payload": {"answer_to_next_p95_ms": 150, "inventory_size": 10000, "main_thread_uninterrupted_p95_ms": 16, "benchmarks": ["posterior sampling", "POS indexing", "warm start", "migration", "export"]},
+      "anchors": ["150 ms p95 for 10,000-lemma answer-to-next-card", "16 ms real-app main-thread uninterrupted work"]
+    },
+    {
+      "id": "DELIV-001",
+      "status": "active",
+      "section": ["Testing, measurements, and rollout gates"],
+      "summary": "Ordered green commits and final verification commands.",
+      "normative_payload": {"commit_order": ["evidence/UX", "difficulty/coverage", "POS/schema", "local prior", "domains", "research export/fitter", "evaluator/performance", "documentation"], "final_commands": ["full evaluator", "Release benchmarks", "six-document GUI matrix", "./scripts/check.sh --no-build", "./scripts/build_app.sh"]},
+      "anchors": ["Deliver as green staged commits", "`./scripts/check.sh --no-build`", "`./scripts/build_app.sh`"]
+    },
+    {
+      "id": "ASSUMP-001",
+      "status": "active",
+      "section": ["Assumptions"],
+      "summary": "One-dimensional Rasch-like expected-loss CAT remains until real residual evidence.",
+      "normative_payload": {"dimensions": 1, "change_requires": "real residual analysis"},
+      "anchors": ["remains one-dimensional Rasch-like until real residual analysis justifies otherwise"]
+    },
+    {
+      "id": "ASSUMP-002",
+      "status": "active",
+      "section": ["Assumptions"],
+      "summary": "Selected cards are treated as learned only for projected lexical coverage.",
+      "normative_payload": {"selected_cards_known_in_projection": true, "comprehension_claim": false},
+      "anchors": ["Selected learning cards are treated as known in post-learning coverage simulations"]
+    },
+    {
+      "id": "ASSUMP-003",
+      "status": "active",
+      "section": ["Assumptions"],
+      "summary": "Residual uncertainty can select soft verified-known items and remains editable.",
+      "normative_payload": {"soft_verified_known_selectable": true, "visible": true, "editable": true},
+      "anchors": ["Soft verified-known items may be proposed in coverage mode"]
+    },
+    {
+      "id": "ASSUMP-004",
+      "status": "active",
+      "section": ["Assumptions"],
+      "summary": "Cross-book adaptation excludes passive exposure.",
+      "normative_payload": {"assessment_evidence_only": true, "passive_exposure": false},
+      "anchors": ["Cross-book adaptation uses only assessment evidence"]
+    },
+    {
+      "id": "ASSUMP-005",
+      "status": "deferred",
+      "section": ["Assumptions"],
+      "summary": "Real calibration, domains, sense splitting, and 2PL stay inactive until gates pass.",
+      "normative_payload": {"inactive": ["real learner calibration", "domain blending", "same-POS sense splitting", "2PL parameters"]},
+      "anchors": ["remain inactive until their stated gates pass"]
+    },
+    {
+      "id": "PRIOR-004",
+      "status": "deferred",
+      "section": ["Lexical identity, personalization, and app flow"],
+      "summary": "Replace abrupt prior expiry with empirically gated time diffusion.",
+      "normative_payload": {"current_age_rule_days": 180, "formula": "theta_t ~ Normal(theta_t-1, sigma_drift^2 * delta_t)", "grid_points": 121, "sequence": "convolve stored grid posterior before existing 90% local / 10% generic mixture", "requires_drift_estimate": true, "warm_question_reduction_min": 0.25, "warm_coverage_degradation_max_pp": 2},
+      "anchors": ["Keep the current 180-day eligibility rule until an empirical drift parameter is frozen."]
+    },
+    {
+      "id": "CALDATA-001",
+      "status": "active",
+      "section": ["Domain and empirical calibration infrastructure"],
+      "summary": "Research mode reserves protocol-frozen calibration assignments and exports assignment context.",
+      "normative_payload": {"slot_rate_range": [0.05, 0.10], "production_policy_unchanged": true, "freeze_before_confirmatory": ["slot rate", "assignment policy"], "minimum_selection_fields": ["questionOrdinal", "selectionType", "predictedKnownBeforeAnswer", "thetaBinBeforeAnswer"], "activation_condition": "approved versioned schema makes the selected assignment mechanism reconstructable or conditionable by the fitter", "exact_additional_fields": "must be approved with the frozen assignment design"},
+      "anchors": ["reserves a protocol-frozen rate within 5–10% of scored questions"]
+    },
+    {
+      "id": "DIF-001",
+      "status": "active",
+      "section": ["Domain and empirical calibration infrastructure"],
+      "summary": "Replace residual-mean DIF with established uniform/non-uniform methods and reporting.",
+      "normative_payload": {"methods": ["logistic regression", "Rasch likelihood-ratio"], "uniform_nonuniform": true, "effect_sizes": true, "multiple_comparison_control": true, "iterative_anchor_purification": true, "minimum_group_sizes_frozen": true, "separate_group_axes": ["L1", "proficiency"]},
+      "anchors": ["Replace the current residual-mean DIF eligibility heuristic"]
+    },
+    {
+      "id": "STUDY-001",
+      "status": "active",
+      "section": ["Domain and empirical calibration infrastructure"],
+      "summary": "Use a separate consented validation dataset for independent criterion and document holdout.",
+      "normative_payload": {"contract": "ConsentedValidationStudyDataset", "requires_explicit_consent": true, "fields": ["opaque study document ID", "criterion label", "rater/adjudication", "question assignment", "audit inclusion probability", "delayed retest linkage"], "split_constraints": ["participant disjoint", "document disjoint"], "normal_export_cannot_claim_document_holdout": true},
+      "anchors": ["Add a separate `ConsentedValidationStudyDataset` contract."]
+    },
+    {
+      "id": "STUDY-002",
+      "status": "active",
+      "section": ["Real-learner validation execution"],
+      "summary": "Execute an independently scored participant-and-document held-out learner pilot.",
+      "normative_payload": {"criterion_timing": "before definition/context reveal", "criterion": "typed book-relevant meaning or translation", "rubric": "frozen bilingual", "raters": 2, "blinded": true, "adjudication": true, "small_documents": "complete lexical audit", "large_documents": "all selected plus stratified unselected audit", "inclusion_probabilities": true, "delayed_retest": true, "holdout_axes": ["participant", "opaque study document"], "holdout_untouched_during_fit_and_tune": true, "comprehension": "separate exploratory outcome"},
+      "anchors": ["Freeze a consented English/German pilot protocol", "two blinded human raters", "Keep the participant-and-document confirmatory holdout untouched"]
+    },
+    {
+      "id": "DIFF-002",
+      "status": "deferred",
+      "section": ["Domain and empirical calibration infrastructure"],
+      "summary": "Hierarchical partial-pooling difficulty model follows sufficient real data.",
+      "normative_payload": {"features": ["general frequency", "prevalence", "contextual diversity", "word length", "morphology", "POS", "L1 cognateness", "domain-frequency residuals"], "partial_pooling": true, "fit": "training participants/documents", "tune": "validation participants/documents", "evaluation": "untouched participant-and-document holdout"},
+      "anchors": ["fit difficulty hierarchically with partial pooling"]
+    },
+    {
+      "id": "DOMAIN-004",
+      "status": "deferred",
+      "section": ["Domain and empirical calibration infrastructure"],
+      "summary": "Domain features must predict residual difficulty and integrate detector uncertainty.",
+      "normative_payload": {"hard_document_label": false, "conditions_on_general_frequency": true, "holdout": "participant-and-document", "enabled_only_after_existing_domain_gates": true, "integration": "P(domain | document)"},
+      "anchors": ["Test domain information as residual difficulty evidence rather than as a hard document label."]
+    },
+    {
+      "id": "L1DIFF-001",
+      "status": "deferred",
+      "section": ["Domain and empirical calibration infrastructure"],
+      "summary": "Evaluate L1-conditioned item residuals only after proper DIF evidence.",
+      "normative_payload": {"formula": "b_j,L1 = b_j + delta_j,L1", "requires_group_support": true, "requires_heldout_gain": true, "subgroup_calibration_regression": false},
+      "anchors": ["`bj,L1 = bj + δj,L1`"]
+    },
+    {
+      "id": "RELEASE-001",
+      "status": "active",
+      "section": ["Testing, measurements, and rollout gates"],
+      "summary": "Diagnose the frozen failing holdout without weakening gates or tuning on it.",
+      "normative_payload": {"frozen_holdout": "three-seed/eight-document version-3", "gate_weakening": false, "golden_replacement": false, "factors": ["evidence reliability", "epsilonKnowledge", "difficulty-prior SD", "coverage quantile", "warm mixture"], "holdout_use": "after candidate freeze", "retain_null_failures": true},
+      "anchors": ["Keep the current failing three-seed/eight-document version-3 release holdout frozen as adverse evidence."]
+    },
+    {
+      "id": "POSVAL-001",
+      "status": "active",
+      "section": ["Testing, measurements, and rollout gates"],
+      "summary": "Validate Apple POS identity on licensed English/German UD fixtures.",
+      "normative_payload": {"languages": ["English", "German"], "metrics": ["precision", "recall", "abstention", "genre", "noun-verb", "adjective-participle", "split-merge error"], "thresholds_remain_engineering": [0.65, 0.20], "unknown_fallback": true},
+      "anchors": ["Validate POS identity independently with licensed English and German Universal Dependencies fixtures."]
+    },
+    {
+      "id": "PERF-002",
+      "status": "active",
+      "section": ["Testing, measurements, and rollout gates"],
+      "summary": "Stage cheap answer updates and full posterior-predictive stop/final computation.",
+      "normative_payload": {"production_full_samples": 512, "screening_candidate_samples": 128, "measurement_candidate_samples": 1024, "full_recompute_phases": ["eligible stop", "final results"], "acceptance": "release decision change within accepted tolerance versus full path", "retain_all_benchmark_repetitions": true},
+      "anchors": ["Stage posterior-predictive computation before changing sample counts:"]
+    },
+    {
+      "id": "COVUX-001",
+      "status": "active",
+      "section": ["Product coverage behavior and empirically gated options"],
+      "summary": "Clarify projected post-mastery coverage without changing the default target.",
+      "normative_payload": {"default_target": 0.98, "action_label": "Build a deck for 98% projected coverage", "show_current_and_projected": true, "mastery_claim": false, "comprehension_claim": false},
+      "anchors": ["Build a deck for 98% projected coverage", "Estimated current coverage"]
+    },
+    {
+      "id": "COVUX-002",
+      "status": "deferred",
+      "section": ["Product coverage behavior and empirically gated options"],
+      "summary": "Evaluate three user-selected projected coverage goals after empirical validation.",
+      "normative_payload": {"light": 0.95, "comfortable_default": 0.98, "maximum": 0.99, "comprehension_percentages": false, "requires_stratified_risk_and_burden": true},
+      "anchors": ["Light preparation at 95%", "Maximum lexical support at 99%"]
+    },
+    {
+      "id": "COLD-001",
+      "status": "deferred",
+      "section": ["Product coverage behavior and empirically gated options"],
+      "summary": "Evaluate explicit cold burden/uncertainty modes without prematurely lowering the ceiling.",
+      "normative_payload": {"quick_questions": "approximately 25–35", "balanced_questions": "approximately 40–60", "high_confidence_questions_max": 80, "objective": "expected decision-loss reduction / (lambda * question cost)", "current_min": 20, "current_max": 80},
+      "anchors": ["Do not reduce the cold ceiling merely because 80 questions feels long.", "expected reduction in decision loss / (λ × question cost)"]
+    },
+    {
+      "id": "MWU-001",
+      "status": "deferred",
+      "section": ["Deferred lexical and risk extensions"],
+      "summary": "Add high-value multi-word lexical items before same-POS sense splitting.",
+      "normative_payload": {"classes": ["phrasal verbs", "idioms", "lexical phrases", "compounds"], "ordering": "before same-POS sense clustering", "production_enabled": false, "requires_separately_approved_design_and_validation": true},
+      "anchors": ["Add high-value multi-word lexical items before enabling same-POS sense clustering."]
+    },
+    {
+      "id": "RISK-001",
+      "status": "deferred",
+      "section": ["Deferred lexical and risk extensions"],
+      "summary": "Empirical conformal/risk calibration is post-pilot only.",
+      "normative_payload": {"requires_untouched_real_validation": true, "requires_exchangeability_statement": true, "requires_monotone_loss": true, "requires_frozen_miss_rate": true, "production_enabled": false},
+      "anchors": ["Defer empirical risk calibration until an untouched real validation set exists."]
+    },
+    {
+      "id": "PRBODY-001",
+      "status": "active",
+      "section": ["PR #9 description refresh"],
+      "summary": "Replace the stale PR body with the supplied complete updated description.",
+      "normative_payload": {"source": "review-2026-08-25.md / New Pull Request description", "source_sha256": "f5299abc0c32aa5fb1af34068aaad74e069d08bb274c455f737e06de2379bc5c", "preserve_verbatim": true, "allowed_live_updates": ["repository-generated links", "revalidated measured status"], "forbid_old_model_description": true},
+      "anchors": ["Replace the materially stale PR #9 body"]
+    },
+    {
+      "id": "ASSUMP-006",
+      "status": "active",
+      "section": ["Assumptions"],
+      "summary": "Typed recall remains optional in production and independent in validation.",
+      "normative_payload": {"production_typed_required": false, "validation_criterion": "independently scored typed recall", "reuse_self_verification_as_ground_truth": false},
+      "anchors": ["Typed meaning recall remains optional in production."]
+    },
+    {
+      "id": "ASSUMP-007",
+      "status": "active",
+      "section": ["Assumptions"],
+      "summary": "Self-rated proficiency remains a research covariate.",
+      "normative_payload": {"strong_production_theta_prior": false, "requires_separate_validation": true},
+      "anchors": ["Self-rated proficiency remains a research covariate"]
+    },
+    {
+      "id": "PRIORITY-001",
+      "status": "active",
+      "section": ["Summary", "Assumptions"],
+      "summary": "Prioritize measurement coherence over new production dimensions.",
+      "normative_payload": {"blocked_by": ["observation likelihood", "calibration assignment", "DIF", "release holdout", "warm performance"], "new_production_dimension": false},
+      "anchors": ["The next implementation phase is measurement coherence rather than another production modeling dimension."]
+    }
+  ]
+}

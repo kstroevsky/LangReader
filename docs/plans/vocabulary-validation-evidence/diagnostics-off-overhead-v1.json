@@ -1,0 +1,51 @@
+{
+  "baselineExecutableSHA256": "ecf95879b272842c574acddfb735da7c0ed920c1d8d1803be50b40f9acf8d450",
+  "baselineMeanMilliseconds": 462.7006854444444,
+  "baselineRawMilliseconds": [
+    438.968292,
+    515.992583,
+    521.251959,
+    535.671459,
+    518.862709,
+    365.043167,
+    403.259375,
+    424.593333,
+    440.663292
+  ],
+  "candidateExecutableSHA256": "0ede8fdb9c450e9d0d9d956445ebb9248c52272ec31c122fa4fa07c5c0bf14af",
+  "candidateMeanMilliseconds": 458.8775834444444,
+  "candidateRawMilliseconds": [
+    433.146042,
+    444.656208,
+    527.259375,
+    533.034125,
+    475.742459,
+    420.891792,
+    423.685708,
+    420.942834,
+    450.539708
+  ],
+  "environment": {
+    "machine": "arm64",
+    "platform": "macOS-15.7.9-arm64-arm-64bit",
+    "python": "3.9.6"
+  },
+  "executionOrder": "paired alternating order after one warmup per executable",
+  "limitation": "Whole-process wall-clock measurements on the current host include scheduler and load noise. This diagnostics-off comparison is separate from the product 150 ms answer-to-next-card gate.",
+  "meanDeltaFraction": -0.00826258123289303,
+  "meanDeltaMilliseconds": -3.8231020000000058,
+  "outputParity": {
+    "byteIdentical": true,
+    "jsonSHA256": "0186acd817dfe1602ad80a3953ecd3b69bfb9937f63f9001170d0b108d0e3f77",
+    "markdownSHA256": "c1fced34d26718423ea42f9cdb4b264d67c36fa9d78608e319fcd88239c085a3"
+  },
+  "repetitions": 9,
+  "schemaVersion": 1,
+  "units": "milliseconds",
+  "workload": {
+    "documents": 2,
+    "lemmas": 60,
+    "readers": 2,
+    "seed": 42
+  }
+}

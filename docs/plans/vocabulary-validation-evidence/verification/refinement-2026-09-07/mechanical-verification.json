@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "base": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-evidence/verification/refinement-2026-09-07/base-plan.md",
+    "sha256": "643159fae7c981d6efab48cc0f48a2d6d176f215cd7298ee4221735976e80d15"
+  },
+  "candidate": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-evidence/implementation-plan.md",
+    "sha256": "93100e889355145526f75f0347ee9b835185a7aa9458929db951d2f24607e05f"
+  },
+  "delta": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-evidence/verification/refinement-2026-09-07/delta.json",
+    "feedback_ids": [
+      "F01",
+      "F02",
+      "F03",
+      "F04",
+      "F05",
+      "F06",
+      "F07"
+    ]
+  },
+  "changed_sections": [
+    "Vocabulary validation and release-evidence implementation plan / Authority and scope",
+    "Vocabulary validation and release-evidence implementation plan / Decisions and amendment boundary",
+    "Vocabulary validation and release-evidence implementation plan / Deliverables and completion checklist",
+    "Vocabulary validation and release-evidence implementation plan / Delivery sequence and ownership",
+    "Vocabulary validation and release-evidence implementation plan / Diagnostic reproducibility and attribution",
+    "Vocabulary validation and release-evidence implementation plan / End-to-end study rehearsal",
+    "Vocabulary validation and release-evidence implementation plan / Human comparison and learning outcomes",
+    "Vocabulary validation and release-evidence implementation plan / Independent predictive evaluation banks",
+    "Vocabulary validation and release-evidence implementation plan / Meaning criterion and rater workflow",
+    "Vocabulary validation and release-evidence implementation plan / SAP precision and endpoint decisions",
+    "Vocabulary validation and release-evidence implementation plan / Study sampling and sequence amendment",
+    "Vocabulary validation and release-evidence implementation plan / Verification and final acceptance"
+  ],
+  "added_sections": [],
+  "removed_sections": [],
+  "allowed_sections": [
+    "Vocabulary validation and release-evidence implementation plan / Authority and scope",
+    "Vocabulary validation and release-evidence implementation plan / Decisions and amendment boundary",
+    "Vocabulary validation and release-evidence implementation plan / Deliverables and completion checklist",
+    "Vocabulary validation and release-evidence implementation plan / Delivery sequence and ownership",
+    "Vocabulary validation and release-evidence implementation plan / Diagnostic reproducibility and attribution",
+    "Vocabulary validation and release-evidence implementation plan / End-to-end study rehearsal",
+    "Vocabulary validation and release-evidence implementation plan / Human comparison and learning outcomes",
+    "Vocabulary validation and release-evidence implementation plan / Independent predictive evaluation banks",
+    "Vocabulary validation and release-evidence implementation plan / Meaning criterion and rater workflow",
+    "Vocabulary validation and release-evidence implementation plan / SAP precision and endpoint decisions",
+    "Vocabulary validation and release-evidence implementation plan / Study sampling and sequence amendment",
+    "Vocabulary validation and release-evidence implementation plan / Verification and final acceptance"
+  ],
+  "contract_signal_deltas": {
+    "Vocabulary validation and release-evidence implementation plan / Authority and scope": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary validation and release-evidence implementation plan / Decisions and amendment boundary": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary validation and release-evidence implementation plan / Deliverables and completion checklist": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary validation and release-evidence implementation plan / Delivery sequence and ownership": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary validation and release-evidence implementation plan / Diagnostic reproducibility and attribution": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "2"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary validation and release-evidence implementation plan / End-to-end study rehearsal": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary validation and release-evidence implementation plan / Human comparison and learning outcomes": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary validation and release-evidence implementation plan / Independent predictive evaluation banks": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary validation and release-evidence implementation plan / Meaning criterion and rater workflow": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary validation and release-evidence implementation plan / SAP precision and endpoint decisions": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary validation and release-evidence implementation plan / Study sampling and sequence amendment": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "Vocabulary validation and release-evidence implementation plan / Verification and final acceptance": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    }
+  },
+  "ledger_counts": {
+    "active": 25,
+    "deferred": 0,
+    "superseded": 0,
+    "other": 0
+  },
+  "base_ledger": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-evidence/verification/refinement-2026-09-07/base-ledger.json",
+  "errors": [],
+  "warnings": []
+}

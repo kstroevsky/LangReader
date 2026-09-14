@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export LC_ALL=C
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SOURCE_ROOT="$ROOT_DIR/Sources/LeafReaderApp"

@@ -1,0 +1,33 @@
+{
+  "b1SampleCounts": [
+    512,
+    4096
+  ],
+  "b2SampleCounts": [
+    512,
+    4096
+  ],
+  "b2ThetaScheme": "independent-within-stratum-jitter-v1",
+  "dataRole": "diagnostic-development",
+  "diagnosticComparisonRule": "Retain every A/B1/B2 replica and both production-selected and frequency-fixed decks; do not choose a favorable replica. Treat an isolated A-pass/B-fail or truth miss as inconclusive.",
+  "documents": 2,
+  "fixedBudget": 60,
+  "fixedControlDeckSize": 5,
+  "idiosyncraticFlipRate": 0.12,
+  "itemResidualStandardDeviation": 0.8,
+  "lemmas": 60,
+  "readers": 2,
+  "replicas": 3,
+  "responseNoiseRate": 0.12,
+  "scenarios": [
+    "well-specified-rasch",
+    "item-residual",
+    "response-noise",
+    "idiosyncratic-knowledge"
+  ],
+  "schemaVersion": 1,
+  "seed": 20260908,
+  "successDetailPolicy": "retain-all-runs",
+  "targetCoverage": 0.98,
+  "timingRepetitions": 3
+}

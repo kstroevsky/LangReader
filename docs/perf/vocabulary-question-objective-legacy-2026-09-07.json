@@ -1,0 +1,1519 @@
+{
+  "configuration": {
+    "adaptiveLossPopulation": "allNonExcluded",
+    "documentsPerScenario": 4,
+    "lemmaCount": 120,
+    "questionObjective": "evidenceSurrogate",
+    "readersPerScenario": 32,
+    "usesPairedDiagnosticSubstreams": true
+  },
+  "runs": [
+    {
+      "evaluatorExitCode": 0,
+      "ordinal": 1,
+      "profile": {
+        "idiosyncratic_flip_rate": 0.08,
+        "item_residual_sd": 0.5,
+        "name": "mild-mismatch",
+        "response_noise_rate": 0.08
+      },
+      "report": {
+        "configuration": {
+          "algorithmVersion": 3,
+          "assessmentModelParameters": {
+            "adaptiveLossPopulation": "allNonExcluded",
+            "coverageQuantile": 0.05,
+            "coverageStoppingComputation": "full-every-answer",
+            "difficultyPriorStandardDeviationScale": 1,
+            "evidenceReliabilityScale": 1,
+            "minimumEpsilonKnowledge": 0.05,
+            "questionObjective": "evidenceSurrogate",
+            "warmPriorWeight": 0.9
+          },
+          "documentsPerScenario": 4,
+          "lemmaCount": 120,
+          "populationParameters": {
+            "idiosyncraticFlipRate": 0.08,
+            "itemResidualStandardDeviation": 0.5,
+            "responseNoiseRate": 0.08
+          },
+          "readersPerScenario": 32,
+          "seed": 17138597181308749477,
+          "usesPairedDiagnosticSubstreams": true
+        },
+        "protocolDiagnostics": {
+          "coldCoverageHitRate": 1,
+          "coldMeanQuestionCount": 76.03125,
+          "difficultyUncertaintyEnabled": true,
+          "partOfSpeechAmbiguityShare": 0.1,
+          "responseProtocol": "answer-before-reveal-verified-v3",
+          "syntheticTruthFingerprint": "31b518760a742335",
+          "warmCoverageHitRate": 0.9375,
+          "warmMeanQuestionCount": 11.5625,
+          "warmStartQuestionReduction": 0.8479243732018085
+        },
+        "qualityGates": {
+          "coverage98HitRate": 0.96875,
+          "eligible": false,
+          "idiosyncraticCoverageHitRate": 1,
+          "itemResidualCoverageHitRate": 0.96875,
+          "minimumDeckPrecision": 0.6974440172816646,
+          "passed": false,
+          "responseNoiseCoverageHitRate": 0.75,
+          "thetaInterval90Coverage": 0.921875,
+          "warmStartCoverageHitDelta": -0.0625,
+          "warmStartQuestionReduction": 0.8479243732018085,
+          "wellSpecifiedECE": 0.019547780614434344
+        },
+        "results": [
+          {
+            "brierScore": 0.06447285035164531,
+            "deckPrecision": 0.9157135586632633,
+            "deckRecall": 0.949728688614261,
+            "expectedCalibrationError": 0.020086874436614555,
+            "logLoss": 0.23669889381791503,
+            "meanQuestionCount": 63.65625,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 10.40625,
+            "realizedTokenCoverage": 0.9799328417574347,
+            "scenario": "well-specified-rasch",
+            "stopReasons": {
+              "lowExpectedValue": 32
+            },
+            "syntheticTruthFingerprint": "7c44bfd2925931a3",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.96875,
+            "thetaRMSE": 0.3934541053482771
+          },
+          {
+            "brierScore": 0.059737797359640694,
+            "deckPrecision": 0.7574310294649848,
+            "deckRecall": 0.9672335012933174,
+            "expectedCalibrationError": 0.01900868679225413,
+            "logLoss": 0.2235936842494252,
+            "meanQuestionCount": 77.53125,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 23.15625,
+            "realizedTokenCoverage": 0.9927200618039407,
+            "scenario": "well-specified-rasch",
+            "stopReasons": {
+              "questionLimit": 28,
+              "targetCoverageStable": 4
+            },
+            "syntheticTruthFingerprint": "e019dc4d55289853",
+            "targetMissRate": 0.03125,
+            "thetaInterval90Coverage": 0.875,
+            "thetaRMSE": 0.4462004115919791
+          },
+          {
+            "brierScore": 0.06187863677129988,
+            "deckPrecision": 0.9227637291659533,
+            "deckRecall": 0.9216322295332869,
+            "expectedCalibrationError": 0.017015757186302778,
+            "logLoss": 0.2312387947955631,
+            "meanQuestionCount": 64.03125,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 8.21875,
+            "realizedTokenCoverage": 0.9700101731734182,
+            "scenario": "item-residual",
+            "stopReasons": {
+              "lowExpectedValue": 32
+            },
+            "syntheticTruthFingerprint": "8a4d5b2e17ce454e",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.90625,
+            "thetaRMSE": 0.41721077793967565
+          },
+          {
+            "brierScore": 0.06471134187498143,
+            "deckPrecision": 0.7358148148653674,
+            "deckRecall": 0.9567279482843566,
+            "expectedCalibrationError": 0.009480786668439573,
+            "logLoss": 0.2296995850239038,
+            "meanQuestionCount": 74.25,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 24.3125,
+            "realizedTokenCoverage": 0.9916071319299964,
+            "scenario": "item-residual",
+            "stopReasons": {
+              "questionLimit": 22,
+              "targetCoverageStable": 10
+            },
+            "syntheticTruthFingerprint": "f90152575e522977",
+            "targetMissRate": 0.03125,
+            "thetaInterval90Coverage": 0.9375,
+            "thetaRMSE": 0.319191893379574
+          },
+          {
+            "brierScore": 0.08577985656058705,
+            "deckPrecision": 0.8854533262814985,
+            "deckRecall": 0.8547459265103472,
+            "expectedCalibrationError": 0.03630225132584935,
+            "logLoss": 0.31884563697102286,
+            "meanQuestionCount": 65.5625,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 6.78125,
+            "realizedTokenCoverage": 0.9515607789744218,
+            "scenario": "response-noise",
+            "stopReasons": {
+              "lowExpectedValue": 31,
+              "questionLimit": 1
+            },
+            "syntheticTruthFingerprint": "4a43a9a92c7dd272",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.96875,
+            "thetaRMSE": 0.4160505990595326
+          },
+          {
+            "brierScore": 0.10065632679632926,
+            "deckPrecision": 0.6974440172816646,
+            "deckRecall": 0.9264805825011345,
+            "expectedCalibrationError": 0.04060893747565699,
+            "logLoss": 0.35516991943554493,
+            "meanQuestionCount": 79,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 24.96875,
+            "realizedTokenCoverage": 0.9841206706645453,
+            "scenario": "response-noise",
+            "stopReasons": {
+              "questionLimit": 29,
+              "targetCoverageStable": 3
+            },
+            "syntheticTruthFingerprint": "58ea0640bb0b93b8",
+            "targetMissRate": 0.25,
+            "thetaInterval90Coverage": 0.90625,
+            "thetaRMSE": 0.48399030554099715
+          },
+          {
+            "brierScore": 0.08938515926254395,
+            "deckPrecision": 0.881062777838272,
+            "deckRecall": 0.894232119970498,
+            "expectedCalibrationError": 0.018225802037157925,
+            "logLoss": 0.3037149394205497,
+            "meanQuestionCount": 67.375,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 9,
+            "realizedTokenCoverage": 0.9500826092277564,
+            "scenario": "idiosyncratic-knowledge",
+            "stopReasons": {
+              "lowExpectedValue": 31,
+              "questionLimit": 1
+            },
+            "syntheticTruthFingerprint": "ccf5c5b6c20af99c",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.8125,
+            "thetaRMSE": 0.5091196962938576
+          },
+          {
+            "brierScore": 0.07468992403527454,
+            "deckPrecision": 0.7009237172442595,
+            "deckRecall": 0.9625855058559116,
+            "expectedCalibrationError": 0.009972944772066,
+            "logLoss": 0.25792866848425916,
+            "meanQuestionCount": 78.4375,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 28.125,
+            "realizedTokenCoverage": 0.9923414361767227,
+            "scenario": "idiosyncratic-knowledge",
+            "stopReasons": {
+              "questionLimit": 28,
+              "targetCoverageStable": 4
+            },
+            "syntheticTruthFingerprint": "9411be1917b5d549",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.875,
+            "thetaRMSE": 0.47829379607366385
+          }
+        ],
+        "schemaVersion": 1
+      },
+      "seed": 17138597181308749477
+    },
+    {
+      "evaluatorExitCode": 0,
+      "ordinal": 2,
+      "profile": {
+        "idiosyncratic_flip_rate": 0.08,
+        "item_residual_sd": 0.5,
+        "name": "mild-mismatch",
+        "response_noise_rate": 0.08
+      },
+      "report": {
+        "configuration": {
+          "algorithmVersion": 3,
+          "assessmentModelParameters": {
+            "adaptiveLossPopulation": "allNonExcluded",
+            "coverageQuantile": 0.05,
+            "coverageStoppingComputation": "full-every-answer",
+            "difficultyPriorStandardDeviationScale": 1,
+            "evidenceReliabilityScale": 1,
+            "minimumEpsilonKnowledge": 0.05,
+            "questionObjective": "evidenceSurrogate",
+            "warmPriorWeight": 0.9
+          },
+          "documentsPerScenario": 4,
+          "lemmaCount": 120,
+          "populationParameters": {
+            "idiosyncraticFlipRate": 0.08,
+            "itemResidualStandardDeviation": 0.5,
+            "responseNoiseRate": 0.08
+          },
+          "readersPerScenario": 32,
+          "seed": 14503140124066779592,
+          "usesPairedDiagnosticSubstreams": true
+        },
+        "protocolDiagnostics": {
+          "coldCoverageHitRate": 0.9375,
+          "coldMeanQuestionCount": 76.125,
+          "difficultyUncertaintyEnabled": true,
+          "partOfSpeechAmbiguityShare": 0.1,
+          "responseProtocol": "answer-before-reveal-verified-v3",
+          "syntheticTruthFingerprint": "ef9890fff0da9302",
+          "warmCoverageHitRate": 0.84375,
+          "warmMeanQuestionCount": 12.90625,
+          "warmStartQuestionReduction": 0.8304597701149425
+        },
+        "qualityGates": {
+          "coverage98HitRate": 1,
+          "eligible": false,
+          "idiosyncraticCoverageHitRate": 0.96875,
+          "itemResidualCoverageHitRate": 0.9375,
+          "minimumDeckPrecision": 0.6965885440067949,
+          "passed": false,
+          "responseNoiseCoverageHitRate": 0.90625,
+          "thetaInterval90Coverage": 0.953125,
+          "warmStartCoverageHitDelta": -0.09375,
+          "warmStartQuestionReduction": 0.8304597701149425,
+          "wellSpecifiedECE": 0.017283670358734723
+        },
+        "results": [
+          {
+            "brierScore": 0.06599778139279787,
+            "deckPrecision": 0.9148835869635473,
+            "deckRecall": 0.9094444149964678,
+            "expectedCalibrationError": 0.01941056611923485,
+            "logLoss": 0.24452754871854132,
+            "meanQuestionCount": 62.34375,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 8.15625,
+            "realizedTokenCoverage": 0.970228169746665,
+            "scenario": "well-specified-rasch",
+            "stopReasons": {
+              "lowExpectedValue": 32
+            },
+            "syntheticTruthFingerprint": "7db176065626145b",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.9375,
+            "thetaRMSE": 0.4578020370532702
+          },
+          {
+            "brierScore": 0.05592245931099065,
+            "deckPrecision": 0.7377035418117427,
+            "deckRecall": 0.9616934172721168,
+            "expectedCalibrationError": 0.015156774598234595,
+            "logLoss": 0.20605945496315012,
+            "meanQuestionCount": 76.375,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 23.71875,
+            "realizedTokenCoverage": 0.9930776526740912,
+            "scenario": "well-specified-rasch",
+            "stopReasons": {
+              "questionLimit": 25,
+              "targetCoverageStable": 7
+            },
+            "syntheticTruthFingerprint": "0c2425b19a29106e",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.96875,
+            "thetaRMSE": 0.3701303410919024
+          },
+          {
+            "brierScore": 0.06542520252175753,
+            "deckPrecision": 0.92346287439626,
+            "deckRecall": 0.9242155739341977,
+            "expectedCalibrationError": 0.009233702156343497,
+            "logLoss": 0.2379012511822168,
+            "meanQuestionCount": 64.59375,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 8.3125,
+            "realizedTokenCoverage": 0.9601850293721701,
+            "scenario": "item-residual",
+            "stopReasons": {
+              "lowExpectedValue": 31,
+              "questionLimit": 1
+            },
+            "syntheticTruthFingerprint": "f7627ca3017af71b",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.9375,
+            "thetaRMSE": 0.3677836099656038
+          },
+          {
+            "brierScore": 0.06745403548712169,
+            "deckPrecision": 0.756857349077927,
+            "deckRecall": 0.9647026623448434,
+            "expectedCalibrationError": 0.01070125286095584,
+            "logLoss": 0.23593744094468327,
+            "meanQuestionCount": 72.84375,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 23.8125,
+            "realizedTokenCoverage": 0.9931044241830865,
+            "scenario": "item-residual",
+            "stopReasons": {
+              "questionLimit": 24,
+              "targetCoverageStable": 8
+            },
+            "syntheticTruthFingerprint": "5be520cb2488f85a",
+            "targetMissRate": 0.0625,
+            "thetaInterval90Coverage": 0.84375,
+            "thetaRMSE": 0.4588843987939147
+          },
+          {
+            "brierScore": 0.08649063769308864,
+            "deckPrecision": 0.884627849665929,
+            "deckRecall": 0.8875936491553652,
+            "expectedCalibrationError": 0.02771349873030348,
+            "logLoss": 0.3169733797818831,
+            "meanQuestionCount": 64.625,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 7.90625,
+            "realizedTokenCoverage": 0.9533812415860972,
+            "scenario": "response-noise",
+            "stopReasons": {
+              "lowExpectedValue": 31,
+              "questionLimit": 1
+            },
+            "syntheticTruthFingerprint": "a7eb30e608c99bd1",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 1,
+            "thetaRMSE": 0.3842601353788633
+          },
+          {
+            "brierScore": 0.09064633726130185,
+            "deckPrecision": 0.6965885440067949,
+            "deckRecall": 0.9460192190397904,
+            "expectedCalibrationError": 0.0307961641860132,
+            "logLoss": 0.31922150362538887,
+            "meanQuestionCount": 77.9375,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 26.1875,
+            "realizedTokenCoverage": 0.9888381929996327,
+            "scenario": "response-noise",
+            "stopReasons": {
+              "questionLimit": 30,
+              "targetCoverageStable": 2
+            },
+            "syntheticTruthFingerprint": "7a3e16cb5d601392",
+            "targetMissRate": 0.09375,
+            "thetaInterval90Coverage": 0.84375,
+            "thetaRMSE": 0.521974371274821
+          },
+          {
+            "brierScore": 0.07942758203010225,
+            "deckPrecision": 0.899078896702272,
+            "deckRecall": 0.9047027363660091,
+            "expectedCalibrationError": 0.009067015813572915,
+            "logLoss": 0.2768342960086409,
+            "meanQuestionCount": 68.59375,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 8.375,
+            "realizedTokenCoverage": 0.9669257128870398,
+            "scenario": "idiosyncratic-knowledge",
+            "stopReasons": {
+              "lowExpectedValue": 30,
+              "questionLimit": 2
+            },
+            "syntheticTruthFingerprint": "d26a0cc1145f6b4c",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.9375,
+            "thetaRMSE": 0.42350735737489675
+          },
+          {
+            "brierScore": 0.07652102776993976,
+            "deckPrecision": 0.7169098809620662,
+            "deckRecall": 0.9545582044800768,
+            "expectedCalibrationError": 0.011159578480164306,
+            "logLoss": 0.26444582051852517,
+            "meanQuestionCount": 75.5625,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 26.125,
+            "realizedTokenCoverage": 0.9913853108554643,
+            "scenario": "idiosyncratic-knowledge",
+            "stopReasons": {
+              "questionLimit": 25,
+              "targetCoverageStable": 7
+            },
+            "syntheticTruthFingerprint": "6bafa545c1a0805c",
+            "targetMissRate": 0.03125,
+            "thetaInterval90Coverage": 0.875,
+            "thetaRMSE": 0.43964815451963846
+          }
+        ],
+        "schemaVersion": 1
+      },
+      "seed": 14503140124066779592
+    },
+    {
+      "evaluatorExitCode": 0,
+      "ordinal": 1,
+      "profile": {
+        "idiosyncratic_flip_rate": 0.12,
+        "item_residual_sd": 0.8,
+        "name": "reviewed-nominal",
+        "response_noise_rate": 0.12
+      },
+      "report": {
+        "configuration": {
+          "algorithmVersion": 3,
+          "assessmentModelParameters": {
+            "adaptiveLossPopulation": "allNonExcluded",
+            "coverageQuantile": 0.05,
+            "coverageStoppingComputation": "full-every-answer",
+            "difficultyPriorStandardDeviationScale": 1,
+            "evidenceReliabilityScale": 1,
+            "minimumEpsilonKnowledge": 0.05,
+            "questionObjective": "evidenceSurrogate",
+            "warmPriorWeight": 0.9
+          },
+          "documentsPerScenario": 4,
+          "lemmaCount": 120,
+          "populationParameters": {
+            "idiosyncraticFlipRate": 0.12,
+            "itemResidualStandardDeviation": 0.8,
+            "responseNoiseRate": 0.12
+          },
+          "readersPerScenario": 32,
+          "seed": 4108890885443164081,
+          "usesPairedDiagnosticSubstreams": true
+        },
+        "protocolDiagnostics": {
+          "coldCoverageHitRate": 1,
+          "coldMeanQuestionCount": 77.59375,
+          "difficultyUncertaintyEnabled": true,
+          "partOfSpeechAmbiguityShare": 0.1,
+          "responseProtocol": "answer-before-reveal-verified-v3",
+          "syntheticTruthFingerprint": "80f476229a5dc423",
+          "warmCoverageHitRate": 0.9375,
+          "warmMeanQuestionCount": 15.3125,
+          "warmStartQuestionReduction": 0.8026580749093838
+        },
+        "qualityGates": {
+          "coverage98HitRate": 0.9375,
+          "eligible": false,
+          "idiosyncraticCoverageHitRate": 0.96875,
+          "itemResidualCoverageHitRate": 1,
+          "minimumDeckPrecision": 0.6555087922499779,
+          "passed": false,
+          "responseNoiseCoverageHitRate": 0.5625,
+          "thetaInterval90Coverage": 0.921875,
+          "warmStartCoverageHitDelta": -0.0625,
+          "warmStartQuestionReduction": 0.8026580749093838,
+          "wellSpecifiedECE": 0.013298459855717759
+        },
+        "results": [
+          {
+            "brierScore": 0.07016003196748698,
+            "deckPrecision": 0.9064675836688721,
+            "deckRecall": 0.90576467248832,
+            "expectedCalibrationError": 0.010885113609311438,
+            "logLoss": 0.2537030922120999,
+            "meanQuestionCount": 63.53125,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 8,
+            "realizedTokenCoverage": 0.9681495532982499,
+            "scenario": "well-specified-rasch",
+            "stopReasons": {
+              "lowExpectedValue": 32
+            },
+            "syntheticTruthFingerprint": "2257c792bc7dce64",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.9375,
+            "thetaRMSE": 0.34901550807915876
+          },
+          {
+            "brierScore": 0.05746977335022751,
+            "deckPrecision": 0.7224579133153743,
+            "deckRecall": 0.965617078045292,
+            "expectedCalibrationError": 0.01571180610212408,
+            "logLoss": 0.21003016066618588,
+            "meanQuestionCount": 79.0625,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 24.21875,
+            "realizedTokenCoverage": 0.9927028515481583,
+            "scenario": "well-specified-rasch",
+            "stopReasons": {
+              "questionLimit": 28,
+              "targetCoverageStable": 4
+            },
+            "syntheticTruthFingerprint": "f98c21aac8021816",
+            "targetMissRate": 0.0625,
+            "thetaInterval90Coverage": 0.90625,
+            "thetaRMSE": 0.4019636099523404
+          },
+          {
+            "brierScore": 0.06966655234707606,
+            "deckPrecision": 0.9107505710011308,
+            "deckRecall": 0.9027116626598805,
+            "expectedCalibrationError": 0.007550967144064372,
+            "logLoss": 0.2529732362329371,
+            "meanQuestionCount": 64.84375,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 8.03125,
+            "realizedTokenCoverage": 0.9630954748500795,
+            "scenario": "item-residual",
+            "stopReasons": {
+              "lowExpectedValue": 31,
+              "questionLimit": 1
+            },
+            "syntheticTruthFingerprint": "6dd3a2a3475f8f2b",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.9375,
+            "thetaRMSE": 0.4093760825522561
+          },
+          {
+            "brierScore": 0.06388448116371567,
+            "deckPrecision": 0.7201251874800938,
+            "deckRecall": 0.9617771950811661,
+            "expectedCalibrationError": 0.010587511071729705,
+            "logLoss": 0.2253678748950342,
+            "meanQuestionCount": 79.28125,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 25.09375,
+            "realizedTokenCoverage": 0.9940280412434217,
+            "scenario": "item-residual",
+            "stopReasons": {
+              "questionLimit": 30,
+              "targetCoverageStable": 2
+            },
+            "syntheticTruthFingerprint": "89d823a03359d01c",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.875,
+            "thetaRMSE": 0.4350275378199775
+          },
+          {
+            "brierScore": 0.09727558537079188,
+            "deckPrecision": 0.8887188655495414,
+            "deckRecall": 0.8938960280999845,
+            "expectedCalibrationError": 0.03725883512898158,
+            "logLoss": 0.3608648050211615,
+            "meanQuestionCount": 65.21875,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 8.3125,
+            "realizedTokenCoverage": 0.9511477328356382,
+            "scenario": "response-noise",
+            "stopReasons": {
+              "lowExpectedValue": 32
+            },
+            "syntheticTruthFingerprint": "adaa29067c235533",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.84375,
+            "thetaRMSE": 0.5093806088734187
+          },
+          {
+            "brierScore": 0.12087331501403606,
+            "deckPrecision": 0.6555087922499779,
+            "deckRecall": 0.9242860526933954,
+            "expectedCalibrationError": 0.06368506171683867,
+            "logLoss": 0.43139594469722115,
+            "meanQuestionCount": 78.25,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 29,
+            "realizedTokenCoverage": 0.9807876177946395,
+            "scenario": "response-noise",
+            "stopReasons": {
+              "questionLimit": 30,
+              "targetCoverageStable": 2
+            },
+            "syntheticTruthFingerprint": "0e21f14fc7c9ad81",
+            "targetMissRate": 0.4375,
+            "thetaInterval90Coverage": 0.84375,
+            "thetaRMSE": 0.7403092870929043
+          },
+          {
+            "brierScore": 0.09569481726652249,
+            "deckPrecision": 0.8834087782279773,
+            "deckRecall": 0.878147749285975,
+            "expectedCalibrationError": 0.024782932646274222,
+            "logLoss": 0.31934073570985017,
+            "meanQuestionCount": 67.84375,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 8.125,
+            "realizedTokenCoverage": 0.939366356627096,
+            "scenario": "idiosyncratic-knowledge",
+            "stopReasons": {
+              "lowExpectedValue": 31,
+              "questionLimit": 1
+            },
+            "syntheticTruthFingerprint": "bcc3583733e7ba32",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.65625,
+            "thetaRMSE": 0.6765392582172168
+          },
+          {
+            "brierScore": 0.07667190474304252,
+            "deckPrecision": 0.7201984350465568,
+            "deckRecall": 0.9592790691764315,
+            "expectedCalibrationError": 0.010907523892656385,
+            "logLoss": 0.2622010671976691,
+            "meanQuestionCount": 79.3125,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 26.875,
+            "realizedTokenCoverage": 0.9922458236445968,
+            "scenario": "idiosyncratic-knowledge",
+            "stopReasons": {
+              "questionLimit": 29,
+              "targetCoverageStable": 3
+            },
+            "syntheticTruthFingerprint": "e06233f4b15cea1c",
+            "targetMissRate": 0.03125,
+            "thetaInterval90Coverage": 0.9375,
+            "thetaRMSE": 0.4740540770316566
+          }
+        ],
+        "schemaVersion": 1
+      },
+      "seed": 4108890885443164081
+    },
+    {
+      "evaluatorExitCode": 0,
+      "ordinal": 2,
+      "profile": {
+        "idiosyncratic_flip_rate": 0.12,
+        "item_residual_sd": 0.8,
+        "name": "reviewed-nominal",
+        "response_noise_rate": 0.12
+      },
+      "report": {
+        "configuration": {
+          "algorithmVersion": 3,
+          "assessmentModelParameters": {
+            "adaptiveLossPopulation": "allNonExcluded",
+            "coverageQuantile": 0.05,
+            "coverageStoppingComputation": "full-every-answer",
+            "difficultyPriorStandardDeviationScale": 1,
+            "evidenceReliabilityScale": 1,
+            "minimumEpsilonKnowledge": 0.05,
+            "questionObjective": "evidenceSurrogate",
+            "warmPriorWeight": 0.9
+          },
+          "documentsPerScenario": 4,
+          "lemmaCount": 120,
+          "populationParameters": {
+            "idiosyncraticFlipRate": 0.12,
+            "itemResidualStandardDeviation": 0.8,
+            "responseNoiseRate": 0.12
+          },
+          "readersPerScenario": 32,
+          "seed": 1722992745447682943,
+          "usesPairedDiagnosticSubstreams": true
+        },
+        "protocolDiagnostics": {
+          "coldCoverageHitRate": 1,
+          "coldMeanQuestionCount": 76.0625,
+          "difficultyUncertaintyEnabled": true,
+          "partOfSpeechAmbiguityShare": 0.1,
+          "responseProtocol": "answer-before-reveal-verified-v3",
+          "syntheticTruthFingerprint": "985ae18b6349660b",
+          "warmCoverageHitRate": 1,
+          "warmMeanQuestionCount": 14.59375,
+          "warmStartQuestionReduction": 0.8081347576006573
+        },
+        "qualityGates": {
+          "coverage98HitRate": 0.875,
+          "eligible": false,
+          "idiosyncraticCoverageHitRate": 0.90625,
+          "itemResidualCoverageHitRate": 0.96875,
+          "minimumDeckPrecision": 0.6623499302199554,
+          "passed": false,
+          "responseNoiseCoverageHitRate": 0.625,
+          "thetaInterval90Coverage": 0.9375,
+          "warmStartCoverageHitDelta": 0,
+          "warmStartQuestionReduction": 0.8081347576006573,
+          "wellSpecifiedECE": 0.019219643401301216
+        },
+        "results": [
+          {
+            "brierScore": 0.06393371354438114,
+            "deckPrecision": 0.904153705366686,
+            "deckRecall": 0.8932552806355347,
+            "expectedCalibrationError": 0.014118319471138552,
+            "logLoss": 0.2360351157872412,
+            "meanQuestionCount": 60.5625,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 8.0625,
+            "realizedTokenCoverage": 0.970687109900869,
+            "scenario": "well-specified-rasch",
+            "stopReasons": {
+              "lowExpectedValue": 32
+            },
+            "syntheticTruthFingerprint": "9d13c863c11b1fd3",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.875,
+            "thetaRMSE": 0.4507129810430581
+          },
+          {
+            "brierScore": 0.058100776348422915,
+            "deckPrecision": 0.7710514676922803,
+            "deckRecall": 0.9691988720976827,
+            "expectedCalibrationError": 0.02432096733146388,
+            "logLoss": 0.21057328004399875,
+            "meanQuestionCount": 76.34375,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 22.8125,
+            "realizedTokenCoverage": 0.9921999296291762,
+            "scenario": "well-specified-rasch",
+            "stopReasons": {
+              "questionLimit": 25,
+              "targetCoverageStable": 7
+            },
+            "syntheticTruthFingerprint": "a4c28007c71b339a",
+            "targetMissRate": 0.125,
+            "thetaInterval90Coverage": 1,
+            "thetaRMSE": 0.3510356217174505
+          },
+          {
+            "brierScore": 0.07064771649995062,
+            "deckPrecision": 0.9080980692023554,
+            "deckRecall": 0.9268780168513525,
+            "expectedCalibrationError": 0.010260691304259942,
+            "logLoss": 0.2540545375505305,
+            "meanQuestionCount": 63.375,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 9.03125,
+            "realizedTokenCoverage": 0.9537120609472525,
+            "scenario": "item-residual",
+            "stopReasons": {
+              "lowExpectedValue": 32
+            },
+            "syntheticTruthFingerprint": "81cf43eca6908bcb",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.875,
+            "thetaRMSE": 0.4700024656450421
+          },
+          {
+            "brierScore": 0.06687642912747836,
+            "deckPrecision": 0.6623499302199554,
+            "deckRecall": 0.9483866508903859,
+            "expectedCalibrationError": 0.011924722266823503,
+            "logLoss": 0.23487116723562454,
+            "meanQuestionCount": 74.84375,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 27.96875,
+            "realizedTokenCoverage": 0.9927774293232163,
+            "scenario": "item-residual",
+            "stopReasons": {
+              "questionLimit": 27,
+              "targetCoverageStable": 5
+            },
+            "syntheticTruthFingerprint": "bb71263be6ad2ea0",
+            "targetMissRate": 0.03125,
+            "thetaInterval90Coverage": 0.9375,
+            "thetaRMSE": 0.4874983926472198
+          },
+          {
+            "brierScore": 0.10887397311988889,
+            "deckPrecision": 0.8623619108914672,
+            "deckRecall": 0.8626314415208309,
+            "expectedCalibrationError": 0.05243750339971161,
+            "logLoss": 0.39974172725017365,
+            "meanQuestionCount": 68.46875,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 7.625,
+            "realizedTokenCoverage": 0.9435255017745688,
+            "scenario": "response-noise",
+            "stopReasons": {
+              "lowExpectedValue": 30,
+              "questionLimit": 2
+            },
+            "syntheticTruthFingerprint": "29c849c980a02801",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.90625,
+            "thetaRMSE": 0.5330073750683059
+          },
+          {
+            "brierScore": 0.11660486013518492,
+            "deckPrecision": 0.699776513661669,
+            "deckRecall": 0.9303331695595707,
+            "expectedCalibrationError": 0.05619548699280001,
+            "logLoss": 0.4107601407515535,
+            "meanQuestionCount": 77.25,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 26.25,
+            "realizedTokenCoverage": 0.9807283380247216,
+            "scenario": "response-noise",
+            "stopReasons": {
+              "questionLimit": 27,
+              "targetCoverageStable": 5
+            },
+            "syntheticTruthFingerprint": "0693ea1f446d4b71",
+            "targetMissRate": 0.375,
+            "thetaInterval90Coverage": 0.875,
+            "thetaRMSE": 0.5387062637348601
+          },
+          {
+            "brierScore": 0.08824583741389823,
+            "deckPrecision": 0.8865722473568137,
+            "deckRecall": 0.8762843422945239,
+            "expectedCalibrationError": 0.0184779503406621,
+            "logLoss": 0.29804743912878806,
+            "meanQuestionCount": 70.15625,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 7.84375,
+            "realizedTokenCoverage": 0.9578731183453678,
+            "scenario": "idiosyncratic-knowledge",
+            "stopReasons": {
+              "lowExpectedValue": 29,
+              "questionLimit": 3
+            },
+            "syntheticTruthFingerprint": "54a393df5ee42faf",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.78125,
+            "thetaRMSE": 0.5989800691306086
+          },
+          {
+            "brierScore": 0.08830196282233947,
+            "deckPrecision": 0.7292276468108356,
+            "deckRecall": 0.9519373596422983,
+            "expectedCalibrationError": 0.01845274625859864,
+            "logLoss": 0.2949605015444996,
+            "meanQuestionCount": 76.625,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 25.875,
+            "realizedTokenCoverage": 0.9891996083710685,
+            "scenario": "idiosyncratic-knowledge",
+            "stopReasons": {
+              "questionLimit": 26,
+              "targetCoverageStable": 6
+            },
+            "syntheticTruthFingerprint": "53aa859d19980726",
+            "targetMissRate": 0.09375,
+            "thetaInterval90Coverage": 0.84375,
+            "thetaRMSE": 0.5857017653513185
+          }
+        ],
+        "schemaVersion": 1
+      },
+      "seed": 1722992745447682943
+    },
+    {
+      "evaluatorExitCode": 0,
+      "ordinal": 1,
+      "profile": {
+        "idiosyncratic_flip_rate": 0.16,
+        "item_residual_sd": 1.1,
+        "name": "severe-mismatch",
+        "response_noise_rate": 0.16
+      },
+      "report": {
+        "configuration": {
+          "algorithmVersion": 3,
+          "assessmentModelParameters": {
+            "adaptiveLossPopulation": "allNonExcluded",
+            "coverageQuantile": 0.05,
+            "coverageStoppingComputation": "full-every-answer",
+            "difficultyPriorStandardDeviationScale": 1,
+            "evidenceReliabilityScale": 1,
+            "minimumEpsilonKnowledge": 0.05,
+            "questionObjective": "evidenceSurrogate",
+            "warmPriorWeight": 0.9
+          },
+          "documentsPerScenario": 4,
+          "lemmaCount": 120,
+          "populationParameters": {
+            "idiosyncraticFlipRate": 0.16,
+            "itemResidualStandardDeviation": 1.1,
+            "responseNoiseRate": 0.16
+          },
+          "readersPerScenario": 32,
+          "seed": 12617010021913835269,
+          "usesPairedDiagnosticSubstreams": true
+        },
+        "protocolDiagnostics": {
+          "coldCoverageHitRate": 1,
+          "coldMeanQuestionCount": 77.5,
+          "difficultyUncertaintyEnabled": true,
+          "partOfSpeechAmbiguityShare": 0.1,
+          "responseProtocol": "answer-before-reveal-verified-v3",
+          "syntheticTruthFingerprint": "ca06bcd47e627e0b",
+          "warmCoverageHitRate": 0.96875,
+          "warmMeanQuestionCount": 12.5625,
+          "warmStartQuestionReduction": 0.8379032258064516
+        },
+        "qualityGates": {
+          "coverage98HitRate": 0.96875,
+          "eligible": false,
+          "idiosyncraticCoverageHitRate": 0.96875,
+          "itemResidualCoverageHitRate": 0.9375,
+          "minimumDeckPrecision": 0.6282641645336594,
+          "passed": false,
+          "responseNoiseCoverageHitRate": 0.46875,
+          "thetaInterval90Coverage": 0.828125,
+          "warmStartCoverageHitDelta": -0.03125,
+          "warmStartQuestionReduction": 0.8379032258064516,
+          "wellSpecifiedECE": 0.011817737154367477
+        },
+        "results": [
+          {
+            "brierScore": 0.06599057049857181,
+            "deckPrecision": 0.9156139193368705,
+            "deckRecall": 0.8810546179691237,
+            "expectedCalibrationError": 0.010285065256067432,
+            "logLoss": 0.24318944800922523,
+            "meanQuestionCount": 62.125,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 7.0625,
+            "realizedTokenCoverage": 0.9590472402398728,
+            "scenario": "well-specified-rasch",
+            "stopReasons": {
+              "lowExpectedValue": 31,
+              "questionLimit": 1
+            },
+            "syntheticTruthFingerprint": "ff0e374f9f5b5cec",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.78125,
+            "thetaRMSE": 0.5636544244553464
+          },
+          {
+            "brierScore": 0.0604277266440043,
+            "deckPrecision": 0.7559814173125157,
+            "deckRecall": 0.9630104472722996,
+            "expectedCalibrationError": 0.013350409052667522,
+            "logLoss": 0.21983967707436822,
+            "meanQuestionCount": 77.71875,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 23.03125,
+            "realizedTokenCoverage": 0.9927927273283563,
+            "scenario": "well-specified-rasch",
+            "stopReasons": {
+              "questionLimit": 27,
+              "targetCoverageStable": 5
+            },
+            "syntheticTruthFingerprint": "5f16d50db2c8e445",
+            "targetMissRate": 0.03125,
+            "thetaInterval90Coverage": 0.875,
+            "thetaRMSE": 0.4573866321220647
+          },
+          {
+            "brierScore": 0.07224192515594322,
+            "deckPrecision": 0.9066728789945452,
+            "deckRecall": 0.9090661945718063,
+            "expectedCalibrationError": 0.013737436002117858,
+            "logLoss": 0.2576298317316744,
+            "meanQuestionCount": 63.4375,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 8.28125,
+            "realizedTokenCoverage": 0.9669276251376819,
+            "scenario": "item-residual",
+            "stopReasons": {
+              "lowExpectedValue": 32
+            },
+            "syntheticTruthFingerprint": "ff543d24ed23db06",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.875,
+            "thetaRMSE": 0.42085921538644194
+          },
+          {
+            "brierScore": 0.06836942656378671,
+            "deckPrecision": 0.6324107747643469,
+            "deckRecall": 0.9297309993504779,
+            "expectedCalibrationError": 0.006809860958443577,
+            "logLoss": 0.23610594103644025,
+            "meanQuestionCount": 75.125,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 27.5625,
+            "realizedTokenCoverage": 0.9909588789621835,
+            "scenario": "item-residual",
+            "stopReasons": {
+              "questionLimit": 26,
+              "targetCoverageStable": 6
+            },
+            "syntheticTruthFingerprint": "e487c990ebfff679",
+            "targetMissRate": 0.0625,
+            "thetaInterval90Coverage": 0.84375,
+            "thetaRMSE": 0.5097615340041741
+          },
+          {
+            "brierScore": 0.12304652833006248,
+            "deckPrecision": 0.8191038452369002,
+            "deckRecall": 0.8461157327286672,
+            "expectedCalibrationError": 0.07359942938940875,
+            "logLoss": 0.4542350463057558,
+            "meanQuestionCount": 66.21875,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 9.40625,
+            "realizedTokenCoverage": 0.9437262880920329,
+            "scenario": "response-noise",
+            "stopReasons": {
+              "lowExpectedValue": 27,
+              "questionLimit": 5
+            },
+            "syntheticTruthFingerprint": "655956fa1416e7ff",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.84375,
+            "thetaRMSE": 0.5654280192470293
+          },
+          {
+            "brierScore": 0.1444788116396631,
+            "deckPrecision": 0.6282641645336594,
+            "deckRecall": 0.9055644346069814,
+            "expectedCalibrationError": 0.08682947026396615,
+            "logLoss": 0.5102108929547583,
+            "meanQuestionCount": 79.96875,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 30.25,
+            "realizedTokenCoverage": 0.9794777261045161,
+            "scenario": "response-noise",
+            "stopReasons": {
+              "questionLimit": 31,
+              "targetCoverageStable": 1
+            },
+            "syntheticTruthFingerprint": "65dcd5fbb8cb55eb",
+            "targetMissRate": 0.53125,
+            "thetaInterval90Coverage": 0.875,
+            "thetaRMSE": 0.6162555342055549
+          },
+          {
+            "brierScore": 0.09943861007987284,
+            "deckPrecision": 0.8840070097142179,
+            "deckRecall": 0.874456234026856,
+            "expectedCalibrationError": 0.03058669455936477,
+            "logLoss": 0.3290045260386118,
+            "meanQuestionCount": 68.90625,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 8.53125,
+            "realizedTokenCoverage": 0.9555306113082851,
+            "scenario": "idiosyncratic-knowledge",
+            "stopReasons": {
+              "lowExpectedValue": 29,
+              "questionLimit": 3
+            },
+            "syntheticTruthFingerprint": "dd1daa20d8531d02",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.65625,
+            "thetaRMSE": 0.7321884581989132
+          },
+          {
+            "brierScore": 0.08487809120205429,
+            "deckPrecision": 0.708419940615522,
+            "deckRecall": 0.9489128696887154,
+            "expectedCalibrationError": 0.009253030757366797,
+            "logLoss": 0.28508338618754486,
+            "meanQuestionCount": 78.21875,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 26.90625,
+            "realizedTokenCoverage": 0.9917849712397505,
+            "scenario": "idiosyncratic-knowledge",
+            "stopReasons": {
+              "questionLimit": 30,
+              "targetCoverageStable": 2
+            },
+            "syntheticTruthFingerprint": "9b9373cf045f0bf4",
+            "targetMissRate": 0.03125,
+            "thetaInterval90Coverage": 0.9375,
+            "thetaRMSE": 0.4924717715733829
+          }
+        ],
+        "schemaVersion": 1
+      },
+      "seed": 12617010021913835269
+    },
+    {
+      "evaluatorExitCode": 0,
+      "ordinal": 2,
+      "profile": {
+        "idiosyncratic_flip_rate": 0.16,
+        "item_residual_sd": 1.1,
+        "name": "severe-mismatch",
+        "response_noise_rate": 0.16
+      },
+      "report": {
+        "configuration": {
+          "algorithmVersion": 3,
+          "assessmentModelParameters": {
+            "adaptiveLossPopulation": "allNonExcluded",
+            "coverageQuantile": 0.05,
+            "coverageStoppingComputation": "full-every-answer",
+            "difficultyPriorStandardDeviationScale": 1,
+            "evidenceReliabilityScale": 1,
+            "minimumEpsilonKnowledge": 0.05,
+            "questionObjective": "evidenceSurrogate",
+            "warmPriorWeight": 0.9
+          },
+          "documentsPerScenario": 4,
+          "lemmaCount": 120,
+          "populationParameters": {
+            "idiosyncraticFlipRate": 0.16,
+            "itemResidualStandardDeviation": 1.1,
+            "responseNoiseRate": 0.16
+          },
+          "readersPerScenario": 32,
+          "seed": 17154071426602865733,
+          "usesPairedDiagnosticSubstreams": true
+        },
+        "protocolDiagnostics": {
+          "coldCoverageHitRate": 0.96875,
+          "coldMeanQuestionCount": 78.4375,
+          "difficultyUncertaintyEnabled": true,
+          "partOfSpeechAmbiguityShare": 0.1,
+          "responseProtocol": "answer-before-reveal-verified-v3",
+          "syntheticTruthFingerprint": "b4f7f2df86852897",
+          "warmCoverageHitRate": 0.9375,
+          "warmMeanQuestionCount": 11.875,
+          "warmStartQuestionReduction": 0.848605577689243
+        },
+        "qualityGates": {
+          "coverage98HitRate": 0.96875,
+          "eligible": false,
+          "idiosyncraticCoverageHitRate": 0.9375,
+          "itemResidualCoverageHitRate": 0.96875,
+          "minimumDeckPrecision": 0.6708153824165713,
+          "passed": false,
+          "responseNoiseCoverageHitRate": 0.40625,
+          "thetaInterval90Coverage": 0.859375,
+          "warmStartCoverageHitDelta": -0.03125,
+          "warmStartQuestionReduction": 0.848605577689243,
+          "wellSpecifiedECE": 0.01711956277710864
+        },
+        "results": [
+          {
+            "brierScore": 0.0671185938815772,
+            "deckPrecision": 0.9290457072929386,
+            "deckRecall": 0.9115813519537274,
+            "expectedCalibrationError": 0.014093009648434579,
+            "logLoss": 0.24578009861311415,
+            "meanQuestionCount": 63.34375,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 7.4375,
+            "realizedTokenCoverage": 0.9613801860237425,
+            "scenario": "well-specified-rasch",
+            "stopReasons": {
+              "lowExpectedValue": 32
+            },
+            "syntheticTruthFingerprint": "379b61d33ebaed9b",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.875,
+            "thetaRMSE": 0.4490138695391619
+          },
+          {
+            "brierScore": 0.05996326796805149,
+            "deckPrecision": 0.7620186832935502,
+            "deckRecall": 0.9687044417033979,
+            "expectedCalibrationError": 0.020146115905782698,
+            "logLoss": 0.21427368661801482,
+            "meanQuestionCount": 71.4375,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 23.28125,
+            "realizedTokenCoverage": 0.993817693672745,
+            "scenario": "well-specified-rasch",
+            "stopReasons": {
+              "questionLimit": 22,
+              "targetCoverageStable": 10
+            },
+            "syntheticTruthFingerprint": "4feeb4e847ab8aae",
+            "targetMissRate": 0.03125,
+            "thetaInterval90Coverage": 0.84375,
+            "thetaRMSE": 0.47124867315235497
+          },
+          {
+            "brierScore": 0.07058873771609123,
+            "deckPrecision": 0.909223542649676,
+            "deckRecall": 0.9183772810189941,
+            "expectedCalibrationError": 0.01245809372940664,
+            "logLoss": 0.2529348803658454,
+            "meanQuestionCount": 65.25,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 7.90625,
+            "realizedTokenCoverage": 0.9604967262269001,
+            "scenario": "item-residual",
+            "stopReasons": {
+              "lowExpectedValue": 30,
+              "questionLimit": 2
+            },
+            "syntheticTruthFingerprint": "03e7023333fa7f1d",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.9375,
+            "thetaRMSE": 0.3564954638964573
+          },
+          {
+            "brierScore": 0.06583815955274104,
+            "deckPrecision": 0.7132236102605009,
+            "deckRecall": 0.9443049347049499,
+            "expectedCalibrationError": 0.01167420805418836,
+            "logLoss": 0.23460918302210723,
+            "meanQuestionCount": 77.28125,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 23.71875,
+            "realizedTokenCoverage": 0.990649094358096,
+            "scenario": "item-residual",
+            "stopReasons": {
+              "questionLimit": 29,
+              "targetCoverageStable": 3
+            },
+            "syntheticTruthFingerprint": "335fd2ea21b331af",
+            "targetMissRate": 0.03125,
+            "thetaInterval90Coverage": 0.90625,
+            "thetaRMSE": 0.43508850188129955
+          },
+          {
+            "brierScore": 0.130704704449174,
+            "deckPrecision": 0.8263079118163741,
+            "deckRecall": 0.8512662967365416,
+            "expectedCalibrationError": 0.07117689941223605,
+            "logLoss": 0.4748865791980815,
+            "meanQuestionCount": 71.28125,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 9.625,
+            "realizedTokenCoverage": 0.945824027046873,
+            "scenario": "response-noise",
+            "stopReasons": {
+              "lowExpectedValue": 27,
+              "questionLimit": 5
+            },
+            "syntheticTruthFingerprint": "5685a4759208cb56",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.84375,
+            "thetaRMSE": 0.5814834452431502
+          },
+          {
+            "brierScore": 0.13239466839799677,
+            "deckPrecision": 0.6708153824165713,
+            "deckRecall": 0.9069786326997518,
+            "expectedCalibrationError": 0.07222742736173757,
+            "logLoss": 0.4702500280453807,
+            "meanQuestionCount": 76.0625,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 27.1875,
+            "realizedTokenCoverage": 0.9755251040264351,
+            "scenario": "response-noise",
+            "stopReasons": {
+              "questionLimit": 27,
+              "targetCoverageStable": 5
+            },
+            "syntheticTruthFingerprint": "f84421bbb4eeddc5",
+            "targetMissRate": 0.59375,
+            "thetaInterval90Coverage": 0.875,
+            "thetaRMSE": 0.5625488959407084
+          },
+          {
+            "brierScore": 0.08721183567154633,
+            "deckPrecision": 0.8988873352070276,
+            "deckRecall": 0.8775352991239902,
+            "expectedCalibrationError": 0.01678470117861281,
+            "logLoss": 0.29466377315920744,
+            "meanQuestionCount": 72.96875,
+            "mode": "all-unknown",
+            "oracleDeckRegret": 6.8125,
+            "realizedTokenCoverage": 0.9355877493574838,
+            "scenario": "idiosyncratic-knowledge",
+            "stopReasons": {
+              "lowExpectedValue": 28,
+              "questionLimit": 4
+            },
+            "syntheticTruthFingerprint": "84aa018e06f38ab0",
+            "targetMissRate": 0,
+            "thetaInterval90Coverage": 0.75,
+            "thetaRMSE": 0.6802565126860886
+          },
+          {
+            "brierScore": 0.09026054258940613,
+            "deckPrecision": 0.7465006107670216,
+            "deckRecall": 0.9624099919587625,
+            "expectedCalibrationError": 0.018091638391768874,
+            "logLoss": 0.3019136834260521,
+            "meanQuestionCount": 77.53125,
+            "mode": "coverage-98",
+            "oracleDeckRegret": 25.96875,
+            "realizedTokenCoverage": 0.991576535919716,
+            "scenario": "idiosyncratic-knowledge",
+            "stopReasons": {
+              "questionLimit": 27,
+              "targetCoverageStable": 5
+            },
+            "syntheticTruthFingerprint": "70f6937b0c4cfa2d",
+            "targetMissRate": 0.0625,
+            "thetaInterval90Coverage": 0.8125,
+            "thetaRMSE": 0.6260266121236016
+          }
+        ],
+        "schemaVersion": 1
+      },
+      "seed": 17154071426602865733
+    }
+  ],
+  "schemaVersion": 1,
+  "suite": "development-sweep",
+  "suiteVersion": "vocabulary-synthetic-holdout-v1",
+  "summary": {
+    "allEligibleEngineeringGatesPassed": false,
+    "cells": [
+      {
+        "brierRange": [
+          0.07942758203010225,
+          0.09943861007987284
+        ],
+        "coverageHitRange": [
+          1,
+          1
+        ],
+        "eceRange": [
+          0.009067015813572915,
+          0.03058669455936477
+        ],
+        "mode": "all-unknown",
+        "questionCountRange": [
+          67.375,
+          72.96875
+        ],
+        "runCount": 6,
+        "scenario": "idiosyncratic-knowledge"
+      },
+      {
+        "brierRange": [
+          0.07468992403527454,
+          0.09026054258940613
+        ],
+        "coverageHitRange": [
+          0.90625,
+          1
+        ],
+        "eceRange": [
+          0.009253030757366797,
+          0.01845274625859864
+        ],
+        "mode": "coverage-98",
+        "questionCountRange": [
+          75.5625,
+          79.3125
+        ],
+        "runCount": 6,
+        "scenario": "idiosyncratic-knowledge"
+      },
+      {
+        "brierRange": [
+          0.06187863677129988,
+          0.07224192515594322
+        ],
+        "coverageHitRange": [
+          1,
+          1
+        ],
+        "eceRange": [
+          0.007550967144064372,
+          0.017015757186302778
+        ],
+        "mode": "all-unknown",
+        "questionCountRange": [
+          63.375,
+          65.25
+        ],
+        "runCount": 6,
+        "scenario": "item-residual"
+      },
+      {
+        "brierRange": [
+          0.06388448116371567,
+          0.06836942656378671
+        ],
+        "coverageHitRange": [
+          0.9375,
+          1
+        ],
+        "eceRange": [
+          0.006809860958443577,
+          0.011924722266823503
+        ],
+        "mode": "coverage-98",
+        "questionCountRange": [
+          72.84375,
+          79.28125
+        ],
+        "runCount": 6,
+        "scenario": "item-residual"
+      },
+      {
+        "brierRange": [
+          0.08577985656058705,
+          0.130704704449174
+        ],
+        "coverageHitRange": [
+          1,
+          1
+        ],
+        "eceRange": [
+          0.02771349873030348,
+          0.07359942938940875
+        ],
+        "mode": "all-unknown",
+        "questionCountRange": [
+          64.625,
+          71.28125
+        ],
+        "runCount": 6,
+        "scenario": "response-noise"
+      },
+      {
+        "brierRange": [
+          0.09064633726130185,
+          0.1444788116396631
+        ],
+        "coverageHitRange": [
+          0.40625,
+          0.90625
+        ],
+        "eceRange": [
+          0.0307961641860132,
+          0.08682947026396615
+        ],
+        "mode": "coverage-98",
+        "questionCountRange": [
+          76.0625,
+          79.96875
+        ],
+        "runCount": 6,
+        "scenario": "response-noise"
+      },
+      {
+        "brierRange": [
+          0.06393371354438114,
+          0.07016003196748698
+        ],
+        "coverageHitRange": [
+          1,
+          1
+        ],
+        "eceRange": [
+          0.010285065256067432,
+          0.020086874436614555
+        ],
+        "mode": "all-unknown",
+        "questionCountRange": [
+          60.5625,
+          63.65625
+        ],
+        "runCount": 6,
+        "scenario": "well-specified-rasch"
+      },
+      {
+        "brierRange": [
+          0.05592245931099065,
+          0.0604277266440043
+        ],
+        "coverageHitRange": [
+          0.875,
+          1
+        ],
+        "eceRange": [
+          0.013350409052667522,
+          0.02432096733146388
+        ],
+        "mode": "coverage-98",
+        "questionCountRange": [
+          71.4375,
+          79.0625
+        ],
+        "runCount": 6,
+        "scenario": "well-specified-rasch"
+      }
+    ],
+    "eligibleEngineeringGateRunCount": 0
+  },
+  "syntheticOnly": true
+}

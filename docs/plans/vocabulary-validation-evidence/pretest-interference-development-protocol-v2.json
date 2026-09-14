@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 2,
+  "status": "modality-aligned-collection-blocked",
+  "supersedesForFutureCollection": {
+    "path": "docs/plans/vocabulary-validation-evidence/pretest-interference-development-protocol-v1.json",
+    "sha256": "2c33c932cba9cf2172be2b8f9f99c9efc6b731dcf056cedbf6dbeb9aebfd3418"
+  },
+  "alignmentReview": "docs/plans/vocabulary-validation-evidence/protocol-alignment-forward-review-v1.json",
+  "inheritUnchangedV1Sections": [
+    "assignment blocking and strata",
+    "rater blinding and adjudication",
+    "dependence and missingness",
+    "decision actions",
+    "privacy",
+    "access boundary",
+    "all null actual-study decision fields"
+  ],
+  "criterionTask": {
+    "display": ["lemma", "part of speech"],
+    "response": "one or more context-free meanings or translations",
+    "targetSenseContextHidden": true
+  },
+  "productProbe": {
+    "modality": "actual-default-first-stage-categorical-ui",
+    "display": ["lemma", "part of speech"],
+    "actions": [
+      {"uiLabel": "I know it", "intent": "known-claim"},
+      {"uiLabel": "Not sure", "intent": "unsure"},
+      {"uiLabel": "I don’t know", "intent": "reported-unknown"},
+      {"uiLabel": "Not a word/name", "intent": "exclude-separate-from-knowledge"}
+    ],
+    "typedMeaning": "optional exactly as in the default product interaction",
+    "primaryOutcome": "indicator that the first-stage action is known-claim",
+    "secondaryOutcomes": [
+      "complete first-stage categorical distribution",
+      "exclusion rate reported separately",
+      "optional typed-meaning availability and adjudicated correctness when present",
+      "response latency",
+      "response missingness"
+    ]
+  },
+  "orderArms": [
+    {
+      "id": "criterion-before-product",
+      "order": ["criterion task", "product first-stage probe"]
+    },
+    {
+      "id": "product-before-criterion",
+      "order": ["product first-stage probe", "criterion task"]
+    }
+  ],
+  "revealControl": {
+    "definitionContextOrCorrectnessFeedbackBeforeBothTasks": false,
+    "knownClaimRevealDelayedUntilOtherTaskSealed": true,
+    "reason": "preserve the no-criterion-before-product control while capturing the actual first-stage response modality",
+    "transportLimitation": "the delayed reveal is a developmental instrumentation deviation after the primary first-stage response; this study does not estimate full adaptive-session behavior"
+  },
+  "primaryEstimand": {
+    "formula": "Pr(first-stage known-claim | criterion-before-product) - Pr(first-stage known-claim | product-before-criterion)",
+    "role": "intention-to-treat pretest-interference effect",
+    "equivalenceRule": "approved confidence interval lies wholly inside [-interferenceMargin, +interferenceMargin]",
+    "conditioningOnResponseObserved": false
+  },
+  "criterionUse": {
+    "primaryProductOutcomeRequiresRaterScoring": false,
+    "criterionCorrectnessUsedForSecondaryEffectModification": true,
+    "categoricalKnownClaimTreatedAsMeaningCorrectness": false
+  },
+  "actualStudyDecisionFieldsAddedByV2": {
+    "productUIContractRevision": null,
+    "knownClaimRevealDelayImplementationVersion": null,
+    "primaryKnownClaimCodingVersion": null
+  },
+  "accessBoundary": {
+    "realParticipantCollectionAuthorized": false,
+    "confirmatoryCollectionAuthorized": false,
+    "developmentConfirmationAccessAuthorized": false,
+    "releaseHoldoutAccessAuthorized": false,
+    "productionChangeAuthorized": false
+  },
+  "unblockRule": "freeze all v1 and v2 actual-study decision fields and receive independent statistical/research/privacy approval before real developmental collection"
+}

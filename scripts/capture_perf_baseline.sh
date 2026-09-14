@@ -14,6 +14,7 @@
 #   scripts/capture_perf_baseline.sh --document-fixtures <pdf> <epub> <docx> [<out-basepath>]
 #   scripts/capture_perf_baseline.sh --matrix-fixtures <clean-pdf> <complex-pdf> <ocr-pdf> <normal-epub> <large-epub> [<out-basepath>]
 #   scripts/capture_perf_baseline.sh --interaction-fixtures <pdf> <epub> [<out-basepath>]
+#   scripts/capture_perf_baseline.sh --vocabulary-preparation-manifest <manifest.json> [<out-basepath>]
 #   scripts/capture_perf_baseline.sh --private-manifest <manifest.json> [<out-basepath>]
 #
 # <fixtures-dir> must contain small.pdf and large.pdf (see make_perf_fixtures.swift).
@@ -24,6 +25,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP_NAME="Leaf Vocabulary"
 APP_BINARY="$ROOT_DIR/$APP_NAME.app/Contents/MacOS/$APP_NAME"
 MANIFEST_TOOL="$ROOT_DIR/scripts/private_perf_fixture_manifest.swift"
+PREPARATION_MANIFEST_TOOL="$ROOT_DIR/scripts/vocabulary_preparation_fixture_manifest.py"
 VALIDATOR="$ROOT_DIR/scripts/validate_perf_capture.swift"
 export CLANG_MODULE_CACHE_PATH="${CLANG_MODULE_CACHE_PATH:-/private/tmp/leafreader-clang-cache}"
 
@@ -33,6 +35,7 @@ if [[ $# -lt 1 ]]; then
   echo "       $0 --matrix-fixtures <clean-pdf> <complex-pdf> <ocr-pdf> <normal-epub> <large-epub> [<out-basepath>]" >&2
   echo "       $0 --interaction-fixtures <pdf> <epub> [<out-basepath>]" >&2
   echo "       $0 --private-manifest <manifest.json> [<out-basepath>]" >&2
+  echo "       $0 --vocabulary-preparation-manifest <manifest.json> [<out-basepath>]" >&2
   exit 2
 fi
 
@@ -40,9 +43,23 @@ PRIVATE_MODE=0
 DOCUMENT_MODE=0
 MATRIX_MODE=0
 INTERACTION_MODE=0
+PREPARATION_MODE=0
 FIXTURE_FILES=()
 PRIVATE_MANIFEST=""
-if [[ "$1" == "--interaction-fixtures" ]]; then
+PREPARATION_MANIFEST=""
+if [[ "$1" == "--vocabulary-preparation-manifest" ]]; then
+  if [[ $# -lt 2 ]]; then
+    echo "--vocabulary-preparation-manifest requires a manifest path" >&2
+    exit 2
+  fi
+  PREPARATION_MODE=1
+  PREPARATION_MANIFEST="$2"
+  OUT_BASE="${3:-$ROOT_DIR/docs/perf/vocabulary-preparation-capture}"
+  python3 "$PREPARATION_MANIFEST_TOOL" validate "$PREPARATION_MANIFEST"
+  while IFS= read -r fixture; do
+    FIXTURE_FILES+=("$fixture")
+  done < <(python3 "$PREPARATION_MANIFEST_TOOL" paths "$PREPARATION_MANIFEST")
+elif [[ "$1" == "--interaction-fixtures" ]]; then
   if [[ $# -lt 3 || ! -f "$2" || "${2##*.}" != "pdf" || ! -f "$3" || "${3##*.}" != "epub" ]]; then
     echo "--interaction-fixtures requires readable PDF and EPUB paths" >&2
     exit 2
@@ -158,6 +175,7 @@ clear_performance_environment() {
     launchctl unsetenv LEAFVOCAB_PERF_RUN_ID || true
     launchctl unsetenv LEAFVOCAB_PERF_DISABLE_SESSION_RESTORE || true
     launchctl unsetenv LEAFVOCAB_PERF_AUTOMATION || true
+    launchctl unsetenv LEAFVOCAB_PREPARATION_AUTOMATION || true
     launchctl unsetenv LEAFREADER_DOCX_CACHE_ROOT || true
   fi
 }
@@ -172,7 +190,9 @@ open_fixture() {
     # take more than 30 seconds on a thermally loaded machine. The automation
     # still gates the user-visible interactions independently of completion.
     sleep "${LEAFREADER_PERF_INTERACTION_WAIT:-60}"
-  elif [[ "$DOCUMENT_MODE" == "1" || "$MATRIX_MODE" == "1" ]]; then
+  elif [[ "$PREPARATION_MODE" == "1" && "${CURRENT_PERF_PHASE:-}" == "preparation" ]]; then
+    sleep "${LEAFREADER_VOCABULARY_PREPARATION_WAIT:-90}"
+  elif [[ "$DOCUMENT_MODE" == "1" || "$MATRIX_MODE" == "1" || "$PREPARATION_MODE" == "1" ]]; then
     sleep "${LEAFREADER_PERF_OPEN_WAIT:-8}"
   else
     sleep 3
@@ -185,6 +205,7 @@ open_fixture() {
 
 run_phase() {
   local phase="$1"
+  CURRENT_PERF_PHASE="$phase"
   local run_base="$RUN_DIRECTORY/$phase"
   local phase_started
   phase_started="$(date +%s)"
@@ -206,6 +227,10 @@ run_phase() {
   launchctl setenv LEAFREADER_DOCX_CACHE_ROOT "$DOCX_CACHE_ROOT"
   if [[ "$INTERACTION_MODE" == "1" ]]; then
     launchctl setenv LEAFVOCAB_PERF_AUTOMATION 1
+  elif [[ "$PREPARATION_MODE" == "1" && "$phase" == "preparation" ]]; then
+    launchctl setenv LEAFVOCAB_PREPARATION_AUTOMATION 1
+  else
+    launchctl unsetenv LEAFVOCAB_PREPARATION_AUTOMATION || true
   fi
   PERFORMANCE_ENVIRONMENT_INSTALLED=1
 
@@ -236,7 +261,11 @@ run_phase() {
     exit 1
   fi
 
-  if [[ "$INTERACTION_MODE" == "1" ]]; then
+  if [[ "$PREPARATION_MODE" == "1" && "$phase" == "preparation" ]]; then
+    swift "$VALIDATOR" vocabulary-preparation "$run_base.json" --control "$RUN_DIRECTORY/control.json" --not-before "$phase_started" --expected-phase "$phase"
+  elif [[ "$PREPARATION_MODE" == "1" ]]; then
+    swift "$VALIDATOR" documents "$run_base.json" --not-before "$phase_started" --expected-phase "$phase"
+  elif [[ "$INTERACTION_MODE" == "1" ]]; then
     swift "$VALIDATOR" interactions "$run_base.json" --not-before "$phase_started" --expected-phase "$phase"
   elif [[ "$PRIVATE_MODE" == "1" && "$phase" == "warm" ]]; then
     swift "$VALIDATOR" private "$run_base.json" --not-before "$phase_started" --expected-phase "$phase"
@@ -267,14 +296,22 @@ private_checkpoint() {
 echo "==> Stopping any running instance"
 quit_app
 wait_gone
-if [[ "$INTERACTION_MODE" == "1" ]]; then
+if [[ "$PREPARATION_MODE" == "1" ]]; then
+  run_phase control
+  run_phase preparation
+elif [[ "$INTERACTION_MODE" == "1" ]]; then
   run_phase interaction
 else
   run_phase cold
   run_phase warm
 fi
 
-if [[ "$INTERACTION_MODE" == "1" ]]; then
+if [[ "$PREPARATION_MODE" == "1" ]]; then
+  mv "$RUN_DIRECTORY/control.txt" "$OUT_BASE.control.txt"
+  mv "$RUN_DIRECTORY/control.json" "$OUT_BASE.control.json"
+  mv "$RUN_DIRECTORY/preparation.txt" "$OUT_BASE.preparation.txt"
+  mv "$RUN_DIRECTORY/preparation.json" "$OUT_BASE.preparation.json"
+elif [[ "$INTERACTION_MODE" == "1" ]]; then
   mv "$RUN_DIRECTORY/interaction.txt" "$OUT_BASE.interaction.txt"
   mv "$RUN_DIRECTORY/interaction.json" "$OUT_BASE.interaction.json"
 else
@@ -291,7 +328,9 @@ rm -rf "$DOCX_CACHE_ROOT"
 rmdir "$RUN_DIRECTORY"
 
 echo
-if [[ "$INTERACTION_MODE" == "1" ]]; then
+if [[ "$PREPARATION_MODE" == "1" ]]; then
+  echo "Captured vocabulary preparation control and preparation reports at $OUT_BASE.{control,preparation}.{txt,json}"
+elif [[ "$INTERACTION_MODE" == "1" ]]; then
   echo "Captured interaction baseline ($OUT_BASE.interaction.txt):"
   cat "$OUT_BASE.interaction.txt"
   echo "Raw-sample JSON written to $OUT_BASE.interaction.json"

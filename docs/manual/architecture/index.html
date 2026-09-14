@@ -1055,16 +1055,17 @@
 
 
 <h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
-<p>Leaf Reader is a native macOS reader built with Swift, AppKit, SwiftUI, PDFKit, WebKit, and Sparkle. The shipping application is split into a platform-neutral <code>LeafReaderCore</code> module and a macOS <code>LeafReaderApp</code> module.</p>
+<p>Leaf Reader is a native macOS reader built with Swift, AppKit, SwiftUI, PDFKit, WebKit, and Sparkle. The shipping application is split into a platform-neutral, domain-focused <code>LeafReaderCore</code> module and a macOS <code>LeafReaderApp</code> module.</p>
+<p>Framework-free does not automatically mean Core. Core owns product semantics, parsing, persistence formats, algorithms, and policies. Presentation models, formatting, accessibility identifiers, design tokens, toolbar descriptions, and window-coordinate geometry remain in the app even when they import only Foundation. A shared UI target should be introduced only when another platform such as iOS creates a real consumer.</p>
 <h2 id="source-tree">Source Tree<a class="headerlink" href="#source-tree" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Sources/LeafReaderCore/
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  AIConversation/      prompts, response formatting, conversation data, embedding storage
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  DocumentReading/     document decoding, identity, selection, and presentation policies
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  DocumentReading/     document decoding, identity, semantic selection, and domain policies
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  Platform/            portable persistence and local-runtime infrastructure
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  ReadAloud/           speech text, matching, and keyboard policies
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  ReaderShell/         portable reader state
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  ReaderShell/         portable reader-session domain state
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  ReadingNotes/        note models, persistence, Markdown, assets, and export
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  SharedUI/            platform-neutral display policies
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  Support/             framework-independent serialization and process utilities
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  VocabularyReview/    dictionary, vocabulary, review, statistics, and export
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>Sources/LeafReaderApp/
@@ -1089,17 +1090,20 @@
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>     -&gt; AI Conversation / Vocabulary Review / Reading Notes / Read Aloud
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        -&gt; Platform services and persistent stores
 </code></pre></div>
-<p><code>DocumentSession</code> owns the active document identity, load generation, restoration data, and teardown. <code>DocumentPresentationState</code> owns transient presentation details such as the table of contents and crop state. The Reader Shell owns the window and routes user input to the feature that owns the behavior. Portable state and services live in <code>LeafReaderCore</code>; PDFKit, WebKit, AppKit, SwiftUI, network, and concrete speech adapters remain in <code>LeafReaderApp</code>.</p>
+<p><code>DocumentSession</code> owns the active document identity, load generation, restoration data, and teardown. <code>DocumentPresentationState</code> owns transient presentation details such as the table of contents and crop state. The Reader Shell owns the window and routes user input to the feature that owns the behavior. Domain state and services that are also platform-neutral live in <code>LeafReaderCore</code>; presentation state plus PDFKit, WebKit, AppKit, SwiftUI, network, and concrete speech adapters remain in <code>LeafReaderApp</code>.</p>
 <p><code>SpeechSynthesisRuntime</code> is the dispatch seam between Read Aloud and concrete local speech engines. Platform-neutral SQLite stores and runtime download primitives live in Core, while macOS-specific clients and runtime adapters live under the app's <code>Platform</code> directory.</p>
 <h2 id="navigation-rules">Navigation Rules<a class="headerlink" href="#navigation-rules" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Start in the feature directory named by the user-visible behavior.</li>
-<li>Put portable domain state and policy in <code>LeafReaderCore</code>; keep framework-bound rendering and adapters in <code>LeafReaderApp</code>.</li>
-<li>Use <code>ReaderWindowController</code> extensions as feature entry points, not as forwarding coordinators.</li>
+<li>Put platform-neutral domain state and policy in <code>LeafReaderCore</code>. Keep presentation types in <code>LeafReaderApp</code> even when they are framework-free.</li>
+<li>Use <code>ReaderWindowController</code> as the composition root and feature entry point: coordinate and delegate, but do not add domain rules to it.</li>
 <li>Keep lifecycle state in its owning model (<code>DocumentSession</code>, review session, or note/editor state) rather than in the window shell.</li>
 <li>Place reusable UI in <code>SharedUI</code>; place service adapters in <code>Platform</code>.</li>
-<li>Keep tests alongside the feature under <code>Tests/LeafReaderTests/</code> and run them with <code>scripts/run_tests.sh</code>.</li>
+<li>Route PDFKit/WebKit feature intent through reader adapters or narrow platform services. Treat <code>reader_native_access_allowlist.txt</code> as debt that may shrink but must not be expanded merely to pass a check.</li>
+<li>Put Core tests under <code>Tests/LeafReaderCoreTests/</code>, app tests under <code>Tests/LeafReaderAppTests/</code>, and legacy regression-harness tests under <code>Tests/LeafReaderTests/</code>.</li>
 </ul>
+<p><code>scripts/check_core_portable.sh</code> enforces framework independence. Its app-file list proves technical portability only; it is not a queue of types that should move into Core.</p>
+<p><code>scripts/check_core_semantics.sh</code> enforces the complementary ownership rule: Core may not contain presentation/view-model types, accessibility/window-coordinate concepts, or a <code>SharedUI</code> source bucket. Native-reader access is separately enforced by <code>scripts/check_reader_native_access.sh</code>; its reviewed migration debt currently moves only downward.</p>
 <h2 id="high-leverage-files">High-Leverage Files<a class="headerlink" href="#high-leverage-files" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>Sources/LeafReaderApp/ReaderShell/ReaderWindowController.swift</code></li>

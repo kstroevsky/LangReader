@@ -1,6 +1,110 @@
 import Foundation
 import NaturalLanguage
 
+package struct VocabularyDocumentSourceRange: Codable, Equatable, Sendable {
+    package let unitIndex: Int
+    package let utf16Location: Int
+    package let utf16Length: Int
+
+    package init(unitIndex: Int, utf16Location: Int, utf16Length: Int) {
+        self.unitIndex = unitIndex
+        self.utf16Location = utf16Location
+        self.utf16Length = utf16Length
+    }
+}
+
+package struct VocabularyDocumentObservedForm: Codable, Equatable, Sendable {
+    package let surface: String
+    package let occurrenceCount: Int
+
+    package init(surface: String, occurrenceCount: Int) {
+        self.surface = surface
+        self.occurrenceCount = occurrenceCount
+    }
+}
+
+package struct VocabularyDocumentLemmaSummary: Codable, Equatable, Sendable {
+    package let canonicalKey: String
+    package let lemmaKey: String
+    package let displayLemma: String
+    package let lexicalItemID: VocabularyLexicalItemID?
+    package let partOfSpeech: VocabularyPartOfSpeech
+    package let observedForms: [VocabularyDocumentObservedForm]
+    package let occurrenceCount: Int
+    package let representativeRange: VocabularyDocumentSourceRange
+    package let isConfidentName: Bool
+
+    package init(
+        canonicalKey: String,
+        lemmaKey: String? = nil,
+        displayLemma: String,
+        lexicalItemID: VocabularyLexicalItemID? = nil,
+        partOfSpeech: VocabularyPartOfSpeech = .unknown,
+        observedForms: [VocabularyDocumentObservedForm],
+        occurrenceCount: Int,
+        representativeRange: VocabularyDocumentSourceRange,
+        isConfidentName: Bool = false
+    ) {
+        self.canonicalKey = canonicalKey
+        self.lemmaKey = lemmaKey ?? VocabularyTextPolicy.canonicalVocabularyKey(displayLemma)
+        self.displayLemma = displayLemma
+        self.lexicalItemID = lexicalItemID
+        self.partOfSpeech = partOfSpeech
+        self.observedForms = observedForms
+        self.occurrenceCount = occurrenceCount
+        self.representativeRange = representativeRange
+        self.isConfidentName = isConfidentName
+    }
+}
+
+/// The production confidence boundary for lexical-class hypotheses. Offline
+/// POS fixtures call this same owner instead of reproducing its thresholds.
+package enum VocabularyPartOfSpeechConfidencePolicy {
+    package static let minimumLeadingProbability = 0.65
+    package static let minimumMargin = 0.20
+
+    package static func classify(hypotheses: [String: Double]) -> VocabularyPartOfSpeech {
+        let ordered = hypotheses
+            .filter { $0.value.isFinite && $0.value >= 0 }
+            .sorted {
+                if $0.value != $1.value { return $0.value > $1.value }
+                return $0.key < $1.key
+            }
+        guard let leading = ordered.first,
+              leading.value >= minimumLeadingProbability,
+              leading.value - (ordered.dropFirst().first?.value ?? 0) >= minimumMargin else {
+            return .unknown
+        }
+        switch NLTag(rawValue: leading.key) {
+        case .noun: return .noun
+        case .verb: return .verb
+        case .adjective: return .adjective
+        case .adverb: return .adverb
+        case .pronoun: return .pronoun
+        case .determiner: return .determiner
+        case .preposition: return .preposition
+        case .conjunction: return .conjunction
+        case .interjection: return .interjection
+        case .particle: return .particle
+        default: return .other
+        }
+    }
+}
+
+package enum VocabularyPartOfSpeechReconciliationPolicy {
+    /// Returns the sole confident POS for each lemma. Unknown occurrences may
+    /// join only that one class; multiple confident classes remain split.
+    package static func soleConfidentPartByLemma(
+        _ items: [VocabularyLexicalItemID]
+    ) -> [String: VocabularyPartOfSpeech] {
+        Dictionary(grouping: items.filter { $0.partOfSpeech != .unknown }, by: \.lemma)
+            .compactMapValues { values in
+                let parts = Set(values.map(\.partOfSpeech))
+                return parts.count == 1 ? parts.first : nil
+            }
+    }
+}
+
 /// A small, already-built page slice that can seed a whole-document index.
 /// The page mapping is explicit because the slice is ordered for latency (the
 /// current page first), not necessarily in document order.
@@ -59,6 +163,14 @@ package enum VocabularyIndexPriorityPlanner {
 /// also supports phrases and PDF line-break spelling variants, but the costly
 /// linguistic pass is reused by every save and backfill.
 package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
+    private static let ignoredTextRegexes: [NSRegularExpression] = [
+        #"(?i)\b(?:https?://|www\.)[^\s<>{}\[\]]+"#,
+        #"(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b"#,
+        #"</?[A-Za-z][^>]{0,512}>"#,
+        #"&(?:#\d{1,7}|#x[0-9A-Fa-f]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});"#,
+        #"\b[\p{L}\p{M}]+(?:--+|'{2,}|’{2,})[\p{L}\p{M}]+\b"#
+    ].compactMap { try? NSRegularExpression(pattern: $0) }
+
     private struct OccurrenceRangeKey: Hashable {
         let location: Int
         let length: Int
@@ -80,7 +192,12 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     private struct Page: Sendable {
         let text: String
         let occurrencesByLemmaKey: [String: [VocabularyTextOccurrence]]
+        let occurrencesByLexicalKey: [String: [VocabularyTextOccurrence]]
         let occurrencesByExactSurface: [String: [VocabularyTextOccurrence]]
+        let displayLemmaByLexicalKey: [String: String]
+        let lexicalItemByKey: [String: VocabularyLexicalItemID]
+        let formCountsByLexicalKey: [String: [String: Int]]
+        let nameOccurrenceCountsByLexicalKey: [String: Int]
         let lineWraps: [LineWrap]
     }
 
@@ -152,7 +269,8 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let availableWorkers = max(1, ProcessInfo.processInfo.activeProcessorCount - 1)
         let workerCount = min(remainingPageIndexes.count, max(1, min(maximumWorkerCount, availableWorkers)))
         DispatchQueue.concurrentPerform(iterations: workerCount) { worker in
-            let tagger = NLTagger(tagSchemes: [.lemma])
+            let tagger = NLTagger(tagSchemes: [.lemma, .lexicalClass])
+            let nameTagger = NLTagger(tagSchemes: [.nameType])
             let fallbackTagger = NLTagger(tagSchemes: [.lemma])
             var lemmaMemo: [String: String] = [:]
             var remainingIndex = worker
@@ -162,6 +280,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                     text: texts[pageIndex],
                     language: language,
                     tagger: tagger,
+                    nameTagger: nameTagger,
                     fallbackTagger: fallbackTagger,
                     lemmaMemo: &lemmaMemo
                 ), at: pageIndex)
@@ -174,6 +293,84 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     }
 
     package var pageCount: Int { pages.count }
+
+    /// Returns the immutable document vocabulary population in deterministic
+    /// occurrence-first order. A source range identifies the first observed
+    /// occurrence in the corresponding PDF page or Web text unit.
+    package func lemmaSummaries() -> [VocabularyDocumentLemmaSummary] {
+        struct Aggregate {
+            var displayLemma: String
+            var forms: [String: (surface: String, count: Int)]
+            var count: Int
+            var nameCount: Int
+            var representativeRange: VocabularyDocumentSourceRange
+        }
+
+        let lexicalItems = pages.flatMap { $0.lexicalItemByKey.values }
+        let soleConfidentPartByLemma = VocabularyPartOfSpeechReconciliationPolicy
+            .soleConfidentPartByLemma(lexicalItems)
+        var resolvedKeyByKey: [String: String] = [:]
+        for item in lexicalItems where item.partOfSpeech == .unknown {
+            guard let partOfSpeech = soleConfidentPartByLemma[item.lemma] else { continue }
+            resolvedKeyByKey[item.canonicalKey] = VocabularyLexicalItemID(
+                language: item.language,
+                lemma: item.lemma,
+                partOfSpeech: partOfSpeech
+            ).canonicalKey
+        }
+
+        var aggregateByKey: [String: Aggregate] = [:]
+        for (unitIndex, page) in pages.enumerated() {
+            for (sourceKey, occurrences) in page.occurrencesByLexicalKey {
+                let key = resolvedKeyByKey[sourceKey] ?? sourceKey
+                guard !key.isEmpty, let first = occurrences.first else { continue }
+                let representative = VocabularyDocumentSourceRange(
+                    unitIndex: unitIndex,
+                    utf16Location: first.range.location,
+                    utf16Length: first.range.length
+                )
+                var aggregate = aggregateByKey[key] ?? Aggregate(
+                    displayLemma: page.displayLemmaByLexicalKey[sourceKey] ?? first.matchedText,
+                    forms: [:],
+                    count: 0,
+                    nameCount: 0,
+                    representativeRange: representative
+                )
+                aggregate.count += occurrences.count
+                aggregate.nameCount += page.nameOccurrenceCountsByLexicalKey[sourceKey] ?? 0
+                for (surface, count) in page.formCountsByLexicalKey[sourceKey] ?? [:] {
+                    let surfaceKey = Self.exactSurfaceKey(surface)
+                    let existing = aggregate.forms[surfaceKey]
+                    aggregate.forms[surfaceKey] = (existing?.surface ?? surface, (existing?.count ?? 0) + count)
+                }
+                aggregateByKey[key] = aggregate
+            }
+        }
+
+        return aggregateByKey.map { key, aggregate in
+            let lexicalItemID = pages.lazy.compactMap { $0.lexicalItemByKey[key] }.first
+            return VocabularyDocumentLemmaSummary(
+                canonicalKey: key,
+                lemmaKey: lexicalItemID?.lemma,
+                displayLemma: aggregate.displayLemma,
+                lexicalItemID: lexicalItemID,
+                partOfSpeech: lexicalItemID?.partOfSpeech ?? .unknown,
+                observedForms: aggregate.forms.values
+                    .map { VocabularyDocumentObservedForm(surface: $0.surface, occurrenceCount: $0.count) }
+                    .sorted {
+                        if $0.occurrenceCount != $1.occurrenceCount { return $0.occurrenceCount > $1.occurrenceCount }
+                        return $0.surface.localizedStandardCompare($1.surface) == .orderedAscending
+                    },
+                occurrenceCount: aggregate.count,
+                representativeRange: aggregate.representativeRange,
+                isConfidentName: aggregate.nameCount == aggregate.count
+            )
+        }.sorted {
+            if $0.occurrenceCount != $1.occurrenceCount { return $0.occurrenceCount > $1.occurrenceCount }
+            if $0.canonicalKey != $1.canonicalKey { return $0.canonicalKey < $1.canonicalKey }
+            return $0.representativeRange.unitIndex < $1.representativeRange.unitIndex
+        }
+    }
 
     package func matches(lemma rawLemma: String, selectedForm: String) -> [[VocabularyTextOccurrence]] {
         let lemma = VocabularyTextPolicy.normalizedVocabularyText(rawLemma)
@@ -296,6 +493,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         text: String,
         language: NLLanguage,
         tagger: NLTagger,
+        nameTagger: NLTagger,
         fallbackTagger: NLTagger,
         lemmaMemo: inout [String: String]
     ) -> Page {
@@ -303,34 +501,63 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             return Page(
                 text: text,
                 occurrencesByLemmaKey: [:],
+                occurrencesByLexicalKey: [:],
                 occurrencesByExactSurface: [:],
+                displayLemmaByLexicalKey: [:],
+                lexicalItemByKey: [:],
+                formCountsByLexicalKey: [:],
+                nameOccurrenceCountsByLexicalKey: [:],
                 lineWraps: []
             )
         }
 
         let nsText = text as NSString
-        let lineWrapMatches = GermanLemmaOccurrenceMatcher.lineWrapRegex?.matches(
+        let ignoredRanges = ignoredTextRegexes.flatMap {
+            $0.matches(in: text, range: NSRange(location: 0, length: nsText.length)).map(\.range)
+        }
+        let lineWrapMatches = (GermanLemmaOccurrenceMatcher.lineWrapRegex?.matches(
             in: text,
             range: NSRange(location: 0, length: nsText.length)
-        ) ?? []
+        ) ?? []).filter { match in
+            !ignoredRanges.contains { NSIntersectionRange(match.range, $0).length > 0 }
+        }
         let lineWrapSpans = lineWrapMatches.map(\.range)
         var byLemma: [String: [VocabularyTextOccurrence]] = [:]
+        var byLexical: [String: [VocabularyTextOccurrence]] = [:]
         var bySurface: [String: [VocabularyTextOccurrence]] = [:]
+        var displayLemmaByLexicalKey: [String: String] = [:]
+        var lexicalItemByKey: [String: VocabularyLexicalItemID] = [:]
+        var formCountsByLexicalKey: [String: [String: Int]] = [:]
+        var nameOccurrenceCountsByLexicalKey: [String: Int] = [:]
 
-        tagger.string = text
-        let fullRange = text.startIndex..<text.endIndex
+        // Renderer line wrapping is presentation geometry, not linguistic
+        // structure. PDFKit commonly inserts newlines at visual wraps while
+        // Web/DOCX extraction uses spaces or paragraph separators. Tag an
+        // equal-UTF16-length whitespace-normalized view so those renderer
+        // choices cannot change lemmas/POS, then translate ranges back to the
+        // untouched source text for selections and highlights.
+        let taggingText = linguisticTaggingText(text)
+        tagger.string = taggingText
+        nameTagger.string = taggingText
+        let fullRange = taggingText.startIndex..<taggingText.endIndex
         tagger.setLanguage(language, range: fullRange)
+        nameTagger.setLanguage(language, range: fullRange)
         tagger.enumerateTags(
             in: fullRange,
             unit: .word,
             scheme: .lemma,
             options: [.omitWhitespace, .omitPunctuation]
         ) { tag, tokenRange in
-            let range = NSRange(tokenRange, in: text)
+            let range = NSRange(tokenRange, in: taggingText)
+            guard let sourceRange = Range(range, in: text) else { return true }
             if lineWrapSpans.contains(where: { NSIntersectionRange(range, $0).length > 0 }) {
                 return true
             }
-            let surface = String(text[tokenRange])
+            let surface = String(text[sourceRange])
+            if ignoredRanges.contains(where: { NSIntersectionRange(range, $0).length > 0 })
+                || isObviousArtifact(surface) {
+                return true
+            }
             let matchedLemma: String
             if let tag {
                 matchedLemma = VocabularyTextPolicy.normalizedVocabularyText(tag.rawValue)
@@ -341,8 +568,28 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                 lemmaMemo[surface] = matchedLemma
             }
             let occurrence = VocabularyTextOccurrence(range: range, matchedText: surface)
-            byLemma[VocabularyTextPolicy.canonicalVocabularyKey(matchedLemma), default: []].append(occurrence)
+            let lemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(matchedLemma)
+            let partOfSpeech = confidentPartOfSpeech(tagger: tagger, at: tokenRange.lowerBound)
+            let lexicalItemID = VocabularyLexicalItemID(
+                language: language.rawValue,
+                lemma: matchedLemma,
+                partOfSpeech: partOfSpeech
+            )
+            let lexicalKey = lexicalItemID.canonicalKey
+            byLemma[lemmaKey, default: []].append(occurrence)
+            byLexical[lexicalKey, default: []].append(occurrence)
             bySurface[exactSurfaceKey(surface), default: []].append(occurrence)
+            displayLemmaByLexicalKey[lexicalKey] = displayLemmaByLexicalKey[lexicalKey] ?? matchedLemma
+            lexicalItemByKey[lexicalKey] = lexicalItemID
+            formCountsByLexicalKey[lexicalKey, default: [:]][surface, default: 0] += 1
+            let nameTag = nameTagger.tag(
+                at: tokenRange.lowerBound,
+                unit: .word,
+                scheme: .nameType
+            ).0
+            if nameTag == .personalName || nameTag == .placeName || nameTag == .organizationName {
+                nameOccurrenceCountsByLexicalKey[lexicalKey, default: 0] += 1
+            }
             return true
         }
 
@@ -362,16 +609,75 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                 )
             )
         }
+        for lineWrap in lineWraps {
+            let lemmaKey = lineWrap.dehyphenatedLemmaKey
+            guard !lemmaKey.isEmpty else { continue }
+            let displayLemma = GermanLemmaResolver.lemma(
+                for: lineWrap.dehyphenated,
+                tagger: fallbackTagger,
+                language: language
+            )
+            let lexicalItemID = VocabularyLexicalItemID(
+                language: language.rawValue,
+                lemma: displayLemma,
+                partOfSpeech: .unknown
+            )
+            let lexicalKey = lexicalItemID.canonicalKey
+            byLemma[lemmaKey, default: []].append(lineWrap.occurrence)
+            byLexical[lexicalKey, default: []].append(lineWrap.occurrence)
+            bySurface[exactSurfaceKey(lineWrap.dehyphenated), default: []].append(lineWrap.occurrence)
+            displayLemmaByLexicalKey[lexicalKey] = displayLemmaByLexicalKey[lexicalKey] ?? displayLemma
+            lexicalItemByKey[lexicalKey] = lexicalItemID
+            formCountsByLexicalKey[lexicalKey, default: [:]][lineWrap.dehyphenated, default: 0] += 1
+        }
         return Page(
             text: text,
             occurrencesByLemmaKey: byLemma,
+            occurrencesByLexicalKey: byLexical,
             occurrencesByExactSurface: bySurface,
+            displayLemmaByLexicalKey: displayLemmaByLexicalKey,
+            lexicalItemByKey: lexicalItemByKey,
+            formCountsByLexicalKey: formCountsByLexicalKey,
+            nameOccurrenceCountsByLexicalKey: nameOccurrenceCountsByLexicalKey,
             lineWraps: lineWraps
         )
     }
 
+    private static func confidentPartOfSpeech(
+        tagger: NLTagger,
+        at index: String.Index
+    ) -> VocabularyPartOfSpeech {
+        let hypotheses = tagger.tagHypotheses(
+            at: index,
+            unit: .word,
+            scheme: .lexicalClass,
+            maximumCount: 2
+        ).0
+        return VocabularyPartOfSpeechConfidencePolicy.classify(hypotheses: hypotheses)
+    }
+
     private static func exactSurfaceKey(_ value: String) -> String {
         VocabularyTextPolicy.normalizedVocabularyText(value).precomposedStringWithCanonicalMapping
+    }
+
+    private static func linguisticTaggingText(_ text: String) -> String {
+        let space = Unicode.Scalar(32)!
+        return String(String.UnicodeScalarView(text.unicodeScalars.map {
+            CharacterSet.whitespacesAndNewlines.contains($0) ? space : $0
+        }))
+    }
+
+    private static func isObviousArtifact(_ value: String) -> Bool {
+        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return true }
+        if normalized.hasPrefix("-") || normalized.hasSuffix("-")
+            || normalized.hasPrefix("'") || normalized.hasSuffix("'")
+            || normalized.hasPrefix("’") || normalized.hasSuffix("’")
+            || normalized.contains("--") || normalized.contains("''") || normalized.contains("’’") {
+            return true
+        }
+        let letters = normalized.lowercased().filter(\.isLetter)
+        return letters.count >= 6 && Set(letters).count == 1
     }
 
     /// Natural Language can split punctuation-bearing selections such as

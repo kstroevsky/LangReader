@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "status": "design-defined-collection-blocked",
+  "dataRole": "developmental-human-study-design",
+  "sourceLock": {
+    "revision": "4c886281aa35daacac0a47bea4ee2e315e1e70b4",
+    "pilot": {
+      "path": "docs/research/VOCABULARY_VALIDATION_PILOT.md",
+      "sha256": "7c47706f0d296b40506bcf2dbf2c3f6851aa7f7a15b802b3cb7b43559657516b"
+    },
+    "approvedDirections": {
+      "path": "docs/plans/vocabulary-validation-evidence/study-protocol-decisions-2026-09-12.md",
+      "sha256": "fe68e4a2c610566df346b5593fff59f6821a63930001367adb5cc68310be8e54"
+    },
+    "sapTemplate": {
+      "path": "docs/research/VOCABULARY_VALIDATION_SAP_TEMPLATE.md",
+      "sha256": "a9ede553798fc32565c40e9b0e4c9a118384eedd464d3d52603da346e1101cc4"
+    }
+  },
+  "objective": "estimate whether completing the independent criterion prompt before the first unaided product-style response changes that product response",
+  "experimentalUnit": "participant-document-lexical-item",
+  "assignment": {
+    "withinParticipantDocument": true,
+    "ratio": "1:1",
+    "strata": ["predeclared frequency band", "part of speech"],
+    "arms": [
+      {
+        "id": "criterion-before-product",
+        "order": ["criterion response", "product-style response"]
+      },
+      {
+        "id": "product-before-criterion",
+        "order": ["product-style response", "criterion response"]
+      }
+    ],
+    "controlInterpretation": "product-before-criterion has no criterion retrieval before the primary product response",
+    "actualRandomizationSeed": null,
+    "allocationConcealment": "assignment generated after the eligible item frame and strata are frozen; participant and response raters do not receive the future assignment sequence"
+  },
+  "taskContract": {
+    "itemDisplay": ["lemma", "part of speech"],
+    "response": "one or more context-free meanings or translations",
+    "productResponseCapturedForEveryAssignedItem": true,
+    "definitionContextOrCorrectnessFeedbackBeforeBothResponses": false,
+    "responseEditingAfterSecondTask": false,
+    "responsesEnterProductionCAT": false,
+    "adaptiveSelectionUsed": false,
+    "reasonForFixedProbe": "capture the primary product response for every randomized item without conditioning on post-assignment adaptive question selection"
+  },
+  "scoring": {
+    "targetSenseContextHiddenFromParticipant": true,
+    "targetSenseContextAvailableToBlindedRaters": true,
+    "raters": 2,
+    "adjudicationRequiredForDisagreement": true,
+    "criterionAmbiguousSeparateFromMissing": true,
+    "productResponsePrimaryOutcome": "adjudicated target-meaning correctness before reveal",
+    "secondaryOutcomes": ["response latency", "response missingness", "criterion-response correctness"],
+    "leafReaderProbabilityOrDeckHiddenFromRaters": true
+  },
+  "estimand": {
+    "population": "all randomized eligible participant-document lexical items under the approved developmental protocol",
+    "primary": "intention-to-treat difference in product-response correctness: criterion-before-product minus product-before-criterion",
+    "equivalenceDecision": "the approved confidence interval must lie wholly inside [-interferenceMargin, +interferenceMargin]",
+    "conditioningOnProductResponseObserved": false,
+    "naturalAdaptiveAssessmentOutcome": "exploratory only; fixed-probe estimand does not claim full adaptive-session transportability"
+  },
+  "dependence": {
+    "participant": true,
+    "opaqueStudyDocument": true,
+    "lexicalItem": true,
+    "participantDocumentBlock": true
+  },
+  "missingnessStatuses": [
+    "observed",
+    "missing-product-response",
+    "missing-criterion-response",
+    "criterion-ambiguous",
+    "abandoned-block",
+    "protocol-deviation"
+  ],
+  "decisionActions": {
+    "equivalenceSupported": "may submit criterion-before-product sequencing for confirmatory protocol approval; does not automatically authorize collection",
+    "materialInterference": "confirmatory protocol must use split-sample, order, or carryover handling",
+    "inconclusive": "confirmatory collection remains blocked"
+  },
+  "fabricatedRehearsal": {
+    "seed": 20260914,
+    "participantDocumentBlocks": 4,
+    "strataPerBlock": 4,
+    "itemsPerStratum": 2,
+    "outcomesIncluded": false,
+    "realCollectionAuthorized": false
+  },
+  "actualStudyDecisionFields": {
+    "practicallyMeaningfulInterferenceMargin": null,
+    "estimator": null,
+    "intervalConstruction": null,
+    "confidenceLevel": null,
+    "smallSampleAdjustment": null,
+    "missingDataRule": null,
+    "sampleSizeAndPower": null,
+    "minimumStratumSupport": null,
+    "randomizationSeed": null,
+    "consentVersion": null,
+    "retentionAndDeletionProtocol": null,
+    "namedApprovers": [],
+    "approvalRevision": null
+  },
+  "privacy": {
+    "separateExplicitConsentRequired": true,
+    "normalProductExportUsed": false,
+    "automaticUpload": false,
+    "rawDocumentTextTitlePathStored": false,
+    "exactProductTimestampStored": false,
+    "ordinaryUserDatabaseAccess": false
+  },
+  "accessBoundary": {
+    "realParticipantCollectionAuthorized": false,
+    "confirmatoryCollectionAuthorized": false,
+    "developmentConfirmationAccessAuthorized": false,
+    "releaseHoldoutAccessAuthorized": false,
+    "productionChangeAuthorized": false
+  },
+  "unblockRule": "freeze every applicable actualStudyDecisionFields value, consent/privacy operations, and the executable assignment/analysis package before any real developmental collection"
+}

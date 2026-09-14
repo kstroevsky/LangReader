@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-evidence/verification/scope-base.md",
+  "sha256": "bd5a907c46717039a0dd9e9fccc7739637e1b1a72200950cec69fc4a1276d497",
+  "bytes": 1702,
+  "lines": 13,
+  "sections": [
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan",
+      "level": 1,
+      "heading": "Vocabulary validation and release-evidence implementation plan",
+      "start_line": 1,
+      "end_line": 2,
+      "sha256": "2e6334aa5ac433a2e8bb1fe8691e8061e56759d80474762a4f70ea4f77bbb1bc",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Authority and scope",
+      "level": 2,
+      "heading": "Authority and scope",
+      "start_line": 3,
+      "end_line": 13,
+      "sha256": "12964ef9c67012cea5cd0465c0c0976a558e7cf6df0751b505caeba6d93fc35b",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "07",
+        "08",
+        "09",
+        "12",
+        "2026",
+        "25",
+        "256",
+        "42"
+      ],
+      "versioned_tokens": []
+    }
+  ]
+}

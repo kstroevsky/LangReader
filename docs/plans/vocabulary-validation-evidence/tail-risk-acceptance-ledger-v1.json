@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "authority": "additive tail-risk definition ledger; not the canonical product ledger",
+  "requirements": [
+    {
+      "id": "TRISK-001",
+      "status": "active",
+      "summary": "Separate posterior-predictive coverage from realized tail-risk claims.",
+      "normativePayload": {
+        "posteriorPredictiveFormula": "Q_0.05(C | E) >= 0.98",
+        "realizedCoverageIsDistinct": true,
+        "rareRealizedMissExcludedByQuantile": false
+      }
+    },
+    {
+      "id": "TRISK-002",
+      "status": "active",
+      "summary": "Define realized shortfall on the learner-document assessment unit.",
+      "normativePayload": {
+        "unit": "learner-document assessment",
+        "targetCoverage": 0.98,
+        "shortfallFormula": "L = max(0, 0.98 - C_realized)"
+      }
+    },
+    {
+      "id": "TRISK-003",
+      "status": "active",
+      "summary": "Define severe-miss frequency parametrically.",
+      "normativePayload": {
+        "formula": "P_severe(c_severe) = Pr(C_realized < c_severe)",
+        "releaseThreshold": null,
+        "developmentReference": 0.96,
+        "developmentReferenceIsReleaseGate": false
+      }
+    },
+    {
+      "id": "TRISK-004",
+      "status": "active",
+      "summary": "Define conditional and unconditional shortfall severity.",
+      "normativePayload": {
+        "conditionalFormula": "ES_severe(c_severe) = E[L | C_realized < c_severe]",
+        "unconditionalFormula": "E[L]",
+        "zeroSevereEventConditionalValue": "not estimable",
+        "worstCaseRole": "descriptive diagnostic only"
+      }
+    },
+    {
+      "id": "TRISK-005",
+      "status": "active",
+      "summary": "Use design weights and learner/document dependence for human tail estimands.",
+      "normativePayload": {
+        "weighting": "approved criterion-audit inclusion weights",
+        "clusters": ["participant", "opaque study document"],
+        "rowCountSubstitutesForIndependentSupport": false
+      }
+    },
+    {
+      "id": "TRISK-006",
+      "status": "active",
+      "summary": "Warm comparisons retain paired frequency, severity, and burden contrasts.",
+      "normativePayload": {
+        "contrasts": [
+          "warm-minus-cold severe-miss rate",
+          "warm-minus-cold conditional severe expected shortfall",
+          "warm-minus-cold unconditional mean shortfall",
+          "warm-minus-cold question burden"
+        ],
+        "pooledMeanCoverageAloneSufficient": false
+      }
+    },
+    {
+      "id": "TRISK-007",
+      "status": "active",
+      "summary": "Zero observed severe misses require an upper uncertainty bound.",
+      "normativePayload": {
+        "zeroObservedEventsImpliesZeroRisk": false,
+        "upperBoundRequired": true,
+        "supportByLanguageGenreFormatAndWarmCondition": true,
+        "retainMissingAmbiguousAndAbandoned": true
+      }
+    },
+    {
+      "id": "TRISK-008",
+      "status": "deferred",
+      "summary": "Numerical release tolerances and combination rule require approval.",
+      "normativePayload": {
+        "severeCoverageThreshold": null,
+        "maximumSevereMissRate": null,
+        "maximumConditionalExpectedShortfall": null,
+        "maximumUnconditionalMeanShortfall": null,
+        "tailComponentsRequiredForRelease": null,
+        "failureAction": "block future safeguard acceptance and confirmation binding"
+      }
+    },
+    {
+      "id": "TRISK-009",
+      "status": "deferred",
+      "summary": "Estimator, interval, confidence, multiplicity, and non-inferiority details require SAP approval.",
+      "normativePayload": {
+        "estimator": null,
+        "intervalConstruction": null,
+        "confidenceLevel": null,
+        "multiplicityRule": null,
+        "tailNonInferiorityMargins": null
+      }
+    },
+    {
+      "id": "TRISK-010",
+      "status": "active",
+      "summary": "Synthetic criteria remain development diagnostics, not release probabilities.",
+      "normativePayload": {
+        "zeroTailCandidateRulesAreCandidateSpecific": true,
+        "syntheticFrequencyIsHumanRiskEstimate": false,
+        "adverseSyntheticRowsRetained": true
+      }
+    },
+    {
+      "id": "TRISK-011",
+      "status": "active",
+      "summary": "Deferred empirical risk calibration remains disabled.",
+      "normativePayload": {
+        "canonicalRequirement": "RISK-001",
+        "canonicalStatus": "deferred",
+        "requiresUntouchedRealValidation": true,
+        "productionEnabled": false
+      }
+    },
+    {
+      "id": "TRISK-012",
+      "status": "active",
+      "summary": "Preserve candidate and holdout sequencing.",
+      "normativePayload": {
+        "nextSyntheticSafeguardBlocked": true,
+        "developmentConfirmationUntouched": true,
+        "releaseHoldoutLast": true,
+        "realLearnerEvidenceRequired": true
+      }
+    }
+  ]
+}

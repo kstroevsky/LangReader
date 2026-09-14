@@ -9,7 +9,10 @@ final class SettingsTabsView: NSView {
     var onSelectionChanged: ((Int) -> Void)?
 
     private let labels: [String]
-    private let symbols = ["slider.horizontal.3", "cube", "sparkles", "speaker.wave.2", "cylinder.split.1x2"]
+    private let symbols = [
+        "slider.horizontal.3", "cube", "sparkles", "speaker.wave.2",
+        "cylinder.split.1x2", "text.book.closed"
+    ]
     private let style: Style
     private var buttons: [NSButton] = []
     private var selectedIndex = 0

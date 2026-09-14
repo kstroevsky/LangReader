@@ -1,0 +1,213 @@
+{
+  "dataRole": "diagnostic-development-only",
+  "limitation": "Replay contrasts are conditional decompositions, not additive causal effects: the destination prior can change the final deck differently on the cold and warm evidence paths.",
+  "materialTailCount": 13,
+  "materialityBoundary": -0.02,
+  "persistsAtFixedBudgetCount": 2,
+  "productionConfigurationChanged": false,
+  "questionEvidencePathImplicatedCount": 2,
+  "rows": [
+    {
+      "classification": "question-evidence-path-implicated",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": -0.14467672712169455,
+      "fixedBudgetReplayContrasts": {
+        "destinationPriorOnColdPath": 0.0,
+        "destinationPriorOnWarmPath": 0.0,
+        "questionEvidencePathUnderColdPrior": -0.14467672712169455,
+        "questionEvidencePathUnderWarmPrior": -0.14467672712169455
+      },
+      "naturalCoverageDifference": -0.13761594905164054,
+      "runID": "biased-self-verification:learner-22",
+      "scenario": "biased-self-verification",
+      "warmNaturalQuestions": 13
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": 0,
+      "fixedBudgetReplayContrasts": {
+        "destinationPriorOnColdPath": null,
+        "destinationPriorOnWarmPath": null,
+        "questionEvidencePathUnderColdPrior": null,
+        "questionEvidencePathUnderWarmPrior": null
+      },
+      "naturalCoverageDifference": -0.13124740412570957,
+      "runID": "noisy-history:learner-13",
+      "scenario": "noisy-history",
+      "warmNaturalQuestions": 11
+    },
+    {
+      "classification": "mixed-selection-prior-path-interaction",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": -0.13844662882458814,
+      "fixedBudgetReplayContrasts": {
+        "destinationPriorOnColdPath": -0.13844662882458814,
+        "destinationPriorOnWarmPath": -0.014260002768932578,
+        "questionEvidencePathUnderColdPrior": -0.12418662605565556,
+        "questionEvidencePathUnderWarmPrior": 0.0
+      },
+      "naturalCoverageDifference": -0.08486778346947255,
+      "runID": "biased-self-verification:learner-23",
+      "scenario": "biased-self-verification",
+      "warmNaturalQuestions": 16
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": 0,
+      "fixedBudgetReplayContrasts": {
+        "destinationPriorOnColdPath": null,
+        "destinationPriorOnWarmPath": null,
+        "questionEvidencePathUnderColdPrior": null,
+        "questionEvidencePathUnderWarmPrior": null
+      },
+      "naturalCoverageDifference": -0.026997092620794638,
+      "runID": "ability-drift:learner-0",
+      "scenario": "ability-drift",
+      "warmNaturalQuestions": 12
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 55,
+      "fixedBudgetCoverageDifference": 0,
+      "fixedBudgetReplayContrasts": {
+        "destinationPriorOnColdPath": null,
+        "destinationPriorOnWarmPath": null,
+        "questionEvidencePathUnderColdPrior": null,
+        "questionEvidencePathUnderWarmPrior": null
+      },
+      "naturalCoverageDifference": -0.026166412847847154,
+      "runID": "failed-write-retry:learner-31",
+      "scenario": "failed-write-retry",
+      "warmNaturalQuestions": 15
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 59,
+      "fixedBudgetCoverageDifference": 0,
+      "fixedBudgetReplayContrasts": {
+        "destinationPriorOnColdPath": null,
+        "destinationPriorOnWarmPath": null,
+        "questionEvidencePathUnderColdPrior": null,
+        "questionEvidencePathUnderWarmPrior": null
+      },
+      "naturalCoverageDifference": -0.025751072961373356,
+      "runID": "changed-difficulty-distribution:learner-5",
+      "scenario": "changed-difficulty-distribution",
+      "warmNaturalQuestions": 16
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": -0.005676311781808163,
+      "fixedBudgetReplayContrasts": {
+        "destinationPriorOnColdPath": null,
+        "destinationPriorOnWarmPath": null,
+        "questionEvidencePathUnderColdPrior": null,
+        "questionEvidencePathUnderWarmPrior": null
+      },
+      "naturalCoverageDifference": -0.02547417970372423,
+      "runID": "abandoned-session:learner-17",
+      "scenario": "abandoned-session",
+      "warmNaturalQuestions": 14
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": 0,
+      "fixedBudgetReplayContrasts": {
+        "destinationPriorOnColdPath": null,
+        "destinationPriorOnWarmPath": null,
+        "questionEvidencePathUnderColdPrior": null,
+        "questionEvidencePathUnderWarmPrior": null
+      },
+      "naturalCoverageDifference": -0.024505053301952073,
+      "runID": "abandoned-session:learner-6",
+      "scenario": "abandoned-session",
+      "warmNaturalQuestions": 11
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 50,
+      "fixedBudgetCoverageDifference": 0,
+      "fixedBudgetReplayContrasts": {
+        "destinationPriorOnColdPath": null,
+        "destinationPriorOnWarmPath": null,
+        "questionEvidencePathUnderColdPrior": null,
+        "questionEvidencePathUnderWarmPrior": null
+      },
+      "naturalCoverageDifference": -0.024089713415478387,
+      "runID": "changed-difficulty-distribution:learner-24",
+      "scenario": "changed-difficulty-distribution",
+      "warmNaturalQuestions": 11
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": 0.007060778070054008,
+      "fixedBudgetReplayContrasts": {
+        "destinationPriorOnColdPath": null,
+        "destinationPriorOnWarmPath": null,
+        "questionEvidencePathUnderColdPrior": null,
+        "questionEvidencePathUnderWarmPrior": null
+      },
+      "naturalCoverageDifference": -0.02256680049840787,
+      "runID": "changed-difficulty-distribution:learner-17",
+      "scenario": "changed-difficulty-distribution",
+      "warmNaturalQuestions": 11
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": 0,
+      "fixedBudgetReplayContrasts": {
+        "destinationPriorOnColdPath": null,
+        "destinationPriorOnWarmPath": null,
+        "questionEvidencePathUnderColdPrior": null,
+        "questionEvidencePathUnderWarmPrior": null
+      },
+      "naturalCoverageDifference": -0.021182334210162024,
+      "runID": "hard-history-easy-evaluation:learner-5",
+      "scenario": "hard-history-easy-evaluation",
+      "warmNaturalQuestions": 11
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": 0,
+      "fixedBudgetReplayContrasts": {
+        "destinationPriorOnColdPath": null,
+        "destinationPriorOnWarmPath": null,
+        "questionEvidencePathUnderColdPrior": null,
+        "questionEvidencePathUnderWarmPrior": null
+      },
+      "naturalCoverageDifference": -0.0204901010660391,
+      "runID": "easy-history-hard-evaluation:learner-7",
+      "scenario": "easy-history-hard-evaluation",
+      "warmNaturalQuestions": 23
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 49,
+      "fixedBudgetCoverageDifference": 0,
+      "fixedBudgetReplayContrasts": {
+        "destinationPriorOnColdPath": null,
+        "destinationPriorOnWarmPath": null,
+        "questionEvidencePathUnderColdPrior": null,
+        "questionEvidencePathUnderWarmPrior": null
+      },
+      "naturalCoverageDifference": -0.020351654437214428,
+      "runID": "changed-difficulty-distribution:learner-15",
+      "scenario": "changed-difficulty-distribution",
+      "warmNaturalQuestions": 11
+    }
+  ],
+  "schemaVersion": 2,
+  "sourceReport": "docs/plans/vocabulary-validation-evidence/longitudinal-development-report-v3.json",
+  "sourceReportSHA256": "feebe929620967caa4359b3f0f430399c18d9f3069e5690d61fe892c1337ff49",
+  "sourceReportSchemaVersion": 2,
+  "sourceRevision": "7fbc12a22fd0e9096ecd3221b9c82d4f7a5dbb3b",
+  "stoppingImplicatedCount": 11,
+  "transferredPriorPosteriorImplicatedCount": 1
+}

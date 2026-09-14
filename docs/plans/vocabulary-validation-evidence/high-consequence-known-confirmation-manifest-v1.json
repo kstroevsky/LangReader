@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "dataRole": "diagnostic-development-feasibility",
+  "reservationStatus": "consumed-candidate-rejected",
+  "seed": 20260914,
+  "sourceMechanismEvidence": {
+    "analysis": "docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-analysis-v2.json",
+    "analysisSHA256": "a0d89e116959c49980c9a9070485659eacd74d1a9b9bcac87e53bb68ec245f09",
+    "interpretation": "selected-case mechanism evidence only; acceptance cases use a fresh seed"
+  },
+  "candidate": {
+    "name": "high-consequence-known-double-confirmation-v1",
+    "eligibility": "an answered item has known-supporting evidence and its occurrence count alone exceeds the target miss-mass budget",
+    "missMassBudget": "floor((1 - targetCoverage) * assessableOccurrenceMass)",
+    "confirmationTiming": "after the natural assessment path and before final deck publication",
+    "independentArm": "draw occasion-1 evidence from the frozen response model using an independent deterministic seed",
+    "fullyCorrelatedArm": "reuse the original evidence as a negative control",
+    "selectionRule": "retain the production deck; additionally select an eligible item when its confirmation is missing, excluded, or does not support known",
+    "posteriorAndThetaUpdated": false,
+    "questionPathUpdated": false,
+    "maximumTotalQuestions": 80,
+    "productionActivation": false
+  },
+  "workload": {
+    "scenarios": [
+      "stable-overlap",
+      "noisy-history",
+      "biased-self-verification",
+      "easy-history-hard-evaluation",
+      "hard-history-easy-evaluation",
+      "changed-difficulty-distribution",
+      "ability-drift",
+      "low-lexical-overlap"
+    ],
+    "learnersPerScenario": 128,
+    "plannedRows": 1024,
+    "historyDocumentCount": 3,
+    "lemmaCount": 60,
+    "fixedBudget": 60,
+    "targetCoverage": 0.98,
+    "retainEveryRow": true
+  },
+  "decisionRule": {
+    "materialCoverageDegradation": -0.02,
+    "independentArmMaximumMaterialTailCount": 0,
+    "independentArmMinimumMeanCoverageDifference": -0.005,
+    "independentArmMinimumMeanQuestionReduction": 0.5,
+    "fullyCorrelatedArmIsNegativeControl": true,
+    "reportConfirmationCountDistribution": true,
+    "reportAddedKnownCardCountAndMass": true,
+    "noApprovedUXCostThreshold": true,
+    "passingDoesNotAuthorizeProduction": true,
+    "failureAction": "retain adverse evidence; do not tune occurrence eligibility or confirmation semantics from this run"
+  },
+  "requiredExternalEvidence": {
+    "repeatResponseCorrelation": true,
+    "userBurdenAcceptability": true,
+    "realLearnerCoverageAndPrecision": true
+  },
+  "forbiddenAccess": {
+    "selectedForensicCasesAsAcceptanceSet": true,
+    "developmentConfirmation": true,
+    "releaseHoldout": true,
+    "consumedPOSHeldout": true,
+    "privateGUIFixtures": true,
+    "userDatabases": true
+  },
+  "outcomes": {
+    "executionSourceRevision": "edf5106de2c45b680e8f9a0e9e4177798496c1bb",
+    "semanticReport": "docs/plans/vocabulary-validation-evidence/high-consequence-known-confirmation-report-v1.json",
+    "semanticReportSHA256": "a3b8ce50ed4baed22c9da656615d8f3a8a12f241f8684a3d4acba3dd1afb2b19",
+    "analysis": "docs/plans/vocabulary-validation-evidence/high-consequence-known-confirmation-analysis-v1.json",
+    "analysisSHA256": "5870bcbe34734a473b794294e96d2c48c523ec5aba73b8ab41346e38ed650d35",
+    "retainedRuns": 1024,
+    "eligibleRuns": 1013,
+    "productionMaterialTailCount": 40,
+    "independentArmMaterialTailCount": 32,
+    "independentArmWorstCoverageDifference": -0.042226221791499374,
+    "independentArmMeanQuestionReduction": 0.6259641610852745,
+    "meanConfirmationCount": 5.350444225074037,
+    "addedKnownCardCount": 274,
+    "addedUnknownCardCount": 31,
+    "candidatePass": false,
+    "decision": "reject-feasibility-candidate"
+  },
+  "consumedAtRevision": "edf5106de2c45b680e8f9a0e9e4177798496c1bb"
+}

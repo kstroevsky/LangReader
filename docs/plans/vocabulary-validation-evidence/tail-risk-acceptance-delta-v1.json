@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "sourceLock": "docs/plans/vocabulary-validation-evidence/tail-risk-acceptance-source-lock-v1.json",
+  "closedWorld": true,
+  "changes": [
+    {
+      "feedbackID": "TAIL-RISK-01",
+      "operation": "ADD",
+      "requirementIDs": ["TRISK-001", "TRISK-002", "TRISK-003", "TRISK-004"],
+      "payloadSource": "user audit 2026-09-13: distinguish posterior-predictive coverage from realized severe-tail risk",
+      "allowedArtifacts": [
+        "tail-risk-acceptance-semantics-v1.json",
+        "tail-risk-acceptance-semantics-v1.md"
+      ]
+    },
+    {
+      "feedbackID": "TAIL-RISK-02",
+      "operation": "ADD",
+      "requirementIDs": ["TRISK-005", "TRISK-006", "TRISK-007", "TRISK-008"],
+      "payloadSource": "user audit 2026-09-13: freeze frequency/severity estimands and uncertainty before another safeguard",
+      "allowedArtifacts": [
+        "tail-risk-acceptance-semantics-v1.json",
+        "tail-risk-acceptance-semantics-v1.md"
+      ]
+    },
+    {
+      "feedbackID": "TAIL-RISK-03",
+      "operation": "ADD",
+      "requirementIDs": ["TRISK-009", "TRISK-010", "TRISK-011", "TRISK-012"],
+      "payloadSource": "existing plan/ledger plus user audit: preserve evidence roles, deferred empirical risk calibration, and holdout order",
+      "allowedArtifacts": [
+        "tail-risk-acceptance-semantics-v1.json",
+        "tail-risk-acceptance-semantics-v1.md"
+      ]
+    }
+  ],
+  "unapprovedExactValues": [
+    "release severe-coverage threshold",
+    "maximum severe-miss probability",
+    "maximum conditional expected shortfall",
+    "maximum unconditional mean shortfall",
+    "confidence level and interval construction",
+    "warm non-inferiority margins for tail endpoints",
+    "multiplicity rule and release component combination"
+  ],
+  "noChange": [
+    "production CAT",
+    "production posterior-predictive fifth-percentile rule",
+    "canonical EVAL-001 gates",
+    "deferred RISK-001 status",
+    "development-confirmation reservation",
+    "release holdout",
+    "SAP approval status"
+  ]
+}

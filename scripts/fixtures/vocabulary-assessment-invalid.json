@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "configuration": {"seed": 1, "readersPerScenario": 100, "lemmaCount": 200, "algorithmVersion": 2},
+  "qualityGates": {"eligible": true, "passed": true, "wellSpecifiedECE": 0.2, "thetaInterval90Coverage": 0.9, "coverage98HitRate": 0.97},
+  "results": []
+}

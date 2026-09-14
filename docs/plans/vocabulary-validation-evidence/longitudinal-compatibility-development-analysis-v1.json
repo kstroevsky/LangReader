@@ -1,0 +1,169 @@
+{
+  "candidatePass": false,
+  "compatibilityCandidate": {
+    "materialTailCount": 54,
+    "meanCoverageDifference": -0.001390981423719978,
+    "meanQuestionReduction": 0.6893399068745387,
+    "worstCoverageDifference": -0.15990585629239928
+  },
+  "dataRole": "diagnostic-development-only",
+  "decision": "reject-candidate-retain-production",
+  "eligibleRuns": 1020,
+  "gateResults": {
+    "materialTailCount": false,
+    "meanCoverageDifference": true,
+    "meanQuestionReduction": true
+  },
+  "ineligibleRuns": 4,
+  "limitation": "Synthetic deterministic learner draws and a conditional warm-selected validation signal do not establish real-learner safety or confirmatory non-inferiority.",
+  "materialTailsEliminated": 4,
+  "materialTailsIntroduced": 3,
+  "productionBaseline": {
+    "materialTailCount": 55,
+    "meanCoverageDifference": -0.001830481604243522,
+    "meanQuestionReduction": 0.7201936722056963,
+    "worstCoverageDifference": -0.15990585629239928
+  },
+  "productionConfigurationChanged": false,
+  "retainedRuns": 1024,
+  "scenarioResults": [
+    {
+      "candidate": {
+        "materialTailCount": 7,
+        "meanCoverageDifference": -0.003160476948636295,
+        "meanQuestionReduction": 0.7139228846257496,
+        "worstCoverageDifference": -0.032811851031427364
+      },
+      "eligibleRuns": 128,
+      "production": {
+        "materialTailCount": 7,
+        "meanCoverageDifference": -0.003327045548940878,
+        "meanQuestionReduction": 0.7400534862438245,
+        "worstCoverageDifference": -0.032811851031427364
+      },
+      "scenario": "stable-overlap"
+    },
+    {
+      "candidate": {
+        "materialTailCount": 7,
+        "meanCoverageDifference": -0.004455169251003731,
+        "meanQuestionReduction": 0.702579027287005,
+        "worstCoverageDifference": -0.13844662882458814
+      },
+      "eligibleRuns": 128,
+      "production": {
+        "materialTailCount": 7,
+        "meanCoverageDifference": -0.005014363837740544,
+        "meanQuestionReduction": 0.7244826145780517,
+        "worstCoverageDifference": -0.13844662882458814
+      },
+      "scenario": "noisy-history"
+    },
+    {
+      "candidate": {
+        "materialTailCount": 11,
+        "meanCoverageDifference": 0.015801303128893805,
+        "meanQuestionReduction": 0.7089161648722243,
+        "worstCoverageDifference": -0.0755918593382251
+      },
+      "eligibleRuns": 128,
+      "production": {
+        "materialTailCount": 12,
+        "meanCoverageDifference": 0.016209071715353733,
+        "meanQuestionReduction": 0.7325479289092514,
+        "worstCoverageDifference": -0.0755918593382251
+      },
+      "scenario": "biased-self-verification"
+    },
+    {
+      "candidate": {
+        "materialTailCount": 16,
+        "meanCoverageDifference": -0.007871988785823066,
+        "meanQuestionReduction": 0.6618984879866558,
+        "worstCoverageDifference": -0.15990585629239928
+      },
+      "eligibleRuns": 128,
+      "production": {
+        "materialTailCount": 16,
+        "meanCoverageDifference": -0.009964912432507267,
+        "meanQuestionReduction": 0.6979765087852864,
+        "worstCoverageDifference": -0.15990585629239928
+      },
+      "scenario": "easy-history-hard-evaluation"
+    },
+    {
+      "candidate": {
+        "materialTailCount": 2,
+        "meanCoverageDifference": -0.00150169932071831,
+        "meanQuestionReduction": 0.7007049098968896,
+        "worstCoverageDifference": -0.02768932576491767
+      },
+      "eligibleRuns": 124,
+      "production": {
+        "materialTailCount": 2,
+        "meanCoverageDifference": -0.0015441265134226176,
+        "meanQuestionReduction": 0.7308638567092823,
+        "worstCoverageDifference": -0.02768932576491767
+      },
+      "scenario": "hard-history-easy-evaluation"
+    },
+    {
+      "candidate": {
+        "materialTailCount": 4,
+        "meanCoverageDifference": -0.0036958760210438852,
+        "meanQuestionReduction": 0.665252694287693,
+        "worstCoverageDifference": -0.05288661221099267
+      },
+      "eligibleRuns": 128,
+      "production": {
+        "materialTailCount": 4,
+        "meanCoverageDifference": -0.004077685864599194,
+        "meanQuestionReduction": 0.6932397926759235,
+        "worstCoverageDifference": -0.05288661221099267
+      },
+      "scenario": "changed-difficulty-distribution"
+    },
+    {
+      "candidate": {
+        "materialTailCount": 5,
+        "meanCoverageDifference": -0.0029668679911394134,
+        "meanQuestionReduction": 0.706286230384788,
+        "worstCoverageDifference": -0.02865845216668972
+      },
+      "eligibleRuns": 128,
+      "production": {
+        "materialTailCount": 4,
+        "meanCoverageDifference": -0.0028911549910009653,
+        "meanQuestionReduction": 0.735251065040694,
+        "worstCoverageDifference": -0.02865845216668972
+      },
+      "scenario": "ability-drift"
+    },
+    {
+      "candidate": {
+        "materialTailCount": 2,
+        "meanCoverageDifference": -0.00328053613457013,
+        "meanQuestionReduction": 0.6555140119997427,
+        "worstCoverageDifference": -0.033919424062024084
+      },
+      "eligibleRuns": 128,
+      "production": {
+        "materialTailCount": 3,
+        "meanCoverageDifference": -0.004024686764502291,
+        "meanQuestionReduction": 0.7074675679689741,
+        "worstCoverageDifference": -0.033919424062024084
+      },
+      "scenario": "low-lexical-overlap"
+    }
+  ],
+  "schemaVersion": 1,
+  "signalSupport": {
+    "counterfactualMinimumApplied": 242,
+    "noDecision": 15,
+    "rejected": 284,
+    "supported": 721
+  },
+  "sourceReport": "docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-development-report-v1.json",
+  "sourceReportSHA256": "789542ee581b315a4e6ed330c9dd855e2f7eef276f95481289a9a2f8db8a5e41",
+  "sourceRevision": "c77f732367d2c75dea45fd36e1b13d1a99d2c92b"
+}

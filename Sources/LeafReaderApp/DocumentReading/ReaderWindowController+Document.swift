@@ -115,6 +115,7 @@ extension ReaderWindowController {
                 self.aiPanel.flushTranscriptLayout()
                 self.aiPanel.layoutSubtreeIfNeeded()
                 self.hideDocumentLoading(generation: generation)
+                self.offerVocabularyPreparationIfNeeded(generation: generation)
             }
         }
     }

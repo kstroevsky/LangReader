@@ -8,6 +8,7 @@ final class AISettingsPanelController {
         case vector = 2
         case speech = 3
         case cache = 4
+        case vocabulary = 5
     }
 
     enum Identifiers {
@@ -30,6 +31,7 @@ final class AISettingsPanelController {
     /// The Cache page's live state. Not a `SettingsPage`: its actions apply
     /// immediately, so there is nothing for Save to commit.
     var cacheSettings: CacheSettingsModel?
+    var vocabularySettings: VocabularySettingsModel?
     var onSaved: (() -> Void)?
     var onAppearanceChanged: (() -> Void)?
     var currentVectorIndexStatus: (() -> String)?
@@ -51,6 +53,7 @@ final class AISettingsPanelController {
     weak var embeddingPage: NSView?
     weak var speechPage: NSView?
     weak var cachePage: NSView?
+    weak var vocabularyPage: NSView?
     var cacheRefreshTimer: Timer?
     var speechDownloadRefreshTimer: Timer?
     var speechVoicePreviewWorkItem: DispatchWorkItem?

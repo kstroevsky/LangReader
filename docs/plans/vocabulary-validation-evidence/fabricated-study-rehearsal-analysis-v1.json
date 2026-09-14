@@ -1,0 +1,39 @@
+{
+  "estimatorStatus": "provisional-not-approved",
+  "executed": {
+    "abandonedCount": 1,
+    "ambiguousCriterionCount": 2,
+    "assessmentCount": 5,
+    "missingCriterionCount": 1,
+    "smallDocumentCensusBrier": 0.041666666666666664
+  },
+  "inputMap": {
+    "burden": [
+      "assessments",
+      "questionTraces"
+    ],
+    "deckValidity": [
+      "deckSnapshots",
+      "criterionRecords",
+      "itemPredictions"
+    ],
+    "itemCalibration": [
+      "itemPredictions",
+      "criterionRecords",
+      "samplingManifests"
+    ],
+    "retention": [
+      "criterionRecords",
+      "retestManifests"
+    ]
+  },
+  "interpretation": "Fabricated rehearsal only; no participant data, confirmatory inference, or release claim.",
+  "nonEstimable": {
+    "DIF": "Insufficient independent learners per item.",
+    "humanThetaIntervalCoverage": "No justified independent human latent reference.",
+    "largeDocumentWeightedCoverage": "No approved estimator or variance method; inputs and design diagnostics are present.",
+    "warmNonInferiority": "Fabricated support is insufficient and no approved margin/variance method exists."
+  },
+  "schemaVersion": 1,
+  "status": "developmental-provisional"
+}
