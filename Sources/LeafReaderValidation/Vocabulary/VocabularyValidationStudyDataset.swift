@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 package enum VocabularyValidationStudySplit: String, Codable, Equatable, Sendable {
     case training

@@ -1,6 +1,7 @@
 import Foundation
 import XCTest
 import LeafReaderCore
+@testable import LeafReaderValidation
 
 final class VocabularyValidationStudyDatasetXCTests: XCTestCase {
     func testConsentedDatasetValidatesAndContainsNoProductDocumentFields() throws {

@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 package enum VocabularyStudyCriterionStatusV2: String, Codable, Equatable, Sendable {
     case known

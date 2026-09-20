@@ -1,6 +1,7 @@
 import Foundation
 import XCTest
 @testable import LeafReaderCore
+@testable import LeafReaderValidation
 
 final class VocabularyValidationStudyPackageV2XCTests: XCTestCase {
     func testFabricatedRelationalPackageValidatesAndRoundTripsWithoutPrivateFields() throws {
