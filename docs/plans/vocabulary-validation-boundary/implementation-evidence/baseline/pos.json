@@ -1,0 +1,506 @@
+{
+  "abstentionRate" : 0.375,
+  "caseResults" : [
+    {
+      "abstained" : false,
+      "caseID" : "en_ewt:weblog-blogspot.com_floppingaces_20050313182621_ENG_20050313_182621-0011:33",
+      "evaluationSplit" : "adversarial",
+      "expectedExcluded" : false,
+      "expectedPartOfSpeech" : "verb",
+      "finalIdentityCorrect" : true,
+      "genre" : "adversarial",
+      "goldFeatures" : "Tense=Pres|VerbForm=Part",
+      "goldLemma" : "run",
+      "goldUPOS" : "VERB",
+      "isParticiple" : true,
+      "languageCode" : "en",
+      "leadingProbability" : 0.9419629566922638,
+      "margin" : 0.9419629566922638,
+      "occurrenceWeight" : 30,
+      "predictedExcluded" : false,
+      "predictedLemma" : "run",
+      "predictedPartOfSpeech" : "verb",
+      "rawTagCorrect" : true,
+      "sourceID" : "en_ewt",
+      "sourceSentenceID" : "weblog-blogspot.com_floppingaces_20050313182621_ENG_20050313_182621-0011",
+      "surface" : "running"
+    },
+    {
+      "abstained" : false,
+      "caseID" : "en_ewt:email-enronsent28_01-0013:13",
+      "evaluationSplit" : "adversarial",
+      "expectedExcluded" : false,
+      "expectedPartOfSpeech" : "adjective",
+      "finalIdentityCorrect" : false,
+      "genre" : "adversarial",
+      "goldFeatures" : "Degree=Pos",
+      "goldLemma" : "record",
+      "goldUPOS" : "ADJ",
+      "isParticiple" : false,
+      "languageCode" : "en",
+      "leadingProbability" : 0.7540822008428923,
+      "margin" : 0.7540822008428923,
+      "occurrenceWeight" : 25,
+      "predictedExcluded" : false,
+      "predictedLemma" : "record",
+      "predictedPartOfSpeech" : "noun",
+      "rawTagCorrect" : false,
+      "sourceID" : "en_ewt",
+      "sourceSentenceID" : "email-enronsent28_01-0013",
+      "surface" : "record"
+    },
+    {
+      "abstained" : false,
+      "caseID" : "en_ewt:email-enronsent32_01-0032:18",
+      "evaluationSplit" : "adversarial",
+      "expectedExcluded" : false,
+      "expectedPartOfSpeech" : "noun",
+      "finalIdentityCorrect" : true,
+      "genre" : "adversarial",
+      "goldFeatures" : "Number=Plur",
+      "goldLemma" : "bank",
+      "goldUPOS" : "NOUN",
+      "isParticiple" : false,
+      "languageCode" : "en",
+      "leadingProbability" : 0.9997548640675585,
+      "margin" : 0.9997548640675585,
+      "occurrenceWeight" : 40,
+      "predictedExcluded" : false,
+      "predictedLemma" : "bank",
+      "predictedPartOfSpeech" : "noun",
+      "rawTagCorrect" : true,
+      "sourceID" : "en_ewt",
+      "sourceSentenceID" : "email-enronsent32_01-0032",
+      "surface" : "banks"
+    },
+    {
+      "abstained" : true,
+      "caseID" : "en_ewt:answers-20111108081911AAy6QeW_ans-0001:23",
+      "evaluationSplit" : "adversarial",
+      "expectedExcluded" : false,
+      "expectedPartOfSpeech" : "verb",
+      "finalIdentityCorrect" : false,
+      "genre" : "adversarial",
+      "goldFeatures" : "Tense=Pres|VerbForm=Part",
+      "goldLemma" : "record",
+      "goldUPOS" : "VERB",
+      "isParticiple" : true,
+      "languageCode" : "en",
+      "leadingProbability" : 0.5164196936604493,
+      "margin" : 0.5164196936604493,
+      "occurrenceWeight" : 20,
+      "predictedExcluded" : false,
+      "predictedLemma" : "recording",
+      "predictedPartOfSpeech" : "unknown",
+      "rawTagCorrect" : false,
+      "sourceID" : "en_ewt",
+      "sourceSentenceID" : "answers-20111108081911AAy6QeW_ans-0001",
+      "surface" : "recording"
+    },
+    {
+      "abstained" : false,
+      "caseID" : "de_gsd:test-s255:5",
+      "evaluationSplit" : "adversarial",
+      "expectedExcluded" : false,
+      "expectedPartOfSpeech" : "noun",
+      "finalIdentityCorrect" : true,
+      "genre" : "adversarial",
+      "goldFeatures" : "Case=Acc|Gender=Fem|Number=Plur",
+      "goldLemma" : "bank",
+      "goldUPOS" : "NOUN",
+      "isParticiple" : false,
+      "languageCode" : "de",
+      "leadingProbability" : 0.9319894974887988,
+      "margin" : 0.9319894974887988,
+      "occurrenceWeight" : 45,
+      "predictedExcluded" : false,
+      "predictedLemma" : "bank",
+      "predictedPartOfSpeech" : "noun",
+      "rawTagCorrect" : true,
+      "sourceID" : "de_gsd",
+      "sourceSentenceID" : "test-s255",
+      "surface" : "Banken"
+    },
+    {
+      "abstained" : false,
+      "caseID" : "de_gsd:test-s255:30",
+      "evaluationSplit" : "adversarial",
+      "expectedExcluded" : false,
+      "expectedPartOfSpeech" : "verb",
+      "finalIdentityCorrect" : true,
+      "genre" : "adversarial",
+      "goldFeatures" : "VerbForm=Part",
+      "goldLemma" : "geben",
+      "goldUPOS" : "VERB",
+      "isParticiple" : true,
+      "languageCode" : "de",
+      "leadingProbability" : 0.9466472563176928,
+      "margin" : 0.9466472563176928,
+      "occurrenceWeight" : 15,
+      "predictedExcluded" : false,
+      "predictedLemma" : "geben",
+      "predictedPartOfSpeech" : "verb",
+      "rawTagCorrect" : true,
+      "sourceID" : "de_gsd",
+      "sourceSentenceID" : "test-s255",
+      "surface" : "gegeben"
+    },
+    {
+      "abstained" : true,
+      "caseID" : "de_gsd:test-s422:6",
+      "evaluationSplit" : "adversarial",
+      "expectedExcluded" : false,
+      "expectedPartOfSpeech" : "verb",
+      "finalIdentityCorrect" : false,
+      "genre" : "adversarial",
+      "goldFeatures" : "Mood=Ind|Number=Plur|Person=3|Tense=Pres|VerbForm=Fin",
+      "goldLemma" : "laufen",
+      "goldUPOS" : "VERB",
+      "isParticiple" : false,
+      "languageCode" : "de",
+      "leadingProbability" : 0.6147802048403036,
+      "margin" : 0.6147802048403036,
+      "occurrenceWeight" : 30,
+      "predictedExcluded" : false,
+      "predictedLemma" : "laufen",
+      "predictedPartOfSpeech" : "unknown",
+      "rawTagCorrect" : false,
+      "sourceID" : "de_gsd",
+      "sourceSentenceID" : "test-s422",
+      "surface" : "laufen"
+    },
+    {
+      "abstained" : true,
+      "caseID" : "de_gsd:test-s447:19",
+      "evaluationSplit" : "adversarial",
+      "expectedExcluded" : true,
+      "expectedPartOfSpeech" : "noun",
+      "finalIdentityCorrect" : true,
+      "genre" : "adversarial",
+      "goldFeatures" : "Case=Dat|Gender=Fem|Number=Sing",
+      "goldLemma" : "bank",
+      "goldUPOS" : "PROPN",
+      "isParticiple" : false,
+      "languageCode" : "de",
+      "leadingProbability" : 0.5734788936139072,
+      "margin" : 0.5734788936139072,
+      "occurrenceWeight" : 20,
+      "predictedExcluded" : true,
+      "predictedLemma" : "bank",
+      "predictedPartOfSpeech" : "unknown",
+      "rawTagCorrect" : false,
+      "sourceID" : "de_gsd",
+      "sourceSentenceID" : "test-s447",
+      "surface" : "Bank"
+    }
+  ],
+  "confusion" : {
+    "adjective->noun" : 1,
+    "noun->noun" : 2,
+    "noun->unknown" : 1,
+    "verb->unknown" : 2,
+    "verb->verb" : 2
+  },
+  "consequences" : [
+    {
+      "denominatorDelta" : 0,
+      "erroneousExcludedMass" : 0,
+      "erroneousIncludedMass" : 0,
+      "goldFirstQuestion" : "en|bank|noun|",
+      "goldOccurrenceDenominator" : 115,
+      "goldSelectedKeys" : [
+        "en|bank|noun|",
+        "en|record|adjective|",
+        "en|record|verb|",
+        "en|run|verb|"
+      ],
+      "languageCode" : "en",
+      "predictedFirstQuestion" : "en|bank|noun|",
+      "predictedOccurrenceDenominator" : 115,
+      "predictedSelectedKeys" : [
+        "en|bank|noun|",
+        "en|recording|unknown|",
+        "en|record|noun|",
+        "en|run|verb|"
+      ],
+      "questionIdentityChanged" : false,
+      "selectedDeckSymmetricDifferenceCount" : 4
+    },
+    {
+      "denominatorDelta" : 0,
+      "erroneousExcludedMass" : 0,
+      "erroneousIncludedMass" : 0,
+      "goldFirstQuestion" : "de|bank|noun|",
+      "goldOccurrenceDenominator" : 90,
+      "goldSelectedKeys" : [
+        "de|bank|noun|",
+        "de|geben|verb|",
+        "de|laufen|verb|"
+      ],
+      "languageCode" : "de",
+      "predictedFirstQuestion" : "de|bank|noun|",
+      "predictedOccurrenceDenominator" : 90,
+      "predictedSelectedKeys" : [
+        "de|bank|noun|",
+        "de|geben|verb|",
+        "de|laufen|unknown|"
+      ],
+      "questionIdentityChanged" : false,
+      "selectedDeckSymmetricDifferenceCount" : 2
+    }
+  ],
+  "environment" : {
+    "os" : "Version 15.7.9 (Build 24G830)"
+  },
+  "finalIdentityAccuracy" : 0.625,
+  "fixtureRelease" : "UD 2.18",
+  "fixtureSHA256" : "258f6220094afecd864aa0930824309509e43aef8b740192acb523133decaf3c",
+  "groupMetrics" : [
+    {
+      "abstentionRate" : 0.375,
+      "caseCount" : 8,
+      "dimension" : "evaluationSplit",
+      "finalIdentityAccuracy" : 0.625,
+      "occurrenceWeight" : 225,
+      "occurrenceWeightedFinalIdentityAccuracy" : 0.6666666666666666,
+      "rawTagAccuracy" : 0.5,
+      "value" : "adversarial"
+    },
+    {
+      "abstentionRate" : 0.5,
+      "caseCount" : 4,
+      "dimension" : "language",
+      "finalIdentityAccuracy" : 0.75,
+      "occurrenceWeight" : 110,
+      "occurrenceWeightedFinalIdentityAccuracy" : 0.7272727272727273,
+      "rawTagAccuracy" : 0.5,
+      "value" : "de"
+    },
+    {
+      "abstentionRate" : 0.25,
+      "caseCount" : 4,
+      "dimension" : "language",
+      "finalIdentityAccuracy" : 0.5,
+      "occurrenceWeight" : 115,
+      "occurrenceWeightedFinalIdentityAccuracy" : 0.6086956521739131,
+      "rawTagAccuracy" : 0.5,
+      "value" : "en"
+    },
+    {
+      "abstentionRate" : 0.5,
+      "caseCount" : 4,
+      "dimension" : "languageAndSplit",
+      "finalIdentityAccuracy" : 0.75,
+      "occurrenceWeight" : 110,
+      "occurrenceWeightedFinalIdentityAccuracy" : 0.7272727272727273,
+      "rawTagAccuracy" : 0.5,
+      "value" : "de:adversarial"
+    },
+    {
+      "abstentionRate" : 0.25,
+      "caseCount" : 4,
+      "dimension" : "languageAndSplit",
+      "finalIdentityAccuracy" : 0.5,
+      "occurrenceWeight" : 115,
+      "occurrenceWeightedFinalIdentityAccuracy" : 0.6086956521739131,
+      "rawTagAccuracy" : 0.5,
+      "value" : "en:adversarial"
+    },
+    {
+      "abstentionRate" : 0.375,
+      "caseCount" : 8,
+      "dimension" : "genre",
+      "finalIdentityAccuracy" : 0.625,
+      "occurrenceWeight" : 225,
+      "occurrenceWeightedFinalIdentityAccuracy" : 0.6666666666666666,
+      "rawTagAccuracy" : 0.5,
+      "value" : "adversarial"
+    },
+    {
+      "abstentionRate" : 0,
+      "caseCount" : 1,
+      "dimension" : "expectedPartOfSpeech",
+      "finalIdentityAccuracy" : 0,
+      "occurrenceWeight" : 25,
+      "occurrenceWeightedFinalIdentityAccuracy" : 0,
+      "rawTagAccuracy" : 0,
+      "value" : "adjective"
+    },
+    {
+      "abstentionRate" : 0.3333333333333333,
+      "caseCount" : 3,
+      "dimension" : "expectedPartOfSpeech",
+      "finalIdentityAccuracy" : 1,
+      "occurrenceWeight" : 105,
+      "occurrenceWeightedFinalIdentityAccuracy" : 1,
+      "rawTagAccuracy" : 0.6666666666666666,
+      "value" : "noun"
+    },
+    {
+      "abstentionRate" : 0.5,
+      "caseCount" : 4,
+      "dimension" : "expectedPartOfSpeech",
+      "finalIdentityAccuracy" : 0.5,
+      "occurrenceWeight" : 95,
+      "occurrenceWeightedFinalIdentityAccuracy" : 0.47368421052631576,
+      "rawTagAccuracy" : 0.5,
+      "value" : "verb"
+    },
+    {
+      "abstentionRate" : 0.5,
+      "caseCount" : 2,
+      "dimension" : "languageSplitAndExpectedPartOfSpeech",
+      "finalIdentityAccuracy" : 1,
+      "occurrenceWeight" : 65,
+      "occurrenceWeightedFinalIdentityAccuracy" : 1,
+      "rawTagAccuracy" : 0.5,
+      "value" : "de:adversarial:noun"
+    },
+    {
+      "abstentionRate" : 0.5,
+      "caseCount" : 2,
+      "dimension" : "languageSplitAndExpectedPartOfSpeech",
+      "finalIdentityAccuracy" : 0.5,
+      "occurrenceWeight" : 45,
+      "occurrenceWeightedFinalIdentityAccuracy" : 0.3333333333333333,
+      "rawTagAccuracy" : 0.5,
+      "value" : "de:adversarial:verb"
+    },
+    {
+      "abstentionRate" : 0,
+      "caseCount" : 1,
+      "dimension" : "languageSplitAndExpectedPartOfSpeech",
+      "finalIdentityAccuracy" : 0,
+      "occurrenceWeight" : 25,
+      "occurrenceWeightedFinalIdentityAccuracy" : 0,
+      "rawTagAccuracy" : 0,
+      "value" : "en:adversarial:adjective"
+    },
+    {
+      "abstentionRate" : 0,
+      "caseCount" : 1,
+      "dimension" : "languageSplitAndExpectedPartOfSpeech",
+      "finalIdentityAccuracy" : 1,
+      "occurrenceWeight" : 40,
+      "occurrenceWeightedFinalIdentityAccuracy" : 1,
+      "rawTagAccuracy" : 1,
+      "value" : "en:adversarial:noun"
+    },
+    {
+      "abstentionRate" : 0.5,
+      "caseCount" : 2,
+      "dimension" : "languageSplitAndExpectedPartOfSpeech",
+      "finalIdentityAccuracy" : 0.5,
+      "occurrenceWeight" : 50,
+      "occurrenceWeightedFinalIdentityAccuracy" : 0.6,
+      "rawTagAccuracy" : 0.5,
+      "value" : "en:adversarial:verb"
+    },
+    {
+      "abstentionRate" : 0.4,
+      "caseCount" : 5,
+      "dimension" : "participle",
+      "finalIdentityAccuracy" : 0.6,
+      "occurrenceWeight" : 160,
+      "occurrenceWeightedFinalIdentityAccuracy" : 0.65625,
+      "rawTagAccuracy" : 0.4,
+      "value" : "other"
+    },
+    {
+      "abstentionRate" : 0.3333333333333333,
+      "caseCount" : 3,
+      "dimension" : "participle",
+      "finalIdentityAccuracy" : 0.6666666666666666,
+      "occurrenceWeight" : 65,
+      "occurrenceWeightedFinalIdentityAccuracy" : 0.6923076923076923,
+      "rawTagAccuracy" : 0.6666666666666666,
+      "value" : "participle"
+    }
+  ],
+  "limitations" : [
+    "Eight selected UD tokens are adversarial engineering fixtures, not a representative POS accuracy estimate.",
+    "German GSD lemmas are upstream annotations with known provenance limits; final identity results do not establish sense correctness.",
+    "NaturalLanguage behavior is OS-dependent and must be rerun after relevant macOS changes."
+  ],
+  "occurrenceWeightedFinalIdentityAccuracy" : 0.6666666666666666,
+  "policy" : {
+    "minimumLeadingProbability" : 0.65,
+    "minimumMargin" : 0.2
+  },
+  "rawTagAccuracy" : 0.5,
+  "schemaVersion" : 1,
+  "splitConsequences" : [
+    {
+      "consequence" : {
+        "denominatorDelta" : 0,
+        "erroneousExcludedMass" : 0,
+        "erroneousIncludedMass" : 0,
+        "goldFirstQuestion" : "en|bank|noun|",
+        "goldOccurrenceDenominator" : 115,
+        "goldSelectedKeys" : [
+          "en|bank|noun|",
+          "en|record|adjective|",
+          "en|record|verb|",
+          "en|run|verb|"
+        ],
+        "languageCode" : "en",
+        "predictedFirstQuestion" : "en|bank|noun|",
+        "predictedOccurrenceDenominator" : 115,
+        "predictedSelectedKeys" : [
+          "en|bank|noun|",
+          "en|recording|unknown|",
+          "en|record|noun|",
+          "en|run|verb|"
+        ],
+        "questionIdentityChanged" : false,
+        "selectedDeckSymmetricDifferenceCount" : 4
+      },
+      "evaluationSplit" : "adversarial"
+    },
+    {
+      "consequence" : {
+        "denominatorDelta" : 0,
+        "erroneousExcludedMass" : 0,
+        "erroneousIncludedMass" : 0,
+        "goldFirstQuestion" : "de|bank|noun|",
+        "goldOccurrenceDenominator" : 90,
+        "goldSelectedKeys" : [
+          "de|bank|noun|",
+          "de|geben|verb|",
+          "de|laufen|verb|"
+        ],
+        "languageCode" : "de",
+        "predictedFirstQuestion" : "de|bank|noun|",
+        "predictedOccurrenceDenominator" : 90,
+        "predictedSelectedKeys" : [
+          "de|bank|noun|",
+          "de|geben|verb|",
+          "de|laufen|unknown|"
+        ],
+        "questionIdentityChanged" : false,
+        "selectedDeckSymmetricDifferenceCount" : 2
+      },
+      "evaluationSplit" : "adversarial"
+    }
+  ],
+  "splitMergeSummaries" : [
+    {
+      "evaluationSplit" : "adversarial",
+      "extraPredictedIdentityCount" : 1,
+      "goldIdentityCount" : 3,
+      "languageCode" : "de",
+      "lemmaPOSSetMismatchCount" : 1,
+      "missingGoldIdentityCount" : 1,
+      "predictedIdentityCount" : 3
+    },
+    {
+      "evaluationSplit" : "adversarial",
+      "extraPredictedIdentityCount" : 2,
+      "goldIdentityCount" : 4,
+      "languageCode" : "en",
+      "lemmaPOSSetMismatchCount" : 2,
+      "missingGoldIdentityCount" : 2,
+      "predictedIdentityCount" : 4
+    }
+  ]
+}

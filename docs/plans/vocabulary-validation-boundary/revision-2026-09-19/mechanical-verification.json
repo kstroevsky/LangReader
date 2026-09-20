@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "base": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/revision-2026-09-19/base-plan.md",
+    "sha256": "0f85e0d18094eb2efccaa601e0c3f9dff59a6ab563fdc5c838bc30e1b21b1467"
+  },
+  "candidate": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/revision-2026-09-19/candidate-plan.md",
+    "sha256": "ee61a39745657e95dc6999bcda9bd15c0aa0b2d315221b65e8502be6b14fff9a"
+  },
+  "delta": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/revision-2026-09-19/delta.json",
+    "feedback_ids": [
+      "R-01-CANDIDATE-STATUS",
+      "R-02-FRESH-CONFIRMATION-ROUTE",
+      "R-03-STAGED-DIAGNOSTIC-MIGRATION",
+      "R-04-NARROW-CORE-SNAPSHOT",
+      "R-05-ARCHITECTURE-ENFORCEMENT",
+      "R-06-HUMAN-STUDY-BOUNDARY",
+      "R-07-VALIDATION-SUBSYSTEM-WORDING",
+      "R-08-FROZEN-PARITY-MANIFEST",
+      "R-08B-PARITY-MANIFEST-BASELINE",
+      "R-09-APP-CROSS-FORMAT-OWNERSHIP",
+      "R-10-TEMPORARY-MIGRATION-CONTROLS"
+    ]
+  },
+  "changed_sections": [
+    "LeafReader validation boundary and remaining-gates implementation plan / Decision and acceptance criteria",
+    "LeafReader validation boundary and remaining-gates implementation plan / Evidence preservation and parity",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Baseline checkpoint — no source changes",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 1 — target scaffold and boundary",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 2 — schemas and Core observation seam",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 3 — assessment, causal, and longitudinal runners",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 4 — POS and cross-format validation helpers",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 5 — enforcement, documentation, and stop",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction / 2A — move independent study schemas and tests",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction / 2B — introduce the narrow Core observation and parallel Validation evaluator",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction / 2C — prove old-versus-new A/B1/B2 and counterfactual parity",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction / 2D — switch the evaluator wrapper and script linkage",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction / 2E — remove the old Core experiment implementation",
+    "LeafReader validation boundary and remaining-gates implementation plan / Ownership classification",
+    "LeafReader validation boundary and remaining-gates implementation plan / Remaining scientific and release gates",
+    "LeafReader validation boundary and remaining-gates implementation plan / Sealed generator-lock compatibility checkpoint",
+    "LeafReader validation boundary and remaining-gates implementation plan / Status and authority",
+    "LeafReader validation boundary and remaining-gates implementation plan / Verification"
+  ],
+  "added_sections": [
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction / 2A — move independent study schemas and tests",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction / 2B — introduce the narrow Core observation and parallel Validation evaluator",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction / 2C — prove old-versus-new A/B1/B2 and counterfactual parity",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction / 2D — switch the evaluator wrapper and script linkage",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction / 2E — remove the old Core experiment implementation"
+  ],
+  "removed_sections": [
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 2 — schemas and Core observation seam"
+  ],
+  "allowed_sections": [
+    "LeafReader validation boundary and remaining-gates implementation plan / Decision and acceptance criteria",
+    "LeafReader validation boundary and remaining-gates implementation plan / Evidence preservation and parity",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence",
+    "LeafReader validation boundary and remaining-gates implementation plan / Ownership classification",
+    "LeafReader validation boundary and remaining-gates implementation plan / Remaining scientific and release gates",
+    "LeafReader validation boundary and remaining-gates implementation plan / Sealed generator-lock compatibility checkpoint",
+    "LeafReader validation boundary and remaining-gates implementation plan / Status and authority",
+    "LeafReader validation boundary and remaining-gates implementation plan / Verification"
+  ],
+  "contract_signal_deltas": {
+    "LeafReader validation boundary and remaining-gates implementation plan / Decision and acceptance criteria": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Evidence preservation and parity": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "004"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "1",
+        "2",
+        "3",
+        "5"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Baseline checkpoint — no source changes": {
+      "numeric_removed": [
+        "002"
+      ],
+      "numeric_added": [
+        "004"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 1 — target scaffold and boundary": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 3 — assessment, causal, and longitudinal runners": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 4 — POS and cross-format validation helpers": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 5 — enforcement, documentation, and stop": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Ownership classification": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Remaining scientific and release gates": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Sealed generator-lock compatibility checkpoint": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Status and authority": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Verification": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "2"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    }
+  },
+  "ledger_counts": {
+    "active": 62,
+    "deferred": 3,
+    "superseded": 3,
+    "other": 0
+  },
+  "base_ledger": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/revision-2026-09-19/base-ledger.json",
+  "errors": [],
+  "warnings": []
+}

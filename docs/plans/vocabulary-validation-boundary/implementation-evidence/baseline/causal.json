@@ -1,0 +1,4298 @@
+{
+  "interpretation" : "Development-only synthetic diagnostics. Bank contrasts diagnose numerical behavior but do not prove a causal failure mechanism, calibrate real learners, or change release acceptance.",
+  "manifest" : {
+    "b1SampleCounts" : [
+      512
+    ],
+    "b2SampleCounts" : [
+      512
+    ],
+    "b2ThetaScheme" : "independent-within-stratum-jitter-v1",
+    "dataRole" : "diagnostic-development",
+    "diagnosticComparisonRule" : "Retain all replicas and do not interpret an isolated contrast as causal proof.",
+    "documents" : 1,
+    "fixedBudget" : 80,
+    "fixedControlDeckSize" : 2,
+    "idiosyncraticFlipRate" : 0.12,
+    "itemResidualStandardDeviation" : 0.8,
+    "lemmas" : 20,
+    "readers" : 1,
+    "replicas" : 1,
+    "responseNoiseRate" : 0.12,
+    "scenarios" : [
+      "well-specified-rasch"
+    ],
+    "schemaVersion" : 1,
+    "seed" : 7,
+    "successDetailPolicy" : "retain-all-runs",
+    "targetCoverage" : 0.98,
+    "timingRepetitions" : 1
+  },
+  "replayControls" : [
+    {
+      "controlID" : "reader-0:document-0:cold-natural-to-oracle-informed-warm",
+      "destinationPrior" : "oracle-informed-warm",
+      "documentID" : "well-specified-rasch-document-0",
+      "evidencePathFingerprint" : "a319a50a539d2228",
+      "interpretation" : "Posterior comparison conditional on the fixed source question/evidence order and validation metadata; not an authentic destination-prior serving path.",
+      "questionCount" : 20,
+      "readerID" : "reader-0",
+      "replayCoverageLowerBound" : 0.9813196416866944,
+      "replayPosteriorFingerprint" : "90738d1b5e606197",
+      "replaySelectedKeys" : [
+        "en|word-00001|verb|",
+        "en|word-00004|noun|",
+        "en|word-00005|verb|",
+        "en|word-00006|noun|",
+        "en|word-00007|verb|",
+        "en|word-00008|noun|",
+        "en|word-00009|verb|",
+        "en|word-00011|verb|",
+        "en|word-00013|verb|",
+        "en|word-00017|verb|",
+        "en|word-00018|noun|"
+      ],
+      "sourcePath" : "cold-natural",
+      "sourcePosteriorFingerprint" : "58d7667a1305a29d"
+    },
+    {
+      "controlID" : "reader-0:document-0:oracle-informed-warm-natural-to-cold",
+      "destinationPrior" : "cold",
+      "documentID" : "well-specified-rasch-document-0",
+      "evidencePathFingerprint" : "6a0e6e96a5509c73",
+      "interpretation" : "Posterior comparison conditional on the fixed source question/evidence order and validation metadata; not an authentic destination-prior serving path.",
+      "questionCount" : 12,
+      "readerID" : "reader-0",
+      "replayCoverageLowerBound" : 0.9813196416866944,
+      "replayPosteriorFingerprint" : "1fe8853ec3b00cc7",
+      "replaySelectedKeys" : [
+        "en|word-00001|verb|",
+        "en|word-00004|noun|",
+        "en|word-00005|verb|",
+        "en|word-00006|noun|",
+        "en|word-00008|noun|",
+        "en|word-00009|verb|",
+        "en|word-00010|unknown|",
+        "en|word-00011|verb|",
+        "en|word-00012|noun|",
+        "en|word-00013|verb|",
+        "en|word-00014|noun|",
+        "en|word-00017|verb|",
+        "en|word-00018|noun|"
+      ],
+      "sourcePath" : "oracle-informed-warm-natural",
+      "sourcePosteriorFingerprint" : "51455f8f0e2b36ef"
+    }
+  ],
+  "retainedRunCounts" : {
+    "allRuns" : 1,
+    "detailedRuns" : 1,
+    "naturalFailures" : 0,
+    "naturalSuccesses" : 1
+  },
+  "runs" : [
+    {
+      "actualDifficultyVersion" : "synthetic-prior-plus-residual-clamped-v1",
+      "documentID" : "well-specified-rasch-document-0",
+      "fixedBudget" : {
+        "bankEvaluations" : [
+          {
+            "deckRole" : "production-selected",
+            "differenceFromProductionA" : 0,
+            "replica" : 0,
+            "result" : {
+              "coverageLowerBound" : 0.9813196416866944,
+              "kind" : "productionA",
+              "latentItemDrawFingerprint" : "a921c1ab204d93d9",
+              "sampleCount" : 512,
+              "targetMissProbability" : 0.048828125,
+              "thetaPositionFingerprint" : "c0cb43a5f2caa3e2",
+              "thetaPositionHistogram" : [
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 41
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 44
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 46
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 47
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 48
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 49
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 50
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 51
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 52
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 53
+                },
+                {
+                  "sampleCount" : 5,
+                  "thetaGridIndex" : 54
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 55
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 56
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 57
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 58
+                },
+                {
+                  "sampleCount" : 11,
+                  "thetaGridIndex" : 59
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 60
+                },
+                {
+                  "sampleCount" : 14,
+                  "thetaGridIndex" : 61
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 62
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 63
+                },
+                {
+                  "sampleCount" : 18,
+                  "thetaGridIndex" : 64
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 65
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 66
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 67
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 68
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 69
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 70
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 71
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 72
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 73
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 74
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 75
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 76
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 77
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 78
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 79
+                },
+                {
+                  "sampleCount" : 12,
+                  "thetaGridIndex" : 80
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 81
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 82
+                },
+                {
+                  "sampleCount" : 8,
+                  "thetaGridIndex" : 83
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 84
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 85
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 86
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 87
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 88
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 89
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 90
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 91
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 92
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 93
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 94
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 95
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 98
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 102
+                }
+              ],
+              "uniqueThetaPositionCount" : 54
+            }
+          },
+          {
+            "deckRole" : "frequency-fixed-control",
+            "differenceFromProductionA" : 0,
+            "replica" : 0,
+            "result" : {
+              "coverageLowerBound" : 0.7099628577670963,
+              "kind" : "productionA",
+              "latentItemDrawFingerprint" : "a921c1ab204d93d9",
+              "sampleCount" : 512,
+              "targetMissProbability" : 1,
+              "thetaPositionFingerprint" : "c0cb43a5f2caa3e2",
+              "thetaPositionHistogram" : [
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 41
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 44
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 46
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 47
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 48
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 49
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 50
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 51
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 52
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 53
+                },
+                {
+                  "sampleCount" : 5,
+                  "thetaGridIndex" : 54
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 55
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 56
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 57
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 58
+                },
+                {
+                  "sampleCount" : 11,
+                  "thetaGridIndex" : 59
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 60
+                },
+                {
+                  "sampleCount" : 14,
+                  "thetaGridIndex" : 61
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 62
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 63
+                },
+                {
+                  "sampleCount" : 18,
+                  "thetaGridIndex" : 64
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 65
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 66
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 67
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 68
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 69
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 70
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 71
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 72
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 73
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 74
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 75
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 76
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 77
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 78
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 79
+                },
+                {
+                  "sampleCount" : 12,
+                  "thetaGridIndex" : 80
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 81
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 82
+                },
+                {
+                  "sampleCount" : 8,
+                  "thetaGridIndex" : 83
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 84
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 85
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 86
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 87
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 88
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 89
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 90
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 91
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 92
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 93
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 94
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 95
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 98
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 102
+                }
+              ],
+              "uniqueThetaPositionCount" : 54
+            }
+          },
+          {
+            "deckRole" : "production-selected",
+            "differenceFromProductionA" : -0.028512125846624436,
+            "replica" : 0,
+            "result" : {
+              "coverageLowerBound" : 0.95280751584007,
+              "kind" : "independentLatentB1",
+              "latentItemDrawFingerprint" : "9f245668450291f6",
+              "sampleCount" : 512,
+              "targetMissProbability" : 0.056640625,
+              "thetaPositionFingerprint" : "c0cb43a5f2caa3e2",
+              "thetaPositionHistogram" : [
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 41
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 44
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 46
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 47
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 48
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 49
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 50
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 51
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 52
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 53
+                },
+                {
+                  "sampleCount" : 5,
+                  "thetaGridIndex" : 54
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 55
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 56
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 57
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 58
+                },
+                {
+                  "sampleCount" : 11,
+                  "thetaGridIndex" : 59
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 60
+                },
+                {
+                  "sampleCount" : 14,
+                  "thetaGridIndex" : 61
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 62
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 63
+                },
+                {
+                  "sampleCount" : 18,
+                  "thetaGridIndex" : 64
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 65
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 66
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 67
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 68
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 69
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 70
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 71
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 72
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 73
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 74
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 75
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 76
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 77
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 78
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 79
+                },
+                {
+                  "sampleCount" : 12,
+                  "thetaGridIndex" : 80
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 81
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 82
+                },
+                {
+                  "sampleCount" : 8,
+                  "thetaGridIndex" : 83
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 84
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 85
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 86
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 87
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 88
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 89
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 90
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 91
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 92
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 93
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 94
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 95
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 98
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 102
+                }
+              ],
+              "uniqueThetaPositionCount" : 54
+            }
+          },
+          {
+            "deckRole" : "frequency-fixed-control",
+            "differenceFromProductionA" : 0.0028402883985143568,
+            "replica" : 0,
+            "result" : {
+              "coverageLowerBound" : 0.7128031461656107,
+              "kind" : "independentLatentB1",
+              "latentItemDrawFingerprint" : "9f245668450291f6",
+              "sampleCount" : 512,
+              "targetMissProbability" : 1,
+              "thetaPositionFingerprint" : "c0cb43a5f2caa3e2",
+              "thetaPositionHistogram" : [
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 41
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 44
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 46
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 47
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 48
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 49
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 50
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 51
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 52
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 53
+                },
+                {
+                  "sampleCount" : 5,
+                  "thetaGridIndex" : 54
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 55
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 56
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 57
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 58
+                },
+                {
+                  "sampleCount" : 11,
+                  "thetaGridIndex" : 59
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 60
+                },
+                {
+                  "sampleCount" : 14,
+                  "thetaGridIndex" : 61
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 62
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 63
+                },
+                {
+                  "sampleCount" : 18,
+                  "thetaGridIndex" : 64
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 65
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 66
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 67
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 68
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 69
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 70
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 71
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 72
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 73
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 74
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 75
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 76
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 77
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 78
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 79
+                },
+                {
+                  "sampleCount" : 12,
+                  "thetaGridIndex" : 80
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 81
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 82
+                },
+                {
+                  "sampleCount" : 8,
+                  "thetaGridIndex" : 83
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 84
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 85
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 86
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 87
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 88
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 89
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 90
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 91
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 92
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 93
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 94
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 95
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 98
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 102
+                }
+              ],
+              "uniqueThetaPositionCount" : 54
+            }
+          },
+          {
+            "deckRole" : "production-selected",
+            "differenceFromMatchingB1" : 0,
+            "differenceFromProductionA" : -0.028512125846624436,
+            "replica" : 0,
+            "result" : {
+              "coverageLowerBound" : 0.95280751584007,
+              "kind" : "randomizedThetaAndLatentB2",
+              "latentItemDrawFingerprint" : "00eeeaacd7e0ff4b",
+              "sampleCount" : 512,
+              "targetMissProbability" : 0.06640625,
+              "thetaPositionFingerprint" : "03f9ac0ae261572d",
+              "thetaPositionHistogram" : [
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 42
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 45
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 46
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 47
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 48
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 49
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 50
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 51
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 52
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 53
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 54
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 55
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 56
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 57
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 58
+                },
+                {
+                  "sampleCount" : 11,
+                  "thetaGridIndex" : 59
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 60
+                },
+                {
+                  "sampleCount" : 14,
+                  "thetaGridIndex" : 61
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 62
+                },
+                {
+                  "sampleCount" : 18,
+                  "thetaGridIndex" : 63
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 64
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 65
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 66
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 67
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 68
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 69
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 70
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 71
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 72
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 73
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 74
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 75
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 76
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 77
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 78
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 79
+                },
+                {
+                  "sampleCount" : 12,
+                  "thetaGridIndex" : 80
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 81
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 82
+                },
+                {
+                  "sampleCount" : 8,
+                  "thetaGridIndex" : 83
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 84
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 85
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 86
+                },
+                {
+                  "sampleCount" : 5,
+                  "thetaGridIndex" : 87
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 88
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 89
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 90
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 91
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 92
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 93
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 94
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 96
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 97
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 103
+                }
+              ],
+              "uniqueThetaPositionCount" : 54
+            }
+          },
+          {
+            "deckRole" : "frequency-fixed-control",
+            "differenceFromMatchingB1" : -0.018680358313305723,
+            "differenceFromProductionA" : -0.015840069914791366,
+            "replica" : 0,
+            "result" : {
+              "coverageLowerBound" : 0.694122787852305,
+              "kind" : "randomizedThetaAndLatentB2",
+              "latentItemDrawFingerprint" : "00eeeaacd7e0ff4b",
+              "sampleCount" : 512,
+              "targetMissProbability" : 1,
+              "thetaPositionFingerprint" : "03f9ac0ae261572d",
+              "thetaPositionHistogram" : [
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 42
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 45
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 46
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 47
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 48
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 49
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 50
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 51
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 52
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 53
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 54
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 55
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 56
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 57
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 58
+                },
+                {
+                  "sampleCount" : 11,
+                  "thetaGridIndex" : 59
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 60
+                },
+                {
+                  "sampleCount" : 14,
+                  "thetaGridIndex" : 61
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 62
+                },
+                {
+                  "sampleCount" : 18,
+                  "thetaGridIndex" : 63
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 64
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 65
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 66
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 67
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 68
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 69
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 70
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 71
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 72
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 73
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 74
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 75
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 76
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 77
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 78
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 79
+                },
+                {
+                  "sampleCount" : 12,
+                  "thetaGridIndex" : 80
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 81
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 82
+                },
+                {
+                  "sampleCount" : 8,
+                  "thetaGridIndex" : 83
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 84
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 85
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 86
+                },
+                {
+                  "sampleCount" : 5,
+                  "thetaGridIndex" : 87
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 88
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 89
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 90
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 91
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 92
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 93
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 94
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 96
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 97
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 103
+                }
+              ],
+              "uniqueThetaPositionCount" : 54
+            }
+          }
+        ],
+        "conservativeCoverageLowerBound" : 0.9813196416866944,
+        "expectedCoverageAfterSelection" : 0.9817273605023404,
+        "expectedCurrentCoverage" : 0.7616409074311751,
+        "forensics" : {
+          "answeredEvidenceMass" : {
+            "reportedUnknown" : 171
+          },
+          "answeredMissedMass" : 171,
+          "assessableOccurrenceMass" : 9154,
+          "claimEligible" : true,
+          "excludedOccurrenceMass" : 0,
+          "largestMissedItemMass" : 171,
+          "missedMass" : 171,
+          "realizedProjectedCoverage" : 0.9813196416866944,
+          "skippedMissedMassWithinUnasked" : 0,
+          "targetShortfall" : 0,
+          "unaskedMissedMass" : 0
+        },
+        "items" : [
+          {
+            "actualSyntheticDifficulty" : -3.949674525125614,
+            "canonicalKey" : "en|word-00000|unknown|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -4,
+            "difficultyPriorStandardDeviation" : 0.35,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00000",
+            "effectiveDifficultyResidualAfterClamping" : 0.05032547487438599,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 13,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.9980323029165254,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 2000,
+            "potentialResponseDraw" : 0.4876448120578919,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : 2.345560435051566,
+            "canonicalKey" : "en|word-00001|verb|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : 3.1578947368421053,
+            "difficultyPriorStandardDeviation" : 0.354,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00001",
+            "effectiveDifficultyResidualAfterClamping" : -0.8123343017905391,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 9,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.8416834582820235,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 1133,
+            "potentialResponseDraw" : 0.6665113063719648,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : -3.452797241904399,
+            "canonicalKey" : "en|word-00002|noun|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -2.736842105263158,
+            "difficultyPriorStandardDeviation" : 0.358,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00002",
+            "effectiveDifficultyResidualAfterClamping" : -0.7159551366412411,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 2,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.9971749879642196,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 812,
+            "potentialResponseDraw" : 0.38056896011664143,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : -2.1067937419121545,
+            "canonicalKey" : "en|word-00003|verb|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -1.8947368421052633,
+            "difficultyPriorStandardDeviation" : 0.362,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00003",
+            "effectiveDifficultyResidualAfterClamping" : -0.21205689980689124,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 17,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.9956394004615894,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 642,
+            "potentialResponseDraw" : 0.4976116563285128,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : 2.206984620989846,
+            "canonicalKey" : "en|word-00004|noun|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : 2.7368421052631575,
+            "difficultyPriorStandardDeviation" : 0.366,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00004",
+            "effectiveDifficultyResidualAfterClamping" : -0.5298574842733115,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 7,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.872621486217364,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 534,
+            "potentialResponseDraw" : 0.006385387838729661,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : true,
+            "responseState" : "answered",
+            "truthKnown" : false
+          },
+          {
+            "actualSyntheticDifficulty" : -0.8029792183778385,
+            "canonicalKey" : "en|word-00005|verb|",
+            "classification" : "notSure",
+            "difficultyPriorMean" : -1.0526315789473686,
+            "difficultyPriorStandardDeviation" : 0.37,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00005",
+            "effectiveDifficultyResidualAfterClamping" : 0.2496523605695301,
+            "evidence" : "unsure",
+            "evidenceOrdinal" : 16,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.6135782218737358,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 460,
+            "potentialResponseDraw" : 0.04393377085286232,
+            "potentialResponseEvidence" : "unsure",
+            "potentialResponseMismatchOrUncertainty" : true,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : 2.437213170521307,
+            "canonicalKey" : "en|word-00006|noun|",
+            "classification" : "reportedUnknown",
+            "difficultyPriorMean" : 2.3157894736842106,
+            "difficultyPriorStandardDeviation" : 0.374,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00006",
+            "effectiveDifficultyResidualAfterClamping" : 0.12142369683709653,
+            "evidence" : "reportedUnknown",
+            "evidenceOrdinal" : 10,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.022867460821478024,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 406,
+            "potentialResponseDraw" : 0.8757301652747796,
+            "potentialResponseEvidence" : "reportedUnknown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : false
+          },
+          {
+            "actualSyntheticDifficulty" : -0.10074823081194334,
+            "canonicalKey" : "en|word-00007|verb|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : 0.21052631578947345,
+            "difficultyPriorStandardDeviation" : 0.378,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00007",
+            "effectiveDifficultyResidualAfterClamping" : -0.3112745466014168,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 11,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.978910271806336,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 363,
+            "potentialResponseDraw" : 0.41345324769337144,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : 1.749353944094389,
+            "canonicalKey" : "en|word-00008|noun|",
+            "classification" : "reportedUnknown",
+            "difficultyPriorMean" : 1.473684210526316,
+            "difficultyPriorStandardDeviation" : 0.382,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00008",
+            "effectiveDifficultyResidualAfterClamping" : 0.2756697335680731,
+            "evidence" : "reportedUnknown",
+            "evidenceOrdinal" : 6,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.04423816919232214,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 330,
+            "potentialResponseDraw" : 0.8466594116678173,
+            "potentialResponseEvidence" : "reportedUnknown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : false
+          },
+          {
+            "actualSyntheticDifficulty" : 0.4070014759321365,
+            "canonicalKey" : "en|word-00009|verb|",
+            "classification" : "reportedUnknown",
+            "difficultyPriorMean" : 0.6315789473684212,
+            "difficultyPriorStandardDeviation" : 0.386,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00009",
+            "effectiveDifficultyResidualAfterClamping" : -0.22457747143628476,
+            "evidence" : "reportedUnknown",
+            "evidenceOrdinal" : 5,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.08265741721078242,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 303,
+            "potentialResponseDraw" : 0.6283923596381488,
+            "potentialResponseEvidence" : "reportedUnknown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : false
+          },
+          {
+            "actualSyntheticDifficulty" : -1.2716290655906899,
+            "canonicalKey" : "en|word-00010|unknown|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -0.6315789473684212,
+            "difficultyPriorStandardDeviation" : 0.38999999999999996,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00010",
+            "effectiveDifficultyResidualAfterClamping" : -0.6400501182222686,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 4,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.989256668429056,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 280,
+            "potentialResponseDraw" : 0.13950006312729102,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : 0.7755347634860947,
+            "canonicalKey" : "en|word-00011|verb|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : 1.0526315789473681,
+            "difficultyPriorStandardDeviation" : 0.39399999999999996,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00011",
+            "effectiveDifficultyResidualAfterClamping" : -0.2770968154612734,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 12,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.9589331229826933,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 261,
+            "potentialResponseDraw" : 0.5058925039734358,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : -2.784460780841617,
+            "canonicalKey" : "en|word-00012|noun|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -3.1578947368421053,
+            "difficultyPriorStandardDeviation" : 0.39799999999999996,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00012",
+            "effectiveDifficultyResidualAfterClamping" : 0.37343395600048845,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 15,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.9975723482454474,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 244,
+            "potentialResponseDraw" : 0.2838942410219949,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : 3.6276853644686295,
+            "canonicalKey" : "en|word-00013|verb|",
+            "classification" : "reportedUnknown",
+            "difficultyPriorMean" : 3.578947368421052,
+            "difficultyPriorStandardDeviation" : 0.40199999999999997,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00013",
+            "effectiveDifficultyResidualAfterClamping" : 0.04873799604757734,
+            "evidence" : "reportedUnknown",
+            "evidenceOrdinal" : 8,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.00905513393555442,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 230,
+            "potentialResponseDraw" : 0.6978565009421742,
+            "potentialResponseEvidence" : "reportedUnknown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : false
+          },
+          {
+            "actualSyntheticDifficulty" : -2.1595523879735925,
+            "canonicalKey" : "en|word-00014|noun|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -2.3157894736842106,
+            "difficultyPriorStandardDeviation" : 0.40599999999999997,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00014",
+            "effectiveDifficultyResidualAfterClamping" : 0.15623708571061812,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 20,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.9965361264082799,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 217,
+            "potentialResponseDraw" : 0.6601095119102582,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : -1.5237524934162368,
+            "canonicalKey" : "en|word-00015|verb|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -1.473684210526316,
+            "difficultyPriorStandardDeviation" : 0.41,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00015",
+            "effectiveDifficultyResidualAfterClamping" : -0.05006828288992082,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 3,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.9942272335800125,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 206,
+            "potentialResponseDraw" : 0.1891528901739261,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : -3.520118209710712,
+            "canonicalKey" : "en|word-00016|noun|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -3.5789473684210527,
+            "difficultyPriorStandardDeviation" : 0.414,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00016",
+            "effectiveDifficultyResidualAfterClamping" : 0.05882915871034067,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 1,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.9978426074737282,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 196,
+            "potentialResponseDraw" : 0.3363263168347056,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : 2.2923721096644623,
+            "canonicalKey" : "en|word-00017|verb|",
+            "classification" : "reportedUnknown",
+            "difficultyPriorMean" : 1.8947368421052628,
+            "difficultyPriorStandardDeviation" : 0.418,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00017",
+            "effectiveDifficultyResidualAfterClamping" : 0.3976352675591994,
+            "evidence" : "reportedUnknown",
+            "evidenceOrdinal" : 14,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.03188081883947341,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 187,
+            "potentialResponseDraw" : 0.360406033010636,
+            "potentialResponseEvidence" : "reportedUnknown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : false
+          },
+          {
+            "actualSyntheticDifficulty" : 4.077291152032105,
+            "canonicalKey" : "en|word-00018|noun|",
+            "classification" : "reportedUnknown",
+            "difficultyPriorMean" : 4,
+            "difficultyPriorStandardDeviation" : 0.422,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00018",
+            "effectiveDifficultyResidualAfterClamping" : 0.0772911520321049,
+            "evidence" : "reportedUnknown",
+            "evidenceOrdinal" : 19,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.006994437944293678,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 179,
+            "potentialResponseDraw" : 0.8479072900578741,
+            "potentialResponseEvidence" : "reportedUnknown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : false
+          },
+          {
+            "actualSyntheticDifficulty" : -0.1510840223119504,
+            "canonicalKey" : "en|word-00019|verb|",
+            "classification" : "reportedUnknown",
+            "difficultyPriorMean" : -0.2105263157894739,
+            "difficultyPriorStandardDeviation" : 0.426,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00019",
+            "effectiveDifficultyResidualAfterClamping" : 0.0594422934775235,
+            "evidence" : "reportedUnknown",
+            "evidenceOrdinal" : 18,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.14239933544991965,
+            "missedUnknownOccurrenceMass" : 171,
+            "occurrenceCount" : 171,
+            "potentialResponseDraw" : 0.33335634707193607,
+            "potentialResponseEvidence" : "reportedUnknown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : false
+          }
+        ],
+        "mode" : "fixed-budget",
+        "naturalStopQuestionCount" : 20,
+        "naturalStopReasonBypassed" : "exhaustedCandidates",
+        "posteriorFingerprint" : "58d7667a1305a29d",
+        "questionCount" : 20,
+        "questions" : [
+          {
+            "canonicalKey" : "en|word-00016|noun|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 1,
+            "predictedKnownBeforeAnswer" : 0.8439864813931239,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00002|noun|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 2,
+            "predictedKnownBeforeAnswer" : 0.8282092813103343,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00015|verb|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 3,
+            "predictedKnownBeforeAnswer" : 0.7630696076009867,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00010|unknown|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 4,
+            "predictedKnownBeforeAnswer" : 0.7338550570664156,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00009|verb|",
+            "evidence" : "reportedUnknown",
+            "ordinal" : 5,
+            "predictedKnownBeforeAnswer" : 0.641543817736868,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00008|noun|",
+            "evidence" : "reportedUnknown",
+            "ordinal" : 6,
+            "predictedKnownBeforeAnswer" : 0.37704650270682966,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00004|noun|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 7,
+            "predictedKnownBeforeAnswer" : 0.16175699087381135,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00013|verb|",
+            "evidence" : "reportedUnknown",
+            "ordinal" : 8,
+            "predictedKnownBeforeAnswer" : 0.163257031988777,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00001|verb|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 9,
+            "predictedKnownBeforeAnswer" : 0.17287626610608026,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00006|noun|",
+            "evidence" : "reportedUnknown",
+            "ordinal" : 10,
+            "predictedKnownBeforeAnswer" : 0.37162621251274325,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00007|verb|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 11,
+            "predictedKnownBeforeAnswer" : 0.6413931249696729,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00011|verb|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 12,
+            "predictedKnownBeforeAnswer" : 0.5665333591605054,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00000|unknown|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 13,
+            "predictedKnownBeforeAnswer" : 0.9450433780037959,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00017|verb|",
+            "evidence" : "reportedUnknown",
+            "ordinal" : 14,
+            "predictedKnownBeforeAnswer" : 0.48611499896690313,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00012|noun|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 15,
+            "predictedKnown" : true,
+            "predictedKnownBeforeAnswer" : 0.9351119145449512,
+            "selectionType" : "tailValidation",
+            "wasValidation" : true
+          },
+          {
+            "canonicalKey" : "en|word-00005|verb|",
+            "evidence" : "unsure",
+            "ordinal" : 16,
+            "predictedKnownBeforeAnswer" : 0.8554631306621358,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00003|verb|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 17,
+            "predictedKnownBeforeAnswer" : 0.8977651674272277,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00019|verb|",
+            "evidence" : "reportedUnknown",
+            "ordinal" : 18,
+            "predictedKnownBeforeAnswer" : 0.7630816814104491,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00018|noun|",
+            "evidence" : "reportedUnknown",
+            "ordinal" : 19,
+            "predictedKnownBeforeAnswer" : 0.11614025066509419,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00014|noun|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 20,
+            "predictedKnown" : true,
+            "predictedKnownBeforeAnswer" : 0.898967006741281,
+            "selectionType" : "tailValidation",
+            "wasValidation" : true
+          }
+        ],
+        "reachedRequestedBudget" : false,
+        "realizedProjectedCoverage" : 0.9813196416866944,
+        "requestedBudget" : 80,
+        "selectedKeys" : [
+          "en|word-00001|verb|",
+          "en|word-00002|noun|",
+          "en|word-00003|verb|",
+          "en|word-00004|noun|",
+          "en|word-00005|verb|",
+          "en|word-00006|noun|",
+          "en|word-00007|verb|",
+          "en|word-00008|noun|",
+          "en|word-00009|verb|",
+          "en|word-00013|verb|",
+          "en|word-00017|verb|",
+          "en|word-00018|noun|"
+        ],
+        "snapshotFingerprint" : "67b35c7a40409cc4",
+        "stopReason" : "exhaustedCandidates",
+        "targetShortfall" : 0,
+        "unreachableReason" : "candidate-exhaustion"
+      },
+      "inventoryFingerprint" : "d57031f381434d12",
+      "natural" : {
+        "bankEvaluations" : [
+          {
+            "deckRole" : "production-selected",
+            "differenceFromProductionA" : 0,
+            "replica" : 0,
+            "result" : {
+              "coverageLowerBound" : 0.9813196416866944,
+              "kind" : "productionA",
+              "latentItemDrawFingerprint" : "a921c1ab204d93d9",
+              "sampleCount" : 512,
+              "targetMissProbability" : 0.048828125,
+              "thetaPositionFingerprint" : "c0cb43a5f2caa3e2",
+              "thetaPositionHistogram" : [
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 41
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 44
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 46
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 47
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 48
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 49
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 50
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 51
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 52
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 53
+                },
+                {
+                  "sampleCount" : 5,
+                  "thetaGridIndex" : 54
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 55
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 56
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 57
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 58
+                },
+                {
+                  "sampleCount" : 11,
+                  "thetaGridIndex" : 59
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 60
+                },
+                {
+                  "sampleCount" : 14,
+                  "thetaGridIndex" : 61
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 62
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 63
+                },
+                {
+                  "sampleCount" : 18,
+                  "thetaGridIndex" : 64
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 65
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 66
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 67
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 68
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 69
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 70
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 71
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 72
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 73
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 74
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 75
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 76
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 77
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 78
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 79
+                },
+                {
+                  "sampleCount" : 12,
+                  "thetaGridIndex" : 80
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 81
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 82
+                },
+                {
+                  "sampleCount" : 8,
+                  "thetaGridIndex" : 83
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 84
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 85
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 86
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 87
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 88
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 89
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 90
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 91
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 92
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 93
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 94
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 95
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 98
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 102
+                }
+              ],
+              "uniqueThetaPositionCount" : 54
+            }
+          },
+          {
+            "deckRole" : "frequency-fixed-control",
+            "differenceFromProductionA" : 0,
+            "replica" : 0,
+            "result" : {
+              "coverageLowerBound" : 0.7099628577670963,
+              "kind" : "productionA",
+              "latentItemDrawFingerprint" : "a921c1ab204d93d9",
+              "sampleCount" : 512,
+              "targetMissProbability" : 1,
+              "thetaPositionFingerprint" : "c0cb43a5f2caa3e2",
+              "thetaPositionHistogram" : [
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 41
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 44
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 46
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 47
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 48
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 49
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 50
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 51
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 52
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 53
+                },
+                {
+                  "sampleCount" : 5,
+                  "thetaGridIndex" : 54
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 55
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 56
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 57
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 58
+                },
+                {
+                  "sampleCount" : 11,
+                  "thetaGridIndex" : 59
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 60
+                },
+                {
+                  "sampleCount" : 14,
+                  "thetaGridIndex" : 61
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 62
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 63
+                },
+                {
+                  "sampleCount" : 18,
+                  "thetaGridIndex" : 64
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 65
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 66
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 67
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 68
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 69
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 70
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 71
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 72
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 73
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 74
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 75
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 76
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 77
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 78
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 79
+                },
+                {
+                  "sampleCount" : 12,
+                  "thetaGridIndex" : 80
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 81
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 82
+                },
+                {
+                  "sampleCount" : 8,
+                  "thetaGridIndex" : 83
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 84
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 85
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 86
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 87
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 88
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 89
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 90
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 91
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 92
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 93
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 94
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 95
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 98
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 102
+                }
+              ],
+              "uniqueThetaPositionCount" : 54
+            }
+          },
+          {
+            "deckRole" : "production-selected",
+            "differenceFromProductionA" : -0.028512125846624436,
+            "replica" : 0,
+            "result" : {
+              "coverageLowerBound" : 0.95280751584007,
+              "kind" : "independentLatentB1",
+              "latentItemDrawFingerprint" : "29f97343e718d7ae",
+              "sampleCount" : 512,
+              "targetMissProbability" : 0.080078125,
+              "thetaPositionFingerprint" : "c0cb43a5f2caa3e2",
+              "thetaPositionHistogram" : [
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 41
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 44
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 46
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 47
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 48
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 49
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 50
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 51
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 52
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 53
+                },
+                {
+                  "sampleCount" : 5,
+                  "thetaGridIndex" : 54
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 55
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 56
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 57
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 58
+                },
+                {
+                  "sampleCount" : 11,
+                  "thetaGridIndex" : 59
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 60
+                },
+                {
+                  "sampleCount" : 14,
+                  "thetaGridIndex" : 61
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 62
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 63
+                },
+                {
+                  "sampleCount" : 18,
+                  "thetaGridIndex" : 64
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 65
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 66
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 67
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 68
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 69
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 70
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 71
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 72
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 73
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 74
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 75
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 76
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 77
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 78
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 79
+                },
+                {
+                  "sampleCount" : 12,
+                  "thetaGridIndex" : 80
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 81
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 82
+                },
+                {
+                  "sampleCount" : 8,
+                  "thetaGridIndex" : 83
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 84
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 85
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 86
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 87
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 88
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 89
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 90
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 91
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 92
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 93
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 94
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 95
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 98
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 102
+                }
+              ],
+              "uniqueThetaPositionCount" : 54
+            }
+          },
+          {
+            "deckRole" : "frequency-fixed-control",
+            "differenceFromProductionA" : -0.015840069914791366,
+            "replica" : 0,
+            "result" : {
+              "coverageLowerBound" : 0.694122787852305,
+              "kind" : "independentLatentB1",
+              "latentItemDrawFingerprint" : "29f97343e718d7ae",
+              "sampleCount" : 512,
+              "targetMissProbability" : 1,
+              "thetaPositionFingerprint" : "c0cb43a5f2caa3e2",
+              "thetaPositionHistogram" : [
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 41
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 44
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 46
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 47
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 48
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 49
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 50
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 51
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 52
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 53
+                },
+                {
+                  "sampleCount" : 5,
+                  "thetaGridIndex" : 54
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 55
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 56
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 57
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 58
+                },
+                {
+                  "sampleCount" : 11,
+                  "thetaGridIndex" : 59
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 60
+                },
+                {
+                  "sampleCount" : 14,
+                  "thetaGridIndex" : 61
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 62
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 63
+                },
+                {
+                  "sampleCount" : 18,
+                  "thetaGridIndex" : 64
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 65
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 66
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 67
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 68
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 69
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 70
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 71
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 72
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 73
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 74
+                },
+                {
+                  "sampleCount" : 19,
+                  "thetaGridIndex" : 75
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 76
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 77
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 78
+                },
+                {
+                  "sampleCount" : 13,
+                  "thetaGridIndex" : 79
+                },
+                {
+                  "sampleCount" : 12,
+                  "thetaGridIndex" : 80
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 81
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 82
+                },
+                {
+                  "sampleCount" : 8,
+                  "thetaGridIndex" : 83
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 84
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 85
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 86
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 87
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 88
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 89
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 90
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 91
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 92
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 93
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 94
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 95
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 98
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 102
+                }
+              ],
+              "uniqueThetaPositionCount" : 54
+            }
+          },
+          {
+            "deckRole" : "production-selected",
+            "differenceFromMatchingB1" : 0.006008302381472541,
+            "differenceFromProductionA" : -0.022503823465151895,
+            "replica" : 0,
+            "result" : {
+              "coverageLowerBound" : 0.9588158182215425,
+              "kind" : "randomizedThetaAndLatentB2",
+              "latentItemDrawFingerprint" : "df3aabf7d21d9292",
+              "sampleCount" : 512,
+              "targetMissProbability" : 0.064453125,
+              "thetaPositionFingerprint" : "d43471856f124878",
+              "thetaPositionHistogram" : [
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 42
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 44
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 46
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 47
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 48
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 49
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 50
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 51
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 52
+                },
+                {
+                  "sampleCount" : 5,
+                  "thetaGridIndex" : 53
+                },
+                {
+                  "sampleCount" : 5,
+                  "thetaGridIndex" : 54
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 55
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 56
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 57
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 58
+                },
+                {
+                  "sampleCount" : 11,
+                  "thetaGridIndex" : 59
+                },
+                {
+                  "sampleCount" : 12,
+                  "thetaGridIndex" : 60
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 61
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 62
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 63
+                },
+                {
+                  "sampleCount" : 18,
+                  "thetaGridIndex" : 64
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 65
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 66
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 67
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 68
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 69
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 70
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 71
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 72
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 73
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 74
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 75
+                },
+                {
+                  "sampleCount" : 18,
+                  "thetaGridIndex" : 76
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 77
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 78
+                },
+                {
+                  "sampleCount" : 14,
+                  "thetaGridIndex" : 79
+                },
+                {
+                  "sampleCount" : 11,
+                  "thetaGridIndex" : 80
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 81
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 82
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 83
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 84
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 85
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 86
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 87
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 88
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 89
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 90
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 91
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 92
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 93
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 94
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 95
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 98
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 100
+                }
+              ],
+              "uniqueThetaPositionCount" : 54
+            }
+          },
+          {
+            "deckRole" : "frequency-fixed-control",
+            "differenceFromMatchingB1" : 0.018680358313305723,
+            "differenceFromProductionA" : 0.0028402883985143568,
+            "replica" : 0,
+            "result" : {
+              "coverageLowerBound" : 0.7128031461656107,
+              "kind" : "randomizedThetaAndLatentB2",
+              "latentItemDrawFingerprint" : "df3aabf7d21d9292",
+              "sampleCount" : 512,
+              "targetMissProbability" : 1,
+              "thetaPositionFingerprint" : "d43471856f124878",
+              "thetaPositionHistogram" : [
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 42
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 44
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 46
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 47
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 48
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 49
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 50
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 51
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 52
+                },
+                {
+                  "sampleCount" : 5,
+                  "thetaGridIndex" : 53
+                },
+                {
+                  "sampleCount" : 5,
+                  "thetaGridIndex" : 54
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 55
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 56
+                },
+                {
+                  "sampleCount" : 9,
+                  "thetaGridIndex" : 57
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 58
+                },
+                {
+                  "sampleCount" : 11,
+                  "thetaGridIndex" : 59
+                },
+                {
+                  "sampleCount" : 12,
+                  "thetaGridIndex" : 60
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 61
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 62
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 63
+                },
+                {
+                  "sampleCount" : 18,
+                  "thetaGridIndex" : 64
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 65
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 66
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 67
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 68
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 69
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 70
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 71
+                },
+                {
+                  "sampleCount" : 22,
+                  "thetaGridIndex" : 72
+                },
+                {
+                  "sampleCount" : 20,
+                  "thetaGridIndex" : 73
+                },
+                {
+                  "sampleCount" : 21,
+                  "thetaGridIndex" : 74
+                },
+                {
+                  "sampleCount" : 17,
+                  "thetaGridIndex" : 75
+                },
+                {
+                  "sampleCount" : 18,
+                  "thetaGridIndex" : 76
+                },
+                {
+                  "sampleCount" : 16,
+                  "thetaGridIndex" : 77
+                },
+                {
+                  "sampleCount" : 15,
+                  "thetaGridIndex" : 78
+                },
+                {
+                  "sampleCount" : 14,
+                  "thetaGridIndex" : 79
+                },
+                {
+                  "sampleCount" : 11,
+                  "thetaGridIndex" : 80
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 81
+                },
+                {
+                  "sampleCount" : 10,
+                  "thetaGridIndex" : 82
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 83
+                },
+                {
+                  "sampleCount" : 7,
+                  "thetaGridIndex" : 84
+                },
+                {
+                  "sampleCount" : 6,
+                  "thetaGridIndex" : 85
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 86
+                },
+                {
+                  "sampleCount" : 4,
+                  "thetaGridIndex" : 87
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 88
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 89
+                },
+                {
+                  "sampleCount" : 2,
+                  "thetaGridIndex" : 90
+                },
+                {
+                  "sampleCount" : 3,
+                  "thetaGridIndex" : 91
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 92
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 93
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 94
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 95
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 98
+                },
+                {
+                  "sampleCount" : 1,
+                  "thetaGridIndex" : 100
+                }
+              ],
+              "uniqueThetaPositionCount" : 54
+            }
+          }
+        ],
+        "conservativeCoverageLowerBound" : 0.9813196416866944,
+        "expectedCoverageAfterSelection" : 0.9817273605023404,
+        "expectedCurrentCoverage" : 0.7616409074311751,
+        "forensics" : {
+          "answeredEvidenceMass" : {
+            "reportedUnknown" : 171
+          },
+          "answeredMissedMass" : 171,
+          "assessableOccurrenceMass" : 9154,
+          "claimEligible" : true,
+          "excludedOccurrenceMass" : 0,
+          "largestMissedItemMass" : 171,
+          "missedMass" : 171,
+          "realizedProjectedCoverage" : 0.9813196416866944,
+          "skippedMissedMassWithinUnasked" : 0,
+          "targetShortfall" : 0,
+          "unaskedMissedMass" : 0
+        },
+        "items" : [
+          {
+            "actualSyntheticDifficulty" : -3.949674525125614,
+            "canonicalKey" : "en|word-00000|unknown|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -4,
+            "difficultyPriorStandardDeviation" : 0.35,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00000",
+            "effectiveDifficultyResidualAfterClamping" : 0.05032547487438599,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 13,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.9980323029165254,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 2000,
+            "potentialResponseDraw" : 0.4876448120578919,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : 2.345560435051566,
+            "canonicalKey" : "en|word-00001|verb|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : 3.1578947368421053,
+            "difficultyPriorStandardDeviation" : 0.354,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00001",
+            "effectiveDifficultyResidualAfterClamping" : -0.8123343017905391,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 9,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.8416834582820235,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 1133,
+            "potentialResponseDraw" : 0.6665113063719648,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : -3.452797241904399,
+            "canonicalKey" : "en|word-00002|noun|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -2.736842105263158,
+            "difficultyPriorStandardDeviation" : 0.358,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00002",
+            "effectiveDifficultyResidualAfterClamping" : -0.7159551366412411,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 2,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.9971749879642196,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 812,
+            "potentialResponseDraw" : 0.38056896011664143,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : -2.1067937419121545,
+            "canonicalKey" : "en|word-00003|verb|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -1.8947368421052633,
+            "difficultyPriorStandardDeviation" : 0.362,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00003",
+            "effectiveDifficultyResidualAfterClamping" : -0.21205689980689124,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 17,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.9956394004615894,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 642,
+            "potentialResponseDraw" : 0.4976116563285128,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : 2.206984620989846,
+            "canonicalKey" : "en|word-00004|noun|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : 2.7368421052631575,
+            "difficultyPriorStandardDeviation" : 0.366,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00004",
+            "effectiveDifficultyResidualAfterClamping" : -0.5298574842733115,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 7,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.872621486217364,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 534,
+            "potentialResponseDraw" : 0.006385387838729661,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : true,
+            "responseState" : "answered",
+            "truthKnown" : false
+          },
+          {
+            "actualSyntheticDifficulty" : -0.8029792183778385,
+            "canonicalKey" : "en|word-00005|verb|",
+            "classification" : "notSure",
+            "difficultyPriorMean" : -1.0526315789473686,
+            "difficultyPriorStandardDeviation" : 0.37,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00005",
+            "effectiveDifficultyResidualAfterClamping" : 0.2496523605695301,
+            "evidence" : "unsure",
+            "evidenceOrdinal" : 16,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.6135782218737358,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 460,
+            "potentialResponseDraw" : 0.04393377085286232,
+            "potentialResponseEvidence" : "unsure",
+            "potentialResponseMismatchOrUncertainty" : true,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : 2.437213170521307,
+            "canonicalKey" : "en|word-00006|noun|",
+            "classification" : "reportedUnknown",
+            "difficultyPriorMean" : 2.3157894736842106,
+            "difficultyPriorStandardDeviation" : 0.374,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00006",
+            "effectiveDifficultyResidualAfterClamping" : 0.12142369683709653,
+            "evidence" : "reportedUnknown",
+            "evidenceOrdinal" : 10,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.022867460821478024,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 406,
+            "potentialResponseDraw" : 0.8757301652747796,
+            "potentialResponseEvidence" : "reportedUnknown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : false
+          },
+          {
+            "actualSyntheticDifficulty" : -0.10074823081194334,
+            "canonicalKey" : "en|word-00007|verb|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : 0.21052631578947345,
+            "difficultyPriorStandardDeviation" : 0.378,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00007",
+            "effectiveDifficultyResidualAfterClamping" : -0.3112745466014168,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 11,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.978910271806336,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 363,
+            "potentialResponseDraw" : 0.41345324769337144,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : 1.749353944094389,
+            "canonicalKey" : "en|word-00008|noun|",
+            "classification" : "reportedUnknown",
+            "difficultyPriorMean" : 1.473684210526316,
+            "difficultyPriorStandardDeviation" : 0.382,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00008",
+            "effectiveDifficultyResidualAfterClamping" : 0.2756697335680731,
+            "evidence" : "reportedUnknown",
+            "evidenceOrdinal" : 6,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.04423816919232214,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 330,
+            "potentialResponseDraw" : 0.8466594116678173,
+            "potentialResponseEvidence" : "reportedUnknown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : false
+          },
+          {
+            "actualSyntheticDifficulty" : 0.4070014759321365,
+            "canonicalKey" : "en|word-00009|verb|",
+            "classification" : "reportedUnknown",
+            "difficultyPriorMean" : 0.6315789473684212,
+            "difficultyPriorStandardDeviation" : 0.386,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00009",
+            "effectiveDifficultyResidualAfterClamping" : -0.22457747143628476,
+            "evidence" : "reportedUnknown",
+            "evidenceOrdinal" : 5,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.08265741721078242,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 303,
+            "potentialResponseDraw" : 0.6283923596381488,
+            "potentialResponseEvidence" : "reportedUnknown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : false
+          },
+          {
+            "actualSyntheticDifficulty" : -1.2716290655906899,
+            "canonicalKey" : "en|word-00010|unknown|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -0.6315789473684212,
+            "difficultyPriorStandardDeviation" : 0.38999999999999996,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00010",
+            "effectiveDifficultyResidualAfterClamping" : -0.6400501182222686,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 4,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.989256668429056,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 280,
+            "potentialResponseDraw" : 0.13950006312729102,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : 0.7755347634860947,
+            "canonicalKey" : "en|word-00011|verb|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : 1.0526315789473681,
+            "difficultyPriorStandardDeviation" : 0.39399999999999996,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00011",
+            "effectiveDifficultyResidualAfterClamping" : -0.2770968154612734,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 12,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.9589331229826933,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 261,
+            "potentialResponseDraw" : 0.5058925039734358,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : -2.784460780841617,
+            "canonicalKey" : "en|word-00012|noun|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -3.1578947368421053,
+            "difficultyPriorStandardDeviation" : 0.39799999999999996,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00012",
+            "effectiveDifficultyResidualAfterClamping" : 0.37343395600048845,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 15,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.9975723482454474,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 244,
+            "potentialResponseDraw" : 0.2838942410219949,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : 3.6276853644686295,
+            "canonicalKey" : "en|word-00013|verb|",
+            "classification" : "reportedUnknown",
+            "difficultyPriorMean" : 3.578947368421052,
+            "difficultyPriorStandardDeviation" : 0.40199999999999997,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00013",
+            "effectiveDifficultyResidualAfterClamping" : 0.04873799604757734,
+            "evidence" : "reportedUnknown",
+            "evidenceOrdinal" : 8,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.00905513393555442,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 230,
+            "potentialResponseDraw" : 0.6978565009421742,
+            "potentialResponseEvidence" : "reportedUnknown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : false
+          },
+          {
+            "actualSyntheticDifficulty" : -2.1595523879735925,
+            "canonicalKey" : "en|word-00014|noun|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -2.3157894736842106,
+            "difficultyPriorStandardDeviation" : 0.40599999999999997,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00014",
+            "effectiveDifficultyResidualAfterClamping" : 0.15623708571061812,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 20,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.9965361264082799,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 217,
+            "potentialResponseDraw" : 0.6601095119102582,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : -1.5237524934162368,
+            "canonicalKey" : "en|word-00015|verb|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -1.473684210526316,
+            "difficultyPriorStandardDeviation" : 0.41,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00015",
+            "effectiveDifficultyResidualAfterClamping" : -0.05006828288992082,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 3,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.9942272335800125,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 206,
+            "potentialResponseDraw" : 0.1891528901739261,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : -3.520118209710712,
+            "canonicalKey" : "en|word-00016|noun|",
+            "classification" : "verifiedKnown",
+            "difficultyPriorMean" : -3.5789473684210527,
+            "difficultyPriorStandardDeviation" : 0.414,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00016",
+            "effectiveDifficultyResidualAfterClamping" : 0.05882915871034067,
+            "evidence" : "verifiedKnown",
+            "evidenceOrdinal" : 1,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.9978426074737282,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 196,
+            "potentialResponseDraw" : 0.3363263168347056,
+            "potentialResponseEvidence" : "verifiedKnown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : true
+          },
+          {
+            "actualSyntheticDifficulty" : 2.2923721096644623,
+            "canonicalKey" : "en|word-00017|verb|",
+            "classification" : "reportedUnknown",
+            "difficultyPriorMean" : 1.8947368421052628,
+            "difficultyPriorStandardDeviation" : 0.418,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00017",
+            "effectiveDifficultyResidualAfterClamping" : 0.3976352675591994,
+            "evidence" : "reportedUnknown",
+            "evidenceOrdinal" : 14,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.03188081883947341,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 187,
+            "potentialResponseDraw" : 0.360406033010636,
+            "potentialResponseEvidence" : "reportedUnknown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : false
+          },
+          {
+            "actualSyntheticDifficulty" : 4.077291152032105,
+            "canonicalKey" : "en|word-00018|noun|",
+            "classification" : "reportedUnknown",
+            "difficultyPriorMean" : 4,
+            "difficultyPriorStandardDeviation" : 0.422,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00018",
+            "effectiveDifficultyResidualAfterClamping" : 0.0772911520321049,
+            "evidence" : "reportedUnknown",
+            "evidenceOrdinal" : 19,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : true,
+            "knownProbability" : 0.006994437944293678,
+            "missedUnknownOccurrenceMass" : 0,
+            "occurrenceCount" : 179,
+            "potentialResponseDraw" : 0.8479072900578741,
+            "potentialResponseEvidence" : "reportedUnknown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : false
+          },
+          {
+            "actualSyntheticDifficulty" : -0.1510840223119504,
+            "canonicalKey" : "en|word-00019|verb|",
+            "classification" : "reportedUnknown",
+            "difficultyPriorMean" : -0.2105263157894739,
+            "difficultyPriorStandardDeviation" : 0.426,
+            "difficultySource" : "rankedFrequency",
+            "difficultyVersion" : "synthetic-uncertain-v3",
+            "displayLemma" : "word-00019",
+            "effectiveDifficultyResidualAfterClamping" : 0.0594422934775235,
+            "evidence" : "reportedUnknown",
+            "evidenceOrdinal" : 18,
+            "idiosyncraticFlipObserved" : false,
+            "isExcluded" : false,
+            "isSelected" : false,
+            "knownProbability" : 0.14239933544991965,
+            "missedUnknownOccurrenceMass" : 171,
+            "occurrenceCount" : 171,
+            "potentialResponseDraw" : 0.33335634707193607,
+            "potentialResponseEvidence" : "reportedUnknown",
+            "potentialResponseMismatchOrUncertainty" : false,
+            "responseState" : "answered",
+            "truthKnown" : false
+          }
+        ],
+        "mode" : "natural",
+        "naturalStopQuestionCount" : 20,
+        "posteriorFingerprint" : "58d7667a1305a29d",
+        "questionCount" : 20,
+        "questions" : [
+          {
+            "canonicalKey" : "en|word-00016|noun|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 1,
+            "predictedKnownBeforeAnswer" : 0.8439864813931239,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00002|noun|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 2,
+            "predictedKnownBeforeAnswer" : 0.8282092813103343,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00015|verb|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 3,
+            "predictedKnownBeforeAnswer" : 0.7630696076009867,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00010|unknown|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 4,
+            "predictedKnownBeforeAnswer" : 0.7338550570664156,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00009|verb|",
+            "evidence" : "reportedUnknown",
+            "ordinal" : 5,
+            "predictedKnownBeforeAnswer" : 0.641543817736868,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00008|noun|",
+            "evidence" : "reportedUnknown",
+            "ordinal" : 6,
+            "predictedKnownBeforeAnswer" : 0.37704650270682966,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00004|noun|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 7,
+            "predictedKnownBeforeAnswer" : 0.16175699087381135,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00013|verb|",
+            "evidence" : "reportedUnknown",
+            "ordinal" : 8,
+            "predictedKnownBeforeAnswer" : 0.163257031988777,
+            "selectionType" : "initialCalibration",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00001|verb|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 9,
+            "predictedKnownBeforeAnswer" : 0.17287626610608026,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00006|noun|",
+            "evidence" : "reportedUnknown",
+            "ordinal" : 10,
+            "predictedKnownBeforeAnswer" : 0.37162621251274325,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00007|verb|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 11,
+            "predictedKnownBeforeAnswer" : 0.6413931249696729,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00011|verb|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 12,
+            "predictedKnownBeforeAnswer" : 0.5665333591605054,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00000|unknown|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 13,
+            "predictedKnownBeforeAnswer" : 0.9450433780037959,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00017|verb|",
+            "evidence" : "reportedUnknown",
+            "ordinal" : 14,
+            "predictedKnownBeforeAnswer" : 0.48611499896690313,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00012|noun|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 15,
+            "predictedKnown" : true,
+            "predictedKnownBeforeAnswer" : 0.9351119145449512,
+            "selectionType" : "tailValidation",
+            "wasValidation" : true
+          },
+          {
+            "canonicalKey" : "en|word-00005|verb|",
+            "evidence" : "unsure",
+            "ordinal" : 16,
+            "predictedKnownBeforeAnswer" : 0.8554631306621358,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00003|verb|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 17,
+            "predictedKnownBeforeAnswer" : 0.8977651674272277,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00019|verb|",
+            "evidence" : "reportedUnknown",
+            "ordinal" : 18,
+            "predictedKnownBeforeAnswer" : 0.7630816814104491,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00018|noun|",
+            "evidence" : "reportedUnknown",
+            "ordinal" : 19,
+            "predictedKnownBeforeAnswer" : 0.11614025066509419,
+            "selectionType" : "adaptiveLoss",
+            "wasValidation" : false
+          },
+          {
+            "canonicalKey" : "en|word-00014|noun|",
+            "evidence" : "verifiedKnown",
+            "ordinal" : 20,
+            "predictedKnown" : true,
+            "predictedKnownBeforeAnswer" : 0.898967006741281,
+            "selectionType" : "tailValidation",
+            "wasValidation" : true
+          }
+        ],
+        "realizedProjectedCoverage" : 0.9813196416866944,
+        "selectedKeys" : [
+          "en|word-00001|verb|",
+          "en|word-00002|noun|",
+          "en|word-00003|verb|",
+          "en|word-00004|noun|",
+          "en|word-00005|verb|",
+          "en|word-00006|noun|",
+          "en|word-00007|verb|",
+          "en|word-00008|noun|",
+          "en|word-00009|verb|",
+          "en|word-00013|verb|",
+          "en|word-00017|verb|",
+          "en|word-00018|noun|"
+        ],
+        "snapshotFingerprint" : "67b35c7a40409cc4",
+        "stopReason" : "exhaustedCandidates",
+        "targetShortfall" : 0
+      },
+      "potentialResponseFingerprint" : "d2b7c99b39d42493",
+      "readerID" : "reader-0",
+      "runID" : "well-specified-rasch:reader-0:document-0",
+      "scenario" : "well-specified-rasch",
+      "streamSeeds" : {
+        "diagnosticSuccessSampling" : 8045833984822558792,
+        "documentConstruction" : 7853927265992951714,
+        "itemResiduals" : 922602544283863494,
+        "learnerTheta" : 9021429021309020497,
+        "learnerTruth" : 9566035131437754692,
+        "potentialResponses" : 2275578400269478631,
+        "productionBankA" : 3978323514577636041
+      },
+      "trueTheta" : -0.07392266858874275,
+      "truthFingerprint" : "f59c9df2e1811abd"
+    }
+  ],
+  "schemaVersion" : 1,
+  "source" : {
+    "algorithmVersion" : 3,
+    "dirtyStatusFingerprint" : "cbf29ce484222325",
+    "dirtyTree" : false,
+    "knowledgeModelVersion" : "rasch-knowledge-v1",
+    "observationModelVersion" : "categorical-evidence-v1",
+    "revision" : "b2b99696feda177be0699d5277a2c13c7c7c9bd5",
+    "sourceContentFingerprint" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "swiftVersion" : "Apple Swift version 6.0.3 (swiftlang-6.0.3.1.10 clang-1600.0.30.1)"
+  }
+}

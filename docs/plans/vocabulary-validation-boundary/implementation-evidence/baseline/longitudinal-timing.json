@@ -1,0 +1,45 @@
+{
+  "limitation" : "Wall-clock observations include host load and are separate from product latency gates. Temporary database creation and cleanup are outside the per-round-trip spans.",
+  "repetitions" : {
+    "fourEvaluationPathsMilliseconds" : [
+      50.270792,
+      65.944792,
+      53.723834
+    ],
+    "fourReplayPathsMilliseconds" : [
+      11.662292,
+      17.2605,
+      13.724291
+    ],
+    "historyAssessmentMilliseconds" : [
+      24.301708,
+      15.700875,
+      3.362708,
+      18.822833,
+      18.315708,
+      14.456709,
+      3.316666
+    ],
+    "semanticSerializationMilliseconds" : [
+      3.12
+    ],
+    "storeRoundTripMilliseconds" : [
+      4.845875,
+      3.888542,
+      3.781875,
+      4.882,
+      4.514875,
+      4.057791,
+      4.22125
+    ]
+  },
+  "schemaVersion" : 1,
+  "semanticReportSHA256" : "86b838dbb39b00b4d7ee6319233d6e5accac57a8facfca997ffa785a5bd14cf4",
+  "units" : "milliseconds",
+  "workload" : {
+    "historyEvents" : 7,
+    "lemmaCount" : 60,
+    "runs" : 3,
+    "timingRepetitions" : 1
+  }
+}

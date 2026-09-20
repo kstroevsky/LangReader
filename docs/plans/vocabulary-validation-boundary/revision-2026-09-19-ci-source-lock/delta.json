@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "base_sha256": "ee61a39745657e95dc6999bcda9bd15c0aa0b2d315221b65e8502be6b14fff9a",
+  "base_status": "verified_unaccepted_candidate",
+  "feedback_sha256": "0f821f7c73e566663cc1b0238bade196e4d9f38cc34f55144fcb8f13eb150fde",
+  "closed_world": true,
+  "changes": [
+    {
+      "feedback_id": "R-01-HISTORICAL-CI-OBJECTS",
+      "operation": "AMEND",
+      "requirement_ids": ["LOCK-003", "IMPL-001", "VER-003", "FAIL-003"],
+      "payload_source": "feedback.md: amendment 1; .github/workflows/architecture.yml checkout and check.sh; reservationRevision historical object",
+      "allowed_sections": [
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Sealed generator-lock compatibility checkpoint"],
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Implementation sequence"],
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Verification"],
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Failure handling and stop conditions"]
+      ],
+      "required_literals": ["Missing historical Git objects are an infrastructure failure"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": ["0", "7"],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Make source-locked Git revisions available before deterministic CI invokes the historical validator"
+    },
+    {
+      "feedback_id": "R-02-EXACT-PLAN-SOURCE-LOCK",
+      "operation": "AMEND",
+      "requirement_ids": ["AUTH-002", "LOCK-006"],
+      "payload_source": "feedback.md: amendment 2; companion source-lock.json at the new revision path and its measured SHA-256",
+      "allowed_sections": [
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Status and authority"],
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Sealed generator-lock compatibility checkpoint"]
+      ],
+      "required_literals": ["Candidate extraction-plan source lock: `docs/plans/vocabulary-validation-boundary/revision-2026-09-19-ci-source-lock/source-lock.json`"],
+      "forbidden_literals": ["artifacts named in `source-lock.json`", "This plan's `source-lock.json` is a historical baseline lock"],
+      "allowed_new_numeric_tokens": ["2026", "09", "19", "256", "12944"],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Remove ambiguity with the older vocabulary-evidence verification/source-lock.json"
+    },
+    {
+      "feedback_id": "R-03-TEST-TARGET-DEPENDENCIES",
+      "operation": "AMEND",
+      "requirement_ids": ["ARCH-002", "OWN-007", "VER-002"],
+      "payload_source": "feedback.md: amendment 3; App cross-format test may use a Validation-owned helper",
+      "allowed_sections": [
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Target architecture"],
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Ownership classification"],
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Verification"]
+      ],
+      "required_literals": ["Test targets may depend on `LeafReaderValidation`"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": [],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Permit test-only helper use without admitting Validation into the shipping product or reversing Validation-to-App dependency"
+    },
+    {
+      "feedback_id": "R-04-MISMATCH-NEGATIVE-CONTROL",
+      "operation": "AMEND",
+      "requirement_ids": ["LOCK-003", "IMPL-001"],
+      "payload_source": "feedback.md: optional wording cleanup for historical-lock negative control",
+      "allowed_sections": [
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Sealed generator-lock compatibility checkpoint"],
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Implementation sequence"]
+      ],
+      "required_literals": ["mismatched historical bytes/checksum, path, or revision"],
+      "forbidden_literals": ["negative control for a corrupted historical blob", "corrupted-blob negative control"],
+      "allowed_new_numeric_tokens": [],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Test rejection without corrupting the Git object database"
+    }
+  ]
+}

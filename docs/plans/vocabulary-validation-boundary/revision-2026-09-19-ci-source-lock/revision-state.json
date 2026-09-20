@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "phase": "COMPLETE",
+  "base_status": "verified_unaccepted_candidate",
+  "base_sha256": "ee61a39745657e95dc6999bcda9bd15c0aa0b2d315221b65e8502be6b14fff9a",
+  "base_ledger_sha256": "045446ed7e972f57999f685275cf94b54551e417f97b1e040ff1feb101103a2b",
+  "feedback_sha256": "0f821f7c73e566663cc1b0238bade196e4d9f38cc34f55144fcb8f13eb150fde",
+  "source_lock_sha256": "12944c83d2bdf0423b89333457030140618c4c70ffd9e6909d4560cbc249e5ba",
+  "delta_sha256": "5e7ec80109770b831357bf215f326c63fb5e46dcb5e56a5da3f4913ea3b50d1c",
+  "target_ledger_sha256": "ac1fb3f2091002f3651870a38ef0f4d35c69b54bd7359af87f2b75b6bcd0fff0",
+  "candidate_sha256": "55c2819200950f8c93a0d451bfe4659a4bc9bf5c0c1182086f28c89b95e8b879",
+  "completed_feedback_ids": [
+    "R-01-HISTORICAL-CI-OBJECTS",
+    "R-02-EXACT-PLAN-SOURCE-LOCK",
+    "R-03-TEST-TARGET-DEPENDENCIES",
+    "R-04-MISMATCH-NEGATIVE-CONTROL"
+  ],
+  "validation_results": {
+    "mechanical": "PASS: 7 changed sections; no added/removed sections, errors, or warnings",
+    "semantic": "PASS: 4/4 delta items, 68/68 requirement anchors, 22/22 source locks",
+    "independent": "PASS: fresh verifier found no material preservation finding"
+  },
+  "repair_attempts_by_finding": {},
+  "open_findings": [],
+  "requires_user_acceptance_for_canonical_status": true
+}

@@ -1,0 +1,424 @@
+{
+  "schema_version": 1,
+  "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/revision-2026-09-19-ci-source-lock/base-plan.md",
+  "sha256": "ee61a39745657e95dc6999bcda9bd15c0aa0b2d315221b65e8502be6b14fff9a",
+  "bytes": 34881,
+  "lines": 230,
+  "sections": [
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan",
+      "level": 1,
+      "heading": "LeafReader validation boundary and remaining-gates implementation plan",
+      "start_line": 1,
+      "end_line": 2,
+      "sha256": "58c98b39d4cac06d44ee4f9bf700ef4214b43edcccc52b5215104e2bdf69a520",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Status and authority",
+      "level": 2,
+      "heading": "Status and authority",
+      "start_line": 3,
+      "end_line": 10,
+      "sha256": "1ad936c344b25062f1912ed5f9cd44c98869aa9b15cfb80c6df61fa5b1606831",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "001",
+        "002",
+        "003"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Decision and acceptance criteria",
+      "level": 2,
+      "heading": "Decision and acceptance criteria",
+      "start_line": 11,
+      "end_line": 26,
+      "sha256": "60dfbc3123a07c9baea60d0c6c58fb276b69beabff599e043cb0a36525d83163",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "001",
+        "002",
+        "003",
+        "004",
+        "005",
+        "006",
+        "007"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Target architecture",
+      "level": 2,
+      "heading": "Target architecture",
+      "start_line": 27,
+      "end_line": 52,
+      "sha256": "6fc71c800ca0c9d3ed0d1c856ecef88466127853902e4adef2151de2bca8730a",
+      "code_fences": 2,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "001",
+        "002",
+        "003",
+        "004",
+        "005"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Ownership classification",
+      "level": 2,
+      "heading": "Ownership classification",
+      "start_line": 53,
+      "end_line": 72,
+      "sha256": "1fed0f9cc9c5dcb83dc61bbfc8c30daf8728ab0cd5bf92346784864cb2704e4a",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "001",
+        "002",
+        "003",
+        "004",
+        "005",
+        "006",
+        "007",
+        "008",
+        "009"
+      ],
+      "versioned_tokens": [
+        "VocabularyValidationStudyPackageV2"
+      ]
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Evidence preservation and parity",
+      "level": 2,
+      "heading": "Evidence preservation and parity",
+      "start_line": 73,
+      "end_line": 88,
+      "sha256": "5d37f05ee731006c6788cabc0b03fde6b735077129ff39965e1289534cd145a3",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "001",
+        "002",
+        "003",
+        "004",
+        "256"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Sealed generator-lock compatibility checkpoint",
+      "level": 2,
+      "heading": "Sealed generator-lock compatibility checkpoint",
+      "start_line": 89,
+      "end_line": 102,
+      "sha256": "0529df921928b2fdc04d03b24ed7d7392ad92af5cdfbcc2ed3b8fa4bac07d2b6",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "001",
+        "002",
+        "003",
+        "004",
+        "005",
+        "006",
+        "256",
+        "6"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence",
+      "level": 2,
+      "heading": "Implementation sequence",
+      "start_line": 103,
+      "end_line": 108,
+      "sha256": "2ddd3dd81adad9314c97b7ba0e0fcad4252341ef069d7cc5817e479a46d1084a",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "001",
+        "002",
+        "1",
+        "2",
+        "3",
+        "5"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Baseline checkpoint — no source changes",
+      "level": 3,
+      "heading": "Baseline checkpoint — no source changes",
+      "start_line": 109,
+      "end_line": 116,
+      "sha256": "a51e010364681921a2bb82ee9dea5e3a95bb0d064d984a63bdbb4bc435ad40f8",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "004",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 1 — target scaffold and boundary",
+      "level": 3,
+      "heading": "Commit 1 — target scaffold and boundary",
+      "start_line": 117,
+      "end_line": 125,
+      "sha256": "8bbbb28c1ce0222f4285ec1b20fafc4961a13dd08c4e64e8c57555d65d06aa55",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction",
+      "level": 3,
+      "heading": "Phase 2 — staged schemas and diagnostic extraction",
+      "start_line": 126,
+      "end_line": 129,
+      "sha256": "b142364a7f518277edb08869924a68a48f09c7b0e791e1e71e5b7203e725569d",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "2"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction / 2A — move independent study schemas and tests",
+      "level": 4,
+      "heading": "2A — move independent study schemas and tests",
+      "start_line": 130,
+      "end_line": 133,
+      "sha256": "c3beb7619d4c680c800cc2faac7412d70aac9a5ddc41d3ce7284981ab99543c7",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "2"
+      ],
+      "versioned_tokens": [
+        "VocabularyValidationStudyPackageV2"
+      ]
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction / 2B — introduce the narrow Core observation and parallel Validation evaluator",
+      "level": 4,
+      "heading": "2B — introduce the narrow Core observation and parallel Validation evaluator",
+      "start_line": 134,
+      "end_line": 137,
+      "sha256": "43b7a9059f276e99a18d075b343e767226961e9b38a4826d1229e8ba4964c100",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "2"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction / 2C — prove old-versus-new A/B1/B2 and counterfactual parity",
+      "level": 4,
+      "heading": "2C — prove old-versus-new A/B1/B2 and counterfactual parity",
+      "start_line": 138,
+      "end_line": 141,
+      "sha256": "af6453e9ab88e90db791f5080284fd8b14aae8a3c3935d9faf01e74b0e0ffde6",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "2"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction / 2D — switch the evaluator wrapper and script linkage",
+      "level": 4,
+      "heading": "2D — switch the evaluator wrapper and script linkage",
+      "start_line": 142,
+      "end_line": 145,
+      "sha256": "59a115c7e4f3535666a3ec9e4c7e11034939968082a134cff85f820bfa58d12c",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "003",
+        "2",
+        "6"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Phase 2 — staged schemas and diagnostic extraction / 2E — remove the old Core experiment implementation",
+      "level": 4,
+      "heading": "2E — remove the old Core experiment implementation",
+      "start_line": 146,
+      "end_line": 149,
+      "sha256": "4b1be59686b39942c521b1c3ff50f2e4c04df1e7d73c1eaf04d092f077e7f850",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "2"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 3 — assessment, causal, and longitudinal runners",
+      "level": 3,
+      "heading": "Commit 3 — assessment, causal, and longitudinal runners",
+      "start_line": 150,
+      "end_line": 156,
+      "sha256": "e21003817c38967630db506230c9796398f415ce1c15833bb9624ae9f7f117d8",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 4 — POS and cross-format validation helpers",
+      "level": 3,
+      "heading": "Commit 4 — POS and cross-format validation helpers",
+      "start_line": 157,
+      "end_line": 162,
+      "sha256": "d8705b3ee40dcb201e0b7a894e45d68cc8b73a9d90f093a1f61e0099a274bf87",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 5 — enforcement, documentation, and stop",
+      "level": 3,
+      "heading": "Commit 5 — enforcement, documentation, and stop",
+      "start_line": 163,
+      "end_line": 169,
+      "sha256": "6c573bbc448b0531be1cc41f72573ef73a23270bc267f880e0df190e1aad9413",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Verification",
+      "level": 2,
+      "heading": "Verification",
+      "start_line": 170,
+      "end_line": 183,
+      "sha256": "108fde2a97c0f0c63d0b7fb79bef3273dca883216f332adcfc9c809702114299",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "001",
+        "002",
+        "003",
+        "004",
+        "10%",
+        "150",
+        "16",
+        "2",
+        "50"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Remaining scientific and release gates",
+      "level": 2,
+      "heading": "Remaining scientific and release gates",
+      "start_line": 184,
+      "end_line": 205,
+      "sha256": "5be16a34d4444cfd07783771a9c64a0fccca70f8d86e310ebd1878e88761be14",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "001",
+        "002",
+        "003",
+        "004",
+        "005",
+        "006",
+        "007",
+        "008",
+        "009",
+        "010",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "98%"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Failure handling and stop conditions",
+      "level": 2,
+      "heading": "Failure handling and stop conditions",
+      "start_line": 206,
+      "end_line": 217,
+      "sha256": "cbdc985a34ea6ac53bd507335fdd1ccdde70851f565d29ada71af7df80712e7f",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "001",
+        "002",
+        "003",
+        "004",
+        "3",
+        "512"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "LeafReader validation boundary and remaining-gates implementation plan / Deferred and superseded choices",
+      "level": 2,
+      "heading": "Deferred and superseded choices",
+      "start_line": 218,
+      "end_line": 230,
+      "sha256": "e7175988aee7c98ff2063da2847f085b696736384ba48c63cde6310233ed69cf",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "001",
+        "002",
+        "003"
+      ],
+      "versioned_tokens": []
+    }
+  ]
+}

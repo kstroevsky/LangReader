@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "base": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/base-scaffold.md",
+    "sha256": "58c98b39d4cac06d44ee4f9bf700ef4214b43edcccc52b5215104e2bdf69a520"
+  },
+  "candidate": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/candidate-plan.md",
+    "sha256": "0f85e0d18094eb2efccaa601e0c3f9dff59a6ab563fdc5c838bc30e1b21b1467"
+  },
+  "delta": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/delta.json",
+    "feedback_ids": [
+      "F-01-AUTHORITY",
+      "F-02-GOAL-AND-ACCEPTANCE",
+      "F-03-TARGET-ARCHITECTURE",
+      "F-04-OWNERSHIP",
+      "F-05-EVIDENCE-AND-PARITY",
+      "F-06-IMPLEMENTATION-SEQUENCE",
+      "F-07-VERIFICATION",
+      "F-08-SCIENTIFIC-GATE-SEQUENCE",
+      "F-09-NEGATIVE-CONTROLS-AND-FAILURE",
+      "F-10-DEFERRED-CHOICES",
+      "F-11-SUPERSEDE-PACKAGE-ECOSYSTEM",
+      "F-12-SUPERSEDE-IMMEDIATE-CLI",
+      "F-13-SUPERSEDE-GENERIC-FRAMEWORK",
+      "F-14-SEALED-GENERATOR-COMPATIBILITY"
+    ]
+  },
+  "changed_sections": [
+    "LeafReader validation boundary and remaining-gates implementation plan / Decision and acceptance criteria",
+    "LeafReader validation boundary and remaining-gates implementation plan / Deferred and superseded choices",
+    "LeafReader validation boundary and remaining-gates implementation plan / Evidence preservation and parity",
+    "LeafReader validation boundary and remaining-gates implementation plan / Failure handling and stop conditions",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Baseline checkpoint — no source changes",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 1 — target scaffold and boundary",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 2 — schemas and Core observation seam",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 3 — assessment, causal, and longitudinal runners",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 4 — POS and cross-format validation helpers",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 5 — enforcement, documentation, and stop",
+    "LeafReader validation boundary and remaining-gates implementation plan / Ownership classification",
+    "LeafReader validation boundary and remaining-gates implementation plan / Remaining scientific and release gates",
+    "LeafReader validation boundary and remaining-gates implementation plan / Sealed generator-lock compatibility checkpoint",
+    "LeafReader validation boundary and remaining-gates implementation plan / Status and authority",
+    "LeafReader validation boundary and remaining-gates implementation plan / Target architecture",
+    "LeafReader validation boundary and remaining-gates implementation plan / Verification"
+  ],
+  "added_sections": [
+    "LeafReader validation boundary and remaining-gates implementation plan / Decision and acceptance criteria",
+    "LeafReader validation boundary and remaining-gates implementation plan / Deferred and superseded choices",
+    "LeafReader validation boundary and remaining-gates implementation plan / Evidence preservation and parity",
+    "LeafReader validation boundary and remaining-gates implementation plan / Failure handling and stop conditions",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Baseline checkpoint — no source changes",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 1 — target scaffold and boundary",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 2 — schemas and Core observation seam",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 3 — assessment, causal, and longitudinal runners",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 4 — POS and cross-format validation helpers",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 5 — enforcement, documentation, and stop",
+    "LeafReader validation boundary and remaining-gates implementation plan / Ownership classification",
+    "LeafReader validation boundary and remaining-gates implementation plan / Remaining scientific and release gates",
+    "LeafReader validation boundary and remaining-gates implementation plan / Sealed generator-lock compatibility checkpoint",
+    "LeafReader validation boundary and remaining-gates implementation plan / Status and authority",
+    "LeafReader validation boundary and remaining-gates implementation plan / Target architecture",
+    "LeafReader validation boundary and remaining-gates implementation plan / Verification"
+  ],
+  "removed_sections": [],
+  "allowed_sections": [
+    "LeafReader validation boundary and remaining-gates implementation plan / Decision and acceptance criteria",
+    "LeafReader validation boundary and remaining-gates implementation plan / Deferred and superseded choices",
+    "LeafReader validation boundary and remaining-gates implementation plan / Evidence preservation and parity",
+    "LeafReader validation boundary and remaining-gates implementation plan / Failure handling and stop conditions",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence",
+    "LeafReader validation boundary and remaining-gates implementation plan / Ownership classification",
+    "LeafReader validation boundary and remaining-gates implementation plan / Remaining scientific and release gates",
+    "LeafReader validation boundary and remaining-gates implementation plan / Sealed generator-lock compatibility checkpoint",
+    "LeafReader validation boundary and remaining-gates implementation plan / Status and authority",
+    "LeafReader validation boundary and remaining-gates implementation plan / Target architecture",
+    "LeafReader validation boundary and remaining-gates implementation plan / Verification"
+  ],
+  "contract_signal_deltas": {},
+  "ledger_counts": {
+    "active": 60,
+    "deferred": 3,
+    "superseded": 3,
+    "other": 0
+  },
+  "base_ledger": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/base-ledger.json",
+  "errors": [],
+  "warnings": []
+}
