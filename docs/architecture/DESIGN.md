@@ -29,6 +29,19 @@ LeafReaderApp
 
 Both build in Swift 6 mode.
 
+The package also has an internal, non-product `LeafReaderValidation` target:
+
+```text
+LeafReaderValidation -> LeafReaderCore
+```
+
+It executes synthetic vocabulary assessment and study-validation machinery against
+the production Core implementation. Neither production target imports or depends
+on Validation, and the shipping `LeafReaderApp` product cannot link it. Validation
+tests may depend on both Validation and Core; App integration tests may use a
+Validation-owned comparison helper without adding Validation to the App product.
+`scripts/check_validation_boundary.py` enforces this target/import/link direction.
+
 ### `LeafReaderCore`
 
 Core is the domain/shared-logic module.

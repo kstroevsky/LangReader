@@ -35,6 +35,9 @@ echo "==> Checking core portability"
 echo "==> Checking Core semantic ownership"
 ./scripts/check_core_semantics.sh
 
+echo "==> Checking one-way validation boundary"
+python3 ./scripts/check_validation_boundary.py --self-test --final
+
 echo "==> Checking Reader native-view access seam"
 bash ./scripts/check_reader_native_access.sh
 
@@ -73,6 +76,9 @@ python3 ./scripts/validate_vocabulary_calibration_assignment_package.py --self-t
 
 echo "==> Checking sealed vocabulary development-confirmation reservation"
 python3 ./scripts/validate_vocabulary_development_confirmation_reservation.py --self-test
+
+echo "==> Checking sealed post-extraction development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v2.py --self-test
 
 echo "==> Checking frozen vocabulary warm-compatibility development reservation"
 python3 ./scripts/validate_vocabulary_longitudinal_compatibility_manifest.py \
