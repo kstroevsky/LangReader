@@ -1,0 +1,101 @@
+{
+  "baseline_manifest_sha256": "a1c2d778a0fcf90357c3b7cc0e3d0db68e414f57f94c8bc39ffdef68a0a68b1b",
+  "runs": [
+    {
+      "artifacts": [
+        {
+          "baseline_sha256": "ed73e2807e321340f911755b9266c61f26b0e547e0548dc9bd444304eff08016",
+          "candidate_sha256": "ed73e2807e321340f911755b9266c61f26b0e547e0548dc9bd444304eff08016",
+          "name": "standard.json"
+        },
+        {
+          "baseline_sha256": "bcf403b33fe76a54f0e3b21837b4bdb574f8937410827010769a2048f0a4da82",
+          "candidate_sha256": "bcf403b33fe76a54f0e3b21837b4bdb574f8937410827010769a2048f0a4da82",
+          "name": "standard.md"
+        }
+      ],
+      "exit_status": 0,
+      "id": "standard",
+      "validator_exit_status": 0
+    },
+    {
+      "artifacts": [
+        {
+          "baseline_sha256": "edcdae3da6ab3bab1b48077d5d774f9292efc005e2d8c2e020519007f3398b13",
+          "candidate_sha256": "edcdae3da6ab3bab1b48077d5d774f9292efc005e2d8c2e020519007f3398b13",
+          "name": "causal-standard.json"
+        },
+        {
+          "baseline_sha256": "88c13e76d3d26c7c1fd19ded8de57d2b55fe5377c67d78c95de974be8cef392c",
+          "candidate_sha256": "88c13e76d3d26c7c1fd19ded8de57d2b55fe5377c67d78c95de974be8cef392c",
+          "name": "causal-standard.md"
+        },
+        {
+          "baseline_sha256": "8966ee143e6501c2de80296d08d9c28b0e090eecf99a3f76bf53008fb7228153",
+          "candidate_sha256": "62d734d4c1d267427e3ab69ab66585d2a890a3b2f3d7007437f15692013ebd66",
+          "name": "causal.json"
+        },
+        {
+          "baseline_sha256": "94729313773858044e628f438858cc37887464144eaca1c0a5c3f1174f6b1988",
+          "candidate_sha256": "5411e2ce07788dd80245cfe1fa206dbf7cea60d4f38e03a15acb853ebb43bd1a",
+          "name": "causal.md"
+        },
+        {
+          "baseline_sha256": "a117fe867387fb46e2970abcf2dc508689d3de091a5b73d2afea0efcca4c7554",
+          "candidate_sha256": "b07984aff06899c94d501ce8102050f926bf7d3e322fd495f300a9b7d8f000ee",
+          "name": "causal-timing.json"
+        }
+      ],
+      "exit_status": 0,
+      "id": "causal",
+      "validator_exit_status": 0
+    },
+    {
+      "artifacts": [
+        {
+          "baseline_sha256": "edcdae3da6ab3bab1b48077d5d774f9292efc005e2d8c2e020519007f3398b13",
+          "candidate_sha256": "edcdae3da6ab3bab1b48077d5d774f9292efc005e2d8c2e020519007f3398b13",
+          "name": "longitudinal-standard.json"
+        },
+        {
+          "baseline_sha256": "88c13e76d3d26c7c1fd19ded8de57d2b55fe5377c67d78c95de974be8cef392c",
+          "candidate_sha256": "88c13e76d3d26c7c1fd19ded8de57d2b55fe5377c67d78c95de974be8cef392c",
+          "name": "longitudinal-standard.md"
+        },
+        {
+          "baseline_sha256": "86b838dbb39b00b4d7ee6319233d6e5accac57a8facfca997ffa785a5bd14cf4",
+          "candidate_sha256": "ac3808f22a9a7b28e3e24644f18adb43f9ff3fb95068b5b6463b7497b3b08392",
+          "name": "longitudinal.json"
+        },
+        {
+          "baseline_sha256": "99ba3fabd82fbb1dd7215e9e5990269401d115feb353745a8a1ce8fc77cae110",
+          "candidate_sha256": "7a5f4ef1387323339c2d1d6b12e862b7adf9fbe58b0ed92c3417ef0b7ea19fa8",
+          "name": "longitudinal.md"
+        },
+        {
+          "baseline_sha256": "d1e92079f7a7f8cae99a4bcd5aa5c25969155de7a2ae089dbada007a73538cec",
+          "candidate_sha256": "80d207d32175343fece30cab38a98f0b5d4fb38ef6183c04d4f4145f0de81b77",
+          "name": "longitudinal-timing.json"
+        }
+      ],
+      "exit_status": 0,
+      "id": "longitudinal",
+      "validator_exit_status": 0
+    },
+    {
+      "artifacts": [
+        {
+          "baseline_sha256": "37352bfd604f16d0605af0df673962e8d7166c709c755b7121935128cccd27f9",
+          "candidate_sha256": "37352bfd604f16d0605af0df673962e8d7166c709c755b7121935128cccd27f9",
+          "name": "pos.json"
+        }
+      ],
+      "exit_status": 0,
+      "id": "pos",
+      "validator_exit_status": 0
+    }
+  ],
+  "schema_version": 1,
+  "status": "PASS",
+  "timing_policy": "retain raw files and hashes; report separately, never normalize or use timing to excuse semantic differences"
+}

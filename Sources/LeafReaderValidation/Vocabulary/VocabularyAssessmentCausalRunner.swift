@@ -110,7 +110,7 @@ private struct CausalBankEvaluation: Codable {
     init(
         deckRole: String,
         replica: Int,
-        result: VocabularyDiagnosticBankResult,
+        result: VocabularyValidationBankResult,
         differenceFromProductionA: Double = 0,
         differenceFromMatchingB1: Double? = nil
     ) {
@@ -137,16 +137,16 @@ private struct CausalBankEvaluation: Codable {
 }
 
 private struct CausalBankResultRecord: Codable {
-    let kind: VocabularyDiagnosticBankKind
+    let kind: VocabularyValidationBankKind
     let sampleCount: Int
     let coverageLowerBound: Double
     let targetMissProbability: Double
     let thetaPositionFingerprint: String
     let latentItemDrawFingerprint: String
     let uniqueThetaPositionCount: Int
-    let thetaPositionHistogram: [VocabularyDiagnosticThetaPositionCount]
+    let thetaPositionHistogram: [VocabularyValidationThetaPositionCount]
 
-    init(_ result: VocabularyDiagnosticBankResult) {
+    init(_ result: VocabularyValidationBankResult) {
         kind = result.kind
         sampleCount = result.sampleCount
         coverageLowerBound = result.coverageLowerBound
@@ -322,7 +322,7 @@ private struct CausalFingerprint {
     var hex: String { String(format: "%016llx", value) }
 }
 
-func runVocabularyCausalDiagnosticSelfTest() throws {
+package func runVocabularyCausalDiagnosticSelfTest() throws {
     let fixture = [
         forensicFixture(key: "answered-known-error", weight: 30, truth: false, selected: false, state: "answered", evidence: .verifiedKnown),
         forensicFixture(key: "answered-unknown", weight: 10, truth: false, selected: false, state: "answered", evidence: .reportedUnknown),
@@ -388,16 +388,13 @@ func runVocabularyCausalDiagnosticSelfTest() throws {
     print("vocabulary causal diagnostic self-test passed")
 }
 
-func runVocabularyCausalDiagnostics(
-    manifestPath: String,
-    jsonPath: String,
-    markdownPath: String,
-    timingPath: String
-) throws {
+package func runVocabularyCausalDiagnostics(
+    manifestData: Data
+) throws -> VocabularyDiagnosticArtifacts {
     let decoder = JSONDecoder()
     let manifest = try decoder.decode(
         CausalDiagnosticManifest.self,
-        from: Data(contentsOf: URL(fileURLWithPath: manifestPath))
+        from: manifestData
     )
     try validate(manifest)
     let source = try sourceProvenance()
@@ -549,15 +546,9 @@ func runVocabularyCausalDiagnostics(
         reportData = try encoder.encode(report)
         serializationTimings.append(milliseconds(since: start))
     }
-    try reportData.write(to: URL(fileURLWithPath: jsonPath), options: .atomic)
-    try causalMarkdown(report).write(
-        to: URL(fileURLWithPath: markdownPath),
-        atomically: true,
-        encoding: .utf8
-    )
     let timing = CausalTimingReport(
         schemaVersion: 1,
-        semanticReportSHA256: try sha256(of: jsonPath),
+        semanticReportSHA256: VocabularyDiagnosticArtifacts.sha256(of: reportData),
         sourceRevision: source.revision,
         environment: [
             "hardware": shellOutput("uname -m"),
@@ -589,7 +580,11 @@ func runVocabularyCausalDiagnostics(
         units: "milliseconds",
         limitation: "Wall-clock observations include host load and are intentionally excluded from the deterministic semantic report. Product 150 ms latency gates do not include this opt-in diagnostic workload."
     )
-    try encoder.encode(timing).write(to: URL(fileURLWithPath: timingPath), options: .atomic)
+    return try VocabularyDiagnosticArtifacts(
+        jsonData: reportData,
+        markdown: causalMarkdown(report),
+        timingData: encoder.encode(timing)
+    )
 }
 
 private func validate(_ manifest: CausalDiagnosticManifest) throws {
@@ -774,12 +769,12 @@ private func buildPath(
     }
     let result = assessment.result()
     let snapshotStart = DispatchTime.now().uptimeNanoseconds
-    let snapshot = try assessment.diagnosticSnapshot()
+    let snapshot = try assessment.validationObservation()
     let snapshotDuration = milliseconds(since: snapshotStart)
     let selected = Set(result.items.filter(\.isSelected).map(\.id))
     let controlSelection = Set(inventory.candidates.prefix(manifest.fixedControlDeckSize).map(\.canonicalKey))
     var bankEvaluations: [CausalBankEvaluation] = []
-    let bankA = try snapshot.evaluate(VocabularyDiagnosticBankConfiguration(
+    let bankA = try snapshot.evaluateValidationBank(VocabularyValidationBankConfiguration(
         kind: .productionA,
         sampleCount: 512,
         thetaPositionSeed: 0,
@@ -790,7 +785,7 @@ private func buildPath(
     bankEvaluations.append(CausalBankEvaluation(
         deckRole: "frequency-fixed-control",
         replica: 0,
-        result: try snapshot.evaluate(VocabularyDiagnosticBankConfiguration(
+        result: try snapshot.evaluateValidationBank(VocabularyValidationBankConfiguration(
             kind: .productionA,
             sampleCount: 512,
             thetaPositionSeed: 0,
@@ -805,7 +800,7 @@ private func buildPath(
         for replica in 0..<manifest.replicas {
             let latentSeed = derivedSeed(manifest.seed, "bank-b1:\(runID):\(pathMode):\(sampleCount):\(replica):latent")
             let start = DispatchTime.now().uptimeNanoseconds
-            let configuration = VocabularyDiagnosticBankConfiguration(
+            let configuration = VocabularyValidationBankConfiguration(
                 kind: .independentLatentB1,
                 sampleCount: sampleCount,
                 thetaPositionSeed: derivedSeed(manifest.seed, "bank-b1-unused-theta:\(runID):\(replica)"),
@@ -815,19 +810,19 @@ private func buildPath(
             bankEvaluations.append(CausalBankEvaluation(
                 deckRole: "production-selected",
                 replica: replica,
-                result: try snapshot.evaluate(configuration)
+                result: try snapshot.evaluateValidationBank(configuration)
             ))
             bankEvaluations.append(CausalBankEvaluation(
                 deckRole: "frequency-fixed-control",
                 replica: replica,
-                result: try snapshot.evaluate(configuration, selectedKeys: controlSelection)
+                result: try snapshot.evaluateValidationBank(configuration, selectedKeys: controlSelection)
             ))
             b1Duration += milliseconds(since: start)
         }
     }
     for sampleCount in manifest.b2SampleCounts {
         for replica in 0..<manifest.replicas {
-            let configuration = VocabularyDiagnosticBankConfiguration(
+            let configuration = VocabularyValidationBankConfiguration(
                 kind: .randomizedThetaAndLatentB2,
                 sampleCount: sampleCount,
                 thetaPositionSeed: derivedSeed(manifest.seed, "bank-b2:\(runID):\(pathMode):\(sampleCount):\(replica):theta"),
@@ -838,12 +833,12 @@ private func buildPath(
             bankEvaluations.append(CausalBankEvaluation(
                 deckRole: "production-selected",
                 replica: replica,
-                result: try snapshot.evaluate(configuration)
+                result: try snapshot.evaluateValidationBank(configuration)
             ))
             bankEvaluations.append(CausalBankEvaluation(
                 deckRole: "frequency-fixed-control",
                 replica: replica,
-                result: try snapshot.evaluate(configuration, selectedKeys: controlSelection)
+                result: try snapshot.evaluateValidationBank(configuration, selectedKeys: controlSelection)
             ))
             b2Duration += milliseconds(since: start)
         }
@@ -1292,13 +1287,4 @@ private func checkedShellOutput(_ command: String) throws -> String {
         decoding: output.fileHandleForReading.readDataToEndOfFile(),
         as: UTF8.self
     ).trimmingCharacters(in: .whitespacesAndNewlines)
-}
-
-private func sha256(of path: String) throws -> String {
-    let output = try checkedShellOutput("shasum -a 256 \(shellQuoted(path))")
-    return output.split(separator: " ").first.map(String.init) ?? "unknown"
-}
-
-private func shellQuoted(_ value: String) -> String {
-    "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
 }

@@ -1,7 +1,8 @@
 import XCTest
 import LeafReaderCore
+@testable import LeafReaderValidation
 
-final class VocabularyAssessmentCausalDiagnosticsXCTests: XCTestCase {
+final class VocabularyValidationBankXCTests: XCTestCase {
     func testProductionABankExactlyMatchesResultMasksAndCoverageQuantile() throws {
         let inventory = makeInventory(count: 12)
         var assessment = AdaptiveVocabularyAssessment(
@@ -14,8 +15,8 @@ final class VocabularyAssessmentCausalDiagnosticsXCTests: XCTestCase {
         }
 
         let result = assessment.result()
-        let snapshot = try assessment.diagnosticSnapshot()
-        let bankA = try snapshot.evaluate(VocabularyDiagnosticBankConfiguration(
+        let snapshot = try assessment.validationObservation()
+        let bankA = try snapshot.evaluateValidationBank(VocabularyValidationBankConfiguration(
             kind: .productionA,
             sampleCount: 512,
             thetaPositionSeed: 11,
@@ -46,7 +47,7 @@ final class VocabularyAssessmentCausalDiagnosticsXCTests: XCTestCase {
         let expectedIndex = Int((0.05 * Double(sorted.count - 1)).rounded(.down))
         XCTAssertEqual(bankA.coverageLowerBound, Double(sorted[expectedIndex]) / Double(total), accuracy: 1e-15)
         let expectedHistogram = Dictionary(grouping: totals, by: { $0 })
-            .map { VocabularyDiagnosticCoverageMassCount(knownOccurrenceMass: $0.key, sampleCount: $0.value.count) }
+            .map { VocabularyValidationCoverageMassCount(knownOccurrenceMass: $0.key, sampleCount: $0.value.count) }
             .sorted { $0.knownOccurrenceMass < $1.knownOccurrenceMass }
         XCTAssertEqual(bankA.coverageMassHistogram, expectedHistogram)
     }
@@ -56,11 +57,11 @@ final class VocabularyAssessmentCausalDiagnosticsXCTests: XCTestCase {
             inventory: makeInventory(count: 20),
             mode: .targetCoverage(0.98)
         )
-        let snapshot = try assessment.diagnosticSnapshot()
-        let bankA = try snapshot.evaluate(configuration(.productionA, samples: 512, theta: 1, latent: 2))
-        let sameSize = try snapshot.evaluate(configuration(.independentLatentB1, samples: 512, theta: 3, latent: 4))
-        let first = try snapshot.evaluate(configuration(.independentLatentB1, samples: 1_024, theta: 3, latent: 4))
-        let second = try snapshot.evaluate(configuration(.independentLatentB1, samples: 1_024, theta: 999, latent: 5))
+        let snapshot = try assessment.validationObservation()
+        let bankA = try snapshot.evaluateValidationBank(configuration(.productionA, samples: 512, theta: 1, latent: 2))
+        let sameSize = try snapshot.evaluateValidationBank(configuration(.independentLatentB1, samples: 512, theta: 3, latent: 4))
+        let first = try snapshot.evaluateValidationBank(configuration(.independentLatentB1, samples: 1_024, theta: 3, latent: 4))
+        let second = try snapshot.evaluateValidationBank(configuration(.independentLatentB1, samples: 1_024, theta: 999, latent: 5))
 
         XCTAssertEqual(sameSize.thetaPositionFingerprint, bankA.thetaPositionFingerprint)
         let productionMass = Dictionary(uniqueKeysWithValues: bankA.thetaPositionHistogram.map {
@@ -78,11 +79,11 @@ final class VocabularyAssessmentCausalDiagnosticsXCTests: XCTestCase {
             inventory: makeInventory(count: 20),
             mode: .targetCoverage(0.98)
         )
-        let snapshot = try assessment.diagnosticSnapshot()
-        let original = try snapshot.evaluate(configuration(.randomizedThetaAndLatentB2, samples: 512, theta: 41, latent: 42))
-        let repeated = try snapshot.evaluate(configuration(.randomizedThetaAndLatentB2, samples: 512, theta: 41, latent: 42))
-        let changedTheta = try snapshot.evaluate(configuration(.randomizedThetaAndLatentB2, samples: 512, theta: 43, latent: 42))
-        let changedLatent = try snapshot.evaluate(configuration(.randomizedThetaAndLatentB2, samples: 512, theta: 41, latent: 44))
+        let snapshot = try assessment.validationObservation()
+        let original = try snapshot.evaluateValidationBank(configuration(.randomizedThetaAndLatentB2, samples: 512, theta: 41, latent: 42))
+        let repeated = try snapshot.evaluateValidationBank(configuration(.randomizedThetaAndLatentB2, samples: 512, theta: 41, latent: 42))
+        let changedTheta = try snapshot.evaluateValidationBank(configuration(.randomizedThetaAndLatentB2, samples: 512, theta: 43, latent: 42))
+        let changedLatent = try snapshot.evaluateValidationBank(configuration(.randomizedThetaAndLatentB2, samples: 512, theta: 41, latent: 44))
 
         XCTAssertEqual(original, repeated)
         XCTAssertNotEqual(original.thetaPositionFingerprint, changedTheta.thetaPositionFingerprint)
@@ -94,13 +95,14 @@ final class VocabularyAssessmentCausalDiagnosticsXCTests: XCTestCase {
         var posterior = Array(repeating: 0.0, count: 121)
         posterior[60] = 1
         let item = try XCTUnwrap(makeInventory(count: 1).candidates.first)
-        let snapshot = try VocabularyAssessmentDiagnosticSnapshot(
-            items: [VocabularyAssessmentDiagnosticSnapshot.Item(
-                candidate: item,
+        let snapshot = try VocabularyAssessmentObservation(
+            items: [VocabularyAssessmentObservation.Item(
+                canonicalKey: item.canonicalKey,
+                occurrenceCount: item.occurrenceCount,
+                isIncluded: true,
                 evidence: nil,
                 responseCurve: Array(repeating: 0.5, count: 121),
-                productionKnownMask: Array(repeating: 0, count: 8),
-                isIncluded: true
+                productionKnownMask: Array(repeating: 0, count: 8)
             )],
             posterior: posterior,
             epsilonKnowledge: 0.05,
@@ -109,7 +111,7 @@ final class VocabularyAssessmentCausalDiagnosticsXCTests: XCTestCase {
             productionSelection: [],
             productionThetaIndexes: Array(repeating: 60, count: 512)
         )
-        let result = try snapshot.evaluate(configuration(
+        let result = try snapshot.evaluateValidationBank(configuration(
             .randomizedThetaAndLatentB2,
             samples: 512,
             theta: 0,
@@ -117,102 +119,24 @@ final class VocabularyAssessmentCausalDiagnosticsXCTests: XCTestCase {
         ))
 
         XCTAssertEqual(result.thetaPositionHistogram, [
-            VocabularyDiagnosticThetaPositionCount(thetaGridIndex: 60, sampleCount: 512)
+            VocabularyValidationThetaPositionCount(thetaGridIndex: 60, sampleCount: 512)
         ])
-    }
-
-    func testObservationSnapshotDoesNotChangeResultOrFutureQuestionPath() throws {
-        let inventory = makeInventory(count: 40)
-        var observed = AdaptiveVocabularyAssessment(inventory: inventory, mode: .targetCoverage(0.98))
-        var control = observed
-        for index in 0..<12 {
-            let observedQuestion = try XCTUnwrap(observed.nextQuestion())
-            let controlQuestion = try XCTUnwrap(control.nextQuestion())
-            XCTAssertEqual(observedQuestion.id, controlQuestion.id)
-            let evidence: VocabularyKnowledgeEvidence = index.isMultiple(of: 2) ? .verifiedKnown : .reportedUnknown
-            observed.record(evidence, for: observedQuestion.id)
-            control.record(evidence, for: controlQuestion.id)
-        }
-
-        let before = observed.result()
-        let snapshot = try observed.diagnosticSnapshot()
-        _ = try snapshot.evaluate(configuration(
-            .independentLatentB1,
-            samples: 512,
-            theta: 100,
-            latent: 101
-        ))
-        let after = observed.result()
-        XCTAssertEqual(before, after)
-        while !observed.isFinished, !control.isFinished {
-            let observedQuestion = try XCTUnwrap(observed.nextQuestion())
-            let controlQuestion = try XCTUnwrap(control.nextQuestion())
-            XCTAssertEqual(observedQuestion.id, controlQuestion.id)
-            let evidence: VocabularyKnowledgeEvidence = observed.answeredQuestionCount.isMultiple(of: 2)
-                ? .verifiedKnown
-                : .reportedUnknown
-            observed.record(evidence, for: observedQuestion.id)
-            control.record(evidence, for: controlQuestion.id)
-        }
-        XCTAssertEqual(observed.isFinished, control.isFinished)
-        XCTAssertEqual(observed.answers, control.answers)
-        XCTAssertEqual(observed.thetaPosteriorSnapshot, control.thetaPosteriorSnapshot)
-        XCTAssertEqual(observed.result(), control.result())
-    }
-
-    func testDiagnosticContinuationLogsNaturalStopButKeepsHardCeilingAndUniqueness() throws {
-        var assessment = AdaptiveVocabularyAssessment(
-            inventory: makeInventory(count: 100),
-            mode: .allUnknown
-        )
-        while !assessment.isFinished {
-            let question = try XCTUnwrap(assessment.nextQuestion())
-            assessment.record(.verifiedKnown, for: question.id)
-        }
-        XCTAssertEqual(assessment.diagnosticNaturalStopReason, .lowExpectedValue)
-        let naturalCount = assessment.answeredQuestionCount
-        XCTAssertLessThan(naturalCount, 80)
-
-        while let question = assessment.nextQuestionForDiagnosticContinuation() {
-            assessment.record(.verifiedKnown, for: question.id)
-        }
-        XCTAssertEqual(assessment.answeredQuestionCount, 80)
-        XCTAssertEqual(Set(assessment.answers.map(\.canonicalKey)).count, assessment.answers.count)
-        XCTAssertNil(assessment.nextQuestionForDiagnosticContinuation())
-    }
-
-    func testRestoredCommonEvidencePathPreservesMetadataAndPosterior() throws {
-        let inventory = makeInventory(count: 40)
-        var source = AdaptiveVocabularyAssessment(inventory: inventory, mode: .allUnknown)
-        for index in 0..<20 {
-            let question = try XCTUnwrap(source.nextQuestion())
-            source.record(index.isMultiple(of: 4) ? .reportedUnknown : .verifiedKnown, for: question.id)
-        }
-        let replay = AdaptiveVocabularyAssessment(
-            inventory: inventory,
-            mode: .allUnknown,
-            restoredAnswers: source.answers
-        )
-
-        XCTAssertEqual(replay.answers, source.answers)
-        XCTAssertEqual(replay.thetaPosteriorSnapshot, source.thetaPosteriorSnapshot)
-        XCTAssertEqual(replay.result(), source.result())
     }
 
     func testSmallFixedBankMatchesHandEnumeratedMassesAndRejectsInvalidInputs() throws {
         let items = [
-            VocabularyDiagnosticFixedBankItem(
+            VocabularyValidationFixedBankItem(
                 canonicalKey: "a",
                 occurrenceCount: 70,
                 knownMaskWords: [0b0011]
             ),
-            VocabularyDiagnosticFixedBankItem(
+            VocabularyValidationFixedBankItem(
                 canonicalKey: "b",
                 occurrenceCount: 30,
                 knownMaskWords: [0b0101]
             )
         ]
-        let result = try VocabularyDiagnosticFixedBank.evaluate(
+        let result = try VocabularyValidationFixedBank.evaluate(
             items: items,
             sampleCount: 4,
             selectedKeys: [],
@@ -224,13 +148,13 @@ final class VocabularyAssessmentCausalDiagnosticsXCTests: XCTestCase {
         XCTAssertEqual(result.coverageLowerBound, 0)
         XCTAssertEqual(result.targetMissProbability, 0.75)
         XCTAssertEqual(result.coverageMassHistogram, [
-            VocabularyDiagnosticCoverageMassCount(knownOccurrenceMass: 0, sampleCount: 1),
-            VocabularyDiagnosticCoverageMassCount(knownOccurrenceMass: 30, sampleCount: 1),
-            VocabularyDiagnosticCoverageMassCount(knownOccurrenceMass: 70, sampleCount: 1),
-            VocabularyDiagnosticCoverageMassCount(knownOccurrenceMass: 100, sampleCount: 1)
+            VocabularyValidationCoverageMassCount(knownOccurrenceMass: 0, sampleCount: 1),
+            VocabularyValidationCoverageMassCount(knownOccurrenceMass: 30, sampleCount: 1),
+            VocabularyValidationCoverageMassCount(knownOccurrenceMass: 70, sampleCount: 1),
+            VocabularyValidationCoverageMassCount(knownOccurrenceMass: 100, sampleCount: 1)
         ])
 
-        let empty = try VocabularyDiagnosticFixedBank.evaluate(
+        let empty = try VocabularyValidationFixedBank.evaluate(
             items: [],
             sampleCount: 4,
             selectedKeys: [],
@@ -240,17 +164,17 @@ final class VocabularyAssessmentCausalDiagnosticsXCTests: XCTestCase {
         XCTAssertEqual(empty.coverageLowerBound, 1)
         XCTAssertEqual(empty.targetMissProbability, 0)
 
-        XCTAssertThrowsError(try VocabularyDiagnosticFixedBank.evaluate(
+        XCTAssertThrowsError(try VocabularyValidationFixedBank.evaluate(
             items: items + [items[0]],
             sampleCount: 4,
             selectedKeys: [],
             coverageQuantile: 0.05,
             targetCoverage: 0.98
         )) { error in
-            XCTAssertEqual(error as? VocabularyDiagnosticInputError, .duplicateKey("a"))
+            XCTAssertEqual(error as? VocabularyValidationBankError, .duplicateKey("a"))
         }
-        XCTAssertThrowsError(try VocabularyDiagnosticFixedBank.evaluate(
-            items: [VocabularyDiagnosticFixedBankItem(
+        XCTAssertThrowsError(try VocabularyValidationFixedBank.evaluate(
+            items: [VocabularyValidationFixedBankItem(
                 canonicalKey: "excluded",
                 occurrenceCount: 1,
                 isIncluded: false,
@@ -265,33 +189,33 @@ final class VocabularyAssessmentCausalDiagnosticsXCTests: XCTestCase {
 
     func testFixedDeckControlExposesDeliberatelyOptimisticBank() throws {
         let neutral = [
-            VocabularyDiagnosticFixedBankItem(
+            VocabularyValidationFixedBankItem(
                 canonicalKey: "frequent",
                 occurrenceCount: 80,
                 knownMaskWords: [0b0011]
             ),
-            VocabularyDiagnosticFixedBankItem(
+            VocabularyValidationFixedBankItem(
                 canonicalKey: "rare",
                 occurrenceCount: 20,
                 knownMaskWords: [0b1100]
             )
         ]
         let optimistic = [
-            VocabularyDiagnosticFixedBankItem(
+            VocabularyValidationFixedBankItem(
                 canonicalKey: "frequent",
                 occurrenceCount: 80,
                 knownMaskWords: [0b1111]
             ),
             neutral[1]
         ]
-        let neutralResult = try VocabularyDiagnosticFixedBank.evaluate(
+        let neutralResult = try VocabularyValidationFixedBank.evaluate(
             items: neutral,
             sampleCount: 4,
             selectedKeys: [],
             coverageQuantile: 0.25,
             targetCoverage: 0.80
         )
-        let optimisticResult = try VocabularyDiagnosticFixedBank.evaluate(
+        let optimisticResult = try VocabularyValidationFixedBank.evaluate(
             items: optimistic,
             sampleCount: 4,
             selectedKeys: [],
@@ -308,17 +232,17 @@ final class VocabularyAssessmentCausalDiagnosticsXCTests: XCTestCase {
         let snapshot = try AdaptiveVocabularyAssessment(
             inventory: makeInventory(count: 20),
             mode: .targetCoverage(0.98)
-        ).diagnosticSnapshot()
-        XCTAssertThrowsError(try snapshot.evaluate(
+        ).validationObservation()
+        XCTAssertThrowsError(try snapshot.evaluateValidationBank(
             configuration(.independentLatentB1, samples: 576, theta: 1, latent: 2)
         )) { error in
-            XCTAssertEqual(error as? VocabularyDiagnosticInputError, .incompatibleB1SampleCount(576))
+            XCTAssertEqual(error as? VocabularyValidationBankError, .incompatibleB1SampleCount(576))
         }
     }
 
-    func testInvalidWeightsMasksSelectionsPosteriorsAndProbabilitiesAreRejected() throws {
-        XCTAssertThrowsError(try VocabularyDiagnosticFixedBank.evaluate(
-            items: [VocabularyDiagnosticFixedBankItem(
+    func testInvalidWeightsMasksAndSelectionsAreRejected() throws {
+        XCTAssertThrowsError(try VocabularyValidationFixedBank.evaluate(
+            items: [VocabularyValidationFixedBankItem(
                 canonicalKey: "bad-weight",
                 occurrenceCount: 0,
                 knownMaskWords: [0]
@@ -328,8 +252,8 @@ final class VocabularyAssessmentCausalDiagnosticsXCTests: XCTestCase {
             coverageQuantile: 0.05,
             targetCoverage: 0.98
         ))
-        XCTAssertThrowsError(try VocabularyDiagnosticFixedBank.evaluate(
-            items: [VocabularyDiagnosticFixedBankItem(
+        XCTAssertThrowsError(try VocabularyValidationFixedBank.evaluate(
+            items: [VocabularyValidationFixedBankItem(
                 canonicalKey: "bad-mask",
                 occurrenceCount: 1,
                 knownMaskWords: []
@@ -339,8 +263,8 @@ final class VocabularyAssessmentCausalDiagnosticsXCTests: XCTestCase {
             coverageQuantile: 0.05,
             targetCoverage: 0.98
         ))
-        XCTAssertThrowsError(try VocabularyDiagnosticFixedBank.evaluate(
-            items: [VocabularyDiagnosticFixedBankItem(
+        XCTAssertThrowsError(try VocabularyValidationFixedBank.evaluate(
+            items: [VocabularyValidationFixedBankItem(
                 canonicalKey: "known-key",
                 occurrenceCount: 1,
                 knownMaskWords: [0]
@@ -351,47 +275,15 @@ final class VocabularyAssessmentCausalDiagnosticsXCTests: XCTestCase {
             targetCoverage: 0.98
         ))
 
-        let candidate = try XCTUnwrap(makeInventory(count: 1).candidates.first)
-        let validItem = VocabularyAssessmentDiagnosticSnapshot.Item(
-            candidate: candidate,
-            evidence: nil,
-            responseCurve: Array(repeating: 0.5, count: 121),
-            productionKnownMask: Array(repeating: 0, count: 8),
-            isIncluded: true
-        )
-        XCTAssertThrowsError(try VocabularyAssessmentDiagnosticSnapshot(
-            items: [validItem],
-            posterior: Array(repeating: 0, count: 121),
-            epsilonKnowledge: 0.05,
-            evidenceReliabilityScale: 1,
-            coverageQuantile: 0.05,
-            productionSelection: [],
-            productionThetaIndexes: Array(repeating: 60, count: 512)
-        ))
-        XCTAssertThrowsError(try VocabularyAssessmentDiagnosticSnapshot(
-            items: [VocabularyAssessmentDiagnosticSnapshot.Item(
-                candidate: candidate,
-                evidence: nil,
-                responseCurve: [Double.nan] + Array(repeating: 0.5, count: 120),
-                productionKnownMask: Array(repeating: 0, count: 8),
-                isIncluded: true
-            )],
-            posterior: Array(repeating: 1.0 / 121.0, count: 121),
-            epsilonKnowledge: 0.05,
-            evidenceReliabilityScale: 1,
-            coverageQuantile: 0.05,
-            productionSelection: [],
-            productionThetaIndexes: Array(repeating: 60, count: 512)
-        ))
     }
 
     private func configuration(
-        _ kind: VocabularyDiagnosticBankKind,
+        _ kind: VocabularyValidationBankKind,
         samples: Int,
         theta: UInt64,
         latent: UInt64
-    ) -> VocabularyDiagnosticBankConfiguration {
-        VocabularyDiagnosticBankConfiguration(
+    ) -> VocabularyValidationBankConfiguration {
+        VocabularyValidationBankConfiguration(
             kind: kind,
             sampleCount: samples,
             thetaPositionSeed: theta,

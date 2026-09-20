@@ -839,30 +839,28 @@ package struct AdaptiveVocabularyAssessment: Sendable {
 
     package var diagnosticNaturalStopReason: VocabularyAssessmentStopReason? { stopReason }
 
-    package func diagnosticSnapshot(
-        selectionOverride: Set<String>? = nil
-    ) throws -> VocabularyAssessmentDiagnosticSnapshot {
+    package func validationObservation() throws -> VocabularyAssessmentObservation {
         let predictiveSamples = cachedPredictiveSamples ?? predictiveCoverageSamples()
-        let proposed = proposedSelection(
+        let selection = proposedSelection(
             predictiveSamples: predictiveSamples,
             pruneRedundant: true
         )
-        let selection = selectionOverride ?? proposed
         let maskWordCount = predictiveSamples.maskWordCount
         let items = inventory.candidates.enumerated().map { index, candidate in
-            VocabularyAssessmentDiagnosticSnapshot.Item(
-                candidate: candidate,
+            VocabularyAssessmentObservation.Item(
+                canonicalKey: candidate.canonicalKey,
+                occurrenceCount: candidate.occurrenceCount,
+                isIncluded: evidenceByCandidateIndex[index] != .excluded,
                 evidence: evidenceByCandidateIndex[index],
                 responseCurve: responseCurves[index],
                 productionKnownMask: Array(
                     predictiveSamples.knownMaskWords[
                         (index * maskWordCount)..<((index + 1) * maskWordCount)
                     ]
-                ),
-                isIncluded: evidenceByCandidateIndex[index] != .excluded
+                )
             )
         }
-        return try VocabularyAssessmentDiagnosticSnapshot(
+        return try VocabularyAssessmentObservation(
             items: items,
             posterior: posterior,
             epsilonKnowledge: epsilonKnowledge,

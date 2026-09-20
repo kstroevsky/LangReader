@@ -156,14 +156,14 @@ private struct LongitudinalPath: Codable {
 }
 
 private struct LongitudinalBankSummary: Codable {
-    let kind: VocabularyDiagnosticBankKind
+    let kind: VocabularyValidationBankKind
     let sampleCount: Int
     let coverageLowerBound: Double
     let targetMissProbability: Double
     let thetaPositionFingerprint: String
     let latentItemDrawFingerprint: String
 
-    init(_ result: VocabularyDiagnosticBankResult) {
+    init(_ result: VocabularyValidationBankResult) {
         kind = result.kind
         sampleCount = result.sampleCount
         coverageLowerBound = result.coverageLowerBound
@@ -363,7 +363,7 @@ private enum LongitudinalFailure: Error, CustomStringConvertible {
     }
 }
 
-func runVocabularyLongitudinalSelfTest() throws {
+package func runVocabularyLongitudinalSelfTest() throws {
     let unavailable = VocabularyReaderPriorStore(databaseURL: nil)
     let posterior = Array(repeating: 1.0 / 121.0, count: 121)
     guard !unavailable.recordCompletedSession(
@@ -390,15 +390,12 @@ func runVocabularyLongitudinalSelfTest() throws {
     print("vocabulary longitudinal diagnostic self-test passed")
 }
 
-func runVocabularyLongitudinalDiagnostics(
-    manifestPath: String,
-    jsonPath: String,
-    markdownPath: String,
-    timingPath: String
-) throws {
+package func runVocabularyLongitudinalDiagnostics(
+    manifestData: Data
+) throws -> VocabularyDiagnosticArtifacts {
     let manifest = try JSONDecoder().decode(
         LongitudinalManifest.self,
-        from: Data(contentsOf: URL(fileURLWithPath: manifestPath))
+        from: manifestData
     )
     try validateLongitudinalManifest(manifest)
     let source = try longitudinalSource()
@@ -789,15 +786,9 @@ func runVocabularyLongitudinalDiagnostics(
         data = try encoder.encode(report)
         serializationTimings.append(longitudinalMilliseconds(since: start))
     }
-    try data.write(to: URL(fileURLWithPath: jsonPath), options: .atomic)
-    try longitudinalMarkdown(report).write(
-        to: URL(fileURLWithPath: markdownPath),
-        atomically: true,
-        encoding: .utf8
-    )
     let timing = LongitudinalTimingReport(
         schemaVersion: 1,
-        semanticReportSHA256: try longitudinalSHA256(jsonPath),
+        semanticReportSHA256: VocabularyDiagnosticArtifacts.sha256(of: data),
         workload: [
             "runs": runs.count,
             "historyEvents": runs.flatMap(\.historyEvents).count,
@@ -814,7 +805,11 @@ func runVocabularyLongitudinalDiagnostics(
         units: "milliseconds",
         limitation: "Wall-clock observations include host load and are separate from product latency gates. Temporary database creation and cleanup are outside the per-round-trip spans."
     )
-    try encoder.encode(timing).write(to: URL(fileURLWithPath: timingPath), options: .atomic)
+    return try VocabularyDiagnosticArtifacts(
+        jsonData: data,
+        markdown: longitudinalMarkdown(report),
+        timingData: encoder.encode(timing)
+    )
 }
 
 private func validateLongitudinalManifest(_ manifest: LongitudinalManifest) throws {
@@ -1067,22 +1062,22 @@ private func buildLongitudinalPath(
         naturalStopReason = assessment.diagnosticNaturalStopReason
     }
     let result = assessment.result()
-    let snapshot = try assessment.diagnosticSnapshot()
-    let bankA = try snapshot.evaluate(VocabularyDiagnosticBankConfiguration(
+    let snapshot = try assessment.validationObservation()
+    let bankA = try snapshot.evaluateValidationBank(VocabularyValidationBankConfiguration(
         kind: .productionA,
         sampleCount: 512,
         thetaPositionSeed: 0,
         latentItemSeed: 0,
         targetCoverage: target
     ))
-    let bankB1 = try snapshot.evaluate(VocabularyDiagnosticBankConfiguration(
+    let bankB1 = try snapshot.evaluateValidationBank(VocabularyValidationBankConfiguration(
         kind: .independentLatentB1,
         sampleCount: b1Samples,
         thetaPositionSeed: derivedLongitudinalSeed(bankSeed, "b1-unused-theta"),
         latentItemSeed: derivedLongitudinalSeed(bankSeed, "b1-latent"),
         targetCoverage: target
     ))
-    let bankB2 = try snapshot.evaluate(VocabularyDiagnosticBankConfiguration(
+    let bankB2 = try snapshot.evaluateValidationBank(VocabularyValidationBankConfiguration(
         kind: .randomizedThetaAndLatentB2,
         sampleCount: b2Samples,
         thetaPositionSeed: derivedLongitudinalSeed(bankSeed, "b2-theta"),
@@ -1668,9 +1663,4 @@ private func longitudinalShell(_ command: String) throws -> String {
     guard process.terminationStatus == 0 else { throw LongitudinalFailure.command(command) }
     return String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
         .trimmingCharacters(in: .whitespacesAndNewlines)
-}
-
-private func longitudinalSHA256(_ path: String) throws -> String {
-    let quoted = "'" + path.replacingOccurrences(of: "'", with: "'\\''") + "'"
-    return try longitudinalShell("shasum -a 256 \(quoted) | awk '{print $1}'")
 }
