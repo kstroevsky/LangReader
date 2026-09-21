@@ -11,6 +11,7 @@ swift "$validator" docx "$fixtures/valid-docx-cold.json" --expected-phase cold
 swift "$validator" docx "$fixtures/valid-docx-warm.json" --expected-phase warm
 swift "$validator" matrix "$fixtures/valid-matrix.json"
 swift "$validator" interactions "$fixtures/valid-interactions.json"
+swift "$validator" vocabulary-preparation "$fixtures/valid-preparation.json" --control "$fixtures/valid-preparation-control.json"
 for fixture in invalid.json missing-event.json undersampled.json invalid-raw-samples.json missing-visible-ready.json; do
   if swift "$validator" synthetic "$fixtures/$fixture"; then
     echo "validator unexpectedly accepted $fixture" >&2
@@ -23,6 +24,10 @@ if swift "$validator" interactions "$fixtures/interaction-threshold-regression.j
 fi
 if swift "$validator" interactions "$fixtures/scroll-degradation-regression.json"; then
   echo "validator unexpectedly accepted background-index scroll degradation" >&2
+  exit 1
+fi
+if swift "$validator" vocabulary-preparation "$fixtures/preparation-threshold-regression.json" --control "$fixtures/valid-preparation-control.json"; then
+  echo "validator unexpectedly accepted a vocabulary preparation threshold regression" >&2
   exit 1
 fi
 if swift "$validator" synthetic "$fixtures/valid-synthetic.json" --expected-phase warm; then

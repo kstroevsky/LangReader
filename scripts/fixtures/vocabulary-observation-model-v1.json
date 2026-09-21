@@ -1,0 +1,134 @@
+{
+  "defaultEpsilonKnowledge" : 0.05,
+  "evidence" : [
+    {
+      "evidence" : "verifiedKnown",
+      "probabilityGivenKnown" : 0.97,
+      "probabilityGivenUnknown" : 0.030000000000000027,
+      "reliability" : 0.97
+    },
+    {
+      "evidence" : "typedVerifiedKnown",
+      "probabilityGivenKnown" : 0.98,
+      "probabilityGivenUnknown" : 0.020000000000000018,
+      "reliability" : 0.98
+    },
+    {
+      "evidence" : "verifiedUnknownOrPartial",
+      "probabilityGivenKnown" : 0.020000000000000018,
+      "probabilityGivenUnknown" : 0.98,
+      "reliability" : 0.98
+    },
+    {
+      "evidence" : "reportedUnknown",
+      "probabilityGivenKnown" : 0.050000000000000044,
+      "probabilityGivenUnknown" : 0.95,
+      "reliability" : 0.95
+    },
+    {
+      "evidence" : "unsure",
+      "probabilityGivenKnown" : 0.25,
+      "probabilityGivenUnknown" : 0.75,
+      "reliability" : 0.75
+    },
+    {
+      "evidence" : "legacyKnown",
+      "probabilityGivenKnown" : 0.75,
+      "probabilityGivenUnknown" : 0.25,
+      "reliability" : 0.75
+    },
+    {
+      "evidence" : "legacyUnknown",
+      "probabilityGivenKnown" : 0.15000000000000002,
+      "probabilityGivenUnknown" : 0.85,
+      "reliability" : 0.85
+    }
+  ],
+  "goldenFixtures" : [
+    {
+      "difficulty" : 0,
+      "epsilonKnowledge" : 0.05,
+      "evidence" : "verifiedKnown",
+      "evidenceLikelihood" : 0.5,
+      "latentKnownProbability" : 0.5,
+      "posteriorKnownProbability" : 0.97,
+      "theta" : 0
+    },
+    {
+      "difficulty" : 0,
+      "epsilonKnowledge" : 0.05,
+      "evidence" : "typedVerifiedKnown",
+      "evidenceLikelihood" : 0.5,
+      "latentKnownProbability" : 0.5,
+      "posteriorKnownProbability" : 0.98,
+      "theta" : 0
+    },
+    {
+      "difficulty" : 0,
+      "epsilonKnowledge" : 0.05,
+      "evidence" : "verifiedUnknownOrPartial",
+      "evidenceLikelihood" : 0.5,
+      "latentKnownProbability" : 0.5,
+      "posteriorKnownProbability" : 0.020000000000000018,
+      "theta" : 0
+    },
+    {
+      "difficulty" : 0,
+      "epsilonKnowledge" : 0.05,
+      "evidence" : "reportedUnknown",
+      "evidenceLikelihood" : 0.5,
+      "latentKnownProbability" : 0.5,
+      "posteriorKnownProbability" : 0.050000000000000044,
+      "theta" : 0
+    },
+    {
+      "difficulty" : 0,
+      "epsilonKnowledge" : 0.05,
+      "evidence" : "unsure",
+      "evidenceLikelihood" : 0.5,
+      "latentKnownProbability" : 0.5,
+      "posteriorKnownProbability" : 0.25,
+      "theta" : 0
+    },
+    {
+      "difficulty" : 0,
+      "epsilonKnowledge" : 0.05,
+      "evidence" : "legacyKnown",
+      "evidenceLikelihood" : 0.5,
+      "latentKnownProbability" : 0.5,
+      "posteriorKnownProbability" : 0.75,
+      "theta" : 0
+    },
+    {
+      "difficulty" : 0,
+      "epsilonKnowledge" : 0.05,
+      "evidence" : "legacyUnknown",
+      "evidenceLikelihood" : 0.5,
+      "latentKnownProbability" : 0.5,
+      "posteriorKnownProbability" : 0.15000000000000002,
+      "theta" : 0
+    },
+    {
+      "difficulty" : 1,
+      "epsilonKnowledge" : 0.05,
+      "evidence" : "reportedUnknown",
+      "evidenceLikelihood" : 0.8665850427261708,
+      "latentKnownProbability" : 0.09268328585981012,
+      "posteriorKnownProbability" : 0.005347616292120615,
+      "theta" : -2
+    },
+    {
+      "difficulty" : -1,
+      "epsilonKnowledge" : 0.25,
+      "evidence" : "verifiedKnown",
+      "evidenceLikelihood" : 0.7127098396065437,
+      "latentKnownProbability" : 0.7262870634112166,
+      "posteriorKnownProbability" : 0.9884786379514605,
+      "theta" : 2
+    }
+  ],
+  "knowledgeModelVersion" : "rasch-knowledge-v1",
+  "observationModelVersion" : "categorical-evidence-v1",
+  "reliabilitySourceVersion" : "cold-start-evidence-v1",
+  "schemaVersion" : 1
+}

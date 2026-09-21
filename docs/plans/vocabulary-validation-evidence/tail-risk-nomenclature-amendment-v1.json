@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "status": "nomenclature-defined-release-role-blocked",
+  "baseContract": {
+    "path": "docs/plans/vocabulary-validation-evidence/tail-risk-acceptance-semantics-v1.json",
+    "sha256": "d8f6dcf9bcb46e55105977e6c839c056d940b3107b25622395512e125c8ab69e"
+  },
+  "preservedMetric": {
+    "existingIdentifier": "conditionalSevereExpectedShortfall",
+    "displayAlias": "conditionalTargetShortfall",
+    "formula": "E[max(0, 0.98 - C_realized) | C_realized < c_severe]",
+    "mathematicalDefinitionChanged": false
+  },
+  "separateOptionalMetric": {
+    "identifier": "conditionalThresholdExcessSeverity",
+    "formula": "E[c_severe - C_realized | C_realized < c_severe]",
+    "releaseRole": null,
+    "numericalTolerance": null
+  },
+  "accessBoundary": {
+    "releaseDecisionChanged": false,
+    "risk001Activated": false,
+    "nextSafeguardAuthorized": false,
+    "developmentConfirmationAuthorized": false,
+    "releaseHoldoutAuthorized": false
+  }
+}

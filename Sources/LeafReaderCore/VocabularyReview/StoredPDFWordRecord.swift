@@ -10,6 +10,8 @@ package struct StoredPDFWordRecord: Codable, Sendable {
     package var vocabularyID: String?
     package var word: String
     package var lemma: String?
+    package var lexicalKey: String?
+    package var partOfSpeech: VocabularyPartOfSpeech?
     package var surfaceForm: String?
     package let pageIndex: Int
     package let bounds: StoredPDFWordRect
@@ -27,6 +29,8 @@ package struct StoredPDFWordRecord: Codable, Sendable {
         vocabularyID: String? = nil,
         word: String,
         lemma: String? = nil,
+        lexicalKey: String? = nil,
+        partOfSpeech: VocabularyPartOfSpeech? = nil,
         surfaceForm: String? = nil,
         pageIndex: Int,
         bounds: StoredPDFWordRect,
@@ -43,6 +47,8 @@ package struct StoredPDFWordRecord: Codable, Sendable {
         self.vocabularyID = vocabularyID
         self.word = word
         self.lemma = lemma
+        self.lexicalKey = lexicalKey
+        self.partOfSpeech = partOfSpeech
         self.surfaceForm = surfaceForm
         self.pageIndex = pageIndex
         self.bounds = bounds

@@ -1,0 +1,195 @@
+{
+  "configuration" : {
+    "algorithmVersion" : 3,
+    "assessmentModelParameters" : {
+      "adaptiveLossPopulation" : "allNonExcluded",
+      "coverageQuantile" : 0.05,
+      "coverageStoppingComputation" : "full-every-answer",
+      "difficultyPriorStandardDeviationScale" : 1,
+      "evidenceReliabilityScale" : 1,
+      "minimumEpsilonKnowledge" : 0.05,
+      "questionObjective" : "evidenceSurrogate",
+      "warmPriorWeight" : 0.9
+    },
+    "documentsPerScenario" : 1,
+    "lemmaCount" : 20,
+    "populationParameters" : {
+      "idiosyncraticFlipRate" : 0.12,
+      "itemResidualStandardDeviation" : 0.8,
+      "responseNoiseRate" : 0.12
+    },
+    "readersPerScenario" : 1,
+    "seed" : 42,
+    "usesPairedDiagnosticSubstreams" : false
+  },
+  "protocolDiagnostics" : {
+    "coldCoverageHitRate" : 1,
+    "coldMeanQuestionCount" : 20,
+    "difficultyUncertaintyEnabled" : true,
+    "partOfSpeechAmbiguityShare" : 0.1,
+    "responseProtocol" : "answer-before-reveal-verified-v3",
+    "warmCoverageHitRate" : 1,
+    "warmMeanQuestionCount" : 20,
+    "warmStartQuestionReduction" : 0
+  },
+  "qualityGates" : {
+    "coverage98HitRate" : 1,
+    "eligible" : false,
+    "idiosyncraticCoverageHitRate" : 1,
+    "itemResidualCoverageHitRate" : 1,
+    "minimumDeckPrecision" : 0.5714285714285714,
+    "passed" : false,
+    "responseNoiseCoverageHitRate" : 1,
+    "thetaInterval90Coverage" : 1,
+    "warmStartCoverageHitDelta" : 0,
+    "warmStartQuestionReduction" : 0,
+    "wellSpecifiedECE" : 0.041451811232713826
+  },
+  "results" : [
+    {
+      "brierScore" : 0.006608669450259656,
+      "deckPrecision" : 1,
+      "deckRecall" : 1,
+      "expectedCalibrationError" : 0.04299822930662395,
+      "logLoss" : 0.04699145245007329,
+      "meanQuestionCount" : 20,
+      "mode" : "all-unknown",
+      "oracleDeckRegret" : 0,
+      "realizedTokenCoverage" : 1,
+      "scenario" : "well-specified-rasch",
+      "stopReasons" : {
+        "exhaustedCandidates" : 1
+      },
+      "targetMissRate" : 0,
+      "thetaInterval90Coverage" : 1,
+      "thetaRMSE" : 0.7563743213818697
+    },
+    {
+      "brierScore" : 0.00450372751253593,
+      "deckPrecision" : 0.8235294117647058,
+      "deckRecall" : 0.9333333333333333,
+      "expectedCalibrationError" : 0.039905393158803704,
+      "logLoss" : 0.04242943219612728,
+      "meanQuestionCount" : 20,
+      "mode" : "coverage-98",
+      "oracleDeckRegret" : 3,
+      "realizedTokenCoverage" : 0.9813196416866944,
+      "scenario" : "well-specified-rasch",
+      "stopReasons" : {
+        "exhaustedCandidates" : 1
+      },
+      "targetMissRate" : 0,
+      "thetaInterval90Coverage" : 1,
+      "thetaRMSE" : 0.448021156584375
+    },
+    {
+      "brierScore" : 0.0036553321284324494,
+      "deckPrecision" : 1,
+      "deckRecall" : 1,
+      "expectedCalibrationError" : 0.035950846919873186,
+      "logLoss" : 0.03800265926497003,
+      "meanQuestionCount" : 20,
+      "mode" : "all-unknown",
+      "oracleDeckRegret" : 1,
+      "realizedTokenCoverage" : 1,
+      "scenario" : "item-residual",
+      "stopReasons" : {
+        "exhaustedCandidates" : 1
+      },
+      "targetMissRate" : 0,
+      "thetaInterval90Coverage" : 1,
+      "thetaRMSE" : 0.12376777665408101
+    },
+    {
+      "brierScore" : 0.0025698239473025295,
+      "deckPrecision" : 0.8333333333333334,
+      "deckRecall" : 1,
+      "expectedCalibrationError" : 0.028812906492207628,
+      "logLoss" : 0.030227542586348705,
+      "meanQuestionCount" : 20,
+      "mode" : "coverage-98",
+      "oracleDeckRegret" : 2,
+      "realizedTokenCoverage" : 1,
+      "scenario" : "item-residual",
+      "stopReasons" : {
+        "exhaustedCandidates" : 1
+      },
+      "targetMissRate" : 0,
+      "thetaInterval90Coverage" : 1,
+      "thetaRMSE" : 0.2769224563769209
+    },
+    {
+      "brierScore" : 0.10572585988671927,
+      "deckPrecision" : 0.9166666666666666,
+      "deckRecall" : 0.9166666666666666,
+      "expectedCalibrationError" : 0.1174632343722649,
+      "logLoss" : 0.5046716254101209,
+      "meanQuestionCount" : 20,
+      "mode" : "all-unknown",
+      "oracleDeckRegret" : 0,
+      "realizedTokenCoverage" : 0.9298667249289928,
+      "scenario" : "response-noise",
+      "stopReasons" : {
+        "exhaustedCandidates" : 1
+      },
+      "targetMissRate" : 0,
+      "thetaInterval90Coverage" : 1,
+      "thetaRMSE" : 1.232757387877556
+    },
+    {
+      "brierScore" : 0.15470624480059647,
+      "deckPrecision" : 0.5714285714285714,
+      "deckRecall" : 1,
+      "expectedCalibrationError" : 0.19678501951264182,
+      "logLoss" : 0.6044686149086542,
+      "meanQuestionCount" : 20,
+      "mode" : "coverage-98",
+      "oracleDeckRegret" : 6,
+      "realizedTokenCoverage" : 1,
+      "scenario" : "response-noise",
+      "stopReasons" : {
+        "exhaustedCandidates" : 1
+      },
+      "targetMissRate" : 0,
+      "thetaInterval90Coverage" : 1,
+      "thetaRMSE" : 0.5271925596062024
+    },
+    {
+      "brierScore" : 0.04292057031817119,
+      "deckPrecision" : 1,
+      "deckRecall" : 0.8,
+      "expectedCalibrationError" : 0.09330954626258059,
+      "logLoss" : 0.13556461728161484,
+      "meanQuestionCount" : 20,
+      "mode" : "all-unknown",
+      "oracleDeckRegret" : -1,
+      "realizedTokenCoverage" : 0.949748743718593,
+      "scenario" : "idiosyncratic-knowledge",
+      "stopReasons" : {
+        "exhaustedCandidates" : 1
+      },
+      "targetMissRate" : 0,
+      "thetaInterval90Coverage" : 1,
+      "thetaRMSE" : 1.5126745506993657
+    },
+    {
+      "brierScore" : 0.057666036259124684,
+      "deckPrecision" : 0.6363636363636364,
+      "deckRecall" : 1,
+      "expectedCalibrationError" : 0.10109892837823126,
+      "logLoss" : 0.20906427423516732,
+      "meanQuestionCount" : 20,
+      "mode" : "coverage-98",
+      "oracleDeckRegret" : 4,
+      "realizedTokenCoverage" : 1,
+      "scenario" : "idiosyncratic-knowledge",
+      "stopReasons" : {
+        "exhaustedCandidates" : 1
+      },
+      "targetMissRate" : 0,
+      "thetaInterval90Coverage" : 1,
+      "thetaRMSE" : 1.113376762585181
+    }
+  ],
+  "schemaVersion" : 1
+}

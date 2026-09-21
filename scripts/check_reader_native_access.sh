@@ -15,9 +15,9 @@ if ! LC_ALL=C sort -cu "$allowlist"; then
   exit 1
 fi
 
-rg -l '\b(pdfView|webView)\b' Sources/LeafReaderApp --glob '*.swift' | sort > "$actual"
-unexpected="$(comm -23 "$actual" "$allowlist")"
-stale="$(comm -13 "$actual" "$allowlist")"
+rg -l '\b(pdfView|webView)\b' Sources/LeafReaderApp --glob '*.swift' | LC_ALL=C sort > "$actual"
+unexpected="$(LC_ALL=C comm -23 "$actual" "$allowlist")"
+stale="$(LC_ALL=C comm -13 "$actual" "$allowlist")"
 if [[ -n "$unexpected" ]]; then
   echo "Direct PDFView/WKWebView access outside the reviewed platform-coordination allowlist:" >&2
   echo "$unexpected" >&2

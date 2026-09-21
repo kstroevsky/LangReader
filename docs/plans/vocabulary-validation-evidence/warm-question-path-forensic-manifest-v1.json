@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "dataRole": "diagnostic-development-forensic",
+  "reservationStatus": "consumed-reporting-incomplete",
+  "sourceEvidence": {
+    "report": "docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-development-report-v1.json",
+    "reportSHA256": "789542ee581b315a4e6ed330c9dd855e2f7eef276f95481289a9a2f8db8a5e41"
+  },
+  "selectionRule": {
+    "severeCaseBoundary": -0.05,
+    "severeCases": "every eligible source run with production natural warm-minus-cold realized coverage below -0.05",
+    "controls": "learner-0 from every scenario represented by a severe case, regardless of its outcome",
+    "selectedRunIDs": [
+      "biased-self-verification:learner-0",
+      "biased-self-verification:learner-3",
+      "biased-self-verification:learner-48",
+      "biased-self-verification:learner-57",
+      "changed-difficulty-distribution:learner-0",
+      "changed-difficulty-distribution:learner-1",
+      "easy-history-hard-evaluation:learner-0",
+      "easy-history-hard-evaluation:learner-119",
+      "easy-history-hard-evaluation:learner-75",
+      "noisy-history:learner-0",
+      "noisy-history:learner-111"
+    ],
+    "biasedSelectionAcknowledged": true,
+    "claimBoundary": "mechanism diagnosis only; no population-rate, safety, or mitigation-effect claim"
+  },
+  "traceContract": {
+    "paths": ["coldNatural", "warmNatural", "coldFixedBudget", "warmFixedBudget"],
+    "perQuestionFields": [
+      "ordinal",
+      "canonicalKey",
+      "occurrenceCount",
+      "difficultyMean",
+      "difficultyStandardDeviation",
+      "truthKnown",
+      "learnerItemException",
+      "evidence",
+      "selectionType",
+      "wasValidation",
+      "predictedKnownBeforeAnswer",
+      "finalKnownProbability",
+      "finalClassification",
+      "selectedInFinalDeck"
+    ],
+    "requiredSummaries": [
+      "firstNaturalQuestionDivergenceOrdinal",
+      "exclusiveAskedOccurrenceMassByTruth",
+      "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence",
+      "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass",
+      "finalDeckSymmetricDifferenceOccurrenceMass"
+    ],
+    "massConservationRequired": true
+  },
+  "hypotheses": [
+    "early warm validation changes the post-ordinal-8 question path",
+    "the divergent warm path collects known-supporting evidence on truly unknown high-mass items",
+    "harmful final omissions concentrate in items never asked by the warm path",
+    "the mechanism differs between biased self-verification and distribution-shift scenarios"
+  ],
+  "decisionRule": {
+    "noProductionChange": true,
+    "noThresholdSelection": true,
+    "nextDesignRequiresFreshReservation": true,
+    "interpretation": "report supported and falsified mechanisms separately; do not choose a mitigation from case counts"
+  },
+  "forbiddenAccess": {
+    "developmentConfirmation": true,
+    "releaseHoldout": true,
+    "consumedPOSHeldout": true,
+    "privateGUIFixtures": true,
+    "userDatabases": true
+  },
+  "outcomes": {
+    "executionSourceRevision": "11844ebeb714a638b81d115f6898c3059dc994a8",
+    "semanticReport": "docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-report-v1.json",
+    "semanticReportSHA256": "14bd07c1c2cd0a2df97b4e2b683169411cb5d59eb13cd43fad6db406adb364bf",
+    "retainedRuns": 11,
+    "pathParityPassed": true,
+    "resultStatus": "reporting-contract-incomplete",
+    "missingEvidence": "unasked final-item identities and occurrence masses required for final-deck symmetric-difference mass"
+  },
+  "consumedAtRevision": "11844ebeb714a638b81d115f6898c3059dc994a8"
+}

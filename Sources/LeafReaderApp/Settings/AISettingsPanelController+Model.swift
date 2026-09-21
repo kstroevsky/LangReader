@@ -70,4 +70,10 @@ extension AISettingsPanelController {
 
         installSettingsPage(CacheSettingsView(model: model), in: page)
     }
+
+    func installVocabularySettingsPage(in page: NSView) {
+        let model = VocabularySettingsModel()
+        vocabularySettings = model
+        installSettingsPage(VocabularySettingsView(model: model), in: page)
+    }
 }

@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "base": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/revision-2026-09-21-boundary-followup/base-plan.md",
+    "sha256": "55c2819200950f8c93a0d451bfe4659a4bc9bf5c0c1182086f28c89b95e8b879"
+  },
+  "candidate": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/revision-2026-09-21-boundary-followup/candidate-plan.md",
+    "sha256": "3a67d47ad1d0ea133618bff40611e9b40a8b6a3f1a5a7f7082f8210a80985cab"
+  },
+  "delta": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/revision-2026-09-21-boundary-followup/delta.json",
+    "feedback_ids": [
+      "F-ACTIVE-GATE-REFERENCE",
+      "F-CORE-SEAM",
+      "F-FOLLOWUP-CLOSURE",
+      "F-FOLLOWUP-SEQUENCE",
+      "F-HISTORICAL-SEQUENCE",
+      "F-LOCK-TRANSITION",
+      "F-NEW-RESERVATION",
+      "F-NONOVERLAP",
+      "F-REGISTER",
+      "F-STATUS",
+      "F-TESTS"
+    ]
+  },
+  "changed_sections": [
+    "LeafReader validation boundary and remaining-gates implementation plan / Decision and acceptance criteria",
+    "LeafReader validation boundary and remaining-gates implementation plan / Evidence preservation and parity",
+    "LeafReader validation boundary and remaining-gates implementation plan / Failure handling and stop conditions",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence",
+    "LeafReader validation boundary and remaining-gates implementation plan / Post-extraction review follow-up",
+    "LeafReader validation boundary and remaining-gates implementation plan / Remaining scientific and release gates",
+    "LeafReader validation boundary and remaining-gates implementation plan / Sealed generator-lock compatibility checkpoint",
+    "LeafReader validation boundary and remaining-gates implementation plan / Status and authority",
+    "LeafReader validation boundary and remaining-gates implementation plan / Verification"
+  ],
+  "added_sections": [
+    "LeafReader validation boundary and remaining-gates implementation plan / Post-extraction review follow-up"
+  ],
+  "removed_sections": [],
+  "allowed_sections": [
+    "LeafReader validation boundary and remaining-gates implementation plan / Decision and acceptance criteria",
+    "LeafReader validation boundary and remaining-gates implementation plan / Evidence preservation and parity",
+    "LeafReader validation boundary and remaining-gates implementation plan / Failure handling and stop conditions",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence",
+    "LeafReader validation boundary and remaining-gates implementation plan / Post-extraction review follow-up",
+    "LeafReader validation boundary and remaining-gates implementation plan / Remaining scientific and release gates",
+    "LeafReader validation boundary and remaining-gates implementation plan / Sealed generator-lock compatibility checkpoint",
+    "LeafReader validation boundary and remaining-gates implementation plan / Status and authority",
+    "LeafReader validation boundary and remaining-gates implementation plan / Verification"
+  ],
+  "contract_signal_deltas": {
+    "LeafReader validation boundary and remaining-gates implementation plan / Decision and acceptance criteria": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "008",
+        "80"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Evidence preservation and parity": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "24"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Failure handling and stop conditions": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "008"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence": {
+      "numeric_removed": [
+        "002",
+        "3"
+      ],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Remaining scientific and release gates": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Sealed generator-lock compatibility checkpoint": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "007",
+        "5"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Status and authority": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "007",
+        "5"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Verification": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "80"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    }
+  },
+  "ledger_counts": {
+    "active": 67,
+    "deferred": 3,
+    "superseded": 3,
+    "other": 0
+  },
+  "base_ledger": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/revision-2026-09-21-boundary-followup/base-ledger.json",
+  "errors": [],
+  "warnings": []
+}

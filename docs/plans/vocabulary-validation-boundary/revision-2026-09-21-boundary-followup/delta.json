@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "base_sha256": "55c2819200950f8c93a0d451bfe4659a4bc9bf5c0c1182086f28c89b95e8b879",
+  "base_status": "accepted_implementation_base",
+  "feedback_sha256": "fca2200bf6ebb544f8806172fce0dbe6661bb7c7f517488ac8ea02071120bfa5",
+  "closed_world": true,
+  "changes": [
+    {
+      "feedback_id": "F-STATUS",
+      "operation": "AMEND",
+      "requirement_ids": ["AUTH-001", "AUTH-003"],
+      "payload_source": "feedback.md: accepted extraction base and user Continue authorization",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Status and authority"]],
+      "required_literals": ["This follow-up candidate is derived from the user-accepted extraction plan", "The original pre-extraction starting revision remains a historical fact"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": ["007", "5"],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Distinguish the accepted base from this narrowly authorized follow-up without changing scientific authority"
+    },
+    {
+      "feedback_id": "F-CORE-SEAM",
+      "operation": "AMEND",
+      "requirement_ids": ["AC-003"],
+      "payload_source": "feedback.md: finding 2 and explicit preference for one narrow continuation primitive",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Decision and acceptance criteria"]],
+      "required_literals": ["exactly one package-scoped continuation primitive"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": ["80"],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Resolve the literal AC-003 contradiction while removing other experiment controls from Core"
+    },
+    {
+      "feedback_id": "F-NEW-RESERVATION",
+      "operation": "ADD",
+      "requirement_ids": ["AC-008"],
+      "payload_source": "feedback.md: source-lock consequence and user Continue reply authorizing v2 preservation plus new v3",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Decision and acceptance criteria"]],
+      "required_literals": ["[AC-008]"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": ["008", "2", "3"],
+      "allowed_new_versioned_tokens": ["v3"],
+      "reason": "Make the active-reservation replacement explicit without rebinding v2 identities"
+    },
+    {
+      "feedback_id": "F-REGISTER",
+      "operation": "ADD",
+      "requirement_ids": ["EVID-003"],
+      "payload_source": "feedback.md: finding 1; independent verifier's standalone register-gap finding",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Evidence preservation and parity"]],
+      "required_literals": ["[EVID-003]"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": ["003", "1", "2", "3"],
+      "allowed_new_versioned_tokens": ["v3"],
+      "reason": "Keep the authoritative derived register aligned with v1/v2 history and the active v3 future set without changing scientific statuses"
+    },
+    {
+      "feedback_id": "F-NONOVERLAP",
+      "operation": "ADD",
+      "requirement_ids": ["DATA-002"],
+      "payload_source": "feedback.md: finding 3; prior frozen development/release manifests and versioned Git tree",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Evidence preservation and parity"]],
+      "required_literals": ["[DATA-002]", "`scripts/fixtures/`"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": ["002", "2", "3", "24"],
+      "allowed_new_versioned_tokens": ["v3"],
+      "reason": "Make all prior seed/document identity coverage mechanical and explain the opaque namespace"
+    },
+    {
+      "feedback_id": "F-LOCK-TRANSITION",
+      "operation": "ADD",
+      "requirement_ids": ["LOCK-007"],
+      "payload_source": "feedback.md: user-approved v2-to-v3 route and historical lock preservation",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Sealed generator-lock compatibility checkpoint"]],
+      "required_literals": ["[LOCK-007]"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": ["007", "2", "3", "5", "7128", "88671654", "9", "2026", "09", "20"],
+      "allowed_new_versioned_tokens": ["v3"],
+      "reason": "Require historical v2 verification, fresh parity, fresh identities, and a new source lock after the Core edit"
+    },
+    {
+      "feedback_id": "F-HISTORICAL-SEQUENCE",
+      "operation": "AMEND",
+      "requirement_ids": ["IMPL-001"],
+      "payload_source": "independent verifier: original Commit 1–5 sequence is already complete at this follow-up",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Implementation sequence"]],
+      "required_literals": ["The Commit 1–5 sequence below records the completed extraction"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": [],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Prevent historical extraction steps from being read as pending follow-up work"
+    },
+    {
+      "feedback_id": "F-FOLLOWUP-SEQUENCE",
+      "operation": "ADD",
+      "requirement_ids": ["FOLLOW-001"],
+      "payload_source": "feedback.md: three follow-ups; user Continue authorization; independent verifier temporal finding",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Post-extraction review follow-up"]],
+      "required_literals": ["[FOLLOW-001]", "derived register's source spec"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": ["001", "1", "2", "3", "4"],
+      "allowed_new_versioned_tokens": ["v3"],
+      "reason": "Specify the ordered follow-up implementation without reopening completed extraction commits"
+    },
+    {
+      "feedback_id": "F-ACTIVE-GATE-REFERENCE",
+      "operation": "AMEND",
+      "requirement_ids": ["GATE-005", "GATE-006"],
+      "payload_source": "independent verifier: Gate 5/6 must point to the active v3 set and LOCK-007",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Remaining scientific and release gates"]],
+      "required_literals": [{"text": "active v3 reservation", "section_count": 2}],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": ["007", "3"],
+      "allowed_new_versioned_tokens": ["v3"],
+      "reason": "Remove temporal ambiguity without changing freeze, review, execution, or release-gate order"
+    },
+    {
+      "feedback_id": "F-FOLLOWUP-CLOSURE",
+      "operation": "AMEND",
+      "requirement_ids": ["FAIL-004"],
+      "payload_source": "independent forward-test: historical extraction closure must not be retroactively invalidated by post-extraction AC-008",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Failure handling and stop conditions"]],
+      "required_literals": ["The earlier extraction checkpoint remains historically complete", "This follow-up closes only when"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": ["008"],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Separate historical extraction acceptance from acceptance of the new review follow-up"
+    },
+    {
+      "feedback_id": "F-TESTS",
+      "operation": "AMEND",
+      "requirement_ids": ["VER-001"],
+      "payload_source": "feedback.md: finding 2 and source-lock consequence",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Verification"]],
+      "required_literals": ["continuation seam's 80-answer ceiling"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": ["80", "2", "3"],
+      "allowed_new_versioned_tokens": ["v3"],
+      "reason": "Prove the exception and reservation transition rather than accepting a documentation-only cleanup"
+    }
+  ]
+}

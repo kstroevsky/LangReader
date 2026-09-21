@@ -1,0 +1,20 @@
+[
+  {
+    "case": "bank_contract_removed",
+    "expected": "reject",
+    "result": "PASS",
+    "errors": [
+      "DIAG-BANK: missing required anchor 'Bank A remains the exact production 512-world bank used to construct the deck.'",
+      "DIAG-BANK: required literal 'Bank A remains the exact production 512-world bank used to construct the deck.' occurs 0 times in mapped sections; expected 1"
+    ]
+  },
+  {
+    "case": "answerability_span_removed",
+    "expected": "reject",
+    "result": "PASS",
+    "errors": [
+      "UX-TIMING: missing required anchor 'answerTap -> learningContentVisible\\ncontinueTap -> nextWordVisible\\ncontinueTap -> nextWordAnswerable\\nknownVerificationTap -> nextWordAnswerable'",
+      "UX-TIMING: required literal 'answerTap -> learningContentVisible\\ncontinueTap -> nextWordVisible\\ncontinueTap -> nextWordAnswerable\\nknownVerificationTap -> nextWordAnswerable' occurs 0 times in mapped sections; expected 1"
+    ]
+  }
+]

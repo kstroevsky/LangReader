@@ -7,6 +7,8 @@ struct StoredWebWordRecord: Codable, Sendable {
     var vocabularyID: String? = nil
     let word: String
     var lemma: String? = nil
+    var lexicalKey: String? = nil
+    var partOfSpeech: VocabularyPartOfSpeech? = nil
     var surfaceForm: String? = nil
     let context: String
     let occurrenceIndex: Int?

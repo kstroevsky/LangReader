@@ -1081,7 +1081,7 @@
 </code></pre></div>
 <h2 id="files">Files<a class="headerlink" href="#files" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>scripts/build_app.sh</code>: builds and signs <code>Leaf Reader.app</code>, pruning bundled speech runtime packaging/debug noise before signing. Daily builds default to <code>--debug --arm64</code>; release packaging calls it with <code>--release --universal</code>.</li>
+<li><code>scripts/build_app.sh</code>: builds and signs <code>Leaf Reader.app</code>, pruning bundled speech runtime packaging/debug noise before signing. Compilation reuses SwiftPM's persistent <code>.build</code> products. Daily builds default to <code>--debug --arm64</code>; release packaging calls it with <code>--release --universal</code>.</li>
 <li><code>scripts/release_pkg.sh</code>: builds release package artifacts.</li>
 <li><code>scripts/publish_release.sh</code>: runs tests, packages, checks version references, and publishes.</li>
 <li><code>scripts/smoke_release_pkg.sh</code>: expands and validates the signed package payload.</li>

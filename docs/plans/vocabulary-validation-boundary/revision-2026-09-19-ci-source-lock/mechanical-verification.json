@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "base": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/revision-2026-09-19-ci-source-lock/base-plan.md",
+    "sha256": "ee61a39745657e95dc6999bcda9bd15c0aa0b2d315221b65e8502be6b14fff9a"
+  },
+  "candidate": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/revision-2026-09-19-ci-source-lock/candidate-plan.md",
+    "sha256": "55c2819200950f8c93a0d451bfe4659a4bc9bf5c0c1182086f28c89b95e8b879"
+  },
+  "delta": {
+    "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/revision-2026-09-19-ci-source-lock/delta.json",
+    "feedback_ids": [
+      "R-01-HISTORICAL-CI-OBJECTS",
+      "R-02-EXACT-PLAN-SOURCE-LOCK",
+      "R-03-TEST-TARGET-DEPENDENCIES",
+      "R-04-MISMATCH-NEGATIVE-CONTROL"
+    ]
+  },
+  "changed_sections": [
+    "LeafReader validation boundary and remaining-gates implementation plan / Failure handling and stop conditions",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 1 — target scaffold and boundary",
+    "LeafReader validation boundary and remaining-gates implementation plan / Ownership classification",
+    "LeafReader validation boundary and remaining-gates implementation plan / Sealed generator-lock compatibility checkpoint",
+    "LeafReader validation boundary and remaining-gates implementation plan / Status and authority",
+    "LeafReader validation boundary and remaining-gates implementation plan / Target architecture",
+    "LeafReader validation boundary and remaining-gates implementation plan / Verification"
+  ],
+  "added_sections": [],
+  "removed_sections": [],
+  "allowed_sections": [
+    "LeafReader validation boundary and remaining-gates implementation plan / Failure handling and stop conditions",
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence",
+    "LeafReader validation boundary and remaining-gates implementation plan / Ownership classification",
+    "LeafReader validation boundary and remaining-gates implementation plan / Sealed generator-lock compatibility checkpoint",
+    "LeafReader validation boundary and remaining-gates implementation plan / Status and authority",
+    "LeafReader validation boundary and remaining-gates implementation plan / Target architecture",
+    "LeafReader validation boundary and remaining-gates implementation plan / Verification"
+  ],
+  "contract_signal_deltas": {
+    "LeafReader validation boundary and remaining-gates implementation plan / Failure handling and stop conditions": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Implementation sequence / Commit 1 — target scaffold and boundary": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "0",
+        "7"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Ownership classification": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Sealed generator-lock compatibility checkpoint": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "09",
+        "12944",
+        "19",
+        "2026"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Status and authority": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "09",
+        "12944",
+        "19",
+        "2026",
+        "256"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Target architecture": {
+      "numeric_removed": [],
+      "numeric_added": [],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    },
+    "LeafReader validation boundary and remaining-gates implementation plan / Verification": {
+      "numeric_removed": [],
+      "numeric_added": [
+        "0"
+      ],
+      "versioned_removed": [],
+      "versioned_added": [],
+      "code_fence_delta": 0,
+      "display_math_delta": 0
+    }
+  },
+  "ledger_counts": {
+    "active": 62,
+    "deferred": 3,
+    "superseded": 3,
+    "other": 0
+  },
+  "base_ledger": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-boundary/revision-2026-09-19-ci-source-lock/base-ledger.json",
+  "errors": [],
+  "warnings": []
+}

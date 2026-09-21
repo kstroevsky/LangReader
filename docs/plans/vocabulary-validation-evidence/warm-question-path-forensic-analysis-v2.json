@@ -1,0 +1,943 @@
+{
+  "aggregateSevereWarmNatural": {
+    "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 5518,
+    "knownSupportingEvidenceShareOfMissedMass": 0.89,
+    "missedOccurrenceMass": 6200,
+    "unaskedMissedOccurrenceMass": 682,
+    "unaskedShareOfMissedMass": 0.11
+  },
+  "controlCount": 4,
+  "dataRole": "diagnostic-development-forensic-selected-cases",
+  "hypothesisAssessment": {
+    "earlyWarmValidationChangesPath": {
+      "evidence": "7/7 severe paths first diverged at ordinal 4 on warm tail validation",
+      "status": "supported-in-selected-severe-cases"
+    },
+    "harmConcentratesInNeverAskedItems": {
+      "evidence": "asked items with known-supporting evidence account for the majority of aggregate severe warm missed mass",
+      "status": "not-supported-in-selected-severe-cases"
+    },
+    "knownSupportingEvidenceOnUnknownHighMassItems": {
+      "evidence": "7/7 severe warm paths missed occurrence mass carrying known-supporting evidence despite synthetic unknown truth",
+      "status": "supported-in-selected-severe-cases"
+    },
+    "mechanismDiffersByScenario": {
+      "evidence": "the known-supporting-evidence mechanism appears in 7/7 severe cases across 4 scenario families",
+      "status": "not-supported-as-primary-explanation"
+    }
+  },
+  "interpretation": "Selected-case mechanism evidence only. The common mechanism is interaction between early warm path divergence, fallible verifiedKnown evidence on truly unknown high-occurrence items, and stopping/deck selection; case counts do not estimate prevalence or authorize mitigation.",
+  "productionConfigurationChanged": false,
+  "rows": [
+    {
+      "firstNaturalQuestionDivergence": {
+        "coldQuestion": "en|long-word-00026|noun|",
+        "coldSelectionType": "initialCalibration",
+        "ordinal": 4,
+        "warmQuestion": "en|long-word-00000|noun|",
+        "warmSelectionType": "tailValidation"
+      },
+      "fixedDeckDifference": {
+        "coldOnlyOccurrenceMass": 0,
+        "symmetricDifferenceOccurrenceMass": 709,
+        "warmOnlyOccurrenceMass": 709
+      },
+      "fixedExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 0,
+          "unknown": 0
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "naturalCoverageDifference": 0.02215146061193418,
+      "naturalDeckDifference": {
+        "coldOnlyOccurrenceMass": 644,
+        "symmetricDifferenceOccurrenceMass": 2605,
+        "warmOnlyOccurrenceMass": 1961
+      },
+      "naturalExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 2126,
+          "unknown": 1120
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "paths": {
+        "coldFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 222
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 222,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 222,
+          "missedOccurrenceMass": 222,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "coldNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 222
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 222,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 222,
+          "missedOccurrenceMass": 222,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "warmFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 222
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 222,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 222,
+          "missedOccurrenceMass": 222,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "warmNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "unasked:no-evidence": 62
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 0,
+          "missedOccurrenceMass": 62,
+          "unaskedMissedOccurrenceShare": 1.0
+        }
+      },
+      "role": "deterministic-control",
+      "runID": "biased-self-verification:learner-0",
+      "scenario": "biased-self-verification"
+    },
+    {
+      "firstNaturalQuestionDivergence": {
+        "coldQuestion": "en|long-word-00026|noun|",
+        "coldSelectionType": "initialCalibration",
+        "ordinal": 4,
+        "warmQuestion": "en|long-word-00122|noun|",
+        "warmSelectionType": "tailValidation"
+      },
+      "fixedDeckDifference": {
+        "coldOnlyOccurrenceMass": 390,
+        "symmetricDifferenceOccurrenceMass": 566,
+        "warmOnlyOccurrenceMass": 176
+      },
+      "fixedExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 0,
+          "unknown": 0
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "naturalCoverageDifference": -0.0755918593382251,
+      "naturalDeckDifference": {
+        "coldOnlyOccurrenceMass": 2822,
+        "symmetricDifferenceOccurrenceMass": 3869,
+        "warmOnlyOccurrenceMass": 1047
+      },
+      "naturalExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 1070,
+          "unknown": 2782
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "paths": {
+        "coldFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 434
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 434,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 1509,
+          "missedOccurrenceMass": 434,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "coldNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 434
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 434,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 1509,
+          "missedOccurrenceMass": 434,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "warmFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 664
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 664,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 1509,
+          "missedOccurrenceMass": 664,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "warmNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 915,
+            "unasked:no-evidence": 65
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 915,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 915,
+          "missedOccurrenceMass": 980,
+          "unaskedMissedOccurrenceShare": 0.0663265306122449
+        }
+      },
+      "role": "severe-selected-case",
+      "runID": "biased-self-verification:learner-3",
+      "scenario": "biased-self-verification"
+    },
+    {
+      "firstNaturalQuestionDivergence": {
+        "coldQuestion": "en|long-word-00026|noun|",
+        "coldSelectionType": "initialCalibration",
+        "ordinal": 4,
+        "warmQuestion": "en|long-word-00000|noun|",
+        "warmSelectionType": "tailValidation"
+      },
+      "fixedDeckDifference": {
+        "coldOnlyOccurrenceMass": 1340,
+        "symmetricDifferenceOccurrenceMass": 1340,
+        "warmOnlyOccurrenceMass": 0
+      },
+      "fixedExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 0,
+          "unknown": 0
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "naturalCoverageDifference": -0.06908486778346945,
+      "naturalDeckDifference": {
+        "coldOnlyOccurrenceMass": 886,
+        "symmetricDifferenceOccurrenceMass": 3943,
+        "warmOnlyOccurrenceMass": 3057
+      },
+      "naturalExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 2518,
+          "unknown": 1347
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "paths": {
+        "coldFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 156
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 156,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 580,
+          "missedOccurrenceMass": 156,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "coldNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 156
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 156,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 580,
+          "missedOccurrenceMass": 156,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "warmFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 580
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 580,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 580,
+          "missedOccurrenceMass": 580,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "warmNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 470,
+            "unasked:no-evidence": 185
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 470,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 470,
+          "missedOccurrenceMass": 655,
+          "unaskedMissedOccurrenceShare": 0.2824427480916031
+        }
+      },
+      "role": "severe-selected-case",
+      "runID": "biased-self-verification:learner-48",
+      "scenario": "biased-self-verification"
+    },
+    {
+      "firstNaturalQuestionDivergence": {
+        "coldQuestion": "en|long-word-00026|noun|",
+        "coldSelectionType": "initialCalibration",
+        "ordinal": 4,
+        "warmQuestion": "en|long-word-00000|noun|",
+        "warmSelectionType": "tailValidation"
+      },
+      "fixedDeckDifference": {
+        "coldOnlyOccurrenceMass": 424,
+        "symmetricDifferenceOccurrenceMass": 424,
+        "warmOnlyOccurrenceMass": 0
+      },
+      "fixedExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 0,
+          "unknown": 0
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "naturalCoverageDifference": -0.06853108126817109,
+      "naturalDeckDifference": {
+        "coldOnlyOccurrenceMass": 571,
+        "symmetricDifferenceOccurrenceMass": 3619,
+        "warmOnlyOccurrenceMass": 3048
+      },
+      "naturalExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 2413,
+          "unknown": 1012
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "paths": {
+        "coldFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 361
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 361,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 785,
+          "missedOccurrenceMass": 361,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "coldNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 361
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 361,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 785,
+          "missedOccurrenceMass": 361,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "warmFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 785
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 785,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 785,
+          "missedOccurrenceMass": 785,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "warmNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 709,
+            "unasked:no-evidence": 147
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 709,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 709,
+          "missedOccurrenceMass": 856,
+          "unaskedMissedOccurrenceShare": 0.17172897196261683
+        }
+      },
+      "role": "severe-selected-case",
+      "runID": "biased-self-verification:learner-57",
+      "scenario": "biased-self-verification"
+    },
+    {
+      "firstNaturalQuestionDivergence": {
+        "coldQuestion": "en|long-word-00026|noun|",
+        "coldSelectionType": "initialCalibration",
+        "ordinal": 4,
+        "warmQuestion": "en|long-word-00000|noun|",
+        "warmSelectionType": "tailValidation"
+      },
+      "fixedDeckDifference": {
+        "coldOnlyOccurrenceMass": 1051,
+        "symmetricDifferenceOccurrenceMass": 1390,
+        "warmOnlyOccurrenceMass": 339
+      },
+      "fixedExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 0,
+          "unknown": 0
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "naturalCoverageDifference": 0,
+      "naturalDeckDifference": {
+        "coldOnlyOccurrenceMass": 1582,
+        "symmetricDifferenceOccurrenceMass": 3714,
+        "warmOnlyOccurrenceMass": 2132
+      },
+      "naturalExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 2636,
+          "unknown": 1258
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "paths": {
+        "coldFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 0,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "coldNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 0,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "warmFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 0,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "warmNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 0,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        }
+      },
+      "role": "deterministic-control",
+      "runID": "changed-difficulty-distribution:learner-0",
+      "scenario": "changed-difficulty-distribution"
+    },
+    {
+      "firstNaturalQuestionDivergence": {
+        "coldQuestion": "en|long-word-00026|noun|",
+        "coldSelectionType": "initialCalibration",
+        "ordinal": 4,
+        "warmQuestion": "en|long-word-00000|noun|",
+        "warmSelectionType": "tailValidation"
+      },
+      "fixedDeckDifference": {
+        "coldOnlyOccurrenceMass": 1424,
+        "symmetricDifferenceOccurrenceMass": 1424,
+        "warmOnlyOccurrenceMass": 0
+      },
+      "fixedExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 0,
+          "unknown": 0
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "naturalCoverageDifference": -0.05288661221099267,
+      "naturalDeckDifference": {
+        "coldOnlyOccurrenceMass": 424,
+        "symmetricDifferenceOccurrenceMass": 2446,
+        "warmOnlyOccurrenceMass": 2022
+      },
+      "naturalExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 2394,
+          "unknown": 903
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "paths": {
+        "coldFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 42
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 42,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 466,
+          "missedOccurrenceMass": 42,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "coldNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 42
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 42,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 466,
+          "missedOccurrenceMass": 42,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "warmFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 466
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 466,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 466,
+          "missedOccurrenceMass": 466,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "warmNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 424
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 424,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 424,
+          "missedOccurrenceMass": 424,
+          "unaskedMissedOccurrenceShare": 0.0
+        }
+      },
+      "role": "severe-selected-case",
+      "runID": "changed-difficulty-distribution:learner-1",
+      "scenario": "changed-difficulty-distribution"
+    },
+    {
+      "firstNaturalQuestionDivergence": {
+        "coldQuestion": "en|long-word-00026|noun|",
+        "coldSelectionType": "initialCalibration",
+        "ordinal": 4,
+        "warmQuestion": "en|long-word-00000|noun|",
+        "warmSelectionType": "tailValidation"
+      },
+      "fixedDeckDifference": {
+        "coldOnlyOccurrenceMass": 511,
+        "symmetricDifferenceOccurrenceMass": 862,
+        "warmOnlyOccurrenceMass": 351
+      },
+      "fixedExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 0,
+          "unknown": 0
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "naturalCoverageDifference": -0.009691264017721135,
+      "naturalDeckDifference": {
+        "coldOnlyOccurrenceMass": 2595,
+        "symmetricDifferenceOccurrenceMass": 3740,
+        "warmOnlyOccurrenceMass": 1145
+      },
+      "naturalExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 1422,
+          "unknown": 1416
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "paths": {
+        "coldFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 0,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "coldNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 0,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "warmFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 0,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "warmNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "unasked:no-evidence": 70
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 0,
+          "missedOccurrenceMass": 70,
+          "unaskedMissedOccurrenceShare": 1.0
+        }
+      },
+      "role": "deterministic-control",
+      "runID": "easy-history-hard-evaluation:learner-0",
+      "scenario": "easy-history-hard-evaluation"
+    },
+    {
+      "firstNaturalQuestionDivergence": {
+        "coldQuestion": "en|long-word-00026|noun|",
+        "coldSelectionType": "initialCalibration",
+        "ordinal": 4,
+        "warmQuestion": "en|long-word-00000|noun|",
+        "warmSelectionType": "tailValidation"
+      },
+      "fixedDeckDifference": {
+        "coldOnlyOccurrenceMass": 142,
+        "symmetricDifferenceOccurrenceMass": 184,
+        "warmOnlyOccurrenceMass": 42
+      },
+      "fixedExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 0,
+          "unknown": 0
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "naturalCoverageDifference": -0.15990585629239928,
+      "naturalDeckDifference": {
+        "coldOnlyOccurrenceMass": 2019,
+        "symmetricDifferenceOccurrenceMass": 2883,
+        "warmOnlyOccurrenceMass": 864
+      },
+      "naturalExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 1923,
+          "unknown": 1852
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "paths": {
+        "coldFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 1000,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "coldNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 1000,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "warmFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 1000,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "warmNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 1000,
+            "unasked:no-evidence": 155
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 1000,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 1000,
+          "missedOccurrenceMass": 1155,
+          "unaskedMissedOccurrenceShare": 0.1341991341991342
+        }
+      },
+      "role": "severe-selected-case",
+      "runID": "easy-history-hard-evaluation:learner-119",
+      "scenario": "easy-history-hard-evaluation"
+    },
+    {
+      "firstNaturalQuestionDivergence": {
+        "coldQuestion": "en|long-word-00026|noun|",
+        "coldSelectionType": "initialCalibration",
+        "ordinal": 4,
+        "warmQuestion": "en|long-word-00122|noun|",
+        "warmSelectionType": "tailValidation"
+      },
+      "fixedDeckDifference": {
+        "coldOnlyOccurrenceMass": 49,
+        "symmetricDifferenceOccurrenceMass": 49,
+        "warmOnlyOccurrenceMass": 0
+      },
+      "fixedExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 0,
+          "unknown": 0
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "naturalCoverageDifference": -0.13789284230928978,
+      "naturalDeckDifference": {
+        "coldOnlyOccurrenceMass": 1554,
+        "symmetricDifferenceOccurrenceMass": 1688,
+        "warmOnlyOccurrenceMass": 134
+      },
+      "naturalExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 219,
+          "unknown": 1733
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "paths": {
+        "coldFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 1050,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "coldNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "unasked:no-evidence": 134
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 1000,
+          "missedOccurrenceMass": 134,
+          "unaskedMissedOccurrenceShare": 1.0
+        },
+        "warmFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 1050,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "warmNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 1000,
+            "unasked:no-evidence": 130
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 1000,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 1000,
+          "missedOccurrenceMass": 1130,
+          "unaskedMissedOccurrenceShare": 0.11504424778761062
+        }
+      },
+      "role": "severe-selected-case",
+      "runID": "easy-history-hard-evaluation:learner-75",
+      "scenario": "easy-history-hard-evaluation"
+    },
+    {
+      "firstNaturalQuestionDivergence": {
+        "coldQuestion": "en|long-word-00026|noun|",
+        "coldSelectionType": "initialCalibration",
+        "ordinal": 4,
+        "warmQuestion": "en|long-word-00000|noun|",
+        "warmSelectionType": "tailValidation"
+      },
+      "fixedDeckDifference": {
+        "coldOnlyOccurrenceMass": 0,
+        "symmetricDifferenceOccurrenceMass": 582,
+        "warmOnlyOccurrenceMass": 582
+      },
+      "fixedExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 0,
+          "unknown": 0
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "naturalCoverageDifference": 0,
+      "naturalDeckDifference": {
+        "coldOnlyOccurrenceMass": 0,
+        "symmetricDifferenceOccurrenceMass": 2003,
+        "warmOnlyOccurrenceMass": 2003
+      },
+      "naturalExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 2514,
+          "unknown": 945
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 41
+        }
+      },
+      "paths": {
+        "coldFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 0,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "coldNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 0,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "warmFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 0,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "warmNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 0,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        }
+      },
+      "role": "deterministic-control",
+      "runID": "noisy-history:learner-0",
+      "scenario": "noisy-history"
+    },
+    {
+      "firstNaturalQuestionDivergence": {
+        "coldQuestion": "en|long-word-00026|noun|",
+        "coldSelectionType": "initialCalibration",
+        "ordinal": 4,
+        "warmQuestion": "en|long-word-00000|noun|",
+        "warmSelectionType": "tailValidation"
+      },
+      "fixedDeckDifference": {
+        "coldOnlyOccurrenceMass": 320,
+        "symmetricDifferenceOccurrenceMass": 1365,
+        "warmOnlyOccurrenceMass": 1045
+      },
+      "fixedExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 0,
+          "unknown": 0
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 0
+        }
+      },
+      "naturalCoverageDifference": -0.13844662882458814,
+      "naturalDeckDifference": {
+        "coldOnlyOccurrenceMass": 2345,
+        "symmetricDifferenceOccurrenceMass": 4246,
+        "warmOnlyOccurrenceMass": 1901
+      },
+      "naturalExclusiveAskedOccurrenceMassByTruth": {
+        "coldOnly": {
+          "known": 2530,
+          "unknown": 1103
+        },
+        "warmOnly": {
+          "known": 0,
+          "unknown": 41
+        }
+      },
+      "paths": {
+        "coldFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 1000
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 1000,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 1000,
+          "missedOccurrenceMass": 1000,
+          "unaskedMissedOccurrenceShare": 0.0
+        },
+        "coldNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 1000,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "warmFixedBudget": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {},
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 0,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 1000,
+          "missedOccurrenceMass": 0,
+          "unaskedMissedOccurrenceShare": 0
+        },
+        "warmNatural": {
+          "assessableOccurrenceMass": 7223,
+          "falseNegativeMissedOccurrenceMassByAskedStatusAndEvidence": {
+            "asked:verifiedKnown": 1000
+          },
+          "knownSupportingEvidenceOnMissedTrulyUnknownOccurrenceMass": 1000,
+          "knownSupportingEvidenceOnTrulyUnknownOccurrenceMass": 1000,
+          "missedOccurrenceMass": 1000,
+          "unaskedMissedOccurrenceShare": 0.0
+        }
+      },
+      "role": "severe-selected-case",
+      "runID": "noisy-history:learner-111",
+      "scenario": "noisy-history"
+    }
+  ],
+  "schemaVersion": 1,
+  "selectedRunCount": 11,
+  "severeCaseCount": 7,
+  "sourceReport": "docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-report-v2.json",
+  "sourceReportSHA256": "44a583a775760030eb22fd89dc5e30ec4f4a969d2ed8a0a7cd181e818fc103c5",
+  "sourceRevision": "fada5088511535a5b2301c79b1ba74faa3c7663e"
+}

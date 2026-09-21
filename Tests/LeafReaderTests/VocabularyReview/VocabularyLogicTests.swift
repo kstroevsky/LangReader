@@ -1066,7 +1066,7 @@ enum VocabularyLogicTests {
             shouldShowSpeakAction: false
         )
         try expectEqual(offlineWord.contextAction, .addWord, "offline word selections should keep the word action")
-        try expectEqual(offlineWord.displayMode, .offlineWord, "offline word selections should show only word/speak/copy actions")
+        try expectEqual(offlineWord.displayMode, .offlineWord, "offline word selections should keep local word actions")
         try expect(offlineWord.showsVocabularySaveAction, "PDF vocabulary selections should expose the local save action without a model")
         try expect(!offlineWord.isVocabularySelectionSaved, "a newly selected PDF vocabulary word should show Save")
 
@@ -1084,7 +1084,7 @@ enum VocabularyLogicTests {
             shouldShowSpeakAction: true
         )
         try expectEqual(needsKeyText.contextAction, .summarize, "non-word selections should keep summarize as their context action")
-        try expectEqual(needsKeyText.displayMode, .needsModelKeyCopyOnly, "unconfigured model text selections should show copy plus settings")
+        try expectEqual(needsKeyText.displayMode, .needsModelKeyText, "unconfigured model text selections should keep local actions plus settings")
         try expect(!needsKeyText.showsVocabularySaveAction, "non-vocabulary selections should not expose a save action")
 
         let full = SelectionToolbarConfiguration.make(

@@ -1,0 +1,611 @@
+{
+  "schema_version": 1,
+  "canonical_sha256": "0f85e0d18094eb2efccaa601e0c3f9dff59a6ab563fdc5c838bc30e1b21b1467",
+  "artifact_status": "verified_unaccepted_candidate_revision_base",
+  "requirements": [
+    {
+      "id": "AUTH-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Status and authority"],
+      "summary": "Revised candidate status and authorization boundary",
+      "normative_payload": {"status": "revised verified-but-unaccepted candidate", "base_status": "verified unaccepted candidate", "not_authorized": ["code changes", "data collection", "confirmation run", "holdout access"], "promotion": "user acceptance required"},
+      "anchors": ["[AUTH-001]"]
+    },
+    {
+      "id": "AUTH-002",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Status and authority"],
+      "summary": "Existing product and scientific contracts remain authoritative",
+      "normative_payload": {"authority": "hash-locked sources in source-lock.json", "change_scope": "structural extraction only"},
+      "anchors": ["[AUTH-002]"]
+    },
+    {
+      "id": "AUTH-003",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Status and authority"],
+      "summary": "Starting repository revision must be revalidated",
+      "normative_payload": {"revision": "b2b99696feda177be0699d5277a2c13c7c7c9bd5", "dirty_state": "clean", "on_changed_starting_tree": "newly reviewed inventory, source lock, baseline, and plan delta before implementation", "after_implementation": "preserve historical baseline lock and add current-candidate provenance"},
+      "anchors": ["[AUTH-003]"]
+    },
+    {
+      "id": "GOAL-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Decision and acceptance criteria"],
+      "summary": "Separate four kinds of work",
+      "normative_payload": {"lanes": ["production code", "correctness tests", "model-validation experiments", "human-research evidence"], "reuse": "optional bonus"},
+      "anchors": ["[GOAL-001]"]
+    },
+    {
+      "id": "GOAL-002",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Decision and acceptance criteria"],
+      "summary": "One internal target is justified; ecosystem is not",
+      "normative_payload": {"required": "one-way production/validation boundary", "selected": "one internal LeafReaderValidation target", "rejected_now": ["separate package", "separate repository", "public SDK", "framework ecosystem"]},
+      "anchors": ["[GOAL-002]"]
+    },
+    {
+      "id": "AC-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Decision and acceptance criteria"],
+      "summary": "Shipping product remains App plus Core",
+      "normative_payload": {"shipping_targets": ["LeafReaderApp", "LeafReaderCore"], "behavior_change": "none"},
+      "anchors": ["[AC-001]"]
+    },
+    {
+      "id": "AC-002",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Decision and acceptance criteria"],
+      "summary": "Validation reuses production implementation",
+      "normative_payload": {"must_reuse": ["assessment", "vocabulary index", "coverage/deck", "prior", "difficulty"], "forbidden": "copied equations or policies"},
+      "anchors": ["[AC-002]"]
+    },
+    {
+      "id": "AC-003",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Decision and acceptance criteria"],
+      "summary": "Only immutable production-fact observation seam may remain in Core",
+      "normative_payload": {"production_api_experiment_concepts": "absent", "exception": "package-scoped immutable Core observation surface exposing production facts"},
+      "anchors": ["[AC-003]"]
+    },
+    {
+      "id": "AC-004",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Decision and acceptance criteria"],
+      "summary": "Runner and fixture parity",
+      "normative_payload": {"comparison": "pre-extraction versus post-extraction", "scope": ["deterministic runner outputs", "frozen-fixture decisions"]},
+      "anchors": ["[AC-004]"]
+    },
+    {
+      "id": "AC-005",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Decision and acceptance criteria"],
+      "summary": "Evidence and gates remain preserved",
+      "normative_payload": {"historical_evidence": "immutable", "reservations": "sealed", "gate_order": "unchanged"},
+      "anchors": ["[AC-005]"]
+    },
+    {
+      "id": "AC-007",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Decision and acceptance criteria"],
+      "summary": "Fresh post-extraction confirmation route selected",
+      "normative_payload": {"original_manifest": "byte-for-byte immutable reservedNotExecuted historical evidence", "old_seed_rebinding": false, "new_reservation": "fresh disjoint seed/document set bound to extracted generator after extraction and parity, before candidate freeze"},
+      "anchors": ["[AC-007]"]
+    },
+    {
+      "id": "AC-006",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Decision and acceptance criteria"],
+      "summary": "Required implementation checks",
+      "normative_payload": {"checks": ["dependency check", "strict Swift build", "strict Swift tests", "deterministic repository suite", "development app assembly"]},
+      "anchors": ["[AC-006]"]
+    },
+    {
+      "id": "ARCH-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Target architecture"],
+      "summary": "Add internal validation library and tests",
+      "normative_payload": {"library_target": "LeafReaderValidation", "library_path": "Sources/LeafReaderValidation", "test_target": "LeafReaderValidationTests", "library_product": false, "app_dependency": false},
+      "anchors": ["[ARCH-001]"]
+    },
+    {
+      "id": "ARCH-002",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Target architecture"],
+      "summary": "Enforce dependency direction",
+      "normative_payload": {"allowed": ["LeafReaderValidation -> LeafReaderCore"], "forbidden": ["LeafReaderCore -> LeafReaderValidation", "LeafReaderApp -> LeafReaderValidation"]},
+      "anchors": ["[ARCH-002]"]
+    },
+    {
+      "id": "ARCH-003",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Target architecture"],
+      "summary": "Keep validation infrastructure internal",
+      "normative_payload": {"external_product": false, "semantic_version_promise": false, "public_sdk": false, "cross_repository_lifecycle": false},
+      "anchors": ["[ARCH-003]"]
+    },
+    {
+      "id": "ARCH-004",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Target architecture"],
+      "summary": "Vocabulary-specific source and navigation locations",
+      "normative_payload": {"source_path": "Sources/LeafReaderValidation/Vocabulary", "current_pointer": "Validation/Vocabulary/CURRENT.md", "pointer_authority": "non-authoritative hash-linked navigation"},
+      "anchors": ["[ARCH-004]"]
+    },
+    {
+      "id": "ARCH-005",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Target architecture"],
+      "summary": "Preserve script interfaces",
+      "normative_payload": {"script_paths": "unchanged", "flags": "unchanged", "role": "thin adapters", "cli_change": "separate future decision"},
+      "anchors": ["[ARCH-005]"]
+    },
+    {
+      "id": "OWN-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Ownership classification"],
+      "summary": "Core retains production algorithms",
+      "normative_payload": {"owner": "LeafReaderCore", "concepts": ["AdaptiveVocabularyAssessment", "model configuration", "knowledge model", "observation model", "question selection", "cross-moment scoring", "coverage sampling", "deck construction", "stopping", "VocabularyReaderPrior", "difficulty behavior", "document vocabulary inventory/index"]},
+      "anchors": ["[OWN-001]"]
+    },
+    {
+      "id": "OWN-002",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Ownership classification"],
+      "summary": "Core retains narrow immutable production snapshot",
+      "normative_payload": {"access": "read-only package-scoped facts needed by Validation", "mutability": "immutable", "item_fields": ["canonicalKey", "occurrenceCount", "isIncluded", "evidence", "responseCurve", "productionKnownMask"], "excluded_item_payload": "full DocumentVocabularyCandidate", "other_facts": ["production selection", "production masks/strata", "fingerprints"], "restricted_state": "posterior/epsilon/reliability/theta positions private where possible; narrow immutable values or operations only when intentionally needed by Validation", "alternate_production_assessment_state": "not exposed", "side_effects": "no shared RNG advancement, cache mutation, stopping change, or next-question change", "generic_mutable_or_native_escape_hatch": false, "selection_override": "not in Core"},
+      "anchors": ["[OWN-002]"]
+    },
+    {
+      "id": "OWN-008",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Ownership classification"],
+      "summary": "Split mixed snapshot and bank error ownership",
+      "normative_payload": {"core_errors": "production-fact snapshot construction only", "validation_errors": "bank-specific cases including incompatibleB1SampleCount", "preserve": "rejection behavior", "forbidden": "Core dependency on Validation error type"},
+      "anchors": ["[OWN-008]"]
+    },
+    {
+      "id": "OWN-009",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Ownership classification"],
+      "summary": "Move selection override out of Core snapshot",
+      "normative_payload": {"remove_from_core": "AdaptiveVocabularyAssessment.diagnosticSnapshot(selectionOverride:)", "core_selection": "production-selected set only", "validation_operation": "counterfactual selectedKeys evaluation", "preserve": ["counterfactual outputs", "unknown/excluded key rejection"]},
+      "anchors": ["[OWN-009]"]
+    },
+    {
+      "id": "OWN-003",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Ownership classification"],
+      "summary": "Validation subsystem owns experiment interpretation and execution",
+      "normative_payload": {"owner": "validation subsystem", "concepts": ["A/B1/B2 banks", "independent-bank evaluation", "fixed-bank controls", "synthetic truth/responses", "experiment arms", "confirmation experiments", "forensic cases", "replay/counterfactuals", "longitudinal histories", "validation manifests", "experiment reports", "reservation-aware runners"], "swift_execution": "reusable portions move to LeafReaderValidation", "python_and_shell": "orchestration, statistical analysis, schema validation, thin entry points may remain in scripts", "historical_files": "frozen manifests/reports stay in immutable archive", "swift_rewrite_of_reservation_machinery": false},
+      "anchors": ["[OWN-003]"]
+    },
+    {
+      "id": "OWN-004",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Ownership classification"],
+      "summary": "Move validation study schemas and tests",
+      "normative_payload": {"files": ["VocabularyValidationStudyDataset.swift", "VocabularyValidationStudyPackageV2.swift"], "destination": "LeafReaderValidation", "preserve": ["Codable shapes", "validation rules", "serialized bytes"]},
+      "anchors": ["[OWN-004]"]
+    },
+    {
+      "id": "OWN-005",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Ownership classification"],
+      "summary": "Keep App-consumed audit/export flows in Core",
+      "normative_payload": {"remain_in_core": ["VocabularyPredictionAudit", "VocabularyResearchExport"], "reason": "current shipping App consumers", "removal_scope": "separate product decision"},
+      "anchors": ["[OWN-005]"]
+    },
+    {
+      "id": "OWN-006",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Ownership classification"],
+      "summary": "Preserve Swift/Python responsibility split",
+      "normative_payload": {"swift": ["production-faithful execution", "simulation", "deck/prior/replay", "diagnostics", "capture"], "python": ["aggregation", "statistical fitting", "DIF/study analysis", "report comparison", "schema validation"], "python_relocation": false},
+      "anchors": ["[OWN-006]"]
+    },
+    {
+      "id": "OWN-007",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Ownership classification"],
+      "summary": "Tests follow behavior ownership",
+      "normative_payload": {"core_app_tests": ["algebra parity", "deck ordering", "prior persistence", "model arithmetic", "App coordination", "VocabularyPreparationFixtureXCTests in LeafReaderAppTests for real PDFKit/Web/document-loading and PDF/EPUB/DOCX final-pipeline integration"], "validation_tests": "moved implementation and experiment-quality claims only", "dependency_boundary": "LeafReaderValidation never depends on LeafReaderApp to absorb integration tests"},
+      "anchors": ["[OWN-007]"]
+    },
+    {
+      "id": "EVID-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Evidence preservation and parity"],
+      "summary": "Code is refactorable; evidence is immutable",
+      "normative_payload": {"refactorable": "validation software", "immutable": ["protocols", "source locks", "frozen reports", "failed candidates", "consumed holdouts", "checkpoints", "reservations", "approvals", "old protocol versions"]},
+      "anchors": ["[EVID-001]"]
+    },
+    {
+      "id": "EVID-002",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Evidence preservation and parity"],
+      "summary": "Existing evidence locations are stable",
+      "normative_payload": {"do_not_move": ["docs/plans/vocabulary-validation-evidence", "docs/perf"], "new_navigation": "repository-relative path plus SHA-256", "future_move": "separate migration"},
+      "anchors": ["[EVID-002]"]
+    },
+    {
+      "id": "PAR-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Evidence preservation and parity"],
+      "summary": "Behavior and experiment contracts are frozen during extraction",
+      "normative_payload": {"unchanged": ["all existing seeds", "RNG derivation and consumption", "algorithms", "equations", "thresholds", "evidence reliabilities", "question order", "stopping", "experiment definitions", "sample counts", "report schemas and fields", "encodings", "command flags", "reservation semantics", "historical checksums"], "later_fresh_reservation": "separately sealed new disjoint seeds/documents; no mutation or reuse of prior reservations"},
+      "anchors": ["[PAR-001]"]
+    },
+    {
+      "id": "PAR-002",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Evidence preservation and parity"],
+      "summary": "Three-way runner parity comparison",
+      "normative_payload": {"exact": ["source/path-independent deterministic JSON", "source/path-independent deterministic Markdown", "exit status"], "canonicalized_exceptions": ["truthful source identity", "wall-clock timing"], "never_normalize": ["metrics", "seeds", "identifiers", "decisions", "missingness", "failure records"]},
+      "anchors": ["[PAR-002]"]
+    },
+    {
+      "id": "PAR-003",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Evidence preservation and parity"],
+      "summary": "CLI, schema, and fixture compatibility",
+      "normative_payload": {"entry_paths": "unchanged", "arguments": "unchanged", "validator_decoding": "unchanged", "fixture decisions": "unchanged", "failure_action": "do not update golden/schema to hide mismatch"},
+      "anchors": ["[PAR-003]"]
+    },
+    {
+      "id": "PAR-004",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Evidence preservation and parity"],
+      "summary": "Freeze a finite machine-readable extraction-parity manifest before source edits",
+      "normative_payload": {"freeze_time": "before any source edit", "fields": ["exact authorized baseline commands", "input paths and hashes", "expected baseline-observed exit statuses", "output artifact paths and hashes", "source/configuration identity", "specific predeclared canonicalization fields for source identity or wall-clock timing"], "immutable_after_freeze": true, "forbidden": ["replace inputs after outcomes", "drop failed runs", "normalize metric values", "rewrite expectations", "reserve or score protected holdout"], "scope": "finite migration only"},
+      "anchors": ["[PAR-004]"]
+    },
+    {
+      "id": "DATA-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Evidence preservation and parity"],
+      "summary": "Only authorized development inputs may be used",
+      "normative_payload": {"allowed_scoring_inputs": ["ordinary development fixtures", "existing self-tests"], "allowed_read_only_integrity_check": "existing validator may read already-consumed POS fixture and report without new predictions or candidate comparison", "forbidden_scoring_inputs": ["sealed development-confirmation", "release holdout", "consumed POS held-out cases", "human collection"], "forbidden_uses_of_consumed_pos": ["new predictions", "tuning", "candidate comparisons"]},
+      "anchors": ["[DATA-001]"]
+    },
+    {
+      "id": "LOCK-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Sealed generator-lock compatibility checkpoint"],
+      "summary": "Sealed generator lock conflicts with pinned-file extraction",
+      "normative_payload": {"manifest": "development-confirmation-reservation-v1.json", "locked_paths": ["scripts/evaluate_vocabulary_assessment.sh", "scripts/evaluate_vocabulary_assessment.swift", "scripts/vocabulary_assessment_causal_diagnostics.swift", "canonical gate ledger"], "current_validator": "checks current repository path hashes", "integrated_suite": "scripts/check.sh invokes validator", "report_parity": "cannot repair source identity mismatch"},
+      "anchors": ["[LOCK-001]"]
+    },
+    {
+      "id": "LOCK-002",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Sealed generator-lock compatibility checkpoint"],
+      "summary": "Fresh reservation selected; historical validator migration precedes pinned edits",
+      "normative_payload": {"selected_route": "fresh post-extraction reservation", "old_status": "reservedNotExecuted forever as historical evidence", "before_pinned_edits": ["revised plan accepted", "historical validator migration passes"], "forbidden": ["additive seed-set rebinding", "rewrite original manifest"]},
+      "anchors": ["[LOCK-002]"]
+    },
+    {
+      "id": "LOCK-003",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Sealed generator-lock compatibility checkpoint"],
+      "summary": "Historical Git-blob validation and fresh current-generator reservation",
+      "normative_payload": {"historical": ["original manifest byte-for-byte preserved", "pinned generator bytes verified at recorded Git revision", "self-test green before and after source movement", "corrupted historical blob rejected"], "extraction_checkpoint": "historical check and extracted-generator provenance pass; no future-reservation validator before its reservation exists", "new_reservation_sequence": ["complete extraction", "pass development-fixture parity", "freeze fresh disjoint seeds/documents and current-generator source/build/Swift 6/analysis binding", "require new-reservation validator to reject missing/mismatched locks and pass before candidate freeze", "freeze candidate and analysis", "record separate reviewed consumption decision", "then permit one execution"], "additive_rebinding": "not authorized"},
+      "anchors": ["[LOCK-003]"]
+    },
+    {
+      "id": "LOCK-004",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Sealed generator-lock compatibility checkpoint"],
+      "summary": "Stop full extraction when lock route is unresolved",
+      "normative_payload": {"before_plan_acceptance_and_historical_validator_pass": "nonconflicting slices only", "forbidden": ["edit pinned paths", "remove frozen-runner Core APIs", "weaken check.sh", "claim complete partial extraction"], "on_validator_failure": "stop and report partial extraction"},
+      "anchors": ["[LOCK-004]"]
+    },
+    {
+      "id": "LOCK-005",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Sealed generator-lock compatibility checkpoint"],
+      "summary": "Prove standalone wrapper build/link integration",
+      "normative_payload": {"current": "standalone swiftc links libLeafReaderCore.a only", "new": "explicit Validation build/link in same package-access and Swift 6 context", "preserve": ["optimization mode", "warnings-as-errors", "paths", "flags", "exit behavior", "artifacts"], "test": "clean build without cached modules"},
+      "anchors": ["[LOCK-005]"]
+    },
+    {
+      "id": "LOCK-006",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Sealed generator-lock compatibility checkpoint"],
+      "summary": "Plan source lock is historical baseline, not current-candidate lock",
+      "normative_payload": {"baseline_revision": "b2b99696feda177be0699d5277a2c13c7c7c9bd5", "verify_repository_baseline": "recorded Git blobs", "verify_external_brief": "locked attachment bytes", "current_candidate": "separate source/build lock", "never": "refresh baseline lock to make implementation edits pass", "changed_starting_tree": "newly reviewed baseline and plan delta"},
+      "anchors": ["[LOCK-006]"]
+    },
+    {
+      "id": "IMPL-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Implementation sequence"],
+      "summary": "Independently green strangler slices after baseline",
+      "normative_payload": {
+        "preconditions": ["read-only baseline checkpoint", "accepted fresh route in LOCK-002", "historical Git-blob validator green before pinned-file slices"],
+        "baseline_steps": [
+          "record revision, dirty state, Swift version, package graph, source hashes, CLI surface, and evidence hashes",
+          "build existing evaluator and POS executables in isolation",
+          "capture authorized self-tests, small development fixtures, raw timing/provenance, exits, and validator results",
+          "freeze normalization rules before post-extraction output",
+          "freeze PAR-004 parity manifest before source edits",
+          "verify current sealed generator hashes and accepted fresh route before pinned edits"
+        ],
+        "ordered_commits": [
+          {
+            "name": "target scaffold and boundary",
+            "steps": ["add internal library and test targets only", "add boundary check and negative fixtures first", "add non-authoritative CURRENT.md", "prove no-content scaffold parity", "prove isolated Validation build/link path without changing pinned runner", "migrate historical validator to recorded Git blobs and prove self-test plus corrupted-blob rejection before pinned edit"]
+          },
+          {
+            "name": "2A independent study schemas and tests",
+            "steps": ["move the two study schema files and validation-specific tests without Codable or privacy-rule drift", "keep old evaluator wrapper green"]
+          },
+          {
+            "name": "2B parallel Core observation and Validation evaluator",
+            "steps": ["introduce narrow immutable Core production-fact snapshot and Core-only construction errors alongside old diagnostic implementation", "introduce Validation A/B1/B2, fixed-bank, selected-set evaluator and bank-specific errors", "reuse production knowledge/observation semantics", "keep old wrapper green"]
+          },
+          {
+            "name": "2C same-tree old/new parity",
+            "steps": ["compare identical states and selected sets", "prove exact A/B1/B2 masks, positions, fingerprints, coverage, quantiles, miss outputs, counterfactuals, and invalid-input rejection", "prove observation side-effect freedom", "do not switch wrapper before pass"]
+          },
+          {
+            "name": "2D wrapper and imports switch",
+            "steps": ["require historical validator and 2C parity green", "link Validation plus Core in same package/Swift 6/optimization/warnings context", "preserve paths, flags, exits, schemas, artifacts", "prove no-cache build", "retain old Core evaluator temporarily as parity reference"]
+          },
+          {
+            "name": "2E remove old Core experiment implementation",
+            "steps": ["remove old Core banks, fixed-bank evaluation, bank errors, selectionOverride", "retain narrow Core snapshot and construction errors", "move or update tests by owner", "prove no stale Core bank callers and integrated strict checks/parity green"]
+          },
+          {
+            "name": "assessment, causal, and longitudinal runners",
+            "steps": ["move shared synthetic/replay/forensic/manifest/report/provenance/metric mechanics", "retain thin compatible command/file adapters and 2D wrapper/import/link integration", "prove clean build without cached Core or Validation modules", "compare locked old/new outputs before deleting duplicates"]
+          },
+          {
+            "name": "POS and cross-format helpers",
+            "steps": ["move reusable Swift POS evaluation and cross-format comparison mechanics needing Core only", "retain real PDFKit/Web/document-loading cross-format integration fixture in LeafReaderAppTests", "App tests may call shared Validation comparison helper but Validation never depends on App", "keep lexical identity, occurrence accounting, inventory, parsing, and objectives in Core", "retain Python analysis role", "use fresh POS development material for new scoring/tuning; allow read-only historical validation"]
+          },
+          {
+            "name": "enforcement, documentation, and stop",
+            "steps": ["wire boundary and validation checks into check.sh", "verify paths, historical baseline Git blobs, extracted-generator provenance, and report parity", "document only the implemented boundary", "publish checkpoint and stop without model redesign; fresh reservation follows extraction checkpoint"]
+          }
+        ],
+        "temporary_duplication": "validation-only evaluator code in 2B–2D, never production CAT implementation",
+        "each_slice_green": true,
+        "combine_with_model_experimentation": false
+      },
+      "anchors": ["[IMPL-001]"]
+    },
+    {
+      "id": "MIG-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Implementation sequence"],
+      "summary": "Migration controls are finite and do not become product architecture",
+      "normative_payload": {"temporary": ["LOCK controls", "frozen parity manifest", "source-transition checks", "old-Core evaluator allowance during 2B–2D"], "retained_for_audit": "frozen records", "expire_at": "old-Core allowance and temporary code path at 2E/after parity", "enduring": ["one-way target boundary", "owner-aligned tests", "thin scripts/Python analysis", "immutable evidence archive", "short CURRENT.md pointer"], "permanent_migration_framework": false},
+      "anchors": ["[MIG-001]"]
+    },
+    {
+      "id": "VER-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Verification"],
+      "summary": "Narrow deterministic test coverage",
+      "normative_payload": {"coverage": ["snapshot immutability", "exact minimal snapshot item-field shape without DocumentVocabularyCandidate", "production-selection identity", "Core-only construction errors", "next-question parity", "Validation-only counterfactual selected-set parity and invalid-key rejection", "production-A parity", "B1 strata/latent stream and bank-specific error rejection", "B2 theta/latent independence", "fixed-bank", "mass conservation", "study schema/privacy", "causal/longitudinal/POS self-tests", "App audit/export coordination"]},
+      "anchors": ["[VER-001]"]
+    },
+    {
+      "id": "VER-002",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Verification"],
+      "summary": "Mechanical dependency and terminology enforcement",
+      "normative_payload": {"hard_inputs": ["SwiftPM target dependency graph", "source imports", "shipping-product link closure", "explicitly enumerated migrated validation-only module/type declarations"], "hard_failures": ["Core/App dependency or import", "transitive shipping-product reachability", "migrated validation-only declarations in production after 2E"], "temporary_exception": "exact old Core bank declarations required for 2B–2D same-tree parity only; expires at 2E", "name_scan": "advisory or declaration-scoped with explicit reviewed allowlist; comments and unrelated words cannot fail build"},
+      "anchors": ["[VER-002]"]
+    },
+    {
+      "id": "VER-003",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Verification"],
+      "summary": "Integrated strict verification commands",
+      "normative_payload": {"commands": ["swift build -Xswiftc -warnings-as-errors", "swift test -Xswiftc -warnings-as-errors", "./scripts/check.sh --no-build", "./scripts/build_app.sh"]},
+      "anchors": ["[VER-003]"]
+    },
+    {
+      "id": "VER-004",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Verification"],
+      "summary": "Durable extraction checkpoint evidence",
+      "normative_payload": {"record": ["commands", "exit statuses", "artifact hashes", "field-level parity", "changed files", "exclusions"], "aggregate_only": "insufficient"},
+      "anchors": ["[VER-004]"]
+    },
+    {
+      "id": "PERF-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Verification"],
+      "summary": "No unmeasured performance claim",
+      "normative_payload": {"production_runtime_claim": "none", "measure_if_material": ["build cost", "validation-run overhead"], "new_infrastructure": "only for concrete regression gap"},
+      "anchors": ["[PERF-001]"]
+    },
+    {
+      "id": "PERF-002",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Verification"],
+      "summary": "Final-tree performance rerun is distinct from parallel diagnostic timing",
+      "normative_payload": {"early_matrix": "development evidence only", "final_tree": "frozen code/model/configuration/resources", "precondition": "development-confirmation and release-holdout progression permits release assessment", "workloads": ["controlled Release repetitions", "private six-document PDF/EPUB/DOCX real-app matrix", "document-open controls", "next question answerable"], "gates": ["algorithm p95 <= 150 ms", "uninterrupted main-thread p95 <= 16 ms", "same-machine visible-ready control + max(10% of control, 50 ms)"], "retain": "all raw/adverse repetitions", "on_relevant_change": "repeat affected evidence"},
+      "anchors": ["[PERF-002]"]
+    },
+    {
+      "id": "GATE-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Remaining scientific and release gates"],
+      "summary": "Independent review is the immediate blocker",
+      "normative_payload": {"order": 1, "review": ["statistical", "research", "privacy"], "decision_groups": ["known-claim interference margin/method", "categorical-response guardrail", "criterion-K acquisition/classification/rater uncertainty/sensitivity", "product-version and evidence-mapping binding", "repeat-event timing/content and rare-denominator precision", "one formal conditional tail-severity endpoint", "sample size/dependence/missingness/consent/retention/deletion/named approval"]},
+      "anchors": ["[GATE-001]"]
+    },
+    {
+      "id": "GATE-002",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Remaining scientific and release gates"],
+      "summary": "Two developmental human studies after review",
+      "normative_payload": {"order": 2, "precondition": "independent approval", "studies": ["pretest interference with known-claim endpoint and full three-category guardrail; exclusion separate", "repeat erroneous verifiedKnown response dependence"], "full_validation_study": false},
+      "anchors": ["[GATE-002]"]
+    },
+    {
+      "id": "GATE-003",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Remaining scientific and release gates"],
+      "summary": "Parallel engineering evidence",
+      "normative_payload": {"order": 3, "timing": ["PDF", "EPUB", "DOCX"], "timing_role": "development evidence only; not frozen-final-tree release gate", "readiness_event": "next question answerable", "pos_data": "fresh development only", "pos_focus": "assessable lexical identity or occurrence mass"},
+      "anchors": ["[GATE-003]"]
+    },
+    {
+      "id": "GATE-004",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Remaining scientific and release gates"],
+      "summary": "Warm-path decision follows developmental evidence",
+      "normative_payload": {"order": 4, "branches": {"high_correlation": "abandon confirmation; stopping/prior only with external evidence", "independent_information": "design one final candidate at acceptable burden", "material_pretest_interference": "redesign main-study criterion sampling/order"}},
+      "anchors": ["[GATE-004]"]
+    },
+    {
+      "id": "GATE-005",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Remaining scientific and release gates"],
+      "summary": "Freeze one candidate",
+      "normative_payload": {"order": 5, "precondition": "fresh post-extraction development-confirmation reservation sealed and disjoint from prior development/release sets", "freeze": ["candidate commit", "clean-tree hash", "model/configuration/resource hashes", "study rules", "thresholds", "analysis and decision-rule checksum", "schemas", "source locks"], "broad_search_after": false},
+      "anchors": ["[GATE-005]"]
+    },
+    {
+      "id": "GATE-006",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Remaining scientific and release gates"],
+      "summary": "Use development-confirmation once",
+      "normative_payload": {"order": 6, "subject": "newly sealed post-extraction development-confirmation reservation only", "preconditions": ["candidate and analysis frozen", "valid current-generator binding", "candidate commit and clean-tree hash", "model/configuration/resource hashes", "analysis/decision-rule checksum", "separate reviewed decision to consume this specific reservation"], "old_reservation": "remains reservedNotExecuted, unexecuted, not rebound", "uses": 1, "on_failure": ["return to development", "preserve adverse evidence", "create future fresh reservation", "never reuse viewed set as untouched"]},
+      "anchors": ["[GATE-006]"]
+    },
+    {
+      "id": "GATE-007",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Remaining scientific and release gates"],
+      "summary": "Release holdout is last synthetic gate",
+      "normative_payload": {"order": 7, "precondition": "development-confirmation passes", "use": "last synthetic gate", "tuning": false, "failed_evidence": "preserve"},
+      "anchors": ["[GATE-007]"]
+    },
+    {
+      "id": "GATE-008",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Remaining scientific and release gates"],
+      "summary": "Real learner validation is final claim evidence",
+      "normative_payload": {"order": 8, "claims": ["calibration", "important-unknown capture", "98% coverage interpretation", "warm-personalization non-inferiority"]},
+      "anchors": ["[GATE-008]"]
+    },
+    {
+      "id": "GATE-009",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Remaining scientific and release gates"],
+      "summary": "Extraction timing does not reorder gates",
+      "normative_payload": {"may_parallelize_with": ["review", "engineering evidence"], "human_collection_preconditions": ["Core/Validation dependency direction finalized", "relevant assessment and study schemas finalized", "study execution path parity-verified", "current executable and product-version hashes frozen", "independent statistical/research/privacy review approved"], "while_collecting": "do not move data-generating or interpreting path", "not_precondition": "unrelated POS/cross-format helper housekeeping or entire extraction completion", "scientific_gate_credit": false, "gate_order": "Gates 1–8 unchanged"},
+      "anchors": ["[GATE-009]"]
+    },
+    {
+      "id": "GATE-010",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Remaining scientific and release gates"],
+      "summary": "CI is separate from scientific authority",
+      "normative_payload": {"ci_may_parallelize": true, "ci_is_scientific_evidence": false, "ci_is_decision_authority": false},
+      "anchors": ["[GATE-010]"]
+    },
+    {
+      "id": "NEG-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Failure handling and stop conditions"],
+      "summary": "Closed-world prohibited changes",
+      "normative_payload": {"forbidden": ["invent safeguard #3", "tune warm weight", "change 512 production samples", "promote remaining-unasked selector", "change evidence reliabilities from synthetic failures", "tune POS on consumed holdout", "run development-confirmation speculatively", "reopen release holdout", "add elaborate governance", "duplicate production CAT", "alter model/study behavior"]},
+      "anchors": ["[NEG-001]"]
+    },
+    {
+      "id": "FAIL-001",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Failure handling and stop conditions"],
+      "summary": "Parity failure restarts from locked slice base",
+      "normative_payload": {"on_failure": ["stop slice", "discard failed candidate changes", "return to locked pre-slice state", "apply demonstrated repair only"], "forbidden_repairs": ["golden change", "schema change", "reservation change", "historical evidence change"]},
+      "anchors": ["[FAIL-001]"]
+    },
+    {
+      "id": "FAIL-002",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Failure handling and stop conditions"],
+      "summary": "Resolve shipping needs without reverse dependency",
+      "normative_payload": {"production_fact": "narrow Core owner allowed", "experimental_interpretation": "Validation only", "forbidden": ["reverse dependency", "untyped escape hatch", "forwarding API solely to pass build"]},
+      "anchors": ["[FAIL-002]"]
+    },
+    {
+      "id": "FAIL-003",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Failure handling and stop conditions"],
+      "summary": "Missing source or sealed access blocks completion",
+      "normative_payload": {"blockers": ["missing baseline payload", "source hash mismatch outside reviewed binding migration", "sealed dataset access"], "action": "mark incomplete and request direction", "invent_contract": false},
+      "anchors": ["[FAIL-003]"]
+    },
+    {
+      "id": "FAIL-004",
+      "status": "active",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Failure handling and stop conditions"],
+      "summary": "Extraction completion is narrow",
+      "normative_payload": {"requires": ["all acceptance criteria", "all verification gates", "durable checkpoint"], "does_not_imply": ["review decisions approved", "confirmation ready", "holdout ready"]},
+      "anchors": ["[FAIL-004]"]
+    },
+    {
+      "id": "DEF-001",
+      "status": "deferred",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Deferred and superseded choices"],
+      "summary": "Validation CLI target deferred",
+      "normative_payload": {"item": "LeafReaderValidationCLI target", "activation_condition": "post-library evidence of substantial duplicated command/bootstrap code", "compatibility": ["commands", "flags", "exit behavior", "schemas"]},
+      "anchors": ["[DEF-001]"]
+    },
+    {
+      "id": "DEF-002",
+      "status": "deferred",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Deferred and superseded choices"],
+      "summary": "Generic support extraction deferred",
+      "normative_payload": {"item": "generic Support/ExperimentKit", "activation_condition": "at least a second experiment genuinely shares a primitive", "current_scope": "vocabulary namespace"},
+      "anchors": ["[DEF-002]"]
+    },
+    {
+      "id": "DEF-003",
+      "status": "deferred",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Deferred and superseded choices"],
+      "summary": "Separate package or repository deferred",
+      "normative_payload": {"item": "separate package/repository", "activation_conditions": ["independent lifecycle/versioning", "multiple repositories", "materially different dependencies", "separate build/test invocation", "stronger visibility requirement"]},
+      "anchors": ["[DEF-003]"]
+    },
+    {
+      "id": "SUP-001",
+      "status": "superseded",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Deferred and superseded choices"],
+      "summary": "Immediate reusable library ecosystem rejected",
+      "normative_payload": {"old": "immediately reusable validation library ecosystem", "replacement": "one internal SwiftPM target without product/versioning commitment"},
+      "anchors": [],
+      "record_anchors": ["[SUP-001]"],
+      "forbidden_anchors": ["Create `Packages/LeafReaderValidation/` now."],
+      "superseded_by": "GOAL-002"
+    },
+    {
+      "id": "SUP-002",
+      "status": "superseded",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Deferred and superseded choices"],
+      "summary": "Immediate CLI target rejected",
+      "normative_payload": {"old": "CLI target in initial extraction", "replacement": "stable script adapters; CLI deferred"},
+      "anchors": [],
+      "record_anchors": ["[SUP-002]"],
+      "forbidden_anchors": ["Add `LeafReaderValidationCLI` in Commit 1."],
+      "superseded_by": "DEF-001"
+    },
+    {
+      "id": "SUP-003",
+      "status": "superseded",
+      "section": ["LeafReader validation boundary and remaining-gates implementation plan", "Deferred and superseded choices"],
+      "summary": "Immediate generic experiment framework rejected",
+      "normative_payload": {"old": "generic experiment platform now", "replacement": "vocabulary-specific code plus second-use-case rule"},
+      "anchors": [],
+      "record_anchors": ["[SUP-003]"],
+      "forbidden_anchors": ["Introduce `UniversalExperimentFramework<TSubject, TTruth, TResponse, ...>`."],
+      "superseded_by": "DEF-002"
+    }
+  ]
+}

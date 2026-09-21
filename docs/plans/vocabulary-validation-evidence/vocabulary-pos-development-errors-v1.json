@@ -1,0 +1,236 @@
+{
+  "allDevelopment": {
+    "cases": 160,
+    "mechanisms": {
+      "abstention": {
+        "cases": 16,
+        "occurrenceMass": 16
+      },
+      "abstentionRecoveredByFinalReconciliation": {
+        "cases": 1,
+        "occurrenceMass": 1
+      },
+      "abstentionUnresolvedOrWrong": {
+        "cases": 15,
+        "occurrenceMass": 15
+      },
+      "finalIdentityError": {
+        "cases": 50,
+        "occurrenceMass": 50
+      },
+      "lemmaError": {
+        "cases": 9,
+        "occurrenceMass": 9
+      },
+      "nameExclusionError": {
+        "cases": 6,
+        "occurrenceMass": 6
+      },
+      "rawPOSError": {
+        "cases": 41,
+        "occurrenceMass": 41
+      }
+    },
+    "occurrenceWeight": 160
+  },
+  "byLanguage": {
+    "de": {
+      "cases": 80,
+      "mechanisms": {
+        "abstention": {
+          "cases": 12,
+          "occurrenceMass": 12
+        },
+        "abstentionRecoveredByFinalReconciliation": {
+          "cases": 1,
+          "occurrenceMass": 1
+        },
+        "abstentionUnresolvedOrWrong": {
+          "cases": 11,
+          "occurrenceMass": 11
+        },
+        "finalIdentityError": {
+          "cases": 28,
+          "occurrenceMass": 28
+        },
+        "lemmaError": {
+          "cases": 7,
+          "occurrenceMass": 7
+        },
+        "nameExclusionError": {
+          "cases": 3,
+          "occurrenceMass": 3
+        },
+        "rawPOSError": {
+          "cases": 22,
+          "occurrenceMass": 22
+        }
+      },
+      "occurrenceWeight": 80
+    },
+    "en": {
+      "cases": 80,
+      "mechanisms": {
+        "abstention": {
+          "cases": 4,
+          "occurrenceMass": 4
+        },
+        "abstentionRecoveredByFinalReconciliation": {
+          "cases": 0,
+          "occurrenceMass": 0
+        },
+        "abstentionUnresolvedOrWrong": {
+          "cases": 4,
+          "occurrenceMass": 4
+        },
+        "finalIdentityError": {
+          "cases": 22,
+          "occurrenceMass": 22
+        },
+        "lemmaError": {
+          "cases": 2,
+          "occurrenceMass": 2
+        },
+        "nameExclusionError": {
+          "cases": 3,
+          "occurrenceMass": 3
+        },
+        "rawPOSError": {
+          "cases": 19,
+          "occurrenceMass": 19
+        }
+      },
+      "occurrenceWeight": 80
+    }
+  },
+  "contentWordsByLanguage": {
+    "de": {
+      "cases": 43,
+      "mechanisms": {
+        "abstention": {
+          "cases": 8,
+          "occurrenceMass": 8
+        },
+        "abstentionRecoveredByFinalReconciliation": {
+          "cases": 0,
+          "occurrenceMass": 0
+        },
+        "abstentionUnresolvedOrWrong": {
+          "cases": 8,
+          "occurrenceMass": 8
+        },
+        "finalIdentityError": {
+          "cases": 16,
+          "occurrenceMass": 16
+        },
+        "lemmaError": {
+          "cases": 4,
+          "occurrenceMass": 4
+        },
+        "nameExclusionError": {
+          "cases": 1,
+          "occurrenceMass": 1
+        },
+        "rawPOSError": {
+          "cases": 13,
+          "occurrenceMass": 13
+        }
+      },
+      "occurrenceWeight": 43
+    },
+    "en": {
+      "cases": 39,
+      "mechanisms": {
+        "abstention": {
+          "cases": 3,
+          "occurrenceMass": 3
+        },
+        "abstentionRecoveredByFinalReconciliation": {
+          "cases": 0,
+          "occurrenceMass": 0
+        },
+        "abstentionUnresolvedOrWrong": {
+          "cases": 3,
+          "occurrenceMass": 3
+        },
+        "finalIdentityError": {
+          "cases": 10,
+          "occurrenceMass": 10
+        },
+        "lemmaError": {
+          "cases": 2,
+          "occurrenceMass": 2
+        },
+        "nameExclusionError": {
+          "cases": 1,
+          "occurrenceMass": 1
+        },
+        "rawPOSError": {
+          "cases": 8,
+          "occurrenceMass": 8
+        }
+      },
+      "occurrenceWeight": 39
+    }
+  },
+  "dataRole": "development-only-root-cause",
+  "heldoutCasesReadForMetrics": 0,
+  "interpretation": "Mechanism flags overlap and are diagnostic attribution, not additive causal shares. Development rows only; V2 held-out outcomes are not reused for tuning.",
+  "mechanismFlagsAreOverlapping": true,
+  "productionAssessableContentWords": {
+    "cases": 82,
+    "mechanisms": {
+      "abstention": {
+        "cases": 11,
+        "occurrenceMass": 11
+      },
+      "abstentionRecoveredByFinalReconciliation": {
+        "cases": 0,
+        "occurrenceMass": 0
+      },
+      "abstentionUnresolvedOrWrong": {
+        "cases": 11,
+        "occurrenceMass": 11
+      },
+      "finalIdentityError": {
+        "cases": 26,
+        "occurrenceMass": 26
+      },
+      "lemmaError": {
+        "cases": 6,
+        "occurrenceMass": 6
+      },
+      "nameExclusionError": {
+        "cases": 2,
+        "occurrenceMass": 2
+      },
+      "rawPOSError": {
+        "cases": 21,
+        "occurrenceMass": 21
+      }
+    },
+    "occurrenceWeight": 82
+  },
+  "productionThresholdsChanged": false,
+  "rawConfusions": {
+    "adjective->adverb": 1,
+    "adjective->noun": 1,
+    "adjective->other": 1,
+    "adjective->unknown": 4,
+    "adjective->verb": 4,
+    "adverb->pronoun": 2,
+    "adverb->unknown": 1,
+    "conjunction->preposition": 5,
+    "conjunction->unknown": 1,
+    "interjection->other": 1,
+    "interjection->unknown": 2,
+    "noun->unknown": 3,
+    "particle->adverb": 7,
+    "pronoun->determiner": 2,
+    "pronoun->unknown": 1,
+    "verb->adjective": 1,
+    "verb->unknown": 4
+  },
+  "schemaVersion": 1,
+  "sourceFixtureID": "ud-v2.18-pos-validation-v2"
+}

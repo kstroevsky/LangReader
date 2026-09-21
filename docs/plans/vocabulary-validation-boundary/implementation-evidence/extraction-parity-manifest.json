@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "data_role": "development-only-extraction-parity",
+  "status": "frozen-before-source-edits",
+  "baseline": {
+    "git_revision": "b2b99696feda177be0699d5277a2c13c7c7c9bd5",
+    "tracked_source_scope_dirty": false,
+    "untracked_plan_documents_present": true,
+    "swift_version": "Apple Swift version 6.0.3 (swiftlang-6.0.3.1.10 clang-1600.0.30.1)",
+    "platform": "arm64-apple-macosx15.0",
+    "package_manifest_sha256": "ab877e437c7a725b2b585c998c1654c0b7ccc9651fffcab8f67742c8fde4b7f4",
+    "evaluator_executable_sha256": "4898a8eb8800b498697d72e41f48ab7643950a7a1f7bef8933483194c196e311",
+    "pos_executable_sha256": "5f3cc4f9be5f34fb1f1a797ecfb95be62252e928e2e0c9a8a31ddb77ccbe2cd6"
+  },
+  "inputs_sha256": {
+    "scripts/evaluate_vocabulary_assessment.sh": "d096fa22e5f68dd9ae2b9f77c9008bf4b6f8c0f681b5a1fdf7ab569bf8be189f",
+    "scripts/evaluate_vocabulary_assessment.swift": "4dd3f5a058765f877ad945599f514583c1865be26d72b55124af7902aca0160d",
+    "scripts/vocabulary_assessment_causal_diagnostics.swift": "598be60bd501de5f05e68dfe2e8c262e7f8c5aaef687b9b8de7294ef85e9b85a",
+    "scripts/vocabulary_assessment_longitudinal_diagnostics.swift": "d0c964a0a543bdd68cc51233179b82599d63982a3caa5d49a3eedfbc2493dcb8",
+    "scripts/evaluate_vocabulary_pos_fixtures.sh": "ffcb4d5f3cbafbc2b1a8d896d8e15985b228c6f4ba168042b7857f7d31e7d24d",
+    "scripts/evaluate_vocabulary_pos_fixtures.swift": "597a11dd5a2b9eaf127d22fa0542c554ccf2dbb144a686ef1d0fea33dd7052de",
+    "scripts/fixtures/vocabulary-causal-diagnostic-manifest-v1.json": "322164967129debada4378d11902c226c1f4811c3281dd3a669e7b48406f6725",
+    "scripts/fixtures/vocabulary-longitudinal-diagnostic-manifest-v1.json": "53d183fcd325a5edbae1cfbd8c4fc0a470b516b9bd99403155d6691783218bb7",
+    "Tests/Fixtures/VocabularyPOS/ud-v2.18-selected.json": "258f6220094afecd864aa0930824309509e43aef8b740192acb523133decaf3c"
+  },
+  "cli_surface": {
+    "assessment_wrapper": "scripts/evaluate_vocabulary_assessment.sh",
+    "assessment_flags": [
+      "--adaptive-loss-population", "--causal-json", "--causal-manifest", "--causal-markdown",
+      "--causal-self-test", "--causal-timing", "--coverage-quantile",
+      "--coverage-stopping-computation", "--difficulty-prior-sd-scale", "--documents",
+      "--epsilon-knowledge-minimum", "--evidence-reliability-scale",
+      "--idiosyncratic-flip-rate", "--item-residual-sd", "--json", "--lemmas",
+      "--longitudinal-json", "--longitudinal-manifest", "--longitudinal-markdown",
+      "--longitudinal-self-test", "--longitudinal-timing", "--markdown", "--no-gate",
+      "--paired-diagnostic-substreams", "--question-objective", "--readers",
+      "--response-noise-rate", "--seed", "--warm-prior-weight"
+    ],
+    "pos_wrapper": "scripts/evaluate_vocabulary_pos_fixtures.sh",
+    "pos_arguments": ["fixture.json", "report.json"]
+  },
+  "runs": [
+    {
+      "id": "standard",
+      "command": ["scripts/evaluate_vocabulary_assessment.sh", "--seed", "42", "--readers", "1", "--lemmas", "20", "--no-gate", "--json", "{output}/standard.json", "--markdown", "{output}/standard.md"],
+      "expected_exit_status": 0,
+      "output_sha256": {
+        "standard.json": "ed73e2807e321340f911755b9266c61f26b0e547e0548dc9bd444304eff08016",
+        "standard.md": "bcf403b33fe76a54f0e3b21837b4bdb574f8937410827010769a2048f0a4da82"
+      },
+      "validator": ["python3", "scripts/validate_vocabulary_assessment_report.py", "{output}/standard.json"],
+      "validator_expected_exit_status": 0
+    },
+    {
+      "id": "causal",
+      "command": ["scripts/evaluate_vocabulary_assessment.sh", "--seed", "7", "--readers", "1", "--lemmas", "20", "--no-gate", "--json", "{output}/causal-standard.json", "--markdown", "{output}/causal-standard.md", "--causal-manifest", "scripts/fixtures/vocabulary-causal-diagnostic-manifest-v1.json", "--causal-json", "{output}/causal.json", "--causal-markdown", "{output}/causal.md", "--causal-timing", "{output}/causal-timing.json"],
+      "expected_exit_status": 0,
+      "output_sha256": {
+        "causal-standard.json": "edcdae3da6ab3bab1b48077d5d774f9292efc005e2d8c2e020519007f3398b13",
+        "causal-standard.md": "88c13e76d3d26c7c1fd19ded8de57d2b55fe5377c67d78c95de974be8cef392c",
+        "causal.json": "8966ee143e6501c2de80296d08d9c28b0e090eecf99a3f76bf53008fb7228153",
+        "causal.md": "94729313773858044e628f438858cc37887464144eaca1c0a5c3f1174f6b1988",
+        "causal-timing.json": "a117fe867387fb46e2970abcf2dc508689d3de091a5b73d2afea0efcca4c7554"
+      },
+      "validator": ["python3", "scripts/validate_vocabulary_causal_diagnostic_report.py", "{output}/causal.json"],
+      "validator_expected_exit_status": 0
+    },
+    {
+      "id": "longitudinal",
+      "command": ["scripts/evaluate_vocabulary_assessment.sh", "--seed", "7", "--readers", "1", "--lemmas", "20", "--no-gate", "--json", "{output}/longitudinal-standard.json", "--markdown", "{output}/longitudinal-standard.md", "--longitudinal-manifest", "scripts/fixtures/vocabulary-longitudinal-diagnostic-manifest-v1.json", "--longitudinal-json", "{output}/longitudinal.json", "--longitudinal-markdown", "{output}/longitudinal.md", "--longitudinal-timing", "{output}/longitudinal-timing.json"],
+      "expected_exit_status": 0,
+      "output_sha256": {
+        "longitudinal-standard.json": "edcdae3da6ab3bab1b48077d5d774f9292efc005e2d8c2e020519007f3398b13",
+        "longitudinal-standard.md": "88c13e76d3d26c7c1fd19ded8de57d2b55fe5377c67d78c95de974be8cef392c",
+        "longitudinal.json": "86b838dbb39b00b4d7ee6319233d6e5accac57a8facfca997ffa785a5bd14cf4",
+        "longitudinal.md": "99ba3fabd82fbb1dd7215e9e5990269401d115feb353745a8a1ce8fc77cae110",
+        "longitudinal-timing.json": "d1e92079f7a7f8cae99a4bcd5aa5c25969155de7a2ae089dbada007a73538cec"
+      },
+      "validator": ["python3", "scripts/validate_vocabulary_longitudinal_report.py", "{output}/longitudinal.json"],
+      "validator_expected_exit_status": 0
+    },
+    {
+      "id": "pos",
+      "command": ["scripts/evaluate_vocabulary_pos_fixtures.sh", "Tests/Fixtures/VocabularyPOS/ud-v2.18-selected.json", "{output}/pos.json"],
+      "expected_exit_status": 0,
+      "output_sha256": {
+        "pos.json": "37352bfd604f16d0605af0df673962e8d7166c709c755b7121935128cccd27f9"
+      },
+      "validator": ["python3", "scripts/validate_vocabulary_pos_report.py", "Tests/Fixtures/VocabularyPOS/ud-v2.18-selected.json", "{output}/pos.json"],
+      "validator_expected_exit_status": 0
+    }
+  ],
+  "baseline_only_checks": [
+    {"command": ["scripts/evaluate_vocabulary_assessment.sh", "--causal-self-test"], "expected_exit_status": 0},
+    {"command": ["scripts/evaluate_vocabulary_assessment.sh", "--longitudinal-self-test"], "expected_exit_status": 0},
+    {"command": ["python3", "scripts/validate_vocabulary_development_confirmation_reservation.py", "--self-test"], "expected_exit_status": 0}
+  ],
+  "predeclared_comparison": {
+    "byte_equal": ["standard.json", "standard.md", "causal-standard.json", "causal-standard.md", "longitudinal-standard.json", "longitudinal-standard.md", "pos.json"],
+    "causal_and_longitudinal_json_source_fields_allowed_to_differ": ["source.revision", "source.dirtyTree", "source.dirtyStatusFingerprint", "source.sourceContentFingerprint"],
+    "causal_markdown_provenance_line_prefix": "Source: `",
+    "longitudinal_markdown_provenance_line_prefix": "Source `",
+    "all_other_semantic_fields": "exactly equal",
+    "timing_json": "retain raw files and hashes; report separately, never normalize or use timing to excuse semantic differences"
+  },
+  "protected_inputs_not_run": [
+    "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v1.json runs",
+    "docs/perf/vocabulary-assessment-holdout-v1.json seeds",
+    "Tests/Fixtures/VocabularyPOS/ud-v2.18-validation-v2.json held-out scoring",
+    "real human collection"
+  ]
+}

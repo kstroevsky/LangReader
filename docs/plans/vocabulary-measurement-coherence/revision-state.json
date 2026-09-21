@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "phase": "INCOMPLETE",
+  "base_status": "accepted user roadmap materialized from the prior task message; not a repository canonical plan before this revision",
+  "base_sha256": "868106f57e1fa78a0b0f03c3e4e0dd29d6161500ef6b8ed8d13bc05bcc6a1671",
+  "review_sha256": "f5299abc0c32aa5fb1af34068aaad74e069d08bb274c455f737e06de2379bc5c",
+  "base_ledger_sha256": "d11ff5931fed900d437b65f34e8f578747e95c86e2ce0373c10d04b60e06dbb1",
+  "delta_sha256": "726a3813c69abdae49d44d70efc9c5f8e32e9e1a7874e1c545b33de1dcd6c466",
+  "candidate_sha256": "1283794cae1af72d36249ad999fd52fd20f81e07f3b2df2145d31e3033de8ec3",
+  "target_ledger_sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4",
+  "repair_delta_sha256": "abf43987195f1fab6f6240f250a55fadfdf1f3efe0feeb8d0f4bee7dabebc84e",
+  "repair_delta_attempt2_sha256": "5d88f878f71ba0607a722bff9f2cff4a8c72d4eab8f2277681b7e657feb19bee",
+  "completed_feedback_ids": [
+    "F-01", "F-02", "F-03", "F-04", "F-05", "F-06", "F-07", "F-08", "F-09", "F-10",
+    "F-11", "F-12", "F-13", "F-14", "F-15", "F-16", "F-17", "F-18", "F-19", "F-20"
+  ],
+  "validation_results": {
+    "mechanical": "PASS",
+    "semantic_delta": "PASS",
+    "semantic_preservation": "PASS",
+    "semantic_negative_control": "PASS",
+    "semantic_cross_interface": "PASS",
+    "semantic_standalone": "PASS",
+    "independent_attempt_1": "FAIL",
+    "independent_attempt_2": "FAIL",
+    "independent_attempt_3": "FAIL"
+  },
+  "repair_attempts_by_finding": {
+    "SEM-001": 1,
+    "SEM-002": 1,
+    "SEM-003": 1,
+    "SEM-004": 1,
+    "IF-001": 1,
+    "IF-002": 1,
+    "IF-003": 1,
+    "IF-004": 1,
+    "IF-005": 1,
+    "IF-006": 1,
+    "VF-01": 1,
+    "VF-02": 1,
+    "VF-03": 1,
+    "VF-04": 1,
+    "VF-05": 1
+  },
+  "open_findings": [
+    "FINAL-001: current hash-locked evidenceLikelihood still couples errorFloor to reliability, contradicting requested separation.",
+    "FINAL-002: the review does not authorize a specific weighted estimator/interval policy for stratified audits.",
+    "PROV-001: second failed candidate eca0f48d…f22a was not retained byte-for-byte."
+  ],
+  "canonical_status": "candidate only; requires verification and user acceptance"
+}

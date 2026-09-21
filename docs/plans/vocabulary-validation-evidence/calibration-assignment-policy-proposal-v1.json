@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "proposalStatus": "approvedDesignNotActivated",
+  "canonicalRequirementIDs": ["CALDATA-001"],
+  "policyVersion": "calibration-assignment-proposal-v1",
+  "activation": {
+    "enabled": false,
+    "defaultSetting": false,
+    "diagnosticFlag": false,
+    "rehearsalFixture": false,
+    "requiresSeparateActivationApproval": true
+  },
+  "slotPolicy": {
+    "baseOpportunityProbability": 0.075,
+    "cadence": "independentBernoulliAtEachEligibleScoredOrdinal",
+    "rounding": "none",
+    "minimumAssignmentQuota": 0,
+    "maximumAssignmentQuota": null,
+    "countsTowardQuestionLimit": true,
+    "calibrationAnswersAdvanceTailOrdinalCounter": true,
+    "questionLimitsRemain": [8, 20, 80],
+    "tailValidationFirstOrdinal": 15,
+    "tailValidationCadence": 5,
+    "calibrationNeverReplacesTailValidation": true,
+    "excludedOpportunitySelectionTypes": ["tailValidation"],
+    "eligibleOpportunityRequires": [
+      "assessment is active",
+      "scored ordinal is not reserved for tail validation",
+      "at least one remaining unasked assessable candidate",
+      "participant consent and approved research protocol are active"
+    ]
+  },
+  "abilityBins": {
+    "source": "posteriorMeanBeforeQuestion",
+    "boundaries": [-1.5, -0.5, 0.5, 1.5],
+    "labels": ["theta-below-1.5", "theta-1.5-to-0.5", "theta-0.5-to-0.5", "theta-0.5-to-1.5", "theta-at-least-1.5"],
+    "boundaryRule": "lowerInclusiveUpperExclusiveWithOpenTails",
+    "underrepresentedDefinition": "accrued independent calibration assignments below one fifth of total assignments at the frozen support snapshot",
+    "underrepresentationResponse": "report and recruitment monitoring only; v1 does not change an individual participant's 0.075 opportunity probability"
+  },
+  "candidatePool": {
+    "source": "remainingUnaskedAssessableInventory",
+    "predictedKnownBoundaries": [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
+    "predictedKnownBinLabels": ["p00-20", "p20-40", "p40-60", "p60-80", "p80-100"],
+    "stratumChoice": "lowestPriorCalibrationSupportForCurrentAbilityBinThenDeclaredBinOrder",
+    "itemChoice": "uniformWithinChosenNonemptyStratum",
+    "supportSnapshot": "versionedCountsByPolicyAbilityBinPredictedKnownBinAndLexicalItem",
+    "excludes": ["alreadyAsked", "explicitlyExcluded", "knownUnanswerableDefinitionFailure"],
+    "exhaustionFallback": "recordNoEligibleCandidatesAndUseOrdinaryAdaptiveSelection",
+    "postAssignmentDefinitionFailure": "record definitionFailure outcome, preserve existing evidence semantics, and do not force a replacement calibration item at the same ordinal"
+  },
+  "anchorBank": {
+    "required": true,
+    "policy": "protocol-frozen reusable lexical-item bank with versioned support snapshot",
+    "ordinaryPrepareVocabularyEligibility": "anchor lexical item must occur in the current document",
+    "dedicatedConsentedStudyEligibility": "a broader frozen anchor block may be administered under the approved calibration-study protocol",
+    "uniformArbitraryBookVocabularySampling": false
+  },
+  "assignmentProbability": {
+    "slotProbability": "0.075 conditional on an eligible non-tail opportunity",
+    "stratumProbability": "1 for the deterministic least-supported nonempty stratum conditional on history",
+    "itemProbability": "1 divided by chosenStratumCandidateCount",
+    "jointProbability": "slotProbability times itemProbability",
+    "dependsOn": ["prior responses", "current posterior", "remaining candidate pool", "support snapshot", "reserved tail ordinal"],
+    "ignorabilityClaim": false
+  },
+  "traceSchema": {
+    "minimumCanonicalFields": ["questionOrdinal", "selectionType", "predictedKnownBeforeAnswer", "thetaBinBeforeAnswer"],
+    "additionalRequiredFields": [
+      "assignmentPolicyVersion",
+      "assignmentOpportunityProbability",
+      "candidatePoolSnapshotID",
+      "candidatePoolSHA256",
+      "eligibleCandidateCount",
+      "chosenPredictedKnownBin",
+      "chosenStratumCandidateCount",
+      "candidateSelectionProbability",
+      "jointAssignmentProbability",
+      "supportSnapshotVersion",
+      "supportSnapshotSHA256",
+      "rngStreamID",
+      "slotDrawIndex",
+      "slotDrawUniform",
+      "itemDrawIndex",
+      "itemDrawUniform",
+      "assignmentOutcome"
+    ],
+    "assignmentOutcomes": ["assigned", "regularSelection", "tailValidationReserved", "noEligibleCandidates", "excluded", "definitionFailure", "abandoned"],
+    "selectionTypeWhenAssigned": "calibration",
+    "restrictedReconstructionJoin": "candidatePoolSnapshotID"
+  },
+  "privacy": {
+    "ordinaryProductExportUnchanged": true,
+    "restrictedPoolSnapshotContains": ["opaque assessment ID", "lexical item IDs", "pre-answer predictions", "eligibility", "support counts"],
+    "forbiddenFields": ["product document ID", "document title", "file path", "raw document text", "context", "definition", "typed meaning", "account identity", "exact timestamp"],
+    "automaticTransmission": false
+  },
+  "mechanismSeparation": {
+    "studyEndpointCollection": "governed by the frozen criterion and retest protocol",
+    "randomizedCriterionAudit": "uses its own audit inclusion probability",
+    "calibrationAssignment": "uses the slot and item propensities in this proposal",
+    "probabilitiesAreInterchangeable": false
+  },
+  "feasibility": {
+    "calculationVersion": "calibration-assignment-feasibility-v1",
+    "assumptions": {
+      "independentLearnersRequiredPerItem": 100,
+      "exploratoryLearnersRequiredPerAbilityCell": 30,
+      "abilityBinCount": 5,
+      "balancedAbilityBins": true,
+      "uniformItemAllocationApproximation": true
+    },
+    "questionScenarios": [
+      {"scoredQuestions": 8, "reservedTailOrdinals": 0, "eligibleOpportunities": 8, "expectedAssignments": 0.6, "expectedShareOfScoredQuestions": 0.075},
+      {"scoredQuestions": 20, "reservedTailOrdinals": 2, "eligibleOpportunities": 18, "expectedAssignments": 1.35, "expectedShareOfScoredQuestions": 0.0675},
+      {"scoredQuestions": 80, "reservedTailOrdinals": 14, "eligibleOpportunities": 66, "expectedAssignments": 4.95, "expectedShareOfScoredQuestions": 0.061875}
+    ],
+    "fixtureInventoryProjections": [
+      {"language": "en", "uniqueItems": 285, "scoredQuestions": 8, "sessionsFor100LearnersPerItem": 47500.0, "sessionsFor30LearnersPerItemAbilityCell": 71250.0},
+      {"language": "en", "uniqueItems": 285, "scoredQuestions": 20, "sessionsFor100LearnersPerItem": 21111.11, "sessionsFor30LearnersPerItemAbilityCell": 31666.67},
+      {"language": "en", "uniqueItems": 285, "scoredQuestions": 80, "sessionsFor100LearnersPerItem": 5757.58, "sessionsFor30LearnersPerItemAbilityCell": 8636.36},
+      {"language": "de", "uniqueItems": 264, "scoredQuestions": 8, "sessionsFor100LearnersPerItem": 44000.0, "sessionsFor30LearnersPerItemAbilityCell": 66000.0},
+      {"language": "de", "uniqueItems": 264, "scoredQuestions": 20, "sessionsFor100LearnersPerItem": 19555.56, "sessionsFor30LearnersPerItemAbilityCell": 29333.33},
+      {"language": "de", "uniqueItems": 264, "scoredQuestions": 80, "sessionsFor100LearnersPerItem": 5333.33, "sessionsFor30LearnersPerItemAbilityCell": 8000.0}
+    ],
+    "interpretation": "Broad document inventories create sparse item-by-ability cells; approval must narrow/reuse a calibration bank or justify substantially larger overlap before collection. Pack eligibility and DIF support thresholds are not lowered."
+  },
+  "unchangedRequirements": [
+    "CAL-001 production observation likelihood remains authoritative",
+    "CAL-002 requires at least 100 independent learners and SE no greater than 0.35",
+    "2PL remains disabled without participant-held-out log-loss improvement of at least 0.01 and stable discrimination",
+    "DIF keeps separate L1 and proficiency axes, uniform and non-uniform effects, multiplicity control, effect sizes, anchor purification, and frozen minimum support",
+    "ordinary research export remains privacy-minimized and unchanged",
+    "tail validation remains scheduled at ordinal 15 and every 5 scored questions",
+    "production slot assignment remains disabled"
+  ]
+}

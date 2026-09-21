@@ -1,0 +1,47 @@
+{
+  "environment" : {
+    "hardware" : "arm64",
+    "os" : "15.7.9",
+    "processCount" : "10",
+    "swift" : "Apple Swift version 6.0.3 (swiftlang-6.0.3.1.10 clang-1600.0.30.1)"
+  },
+  "limitation" : "Wall-clock observations include host load and are intentionally excluded from the deterministic semantic report. Product 150 ms latency gates do not include this opt-in diagnostic workload.",
+  "repetitionCounts" : {
+    "b1EvaluationMilliseconds" : 2,
+    "b2EvaluationMilliseconds" : 2,
+    "commonEvidenceReplayMilliseconds" : 1,
+    "semanticSerializationMilliseconds" : 1,
+    "snapshotConstructionMilliseconds" : 2
+  },
+  "repetitions" : {
+    "b1EvaluationMilliseconds" : [
+      0.6145,
+      0.619792
+    ],
+    "b2EvaluationMilliseconds" : [
+      0.510375,
+      0.523208
+    ],
+    "commonEvidenceReplayMilliseconds" : [
+      2.552375
+    ],
+    "semanticSerializationMilliseconds" : [
+      2.10125
+    ],
+    "snapshotConstructionMilliseconds" : [
+      0.261917,
+      0.219041
+    ]
+  },
+  "schemaVersion" : 1,
+  "semanticReportSHA256" : "8966ee143e6501c2de80296d08d9c28b0e090eecf99a3f76bf53008fb7228153",
+  "sourceRevision" : "b2b99696feda177be0699d5277a2c13c7c7c9bd5",
+  "units" : "milliseconds",
+  "workload" : {
+    "documents" : 1,
+    "lemmas" : 20,
+    "readers" : 1,
+    "runs" : 1,
+    "timingRepetitions" : 1
+  }
+}

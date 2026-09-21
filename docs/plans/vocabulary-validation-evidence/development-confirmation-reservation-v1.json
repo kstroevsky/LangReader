@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "reservationID": "development-confirmation-v1",
+  "dataRole": "development-confirmation",
+  "reservationDate": "2026-09-12",
+  "reservationRevision": "9df23ba57477371dc99422725329c8cab0cb7bf6",
+  "executionStatus": "reservedNotExecuted",
+  "seedDerivation": {
+    "algorithm": "SHA256(seedDerivationRootBytes || UTF8('development-confirmation-v1/run/' || zeroBasedRunOrdinal)); evaluator seed is the first 8 digest bytes as unsigned big-endian UInt64; zero maps to one",
+    "seedDerivationRoot": "e9a800b7e4d71003461d38e0fd26aa6e0ec3e1fc10cc32a9734cda92be61ac52",
+    "documentIdentityAlgorithm": "first 24 lowercase hex characters of SHA256(fullRunDigest || UTF8('/document/' || zeroBasedDocumentOrdinal))"
+  },
+  "generatorLock": {
+    "runner": "scripts/evaluate_vocabulary_assessment.sh",
+    "runnerSHA256": "d096fa22e5f68dd9ae2b9f77c9008bf4b6f8c0f681b5a1fdf7ab569bf8be189f",
+    "evaluator": "scripts/evaluate_vocabulary_assessment.swift",
+    "evaluatorSHA256": "4dd3f5a058765f877ad945599f514583c1865be26d72b55124af7902aca0160d",
+    "causalSupport": "scripts/vocabulary_assessment_causal_diagnostics.swift",
+    "causalSupportSHA256": "598be60bd501de5f05e68dfe2e8c262e7f8c5aaef687b9b8de7294ef85e9b85a",
+    "canonicalGateLedger": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+    "canonicalGateLedgerSHA256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4"
+  },
+  "workload": {
+    "readersPerScenario": 64,
+    "documentsPerScenario": 8,
+    "lemmasPerDocument": 400,
+    "scenarios": ["well-specified", "item-residual", "response-noise", "idiosyncratic-knowledge"],
+    "modes": ["all-unknown", "coverage-98"],
+    "warmAndCold": true,
+    "gatePolicy": "unchanged EVAL-001 and release-regression thresholds",
+    "interpretation": "three independent reserved runs; percentages retain raw reader/document counts and are not a two-point precision claim"
+  },
+  "runs": [
+    {
+      "runOrdinal": 0,
+      "runID": "2d31f8842cfc1e41",
+      "seed": 3256657252139671105,
+      "opaqueDocumentDerivationIDs": [
+        "6a721e35ddf2b1d6a9a2584e", "b71e791c3d50d9d13ebe8d9e",
+        "768175fb22ee72a7f608e7b9", "643a868e4051087af676916d",
+        "5cb78a288292c30d5faa3bdc", "7cff8ab6d4fb8812f167bd4b",
+        "7d0a8ac0af0821eeaf59307c", "f3c37926c4f4f8138d5b96b0"
+      ]
+    },
+    {
+      "runOrdinal": 1,
+      "runID": "5b45490f60f2fb23",
+      "seed": 6576743161244351267,
+      "opaqueDocumentDerivationIDs": [
+        "cc2feb932456d4611c7056b1", "f2c649d45b4e34a6d039ccf5",
+        "4f7cf98b36d852ee8c8c8ef0", "72c7de0a7e7e3744be43a0f4",
+        "b66dd0ce41d4da68f970ff1c", "3bf08c53a801bc66afd5a62b",
+        "d833640d507831ff0817dc06", "94ca2d37381720c74698fe44"
+      ]
+    },
+    {
+      "runOrdinal": 2,
+      "runID": "d35fd2cf4a834017",
+      "seed": 15231124252540485655,
+      "opaqueDocumentDerivationIDs": [
+        "2163543e5c0f15e8ead56777", "ece31b36dbbce3484595b1e0",
+        "b0643dbf9e871ed833f797ad", "20aef93c62b54acd80e9899a",
+        "418cde1f641b744a0f8741f2", "df895b74ff894e93712a9a71",
+        "cb34a8205566eb8e32de965e", "fc1298a76a01f49c7d22a337"
+      ]
+    }
+  ],
+  "nonOverlap": {
+    "knownDevelopmentSeeds": [20260815, 20260908],
+    "frozenReleaseHoldoutSeeds": [13785352245285352300, 16855471854424563266, 5886616191894718396],
+    "allReservedSeedsMustBeDisjoint": true,
+    "allOpaqueDocumentDerivationIDsMustBeUnique": true
+  },
+  "freezeAndConsumption": {
+    "candidateFreeze": null,
+    "analysisFreeze": null,
+    "outcomeArtifacts": [],
+    "outcomesInspected": false,
+    "consumedByCandidateCycle": null,
+    "releaseHoldoutAccessAllowed": false,
+    "requiredBeforeExecution": [
+      "candidate commit and clean-tree hash",
+      "model/configuration/resource hashes",
+      "analysis and decision-rule checksum",
+      "reviewed decision to consume this reservation"
+    ],
+    "onDesignChangeAfterExecution": "retain the result, mark this reservation consumed for that candidate-design cycle, return to development, and reserve a fresh future confirmation set",
+    "onPass": "record the frozen confirmation decision before any frozen release-holdout access"
+  }
+}

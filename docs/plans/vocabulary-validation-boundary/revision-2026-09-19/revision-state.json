@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "phase": "COMPLETE",
+  "base_status": "verified_unaccepted_candidate",
+  "base_sha256": "0f85e0d18094eb2efccaa601e0c3f9dff59a6ab563fdc5c838bc30e1b21b1467",
+  "base_ledger_sha256": "dab7bc8f444500198b899bc478b6fe58938675b184c0e9fd02c54a27bf743edd",
+  "source_lock_sha256": "12944c83d2bdf0423b89333457030140618c4c70ffd9e6909d4560cbc249e5ba",
+  "feedback_sha256": "7867a698953b7264c4b6c0f6a453e714e751a3728e8fd3c3290c058a92142101",
+  "delta_sha256": "29df947e22c04f9843dfc03d50ba077337aa8c27653ee3cfbc542fef2d998eee",
+  "target_ledger_sha256": "22e0ed04820f7c598fd034882abf6a20ba29a43814f7a16509d3226d155b8e42",
+  "candidate_sha256": "ee61a39745657e95dc6999bcda9bd15c0aa0b2d315221b65e8502be6b14fff9a",
+  "completed_feedback_ids": [
+    "R-01-CANDIDATE-STATUS",
+    "R-02-FRESH-CONFIRMATION-ROUTE",
+    "R-03-STAGED-DIAGNOSTIC-MIGRATION",
+    "R-04-NARROW-CORE-SNAPSHOT",
+    "R-05-ARCHITECTURE-ENFORCEMENT",
+    "R-06-HUMAN-STUDY-BOUNDARY",
+    "R-07-VALIDATION-SUBSYSTEM-WORDING",
+    "R-08-FROZEN-PARITY-MANIFEST",
+    "R-08B-PARITY-MANIFEST-BASELINE",
+    "R-09-APP-CROSS-FORMAT-OWNERSHIP",
+    "R-10-TEMPORARY-MIGRATION-CONTROLS"
+  ],
+  "validation_results": {
+    "mechanical": "PASS: 20 changed sections; 6 added, 1 removed; no errors or warnings",
+    "semantic": "PASS: 11/11 delta items; 68/68 anchors; no unauthorized ledger changes or cross-interface contradiction found",
+    "independent": "PASS: fresh verifier found no material preservation finding on candidate hash"
+  },
+  "repair_attempts_by_finding": {
+    "future_reservation_validator_timing": 1
+  },
+  "open_findings": [],
+  "requires_user_acceptance_for_canonical_status": true
+}

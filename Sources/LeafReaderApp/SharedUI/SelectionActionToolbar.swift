@@ -262,38 +262,36 @@ final class SelectionActionToolbar: NSView {
             setAIActionButtonsHidden(false)
             contextButton.isHidden = false
             speakButton.isHidden = !showsSpeak
-            noteButton.isHidden = false
             copyButton.isHidden = false
             configureModelButton.isHidden = true
         case .offlineWord:
             setAIActionButtonsHidden(true)
             contextButton.isHidden = false
             speakButton.isHidden = false
-            noteButton.isHidden = true
             copyButton.isHidden = false
             configureModelButton.isHidden = true
-        case .offlineCopyOnly:
+        case .offlineText:
             setAIActionButtonsHidden(true)
             contextButton.isHidden = true
             speakButton.isHidden = true
-            noteButton.isHidden = true
             copyButton.isHidden = false
             configureModelButton.isHidden = true
         case .needsModelKeyWord:
             setAIActionButtonsHidden(true)
             contextButton.isHidden = false
             speakButton.isHidden = false
-            noteButton.isHidden = true
             copyButton.isHidden = false
             configureModelButton.isHidden = false
-        case .needsModelKeyCopyOnly:
+        case .needsModelKeyText:
             setAIActionButtonsHidden(true)
             contextButton.isHidden = true
             speakButton.isHidden = true
-            noteButton.isHidden = true
             copyButton.isHidden = false
             configureModelButton.isHidden = false
         }
+        // Creating a Reading Note is a local document action. Its availability
+        // must not follow the online/model-key capability that selects this mode.
+        noteButton.isHidden = false
         needsLayout = true
     }
 

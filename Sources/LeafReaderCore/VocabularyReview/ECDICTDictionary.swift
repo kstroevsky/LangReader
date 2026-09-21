@@ -96,6 +96,34 @@ package final class ECDICTDictionary: @unchecked Sendable {
         return ECDICTDiagnosticInfo(url: nil, byteCount: nil, entryCount: nil)
     }
 
+    package func maximumFrequencyRank() -> Int? {
+        for url in databaseURLs where FileManager.default.fileExists(atPath: url.path) {
+            if let rank = sqliteMaximumFrequencyRank(databaseURL: url) { return rank }
+        }
+        return nil
+    }
+
+    private func sqliteMaximumFrequencyRank(databaseURL: URL) -> Int? {
+        sqliteLock.lock()
+        defer { sqliteLock.unlock() }
+        guard let database = openSQLiteDatabase(databaseURL) else { return nil }
+        for table in ["stardict", "ecdict", "dictionary"] {
+            var statement: OpaquePointer?
+            guard sqlite3_prepare_v2(
+                database,
+                "SELECT MAX(CAST(frq AS INTEGER)) FROM \(table) WHERE CAST(frq AS INTEGER) > 0",
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK else { continue }
+            defer { sqlite3_finalize(statement) }
+            guard sqlite3_step(statement) == SQLITE_ROW else { continue }
+            let rank = Int(sqlite3_column_int(statement, 0))
+            if rank > 0 { return rank }
+        }
+        return nil
+    }
+
     package func lookup(_ query: String) -> ECDICTEntry? {
         let normalized = Self.lookupKey(query)
         guard !normalized.isEmpty else { return nil }

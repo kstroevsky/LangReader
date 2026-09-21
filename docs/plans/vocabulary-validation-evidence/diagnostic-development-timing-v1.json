@@ -1,0 +1,92 @@
+{
+  "environment" : {
+    "hardware" : "arm64",
+    "os" : "15.7.9",
+    "processCount" : "10",
+    "swift" : "Apple Swift version 6.0.3 (swiftlang-6.0.3.1.10 clang-1600.0.30.1)"
+  },
+  "limitation" : "Wall-clock observations include host load and are intentionally excluded from the deterministic semantic report. Product 150 ms latency gates do not include this opt-in diagnostic workload.",
+  "repetitionCounts" : {
+    "b1EvaluationMilliseconds" : 16,
+    "b2EvaluationMilliseconds" : 16,
+    "commonEvidenceReplayMilliseconds" : 2,
+    "semanticSerializationMilliseconds" : 3,
+    "snapshotConstructionMilliseconds" : 16
+  },
+  "repetitions" : {
+    "b1EvaluationMilliseconds" : [
+      49.36004,
+      48.480083,
+      49.99725099999999,
+      49.987833,
+      49.330667000000005,
+      51.274085,
+      54.496584000000006,
+      56.152958000000005,
+      60.063626,
+      59.163375,
+      59.32620800000001,
+      58.718249,
+      59.159209000000004,
+      57.771626,
+      59.788331,
+      59.690167
+    ],
+    "b2EvaluationMilliseconds" : [
+      48.779375,
+      48.086167,
+      49.214208,
+      49.164791,
+      49.012542,
+      48.381039,
+      50.673874999999995,
+      51.439541,
+      58.787667,
+      58.611000000000004,
+      59.120793000000006,
+      58.382374999999996,
+      58.62495800000001,
+      57.017042000000004,
+      59.527916000000005,
+      59.373874
+    ],
+    "commonEvidenceReplayMilliseconds" : [
+      12.737959,
+      13.280333
+    ],
+    "semanticSerializationMilliseconds" : [
+      98.041959,
+      97.349667,
+      97.668209
+    ],
+    "snapshotConstructionMilliseconds" : [
+      0.658,
+      0.733375,
+      0.780959,
+      0.727667,
+      0.744917,
+      1.091417,
+      0.932917,
+      1.03175,
+      0.837208,
+      0.813875,
+      0.674084,
+      0.933125,
+      0.696833,
+      0.975125,
+      0.765583,
+      0.829459
+    ]
+  },
+  "schemaVersion" : 1,
+  "semanticReportSHA256" : "ead10efb51def1dc07e93831672b4f9ea102c643dd23466384b7fe9862647f65",
+  "sourceRevision" : "e8ea803c2a9eb557677a520f4c97aacf729e7c52",
+  "units" : "milliseconds",
+  "workload" : {
+    "documents" : 2,
+    "lemmas" : 60,
+    "readers" : 2,
+    "runs" : 8,
+    "timingRepetitions" : 3
+  }
+}

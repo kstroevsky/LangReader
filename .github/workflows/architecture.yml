@@ -15,6 +15,8 @@ jobs:
       HOMEBREW_NO_AUTO_UPDATE: "1"
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Verify pinned toolchain
         run: |
           sw_vers
@@ -23,9 +25,19 @@ jobs:
       - name: Install deterministic check dependencies
         run: |
           brew install ripgrep
-          brew install --cask sparkle
-          sparkle_home="$(find "$(brew --prefix)/Caskroom/sparkle" -mindepth 1 -maxdepth 1 -type d ! -name .metadata | LC_ALL=C sort | tail -n 1)"
+          sparkle_version="2.9.4"
+          sparkle_sha256="ce89daf967db1e1893ed3ebd67575ed82d3902563e3191ca92aaec9164fbdef9"
+          sparkle_archive="$RUNNER_TEMP/Sparkle-$sparkle_version.tar.xz"
+          sparkle_home="$RUNNER_TEMP/Sparkle-$sparkle_version"
+          curl --fail --location --retry 3 \
+            --output "$sparkle_archive" \
+            "https://github.com/sparkle-project/Sparkle/releases/download/$sparkle_version/Sparkle-$sparkle_version.tar.xz"
+          echo "$sparkle_sha256  $sparkle_archive" | shasum -a 256 --check
+          mkdir -p "$sparkle_home"
+          tar -xJf "$sparkle_archive" -C "$sparkle_home"
           test -d "$sparkle_home/Sparkle.framework"
+          test -f "$sparkle_home/Sparkle.framework/Headers/Sparkle.h"
+          codesign --verify --deep --strict "$sparkle_home/Sparkle.framework"
           echo "SPARKLE_HOME=$sparkle_home" >> "$GITHUB_ENV"
       - name: Run deterministic architecture, build, and test checks
         run: ./scripts/check.sh --no-build

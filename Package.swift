@@ -40,6 +40,16 @@ let package = Package(
                 .swiftLanguageMode(.v6)
             ]
         ),
+        // Internal model-validation infrastructure. It executes Core behavior
+        // but is not a product and is never in the shipping app's dependency graph.
+        .target(
+            name: "LeafReaderValidation",
+            dependencies: ["LeafReaderCore"],
+            path: "Sources/LeafReaderValidation",
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
+            ]
+        ),
         .executableTarget(
             name: "LeafReaderApp",
             dependencies: ["LeafReaderCore"],
@@ -79,6 +89,14 @@ let package = Package(
             ],
             linkerSettings: [
                 .linkedLibrary("sqlite3")
+            ]
+        ),
+        .testTarget(
+            name: "LeafReaderValidationTests",
+            dependencies: ["LeafReaderValidation", "LeafReaderCore"],
+            path: "Tests/LeafReaderValidationTests",
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
             ]
         ),
         // App-target tests exercise the AppKit/SwiftUI ownership seam.  Core

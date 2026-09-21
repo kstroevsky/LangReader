@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "phase": "INDEPENDENT_VERIFIED",
+  "base_sha256": "55c2819200950f8c93a0d451bfe4659a4bc9bf5c0c1182086f28c89b95e8b879",
+  "delta_sha256": "b64ceb2157af65f7349bfecf5a07e41f573785903932c909abfc0f94e983b48e",
+  "candidate_sha256": "3a67d47ad1d0ea133618bff40611e9b40a8b6a3f1a5a7f7082f8210a80985cab",
+  "completed_feedback_ids": [
+    "F-ACTIVE-GATE-REFERENCE",
+    "F-CORE-SEAM",
+    "F-FOLLOWUP-CLOSURE",
+    "F-FOLLOWUP-SEQUENCE",
+    "F-HISTORICAL-SEQUENCE",
+    "F-LOCK-TRANSITION",
+    "F-NEW-RESERVATION",
+    "F-NONOVERLAP",
+    "F-REGISTER",
+    "F-STATUS",
+    "F-TESTS"
+  ],
+  "validation_results": {
+    "mechanical": "PASS",
+    "semantic": "PASS",
+    "independent": "PASS"
+  },
+  "repair_attempts_by_finding": {
+    "standalone_temporal_and_register_contracts": 1,
+    "followup_closure_and_fixture_corpus": 1
+  },
+  "open_findings": []
+}

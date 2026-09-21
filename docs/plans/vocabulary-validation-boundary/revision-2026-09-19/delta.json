@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "base_sha256": "0f85e0d18094eb2efccaa601e0c3f9dff59a6ab563fdc5c838bc30e1b21b1467",
+  "base_status": "verified_unaccepted_candidate",
+  "feedback_sha256": "7867a698953b7264c4b6c0f6a453e714e751a3728e8fd3c3290c058a92142101",
+  "closed_world": true,
+  "changes": [
+    {
+      "feedback_id": "R-01-CANDIDATE-STATUS",
+      "operation": "AMEND",
+      "requirement_ids": ["AUTH-001"],
+      "payload_source": "feedback.md: opening and bottom-line conditional acceptance",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Status and authority"]],
+      "required_literals": ["[AUTH-001] This is a revised candidate plan"],
+      "forbidden_literals": ["This is a new candidate plan, not a preservation revision"],
+      "allowed_new_numeric_tokens": [],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Record that the exact prior verified candidate remains unaccepted until the user accepts this revision"
+    },
+    {
+      "feedback_id": "R-02-FRESH-CONFIRMATION-ROUTE",
+      "operation": "AMEND",
+      "requirement_ids": ["AC-007", "PAR-001", "LOCK-002", "LOCK-003", "LOCK-004", "GATE-005", "GATE-006"],
+      "payload_source": "feedback.md: amendment 1 and bottom-line strongest recommendation",
+      "allowed_sections": [
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Decision and acceptance criteria"],
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Evidence preservation and parity"],
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Sealed generator-lock compatibility checkpoint"],
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Remaining scientific and release gates"]
+      ],
+      "required_literals": ["fresh disjoint seed/document set against the extracted generator"],
+      "forbidden_literals": ["If additive rebinding is approved", "whether the still-uninspected seed/document set may be carried"],
+      "allowed_new_numeric_tokens": [],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Select fresh post-extraction confirmation; retain the original reservation unexecuted and hash-locked"
+    },
+    {
+      "feedback_id": "R-03-STAGED-DIAGNOSTIC-MIGRATION",
+      "operation": "AMEND",
+      "requirement_ids": ["IMPL-001"],
+      "payload_source": "feedback.md: amendment 2, five 2A–2E steps and temporary validation-only duplication",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Implementation sequence"]],
+      "required_literals": ["2C — prove old-versus-new A/B1/B2 and counterfactual parity"],
+      "forbidden_literals": ["five dependency-ordered, independently reviewable commits"],
+      "allowed_new_numeric_tokens": ["1", "2", "3", "5"],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Split the former oversized Commit 2 into independently green strangler slices"
+    },
+    {
+      "feedback_id": "R-04-NARROW-CORE-SNAPSHOT",
+      "operation": "AMEND",
+      "requirement_ids": ["OWN-002", "VER-001"],
+      "payload_source": "feedback.md: amendment 3 and current snapshot Item source",
+      "allowed_sections": [
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Ownership classification"],
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Verification"]
+      ],
+      "required_literals": ["canonicalKey, occurrenceCount, isIncluded, evidence, responseCurve, and productionKnownMask"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": [],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Do not carry a full DocumentVocabularyCandidate through the observation seam"
+    },
+    {
+      "feedback_id": "R-05-ARCHITECTURE-ENFORCEMENT",
+      "operation": "AMEND",
+      "requirement_ids": ["VER-002"],
+      "payload_source": "feedback.md: amendment 4",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Verification"]],
+      "required_literals": ["The broader vocabulary/name scan is advisory"],
+      "forbidden_literals": ["if validation-only names such as synthetic truth"],
+      "allowed_new_numeric_tokens": ["2"],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Keep graph/import/link and explicit declarations hard; avoid brittle free-text failures"
+    },
+    {
+      "feedback_id": "R-06-HUMAN-STUDY-BOUNDARY",
+      "operation": "AMEND",
+      "requirement_ids": ["GATE-009"],
+      "payload_source": "feedback.md: amendment 5",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Remaining scientific and release gates"]],
+      "required_literals": ["Human collection depends on the relevant study execution boundary"],
+      "forbidden_literals": ["it must finish and publish parity evidence before any human study"],
+      "allowed_new_numeric_tokens": [],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Freeze data-generating and interpreting paths, not unrelated POS/cross-format housekeeping"
+    },
+    {
+      "feedback_id": "R-07-VALIDATION-SUBSYSTEM-WORDING",
+      "operation": "AMEND",
+      "requirement_ids": ["OWN-003"],
+      "payload_source": "feedback.md: wording inconsistency after five amendments",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Ownership classification"]],
+      "required_literals": ["belong to the validation subsystem"],
+      "forbidden_literals": ["reservation-aware runner mechanics belong to `LeafReaderValidation`"],
+      "allowed_new_numeric_tokens": [],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Swift execution moves to Validation; Python orchestration remains in scripts"
+    },
+    {
+      "feedback_id": "R-08-FROZEN-PARITY-MANIFEST",
+      "operation": "ADD",
+      "requirement_ids": ["PAR-004"],
+      "payload_source": "feedback.md: finite machine-readable extraction-parity manifest",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Evidence preservation and parity"]],
+      "required_literals": ["[PAR-004] Before any source edit, freeze one machine-readable extraction-parity manifest"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": ["004"],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Lock baseline commands, inputs, expected exits, artifact hashes, and canonicalization before migration"
+    },
+    {
+      "feedback_id": "R-08B-PARITY-MANIFEST-BASELINE",
+      "operation": "AMEND",
+      "requirement_ids": ["IMPL-001"],
+      "payload_source": "feedback.md: make the described baseline checkpoint one machine-readable parity manifest",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Implementation sequence"]],
+      "required_literals": ["Freeze the `PAR-004` manifest before editing source"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": ["004"],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Carry the new manifest into the ordered implementation baseline"
+    },
+    {
+      "feedback_id": "R-09-APP-CROSS-FORMAT-OWNERSHIP",
+      "operation": "AMEND",
+      "requirement_ids": ["OWN-007", "IMPL-001"],
+      "payload_source": "feedback.md: App cross-format fixture exception and observed VocabularyPreparationFixtureXCTests.swift",
+      "allowed_sections": [
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Ownership classification"],
+        ["LeafReader validation boundary and remaining-gates implementation plan", "Implementation sequence"]
+      ],
+      "required_literals": ["`VocabularyPreparationFixtureXCTests` remains in `LeafReaderAppTests`"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": [],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Move shared evaluation mechanics only; keep PDFKit/Web/document-loading integration with App tests"
+    },
+    {
+      "feedback_id": "R-10-TEMPORARY-MIGRATION-CONTROLS",
+      "operation": "ADD",
+      "requirement_ids": ["MIG-001"],
+      "payload_source": "feedback.md: migration lock/parity machinery is temporary, not permanent architecture",
+      "allowed_sections": [["LeafReader validation boundary and remaining-gates implementation plan", "Implementation sequence"]],
+      "required_literals": ["[MIG-001] The LOCK controls, parity manifest, and source-transition checks are finite migration controls"],
+      "forbidden_literals": [],
+      "allowed_new_numeric_tokens": ["001"],
+      "allowed_new_versioned_tokens": [],
+      "reason": "Keep enduring architecture smaller than the one-time extraction process"
+    }
+  ]
+}

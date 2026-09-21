@@ -1,0 +1,463 @@
+{
+  "schema_version": 1,
+  "base_sha256": "bd5a907c46717039a0dd9e9fccc7739637e1b1a72200950cec69fc4a1276d497",
+  "scope": "Initial additive companion creation from locked scope scaffold; canonical files NO_CHANGE. User review and follow-up clarification are the feedback sources.",
+  "changes": [
+    {
+      "feedback_id": "EVIDENCE",
+      "operation": "ADD",
+      "requirement_ids": [
+        "EVIDENCE"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Evidence baseline"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: EVIDENCE -->",
+        "A hit changes the per-seed rate by 12.5 points"
+      ],
+      "reason": "Separate four evidence classes and historical/current/final-tree claims."
+    },
+    {
+      "feedback_id": "INVARIANTS",
+      "operation": "ADD",
+      "requirement_ids": [
+        "INVARIANTS"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Preserved production and release contracts"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: INVARIANTS -->",
+        "The frozen three-seed/eight-document version-3 holdout and version-2 golden remain unchanged."
+      ],
+      "reason": "Preserve model, UX, privacy, numerical gates, and all deferred requirements."
+    },
+    {
+      "feedback_id": "DIAG-TRACE",
+      "operation": "ADD",
+      "requirement_ids": [
+        "DIAG-TRACE"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Failed-deck forensic diagnostics"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: DIAG-TRACE -->",
+        "realizedProjectedCoverage = 1 - missedMass / W"
+      ],
+      "reason": "Record all runs and item-level missed occurrence mass, with exact denominators and provenance."
+    },
+    {
+      "feedback_id": "DIAG-BANK",
+      "operation": "ADD",
+      "requirement_ids": [
+        "DIAG-BANK"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Independent predictive evaluation banks"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: DIAG-BANK -->",
+        "Bank A remains the exact production 512-world bank used to construct the deck."
+      ],
+      "reason": "Freeze deck from bank A; independent deterministic replicated banks evaluate without tuning or mutation."
+    },
+    {
+      "feedback_id": "DIAG-BUDGET",
+      "operation": "ADD",
+      "requirement_ids": [
+        "DIAG-BUDGET"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Stopping and posterior counterfactuals"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: DIAG-BUDGET -->",
+        "Predeclare replay sequences from the natural cold path and natural warm path, and report both"
+      ],
+      "reason": "Matched budgets plus common-question/evidence replay; distinguish causal limits."
+    },
+    {
+      "feedback_id": "DIAG-PAIR",
+      "operation": "ADD",
+      "requirement_ids": [
+        "DIAG-PAIR"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Diagnostic reproducibility and attribution"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: DIAG-PAIR -->",
+        "verify fingerprints for both truth and the response table, not truth alone."
+      ],
+      "reason": "Pair truth and response potential outcomes; precision, controls, independent oracles, failed/null retention."
+    },
+    {
+      "feedback_id": "WARM-HISTORY",
+      "operation": "ADD",
+      "requirement_ids": [
+        "WARM-HISTORY"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Longitudinal warm-start simulation"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: WARM-HISTORY -->",
+        "The current store replaces its posterior with the supplied completed posterior and increments counters;"
+      ],
+      "reason": "Run completed histories through real Core store and App contribution contract; no oracle prior injection."
+    },
+    {
+      "feedback_id": "WARM-STRESS",
+      "operation": "ADD",
+      "requirement_ids": [
+        "WARM-STRESS"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Warm-history scenarios and comparisons"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: WARM-STRESS -->",
+        "not a mathematical upper bound and not a realistic history simulation."
+      ],
+      "reason": "Stable, noisy, biased, easy/hard, shift, drift, overlap, eligibility and failure cases; retain oracle reference."
+    },
+    {
+      "feedback_id": "STUDY-SAMPLE",
+      "operation": "ADD",
+      "requirement_ids": [
+        "STUDY-SAMPLE"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Study sampling and sequence amendment"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: STUDY-SAMPLE -->",
+        "every item in the target estimand"
+      ],
+      "reason": "Predetermine audit before assessment, preserve positive inclusion probabilities and census, assess pretest interference."
+    },
+    {
+      "feedback_id": "STUDY-RUBRIC",
+      "operation": "ADD",
+      "requirement_ids": [
+        "STUDY-RUBRIC"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Meaning criterion and rater workflow"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: STUDY-RUBRIC -->",
+        "Write the meanings/translations you know for this word."
+      ],
+      "reason": "Context-free multiple meanings, hidden target context for blinded raters, ambiguity handling and adjudication."
+    },
+    {
+      "feedback_id": "STUDY-PACKAGE",
+      "operation": "ADD",
+      "requirement_ids": [
+        "STUDY-PACKAGE"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Relational consented study package"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: STUDY-PACKAGE -->",
+        "finalKnownProbability for every assessable item including unasked items"
+      ],
+      "reason": "Versioned relational package and privacy-preserving joins cover all endpoints without giant records."
+    },
+    {
+      "feedback_id": "STUDY-REHEARSAL",
+      "operation": "ADD",
+      "requirement_ids": [
+        "STUDY-REHEARSAL"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "End-to-end study rehearsal"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: STUDY-REHEARSAL -->",
+        "the event “actual coverage below 98%” is not the same as a plug-in coverage estimate below 98%"
+      ],
+      "reason": "Fabricated census and sampled data reproduce proposed endpoints and detect negative controls; no confirmatory claims."
+    },
+    {
+      "feedback_id": "STUDY-SAP",
+      "operation": "ADD",
+      "requirement_ids": [
+        "STUDY-SAP"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "SAP precision and endpoint decisions"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: STUDY-SAP -->",
+        "SAP, protocol, scoring rules, analysis code/configuration, outcome gates and analysis populations must be reviewed/frozen before confirmatory data collection and inspection."
+      ],
+      "reason": "Freeze estimator, variance, missingness, clustering, power/precision, theta decision and sample support before confirmation."
+    },
+    {
+      "feedback_id": "STUDY-VALUE",
+      "operation": "ADD",
+      "requirement_ids": [
+        "STUDY-VALUE"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Human comparison and learning outcomes"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: STUDY-VALUE -->",
+        "equal total preparation-time budget, counting assessment, lookup/reading, review and residual waiting."
+      ],
+      "reason": "Separate model projection, verified learning, retention and equal-time simple baselines; developmental pilot allowed."
+    },
+    {
+      "feedback_id": "CALIBRATION",
+      "operation": "ADD",
+      "requirement_ids": [
+        "CALIBRATION"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Calibration assignment approval package"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: CALIBRATION -->",
+        "rate within the canonical 5–10% of scored questions"
+      ],
+      "reason": "Keep slots disabled; rate, bins, assignment reconstruction, export schema and independent item support require frozen approval."
+    },
+    {
+      "feedback_id": "POS-FIXTURES",
+      "operation": "ADD",
+      "requirement_ids": [
+        "POS-FIXTURES"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Licensed POS fixtures and annotation mapping"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: POS-FIXTURES -->",
+        "Retain the production 0.65 leading-probability and 0.20 margin thresholds while evaluating."
+      ],
+      "reason": "Pinned EN/DE UD, mapping, morphology, provenance, genre, reviewed adversarial subset, OS metadata."
+    },
+    {
+      "feedback_id": "POS-IMPACT",
+      "operation": "ADD",
+      "requirement_ids": [
+        "POS-IMPACT"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "POS to inventory to deck validation"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: POS-IMPACT -->",
+        "Evaluate three successive boundaries"
+      ],
+      "reason": "Raw tags, reconciled lexical identity and consequence-weighted impact including exclusions and cross-format effects."
+    },
+    {
+      "feedback_id": "UX-TIMING",
+      "operation": "ADD",
+      "requirement_ids": [
+        "UX-TIMING"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Usable-question latency instrumentation"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: UX-TIMING -->",
+        "answerTap -> learningContentVisible\ncontinueTap -> nextWordVisible\ncontinueTap -> nextWordAnswerable\nknownVerificationTap -> nextWordAnswerable"
+      ],
+      "reason": "Four user-perceived spans, p50/p95/p99, enabled-state semantics, cancellation and privacy-safe local measurements."
+    },
+    {
+      "feedback_id": "GUI-FIXTURES",
+      "operation": "ADD",
+      "requirement_ids": [
+        "GUI-FIXTURES"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Cross-format fixture and real-app matrix"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: GUI-FIXTURES -->",
+        "control + max(10%, 50 ms) tolerance and main-thread p95 ≤ 16 ms."
+      ],
+      "reason": "Reproducible texts complement private EN/DE PDF EPUB DOCX; retain 16 ms and document-open control gates."
+    },
+    {
+      "feedback_id": "STATUS",
+      "operation": "ADD",
+      "requirement_ids": [
+        "STATUS"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Evidence register and documentation reconciliation"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: STATUS -->",
+        "canonical ledger's role or counts."
+      ],
+      "reason": "Derived requirement/artifact/source/gate view, historical failures retained, PR refresh complete, no extra canonical roadmap."
+    },
+    {
+      "feedback_id": "AMENDMENTS",
+      "operation": "ADD",
+      "requirement_ids": [
+        "AMENDMENTS"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Decisions and amendment boundary"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: AMENDMENTS -->",
+        "Explicit endpoint amendment and SAP review; preserve the existing requirement until that decision is recorded"
+      ],
+      "reason": "Explicit study sampling and theta deltas; operationalize rubric/schema and defer statistical choices to SAP."
+    },
+    {
+      "feedback_id": "ORDER",
+      "operation": "ADD",
+      "requirement_ids": [
+        "ORDER"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Delivery sequence and ownership"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: ORDER -->",
+        "Start with forensic diagnostics, then longitudinal warm simulation;"
+      ],
+      "reason": "Dependency-ordered independently testable slices, bounded parallel work, ownership and resources."
+    },
+    {
+      "feedback_id": "VERIFY",
+      "operation": "ADD",
+      "requirement_ids": [
+        "VERIFY"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Verification and final acceptance"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: VERIFY -->",
+        "Run the complete evaluator and the frozen release holdout only after candidate freeze"
+      ],
+      "reason": "Narrow tests, strict Swift 6 warnings errors, final tree checks/build/matrix, candidate freeze, no holdout tuning."
+    },
+    {
+      "feedback_id": "HANDOFF",
+      "operation": "ADD",
+      "requirement_ids": [
+        "HANDOFF"
+      ],
+      "payload_source": "User detailed review and priority order, plus assistant scientific qualifications accepted by user; repository evidence used for implementation placement.",
+      "allowed_sections": [
+        [
+          "Vocabulary validation and release-evidence implementation plan",
+          "Deliverables and completion checklist"
+        ]
+      ],
+      "required_literals": [
+        "<!-- requirement: HANDOFF -->",
+        "“Diagnostic tooling complete” does not mean “coverage failure fixed.”"
+      ],
+      "reason": "Per-slice artifacts, evidence completeness vs product readiness, stop/failure rules and unresolved owner decisions."
+    }
+  ]
+}

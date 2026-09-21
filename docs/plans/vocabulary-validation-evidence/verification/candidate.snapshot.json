@@ -1,0 +1,476 @@
+{
+  "schema_version": 1,
+  "path": "/Users/a.stroevskaya/Desktop/dev/LangReader/docs/plans/vocabulary-validation-evidence/implementation-plan.md",
+  "sha256": "643159fae7c981d6efab48cc0f48a2d6d176f215cd7298ee4221735976e80d15",
+  "bytes": 72801,
+  "lines": 483,
+  "sections": [
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan",
+      "level": 1,
+      "heading": "Vocabulary validation and release-evidence implementation plan",
+      "start_line": 1,
+      "end_line": 2,
+      "sha256": "2e6334aa5ac433a2e8bb1fe8691e8061e56759d80474762a4f70ea4f77bbb1bc",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Authority and scope",
+      "level": 2,
+      "heading": "Authority and scope",
+      "start_line": 3,
+      "end_line": 13,
+      "sha256": "12964ef9c67012cea5cd0465c0c0976a558e7cf6df0751b505caeba6d93fc35b",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "07",
+        "08",
+        "09",
+        "12",
+        "2026",
+        "25",
+        "256",
+        "42"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Evidence baseline",
+      "level": 2,
+      "heading": "Evidence baseline",
+      "start_line": 14,
+      "end_line": 31,
+      "sha256": "0c818c9a986965ca96d9bc901fa69ed5502a203949b728c9fa92e75f92940d1b",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "000",
+        "07",
+        "08",
+        "09",
+        "10",
+        "12.5",
+        "120",
+        "13.66",
+        "19.64",
+        "2.6",
+        "2026",
+        "22.40",
+        "3",
+        "31",
+        "4.6875",
+        "4.7",
+        "84.375%",
+        "87.5%"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Preserved production and release contracts",
+      "level": 2,
+      "heading": "Preserved production and release contracts",
+      "start_line": 32,
+      "end_line": 60,
+      "sha256": "df62d0f58237fae2e123eff8f773ed64b599c12581c0987a19d1b569af5ccb10",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "0.01",
+        "0.05",
+        "0.15",
+        "0.25",
+        "0.35",
+        "0.50",
+        "0.75",
+        "0.85",
+        "0.95",
+        "0.97",
+        "0.98",
+        "000",
+        "001",
+        "002",
+        "003",
+        "004",
+        "005",
+        "1",
+        "10",
+        "10%",
+        "121",
+        "128",
+        "150",
+        "16",
+        "180",
+        "19",
+        "2",
+        "20",
+        "25%",
+        "3",
+        "40",
+        "50",
+        "512",
+        "6",
+        "8",
+        "80",
+        "85%",
+        "9",
+        "90%",
+        "95%",
+        "98%"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Failed-deck forensic diagnostics",
+      "level": 2,
+      "heading": "Failed-deck forensic diagnostics",
+      "start_line": 61,
+      "end_line": 93,
+      "sha256": "3a197bac00b8f95fbe770acbd9772323dd99049a31611b70bb2f545899c456b6",
+      "code_fences": 2,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "0",
+        "0.98",
+        "1",
+        "31%",
+        "61%",
+        "8%"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Independent predictive evaluation banks",
+      "level": 2,
+      "heading": "Independent predictive evaluation banks",
+      "start_line": 94,
+      "end_line": 117,
+      "sha256": "2bb526a3b73559450fe355f89e9c5e2216c4c2d131cebfda5c3bb8302e4fb17b",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "0.98",
+        "05",
+        "096",
+        "16",
+        "384",
+        "4",
+        "512"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Stopping and posterior counterfactuals",
+      "level": 2,
+      "heading": "Stopping and posterior counterfactuals",
+      "start_line": 118,
+      "end_line": 133,
+      "sha256": "b6490625e3388f672f5b3a77942b7f2732279dd583a0439c57723b894304d217",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "80"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Diagnostic reproducibility and attribution",
+      "level": 2,
+      "heading": "Diagnostic reproducibility and attribution",
+      "start_line": 134,
+      "end_line": 145,
+      "sha256": "4cac8bb52116e95846097a27332d365f4acbc042cacc695cb1537fec3fa6bb32",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Longitudinal warm-start simulation",
+      "level": 2,
+      "heading": "Longitudinal warm-start simulation",
+      "start_line": 146,
+      "end_line": 166,
+      "sha256": "5a0b6a7f6b6a77028e13064290af8308d32a63f498fa82585aa2cb9f82aecae4",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Warm-history scenarios and comparisons",
+      "level": 2,
+      "heading": "Warm-history scenarios and comparisons",
+      "start_line": 167,
+      "end_line": 178,
+      "sha256": "6ed2647b533eb662534a720eee6f64e1851364340de5329fd1263e1d3c7dc967",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Study sampling and sequence amendment",
+      "level": 2,
+      "heading": "Study sampling and sequence amendment",
+      "start_line": 179,
+      "end_line": 201,
+      "sha256": "4bffa6ddeb0b32fd47485e3b3bdde6695c604ffe7fd71167ff1447c3d1c8d6db",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "002",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Meaning criterion and rater workflow",
+      "level": 2,
+      "heading": "Meaning criterion and rater workflow",
+      "start_line": 202,
+      "end_line": 217,
+      "sha256": "01b85e181555630b1731977b57e27bb3f283b3b6619092ed18db871454e80dbe",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Relational consented study package",
+      "level": 2,
+      "heading": "Relational consented study package",
+      "start_line": 218,
+      "end_line": 242,
+      "sha256": "9612b2937032ff4a3252a39daa7abe763273176617495ab82f354f478f21e21c",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / End-to-end study rehearsal",
+      "level": 2,
+      "heading": "End-to-end study rehearsal",
+      "start_line": 243,
+      "end_line": 268,
+      "sha256": "50901d6238956071b49346e6cc5f20dfb7f99fd593895be468cda79256c61702",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "98%"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / SAP precision and endpoint decisions",
+      "level": 2,
+      "heading": "SAP precision and endpoint decisions",
+      "start_line": 269,
+      "end_line": 282,
+      "sha256": "a628183b2d8f3e0e0c5df5f2f1aef4be32ffbc7540fd3d5805f0fe81a2734d59",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "002"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Human comparison and learning outcomes",
+      "level": 2,
+      "heading": "Human comparison and learning outcomes",
+      "start_line": 283,
+      "end_line": 292,
+      "sha256": "f501dcba5db5cd6dccf6b7b56da82715af02ed0de40799372d95057a5c063595",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Calibration assignment approval package",
+      "level": 2,
+      "heading": "Calibration assignment approval package",
+      "start_line": 293,
+      "end_line": 306,
+      "sha256": "74bb2b13abf9714abf4aa3a78b593507440d9d9111617f5bd6634a486b1474a8",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "0.01",
+        "0.35",
+        "001",
+        "10%",
+        "100",
+        "2",
+        "5",
+        "80"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Licensed POS fixtures and annotation mapping",
+      "level": 2,
+      "heading": "Licensed POS fixtures and annotation mapping",
+      "start_line": 307,
+      "end_line": 318,
+      "sha256": "ab0ea5831a235a7556c57d3dd63db845b54ca09d0a14a0dd468537603da5ad2c",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "0.20",
+        "0.65",
+        "16"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / POS to inventory to deck validation",
+      "level": 2,
+      "heading": "POS to inventory to deck validation",
+      "start_line": 319,
+      "end_line": 332,
+      "sha256": "dca10494fd7a4cee7c812387f93054f92601c2ea8805884fc757f791263728e2",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "1",
+        "10%",
+        "2",
+        "3"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Usable-question latency instrumentation",
+      "level": 2,
+      "heading": "Usable-question latency instrumentation",
+      "start_line": 333,
+      "end_line": 355,
+      "sha256": "b372e4145a3d04057e79d50aa20245e925e0def9b0f7e8aa23b47147f8ce68f6",
+      "code_fences": 2,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "150",
+        "16",
+        "30"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Cross-format fixture and real-app matrix",
+      "level": 2,
+      "heading": "Cross-format fixture and real-app matrix",
+      "start_line": 356,
+      "end_line": 367,
+      "sha256": "ee3b2439b08b4854fb97d2b6ce9038e8ae5fa08e32810548308f8a29316491e6",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "10%",
+        "16",
+        "3",
+        "50"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Evidence register and documentation reconciliation",
+      "level": 2,
+      "heading": "Evidence register and documentation reconciliation",
+      "start_line": 368,
+      "end_line": 377,
+      "sha256": "f3913ef5d791a75a655bc7c52a3edffec1c389c8f1fddf3f0a060d8f2ed59d50",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "2",
+        "3",
+        "9"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Decisions and amendment boundary",
+      "level": 2,
+      "heading": "Decisions and amendment boundary",
+      "start_line": 378,
+      "end_line": 394,
+      "sha256": "8dbf40c40e80273ca80b16b034adb9712d0d8366f061da5c72a0737ecc3f66bc",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "002",
+        "10%",
+        "5"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Delivery sequence and ownership",
+      "level": 2,
+      "heading": "Delivery sequence and ownership",
+      "start_line": 395,
+      "end_line": 416,
+      "sha256": "5be727a47cc40af09b9fa6e24c2aba9d6a927b2bd5b520dba7376c42fa023dc8",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Verification and final acceptance",
+      "level": 2,
+      "heading": "Verification and final acceptance",
+      "start_line": 417,
+      "end_line": 459,
+      "sha256": "30d8216769a1193c0e9f8f4a2e1224b8e1da94a69568d9446864d8c2ed931083",
+      "code_fences": 2,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "1",
+        "150",
+        "16",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "9"
+      ],
+      "versioned_tokens": []
+    },
+    {
+      "path": "Vocabulary validation and release-evidence implementation plan / Deliverables and completion checklist",
+      "level": 2,
+      "heading": "Deliverables and completion checklist",
+      "start_line": 460,
+      "end_line": 483,
+      "sha256": "9adedf481717763581f7fbe1a2a0d5ec9fd3448f080cae64dd3a1abe3f294285",
+      "code_fences": 0,
+      "display_math_markers": 0,
+      "numeric_tokens": [
+        "12",
+        "42"
+      ],
+      "versioned_tokens": []
+    }
+  ]
+}

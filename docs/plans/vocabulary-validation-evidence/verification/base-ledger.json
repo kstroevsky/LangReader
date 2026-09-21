@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "canonical_sha256": "bd5a907c46717039a0dd9e9fccc7739637e1b1a72200950cec69fc4a1276d497",
+  "requirements": [
+    {
+      "id": "SCOPE",
+      "status": "active",
+      "section": [
+        "Authority and scope"
+      ],
+      "summary": "Additive execution plan; canonical authority and task scope preserved.",
+      "normative_payload": {
+        "canonical_counts": {
+          "active": 42,
+          "deferred": 12
+        },
+        "canonical_unchanged": true,
+        "current_task": "documentation only"
+      },
+      "anchors": [
+        "All unmentioned requirements remain unchanged."
+      ]
+    }
+  ]
+}

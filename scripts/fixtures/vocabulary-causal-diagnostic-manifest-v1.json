@@ -1,0 +1,22 @@
+{
+  "b1SampleCounts": [512],
+  "b2SampleCounts": [512],
+  "b2ThetaScheme": "independent-within-stratum-jitter-v1",
+  "dataRole": "diagnostic-development",
+  "diagnosticComparisonRule": "Retain all replicas and do not interpret an isolated contrast as causal proof.",
+  "documents": 1,
+  "fixedBudget": 80,
+  "fixedControlDeckSize": 2,
+  "idiosyncraticFlipRate": 0.12,
+  "itemResidualStandardDeviation": 0.8,
+  "lemmas": 20,
+  "readers": 1,
+  "replicas": 1,
+  "responseNoiseRate": 0.12,
+  "scenarios": ["well-specified-rasch"],
+  "schemaVersion": 1,
+  "seed": 7,
+  "successDetailPolicy": "retain-all-runs",
+  "targetCoverage": 0.98,
+  "timingRepetitions": 1
+}

@@ -556,6 +556,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
 
         <li class="md-nav__item">
+  <a href="#feature-spec-design-and-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feature Spec, Design, And Tasks
+    </span>
+  </a>
+
+</li>
+
+        <li class="md-nav__item">
   <a href="#change-pdf-page-turning" class="md-nav__link">
     <span class="md-ellipsis">
       Change PDF Page Turning
@@ -1037,6 +1046,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
 
         <li class="md-nav__item">
+  <a href="#feature-spec-design-and-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feature Spec, Design, And Tasks
+    </span>
+  </a>
+
+</li>
+
+        <li class="md-nav__item">
   <a href="#change-pdf-page-turning" class="md-nav__link">
     <span class="md-ellipsis">
       Change PDF Page Turning
@@ -1127,7 +1145,16 @@
 
 
 <h1 id="development-tasks">Development Tasks<a class="headerlink" href="#development-tasks" title="Permanent link">&para;</a></h1>
-<p>Use this page when a task starts with a product behavior. Paths marked App are rooted at <code>Sources/LeafReaderApp/</code>; paths marked Core are rooted at <code>Sources/LeafReaderCore/</code>. Feature tests are under <code>Tests/LeafReaderTests/</code>.</p>
+<p>Use this page when a task starts with a product behavior. Paths marked App are rooted at <code>Sources/LeafReaderApp/</code>; paths marked Core are rooted at <code>Sources/LeafReaderCore/</code>. Tests are split between <code>Tests/LeafReaderCoreTests/</code>, <code>Tests/LeafReaderAppTests/</code>, and the legacy regression harness in <code>Tests/LeafReaderTests/</code>.</p>
+<h2 id="feature-spec-design-and-tasks">Feature Spec, Design, And Tasks<a class="headerlink" href="#feature-spec-design-and-tasks" title="Permanent link">&para;</a></h2>
+<p>Before implementing a behavior-changing or multi-file feature, write down three layers of intent:</p>
+<ol>
+<li><strong>Spec:</strong> user-visible behavior, non-goals, acceptance criteria, and important edge or failure cases.</li>
+<li><strong>Design:</strong> the authoritative state owner, Core-versus-App placement, data and control flow, PDFKit/WebKit seams, persistence or migration effects, and material performance or security risks.</li>
+<li><strong>Tasks:</strong> dependency-ordered implementation slices, each with its focused verification, followed by the relevant repository checks.</li>
+</ol>
+<p>An isolated fix can keep these compact in the working plan. Larger or review-sensitive work should store them in <code>docs/plans/&lt;feature&gt;/spec.md</code>, <code>design.md</code>, and <code>tasks.md</code>. Update the design when implementation reveals a different ownership boundary; do not silently let the code become the only specification.</p>
+<p>Do not start a broad refactor phase as part of feature work. Improve an existing boundary when the feature touches it, especially by moving direct native-reader access behind an adapter and moving domain rules out of <code>ReaderWindowController</code>.</p>
 <h2 id="change-pdf-page-turning">Change PDF Page Turning<a class="headerlink" href="#change-pdf-page-turning" title="Permanent link">&para;</a></h2>
 <p>Start with App <code>DocumentReading/PDFReaderView.swift</code>, <code>DocumentReading/ReaderWindowController+Navigation.swift</code>, and the paged backend in <code>DocumentReading/ReaderWindowController+Backend.swift</code>.</p>
 <p>Run <code>./scripts/check.sh --no-build</code>. Preserve PDFKit viewport restoration and verify that each toolbar or keyboard action advances exactly one page.</p>

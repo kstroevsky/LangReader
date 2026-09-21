@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 3,
+  "reservationID": "development-confirmation-v3",
+  "dataRole": "development-confirmation",
+  "reservationDate": "2026-09-21",
+  "reservationSourceRevision": "0dc16efd21e2816a5154b4d515c2b5272e6b8fe3",
+  "executionStatus": "reservedNotExecuted",
+  "supersedesAsActiveReservation": "development-confirmation-v2",
+  "historicalReservationStatuses": {
+    "development-confirmation-v1": "reservedNotExecuted",
+    "development-confirmation-v2": "reservedNotExecuted"
+  },
+  "seedDerivation": {
+    "algorithm": "SHA256(rootBytes || UTF8('development-confirmation-v3/run/' || zeroBasedRunOrdinal)); seed=first8BytesUInt64BE, zero maps to one",
+    "seedDerivationRoot": "cb44fd8e4afd5607fe6fb474c44eebb2b92982d43718a30c58cd673ebc4720c6",
+    "documentIdentityAlgorithm": "first24Hex(SHA256(fullRunDigest || UTF8('/document/' || zeroBasedDocumentOrdinal)))"
+  },
+  "generatorLock": {
+    "path": "docs/plans/vocabulary-validation-boundary/implementation-evidence/post-cleanup-generator-source-lock-v3.json",
+    "sha256": "b11db3185cfb70c22115da15f82e554c1dda3e5553112a06c0bc95257975574a"
+  },
+  "workload": {
+    "readersPerScenario": 64,
+    "documentsPerScenario": 8,
+    "lemmasPerDocument": 400,
+    "scenarios": ["well-specified", "item-residual", "response-noise", "idiosyncratic-knowledge"],
+    "modes": ["all-unknown", "coverage-98"],
+    "warmAndCold": true,
+    "gatePolicy": "unchanged EVAL-001 and release-regression thresholds",
+    "interpretation": "three independent reserved runs; percentages retain raw reader/document counts and are not a two-point precision claim"
+  },
+  "runs": [
+    {
+      "runOrdinal": 0,
+      "runID": "c997dffc279b4341",
+      "seed": 14526325397196063553,
+      "opaqueDocumentDerivationIDs": [
+        "70dd895531e343bf17e478aa", "ddeeeb3198c424f79e3cca68",
+        "73bd63c0eb7942ff09867e31", "295367d98ef17c630d3d8b77",
+        "6a34b2c028753ff809ece76c", "9f3bcc9da3eb1d6c2f9f665a",
+        "26928141aca630343192e04e", "8bacb298ef4d3d4ac9856ca9"
+      ]
+    },
+    {
+      "runOrdinal": 1,
+      "runID": "5b3fdb383021b2f5",
+      "seed": 6575215015356379893,
+      "opaqueDocumentDerivationIDs": [
+        "6794cdb0908958f57282ec0c", "dd69f396580a4f252bdbb290",
+        "54d654f40daf3763f68805b7", "4f905be274eca0b0d8d82a73",
+        "5163afced5e0e084da4f9ac2", "5ce5ba2b05fc33936cb4e88b",
+        "db64ff0e8d2727ee54fbd7ce", "a42ae41cfe5757aea9b05166"
+      ]
+    },
+    {
+      "runOrdinal": 2,
+      "runID": "8d2bd5da08d4e7a7",
+      "seed": 10172459315774154663,
+      "opaqueDocumentDerivationIDs": [
+        "19850a4271c3cf3ca4dee575", "f4c90abe6a40becca4a43381",
+        "6c55514a9127469cffdaf2db", "6ad8f0698809ce3849a41eaf",
+        "ee4163593ee565e535c4c9b7", "a83a65c80345444a55129a3d",
+        "10b4588492e8ad4ec74b0951", "dd72e2b65d60e1e70f89a4d0"
+      ]
+    }
+  ],
+  "nonOverlap": {
+    "identityCorpusRevision": "0dc16efd21e2816a5154b4d515c2b5272e6b8fe3",
+    "identityCorpusRoots": ["docs/perf", "docs/plans", "scripts/fixtures"],
+    "historicalReservationSHA256": {
+      "development-confirmation-v1": "a43e45a5fef43367b20e36e0f41684186901af325e2e597a994857591015303a",
+      "development-confirmation-v2": "19ccb4a9bddff02df1c074c85b56ffc782e7216d1a883a60cc088ac7338af89d"
+    },
+    "allReservedSeedsMustBeDisjoint": true,
+    "allOpaqueDocumentDerivationIDsMustBeUnique": true,
+    "opaqueDocumentNamespaceNote": "At the v2 seal, v1 was the only earlier artifact using this exact opaque-document derivation namespace; validation conservatively checks every prior archived 24-hex JSON identity."
+  },
+  "freezeAndConsumption": {
+    "candidateFreeze": null,
+    "analysisFreeze": null,
+    "decisionRulesChecksum": null,
+    "outcomeArtifacts": [],
+    "outcomesInspected": false,
+    "consumedByCandidateCycle": null,
+    "releaseHoldoutAccessAllowed": false,
+    "requiredBeforeExecution": [
+      "candidate commit and clean-tree hash",
+      "model/configuration/resource hashes",
+      "analysis and decision-rule checksum",
+      "reviewed decision to consume this specific reservation"
+    ],
+    "onDesignChangeAfterExecution": "retain the result, mark this reservation consumed for that candidate-design cycle, return to development, and reserve a fresh future confirmation set",
+    "onPass": "record the frozen confirmation decision before any frozen release-holdout access"
+  }
+}

@@ -1,0 +1,21 @@
+10,000-lemma answer-to-next-card p95 exceeds 150ms
+real 23.12
+user 30.18
+sys 1.27
+            99483648  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+                9298  page reclaims
+                   2  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                   1  voluntary context switches
+               59083  involuntary context switches
+        109228306118  instructions retired
+         40443818478  cycles elapsed
+            26134336  peak memory footprint

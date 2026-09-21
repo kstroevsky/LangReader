@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 2,
+  "dataRole": "diagnostic-development-forensic-repair",
+  "reservationStatus": "consumed-complete",
+  "failedAttempt": {
+    "manifest": "docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-manifest-v1.json",
+    "manifestSHA256": "cfcb181ff6026443373e8cfc3d303ab9c1ba94dd798d98f1ba01c30f7b030ded",
+    "report": "docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-report-v1.json",
+    "reportSHA256": "14bd07c1c2cd0a2df97b4e2b683169411cb5d59eb13cd43fad6db406adb364bf",
+    "failure": "final unasked inventory rows were absent"
+  },
+  "repairScope": {
+    "selectedRunIDsMustMatchV1": true,
+    "originalPathMetricsMustMatchV1": true,
+    "questionTracesMustMatchV1": true,
+    "onlyAddedEvidence": "final inventory rows for each traced path",
+    "finalInventoryFields": [
+      "canonicalKey",
+      "occurrenceCount",
+      "truthKnown",
+      "learnerItemException",
+      "asked",
+      "evidence",
+      "finalKnownProbability",
+      "finalClassification",
+      "selectedInFinalDeck"
+    ],
+    "analysisContractMustMatchV1": true,
+    "noOutcomeDependentSelection": true
+  },
+  "decisionRule": {
+    "noProductionChange": true,
+    "noThresholdSelection": true,
+    "reportSupportedAndFalsifiedHypotheses": true,
+    "noPopulationClaim": true
+  },
+  "forbiddenAccess": {
+    "developmentConfirmation": true,
+    "releaseHoldout": true,
+    "consumedPOSHeldout": true,
+    "privateGUIFixtures": true,
+    "userDatabases": true
+  },
+  "outcomes": {
+    "executionSourceRevision": "fada5088511535a5b2301c79b1ba74faa3c7663e",
+    "semanticReport": "docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-report-v2.json",
+    "semanticReportSHA256": "44a583a775760030eb22fd89dc5e30ec4f4a969d2ed8a0a7cd181e818fc103c5",
+    "analysis": "docs/plans/vocabulary-validation-evidence/warm-question-path-forensic-analysis-v2.json",
+    "analysisSHA256": "a0d89e116959c49980c9a9070485659eacd74d1a9b9bcac87e53bb68ec245f09",
+    "selectedRuns": 11,
+    "severeCases": 7,
+    "v1PathAndQuestionTraceParityPassed": true,
+    "severeWarmMissedOccurrenceMass": 6200,
+    "knownSupportingEvidenceOnMissedUnknownMass": 5518,
+    "unaskedMissedOccurrenceMass": 682,
+    "resultStatus": "complete-selected-case-mechanism-evidence"
+  },
+  "consumedAtRevision": "fada5088511535a5b2301c79b1ba74faa3c7663e"
+}

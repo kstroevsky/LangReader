@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "lockedAt": "2026-09-13",
+  "sourceRevision": "5d3ef1411b98f82659ed3c74008f9a307b6486c1",
+  "sources": [
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/implementation-plan.md",
+      "role": "accepted additive implementation plan base",
+      "sha256": "93100e889355145526f75f0347ee9b835185a7aa9458929db951d2f24607e05f"
+    },
+    {
+      "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
+      "role": "canonical 42-active/12-deferred requirement ledger",
+      "sha256": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4"
+    },
+    {
+      "path": "docs/research/VOCABULARY_VALIDATION_SAP_TEMPLATE.md",
+      "role": "unapproved confirmatory SAP template",
+      "sha256": "a9ede553798fc32565c40e9b0e4c9a118384eedd464d3d52603da346e1101cc4"
+    }
+  ],
+  "preservation": {
+    "implementationPlanModified": false,
+    "canonicalLedgerModified": false,
+    "sapTemplateModified": false,
+    "risk001Status": "deferred",
+    "productionRiskCalibrationEnabled": false
+  }
+}

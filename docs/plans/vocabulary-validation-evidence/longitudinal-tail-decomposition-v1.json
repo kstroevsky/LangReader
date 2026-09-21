@@ -1,0 +1,142 @@
+{
+  "dataRole": "diagnostic-development-only",
+  "limitation": "Common-evidence replay does not currently report realized truth coverage, so fixed-budget-persistent failures cannot yet distinguish question selection from transferred-prior/posterior effects.",
+  "materialTailCount": 13,
+  "materialityBoundary": -0.02,
+  "persistsAtFixedBudgetCount": 2,
+  "productionConfigurationChanged": false,
+  "rows": [
+    {
+      "classification": "persists-at-fixed-budget",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": -0.14467672712169455,
+      "naturalCoverageDifference": -0.13761594905164054,
+      "replayCoverageAttribution": "unavailable-current-replay-records-posterior-and-selection-fingerprints-only",
+      "runID": "biased-self-verification:learner-22",
+      "scenario": "biased-self-verification",
+      "warmNaturalQuestions": 13
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": 0,
+      "naturalCoverageDifference": -0.13124740412570957,
+      "replayCoverageAttribution": "unavailable-current-replay-records-posterior-and-selection-fingerprints-only",
+      "runID": "noisy-history:learner-13",
+      "scenario": "noisy-history",
+      "warmNaturalQuestions": 11
+    },
+    {
+      "classification": "persists-at-fixed-budget",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": -0.13844662882458814,
+      "naturalCoverageDifference": -0.08486778346947255,
+      "replayCoverageAttribution": "unavailable-current-replay-records-posterior-and-selection-fingerprints-only",
+      "runID": "biased-self-verification:learner-23",
+      "scenario": "biased-self-verification",
+      "warmNaturalQuestions": 16
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": 0,
+      "naturalCoverageDifference": -0.026997092620794638,
+      "replayCoverageAttribution": "unavailable-current-replay-records-posterior-and-selection-fingerprints-only",
+      "runID": "ability-drift:learner-0",
+      "scenario": "ability-drift",
+      "warmNaturalQuestions": 12
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 55,
+      "fixedBudgetCoverageDifference": 0,
+      "naturalCoverageDifference": -0.026166412847847154,
+      "replayCoverageAttribution": "unavailable-current-replay-records-posterior-and-selection-fingerprints-only",
+      "runID": "failed-write-retry:learner-31",
+      "scenario": "failed-write-retry",
+      "warmNaturalQuestions": 15
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 59,
+      "fixedBudgetCoverageDifference": 0,
+      "naturalCoverageDifference": -0.025751072961373356,
+      "replayCoverageAttribution": "unavailable-current-replay-records-posterior-and-selection-fingerprints-only",
+      "runID": "changed-difficulty-distribution:learner-5",
+      "scenario": "changed-difficulty-distribution",
+      "warmNaturalQuestions": 16
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": -0.005676311781808163,
+      "naturalCoverageDifference": -0.02547417970372423,
+      "replayCoverageAttribution": "unavailable-current-replay-records-posterior-and-selection-fingerprints-only",
+      "runID": "abandoned-session:learner-17",
+      "scenario": "abandoned-session",
+      "warmNaturalQuestions": 14
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": 0,
+      "naturalCoverageDifference": -0.024505053301952073,
+      "replayCoverageAttribution": "unavailable-current-replay-records-posterior-and-selection-fingerprints-only",
+      "runID": "abandoned-session:learner-6",
+      "scenario": "abandoned-session",
+      "warmNaturalQuestions": 11
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 50,
+      "fixedBudgetCoverageDifference": 0,
+      "naturalCoverageDifference": -0.024089713415478387,
+      "replayCoverageAttribution": "unavailable-current-replay-records-posterior-and-selection-fingerprints-only",
+      "runID": "changed-difficulty-distribution:learner-24",
+      "scenario": "changed-difficulty-distribution",
+      "warmNaturalQuestions": 11
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": 0.007060778070054008,
+      "naturalCoverageDifference": -0.02256680049840787,
+      "replayCoverageAttribution": "unavailable-current-replay-records-posterior-and-selection-fingerprints-only",
+      "runID": "changed-difficulty-distribution:learner-17",
+      "scenario": "changed-difficulty-distribution",
+      "warmNaturalQuestions": 11
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": 0,
+      "naturalCoverageDifference": -0.021182334210162024,
+      "replayCoverageAttribution": "unavailable-current-replay-records-posterior-and-selection-fingerprints-only",
+      "runID": "hard-history-easy-evaluation:learner-5",
+      "scenario": "hard-history-easy-evaluation",
+      "warmNaturalQuestions": 11
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 60,
+      "fixedBudgetCoverageDifference": 0,
+      "naturalCoverageDifference": -0.0204901010660391,
+      "replayCoverageAttribution": "unavailable-current-replay-records-posterior-and-selection-fingerprints-only",
+      "runID": "easy-history-hard-evaluation:learner-7",
+      "scenario": "easy-history-hard-evaluation",
+      "warmNaturalQuestions": 23
+    },
+    {
+      "classification": "stopping-implicated",
+      "coldNaturalQuestions": 49,
+      "fixedBudgetCoverageDifference": 0,
+      "naturalCoverageDifference": -0.020351654437214428,
+      "replayCoverageAttribution": "unavailable-current-replay-records-posterior-and-selection-fingerprints-only",
+      "runID": "changed-difficulty-distribution:learner-15",
+      "scenario": "changed-difficulty-distribution",
+      "warmNaturalQuestions": 11
+    }
+  ],
+  "schemaVersion": 1,
+  "stoppingImplicatedCount": 11
+}
