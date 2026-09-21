@@ -148,9 +148,10 @@ struct VocabularyRecordProviderTestRunner {
 
         // MARK: - Labels flow through the provider
 
-        // End-to-end check that a saved German occurrence reaches the view model
-        // carrying its grammatical label, using the same production call path
-        // the reader and library both render from.
+        // Provider contract check: an injected label survives record creation,
+        // grouping, and form merging into the view model. NaturalLanguage's
+        // platform-dependent German classification is covered separately by
+        // GermanFormLabelerTests.
         let participle = pdfRecord(
             id: "participle",
             word: "gehen",
@@ -186,7 +187,14 @@ struct VocabularyRecordProviderTestRunner {
             documentKind: .pdf,
             pdfRecords: [participle, plural, englishRecord],
             webRecords: [],
-            pdfContext: { $0.context ?? "" }
+            pdfContext: { $0.context ?? "" },
+            formLabel: { surface, _, _ in
+                switch surface {
+                case "gegangen": .partizipII
+                case "Bücher": .plural
+                default: nil
+                }
+            }
         )
 
         guard let verb = labeled.first(where: { $0.word == "gehen" }),
