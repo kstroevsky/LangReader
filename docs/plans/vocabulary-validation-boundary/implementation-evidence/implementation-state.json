@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "phase": "post-extraction-followup-final-verification",
+  "phase": "post-extraction-followup-complete",
   "source_revision": "b2b99696feda177be0699d5277a2c13c7c7c9bd5",
   "accepted_plan": "docs/plans/vocabulary-validation-boundary/revision-2026-09-19-ci-source-lock/candidate-plan.md",
   "baseline_manifest": "docs/plans/vocabulary-validation-boundary/implementation-evidence/extraction-parity-manifest.json",
@@ -9,7 +9,7 @@
   "followup_plan": "docs/plans/vocabulary-validation-boundary/revision-2026-09-21-boundary-followup/candidate-plan.md",
   "followup_plan_sha256": "3a67d47ad1d0ea133618bff40611e9b40a8b6a3f1a5a7f7082f8210a80985cab",
   "completed_slices": ["baseline-checkpoint", "commit-1-boundary-scaffold", "2a-study-schemas", "2b-parallel-diagnostic-evaluator", "2c-same-tree-bank-parity", "2d-wrapper-linkage-switch", "2e-remove-core-experiment-code", "commit-3-runner-extraction", "commit-4-pos-cross-format", "commit-5-enforcement-and-handoff", "followup-register-and-v2-hardening", "followup-core-seam-cleanup", "followup-v3-seal"],
-  "current_slice": "followup-final-verification",
+  "current_slice": null,
   "protected_data_accessed": false,
   "historical_reservation_modified": false,
   "fresh_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v3.json",
@@ -31,7 +31,7 @@
     "core_experiment_removal": "final boundary check, strict Swift build, full 174-test suite (one skip), and frozen four-run 2E parity report PASS; old Core bank code and migration hooks removed",
     "runner_extraction": "causal/longitudinal and standard synthetic execution moved into Validation; 29 CLI flags unchanged; parity reports 3a, 3b, 3c all PASS across 13 artifacts",
     "pos_cross_format": "POS report byte-identical and full parity report 4 PASS; App PDF/EPUB/DOCX fixture 3 tests passed; no Validation-to-App dependency",
-    "final_matrix": "swift build and swift test with warnings as errors passed; ./scripts/check.sh --no-build passed with 176 Swift tests (1 skip), 281 logic tests, all evidence validators, and both reservation self-tests; ./scripts/build_app.sh built and signed the app; git diff --check passed",
+    "final_matrix": "post-followup ./scripts/check.sh --no-build passed with strict Swift build, 177 Swift tests (1 skip), 281 logic tests, all evidence validators, and v1/v2/v3 reservation self-tests; ./scripts/build_app.sh built, signed, and validated the app; git diff --check passed",
     "fresh_reservation": "v1/v2 remain byte-identical and unexecuted; fresh v3 identities are disjoint from the versioned docs/perf, docs/plans, and scripts/fixtures corpus and locked to post-cleanup commit 0dc16ef; no outcomes or protected data accessed",
     "post_extraction_followup": "lossless follow-up plan mechanical/semantic/independent verification passed; three extra Core diagnostic controls removed; guarded continuation tests and 13-artifact frozen development parity passed"
   },
