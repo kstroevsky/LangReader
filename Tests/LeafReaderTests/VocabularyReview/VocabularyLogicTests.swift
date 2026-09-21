@@ -422,6 +422,49 @@ enum VocabularyLogicTests {
     }
 
     static func testGermanLemmaGrouping() throws {
+        let unavailable = GermanLemmaResolver.resolution(
+            for: "fehlerhafte",
+            taggedLemma: nil,
+            language: .german,
+            isKnownGermanWord: { $0 == "fehlerhaft" }
+        )
+        try expectEqual(
+            unavailable,
+            .resolved(lemma: "fehlerhaft", source: .deterministicAdjectiveMorphology),
+            "an unavailable Apple lemma should use the bounded -haft adjective fallback"
+        )
+        let identity = GermanLemmaResolver.resolution(
+            for: "fehlerhaften",
+            taggedLemma: "fehlerhaften",
+            language: .german,
+            isKnownGermanWord: { $0 == "fehlerhaft" }
+        )
+        try expectEqual(
+            identity,
+            .resolved(lemma: "fehlerhaft", source: .deterministicAdjectiveMorphology),
+            "an identity Apple lemma should remain distinguishable and invoke the fallback"
+        )
+        try expectEqual(
+            GermanLemmaResolver.resolution(
+                for: "erwirtschafte",
+                taggedLemma: nil,
+                language: .german,
+                isKnownGermanWord: { _ in true }
+            ),
+            .unresolved(surface: "erwirtschafte"),
+            "-schaft verb stems must not be mistaken for -haft adjectives"
+        )
+        try expectEqual(
+            GermanLemmaResolver.resolution(
+                for: "fehlerhafte",
+                taggedLemma: nil,
+                language: .german,
+                isKnownGermanWord: { _ in false }
+            ),
+            .unresolved(surface: "fehlerhafte"),
+            "morphology without independent lexical evidence must abstain"
+        )
+
         try expectEqual(GermanLemmaResolver.lemma(for: "fehlerhafte", language: .german), "fehlerhaft", "German adjective inflection should resolve to its lemma")
         try expectEqual(GermanLemmaResolver.lemma(for: "fehlerhaften", language: .german), "fehlerhaft", "related German adjective forms should share one lemma")
         try expectEqual(
@@ -600,6 +643,16 @@ enum VocabularyLogicTests {
             VocabularyFormLabeling.label(surfaceForm: "gegangen", lemma: "gehen", context: germanContext, language: .german),
             .partizipII,
             "German still routes to the German labeler"
+        )
+        try expectEqual(
+            VocabularyFormLabeling.label(
+                surfaceForm: "books",
+                lemma: "book",
+                context: "The books are very old.",
+                language: .english
+            ),
+            .plural,
+            "an English document is protected by routing to the English labeler, not by the German labeler re-detecting one token"
         )
         try expect(
             VocabularyFormLabeling.label(surfaceForm: "parle", lemma: "parler", context: "Je parle français.", language: .french) == nil,

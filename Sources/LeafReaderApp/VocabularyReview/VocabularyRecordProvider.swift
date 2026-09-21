@@ -21,19 +21,15 @@ enum VocabularyRecordProvider {
         formLabel: FormLabelResolver = offlineFormLabelResolver
     ) -> [VocabularyExportRecord] {
         // Labeling a form runs NaturalLanguage tagging and, for cached words, a
-        // SQLite lookup — a few milliseconds each. A document with 100+ saved
-        // instances of the same word would pay that per instance, yet every
-        // record of a given surface form collapses to a single labeled
-        // `VocabularyForm` in `aggregate`/`VocabularyFormMerger`, which keeps the
-        // first non-nil label. Memoizing the first non-nil label per
-        // (surface, lemma) is therefore output-identical while cutting the work
-        // to one call per distinct form. Nil is not cached, so a later occurrence
-        // whose context finally resolves a label still gets its chance — matching
-        // the merger's "first non-nil wins" exactly.
+        // SQLite lookup — a few milliseconds each. Memoize identical requests,
+        // including their context: sentence-level classification must not leak
+        // from one occurrence to another. Nil is not cached, so a later, stronger
+        // context still gets its chance.
         var labelMemo: [String: GermanFormLabel] = [:]
         func memoizedLabel(surface: String, lemma: String, context: String) -> GermanFormLabel? {
             let key = VocabularyTextPolicy.canonicalVocabularyKey(surface)
                 + "\u{1}" + VocabularyTextPolicy.canonicalVocabularyKey(lemma)
+                + "\u{1}" + context
             if let hit = labelMemo[key] { return hit }
             let resolved = formLabel(surface, lemma, context)
             if let resolved { labelMemo[key] = resolved }

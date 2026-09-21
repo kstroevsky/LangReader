@@ -68,15 +68,13 @@ extension GermanFormLabeler {
         persistentCachedLabel(surfaceForm: surfaceForm, lemma: lemma, context: context)
     }
 
-    /// Like `cachedLabel`, but the expensive half is memoized across relaunches
-    /// in SQLite.
+    /// Like `cachedLabel`, with only context-independent verdicts memoized across
+    /// relaunches in SQLite.
     ///
-    /// Only the **offline** label is cached. That is the costly part — a
-    /// NaturalLanguage tag over the context sentence — and it depends solely on
-    /// `(surface, lemma, context)`, so once computed it never has to run again.
-    /// "No label" is stored too (as an empty string), because the ambiguous
-    /// forms that resolve to nothing are exactly the ones the tagger spends the
-    /// most time on.
+    /// Only context-independent offline verdicts are cached. Contextual Apple
+    /// analysis is deliberately recomputed: the table is keyed by `(surface,
+    /// lemma, version)` and must not let a weak sentence suppress a later strong
+    /// one, or reuse one occurrence's contextual classification for another.
     ///
     /// The flexion refinement is deliberately **not** cached: it is composed
     /// fresh on every read from a single indexed lookup. Caching it would make a
@@ -90,7 +88,10 @@ extension GermanFormLabeler {
         lemma: String,
         context: String? = nil,
         labelStore: WordRecordSQLiteStore = .shared,
-        flexionStore: GermanFlexionStore = .shared
+        flexionStore: GermanFlexionStore = .shared,
+        offlineResolver: (String, String, String?) -> GermanFormLabelResolution = {
+            GermanFormLabeler.resolution(surfaceForm: $0, lemma: $1, context: $2)
+        }
     ) -> GermanFormLabel? {
         // Flexion wins when it covers the form, and is always read fresh.
         if let refined = flexionLabel(surfaceForm: surfaceForm, lemma: lemma, store: flexionStore) {
@@ -110,15 +111,15 @@ extension GermanFormLabeler {
             return hit.label.flatMap(GermanFormLabel.init(rawValue:))
         }
 
-        let offline = label(surfaceForm: surfaceForm, lemma: lemma, context: context)
-        if cacheable {
+        let offline = offlineResolver(surfaceForm, lemma, context)
+        if cacheable, offline.isPersistentlyCacheable {
             labelStore.saveGermanFormLabel(
                 surfaceKey: surfaceKey,
                 lemmaKey: lemmaKey,
-                label: offline?.rawValue,
+                label: offline.label?.rawValue,
                 version: labelingVersion
             )
         }
-        return offline
+        return offline.label
     }
 }

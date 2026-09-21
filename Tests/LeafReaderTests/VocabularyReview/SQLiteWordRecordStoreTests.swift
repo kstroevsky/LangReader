@@ -516,6 +516,69 @@ struct SQLiteWordRecordStoreTestRunner {
                 reopened.germanFormLabel(surfaceKey: "autos", lemmaKey: "auto", version: 1)?.label == nil,
                 "a cached nil label should survive a reopen"
             )
+
+            let flexionStore = GermanFlexionStore(store: store)
+            var contextualCalls = 0
+            let weak = GermanFormLabeler.persistentCachedLabel(
+                surfaceForm: "gegangen",
+                lemma: "gehen",
+                context: "gegangen",
+                labelStore: store,
+                flexionStore: flexionStore,
+                offlineResolver: { _, _, _ in
+                    contextualCalls += 1
+                    return .contextual(nil)
+                }
+            )
+            assert(weak == nil, "weak context may remain unlabeled")
+            assert(
+                store.germanFormLabel(
+                    surfaceKey: "gegangen",
+                    lemmaKey: "gehen",
+                    version: GermanFormLabeler.labelingVersion
+                ) == nil,
+                "a contextual nil must not become a global cache hit"
+            )
+            let strong = GermanFormLabeler.persistentCachedLabel(
+                surfaceForm: "gegangen",
+                lemma: "gehen",
+                context: "Er ist nach Hause gegangen.",
+                labelStore: store,
+                flexionStore: flexionStore,
+                offlineResolver: { _, _, _ in
+                    contextualCalls += 1
+                    return .contextual(.partizipII)
+                }
+            )
+            assert(strong == .partizipII, "later strong context should reach the labeler")
+            assert(contextualCalls == 2, "distinct contextual verdicts should both be evaluated")
+
+            var deterministicCalls = 0
+            let deterministic = GermanFormLabeler.persistentCachedLabel(
+                surfaceForm: "Bücher",
+                lemma: "Buch",
+                context: "Die Bücher liegen dort.",
+                labelStore: store,
+                flexionStore: flexionStore,
+                offlineResolver: { _, _, _ in
+                    deterministicCalls += 1
+                    return .contextIndependent(.plural)
+                }
+            )
+            assert(deterministic == .plural, "context-independent morphology should produce a label")
+            let deterministicHit = GermanFormLabeler.persistentCachedLabel(
+                surfaceForm: "Bücher",
+                lemma: "Buch",
+                context: "Bücher",
+                labelStore: store,
+                flexionStore: flexionStore,
+                offlineResolver: { _, _, _ in
+                    deterministicCalls += 1
+                    return .contextual(nil)
+                }
+            )
+            assert(deterministicHit == .plural, "a deterministic label should be reusable across contexts")
+            assert(deterministicCalls == 1, "a deterministic cache hit should skip recomputation")
         }
 
         // MARK: - Regrouping inflected records onto their lemma

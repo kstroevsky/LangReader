@@ -73,6 +73,38 @@ package enum GermanFormLabel: String, Equatable {
 /// cache's rawValues). New code should prefer this name.
 package typealias WordFormLabel = GermanFormLabel
 
+/// The fallible evidence supplied by Apple's tagger after LeafReader's own
+/// deterministic rules have had the first chance to resolve a form.
+package struct GermanFormLabelEvidence: Equatable {
+    package let partOfSpeech: String?
+    package let hasClauseAuxiliary: Bool
+
+    package init(partOfSpeech: String?, hasClauseAuxiliary: Bool) {
+        self.partOfSpeech = partOfSpeech
+        self.hasClauseAuxiliary = hasClauseAuxiliary
+    }
+}
+
+/// A form-label verdict together with whether it is safe to persist without
+/// sentence context. Contextual Apple NLP results may be memoized for one build,
+/// but must not become a global `(surface, lemma)` fact.
+package enum GermanFormLabelResolution: Equatable {
+    case contextIndependent(GermanFormLabel?)
+    case contextual(GermanFormLabel?)
+
+    package var label: GermanFormLabel? {
+        switch self {
+        case let .contextIndependent(label), let .contextual(label):
+            return label
+        }
+    }
+
+    package var isPersistentlyCacheable: Bool {
+        if case .contextIndependent = self { return true }
+        return false
+    }
+}
+
 /// Derives a grammatical form label for a German surface form, offline.
 ///
 /// The guiding rule is **never guess**: every heuristic here was measured
@@ -83,7 +115,7 @@ package enum GermanFormLabeler {
     /// Bumped whenever the offline heuristics in this file change. A label
     /// persisted by an older ruleset carries an older version and is treated as
     /// absent, so a labeler improvement takes effect without a manual cache wipe.
-    package static let labelingVersion = 1
+    package static let labelingVersion = 2
 
     private static let auxiliaryLemmas: Set<String> = ["haben", "sein", "werden"]
     private static let umlauts = CharacterSet(charactersIn: "äöüÄÖÜ")
@@ -104,35 +136,58 @@ package enum GermanFormLabeler {
         lemma rawLemma: String,
         context: String? = nil
     ) -> GermanFormLabel? {
+        resolution(surfaceForm: rawSurface, lemma: rawLemma, context: context).label
+    }
+
+    /// Resolves a label and records whether the verdict consumed sentence-level
+    /// NLP evidence. The language-specific router is the sole language owner;
+    /// once it chooses this labeler, a token-level recognizer cannot veto it.
+    package static func resolution(
+        surfaceForm rawSurface: String,
+        lemma rawLemma: String,
+        context: String? = nil,
+        evidenceProvider: (_ surface: String, _ context: String?) -> GermanFormLabelEvidence = naturalLanguageEvidence
+    ) -> GermanFormLabelResolution {
         let surface = VocabularyTextPolicy.normalizedVocabularyText(rawSurface)
         let lemma = VocabularyTextPolicy.normalizedVocabularyText(rawLemma)
         guard VocabularyTextPolicy.isSingleEnglishWord(surface), !lemma.isEmpty else {
-            return nil
+            return .contextIndependent(nil)
         }
-        // The app has no explicit German mode — the German dictionary is a
-        // fallback for words the English dictionary misses — so the labeler has
-        // to decide for itself. Without this gate an English document would show
-        // German grammatical labels.
-        guard isGerman(context ?? surface) else { return nil }
-
-        let analysis = context.flatMap { analyze(surface: surface, in: $0) }
-        let partOfSpeech = analysis?.partOfSpeech ?? isolatedPartOfSpeech(surface)
         let isBaseForm = VocabularyTextPolicy.canonicalVocabularyKey(surface)
             == VocabularyTextPolicy.canonicalVocabularyKey(lemma)
 
-        switch partOfSpeech {
+        // German common nouns carry capitalization in their lemma. Combined
+        // with the conservative morphology below, that is sufficient owned
+        // evidence for noun base/plural labels; Apple POS may corroborate it but
+        // cannot veto it by returning nil or a different class on another OS.
+        if isNounLikeLemma(lemma) {
+            if isBaseForm { return .contextIndependent(.grundform) }
+            return .contextIndependent(isPlural(surface: surface, lemma: lemma) ? .plural : nil)
+        }
+
+        let evidence = evidenceProvider(surface, context)
+        let label: GermanFormLabel?
+        switch evidence.partOfSpeech {
         case "Verb":
-            if isBaseForm { return .infinitiv }
-            if analysis?.hasClauseAuxiliary == true { return .partizipII }
-            return .finiteVerb
+            if isBaseForm {
+                label = .infinitiv
+            } else if evidence.hasClauseAuxiliary {
+                label = .partizipII
+            } else {
+                label = .finiteVerb
+            }
         case "Noun":
-            if isBaseForm { return .grundform }
-            return isPlural(surface: surface, lemma: lemma) ? .plural : nil
+            if isBaseForm {
+                label = .grundform
+            } else {
+                label = isPlural(surface: surface, lemma: lemma) ? .plural : nil
+            }
         default:
             // Adjectives are systematically tagged Adverb by the German tagger,
             // so no adjective-specific label can be trusted here.
-            return isBaseForm ? .grundform : nil
+            label = isBaseForm ? .grundform : nil
         }
+        return .contextual(label)
     }
 
     // MARK: - Noun number
@@ -163,19 +218,29 @@ package enum GermanFormLabeler {
         return surfaceHasUmlaut && !lemmaHasUmlaut
     }
 
-    // MARK: - Tagging
-
-    private struct ContextAnalysis {
-        let partOfSpeech: String?
-        /// True when a form of haben/sein/werden governs this token — either
-        /// earlier in the sentence (`ist … gegangen`) or immediately after it,
-        /// which is where German verb-final clauses put it (`weil er gegangen ist`).
-        let hasClauseAuxiliary: Bool
+    private static func isNounLikeLemma(_ lemma: String) -> Bool {
+        lemma.first(where: \Character.isLetter)?.isUppercase == true
     }
 
-    private static func analyze(surface: String, in context: String) -> ContextAnalysis? {
+    // MARK: - Tagging
+
+    package static func naturalLanguageEvidence(
+        surface: String,
+        context: String?
+    ) -> GermanFormLabelEvidence {
+        guard let context else {
+            return GermanFormLabelEvidence(
+                partOfSpeech: isolatedPartOfSpeech(surface),
+                hasClauseAuxiliary: false
+            )
+        }
         let text = VocabularyTextPolicy.normalizedVocabularyText(context)
-        guard !text.isEmpty else { return nil }
+        guard !text.isEmpty else {
+            return GermanFormLabelEvidence(
+                partOfSpeech: isolatedPartOfSpeech(surface),
+                hasClauseAuxiliary: false
+            )
+        }
 
         let tagger = NLTagger(tagSchemes: [.lemma, .lexicalClass])
         tagger.string = text
@@ -205,7 +270,10 @@ package enum GermanFormLabeler {
         guard let index = tokens.firstIndex(where: {
             VocabularyTextPolicy.canonicalVocabularyKey($0.surface) == target
         }) else {
-            return nil
+            return GermanFormLabelEvidence(
+                partOfSpeech: isolatedPartOfSpeech(surface),
+                hasClauseAuxiliary: false
+            )
         }
 
         func isAuxiliary(_ token: (surface: String, lemma: String, partOfSpeech: String)) -> Bool {
@@ -230,20 +298,10 @@ package enum GermanFormLabeler {
         // ("weil er gegangen ist"), where German pushes the auxiliary to the end.
         let trailingAuxiliary = tokens.indices.contains(index + 1) && isAuxiliary(tokens[index + 1])
 
-        return ContextAnalysis(
+        return GermanFormLabelEvidence(
             partOfSpeech: tokens[index].partOfSpeech.isEmpty ? nil : tokens[index].partOfSpeech,
             hasClauseAuxiliary: precedingAuxiliary || trailingAuxiliary
         )
-    }
-
-    /// Whether `text` reads as German. Measured at 14/14 on sentence-length and
-    /// single-word samples, so it is safe to apply to short PDF contexts.
-    private static func isGerman(_ text: String) -> Bool {
-        let value = VocabularyTextPolicy.normalizedVocabularyText(text)
-        guard !value.isEmpty else { return false }
-        let recognizer = NLLanguageRecognizer()
-        recognizer.processString(value)
-        return recognizer.dominantLanguage == .german
     }
 
     private static func isolatedPartOfSpeech(_ word: String) -> String? {

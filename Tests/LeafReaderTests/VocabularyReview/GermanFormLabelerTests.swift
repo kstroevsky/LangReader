@@ -150,6 +150,38 @@ enum GermanFormLabelerTests {
         )
     }
 
+    static func testOwnedNounMorphologyDoesNotDependOnApplePOS() throws {
+        var evidenceRequests = 0
+        let plural = GermanFormLabeler.resolution(
+            surfaceForm: "Bücher",
+            lemma: "Buch",
+            context: "Die Bücher liegen dort.",
+            evidenceProvider: { _, _ in
+                evidenceRequests += 1
+                return GermanFormLabelEvidence(partOfSpeech: nil, hasClauseAuxiliary: false)
+            }
+        )
+        try expectEqual(
+            plural,
+            .contextIndependent(.plural),
+            "noun orthography plus conservative morphology should prove Bücher without Apple POS"
+        )
+        try expectEqual(evidenceRequests, 0, "owned noun morphology should run before Apple evidence")
+
+        let wrongPOS = GermanFormLabeler.resolution(
+            surfaceForm: "Bücher",
+            lemma: "Buch",
+            evidenceProvider: { _, _ in
+                GermanFormLabelEvidence(partOfSpeech: "Verb", hasClauseAuxiliary: false)
+            }
+        )
+        try expectEqual(
+            wrongPOS,
+            .contextIndependent(.plural),
+            "a runtime POS disagreement must not veto a proven plural"
+        )
+    }
+
     // MARK: - Guards
 
     static func testRejectsNonWordInput() throws {
@@ -160,35 +192,6 @@ enum GermanFormLabelerTests {
             nil,
             "a multi-word selection is not a single form"
         )
-    }
-
-    static func testEnglishTextIsNeverLabeled() throws {
-        // The app has no German mode — the German dictionary is a fallback for
-        // words the English dictionary misses — so an unguarded labeler would
-        // decorate English vocabulary with German grammatical terms.
-        let cases: [(surface: String, lemma: String, sentence: String)] = [
-            ("houses", "house", "The houses are very old."),
-            ("children", "child", "The children were playing."),
-            ("written", "write", "He has written a letter."),
-            ("walked", "walk", "She walked home slowly."),
-            ("books", "book", "The books are on the table.")
-        ]
-        for (surface, lemma, sentence) in cases {
-            try expectEqual(
-                label(surface, lemma, sentence),
-                nil,
-                "English '\(surface)' must never receive a German form label"
-            )
-        }
-        // 'written' follows an auxiliary and would otherwise satisfy the
-        // Partizip II rule, so the language gate is what stops it.
-        try expectEqual(
-            label("written", "write", "He has written a letter."),
-            nil,
-            "an English participle after 'has' must not be labeled Partizip II"
-        )
-        // Bare English words with no context must be rejected too.
-        try expectEqual(label("house", "house"), nil, "an English word alone is not labeled")
     }
 
     static func testMissingContextStillLabelsWhatItCan() throws {

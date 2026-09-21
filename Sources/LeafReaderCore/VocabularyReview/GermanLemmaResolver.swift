@@ -1,13 +1,44 @@
 import Foundation
 import NaturalLanguage
 
+package enum GermanLemmaSource: Equatable {
+    case naturalLanguage
+    case deterministicAdjectiveMorphology
+}
+
+/// Distinguishes an actual lemma resolution from retaining the surface as a
+/// safe fallback. Callers that still need a String can use `value`, while new
+/// policy can avoid treating an unresolved identity as authoritative.
+package enum GermanLemmaResolution: Equatable {
+    case resolved(lemma: String, source: GermanLemmaSource)
+    case unresolved(surface: String)
+
+    package var value: String {
+        switch self {
+        case let .resolved(lemma, _): return lemma
+        case let .unresolved(surface): return surface
+        }
+    }
+}
+
 // Despite the "German" name, the resolver and matcher are language-neutral:
 // the grouping, line-wrap, and homograph logic are the same everywhere and only
 // the tagger's language differs. Callers pass an `NLLanguage`, defaulting to
 // English; the app always passes the detected document language explicitly.
 package enum GermanLemmaResolver {
     package static func lemma(for surfaceForm: String, language: NLLanguage = .english) -> String {
-        lemma(for: surfaceForm, tagger: NLTagger(tagSchemes: [.lemma]), language: language)
+        resolution(for: surfaceForm, language: language).value
+    }
+
+    package static func resolution(
+        for surfaceForm: String,
+        language: NLLanguage = .english
+    ) -> GermanLemmaResolution {
+        resolution(
+            for: surfaceForm,
+            tagger: NLTagger(tagSchemes: [.lemma]),
+            language: language
+        )
     }
 
     /// - Parameter tagger: reused across calls by the occurrence scanner.
@@ -18,23 +49,64 @@ package enum GermanLemmaResolver {
     ///   inside its own `enumerateTags` callback.
     /// - Parameter language: the document's language, used to lemmatize.
     package static func lemma(for surfaceForm: String, tagger: NLTagger, language: NLLanguage = .english) -> String {
+        resolution(for: surfaceForm, tagger: tagger, language: language).value
+    }
+
+    package static func resolution(
+        for surfaceForm: String,
+        tagger: NLTagger,
+        language: NLLanguage = .english
+    ) -> GermanLemmaResolution {
         let word = VocabularyTextPolicy.normalizedVocabularyText(surfaceForm)
         guard VocabularyTextPolicy.isSingleEnglishWord(word),
-              !word.isEmpty else { return word }
+              !word.isEmpty else { return .unresolved(surface: word) }
 
         tagger.string = word
         let fullRange = word.startIndex..<word.endIndex
         tagger.setLanguage(language, range: fullRange)
-        guard let tag = tagger.tag(
+        let taggedLemma = tagger.tag(
             at: word.startIndex,
             unit: .word,
             scheme: .lemma
-        ).0 else {
-            return word
+        ).0?.rawValue
+        return resolution(
+            for: word,
+            taggedLemma: taggedLemma,
+            language: language,
+            isKnownGermanWord: { GermanFrequencyRankTable.shared.rank(for: $0) != nil }
+        )
+    }
+
+    /// Pure decision seam used to test unavailable and identity Apple lemmas
+    /// without depending on the host macOS model.
+    package static func resolution(
+        for surfaceForm: String,
+        taggedLemma: String?,
+        language: NLLanguage,
+        isKnownGermanWord: (String) -> Bool
+    ) -> GermanLemmaResolution {
+        let word = VocabularyTextPolicy.normalizedVocabularyText(surfaceForm)
+        guard VocabularyTextPolicy.isSingleEnglishWord(word), !word.isEmpty else {
+            return .unresolved(surface: word)
         }
-        let lemma = VocabularyTextPolicy.normalizedVocabularyText(tag.rawValue)
-        guard VocabularyTextPolicy.isSingleEnglishWord(lemma) else { return word }
-        return lemma
+
+        if let taggedLemma {
+            let lemma = VocabularyTextPolicy.normalizedVocabularyText(taggedLemma)
+            if VocabularyTextPolicy.isSingleEnglishWord(lemma),
+               VocabularyTextPolicy.canonicalVocabularyKey(lemma)
+                   != VocabularyTextPolicy.canonicalVocabularyKey(word) {
+                return .resolved(lemma: lemma, source: .naturalLanguage)
+            }
+        }
+
+        if language == .german,
+           let lemma = deterministicGermanAdjectiveLemma(
+               for: word,
+               isKnownGermanWord: isKnownGermanWord
+           ) {
+            return .resolved(lemma: lemma, source: .deterministicAdjectiveMorphology)
+        }
+        return .unresolved(surface: word)
     }
 
     package static func groupingKey(word: String, lemma: String? = nil, language: NLLanguage = .english) -> String {
@@ -43,6 +115,29 @@ package enum GermanLemmaResolver {
             value.isEmpty ? nil : value
         } ?? self.lemma(for: word, language: language)
         return VocabularyTextPolicy.canonicalVocabularyKey(resolved)
+    }
+
+    /// Conservative fallback for the productive German `-haft` adjective class.
+    /// The inflectional ending is removed only when the resulting base is present
+    /// in the bundled German corpus lexicon. `-schaft` nouns and bare `Haft` are
+    /// excluded; both otherwise mimic the same suffix mechanically.
+    private static func deterministicGermanAdjectiveLemma(
+        for word: String,
+        isKnownGermanWord: (String) -> Bool
+    ) -> String? {
+        let key = VocabularyTextPolicy.canonicalVocabularyKey(word)
+        let endings = ["em", "en", "er", "es", "e"]
+        guard let ending = endings.first(where: { key.hasSuffix($0) && key.count > $0.count }) else {
+            return nil
+        }
+        let candidate = String(key.dropLast(ending.count))
+        guard candidate.hasSuffix("haft"),
+              candidate != "haft",
+              !candidate.hasSuffix("schaft"),
+              isKnownGermanWord(candidate) else {
+            return nil
+        }
+        return candidate
     }
 }
 

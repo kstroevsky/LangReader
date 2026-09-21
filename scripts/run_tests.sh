@@ -147,6 +147,7 @@ SQLITE_WORD_TEST_SOURCES=(
   "$APP_SOURCE_ROOT/VocabularyReview/WordRecordSQLiteRowMapper.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/WordRecordSQLiteStore.swift"
   "$APP_SOURCE_ROOT/VocabularyReview/GermanFlexionStore.swift"
+  "$APP_SOURCE_ROOT/VocabularyReview/GermanCachedFormLabeling.swift"
 )
 
 PERSONAL_VOCABULARY_TEST_SOURCES=(
