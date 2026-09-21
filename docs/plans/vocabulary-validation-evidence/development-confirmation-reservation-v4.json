@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 4,
+  "reservationID": "development-confirmation-v4",
+  "dataRole": "development-confirmation",
+  "reservationDate": "2026-09-21",
+  "reservationSourceRevision": "3b1aa9c07659325c86e78f46f06c7c927f340e37",
+  "executionStatus": "reservedNotExecuted",
+  "supersedesAsActiveReservation": "development-confirmation-v3",
+  "historicalReservationStatuses": {
+    "development-confirmation-v1": "reservedNotExecuted",
+    "development-confirmation-v2": "reservedNotExecuted",
+    "development-confirmation-v3": "reservedNotExecuted"
+  },
+  "seedDerivation": {
+    "algorithm": "SHA256(rootBytes || UTF8('development-confirmation-v4/run/' || zeroBasedRunOrdinal)); seed=first8BytesUInt64BE, zero maps to one",
+    "seedDerivationRoot": "fb63835a4385426101c5a49ce5219bb713f76558d1878666994bb10e2d8c5f79",
+    "documentIdentityAlgorithm": "first24Hex(SHA256(fullRunDigest || UTF8('/document/' || zeroBasedDocumentOrdinal)))"
+  },
+  "generatorLock": {
+    "path": "docs/plans/vocabulary-validation-boundary/implementation-evidence/german-portability-generator-source-lock-v4.json",
+    "sha256": "1e9e67a5dd6b1aac4394959e3cbf5e4586018c9244a225b3cd6ae5a44d122a25"
+  },
+  "workload": {
+    "readersPerScenario": 64,
+    "documentsPerScenario": 8,
+    "lemmasPerDocument": 400,
+    "scenarios": ["well-specified", "item-residual", "response-noise", "idiosyncratic-knowledge"],
+    "modes": ["all-unknown", "coverage-98"],
+    "warmAndCold": true,
+    "gatePolicy": "unchanged EVAL-001 and release-regression thresholds",
+    "interpretation": "three independent reserved runs; percentages retain raw reader/document counts and are not a two-point precision claim"
+  },
+  "runs": [
+    {
+      "runOrdinal": 0,
+      "runID": "89eb4ef18bdccde0",
+      "seed": 9938123802063719904,
+      "opaqueDocumentDerivationIDs": [
+        "0fe41645025e88fa13ae2258", "ab906dcd52493648662f7dbf",
+        "d9a26478342d7ab88281ad4b", "929dc03f33545b41d2c3d81c",
+        "60550ab953e04ff05d8c782c", "db87a45cfd36e08e9a0ed04e",
+        "70a9ff91df0a9c6190ae81a8", "9c7c816327a8ec031090d3df"
+      ]
+    },
+    {
+      "runOrdinal": 1,
+      "runID": "c1ee21c2944f839e",
+      "seed": 13974143813372838814,
+      "opaqueDocumentDerivationIDs": [
+        "83fab077d8a2369a9886a157", "ff9dd3630105c0cc62cb1ac4",
+        "521b30296ccec0001416b887", "7647d646f9635b4009186d5b",
+        "57761d675bfc5d0b34580e17", "77f227f306f6bbf5ed10063a",
+        "6f4a1eb969f55c553f153186", "fa1a4cee7a268be9ba0d7679"
+      ]
+    },
+    {
+      "runOrdinal": 2,
+      "runID": "bbaaa1e856e912f9",
+      "seed": 13522798850395935481,
+      "opaqueDocumentDerivationIDs": [
+        "d6de7d0c0c246f1e38586c1e", "fffafaa837c9f24f2df00093",
+        "22b8e2ad66b9c078d5da1eb6", "f1697da2252ae7257eed63d6",
+        "df14d4ed5ee55fda5e7c63f9", "5144002e40c5cdc120401997",
+        "196d25e75a8976fb95c7d222", "ccde02227b56b917bab547b7"
+      ]
+    }
+  ],
+  "nonOverlap": {
+    "identityCorpusRevision": "3b1aa9c07659325c86e78f46f06c7c927f340e37",
+    "identityCorpusRoots": ["docs/perf", "docs/plans", "scripts/fixtures"],
+    "historicalReservationSHA256": {
+      "development-confirmation-v1": "a43e45a5fef43367b20e36e0f41684186901af325e2e597a994857591015303a",
+      "development-confirmation-v2": "19ccb4a9bddff02df1c074c85b56ffc782e7216d1a883a60cc088ac7338af89d",
+      "development-confirmation-v3": "8c25324b82cf54e7d1945ce2918c61d4eecae8522743839323e24edb58f7fb4c"
+    },
+    "allReservedSeedsMustBeDisjoint": true,
+    "allOpaqueDocumentDerivationIDsMustBeUnique": true,
+    "opaqueDocumentNamespaceNote": "The versioned identity corpus includes all v1-v3 reservation seeds and every prior archived 24-hex JSON identity before v4 was created."
+  },
+  "freezeAndConsumption": {
+    "candidateFreeze": null,
+    "analysisFreeze": null,
+    "decisionRulesChecksum": null,
+    "outcomeArtifacts": [],
+    "outcomesInspected": false,
+    "consumedByCandidateCycle": null,
+    "releaseHoldoutAccessAllowed": false,
+    "requiredBeforeExecution": [
+      "candidate commit and clean-tree hash",
+      "model/configuration/resource hashes",
+      "analysis and decision-rule checksum",
+      "reviewed decision to consume this specific reservation"
+    ],
+    "onDesignChangeAfterExecution": "retain the result, mark this reservation consumed for that candidate-design cycle, return to development, and reserve a fresh future confirmation set",
+    "onPass": "record the frozen confirmation decision before any frozen release-holdout access"
+  }
+}

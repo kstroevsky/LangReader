@@ -2,9 +2,9 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `0dc16efd21e2816a5154b4d515c2b5272e6b8fe3`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `3b1aa9c07659325c86e78f46f06c7c927f340e37`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
-Active future reservation: `docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v3.json` (SHA-256 `8c25324b82cf54e7d1945ce2918c61d4eecae8522743839323e24edb58f7fb4c`; `reserved_not_executed`). Historical reservations remain indexed separately and unexecuted.
+Active future reservation: `docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v4.json` (SHA-256 `4717a4b2b7f2b0e55d03321a5754a52ceb31c2e7b8ac232e67464fe8a89c9006`; `reserved_not_executed`). Historical reservations remain indexed separately and unexecuted.
 
 Head-only changes since the production evidence candidate:
 
@@ -76,6 +76,8 @@ Head-only changes since the production evidence candidate:
 - 5de7128feb8bc2cab2457d88d0fd7d88671654d9: boundary enforcement and sealed, unexecuted v2 future reservation
 - 850d09d72a40b584bf0bfe78337ce9708e1bdd8c: reviewed follow-up plan, derived register synchronization, and historical v2 validator hardening
 - 0dc16efd21e2816a5154b4d515c2b5272e6b8fe3: narrowed Core validation controls and development-fixture parity; production policy unchanged
+- ca5d20f7f50a9e1a6ea46b6d248fa999ed3b8a26: German NaturalLanguage portability and context-cache correctness repair
+- 3b1aa9c07659325c86e78f46f06c7c927f340e37: narrowed capitalized-noun plural bypass after development-corpus consequence check
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 
@@ -193,7 +195,21 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v3.json`](development-confirmation-reservation-v3.json); SHA-256 `8c25324b82cf54e7d1945ce2918c61d4eecae8522743839323e24edb58f7fb4c`
 - Evidence class: sealed synthetic development-confirmation reservation
 - Status: `reserved_not_executed`
-- Interpretation: Sole active future reservation for the post-cleanup generator, with three disjoint seeds and 24 opaque document identities; no candidate, analysis freeze, outcomes, consumption, or release access exists.
+- Interpretation: Historical unexecuted reservation for the post-cleanup generator; its source binding was superseded as the active future set after the German lexical generator changed, while its identities and bytes remain sealed.
+
+### docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v4.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v4.json`](development-confirmation-reservation-v4.json); SHA-256 `4717a4b2b7f2b0e55d03321a5754a52ceb31c2e7b8ac232e67464fe8a89c9006`
+- Evidence class: sealed synthetic development-confirmation reservation
+- Status: `reserved_not_executed`
+- Interpretation: Sole active future reservation for the final German-portability generator, with three disjoint seeds and 24 opaque document identities; no candidate, analysis freeze, outcomes, consumption, or release access exists.
+
+### docs/plans/vocabulary-validation-evidence/german-form-label-portability-development-check-2026-09-21.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/german-form-label-portability-development-check-2026-09-21.json`](german-form-label-portability-development-check-2026-09-21.json); SHA-256 `10c6a4245582b5ae381e470d91ff73acfc05138bd7bb8098410a0b99a5aa3f01`
+- Evidence class: German form-label development consequence check
+- Status: `development_only`
+- Interpretation: The broad capitalized-lemma plural bypass was rejected after 36 false-positive consequences; the retained umlaut-er predicate produced three plural labels and zero false positives on the pinned 12,480-token German development corpus.
 
 ### docs/plans/vocabulary-validation-boundary/implementation-evidence/commit-5-extraction-checkpoint.md
 
