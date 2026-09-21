@@ -64,14 +64,38 @@ final class VocabularyAssessmentObservationXCTests: XCTestCase {
             let question = try XCTUnwrap(assessment.nextQuestion())
             assessment.record(.verifiedKnown, for: question.canonicalKey)
         }
-        XCTAssertEqual(assessment.diagnosticNaturalStopReason, .lowExpectedValue)
+        XCTAssertEqual(assessment.result().diagnostics.stopReason, .lowExpectedValue)
         XCTAssertLessThan(assessment.answeredQuestionCount, 80)
-        while let question = assessment.nextQuestionForDiagnosticContinuation() {
-            assessment.record(.verifiedKnown, for: question.canonicalKey)
+        var continuation = assessment
+        let naturalAnswers = assessment.answers
+        while let question = continuation.nextQuestionForDiagnosticContinuation() {
+            continuation.record(.verifiedKnown, for: question.canonicalKey)
         }
-        XCTAssertEqual(assessment.answeredQuestionCount, 80)
-        XCTAssertEqual(Set(assessment.answers.map(\.canonicalKey)).count, assessment.answers.count)
-        XCTAssertNil(assessment.nextQuestionForDiagnosticContinuation())
+        XCTAssertEqual(assessment.answers, naturalAnswers)
+        XCTAssertEqual(continuation.answeredQuestionCount, 80)
+        XCTAssertEqual(Set(continuation.answers.map(\.canonicalKey)).count, continuation.answers.count)
+        XCTAssertNil(continuation.nextQuestionForDiagnosticContinuation())
+    }
+
+    func testDiagnosticContinuationRespectsExclusionsSkipsAndExhaustion() throws {
+        var natural = AdaptiveVocabularyAssessment(inventory: makeInventory(count: 5), mode: .allUnknown)
+        let excluded = try XCTUnwrap(natural.nextQuestion())
+        natural.record(.excluded, for: excluded.canonicalKey)
+        let skipped = try XCTUnwrap(natural.nextQuestion())
+        natural.skipCurrentQuestion()
+        let naturalAnswers = natural.answers
+
+        var continuation = natural
+        var seen: Set<String> = []
+        while let question = continuation.nextQuestionForDiagnosticContinuation() {
+            XCTAssertNotEqual(question.canonicalKey, excluded.canonicalKey)
+            XCTAssertNotEqual(question.canonicalKey, skipped.canonicalKey)
+            XCTAssertTrue(seen.insert(question.canonicalKey).inserted)
+            continuation.record(.verifiedKnown, for: question.canonicalKey)
+        }
+        XCTAssertEqual(seen.count, 3)
+        XCTAssertEqual(natural.answers, naturalAnswers)
+        XCTAssertNil(continuation.nextQuestionForDiagnosticContinuation())
     }
 
     func testRestoredCommonEvidencePathPreservesMetadataAndPosterior() throws {

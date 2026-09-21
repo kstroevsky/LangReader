@@ -766,10 +766,10 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         nextQuestion(allowingDiagnosticStopBypass: false)
     }
 
-    /// Continues question selection on a copied assessment after its natural
-    /// product stop. This is an offline diagnostic seam: it never bypasses the
-    /// 80-answer ceiling, candidate exhaustion, exclusions, skips, or duplicate
-    /// answer protection.
+    /// The single package-scoped experiment control: Validation uses it only on
+    /// an isolated assessment copy after the natural product stop. It preserves
+    /// the 80-answer ceiling, candidate exhaustion, exclusions, skips, and
+    /// duplicate-answer protection.
     package mutating func nextQuestionForDiagnosticContinuation() -> DocumentVocabularyCandidate? {
         nextQuestion(allowingDiagnosticStopBypass: true)
     }
@@ -836,8 +836,6 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         )
         return selected.candidate
     }
-
-    package var diagnosticNaturalStopReason: VocabularyAssessmentStopReason? { stopReason }
 
     package func validationObservation() throws -> VocabularyAssessmentObservation {
         let predictiveSamples = cachedPredictiveSamples ?? predictiveCoverageSamples()
@@ -975,13 +973,6 @@ package struct AdaptiveVocabularyAssessment: Sendable {
     package var usedEligibleReaderPrior: Bool { usesEligibleReaderPrior }
     package var requiredMinimumAnsweredQuestionCount: Int { minimumQuestionCount }
 
-    /// Exposes the assessment's current item probability to package-owned
-    /// offline diagnostics. Production question selection and stopping do not
-    /// call this seam.
-    package func diagnosticKnownProbability(for canonicalKey: String) -> Double? {
-        candidateIndexByKey[canonicalKey].map { currentProbabilities[$0] }
-    }
-
     /// Skips a dictionary-failure item without treating it as an answer or an
     /// exclusion. It remains an unasked posterior item in the final result.
     package mutating func skipCurrentQuestion() {
@@ -1018,13 +1009,13 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         }.count
     }
 
-    package func result(selectionOverride: Set<String>? = nil) -> VocabularyAssessmentResult {
+    package func result() -> VocabularyAssessmentResult {
         let predictiveSamples = cachedPredictiveSamples ?? predictiveCoverageSamples()
         let proposed = proposedSelection(
             predictiveSamples: predictiveSamples,
             pruneRedundant: true
         )
-        let selection = selectionOverride ?? proposed
+        let selection = proposed
         var totalOccurrences = 0.0
         var expectedCurrentKnownOccurrences = 0.0
         var expectedKnownOccurrences = 0.0

@@ -746,7 +746,7 @@ private func buildPath(
         if assessment.isFinished, fixedBudget != nil {
             if naturalStopCount == nil {
                 naturalStopCount = assessment.answeredQuestionCount
-                naturalStopReason = assessment.diagnosticNaturalStopReason
+                naturalStopReason = assessment.result().diagnostics.stopReason
             }
             question = assessment.nextQuestionForDiagnosticContinuation()
         } else {
@@ -765,7 +765,7 @@ private func buildPath(
     }
     if fixedBudget == nil {
         naturalStopCount = assessment.answeredQuestionCount
-        naturalStopReason = assessment.diagnosticNaturalStopReason
+        naturalStopReason = assessment.result().diagnostics.stopReason
     }
     let result = assessment.result()
     let snapshotStart = DispatchTime.now().uptimeNanoseconds

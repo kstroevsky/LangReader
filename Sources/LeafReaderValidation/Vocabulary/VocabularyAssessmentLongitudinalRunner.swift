@@ -1042,7 +1042,7 @@ private func buildLongitudinalPath(
         if fixedBudget != nil, assessment.isFinished {
             if naturalStopCount == nil {
                 naturalStopCount = assessment.answeredQuestionCount
-                naturalStopReason = assessment.diagnosticNaturalStopReason
+                naturalStopReason = assessment.result().diagnostics.stopReason
             }
             question = assessment.nextQuestionForDiagnosticContinuation()
         } else {
@@ -1059,7 +1059,7 @@ private func buildLongitudinalPath(
     }
     if fixedBudget == nil {
         naturalStopCount = assessment.answeredQuestionCount
-        naturalStopReason = assessment.diagnosticNaturalStopReason
+        naturalStopReason = assessment.result().diagnostics.stopReason
     }
     let result = assessment.result()
     let snapshot = try assessment.validationObservation()
@@ -1207,7 +1207,7 @@ private func longitudinalWarmCompatibility(
                 readerPrior: nil,
                 currentDate: currentDate
             )
-            if let coldProbability = coldPrefix.diagnosticKnownProbability(
+            if let coldProbability = coldPrefix.knownProbability(
                 for: answer.canonicalKey
             ) {
                 let warmLikelihood = VocabularyObservationModel.evidenceLikelihood(

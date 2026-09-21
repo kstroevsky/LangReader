@@ -411,12 +411,12 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
             inventory: inventory,
             mode: .targetCoverage(0.98),
             modelConfiguration: VocabularyAssessmentModelConfiguration(coverageQuantile: 0.025)
-        ).result(selectionOverride: [])
+        ).result().applyingSelection([])
         let high = AdaptiveVocabularyAssessment(
             inventory: inventory,
             mode: .targetCoverage(0.98),
             modelConfiguration: VocabularyAssessmentModelConfiguration(coverageQuantile: 0.10)
-        ).result(selectionOverride: [])
+        ).result().applyingSelection([])
 
         XCTAssertGreaterThanOrEqual(
             high.diagnostics.conservativeCoverageLowerBound,
@@ -441,7 +441,7 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         assessment.record(.known, for: "known")
         assessment.record(.unknown, for: "unknown")
 
-        let result = assessment.result(selectionOverride: [])
+        let result = assessment.result().applyingSelection([])
         let knownProbability = try XCTUnwrap(result.items.first { $0.id == "known" }?.knownProbability)
         let unknownProbability = try XCTUnwrap(result.items.first { $0.id == "unknown" }?.knownProbability)
         XCTAssertGreaterThan(knownProbability, 0.5)
@@ -500,7 +500,7 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         assessment.record(.known, for: "known")
         assessment.record(.unknown, for: "unknown")
 
-        let withoutDeck = assessment.result(selectionOverride: [])
+        let withoutDeck = assessment.result().applyingSelection([])
         let withDeck = withoutDeck.applyingSelection(["unknown"])
 
         XCTAssertLessThan(withoutDeck.diagnostics.conservativeCoverageLowerBound, 1)
@@ -545,7 +545,7 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         var assessment = AdaptiveVocabularyAssessment(inventory: inventory, mode: .targetCoverage(0.98))
         assessment.record(.excluded, for: "noise")
 
-        let result = assessment.result(selectionOverride: ["noise"])
+        let result = assessment.result().applyingSelection(["noise"])
         XCTAssertFalse(try XCTUnwrap(result.items.first).isSelected)
         XCTAssertEqual(result.expectedCoverageAfterSelection, 1)
         XCTAssertEqual(result.diagnostics.conservativeCoverageLowerBound, 1)
@@ -773,21 +773,23 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         XCTAssertEqual(assessment.requiredMinimumAnsweredQuestionCount, 8)
     }
 
-    func testDiagnosticKnownProbabilityReadsCurrentPosteriorWithoutMutatingAssessment() throws {
+    func testUnansweredKnownProbabilityReadsCurrentPosteriorWithoutMutatingAssessment() throws {
+        let document = inventory(count: 40)
         var assessment = AdaptiveVocabularyAssessment(
-            inventory: inventory(count: 40),
+            inventory: document,
             mode: .targetCoverage(0.98)
         )
         let question = try XCTUnwrap(assessment.nextQuestion())
+        let probe = try XCTUnwrap(document.candidates.first { $0.canonicalKey != question.canonicalKey })
         let before = try XCTUnwrap(
-            assessment.diagnosticKnownProbability(for: question.canonicalKey)
+            assessment.knownProbability(for: probe.canonicalKey)
         )
         XCTAssertEqual(assessment.answeredQuestionCount, 0)
-        XCTAssertNil(assessment.diagnosticKnownProbability(for: "missing"))
+        XCTAssertNil(assessment.knownProbability(for: "missing"))
 
         assessment.record(.verifiedKnown, for: question.canonicalKey)
         let after = try XCTUnwrap(
-            assessment.diagnosticKnownProbability(for: question.canonicalKey)
+            assessment.knownProbability(for: probe.canonicalKey)
         )
         XCTAssertEqual(assessment.answeredQuestionCount, 1)
         XCTAssertNotEqual(before, after)

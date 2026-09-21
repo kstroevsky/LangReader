@@ -25,6 +25,16 @@ FINAL_VALIDATION_TYPES = {
     "VocabularyDiagnosticFixedBankResult",
     "VocabularyDiagnosticThetaPositionCount",
 }
+FINAL_CORE_FORBIDDEN_MEMBERS = {
+    "diagnosticNaturalStopReason": re.compile(r"^\s*package\s+var\s+diagnosticNaturalStopReason\b", re.MULTILINE),
+    "diagnosticKnownProbability(for:)": re.compile(r"^\s*package\s+func\s+diagnosticKnownProbability\s*\(", re.MULTILINE),
+    "result(selectionOverride:)": re.compile(r"^\s*package\s+func\s+result\s*\(\s*selectionOverride\s*:", re.MULTILINE),
+}
+CONTINUATION_DECLARATION_RE = re.compile(
+    r"^\s*(?P<access>public|package|internal|private|fileprivate)?\s*"
+    r"(?P<mutation>mutating\s+)?func\s+nextQuestionForDiagnosticContinuation\s*\(",
+    re.MULTILINE,
+)
 IMPORT_RE = re.compile(r"^\s*(?:@\w+\s+)*import\s+([A-Za-z_][A-Za-z_0-9]*)\b", re.MULTILINE)
 DECLARATION_RE = re.compile(
     r"^\s*(?:(?:public|package|internal|private|fileprivate)\s+)?"
@@ -101,6 +111,20 @@ def declaration_errors(sources: dict[str, str]) -> list[str]:
     return errors
 
 
+def core_member_errors(sources: dict[str, str]) -> list[str]:
+    core = sources.get("LeafReaderCore", "")
+    errors = [
+        f"LeafReaderCore still declares experimental {name}"
+        for name, pattern in FINAL_CORE_FORBIDDEN_MEMBERS.items()
+        if pattern.search(core)
+    ]
+    continuations = list(CONTINUATION_DECLARATION_RE.finditer(core))
+    if len(continuations) != 1 or continuations[0].group("access") != "package" \
+            or continuations[0].group("mutation") is None:
+        errors.append("LeafReaderCore must declare exactly one package mutating continuation seam")
+    return errors
+
+
 def sources_by_target() -> dict[str, str]:
     result = {}
     for name in (*sorted(PRODUCTION_TARGETS), VALIDATION_TARGET):
@@ -139,6 +163,17 @@ def self_test() -> None:
     assert import_errors({"LeafReaderCore": "// import LeafReaderValidation\n"}) == []
     assert declaration_errors({"LeafReaderCore": "package enum VocabularyDiagnosticBankKind {}\n"})
     assert declaration_errors({"LeafReaderCore": "// package enum VocabularyDiagnosticBankKind {}\n"}) == []
+    valid_core = "package mutating func nextQuestionForDiagnosticContinuation() {}\n"
+    assert core_member_errors({"LeafReaderCore": valid_core}) == []
+    for invalid in (
+        "package var diagnosticNaturalStopReason: Int { 0 }\n",
+        "package func diagnosticKnownProbability(for key: String) -> Double { 0 }\n",
+        "package func result(selectionOverride: Set<String> = []) {}\n",
+        "private mutating func nextQuestionForDiagnosticContinuation() {}\n",
+        "package mutating func nextQuestionForDiagnosticContinuation() {}\n" * 2,
+    ):
+        assert core_member_errors({"LeafReaderCore": valid_core + invalid}), f"accepted Core method fixture: {invalid}"
+    assert core_member_errors({"LeafReaderCore": valid_core + "// package func diagnosticKnownProbability() {}\n"}) == []
     print("validation boundary negative fixtures passed")
 
 
@@ -158,6 +193,7 @@ def main() -> None:
     errors.extend(import_errors(sources))
     if args.final:
         errors.extend(declaration_errors(sources))
+        errors.extend(core_member_errors(sources))
     if errors:
         raise SystemExit("validation boundary FAILED:\n  " + "\n  ".join(errors))
     print("validation boundary ok: production cannot depend on Validation")
