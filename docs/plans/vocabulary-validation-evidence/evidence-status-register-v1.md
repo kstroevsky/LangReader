@@ -2,7 +2,9 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `f98f622e47bd76a6ef8f7604051c312626636833`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `5de7128feb8bc2cab2457d88d0fd7d88671654d9`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+
+Active future reservation: `docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v2.json` (SHA-256 `19ccb4a9bddff02df1c074c85b56ffc782e7216d1a883a60cc088ac7338af89d`; `reserved_not_executed`). Historical reservations remain indexed separately and unexecuted.
 
 Head-only changes since the production evidence candidate:
 
@@ -65,6 +67,13 @@ Head-only changes since the production evidence candidate:
 - 2f0135a77869162a10863667437d42f0d09f3cd8: no-outcome categorical guardrail rehearsal and readiness checkpoint
 - e100bcdf5d548b6424703729c9c865f83628fe6f: derived independent-review readiness evidence-register refresh only
 - f98f622e47bd76a6ef8f7604051c312626636833: generated code-map refresh only
+- b2b99696feda177be0699d5277a2c13c7c7c9bd5: derived vocabulary evidence-status refresh only
+- 4be059e61edd47f2c33666a2a01137a72094f316: accepted extraction plan and frozen development-only baseline
+- 98ce88d23cf600cd89e7bd5e6c722247023678b5: historical v1 lock verified from Git blobs and full-history CI checkout
+- a3c83e872740d47c6b2c1140d07f9a39fc315d0b: validation target and study-schema move; shipping closure unchanged
+- 6b8881983a1609ff96f4d5e4aba732136d8e9683: production observation and validation-owned bank/runner extraction
+- a50f3fb4414b00252427ffed52916d0c45aaa8d9: POS evaluator moved to internal validation target
+- 5de7128feb8bc2cab2457d88d0fd7d88671654d9: boundary enforcement and sealed, unexecuted v2 future reservation
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 
@@ -168,7 +177,28 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v1.json`](development-confirmation-reservation-v1.json); SHA-256 `a43e45a5fef43367b20e36e0f41684186901af325e2e597a994857591015303a`
 - Evidence class: sealed synthetic development-confirmation reservation
 - Status: `reserved_not_executed`
-- Interpretation: Three seeds and 24 document derivation identities are committed; no candidate, outcomes, consumption, or release access exists.
+- Interpretation: Historical unexecuted reservation for the pre-extraction generator; its three seeds and 24 document derivation identities remain sealed and are not the active future set.
+
+### docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v2.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v2.json`](development-confirmation-reservation-v2.json); SHA-256 `19ccb4a9bddff02df1c074c85b56ffc782e7216d1a883a60cc088ac7338af89d`
+- Evidence class: sealed synthetic development-confirmation reservation
+- Status: `reserved_not_executed`
+- Interpretation: Active future reservation for the extracted generator, with three disjoint seeds and 24 opaque document identities; no candidate, analysis freeze, outcomes, consumption, or release access exists.
+
+### docs/plans/vocabulary-validation-boundary/implementation-evidence/commit-5-extraction-checkpoint.md
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-boundary/implementation-evidence/commit-5-extraction-checkpoint.md`](../vocabulary-validation-boundary/implementation-evidence/commit-5-extraction-checkpoint.md); SHA-256 `4225fbe28d1bcb54e2ce73ad3ec128ab10281d115a73d1cae198e48a071b29c4`
+- Evidence class: structural extraction checkpoint
+- Status: `structural_only_not_scientific_validation`
+- Interpretation: Development-fixture parity and deterministic boundary checks support the extraction; this is not a human, confirmation, release, or final-tree performance gate.
+
+### docs/plans/vocabulary-validation-boundary/implementation-evidence/extracted-generator-source-lock.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-boundary/implementation-evidence/extracted-generator-source-lock.json`](../vocabulary-validation-boundary/implementation-evidence/extracted-generator-source-lock.json); SHA-256 `ba1383065f79f3b43f87b3fa69d3916133b683b5d7f2615465c45e41502abd38`
+- Evidence class: post-extraction generator source/build provenance
+- Status: `locked_provenance_not_candidate_freeze`
+- Interpretation: Pins extracted Core/Validation source and build inputs at the dirty extraction checkpoint; it is not a clean candidate or analysis freeze.
 
 ### docs/plans/vocabulary-validation-evidence/cross-format-fixture-checkpoint-2026-09-09.md
 

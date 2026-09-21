@@ -113,12 +113,38 @@ def build() -> dict:
             raise ValueError(f"retained artifact does not exist: {item['path']}")
         retained_artifacts.append({**item, "sha256": sha256(path)})
 
+    active_path = spec.get("active_future_reservation")
+    active_entries = [
+        item for item in retained_artifacts
+        if item.get("reservation_role") == "active_future"
+    ]
+    if len(active_entries) != 1 or active_entries[0]["path"] != active_path:
+        raise ValueError("exactly one indexed active future reservation is required")
+    active_entry = active_entries[0]
+    active_manifest = load_json(ROOT / active_path)
+    if active_entry["status"] != "reserved_not_executed" \
+            or active_manifest.get("executionStatus") != "reservedNotExecuted" \
+            or active_manifest.get("freezeAndConsumption", {}).get("outcomesInspected") is not False \
+            or active_manifest.get("freezeAndConsumption", {}).get("releaseHoldoutAccessAllowed") is not False:
+        raise ValueError("active future reservation is not sealed and unexecuted")
+    for item in retained_artifacts:
+        if item.get("reservation_role") == "historical_unexecuted":
+            historical = load_json(ROOT / item["path"])
+            if item["status"] != "reserved_not_executed" \
+                    or historical.get("executionStatus") != "reservedNotExecuted":
+                raise ValueError("historical reservation status changed")
+
     counts = Counter(record["current_status"] for record in records)
     return {
         "schema_version": 1,
         "derived_view": True,
         "production_evidence_candidate": spec["production_evidence_candidate"],
         "repository_head_reviewed": spec["repository_head_reviewed"],
+        "active_future_reservation": {
+            "path": active_path,
+            "sha256": active_entry["sha256"],
+            "status": active_entry["status"],
+        },
         "head_since_production_evidence": spec["head_since_production_evidence"],
         "canonical_ledger": {
             "path": spec["canonical_ledger"],
@@ -140,6 +166,8 @@ def markdown(register: dict) -> str:
         "This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.",
         "",
         f"Production evidence candidate: `{register['production_evidence_candidate']}`. Repository head reviewed: `{register['repository_head_reviewed']}`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.",
+        "",
+        f"Active future reservation: `{register['active_future_reservation']['path']}` (SHA-256 `{register['active_future_reservation']['sha256']}`; `{register['active_future_reservation']['status']}`). Historical reservations remain indexed separately and unexecuted.",
         "",
         "Head-only changes since the production evidence candidate:",
         "",

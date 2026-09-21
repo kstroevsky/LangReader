@@ -8,6 +8,8 @@ import copy
 import hashlib
 import json
 import re
+import subprocess
+from functools import cache
 from pathlib import Path
 from unittest.mock import patch
 
@@ -39,6 +41,10 @@ KNOWN_DEVELOPMENT_SEEDS = (20260815, 20260908)
 FROZEN_RELEASE_SEEDS = (13785352245285352300, 16855471854424563266, 5886616191894718396)
 PARITY_MANIFEST = ROOT / "docs/plans/vocabulary-validation-boundary/implementation-evidence/extraction-parity-manifest.json"
 PARITY_REPORT = ROOT / "docs/plans/vocabulary-validation-boundary/implementation-evidence/parity-4.json"
+# This Git tree is the versioned inventory of development/release artifacts
+# that existed when v2 was sealed. Do not replace it with a moving HEAD scan.
+PRIOR_EVIDENCE_REVISION = "5de7128feb8bc2cab2457d88d0fd7d88671654d9"
+PRIOR_EVIDENCE_ROOTS = ("docs/perf", "docs/plans", "scripts/fixtures")
 
 
 def sha256(data: bytes) -> str:
@@ -74,6 +80,50 @@ def current_source_lock() -> dict:
     }
 
 
+@cache
+def historical_source_lock(revision: str = PRIOR_EVIDENCE_REVISION) -> dict:
+    """Rebuild v2's generator fingerprint from the commit that sealed v2.
+
+    A later Core/Validation edit cannot silently rebind v2 to current source.
+    Missing Git history is an infrastructure error, not a checksum mismatch.
+    """
+    available = subprocess.run(
+        ["git", "cat-file", "-e", f"{revision}^{{commit}}"],
+        cwd=ROOT, capture_output=True, check=False,
+    )
+    if available.returncode != 0:
+        raise RuntimeError(f"sealed v2 Git revision unavailable: {revision}")
+
+    def blob(path: str) -> bytes:
+        result = subprocess.run(
+            ["git", "show", f"{revision}:{path}"],
+            cwd=ROOT, capture_output=True, check=False,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"sealed v2 Git blob unavailable: {revision}:{path}")
+        return result.stdout
+
+    trees = {}
+    for relative_dir in SOURCE_TREES:
+        listing = subprocess.run(
+            ["git", "ls-tree", "-r", "--name-only", revision, "--", relative_dir],
+            cwd=ROOT, capture_output=True, text=True, check=False,
+        )
+        if listing.returncode != 0:
+            raise RuntimeError(f"cannot list sealed v2 source tree: {relative_dir}")
+        paths = sorted(path for path in listing.stdout.splitlines() if path.startswith(relative_dir + "/"))
+        if not paths:
+            raise ValueError(f"sealed v2 source tree empty: {relative_dir}")
+        digest = hashlib.sha256()
+        for path in paths:
+            digest.update(path.encode("utf-8") + b"\0" + sha256(blob(path)).encode("ascii") + b"\n")
+        trees[relative_dir] = {"sourceFileCount": len(paths), "pathAndContentSHA256": digest.hexdigest()}
+    return {
+        "sourceTrees": trees,
+        "files": {name: sha256(blob(name)) for name in LOCKED_FILES},
+    }
+
+
 def derived_run(root: bytes, ordinal: int) -> tuple[bytes, int, str]:
     digest = hashlib.sha256(root + f"development-confirmation-v2/run/{ordinal}".encode()).digest()
     return digest, int.from_bytes(digest[:8], "big") or 1, digest.hex()[:16]
@@ -81,6 +131,74 @@ def derived_run(root: bytes, ordinal: int) -> tuple[bytes, int, str]:
 
 def derived_document_id(run_digest: bytes, ordinal: int) -> str:
     return hashlib.sha256(run_digest + f"/document/{ordinal}".encode()).hexdigest()[:24]
+
+
+@cache
+def prior_artifact_identities() -> tuple[frozenset[int], frozenset[str], int]:
+    """Read all retained pre-v2 JSON identities from the v2-seal Git tree.
+
+    The 24-hex comparison is deliberately conservative: it covers any prior
+    opaque document namespace represented in the archived JSON, not only v1's
+    `opaqueDocumentDerivationIDs` field.
+    """
+    available = subprocess.run(
+        ["git", "cat-file", "-e", f"{PRIOR_EVIDENCE_REVISION}^{{commit}}"],
+        cwd=ROOT, capture_output=True, check=False,
+    )
+    if available.returncode != 0:
+        raise RuntimeError(f"prior evidence Git revision unavailable: {PRIOR_EVIDENCE_REVISION}")
+    listing = subprocess.run(
+        ["git", "ls-tree", "-r", "--name-only", PRIOR_EVIDENCE_REVISION, "--", *PRIOR_EVIDENCE_ROOTS],
+        cwd=ROOT, capture_output=True, text=True, check=False,
+    )
+    if listing.returncode != 0:
+        raise RuntimeError(f"cannot list prior evidence at {PRIOR_EVIDENCE_REVISION}")
+    paths = [
+        path for path in listing.stdout.splitlines()
+        if path.endswith(".json") and path != MANIFEST.relative_to(ROOT).as_posix()
+    ]
+    if not paths:
+        raise ValueError("prior evidence inventory is empty")
+    seeds: set[int] = set()
+    documents: set[str] = set()
+
+    def collect(value: object, field: str = "") -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                collect(child, key)
+        elif isinstance(value, list):
+            for child in value:
+                collect(child, field)
+        elif isinstance(value, int) and not isinstance(value, bool) and "seed" in field.lower():
+            seeds.add(value)
+        elif isinstance(value, str) and re.fullmatch(r"[0-9a-f]{24}", value):
+            documents.add(value)
+
+    for path in paths:
+        blob = subprocess.run(
+            ["git", "show", f"{PRIOR_EVIDENCE_REVISION}:{path}"],
+            cwd=ROOT, capture_output=True, check=False,
+        )
+        if blob.returncode != 0:
+            raise RuntimeError(f"prior evidence Git blob unavailable: {path}")
+        try:
+            collect(json.loads(blob.stdout))
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise ValueError(f"invalid prior evidence JSON: {path}") from error
+    if not set(KNOWN_DEVELOPMENT_SEEDS).issubset(seeds) \
+            or not set(FROZEN_RELEASE_SEEDS).issubset(seeds):
+        raise ValueError("prior evidence inventory omitted known development/release seeds")
+    return frozenset(seeds), frozenset(documents), len(paths)
+
+
+def require_disjoint(
+    seeds: set[int], documents: set[str],
+    prior_seeds: frozenset[int], prior_documents: frozenset[str],
+) -> None:
+    if seeds & prior_seeds:
+        raise ValueError("reserved seeds overlap a prior development/release artifact")
+    if documents & prior_documents:
+        raise ValueError("reserved document IDs overlap a prior archived opaque identity")
 
 
 def validate_source_lock(lock: dict, *, verify_files: bool = True) -> None:
@@ -92,13 +210,13 @@ def validate_source_lock(lock: dict, *, verify_files: bool = True) -> None:
         raise ValueError("source lock must not claim a clean candidate freeze")
     if lock.get("swiftMode") != "Swift 6" or lock.get("standaloneSwiftFlags") != ["-swift-version", "6", "-warnings-as-errors", "-O"]:
         raise ValueError("Swift 6 build flags changed")
-    expected = current_source_lock() if verify_files else lock.get("generatorInputs", {})
+    expected = historical_source_lock() if verify_files else lock.get("generatorInputs", {})
     if set(lock.get("generatorInputs", {}).get("sourceTrees", {})) != set(SOURCE_TREES):
         raise ValueError("source tree coverage changed")
     if set(lock.get("generatorInputs", {}).get("files", {})) != set(LOCKED_FILES):
         raise ValueError("locked file coverage changed")
     if lock.get("generatorInputs") != expected:
-        raise ValueError("extracted generator source/build inputs changed")
+        raise ValueError("sealed v2 historical generator source/build inputs changed")
     if lock.get("analysisBinding", {}).get("status") != "provenanceOnlyNotFrozen":
         raise ValueError("analysis binding incorrectly claims a candidate freeze")
     if lock["analysisBinding"].get("paths") != [
@@ -169,10 +287,10 @@ def validate(manifest: dict, *, verify_files: bool = True) -> dict:
         raise ValueError("historical reservation was executed")
     older_seeds = {run["seed"] for run in historical["runs"]}
     older_documents = {document for run in historical["runs"] for document in run["opaqueDocumentDerivationIDs"]}
-    if set(seeds) & (older_seeds | set(KNOWN_DEVELOPMENT_SEEDS) | set(FROZEN_RELEASE_SEEDS)):
-        raise ValueError("reserved seeds overlap prior development or release sets")
-    if set(documents) & older_documents:
-        raise ValueError("reserved document IDs overlap historical reservation")
+    prior_seeds, prior_documents, _ = prior_artifact_identities()
+    require_disjoint(set(seeds), set(documents), prior_seeds, prior_documents)
+    if not older_seeds.issubset(prior_seeds) or not older_documents.issubset(prior_documents):
+        raise ValueError("prior evidence inventory omitted the historical reservation")
     non_overlap = manifest.get("nonOverlap", {})
     if non_overlap.get("knownDevelopmentSeeds") != list(KNOWN_DEVELOPMENT_SEEDS) \
             or non_overlap.get("frozenReleaseHoldoutSeeds") != list(FROZEN_RELEASE_SEEDS) \
@@ -212,6 +330,21 @@ def validate(manifest: dict, *, verify_files: bool = True) -> dict:
 def self_test() -> None:
     original = read_json(MANIFEST)
     validate(original)
+    prior_seeds, prior_documents, file_count = prior_artifact_identities()
+    if file_count < 100 or not {1, 2, 7, 17, 20260909, 20260912, 20260913, 20260914}.issubset(prior_seeds):
+        raise AssertionError("versioned prior development inventory is incomplete")
+    first_seed = original["runs"][0]["seed"]
+    first_document = original["runs"][0]["opaqueDocumentDerivationIDs"][0]
+    for seed_set, document_set in (
+        (prior_seeds | {first_seed}, prior_documents),
+        (prior_seeds, prior_documents | {first_document}),
+    ):
+        try:
+            require_disjoint({first_seed}, {first_document}, seed_set, document_set)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("accepted a synthetic prior-identity collision")
     mutations = (
         ("seed", lambda value: value["runs"][0].__setitem__("seed", 1)),
         ("document", lambda value: value["runs"][1]["opaqueDocumentDerivationIDs"].__setitem__(0, "0" * 24)),
@@ -236,6 +369,12 @@ def self_test() -> None:
         pass
     else:
         raise AssertionError("accepted mismatched source bytes")
+    try:
+        historical_source_lock("f" * 40)
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("accepted unavailable sealed Git revision")
     real_read_bytes = Path.read_bytes
 
     def missing_source_lock(path: Path) -> bytes:

@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "f98f622e47bd76a6ef8f7604051c312626636833",
+  "repository_head_reviewed": "5de7128feb8bc2cab2457d88d0fd7d88671654d9",
+  "active_future_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v2.json",
   "head_since_production_evidence": [
     "9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only",
     "52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only",
@@ -61,7 +62,14 @@
     "83f343ccbcd6d0d513b3c19739af27db28ee0083: categorical-distribution guardrail and independent-review checklist definition",
     "2f0135a77869162a10863667437d42f0d09f3cd8: no-outcome categorical guardrail rehearsal and readiness checkpoint",
     "e100bcdf5d548b6424703729c9c865f83628fe6f: derived independent-review readiness evidence-register refresh only",
-    "f98f622e47bd76a6ef8f7604051c312626636833: generated code-map refresh only"
+    "f98f622e47bd76a6ef8f7604051c312626636833: generated code-map refresh only",
+    "b2b99696feda177be0699d5277a2c13c7c7c9bd5: derived vocabulary evidence-status refresh only",
+    "4be059e61edd47f2c33666a2a01137a72094f316: accepted extraction plan and frozen development-only baseline",
+    "98ce88d23cf600cd89e7bd5e6c722247023678b5: historical v1 lock verified from Git blobs and full-history CI checkout",
+    "a3c83e872740d47c6b2c1140d07f9a39fc315d0b: validation target and study-schema move; shipping closure unchanged",
+    "6b8881983a1609ff96f4d5e4aba732136d8e9683: production observation and validation-owned bank/runner extraction",
+    "a50f3fb4414b00252427ffed52916d0c45aaa8d9: POS evaluator moved to internal validation target",
+    "5de7128feb8bc2cab2457d88d0fd7d88671654d9: boundary enforcement and sealed, unexecuted v2 future reservation"
   ],
   "canonical_ledger": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
   "retained_artifacts": [
@@ -147,7 +155,27 @@
       "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v1.json",
       "evidence_class": "sealed synthetic development-confirmation reservation",
       "status": "reserved_not_executed",
-      "interpretation": "Three seeds and 24 document derivation identities are committed; no candidate, outcomes, consumption, or release access exists."
+      "reservation_role": "historical_unexecuted",
+      "interpretation": "Historical unexecuted reservation for the pre-extraction generator; its three seeds and 24 document derivation identities remain sealed and are not the active future set."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v2.json",
+      "evidence_class": "sealed synthetic development-confirmation reservation",
+      "status": "reserved_not_executed",
+      "reservation_role": "active_future",
+      "interpretation": "Active future reservation for the extracted generator, with three disjoint seeds and 24 opaque document identities; no candidate, analysis freeze, outcomes, consumption, or release access exists."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-boundary/implementation-evidence/commit-5-extraction-checkpoint.md",
+      "evidence_class": "structural extraction checkpoint",
+      "status": "structural_only_not_scientific_validation",
+      "interpretation": "Development-fixture parity and deterministic boundary checks support the extraction; this is not a human, confirmation, release, or final-tree performance gate."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-boundary/implementation-evidence/extracted-generator-source-lock.json",
+      "evidence_class": "post-extraction generator source/build provenance",
+      "status": "locked_provenance_not_candidate_freeze",
+      "interpretation": "Pins extracted Core/Validation source and build inputs at the dirty extraction checkpoint; it is not a clean candidate or analysis freeze."
     },
     {
       "path": "docs/plans/vocabulary-validation-evidence/cross-format-fixture-checkpoint-2026-09-09.md",
