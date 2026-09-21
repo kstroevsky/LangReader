@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "evidenceRole": "development-only-product-rule-check",
+  "date": "2026-09-21",
+  "protectedOutcomesAccessed": false,
+  "source": {
+    "repository": "https://github.com/UniversalDependencies/UD_German-GSD",
+    "revision": "81d8c3612a88f5867fd089e9c0a5466ef230078b",
+    "tag": "r2.18",
+    "path": "de_gsd-ud-dev.conllu",
+    "sha256": "01e8e674973592747ffe9a8c77fcf9d2f5936a8484e731ad4f76254318a8952c",
+    "tokenCount": 12480
+  },
+  "rejectedBroadPredicate": {
+    "description": "capitalized gold lemma plus the pre-existing general isPlural(surface, lemma) heuristic",
+    "capitalizedLemmaTokens": 2816,
+    "predictedPluralTokens": 412,
+    "falsePositiveConsequences": 36,
+    "decision": "rejected; the old precision claim did not transfer to the broadened entrance population"
+  },
+  "retainedOwnedPredicate": {
+    "description": "capitalized gold lemma plus a surface-only umlaut gain, an -er ending, and equality between the de-umlauted surface stem and de-umlauted lemma",
+    "predictedPluralTokens": 3,
+    "falsePositiveConsequences": 0,
+    "predictions": [
+      {
+        "surface": "Häuser",
+        "lemma": "Haus",
+        "goldFeatures": "Case=Nom|Gender=Neut|Number=Plur"
+      },
+      {
+        "surface": "Länder",
+        "lemma": "Land",
+        "goldFeatures": "Case=Nom|Gender=Neut|Number=Plur"
+      },
+      {
+        "surface": "Länder",
+        "lemma": "Land",
+        "goldFeatures": "Case=Gen|Gender=Neut|Number=Plur"
+      }
+    ],
+    "targetedPortableContract": {
+      "surface": "Bücher",
+      "lemma": "Buch",
+      "expectedLabel": "plural"
+    },
+    "decision": "retain as the only context-independent noun plural bypass; all other noun-number cases continue through Apple or fresh flexion evidence"
+  },
+  "limitations": [
+    "This is one mixed-web German development corpus, not a release holdout or private-document sample.",
+    "Zero observed false positives is evidence for this bounded predicate on this corpus, not a universal linguistic proof."
+  ]
+}

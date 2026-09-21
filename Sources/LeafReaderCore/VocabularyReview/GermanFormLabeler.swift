@@ -115,7 +115,7 @@ package enum GermanFormLabeler {
     /// Bumped whenever the offline heuristics in this file change. A label
     /// persisted by an older ruleset carries an older version and is treated as
     /// absent, so a labeler improvement takes effect without a manual cache wipe.
-    package static let labelingVersion = 2
+    package static let labelingVersion = 3
 
     private static let auxiliaryLemmas: Set<String> = ["haben", "sein", "werden"]
     private static let umlauts = CharacterSet(charactersIn: "äöüÄÖÜ")
@@ -156,13 +156,13 @@ package enum GermanFormLabeler {
         let isBaseForm = VocabularyTextPolicy.canonicalVocabularyKey(surface)
             == VocabularyTextPolicy.canonicalVocabularyKey(lemma)
 
-        // German common nouns carry capitalization in their lemma. Combined
-        // with the conservative morphology below, that is sufficient owned
-        // evidence for noun base/plural labels; Apple POS may corroborate it but
-        // cannot veto it by returning nil or a different class on another OS.
-        if isNounLikeLemma(lemma) {
-            if isBaseForm { return .contextIndependent(.grundform) }
-            return .contextIndependent(isPlural(surface: surface, lemma: lemma) ? .plural : nil)
+        // The owned bypass is deliberately narrower than the general plural
+        // heuristic below. Capitalization plus a stem-matching umlaut `-er`
+        // alternation (`Buch` -> `Bücher`) is precise on the pinned German
+        // development corpus; ordinary `-en`/`-n` endings overlap singular weak
+        // noun declension and still require Apple or flexion evidence.
+        if isNounLikeLemma(lemma), isHighConfidenceOwnedPlural(surface: surface, lemma: lemma) {
+            return .contextIndependent(.plural)
         }
 
         let evidence = evidenceProvider(surface, context)
@@ -216,6 +216,22 @@ package enum GermanFormLabeler {
         let surfaceHasUmlaut = surface.unicodeScalars.contains { umlauts.contains($0) }
         let lemmaHasUmlaut = lemma.unicodeScalars.contains { umlauts.contains($0) }
         return surfaceHasUmlaut && !lemmaHasUmlaut
+    }
+
+    private static func isHighConfidenceOwnedPlural(surface: String, lemma: String) -> Bool {
+        guard gainsUmlaut(surface: surface, lemma: lemma) else { return false }
+        let surfaceKey = VocabularyTextPolicy.canonicalVocabularyKey(surface)
+        let lemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(lemma)
+        guard surfaceKey.hasSuffix("er") else { return false }
+        return foldGermanUmlauts(String(surfaceKey.dropLast(2))) == foldGermanUmlauts(lemmaKey)
+    }
+
+    private static func foldGermanUmlauts(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "ä", with: "a")
+            .replacingOccurrences(of: "ö", with: "o")
+            .replacingOccurrences(of: "ü", with: "u")
+            .replacingOccurrences(of: "ß", with: "ss")
     }
 
     private static func isNounLikeLemma(_ lemma: String) -> Bool {

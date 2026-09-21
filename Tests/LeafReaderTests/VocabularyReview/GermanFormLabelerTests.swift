@@ -180,6 +180,25 @@ enum GermanFormLabelerTests {
             .contextIndependent(.plural),
             "a runtime POS disagreement must not veto a proven plural"
         )
+
+        for (surface, lemma) in [
+            ("Kunden", "Kunde"),
+            ("Herrn", "Herr"),
+            ("Präsidenten", "Präsident")
+        ] {
+            let unresolved = GermanFormLabeler.resolution(
+                surfaceForm: surface,
+                lemma: lemma,
+                evidenceProvider: { _, _ in
+                    GermanFormLabelEvidence(partOfSpeech: nil, hasClauseAuxiliary: false)
+                }
+            )
+            try expectEqual(
+                unresolved,
+                .contextual(nil),
+                "capitalization plus an ambiguous weak-noun ending must not prove '\(surface)' plural"
+            )
+        }
     }
 
     // MARK: - Guards
