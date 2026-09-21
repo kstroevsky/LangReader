@@ -22,7 +22,7 @@
     "baseline_runs": "standard, causal, longitudinal, POS all exit 0; 13 output hashes frozen",
     "baseline_validators": "assessment, causal, longitudinal, POS, and sealed-reservation self-test exit 0",
     "historical_validator": "Git-blob verification and injected negative controls exit 0",
-    "architecture_ci": "checkout fetch-depth 0 configured; remote CI not yet run",
+    "architecture_ci": "run 35568095165 at 75df35c failed in the regression harness on the same German participle/NaturalLanguage provider assertion as baseline b2b9969 run 34875380965; validation boundary and 177 Swift tests passed before the failure",
     "boundary_scaffold": "SwiftPM target graph, negative boundary fixtures, focused Swift 6 target test, app-product build, and baseline standard-output parity passed",
     "study_schemas": "7 moved Swift 6 tests passed; source bodies byte-identical to HEAD except required LeafReaderCore import; historical seal unchanged",
     "parallel_evaluator": "41 Core tests and 3 Validation parity tests passed; frozen four-run candidate parity report PASS across 13 artifacts; old wrapper unchanged",
@@ -33,7 +33,7 @@
     "pos_cross_format": "POS report byte-identical and full parity report 4 PASS; App PDF/EPUB/DOCX fixture 3 tests passed; no Validation-to-App dependency",
     "final_matrix": "post-followup ./scripts/check.sh --no-build passed with strict Swift build, 177 Swift tests (1 skip), 281 logic tests, all evidence validators, and v1/v2/v3 reservation self-tests; ./scripts/build_app.sh built, signed, and validated the app; git diff --check passed",
     "fresh_reservation": "v1/v2 remain byte-identical and unexecuted; fresh v3 identities are disjoint from the versioned docs/perf, docs/plans, and scripts/fixtures corpus and locked to post-cleanup commit 0dc16ef; no outcomes or protected data accessed",
-    "post_extraction_followup": "lossless follow-up plan mechanical/semantic/independent verification passed; three extra Core diagnostic controls removed; guarded continuation tests and 13-artifact frozen development parity passed"
+    "post_extraction_followup": "lossless follow-up plan mechanical/semantic/independent verification passed; three extra Core diagnostic controls removed; guarded continuation tests and 13-artifact frozen development parity passed; v3 scans 188 prior JSON artifacts and explicitly includes/rejects all v2 seed/document identities"
   },
   "open_findings": [],
   "remaining_gates": ["independent statistical/research/privacy review", "clean candidate and analysis/decision-rule freeze", "separate reviewed v3 consumption decision", "development-confirmation execution", "release-holdout gate", "final-tree private GUI and algorithm performance matrix"]

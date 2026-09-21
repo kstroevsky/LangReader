@@ -153,7 +153,10 @@ def validate(manifest: dict, *, verify_files: bool = True) -> dict:
             or non_overlap.get("allOpaqueDocumentDerivationIDsMustBeUnique") is not True \
             or "24-hex" not in str(non_overlap.get("opaqueDocumentNamespaceNote", "")):
         raise ValueError("v3 non-overlap contract changed")
-    prior_seeds, prior_documents, file_count = v2.prior_artifact_identities(SOURCE_REVISION)
+    prior_seeds, prior_documents, file_count = v2.prior_artifact_identities(
+        SOURCE_REVISION,
+        MANIFEST.relative_to(ROOT).as_posix(),
+    )
     if file_count < 100 or not {1, 2, 7, 17, 20260909, 20260912, 20260913, 20260914}.issubset(prior_seeds):
         raise ValueError("v3 prior identity corpus is incomplete")
     v2.require_disjoint(seeds, documents, prior_seeds, prior_documents)
@@ -195,6 +198,30 @@ def validate(manifest: dict, *, verify_files: bool = True) -> dict:
 def self_test() -> None:
     original = read_json(MANIFEST)
     validate(original)
+    prior_seeds, prior_documents, _ = v2.prior_artifact_identities(
+        SOURCE_REVISION,
+        MANIFEST.relative_to(ROOT).as_posix(),
+    )
+    v2_manifest = read_json(V2_MANIFEST)
+    v2_seeds = {run["seed"] for run in v2_manifest["runs"]}
+    v2_documents = {
+        document
+        for run in v2_manifest["runs"]
+        for document in run["opaqueDocumentDerivationIDs"]
+    }
+    if not v2_seeds.issubset(prior_seeds) or not v2_documents.issubset(prior_documents):
+        raise AssertionError("v3 prior identity corpus omitted v2 identities")
+    try:
+        v2.require_disjoint(
+            {next(iter(v2_seeds))},
+            {next(iter(v2_documents))},
+            prior_seeds,
+            prior_documents,
+        )
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("accepted explicit v2-to-v3 identity collision")
     mutations = (
         ("seed", lambda value: value["runs"][0].__setitem__("seed", 1)),
         ("document", lambda value: value["runs"][0]["opaqueDocumentDerivationIDs"].__setitem__(0, "0" * 24)),

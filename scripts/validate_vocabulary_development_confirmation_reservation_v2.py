@@ -136,6 +136,7 @@ def derived_document_id(run_digest: bytes, ordinal: int) -> str:
 @cache
 def prior_artifact_identities(
     revision: str = PRIOR_EVIDENCE_REVISION,
+    excluded_manifest: str = MANIFEST.relative_to(ROOT).as_posix(),
 ) -> tuple[frozenset[int], frozenset[str], int]:
     """Read all retained pre-v2 JSON identities from the v2-seal Git tree.
 
@@ -157,7 +158,7 @@ def prior_artifact_identities(
         raise RuntimeError(f"cannot list prior evidence at {revision}")
     paths = [
         path for path in listing.stdout.splitlines()
-        if path.endswith(".json") and path != MANIFEST.relative_to(ROOT).as_posix()
+        if path.endswith(".json") and path != excluded_manifest
     ]
     if not paths:
         raise ValueError("prior evidence inventory is empty")
