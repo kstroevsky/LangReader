@@ -41,6 +41,10 @@ on Validation, and the shipping `LeafReaderApp` product cannot link it. Validati
 tests may depend on both Validation and Core; App integration tests may use a
 Validation-owned comparison helper without adding Validation to the App product.
 `scripts/check_validation_boundary.py` enforces this target/import/link direction.
+Core exposes immutable production assessment observations to Validation. Its only
+package-scoped experimental control is the guarded fixed-budget question-continuation
+primitive, used on a Validation-owned assessment copy; Core has no diagnostic stop,
+probability, or selection-override API.
 
 ### `LeafReaderCore`
 

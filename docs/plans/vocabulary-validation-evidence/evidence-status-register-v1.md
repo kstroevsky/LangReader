@@ -2,9 +2,9 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `5de7128feb8bc2cab2457d88d0fd7d88671654d9`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `0dc16efd21e2816a5154b4d515c2b5272e6b8fe3`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
-Active future reservation: `docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v2.json` (SHA-256 `19ccb4a9bddff02df1c074c85b56ffc782e7216d1a883a60cc088ac7338af89d`; `reserved_not_executed`). Historical reservations remain indexed separately and unexecuted.
+Active future reservation: `docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v3.json` (SHA-256 `8c25324b82cf54e7d1945ce2918c61d4eecae8522743839323e24edb58f7fb4c`; `reserved_not_executed`). Historical reservations remain indexed separately and unexecuted.
 
 Head-only changes since the production evidence candidate:
 
@@ -74,6 +74,8 @@ Head-only changes since the production evidence candidate:
 - 6b8881983a1609ff96f4d5e4aba732136d8e9683: production observation and validation-owned bank/runner extraction
 - a50f3fb4414b00252427ffed52916d0c45aaa8d9: POS evaluator moved to internal validation target
 - 5de7128feb8bc2cab2457d88d0fd7d88671654d9: boundary enforcement and sealed, unexecuted v2 future reservation
+- 850d09d72a40b584bf0bfe78337ce9708e1bdd8c: reviewed follow-up plan, derived register synchronization, and historical v2 validator hardening
+- 0dc16efd21e2816a5154b4d515c2b5272e6b8fe3: narrowed Core validation controls and development-fixture parity; production policy unchanged
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 
@@ -184,7 +186,14 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v2.json`](development-confirmation-reservation-v2.json); SHA-256 `19ccb4a9bddff02df1c074c85b56ffc782e7216d1a883a60cc088ac7338af89d`
 - Evidence class: sealed synthetic development-confirmation reservation
 - Status: `reserved_not_executed`
-- Interpretation: Active future reservation for the extracted generator, with three disjoint seeds and 24 opaque document identities; no candidate, analysis freeze, outcomes, consumption, or release access exists.
+- Interpretation: Historical unexecuted reservation for the initial extracted generator; its three seeds and 24 opaque document identities remain sealed after the post-extraction Core cleanup changed the generator source lock.
+
+### docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v3.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v3.json`](development-confirmation-reservation-v3.json); SHA-256 `8c25324b82cf54e7d1945ce2918c61d4eecae8522743839323e24edb58f7fb4c`
+- Evidence class: sealed synthetic development-confirmation reservation
+- Status: `reserved_not_executed`
+- Interpretation: Sole active future reservation for the post-cleanup generator, with three disjoint seeds and 24 opaque document identities; no candidate, analysis freeze, outcomes, consumption, or release access exists.
 
 ### docs/plans/vocabulary-validation-boundary/implementation-evidence/commit-5-extraction-checkpoint.md
 

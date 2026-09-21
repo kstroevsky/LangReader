@@ -134,7 +134,9 @@ def derived_document_id(run_digest: bytes, ordinal: int) -> str:
 
 
 @cache
-def prior_artifact_identities() -> tuple[frozenset[int], frozenset[str], int]:
+def prior_artifact_identities(
+    revision: str = PRIOR_EVIDENCE_REVISION,
+) -> tuple[frozenset[int], frozenset[str], int]:
     """Read all retained pre-v2 JSON identities from the v2-seal Git tree.
 
     The 24-hex comparison is deliberately conservative: it covers any prior
@@ -142,17 +144,17 @@ def prior_artifact_identities() -> tuple[frozenset[int], frozenset[str], int]:
     `opaqueDocumentDerivationIDs` field.
     """
     available = subprocess.run(
-        ["git", "cat-file", "-e", f"{PRIOR_EVIDENCE_REVISION}^{{commit}}"],
+        ["git", "cat-file", "-e", f"{revision}^{{commit}}"],
         cwd=ROOT, capture_output=True, check=False,
     )
     if available.returncode != 0:
-        raise RuntimeError(f"prior evidence Git revision unavailable: {PRIOR_EVIDENCE_REVISION}")
+        raise RuntimeError(f"prior evidence Git revision unavailable: {revision}")
     listing = subprocess.run(
-        ["git", "ls-tree", "-r", "--name-only", PRIOR_EVIDENCE_REVISION, "--", *PRIOR_EVIDENCE_ROOTS],
+        ["git", "ls-tree", "-r", "--name-only", revision, "--", *PRIOR_EVIDENCE_ROOTS],
         cwd=ROOT, capture_output=True, text=True, check=False,
     )
     if listing.returncode != 0:
-        raise RuntimeError(f"cannot list prior evidence at {PRIOR_EVIDENCE_REVISION}")
+        raise RuntimeError(f"cannot list prior evidence at {revision}")
     paths = [
         path for path in listing.stdout.splitlines()
         if path.endswith(".json") and path != MANIFEST.relative_to(ROOT).as_posix()
@@ -176,7 +178,7 @@ def prior_artifact_identities() -> tuple[frozenset[int], frozenset[str], int]:
 
     for path in paths:
         blob = subprocess.run(
-            ["git", "show", f"{PRIOR_EVIDENCE_REVISION}:{path}"],
+            ["git", "show", f"{revision}:{path}"],
             cwd=ROOT, capture_output=True, check=False,
         )
         if blob.returncode != 0:

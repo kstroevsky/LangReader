@@ -1,19 +1,22 @@
 {
   "schema_version": 1,
-  "phase": "extraction-checkpoint-complete",
+  "phase": "post-extraction-followup-final-verification",
   "source_revision": "b2b99696feda177be0699d5277a2c13c7c7c9bd5",
   "accepted_plan": "docs/plans/vocabulary-validation-boundary/revision-2026-09-19-ci-source-lock/candidate-plan.md",
   "baseline_manifest": "docs/plans/vocabulary-validation-boundary/implementation-evidence/extraction-parity-manifest.json",
   "baseline_manifest_sha256": "a1c2d778a0fcf90357c3b7cc0e3d0db68e414f57f94c8bc39ffdef68a0a68b1b",
-  "completed_slices": ["baseline-checkpoint", "commit-1-boundary-scaffold", "2a-study-schemas", "2b-parallel-diagnostic-evaluator", "2c-same-tree-bank-parity", "2d-wrapper-linkage-switch", "2e-remove-core-experiment-code", "commit-3-runner-extraction", "commit-4-pos-cross-format", "commit-5-enforcement-and-handoff"],
-  "current_slice": null,
+  "followup_source_revision": "0dc16efd21e2816a5154b4d515c2b5272e6b8fe3",
+  "followup_plan": "docs/plans/vocabulary-validation-boundary/revision-2026-09-21-boundary-followup/candidate-plan.md",
+  "followup_plan_sha256": "3a67d47ad1d0ea133618bff40611e9b40a8b6a3f1a5a7f7082f8210a80985cab",
+  "completed_slices": ["baseline-checkpoint", "commit-1-boundary-scaffold", "2a-study-schemas", "2b-parallel-diagnostic-evaluator", "2c-same-tree-bank-parity", "2d-wrapper-linkage-switch", "2e-remove-core-experiment-code", "commit-3-runner-extraction", "commit-4-pos-cross-format", "commit-5-enforcement-and-handoff", "followup-register-and-v2-hardening", "followup-core-seam-cleanup", "followup-v3-seal"],
+  "current_slice": "followup-final-verification",
   "protected_data_accessed": false,
   "historical_reservation_modified": false,
-  "fresh_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v2.json",
-  "fresh_reservation_sha256": "19ccb4a9bddff02df1c074c85b56ffc782e7216d1a883a60cc088ac7338af89d",
+  "fresh_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v3.json",
+  "fresh_reservation_sha256": "8c25324b82cf54e7d1945ce2918c61d4eecae8522743839323e24edb58f7fb4c",
   "fresh_reservation_status": "reservedNotExecuted",
-  "extracted_generator_source_lock": "docs/plans/vocabulary-validation-boundary/implementation-evidence/extracted-generator-source-lock.json",
-  "extracted_generator_source_lock_sha256": "ba1383065f79f3b43f87b3fa69d3916133b683b5d7f2615465c45e41502abd38",
+  "extracted_generator_source_lock": "docs/plans/vocabulary-validation-boundary/implementation-evidence/post-cleanup-generator-source-lock-v3.json",
+  "extracted_generator_source_lock_sha256": "b11db3185cfb70c22115da15f82e554c1dda3e5553112a06c0bc95257975574a",
   "candidate_frozen": false,
   "verification": {
     "baseline_runs": "standard, causal, longitudinal, POS all exit 0; 13 output hashes frozen",
@@ -29,8 +32,9 @@
     "runner_extraction": "causal/longitudinal and standard synthetic execution moved into Validation; 29 CLI flags unchanged; parity reports 3a, 3b, 3c all PASS across 13 artifacts",
     "pos_cross_format": "POS report byte-identical and full parity report 4 PASS; App PDF/EPUB/DOCX fixture 3 tests passed; no Validation-to-App dependency",
     "final_matrix": "swift build and swift test with warnings as errors passed; ./scripts/check.sh --no-build passed with 176 Swift tests (1 skip), 281 logic tests, all evidence validators, and both reservation self-tests; ./scripts/build_app.sh built and signed the app; git diff --check passed",
-    "fresh_reservation": "new disjoint v2 run/document identities locked to extracted Core/Validation source/build and analysis provenance; missing/mismatched lock negative controls passed; no outcomes or protected data accessed"
+    "fresh_reservation": "v1/v2 remain byte-identical and unexecuted; fresh v3 identities are disjoint from the versioned docs/perf, docs/plans, and scripts/fixtures corpus and locked to post-cleanup commit 0dc16ef; no outcomes or protected data accessed",
+    "post_extraction_followup": "lossless follow-up plan mechanical/semantic/independent verification passed; three extra Core diagnostic controls removed; guarded continuation tests and 13-artifact frozen development parity passed"
   },
   "open_findings": [],
-  "remaining_gates": ["independent statistical/research/privacy review", "clean candidate and analysis/decision-rule freeze", "separate reviewed v2 consumption decision", "development-confirmation execution", "release-holdout gate", "final-tree private GUI and algorithm performance matrix"]
+  "remaining_gates": ["independent statistical/research/privacy review", "clean candidate and analysis/decision-rule freeze", "separate reviewed v3 consumption decision", "development-confirmation execution", "release-holdout gate", "final-tree private GUI and algorithm performance matrix"]
 }

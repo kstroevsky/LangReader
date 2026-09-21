@@ -80,6 +80,9 @@ python3 ./scripts/validate_vocabulary_development_confirmation_reservation.py --
 echo "==> Checking sealed post-extraction development-confirmation reservation"
 python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v2.py --self-test
 
+echo "==> Checking sealed post-cleanup development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v3.py --self-test
+
 echo "==> Checking frozen vocabulary warm-compatibility development reservation"
 python3 ./scripts/validate_vocabulary_longitudinal_compatibility_manifest.py \
   ./docs/plans/vocabulary-validation-evidence/longitudinal-compatibility-development-manifest-v1.json \
