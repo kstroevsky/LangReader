@@ -267,4 +267,12 @@ enum GermanLemmaFixtureTests {
             "KNOWN GAP: the separated prefix 'auf' is left as a bare Particle"
         )
     }
+
+    static func testAdditionalLanguageModelCharacterization() throws {
+        try characterizeEqual(
+            GermanLemmaResolver.lemma(for: "части", language: .russian),
+            "часть",
+            "Russian inflected noun availability is host-runtime characterization"
+        )
+    }
 }

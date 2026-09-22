@@ -49,6 +49,21 @@ private struct InMemoryWordRecordStore {
 }
 
 enum VocabularyLogicTests {
+    private static let unavailableLemmaResolution: VocabularyLemmaResolutionProvider = {
+        surfaceForm, _, _ in
+        .unresolved(surface: VocabularyTextPolicy.normalizedVocabularyText(surfaceForm))
+    }
+
+    private static let unavailableGermanWithOwnedFallback: VocabularyLemmaResolutionProvider = {
+        surfaceForm, _, language in
+        GermanLemmaResolver.resolution(
+            for: surfaceForm,
+            taggedLemma: nil,
+            language: language,
+            isKnownGermanWord: { $0 == "fehlerhaft" }
+        )
+    }
+
     static func testVocabularySRS() throws {
         let date = Date(timeIntervalSince1970: 1_700_000_000)
         let initial = VocabularySRSState.initial(createdAt: date)
@@ -329,7 +344,11 @@ enum VocabularyLogicTests {
             "Die E-Mail und die E-\nMail kamen an.",
             ""
         ]
-        guard let index = VocabularyDocumentLemmaIndex(texts: pages, language: .german) else {
+        guard let index = VocabularyDocumentLemmaIndex(
+            texts: pages,
+            language: .german,
+            resolutionProvider: unavailableLemmaResolution
+        ) else {
             try expect(false, "a non-cancelled document should produce a lemma index")
             return
         }
@@ -344,7 +363,8 @@ enum VocabularyLogicTests {
                 lemma: lemma,
                 selectedForm: selected,
                 inTexts: pages,
-                language: .german
+                language: .german,
+                resolutionProvider: unavailableLemmaResolution
             )
             try expectEqual(
                 index.matches(lemma: lemma, selectedForm: selected),
@@ -356,7 +376,12 @@ enum VocabularyLogicTests {
         let groups = ["gehen": "gehen", "e-mail": "E-Mail"]
         let indexedGroups = index.matches(lemmasByKey: groups)
         let expectedGroups = pages.map {
-            GermanLemmaOccurrenceMatcher.matches(lemmasByKey: groups, in: $0, language: .german)
+            GermanLemmaOccurrenceMatcher.matches(
+                lemmasByKey: groups,
+                in: $0,
+                language: .german,
+                resolutionProvider: unavailableLemmaResolution
+            )
         }
         try expectEqual(
             indexedGroups,
@@ -383,14 +408,19 @@ enum VocabularyLogicTests {
             "the priority plan should be current-first, unique, bounded, and deterministic"
         )
         let priorityTexts = priorityPageIndexes.map { pages[$0] }
-        guard let priorityIndex = VocabularyDocumentLemmaIndex(texts: priorityTexts, language: .german),
+        guard let priorityIndex = VocabularyDocumentLemmaIndex(
+                  texts: priorityTexts,
+                  language: .german,
+                  resolutionProvider: unavailableLemmaResolution
+              ),
               let seededIndex = VocabularyDocumentLemmaIndex(
-                texts: pages,
-                language: .german,
-                seed: VocabularyDocumentLemmaIndexSeed(
-                    pageIndexes: priorityPageIndexes,
-                    index: priorityIndex
-                )
+                  texts: pages,
+                  language: .german,
+                  seed: VocabularyDocumentLemmaIndexSeed(
+                      pageIndexes: priorityPageIndexes,
+                      index: priorityIndex
+                  ),
+                  resolutionProvider: unavailableLemmaResolution
               ) else {
             try expect(false, "a reusable visible-first slice should seed the complete index")
             return
@@ -478,7 +508,8 @@ enum VocabularyLogicTests {
             lemma: "fehlerhaft",
             selectedForm: "fehlerhafte",
             in: text,
-            language: .german
+            language: .german,
+            resolutionProvider: unavailableGermanWithOwnedFallback
         )
         try expectEqual(
             matches.map(\.matchedText),
@@ -488,7 +519,8 @@ enum VocabularyLogicTests {
         let batchMatches = GermanLemmaOccurrenceMatcher.matches(
             lemmasByKey: ["fehlerhaft": "fehlerhaft"],
             in: text,
-            language: .german
+            language: .german,
+            resolutionProvider: unavailableGermanWithOwnedFallback
         )
         try expectEqual(batchMatches["fehlerhaft"]?.map(\.matchedText), matches.map(\.matchedText), "batch rescans should preserve all exact and line-wrapped inflected occurrences")
         try expect(batchMatches["fehler"] == nil, "batch rescans should not create an unrelated noun group")
@@ -508,7 +540,8 @@ enum VocabularyLogicTests {
             lemma: "folgen",
             selectedForm: "folgen",
             in: text,
-            language: .german
+            language: .german,
+            resolutionProvider: unavailableLemmaResolution
         )
         try expect(
             !matches.contains { VocabularyTextPolicy.canonicalVocabularyKey($0.matchedText) == "folg" },
@@ -516,27 +549,38 @@ enum VocabularyLogicTests {
         )
         try expectEqual(
             matches.map(\.matchedText),
-            ["folgen", "folgten"],
-            "real occurrences of 'folgen' should still be matched around the false fragment"
+            ["folgen"],
+            "without a lemma model only the exact base surface should match"
         )
 
-        let batch = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["folgen": "folgen"], in: text, language: .german)
+        let batch = GermanLemmaOccurrenceMatcher.matches(
+            lemmasByKey: ["folgen": "folgen"],
+            in: text,
+            language: .german,
+            resolutionProvider: unavailableLemmaResolution
+        )
         try expectEqual(
             batch["folgen"]?.map(\.matchedText),
-            ["folgen", "folgten"],
-            "the backfill matcher must agree and must not spawn a 'folg' occurrence"
+            ["folgen"],
+            "the model-less backfill matcher must be exact-only and must not spawn 'folg' or infer 'folgten'"
         )
     }
 
-    /// The occurrence engine passes the document language through to the system
-    /// lemmatizer. Use language models present on a clean macOS runner here;
-    /// additional NaturalLanguage assets are optional and machine-dependent.
+    /// The occurrence engine passes the document language through its evidence
+    /// boundary without making an installed Apple model a product prerequisite.
     static func testLemmaEngineIsLanguageParameterized() throws {
         let text = "I run every day and I am running now."
+        let englishEvidence: VocabularyLemmaResolutionProvider = { surface, _, language in
+            if language == .english, surface.lowercased() == "running" {
+                return .resolved(lemma: "run", source: .naturalLanguage)
+            }
+            return .unresolved(surface: surface)
+        }
         let englishGroups = GermanLemmaOccurrenceMatcher.matches(
             lemmasByKey: ["run": "run"],
             in: text,
-            language: .english
+            language: .english,
+            resolutionProvider: englishEvidence
         )
         try expectEqual(
             Set((englishGroups["run"] ?? []).map { $0.matchedText.lowercased() }),
@@ -549,26 +593,36 @@ enum VocabularyLogicTests {
         let englishUnderGerman = GermanLemmaOccurrenceMatcher.matches(
             lemmasByKey: ["run": "run"],
             in: text,
-            language: .german
+            language: .german,
+            resolutionProvider: englishEvidence
         )
         try expect(
             (englishUnderGerman["run"]?.count ?? 0) < (englishGroups["run"]?.count ?? 0),
             "German lemmatization must not reproduce the English grouping"
         )
 
-        // English, via the resolver directly.
-        try expectEqual(GermanLemmaResolver.lemma(for: "running", language: .english), "run", "English -ing form should lemmatize under .english")
-        try expectEqual(GermanLemmaResolver.lemma(for: "children", language: .english), "child", "English irregular plural should lemmatize under .english")
-
-        // Russian groups well too, and is why the supported set includes it.
-        try expectEqual(GermanLemmaResolver.lemma(for: "части", language: .russian), "часть", "Russian inflected noun should lemmatize under .russian")
-
-        // The detector picks the document language and gates on support.
         try expectEqual(
-            VocabularyLanguageDetector.language(forSample: "Je parle français et je lis un long texte en français ici."),
-            .french,
-            "the detector should recognize a French sample"
+            GermanLemmaResolver.resolution(
+                for: "running",
+                taggedLemma: "run",
+                language: .english,
+                isKnownGermanWord: { _ in false }
+            ),
+            .resolved(lemma: "run", source: .naturalLanguage),
+            "a useful non-identity Apple lemma remains resolved"
         )
+        try expectEqual(
+            GermanLemmaResolver.resolution(
+                for: "части",
+                taggedLemma: "части",
+                language: .russian,
+                isKnownGermanWord: { _ in false }
+            ),
+            .unresolved(surface: "части"),
+            "an identity lemma in any language is unresolved rather than inferred knowledge"
+        )
+
+        // Short inputs take the deterministic fallback without asking the runtime.
         try expectEqual(
             VocabularyLanguageDetector.language(forSample: "kort"),
             VocabularyLanguageDetector.fallback,
@@ -638,11 +692,15 @@ enum VocabularyLogicTests {
             .pastParticiple,
             "English routes to the English labeler"
         )
-        let germanContext = "Er ist gestern nach Hause gegangen und hat nichts gesagt."
         try expectEqual(
-            VocabularyFormLabeling.label(surfaceForm: "gegangen", lemma: "gehen", context: germanContext, language: .german),
-            .partizipII,
-            "German still routes to the German labeler"
+            VocabularyFormLabeling.label(
+                surfaceForm: "Bücher",
+                lemma: "Buch",
+                context: "Die Bücher liegen dort.",
+                language: .german
+            ),
+            .plural,
+            "German routing preserves LeafReader-owned evidence without requiring the Apple model"
         )
         try expectEqual(
             VocabularyFormLabeling.label(
@@ -764,7 +822,8 @@ enum VocabularyLogicTests {
         try expect(
             !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
                 surfaceForm: "Folgen", groupLemma: "folgen",
-                in: "Welche Folgen hätte das?", language: .german
+                in: "Welche Folgen hätte das?", language: .german,
+                resolutionProvider: unavailableLemmaResolution
             ),
             "the noun 'Folgen' is not a member of the German verb group 'folgen'"
         )
@@ -811,35 +870,82 @@ enum VocabularyLogicTests {
         let text = "Wir folgen dem Plan. Welche Folgen hätte das? Der Fehler folgt daraus."
 
         // Backfill / group-expansion path (no exact-form query).
-        let batch = GermanLemmaOccurrenceMatcher.matches(lemmasByKey: ["folgen": "folgen"], in: text, language: .german)
+        let batch = GermanLemmaOccurrenceMatcher.matches(
+            lemmasByKey: ["folgen": "folgen"],
+            in: text,
+            language: .german,
+            resolutionProvider: unavailableLemmaResolution
+        )
         try expect(
             batch["folgen"]?.contains { $0.matchedText == "Folgen" } != true,
             "the backfill scan must keep the noun 'Folgen' out of the verb group 'folgen'"
         )
         try expect(
-            batch["folgen"]?.contains { $0.matchedText == "folgt" } == true,
-            "the backfill scan must still find the real verb form 'folgt'"
+            batch["folgen"]?.contains { $0.matchedText == "folgen" } == true
+                && batch["folgen"]?.contains { $0.matchedText == "folgt" } != true,
+            "the model-less backfill scan keeps the exact base and does not infer 'folgt'"
         )
 
-        // Lemma/surface expansion around a different saved form ("folgt"): the
-        // noun "Folgen" must not be swept in, while real verb forms still match.
-        let sequential = GermanLemmaOccurrenceMatcher.matches(lemma: "folgen", selectedForm: "folgt", in: text, language: .german)
+        // An exact query for another saved form keeps that form plus the exact
+        // base, but does not infer any additional forms or fold the noun's case.
+        let sequential = GermanLemmaOccurrenceMatcher.matches(
+            lemma: "folgen",
+            selectedForm: "folgt",
+            in: text,
+            language: .german,
+            resolutionProvider: unavailableLemmaResolution
+        )
         try expect(
             !sequential.contains { $0.matchedText == "Folgen" },
             "expanding the verb group must not match the noun 'Folgen'"
         )
         try expect(
-            sequential.contains { $0.matchedText == "folgt" } && sequential.contains { $0.matchedText == "folgen" },
-            "expanding the verb group must still match 'folgt' and the base 'folgen'"
+            sequential.contains { $0.matchedText == "folgt" }
+                && sequential.contains { $0.matchedText == "folgen" },
+            "exact selected and base surfaces remain available without lemma inference"
         )
 
         // Group membership (used by the load-time prune) excludes the noun.
         try expect(
             !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
                 surfaceForm: "Folgen", groupLemma: "folgen", in: "Welche Folgen hätte das?",
-                language: .german
+                language: .german,
+                resolutionProvider: unavailableLemmaResolution
             ),
             "the noun 'Folgen' is not a member of the verb group 'folgen'"
+        )
+
+        guard let index = VocabularyDocumentLemmaIndex(
+            texts: [text],
+            language: .german,
+            resolutionProvider: unavailableLemmaResolution
+        ) else {
+            try expect(false, "the model-less document index should build")
+            return
+        }
+        let unresolvedSummaries = index.lemmaSummaries()
+        try expect(
+            unresolvedSummaries.contains { $0.displayLemma == "folgen" }
+                && unresolvedSummaries.contains { $0.displayLemma == "Folgen" },
+            "unresolved case-distinct surfaces must remain separate lexical identities in the reusable index"
+        )
+
+        let usefulVerbEvidence: VocabularyLemmaResolutionProvider = { surface, _, _ in
+            if surface == "folgt" {
+                return .resolved(lemma: "folgen", source: .naturalLanguage)
+            }
+            return .unresolved(surface: surface)
+        }
+        let assisted = GermanLemmaOccurrenceMatcher.matches(
+            lemmasByKey: ["folgen": "folgen"],
+            in: text,
+            language: .german,
+            resolutionProvider: usefulVerbEvidence
+        )
+        try expectEqual(
+            assisted["folgen"]?.map(\.matchedText),
+            ["folgen", "folgt"],
+            "useful non-identity evidence should restore high-recall grouping without admitting 'Folgen'"
         )
     }
 

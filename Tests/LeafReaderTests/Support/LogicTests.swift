@@ -844,6 +844,7 @@ private let tests: [(String, () throws -> Void)] = [
     ("NaturalLanguage German lemma-gap characterization", GermanLemmaFixtureTests.testKnownLemmaGaps),
     ("NaturalLanguage German POS-gap characterization", GermanLemmaFixtureTests.testKnownPartOfSpeechGaps),
     ("NaturalLanguage German separable-verb characterization", GermanLemmaFixtureTests.testSeparableVerbGap),
+    ("NaturalLanguage Russian lemma characterization", GermanLemmaFixtureTests.testAdditionalLanguageModelCharacterization),
     ("German form label Partizip II", GermanFormLabelerTests.testPartizipIIWithAuxiliary),
     ("German form label verb-final clause", GermanFormLabelerTests.testPartizipIIInVerbFinalClause),
     ("German form label clause boundary", GermanFormLabelerTests.testAuxiliaryInAnotherClauseIsNotBorrowed),

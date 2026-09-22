@@ -1,15 +1,21 @@
 import Foundation
 import NaturalLanguage
 
-package enum GermanLemmaSource: Equatable {
+package enum GermanLemmaSource: Equatable, Sendable {
     case naturalLanguage
     case deterministicAdjectiveMorphology
 }
 
+package typealias VocabularyLemmaResolutionProvider = @Sendable (
+    _ surfaceForm: String,
+    _ taggedLemma: String?,
+    _ language: NLLanguage
+) -> GermanLemmaResolution
+
 /// Distinguishes an actual lemma resolution from retaining the surface as a
 /// safe fallback. Callers that still need a String can use `value`, while new
 /// policy can avoid treating an unresolved identity as authoritative.
-package enum GermanLemmaResolution: Equatable {
+package enum GermanLemmaResolution: Equatable, Sendable {
     case resolved(lemma: String, source: GermanLemmaSource)
     case unresolved(surface: String)
 
@@ -82,6 +88,19 @@ package enum GermanLemmaResolver {
     package static func resolution(
         for surfaceForm: String,
         taggedLemma: String?,
+        language: NLLanguage
+    ) -> GermanLemmaResolution {
+        resolution(
+            for: surfaceForm,
+            taggedLemma: taggedLemma,
+            language: language,
+            isKnownGermanWord: { GermanFrequencyRankTable.shared.rank(for: $0) != nil }
+        )
+    }
+
+    package static func resolution(
+        for surfaceForm: String,
+        taggedLemma: String?,
         language: NLLanguage,
         isKnownGermanWord: (String) -> Bool
     ) -> GermanLemmaResolution {
@@ -142,6 +161,15 @@ package enum GermanLemmaResolver {
 }
 
 package enum GermanLemmaOccurrenceMatcher {
+    package static let naturalLanguageResolutionProvider: VocabularyLemmaResolutionProvider = {
+        surfaceForm, taggedLemma, language in
+        GermanLemmaResolver.resolution(
+            for: surfaceForm,
+            taggedLemma: taggedLemma,
+            language: language
+        )
+    }
+
     /// The parallel scanner writes each page exactly once. Keeping that write
     /// behind a small Sendable owner avoids passing an inout buffer into a
     /// Swift 6 concurrent closure while preserving page-order results.
@@ -184,7 +212,8 @@ package enum GermanLemmaOccurrenceMatcher {
         lemma rawLemma: String,
         selectedForm: String,
         inTexts texts: [String],
-        language: NLLanguage = .english
+        language: NLLanguage = .english,
+        resolutionProvider: @escaping VocabularyLemmaResolutionProvider = naturalLanguageResolutionProvider
     ) -> [[VocabularyTextOccurrence]] {
         guard !texts.isEmpty else { return [] }
         let compiled = VocabularyOccurrenceMatcher.compile(query: selectedForm)
@@ -197,7 +226,8 @@ package enum GermanLemmaOccurrenceMatcher {
                 in: texts[0],
                 compiledQuery: compiled,
                 tagger: NLTagger(tagSchemes: [.lemma]),
-                language: language
+                language: language,
+                resolutionProvider: resolutionProvider
             ), at: 0)
             return results.snapshot()
         }
@@ -212,7 +242,7 @@ package enum GermanLemmaOccurrenceMatcher {
             // A second tagger: the first is mid-enumeration when the
             // fallback fires and cannot be reentered.
             let fallbackTagger = NLTagger(tagSchemes: [.lemma])
-            var lemmaMemo: [String: String] = [:]
+            var lemmaMemo: [String: GermanLemmaResolution] = [:]
             var index = worker
             while index < texts.count {
                 results.store(matches(
@@ -223,7 +253,8 @@ package enum GermanLemmaOccurrenceMatcher {
                     tagger: tagger,
                     fallbackTagger: fallbackTagger,
                     lemmaMemo: &lemmaMemo,
-                    language: language
+                    language: language,
+                    resolutionProvider: resolutionProvider
                 ), at: index)
                 index += workerCount
             }
@@ -242,24 +273,37 @@ package enum GermanLemmaOccurrenceMatcher {
         surfaceForm: String,
         groupLemma: String,
         in context: String,
-        language: NLLanguage = .english
+        language: NLLanguage = .english,
+        resolutionProvider: @escaping VocabularyLemmaResolutionProvider = naturalLanguageResolutionProvider
     ) -> Bool {
         let key = VocabularyTextPolicy.canonicalVocabularyKey(groupLemma)
         let surfaceKey = VocabularyTextPolicy.canonicalVocabularyKey(surfaceForm)
         guard !key.isEmpty, !surfaceKey.isEmpty, !context.isEmpty else { return false }
-        return matches(lemmasByKey: [key: groupLemma], in: context, language: language)[key]?.contains {
+        return matches(
+            lemmasByKey: [key: groupLemma],
+            in: context,
+            language: language,
+            resolutionProvider: resolutionProvider
+        )[key]?.contains {
             VocabularyTextPolicy.canonicalVocabularyKey($0.matchedText) == surfaceKey
         } ?? false
     }
 
-    package static func matches(lemma rawLemma: String, selectedForm: String, in text: String, language: NLLanguage = .english) -> [VocabularyTextOccurrence] {
+    package static func matches(
+        lemma rawLemma: String,
+        selectedForm: String,
+        in text: String,
+        language: NLLanguage = .english,
+        resolutionProvider: @escaping VocabularyLemmaResolutionProvider = naturalLanguageResolutionProvider
+    ) -> [VocabularyTextOccurrence] {
         matches(
             lemma: rawLemma,
             selectedForm: selectedForm,
             in: text,
             compiledQuery: VocabularyOccurrenceMatcher.compile(query: selectedForm),
             tagger: NLTagger(tagSchemes: [.lemma]),
-            language: language
+            language: language,
+            resolutionProvider: resolutionProvider
         )
     }
 
@@ -269,9 +313,10 @@ package enum GermanLemmaOccurrenceMatcher {
         in text: String,
         compiledQuery: VocabularyOccurrenceMatcher.CompiledQuery?,
         tagger: NLTagger,
-        language: NLLanguage
+        language: NLLanguage,
+        resolutionProvider: @escaping VocabularyLemmaResolutionProvider
     ) -> [VocabularyTextOccurrence] {
-        var memo: [String: String] = [:]
+        var memo: [String: GermanLemmaResolution] = [:]
         return matches(
             lemma: rawLemma,
             selectedForm: selectedForm,
@@ -280,7 +325,8 @@ package enum GermanLemmaOccurrenceMatcher {
             tagger: tagger,
             fallbackTagger: NLTagger(tagSchemes: [.lemma]),
             lemmaMemo: &memo,
-            language: language
+            language: language,
+            resolutionProvider: resolutionProvider
         )
     }
 
@@ -292,8 +338,8 @@ package enum GermanLemmaOccurrenceMatcher {
     ///     shared between concurrent workers.
     ///   - fallbackTagger: used only for tokens the primary tagger returns no
     ///     lemma for, which cannot reuse `tagger` mid-enumeration.
-    ///   - lemmaMemo: fallback results cached per worker. Roughly a fifth of
-    ///     tokens take this path and repeat heavily across a document.
+    ///   - lemmaMemo: isolated fallback resolutions cached per worker. Identity
+    ///     and unavailable lemmas remain explicitly unresolved.
     private static func matches(
         lemma rawLemma: String,
         selectedForm: String,
@@ -301,8 +347,9 @@ package enum GermanLemmaOccurrenceMatcher {
         compiledQuery: VocabularyOccurrenceMatcher.CompiledQuery?,
         tagger: NLTagger,
         fallbackTagger: NLTagger,
-        lemmaMemo: inout [String: String],
-        language: NLLanguage
+        lemmaMemo: inout [String: GermanLemmaResolution],
+        language: NLLanguage,
+        resolutionProvider: @escaping VocabularyLemmaResolutionProvider
     ) -> [VocabularyTextOccurrence] {
         let lemma = VocabularyTextPolicy.normalizedVocabularyText(rawLemma)
         let selected = VocabularyTextPolicy.normalizedVocabularyText(selectedForm)
@@ -345,20 +392,19 @@ package enum GermanLemmaOccurrenceMatcher {
                 return true
             }
             let matchedText = String(text[tokenRange])
-            let matchedLemma: String
-            if let tag {
-                matchedLemma = VocabularyTextPolicy.normalizedVocabularyText(tag.rawValue)
-            } else if let cached = lemmaMemo[matchedText] {
-                matchedLemma = cached
-            } else {
-                matchedLemma = GermanLemmaResolver.lemma(for: matchedText, tagger: fallbackTagger, language: language)
-                lemmaMemo[matchedText] = matchedLemma
-            }
+            let resolution = tokenResolution(
+                surfaceForm: matchedText,
+                taggedLemma: tag?.rawValue,
+                language: language,
+                fallbackTagger: fallbackTagger,
+                lemmaMemo: &lemmaMemo,
+                resolutionProvider: resolutionProvider
+            )
             // Match by lemma, or by a surface that IS the base form spelled
             // identically. The surface test is case-sensitive on purpose: the
             // capitalized noun "Folgen" (lemma "Folge") must not be swept into
             // the verb group "folgen" just because the two fold to one key.
-            let matchedLemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(matchedLemma)
+            let matchedLemmaKey = resolvedLemmaKey(resolution)
             guard VocabularyTextPolicy.surfaceMatchesLemmaExactly(matchedText, lemma)
                     || matchedLemmaKey == lemmaKey else { return true }
 
@@ -374,11 +420,15 @@ package enum GermanLemmaOccurrenceMatcher {
                 rawMatch,
                 matching: selected
             )
-            let matchedLemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(
-                GermanLemmaResolver.lemma(for: normalizedMatch, language: language)
+            let resolution = isolatedResolution(
+                surfaceForm: normalizedMatch,
+                language: language,
+                tagger: fallbackTagger,
+                resolutionProvider: resolutionProvider
             )
             let rangeKey = "\(match.range.location):\(match.range.length)"
-            guard matchedLemmaKey == lemmaKey,
+            guard (VocabularyTextPolicy.surfaceMatchesLemmaExactly(normalizedMatch, lemma)
+                    || resolvedLemmaKey(resolution) == lemmaKey),
                   seenRanges.insert(rangeKey).inserted else { continue }
             occurrences.append(VocabularyTextOccurrence(range: match.range, matchedText: rawMatch))
         }
@@ -391,7 +441,12 @@ package enum GermanLemmaOccurrenceMatcher {
         }
     }
 
-    package static func matches(lemmasByKey: [String: String], in text: String, language: NLLanguage = .english) -> [String: [VocabularyTextOccurrence]] {
+    package static func matches(
+        lemmasByKey: [String: String],
+        in text: String,
+        language: NLLanguage = .english,
+        resolutionProvider: @escaping VocabularyLemmaResolutionProvider = naturalLanguageResolutionProvider
+    ) -> [String: [VocabularyTextOccurrence]] {
         guard !lemmasByKey.isEmpty, !text.isEmpty else { return [:] }
         var occurrencesByKey: [String: [VocabularyTextOccurrence]] = [:]
         var seenRangesByKey: [String: Set<String>] = [:]
@@ -425,6 +480,8 @@ package enum GermanLemmaOccurrenceMatcher {
         let lineWrapSpans = lineWrapMatches.map(\.range)
 
         let tagger = NLTagger(tagSchemes: [.lemma])
+        let fallbackTagger = NLTagger(tagSchemes: [.lemma])
+        var lemmaMemo: [String: GermanLemmaResolution] = [:]
         tagger.string = text
         let fullRange = text.startIndex..<text.endIndex
         tagger.setLanguage(language, range: fullRange)
@@ -439,13 +496,21 @@ package enum GermanLemmaOccurrenceMatcher {
                 return true
             }
             let matchedText = String(text[tokenRange])
-            let matchedLemma = tag.map { VocabularyTextPolicy.normalizedVocabularyText($0.rawValue) }
-                ?? GermanLemmaResolver.lemma(for: matchedText, language: language)
+            let resolution = tokenResolution(
+                surfaceForm: matchedText,
+                taggedLemma: tag?.rawValue,
+                language: language,
+                fallbackTagger: fallbackTagger,
+                lemmaMemo: &lemmaMemo,
+                resolutionProvider: resolutionProvider
+            )
             let occurrence = VocabularyTextOccurrence(
                 range: range,
                 matchedText: matchedText
             )
-            append(occurrence, for: VocabularyTextPolicy.canonicalVocabularyKey(matchedLemma))
+            if let key = resolvedLemmaKey(resolution) {
+                append(occurrence, for: key)
+            }
             appendBySurface(occurrence, surface: matchedText)
             return true
         }
@@ -458,12 +523,15 @@ package enum GermanLemmaOccurrenceMatcher {
             ]
             let occurrence = VocabularyTextOccurrence(range: match.range, matchedText: rawMatch)
             for candidate in candidates {
-                append(
-                    occurrence,
-                    for: VocabularyTextPolicy.canonicalVocabularyKey(
-                        GermanLemmaResolver.lemma(for: candidate, language: language)
-                    )
+                let resolution = isolatedResolution(
+                    surfaceForm: candidate,
+                    language: language,
+                    tagger: fallbackTagger,
+                    resolutionProvider: resolutionProvider
                 )
+                if let key = resolvedLemmaKey(resolution) {
+                    append(occurrence, for: key)
+                }
                 appendBySurface(occurrence, surface: candidate)
             }
         }
@@ -476,5 +544,52 @@ package enum GermanLemmaOccurrenceMatcher {
                 return $0.range.length < $1.range.length
             }
         }
+    }
+
+    private static func resolvedLemmaKey(_ resolution: GermanLemmaResolution) -> String? {
+        guard case let .resolved(lemma, _) = resolution else { return nil }
+        return VocabularyTextPolicy.canonicalVocabularyKey(lemma)
+    }
+
+    private static func tokenResolution(
+        surfaceForm: String,
+        taggedLemma: String?,
+        language: NLLanguage,
+        fallbackTagger: NLTagger,
+        lemmaMemo: inout [String: GermanLemmaResolution],
+        resolutionProvider: VocabularyLemmaResolutionProvider
+    ) -> GermanLemmaResolution {
+        let contextual = resolutionProvider(surfaceForm, taggedLemma, language)
+        if case .resolved = contextual { return contextual }
+        if let cached = lemmaMemo[surfaceForm] { return cached }
+        let fallback = isolatedResolution(
+            surfaceForm: surfaceForm,
+            language: language,
+            tagger: fallbackTagger,
+            resolutionProvider: resolutionProvider
+        )
+        lemmaMemo[surfaceForm] = fallback
+        return fallback
+    }
+
+    private static func isolatedResolution(
+        surfaceForm: String,
+        language: NLLanguage,
+        tagger: NLTagger,
+        resolutionProvider: VocabularyLemmaResolutionProvider
+    ) -> GermanLemmaResolution {
+        let word = VocabularyTextPolicy.normalizedVocabularyText(surfaceForm)
+        guard VocabularyTextPolicy.isSingleEnglishWord(word), !word.isEmpty else {
+            return .unresolved(surface: word)
+        }
+        tagger.string = word
+        let range = word.startIndex..<word.endIndex
+        tagger.setLanguage(language, range: range)
+        let taggedLemma = tagger.tag(
+            at: word.startIndex,
+            unit: .word,
+            scheme: .lemma
+        ).0?.rawValue
+        return resolutionProvider(word, taggedLemma, language)
     }
 }

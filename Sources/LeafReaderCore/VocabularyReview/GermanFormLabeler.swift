@@ -115,7 +115,7 @@ package enum GermanFormLabeler {
     /// Bumped whenever the offline heuristics in this file change. A label
     /// persisted by an older ruleset carries an older version and is treated as
     /// absent, so a labeler improvement takes effect without a manual cache wipe.
-    package static let labelingVersion = 3
+    package static let labelingVersion = 4
 
     private static let auxiliaryLemmas: Set<String> = ["haben", "sein", "werden"]
     private static let umlauts = CharacterSet(charactersIn: "äöüÄÖÜ")
@@ -183,9 +183,10 @@ package enum GermanFormLabeler {
                 label = isPlural(surface: surface, lemma: lemma) ? .plural : nil
             }
         default:
-            // Adjectives are systematically tagged Adverb by the German tagger,
-            // so no adjective-specific label can be trusted here.
-            label = isBaseForm ? .grundform : nil
+            // Missing/unknown POS is not evidence that an identity surface is a
+            // grammatical base form. A host without the language model must
+            // abstain instead of turning the retained surface into knowledge.
+            label = nil
         }
         return .contextual(label)
     }

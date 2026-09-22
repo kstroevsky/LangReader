@@ -13,9 +13,21 @@ enum GermanFormLabelerTests {
     private static func label(
         _ surface: String,
         _ lemma: String,
-        _ context: String? = nil
+        _ context: String? = nil,
+        partOfSpeech: String? = nil,
+        hasClauseAuxiliary: Bool = false
     ) -> GermanFormLabel? {
-        GermanFormLabeler.label(surfaceForm: surface, lemma: lemma, context: context)
+        GermanFormLabeler.resolution(
+            surfaceForm: surface,
+            lemma: lemma,
+            context: context,
+            evidenceProvider: { _, _ in
+                GermanFormLabelEvidence(
+                    partOfSpeech: partOfSpeech,
+                    hasClauseAuxiliary: hasClauseAuxiliary
+                )
+            }
+        ).label
     }
 
     // MARK: - Partizip II
@@ -34,7 +46,7 @@ enum GermanFormLabelerTests {
         ]
         for (surface, lemma, sentence) in cases {
             try expectEqual(
-                label(surface, lemma, sentence),
+                label(surface, lemma, sentence, partOfSpeech: "Verb", hasClauseAuxiliary: true),
                 .partizipII,
                 "'\(surface)' in \"\(sentence)\" should be labeled Partizip II"
             )
@@ -44,7 +56,13 @@ enum GermanFormLabelerTests {
     static func testPartizipIIInVerbFinalClause() throws {
         // German subordinate clauses put the auxiliary after the participle.
         try expectEqual(
-            label("gegangen", "gehen", "Ich weiß, dass er nach Hause gegangen ist."),
+            label(
+                "gegangen",
+                "gehen",
+                "Ich weiß, dass er nach Hause gegangen ist.",
+                partOfSpeech: "Verb",
+                hasClauseAuxiliary: true
+            ),
             .partizipII,
             "a verb-final clause should still resolve Partizip II from the trailing auxiliary"
         )
@@ -55,12 +73,12 @@ enum GermanFormLabelerTests {
         // clause before 'und', so it must not license a Partizip II reading of
         // 'lief', which is Präteritum.
         try expectEqual(
-            label("lief", "laufen", "Er ist müde und lief schnell."),
+            label("lief", "laufen", "Er ist müde und lief schnell.", partOfSpeech: "Verb"),
             .finiteVerb,
             "an auxiliary in a preceding coordinate clause must not label 'lief' as Partizip II"
         )
         try expectEqual(
-            label("ging", "gehen", "Sie war krank, aber sie ging zur Arbeit."),
+            label("ging", "gehen", "Sie war krank, aber sie ging zur Arbeit.", partOfSpeech: "Verb"),
             .finiteVerb,
             "an auxiliary before a comma and conjunction must not reach across the boundary"
         )
@@ -76,7 +94,7 @@ enum GermanFormLabelerTests {
         ]
         for (surface, lemma, sentence) in cases {
             try expectEqual(
-                label(surface, lemma, sentence),
+                label(surface, lemma, sentence, partOfSpeech: "Verb"),
                 .finiteVerb,
                 "'\(surface)' looks like a participle but is finite; it must not be labeled Partizip II"
             )
@@ -87,7 +105,7 @@ enum GermanFormLabelerTests {
 
     static func testInfinitiveAndFiniteForms() throws {
         try expectEqual(
-            label("gehen", "gehen", "Wir wollen nach Hause gehen."),
+            label("gehen", "gehen", "Wir wollen nach Hause gehen.", partOfSpeech: "Verb"),
             .infinitiv,
             "a verb equal to its lemma is an Infinitiv"
         )
@@ -98,7 +116,7 @@ enum GermanFormLabelerTests {
             ("machte", "machen", "Er machte seine Arbeit.")
         ] {
             try expectEqual(
-                label(surface, lemma, sentence),
+                label(surface, lemma, sentence, partOfSpeech: "Verb"),
                 .finiteVerb,
                 "'\(surface)' is a finite form and must not be split into a guessed tense"
             )
@@ -116,7 +134,7 @@ enum GermanFormLabelerTests {
         ]
         for (surface, lemma, sentence) in cases {
             try expectEqual(
-                label(surface, lemma, sentence),
+                label(surface, lemma, sentence, partOfSpeech: "Noun"),
                 .plural,
                 "'\(surface)' should be labeled Plural"
             )
@@ -135,7 +153,7 @@ enum GermanFormLabelerTests {
         ]
         for (surface, lemma, sentence, why) in cases {
             try expectEqual(
-                label(surface, lemma, sentence),
+                label(surface, lemma, sentence, partOfSpeech: "Noun"),
                 nil,
                 "'\(surface)' must stay unlabeled (\(why))"
             )
@@ -144,7 +162,7 @@ enum GermanFormLabelerTests {
 
     static func testBaseForms() throws {
         try expectEqual(
-            label("Kind", "Kind", "Das Kind spielt."),
+            label("Kind", "Kind", "Das Kind spielt.", partOfSpeech: "Noun"),
             .grundform,
             "a noun equal to its lemma is the Grundform"
         )
@@ -211,18 +229,28 @@ enum GermanFormLabelerTests {
             nil,
             "a multi-word selection is not a single form"
         )
+        try expectEqual(
+            label("gehen", "gehen", "Wir gehen nach Hause."),
+            nil,
+            "missing POS must not turn an unresolved identity lemma into a base-form label"
+        )
+        try expectEqual(
+            label("gehen", "gehen", "Wir gehen nach Hause.", partOfSpeech: "OtherWord"),
+            nil,
+            "OtherWord POS must abstain"
+        )
     }
 
     static func testMissingContextStillLabelsWhatItCan() throws {
-        // Without context Partizip II is undecidable, but plural and base forms
-        // survive, so occurrences lacking stored context still get some labeling.
+        // Without context Partizip II is undecidable, but owned plural evidence
+        // survives, so occurrences lacking stored context still get some labeling.
         try expectEqual(
             label("Bücher", "Buch"),
             .plural,
             "plural detection does not depend on sentence context"
         )
         try expectEqual(
-            label("Hause", "Haus"),
+            label("Hause", "Haus", partOfSpeech: "Noun"),
             nil,
             "an ambiguous form stays unlabeled without context too"
         )
