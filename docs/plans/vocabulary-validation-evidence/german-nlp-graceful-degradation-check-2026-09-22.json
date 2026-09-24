@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "evidenceRole": "product-portability-regression-check",
+  "date": "2026-09-22",
+  "protectedOutcomesAccessed": false,
+  "remoteFailure": {
+    "workflow": "Architecture",
+    "runID": 35656399595,
+    "jobID": 106521033718,
+    "sourceRevision": "71c149ceb7819153dbe0bc5458a74353176d60c6",
+    "environment": "clean macos-15 runner",
+    "observedCapability": "German lexical classes returned OtherWord and German/Russian lemmas returned identity surfaces",
+    "materialFailures": [
+      "identity lemma Folgen entered lowercase folgen grouping",
+      "folgten could not resolve to folgen",
+      "German form labels depended on unavailable POS/context evidence",
+      "Russian lemma expectation depended on an optional platform model"
+    ]
+  },
+  "retainedContract": {
+    "generatorRevision": "294294187d55d45a33eef32db11fb7f8bdb289d0",
+    "invariant": "Missing platform NLP may reduce recall, but must not create false lexical grouping or unsupported grammatical labels.",
+    "resolvedEvidence": "use non-identity Apple lemmas and usable POS/context evidence",
+    "unresolvedLemma": "case-sensitive exact-surface identity only",
+    "unavailablePOS": "abstain except for measured LeafReader-owned rules",
+    "ownedRules": [
+      "capitalized lemma plus stem-matching umlaut-er plural",
+      "bounded lexicon-attested -haft adjective fallback"
+    ],
+    "runtimeCharacterization": "non-gating by default; LEAFREADER_STRICT_NL_CHARACTERIZATION=1 pins a known host intentionally"
+  },
+  "verification": {
+    "commands": [
+      "./scripts/run_tests.sh",
+      "swift build -Xswiftc -warnings-as-errors",
+      "swift test -Xswiftc -warnings-as-errors",
+      "swift test -Xswiftc -warnings-as-errors --filter VocabularyDocumentLemmaIndexXCTests"
+    ],
+    "logicTests": 282,
+    "swiftTests": 177,
+    "swiftTestSkips": 1,
+    "focusedIndexTests": 15,
+    "failures": 0,
+    "coveredDegradationCases": [
+      "missing and OtherWord POS abstain",
+      "identity and unavailable lemmas are unresolved",
+      "folgen matches exactly while folgten and Folgen are not inferred",
+      "single, batch, line-wrap, group reproduction, and reusable index share resolution semantics",
+      "case-distinct unresolved surfaces remain separate inventory identities",
+      "a uniquely resolved same-case lemma may absorb its exact unresolved base surface",
+      "Bücher remains available without POS",
+      "fehlerhafte remains available without an Apple lemma",
+      "useful non-identity evidence restores high-recall grouping"
+    ]
+  },
+  "limitations": [
+    "Graceful degradation intentionally loses inflection recall when the platform model is unavailable.",
+    "This change does not add a general German or Russian morphology implementation."
+  ]
+}

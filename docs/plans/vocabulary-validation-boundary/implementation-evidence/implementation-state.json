@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "phase": "german-portability-v4-sealed",
+  "phase": "graceful-degradation-v5-sealed",
   "source_revision": "b2b99696feda177be0699d5277a2c13c7c7c9bd5",
   "accepted_plan": "docs/plans/vocabulary-validation-boundary/revision-2026-09-19-ci-source-lock/candidate-plan.md",
   "baseline_manifest": "docs/plans/vocabulary-validation-boundary/implementation-evidence/extraction-parity-manifest.json",
@@ -8,16 +8,16 @@
   "followup_source_revision": "0dc16efd21e2816a5154b4d515c2b5272e6b8fe3",
   "followup_plan": "docs/plans/vocabulary-validation-boundary/revision-2026-09-21-boundary-followup/candidate-plan.md",
   "followup_plan_sha256": "3a67d47ad1d0ea133618bff40611e9b40a8b6a3f1a5a7f7082f8210a80985cab",
-  "completed_slices": ["baseline-checkpoint", "commit-1-boundary-scaffold", "2a-study-schemas", "2b-parallel-diagnostic-evaluator", "2c-same-tree-bank-parity", "2d-wrapper-linkage-switch", "2e-remove-core-experiment-code", "commit-3-runner-extraction", "commit-4-pos-cross-format", "commit-5-enforcement-and-handoff", "followup-register-and-v2-hardening", "followup-core-seam-cleanup", "followup-v3-seal", "german-portability-product-fix", "german-portability-v4-seal"],
+  "completed_slices": ["baseline-checkpoint", "commit-1-boundary-scaffold", "2a-study-schemas", "2b-parallel-diagnostic-evaluator", "2c-same-tree-bank-parity", "2d-wrapper-linkage-switch", "2e-remove-core-experiment-code", "commit-3-runner-extraction", "commit-4-pos-cross-format", "commit-5-enforcement-and-handoff", "followup-register-and-v2-hardening", "followup-core-seam-cleanup", "followup-v3-seal", "german-portability-product-fix", "german-portability-v4-seal", "graceful-degradation-product-fix", "graceful-degradation-v5-seal"],
   "current_slice": null,
   "protected_data_accessed": false,
   "historical_reservation_modified": false,
-  "product_generator_revision": "3b1aa9c07659325c86e78f46f06c7c927f340e37",
-  "fresh_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v4.json",
-  "fresh_reservation_sha256": "4717a4b2b7f2b0e55d03321a5754a52ceb31c2e7b8ac232e67464fe8a89c9006",
+  "product_generator_revision": "294294187d55d45a33eef32db11fb7f8bdb289d0",
+  "fresh_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v5.json",
+  "fresh_reservation_sha256": "ace9fa7c0e44df40f7eff8c6572828296d4acfd09c857211c207989af6f73647",
   "fresh_reservation_status": "reservedNotExecuted",
-  "extracted_generator_source_lock": "docs/plans/vocabulary-validation-boundary/implementation-evidence/german-portability-generator-source-lock-v4.json",
-  "extracted_generator_source_lock_sha256": "1e9e67a5dd6b1aac4394959e3cbf5e4586018c9244a225b3cd6ae5a44d122a25",
+  "extracted_generator_source_lock": "docs/plans/vocabulary-validation-boundary/implementation-evidence/graceful-degradation-generator-source-lock-v5.json",
+  "extracted_generator_source_lock_sha256": "749764b5ae59a3bb1e741777602a772dedf1327eaa10710f0cac1afb745dc50e",
   "candidate_frozen": false,
   "verification": {
     "baseline_runs": "standard, causal, longitudinal, POS all exit 0; 13 output hashes frozen",
@@ -37,8 +37,10 @@
     "post_extraction_followup": "lossless follow-up plan mechanical/semantic/independent verification passed; three extra Core diagnostic controls removed; guarded continuation tests and 13-artifact frozen development parity passed; v3 scans 188 prior JSON artifacts and explicitly includes/rejects all v2 seed/document identities",
     "german_portability_product_fix": "German language routing owns the decision; context-independent morphology cannot be vetoed by Apple POS; contextual labels are not persisted globally; 281 logic tests passed",
     "german_noun_development_check": "the broad capitalized-lemma predicate produced 412 labels and 36 false-positive consequences and was rejected; the retained umlaut-er predicate produced 3 labels and 0 false positives across 12,480 pinned German development tokens",
-    "fresh_v4_reservation": "v1-v3 remain byte-identical and unexecuted historical evidence; v4 scans 191 prior JSON artifacts, includes all v1-v3 identities, and reserves 3 disjoint seeds plus 24 disjoint document identities for generator commit 3b1aa9c; no outcomes or protected data accessed"
+    "fresh_v4_reservation": "v1-v3 remain byte-identical and unexecuted historical evidence; v4 scans 191 prior JSON artifacts, includes all v1-v3 identities, and reserves 3 disjoint seeds plus 24 disjoint document identities for generator commit 3b1aa9c; no outcomes or protected data accessed",
+    "graceful_degradation_product_fix": "missing or identity platform lemmas now permit only case-sensitive exact-surface identity; unavailable POS abstains; single, batch, line-wrap, group-reproduction, and reusable-index paths share one resolution contract; 282 logic tests and 177 Swift tests passed",
+    "fresh_v5_reservation": "v1-v4 remain byte-identical and unexecuted historical evidence; v5 scans 193 prior JSON artifacts, includes all v1-v4 identities, and reserves 3 disjoint seeds plus 24 disjoint document identities for generator commit 2942941; no outcomes or protected data accessed"
   },
   "open_findings": [],
-  "remaining_gates": ["independent statistical/research/privacy review", "clean candidate and analysis/decision-rule freeze", "separate reviewed v4 consumption decision", "development-confirmation execution", "release-holdout gate", "final-tree private GUI and algorithm performance matrix"]
+  "remaining_gates": ["independent statistical/research/privacy review", "clean candidate and analysis/decision-rule freeze", "separate reviewed v5 consumption decision", "development-confirmation execution", "release-holdout gate", "final-tree private GUI and algorithm performance matrix"]
 }
