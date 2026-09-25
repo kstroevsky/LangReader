@@ -795,6 +795,77 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         XCTAssertNotEqual(before, after)
     }
 
+    func testDirectEvidenceOnlyCandidateNeitherInheritsNorUpdatesTheta() throws {
+        func candidate(
+            key: String,
+            difficulty: Double,
+            identityPolicy: VocabularyAssessmentIdentityPolicy
+        ) -> DocumentVocabularyCandidate {
+            DocumentVocabularyCandidate(
+                canonicalKey: key,
+                displayLemma: key,
+                identityPolicy: identityPolicy,
+                observedForms: [VocabularyDocumentObservedForm(surface: key, occurrenceCount: 1)],
+                occurrenceCount: 1,
+                representativeRange: VocabularyDocumentSourceRange(
+                    unitIndex: 0,
+                    utf16Location: 0,
+                    utf16Length: key.utf16.count
+                ),
+                generalFrequencyRank: nil,
+                difficulty: difficulty
+            )
+        }
+
+        let full = candidate(key: "full", difficulty: 0, identityPolicy: .fullInference)
+        let direct = candidate(key: "direct", difficulty: -4, identityPolicy: .directEvidenceOnly)
+        var assessment = AdaptiveVocabularyAssessment(
+            inventory: DocumentVocabularyInventory(languageCode: "en", candidates: [full, direct]),
+            mode: .allUnknown
+        )
+
+        XCTAssertEqual(assessment.adaptiveLossPopulationCount, 1)
+        XCTAssertEqual(assessment.knownProbability(for: direct.canonicalKey), 0.5)
+        assessment.record(.verifiedKnown, for: full.canonicalKey)
+        XCTAssertEqual(assessment.knownProbability(for: direct.canonicalKey), 0.5)
+
+        let thetaBeforeDirectAnswer = assessment.thetaPosteriorSnapshot
+        assessment.record(.verifiedKnown, for: direct.canonicalKey)
+        XCTAssertEqual(assessment.thetaPosteriorSnapshot, thetaBeforeDirectAnswer)
+        XCTAssertGreaterThan(try XCTUnwrap(assessment.knownProbability(for: direct.canonicalKey)), 0.5)
+        XCTAssertEqual(
+            assessment.result().items.first { $0.id == direct.canonicalKey }?.classification,
+            .verifiedKnown
+        )
+    }
+
+    func testCandidateDecodeDefaultsMissingIdentityPolicyToFullInference() throws {
+        let candidate = DocumentVocabularyCandidate(
+            canonicalKey: "legacy",
+            displayLemma: "legacy",
+            observedForms: [VocabularyDocumentObservedForm(surface: "legacy", occurrenceCount: 1)],
+            occurrenceCount: 1,
+            representativeRange: VocabularyDocumentSourceRange(
+                unitIndex: 0,
+                utf16Location: 0,
+                utf16Length: 6
+            ),
+            generalFrequencyRank: nil,
+            difficulty: 0
+        )
+        let data = try JSONEncoder().encode(candidate)
+        var object = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: data) as? [String: Any]
+        )
+        object.removeValue(forKey: "identityPolicy")
+        let legacyData = try JSONSerialization.data(withJSONObject: object)
+
+        XCTAssertEqual(
+            try JSONDecoder().decode(DocumentVocabularyCandidate.self, from: legacyData).identityPolicy,
+            .fullInference
+        )
+    }
+
     func testCompatibilityDiagnosticDoesNotChangeProductionWarmMinimumRule() throws {
         let prior = VocabularyReaderPrior(
             languageCode: "en",

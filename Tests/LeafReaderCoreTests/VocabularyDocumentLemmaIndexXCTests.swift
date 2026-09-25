@@ -173,6 +173,80 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         XCTAssertEqual(summaries.first { $0.lemmaKey == "development" }?.occurrenceCount, 1)
     }
 
+    func testReconciledSummariesCreateSplitOnlyFromCorroboratedContexts() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: [
+                "noun-one record remains",
+                "noun-two record survives",
+                "verb-one record this",
+                "verb-two record that"
+            ],
+            language: .english,
+            maximumWorkerCount: 1,
+            resolutionProvider: { surface, _, _ in
+                surface == "record"
+                    ? .resolved(lemma: "record", source: .naturalLanguage)
+                    : .unresolved(surface: surface)
+            },
+            analysisProvider: { request in
+                guard request.surface == "record" else { return [] }
+                let part: VocabularyPartOfSpeech = request.context.contains("noun-") ? .noun : .verb
+                return [VocabularyMorphologicalAnalysis(
+                    lemma: "record",
+                    partOfSpeech: part,
+                    source: .validationFixture,
+                    rawScore: 1,
+                    confidence: .usable
+                )]
+            }
+        ))
+
+        let record = index.lexicalSummaries().filter { $0.lemmaKey == "record" }
+        XCTAssertEqual(record.count, 2)
+        XCTAssertEqual(Set(record.map(\.partOfSpeech)), [.noun, .verb])
+        XCTAssertTrue(record.allSatisfy { $0.resolutionState == .resolvedSplit })
+        XCTAssertTrue(record.allSatisfy { $0.assessmentPolicy == .fullInference })
+        XCTAssertEqual(record.map(\.occurrenceCount).sorted(), [2, 2])
+    }
+
+    func testReconciledSummariesKeepOneOffConflictAsDirectEvidenceResidual() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: [
+                "noun-one record remains",
+                "noun-two record survives",
+                "noun-three record persists",
+                "verb-one record this"
+            ],
+            language: .english,
+            maximumWorkerCount: 1,
+            resolutionProvider: { surface, _, _ in
+                surface == "record"
+                    ? .resolved(lemma: "record", source: .naturalLanguage)
+                    : .unresolved(surface: surface)
+            },
+            analysisProvider: { request in
+                guard request.surface == "record" else { return [] }
+                let part: VocabularyPartOfSpeech = request.context.contains("verb-") ? .verb : .noun
+                return [VocabularyMorphologicalAnalysis(
+                    lemma: "record",
+                    partOfSpeech: part,
+                    source: .validationFixture,
+                    rawScore: 1,
+                    confidence: .usable
+                )]
+            }
+        ))
+
+        let record = index.lexicalSummaries().filter { $0.lemmaKey == "record" }
+        let noun = try XCTUnwrap(record.first { $0.partOfSpeech == .noun })
+        let residual = try XCTUnwrap(record.first { $0.assessmentPolicy == .directEvidenceOnly })
+        XCTAssertEqual(noun.occurrenceCount, 3)
+        XCTAssertEqual(noun.resolutionState, .resolvedSingle)
+        XCTAssertEqual(residual.occurrenceCount, 1)
+        XCTAssertEqual(residual.partOfSpeech, .unknown)
+        XCTAssertTrue(residual.canonicalKey.hasSuffix("|residual"))
+    }
+
     func testOrdinaryEnglishWordsAreNotClassifiedAsConfidentNames() throws {
         let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
             texts: ["They develop tools while readers learn vocabulary."],

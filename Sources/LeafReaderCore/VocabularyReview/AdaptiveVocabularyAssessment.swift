@@ -85,6 +85,14 @@ package enum VocabularyKnowledgeEvidence: String, CaseIterable, Codable, Equatab
     package static var unknown: Self { .reportedUnknown }
 }
 
+package enum VocabularyAssessmentIdentityPolicy: String, Codable, Equatable, Sendable {
+    /// A resolved lexical identity may participate in latent ability inference.
+    case fullInference
+    /// Ambiguous or unresolved identity is useful only through evidence about
+    /// the specific candidate; it must not calibrate or inherit theta.
+    case directEvidenceOnly
+}
+
 package struct DocumentVocabularyCandidate: Codable, Equatable, Identifiable, Sendable {
     package var id: String { canonicalKey }
     package let canonicalKey: String
@@ -92,6 +100,7 @@ package struct DocumentVocabularyCandidate: Codable, Equatable, Identifiable, Se
     package let displayLemma: String
     package let lexicalItemID: VocabularyLexicalItemID?
     package let partOfSpeech: VocabularyPartOfSpeech
+    package let identityPolicy: VocabularyAssessmentIdentityPolicy
     package let observedForms: [VocabularyDocumentObservedForm]
     package let occurrenceCount: Int
     package let representativeRange: VocabularyDocumentSourceRange
@@ -99,12 +108,27 @@ package struct DocumentVocabularyCandidate: Codable, Equatable, Identifiable, Se
     package let difficultyPrior: VocabularyItemDifficultyPrior
     package var difficulty: Double { difficultyPrior.mean }
 
+    private enum CodingKeys: String, CodingKey {
+        case canonicalKey
+        case lemmaKey
+        case displayLemma
+        case lexicalItemID
+        case partOfSpeech
+        case identityPolicy
+        case observedForms
+        case occurrenceCount
+        case representativeRange
+        case generalFrequencyRank
+        case difficultyPrior
+    }
+
     package init(
         canonicalKey: String,
         lemmaKey: String? = nil,
         displayLemma: String,
         lexicalItemID: VocabularyLexicalItemID? = nil,
         partOfSpeech: VocabularyPartOfSpeech = .unknown,
+        identityPolicy: VocabularyAssessmentIdentityPolicy = .fullInference,
         observedForms: [VocabularyDocumentObservedForm],
         occurrenceCount: Int,
         representativeRange: VocabularyDocumentSourceRange,
@@ -116,6 +140,7 @@ package struct DocumentVocabularyCandidate: Codable, Equatable, Identifiable, Se
         self.displayLemma = displayLemma
         self.lexicalItemID = lexicalItemID
         self.partOfSpeech = partOfSpeech
+        self.identityPolicy = identityPolicy
         self.observedForms = observedForms
         self.occurrenceCount = occurrenceCount
         self.representativeRange = representativeRange
@@ -134,6 +159,7 @@ package struct DocumentVocabularyCandidate: Codable, Equatable, Identifiable, Se
         displayLemma: String,
         lexicalItemID: VocabularyLexicalItemID? = nil,
         partOfSpeech: VocabularyPartOfSpeech = .unknown,
+        identityPolicy: VocabularyAssessmentIdentityPolicy = .fullInference,
         observedForms: [VocabularyDocumentObservedForm],
         occurrenceCount: Int,
         representativeRange: VocabularyDocumentSourceRange,
@@ -145,11 +171,45 @@ package struct DocumentVocabularyCandidate: Codable, Equatable, Identifiable, Se
         self.displayLemma = displayLemma
         self.lexicalItemID = lexicalItemID
         self.partOfSpeech = partOfSpeech
+        self.identityPolicy = identityPolicy
         self.observedForms = observedForms
         self.occurrenceCount = occurrenceCount
         self.representativeRange = representativeRange
         self.generalFrequencyRank = generalFrequencyRank
         self.difficultyPrior = difficultyPrior
+    }
+
+    package init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        canonicalKey = try container.decode(String.self, forKey: .canonicalKey)
+        lemmaKey = try container.decode(String.self, forKey: .lemmaKey)
+        displayLemma = try container.decode(String.self, forKey: .displayLemma)
+        lexicalItemID = try container.decodeIfPresent(VocabularyLexicalItemID.self, forKey: .lexicalItemID)
+        partOfSpeech = try container.decode(VocabularyPartOfSpeech.self, forKey: .partOfSpeech)
+        identityPolicy = try container.decodeIfPresent(
+            VocabularyAssessmentIdentityPolicy.self,
+            forKey: .identityPolicy
+        ) ?? .fullInference
+        observedForms = try container.decode([VocabularyDocumentObservedForm].self, forKey: .observedForms)
+        occurrenceCount = try container.decode(Int.self, forKey: .occurrenceCount)
+        representativeRange = try container.decode(VocabularyDocumentSourceRange.self, forKey: .representativeRange)
+        generalFrequencyRank = try container.decodeIfPresent(Int.self, forKey: .generalFrequencyRank)
+        difficultyPrior = try container.decode(VocabularyItemDifficultyPrior.self, forKey: .difficultyPrior)
+    }
+
+    package func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(canonicalKey, forKey: .canonicalKey)
+        try container.encode(lemmaKey, forKey: .lemmaKey)
+        try container.encode(displayLemma, forKey: .displayLemma)
+        try container.encodeIfPresent(lexicalItemID, forKey: .lexicalItemID)
+        try container.encode(partOfSpeech, forKey: .partOfSpeech)
+        try container.encode(identityPolicy, forKey: .identityPolicy)
+        try container.encode(observedForms, forKey: .observedForms)
+        try container.encode(occurrenceCount, forKey: .occurrenceCount)
+        try container.encode(representativeRange, forKey: .representativeRange)
+        try container.encodeIfPresent(generalFrequencyRank, forKey: .generalFrequencyRank)
+        try container.encode(difficultyPrior, forKey: .difficultyPrior)
     }
 }
 
@@ -174,6 +234,7 @@ package struct DocumentVocabularyInventory: Codable, Equatable, Sendable {
                 displayLemma: summary.displayLemma,
                 lexicalItemID: summary.lexicalItemID,
                 partOfSpeech: summary.partOfSpeech,
+                identityPolicy: summary.assessmentPolicy,
                 observedForms: summary.observedForms,
                 occurrenceCount: summary.occurrenceCount,
                 representativeRange: summary.representativeRange,
@@ -219,6 +280,7 @@ package struct DocumentVocabularyInventory: Codable, Equatable, Sendable {
                 displayLemma: summary.displayLemma,
                 lexicalItemID: summary.lexicalItemID,
                 partOfSpeech: summary.partOfSpeech,
+                identityPolicy: summary.assessmentPolicy,
                 observedForms: summary.observedForms,
                 occurrenceCount: summary.occurrenceCount,
                 representativeRange: summary.representativeRange,
@@ -375,6 +437,7 @@ package enum VocabularyPreparationInvitationState: String, Codable, Equatable, S
 
 package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
     package static let currentAlgorithmVersion = 3
+    package static let lexicalReconciliationAlgorithmVersion = 4
 
     package var mode: VocabularyAssessmentMode
     package var invitationState: VocabularyPreparationInvitationState
@@ -655,6 +718,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         restoredAnswers: [VocabularyAssessmentAnswer] = [],
         readerPrior: VocabularyReaderPrior? = nil,
         currentDate: Date = Date(),
+        algorithmVersion: Int = VocabularyPreparationSession.currentAlgorithmVersion,
         modelConfiguration: VocabularyAssessmentModelConfiguration = .production
     ) {
         self.inventory = inventory
@@ -672,11 +736,11 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         difficultyOrderedIndexes = inventory.candidates.indices.sorted {
             Self.difficultyOrder(inventory.candidates[$0], inventory.candidates[$1])
         }
-        predictiveSeed = Self.inventorySeed(inventory)
+        predictiveSeed = Self.inventorySeed(inventory, algorithmVersion: algorithmVersion)
         answers = []
         let genericPrior = Self.normalPrior()
         usesEligibleReaderPrior = readerPrior?.languageCode == inventory.languageCode.lowercased()
-            && readerPrior?.algorithmVersion == VocabularyPreparationSession.currentAlgorithmVersion
+            && readerPrior?.algorithmVersion == algorithmVersion
             && readerPrior?.isEligible(at: currentDate) == true
         initialPosterior = usesEligibleReaderPrior
             ? readerPrior?.warmStartPosterior(
@@ -986,9 +1050,19 @@ package struct AdaptiveVocabularyAssessment: Sendable {
 
     package func knownProbability(for canonicalKey: String) -> Double? {
         guard let index = candidateIndexByKey[canonicalKey] else { return nil }
+        let candidate = inventory.candidates[index]
         if let answer = answerByKey[canonicalKey] {
-            return answer.evidence == .excluded ? nil : answeredProbabilities[canonicalKey]
+            guard answer.evidence != .excluded else { return nil }
+            if candidate.identityPolicy == .directEvidenceOnly {
+                return VocabularyObservationModel.posteriorKnownProbability(
+                    prior: 0.5,
+                    evidence: answer.evidence,
+                    reliabilityScale: modelConfiguration.evidenceReliabilityScale
+                )
+            }
+            return answeredProbabilities[canonicalKey]
         }
+        if candidate.identityPolicy == .directEvidenceOnly { return 0.5 }
         return currentProbabilities[index]
     }
 
@@ -1028,12 +1102,16 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             case .verifiedUnknownOrPartial, .reportedUnknown, .legacyUnknown: classification = .reportedUnknown
             case .unsure: classification = .notSure
             case .legacyKnown:
-                if probability >= 0.85 { classification = .estimatedKnown }
+                if candidate.identityPolicy == .directEvidenceOnly {
+                    classification = .uncertain
+                } else if probability >= 0.85 { classification = .estimatedKnown }
                 else if probability <= 0.15 { classification = .estimatedUnknown }
                 else { classification = .uncertain }
             case .excluded: classification = .excluded
             case nil:
-                if probability >= 0.85 { classification = .estimatedKnown }
+                if candidate.identityPolicy == .directEvidenceOnly {
+                    classification = .uncertain
+                } else if probability >= 0.85 { classification = .estimatedKnown }
                 else if probability <= 0.15 { classification = .estimatedUnknown }
                 else { classification = .uncertain }
             }
@@ -1128,7 +1206,19 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             if answer.evidence == .excluded { excludedCandidateIndexes.insert(index) }
         }
         guard answer.evidence != .excluded,
-              candidateIndexByKey[answer.canonicalKey] != nil else { return }
+              let candidateIndex = candidateIndexByKey[answer.canonicalKey] else { return }
+        if inventory.candidates[candidateIndex].identityPolicy == .directEvidenceOnly {
+            answeredProbabilities[answer.canonicalKey] =
+                VocabularyObservationModel.posteriorKnownProbability(
+                    prior: 0.5,
+                    evidence: answer.evidence,
+                    reliabilityScale: modelConfiguration.evidenceReliabilityScale
+                )
+            cachedPredictiveSamples = nil
+            cachedCoverageSelection = nil
+            cachedCoverageTargetReached = false
+            return
+        }
 
         let previousEpsilonKnowledge = epsilonKnowledge
         if let predictedKnown = answer.predictedKnown {
@@ -1170,6 +1260,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         cachedCoverageSelection = nil
         cachedCoverageTargetReached = false
         guard let candidateIndex = candidateIndexByKey[answer.canonicalKey] else { return }
+        guard inventory.candidates[candidateIndex].identityPolicy == .fullInference else { return }
         for thetaIndex in posterior.indices {
             let latentKnown = VocabularyKnowledgeModel.adjustedKnownProbability(
                 baseKnownProbability: responseCurves[candidateIndex][thetaIndex],
@@ -1193,6 +1284,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         cachedCoverageTargetReached = false
         for answer in answers where answer.evidence != .excluded {
             guard let candidateIndex = candidateIndexByKey[answer.canonicalKey] else { continue }
+            guard inventory.candidates[candidateIndex].identityPolicy == .fullInference else { continue }
             for index in posterior.indices {
                 let latentKnown = VocabularyKnowledgeModel.adjustedKnownProbability(
                     baseKnownProbability: responseCurves[candidateIndex][index],
@@ -1456,6 +1548,22 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 localTotal += candidate.occurrenceCount
                 let evidence = evidenceByCandidateIndex[candidateIndex]
                 let localMaskOffset = (candidateIndex - lower) * maskWordCount
+                if candidate.identityPolicy == .directEvidenceOnly {
+                    let probability = evidence.map {
+                        VocabularyObservationModel.posteriorKnownProbability(
+                            prior: 0.5,
+                            evidence: $0,
+                            reliabilityScale: modelConfiguration.evidenceReliabilityScale
+                        )
+                    } ?? 0.5
+                    for sampleIndex in 0..<sampleCount
+                    where Self.nextRandomUnit(state: &randomState) < probability {
+                        localMasks[localMaskOffset + (sampleIndex >> 6)] |=
+                            UInt64(1) << UInt64(sampleIndex & 63)
+                        localBaseline[sampleIndex] += candidate.occurrenceCount
+                    }
+                    continue
+                }
                 let curve = responseCurves[candidateIndex]
                 if let evidence {
                     if modelConfiguration.reuseRepeatedPredictiveProbabilities {
@@ -1928,6 +2036,11 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             var candidateOffset = worker
             while candidateOffset < candidates.count {
                 let candidate = candidates[candidateOffset]
+                if candidate.identityPolicy == .directEvidenceOnly {
+                    local.append(ScoredQuestion(candidate: candidate, reduction: 0))
+                    candidateOffset += workerCount
+                    continue
+                }
                 if let index = candidateIndexByKey[candidate.canonicalKey] {
                     let pKnown = currentProbabilities[index]
                     let questionCurve = responseCurves[index]
@@ -2081,6 +2194,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         for candidate: DocumentVocabularyCandidate,
         known: Bool
     ) -> [Double] {
+        guard candidate.identityPolicy == .fullInference else { return posterior }
         guard let candidateIndex = candidateIndexByKey[candidate.canonicalKey] else { return posterior }
         var result = posterior
         for index in result.indices {
@@ -2105,7 +2219,8 @@ package struct AdaptiveVocabularyAssessment: Sendable {
 
     private func isAdaptiveLossTarget(_ index: Int, excludingIndex: Int?) -> Bool {
         guard index != excludingIndex,
-              !excludedCandidateIndexes.contains(index) else { return false }
+              !excludedCandidateIndexes.contains(index),
+              inventory.candidates[index].identityPolicy == .fullInference else { return false }
         switch modelConfiguration.adaptiveLossPopulation {
         case .remainingUnasked:
             return !answeredCandidateIndexes.contains(index)
@@ -2119,6 +2234,9 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         posterior: [Double],
         epsilonKnowledge: Double
     ) -> Double {
+        if inventory.candidates[candidateIndex].identityPolicy == .directEvidenceOnly {
+            return 0.5
+        }
         let baseProbability = zip(responseCurves[candidateIndex], posterior).reduce(0.0) { partial, pair in
             partial + pair.0 * pair.1
         }
@@ -2174,7 +2292,10 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         }
     }
 
-    private static func inventorySeed(_ inventory: DocumentVocabularyInventory) -> UInt64 {
+    private static func inventorySeed(
+        _ inventory: DocumentVocabularyInventory,
+        algorithmVersion: Int
+    ) -> UInt64 {
         var hash: UInt64 = 0xCBF2_9CE4_8422_2325
         func mix(_ byte: UInt8) {
             hash ^= UInt64(byte)
@@ -2193,7 +2314,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 for byte in bytes { mix(byte) }
             }
         }
-        withUnsafeBytes(of: UInt64(VocabularyPreparationSession.currentAlgorithmVersion).littleEndian) { bytes in
+        withUnsafeBytes(of: UInt64(algorithmVersion).littleEndian) { bytes in
             for byte in bytes { mix(byte) }
         }
         return hash
@@ -2211,6 +2332,15 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         answeredProbabilities.removeAll(keepingCapacity: true)
         for answer in answers where answer.evidence != .excluded {
             guard let candidateIndex = candidateIndexByKey[answer.canonicalKey] else { continue }
+            if inventory.candidates[candidateIndex].identityPolicy == .directEvidenceOnly {
+                answeredProbabilities[answer.canonicalKey] =
+                    VocabularyObservationModel.posteriorKnownProbability(
+                        prior: 0.5,
+                        evidence: answer.evidence,
+                        reliabilityScale: modelConfiguration.evidenceReliabilityScale
+                    )
+                continue
+            }
             var leaveOneOut = posterior
             for thetaIndex in leaveOneOut.indices {
                 let latentKnown = VocabularyKnowledgeModel.adjustedKnownProbability(

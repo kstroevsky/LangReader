@@ -37,6 +37,10 @@ struct VocabularyPreparationInventoryPayload: Sendable {
     let sourceSnapshotMilliseconds: Double
     let inventoryModelMilliseconds: Double
     let contextMaterializationMilliseconds: Double
+    let algorithmVersion: Int
+    let lexicalShadowMilliseconds: Double
+    let lexicalShadowCandidateDelta: Int
+    let lexicalShadowDirectEvidenceCount: Int
 }
 
 private final class VocabularyPreparationCancellationToken: @unchecked Sendable {
@@ -127,6 +131,16 @@ final class VocabularyPreparationCoordinator {
 
     var experimentalDomainsEnabled: Bool {
         UserDefaults.standard.bool(forKey: "LeafReader.experimentalVocabularyDomains")
+    }
+
+    var experimentalLexicalReconciliationEnabled: Bool {
+        UserDefaults.standard.bool(forKey: "LeafReader.experimentalLexicalReconciliationV4")
+    }
+
+    private var desiredAlgorithmVersion: Int {
+        experimentalLexicalReconciliationEnabled
+            ? VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+            : VocabularyPreparationSession.currentAlgorithmVersion
     }
 
     var selectedDocumentDomain: VocabularyDocumentDomain {
@@ -269,7 +283,7 @@ final class VocabularyPreparationCoordinator {
     func beginAssessment() {
         guard let inventory else { return }
         var restored = session.answers
-        if session.algorithmVersion > VocabularyPreparationSession.currentAlgorithmVersion {
+        if session.algorithmVersion != desiredAlgorithmVersion {
             restored = []
         }
         phase = .analyzing
@@ -277,6 +291,7 @@ final class VocabularyPreparationCoordinator {
         let activeRequestID = requestID
         let mode = mode
         let readerPrior = readerPrior
+        let algorithmVersion = session.algorithmVersion
         if session.readerPriorContributionID == nil {
             session.readerPriorContributionID = UUID().uuidString
             sessionStore?.save(session)
@@ -287,7 +302,8 @@ final class VocabularyPreparationCoordinator {
                 inventory: inventory,
                 mode: mode,
                 restoredAnswers: restored,
-                readerPrior: readerPrior
+                readerPrior: readerPrior,
+                algorithmVersion: algorithmVersion
             )
             let advance = Self.advance(
                 assessment,
@@ -373,7 +389,7 @@ final class VocabularyPreparationCoordinator {
         session.finalSelection = []
         session.readerPriorContributionRecorded = false
         session.readerPriorContributionID = nil
-        session.algorithmVersion = VocabularyPreparationSession.currentAlgorithmVersion
+        session.algorithmVersion = desiredAlgorithmVersion
         sessionStore?.save(session)
         phase = inventory == nil ? .welcome : .inventory
     }
@@ -647,12 +663,24 @@ final class VocabularyPreparationCoordinator {
         sourceSnapshotMilliseconds: Double
     ) {
         let domainsEnabled = experimentalDomainsEnabled
+        let reconciledIdentityEnabled = experimentalLexicalReconciliationEnabled
+        let algorithmVersion = reconciledIdentityEnabled
+            ? VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+            : VocabularyPreparationSession.currentAlgorithmVersion
         let restoredDomain = session.documentDomain
         let priorStore = readerPriorStore
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard !cancellationToken.isCancelled else { return }
             let inventoryModelStartedAt = ProcessInfo.processInfo.systemUptime
-            let summaries = snapshot.index.lemmaSummaries()
+            let legacySummaries = snapshot.index.lemmaSummaries()
+            guard !cancellationToken.isCancelled else { return }
+            let lexicalShadowStartedAt = ProcessInfo.processInfo.systemUptime
+            let reconciledSummaries = snapshot.index.lexicalSummaries()
+            let lexicalShadowMilliseconds = (
+                ProcessInfo.processInfo.systemUptime - lexicalShadowStartedAt
+            ) * 1_000
+            guard !cancellationToken.isCancelled else { return }
+            let summaries = reconciledIdentityEnabled ? reconciledSummaries : legacySummaries
             let difficultyProvider = DocumentVocabularyFrequencyProvider.calibrated(
                 languageCode: snapshot.language.rawValue
             )
@@ -698,7 +726,13 @@ final class VocabularyPreparationCoordinator {
                 readerPrior: priorStore.load(languageCode: snapshot.language.rawValue),
                 sourceSnapshotMilliseconds: sourceSnapshotMilliseconds,
                 inventoryModelMilliseconds: inventoryModelMilliseconds,
-                contextMaterializationMilliseconds: contextMaterializationMilliseconds
+                contextMaterializationMilliseconds: contextMaterializationMilliseconds,
+                algorithmVersion: algorithmVersion,
+                lexicalShadowMilliseconds: lexicalShadowMilliseconds,
+                lexicalShadowCandidateDelta: reconciledSummaries.count - legacySummaries.count,
+                lexicalShadowDirectEvidenceCount: reconciledSummaries.lazy.filter {
+                    $0.assessmentPolicy == .directEvidenceOnly
+                }.count
             )
             Task { @MainActor [weak self] in
                 guard let self,
@@ -714,6 +748,15 @@ final class VocabularyPreparationCoordinator {
 
     private func apply(payload: VocabularyPreparationInventoryPayload, durationMilliseconds: Double) {
         let mainWorkStartedAt = ProcessInfo.processInfo.systemUptime
+        if session.algorithmVersion != payload.algorithmVersion {
+            session.answers = []
+            session.finalSelection = []
+            session.predictionAudit = nil
+            session.readerPriorContributionRecorded = false
+            session.readerPriorContributionID = nil
+            session.algorithmVersion = payload.algorithmVersion
+            sessionStore?.save(session)
+        }
         inventory = payload.inventory
         domainDetection = payload.domainDetection
         contexts = payload.contexts
@@ -736,6 +779,12 @@ final class VocabularyPreparationCoordinator {
         ReaderPerformance.record(
             .vocabularyPreparationContextMaterialization,
             milliseconds: payload.contextMaterializationMilliseconds
+        )
+        ReaderPerformance.logVocabularyPreparation(
+            .lexicalReconciliationShadow,
+            milliseconds: payload.lexicalShadowMilliseconds,
+            itemCount: payload.lexicalShadowCandidateDelta,
+            auxiliaryCount: payload.lexicalShadowDirectEvidenceCount
         )
         ReaderPerformance.record(.vocabularyPreparationInventoryBuild, milliseconds: durationMilliseconds)
         ReaderPerformance.logVocabularyPreparation(
@@ -1203,6 +1252,7 @@ final class VocabularyPreparationCoordinator {
         let researchStore = researchEvidenceStore
         let answers = assessment.answers
         let activeRequestID = requestID
+        let algorithmVersion = session.algorithmVersion
         Task { [weak self] in
             let saved = await Task.detached {
                 let priorSaved = store.recordCompletedSession(
@@ -1211,13 +1261,13 @@ final class VocabularyPreparationCoordinator {
                     thetaPosterior: posterior,
                     verifiedEvidenceCount: verifiedCount,
                     completedAt: Date(),
-                    algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion
+                    algorithmVersion: algorithmVersion
                 )
                 _ = researchStore.recordCompletedSession(
                     contributionID: contributionID,
                     inventory: inventory,
                     answers: answers,
-                    protocolVersion: VocabularyPreparationSession.currentAlgorithmVersion
+                    protocolVersion: algorithmVersion
                 )
                 return priorSaved
             }.value
@@ -1232,7 +1282,6 @@ final class VocabularyPreparationCoordinator {
         guard let assessment else { return }
         session.mode = mode
         session.answers = assessment.answers
-        session.algorithmVersion = VocabularyPreparationSession.currentAlgorithmVersion
         sessionStore?.save(session)
     }
 
