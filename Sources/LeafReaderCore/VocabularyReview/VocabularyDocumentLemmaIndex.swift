@@ -594,7 +594,8 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             resolutionState: VocabularyLexicalResolutionState,
             assessmentPolicy: VocabularyAssessmentIdentityPolicy,
             diagnostics: VocabularyLexicalResolutionDiagnostics,
-            residual: Bool = false
+            residual: Bool = false,
+            directEvidenceOccurrenceID: VocabularyOccurrenceAnalysisID? = nil
         ) {
             let selected = occurrenceIDs.compactMap { recordsByID[$0] }.sorted {
                 if $0.analysis.sourceRange.unitIndex != $1.analysis.sourceRange.unitIndex {
@@ -612,8 +613,11 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                     (existing?.count ?? 0) + 1
                 )
             }
+            let directEvidenceSuffix = directEvidenceOccurrenceID.map {
+                "|direct|\($0.unitIndex):\($0.utf16Location):\($0.utf16Length)"
+            } ?? ""
             let canonicalKey = lexicalItemID?.canonicalKey
-                ?? anchor.canonicalKey + (residual ? "|residual" : "")
+                ?? anchor.canonicalKey + (residual ? "|residual" : "") + directEvidenceSuffix
             summaries.append(VocabularyDocumentLemmaSummary(
                 canonicalKey: canonicalKey,
                 lemmaKey: lexicalItemID?.lemma
@@ -645,6 +649,27 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             ))
         }
 
+        func appendDirectEvidenceSummaries(
+            occurrenceIDs: [VocabularyOccurrenceAnalysisID],
+            anchor: VocabularyLexicalAnchorID,
+            resolutionState: VocabularyLexicalResolutionState,
+            diagnostics: VocabularyLexicalResolutionDiagnostics,
+            residual: Bool = false
+        ) {
+            for occurrenceID in occurrenceIDs {
+                appendSummary(
+                    occurrenceIDs: [occurrenceID],
+                    anchor: anchor,
+                    lexicalItemID: nil,
+                    resolutionState: resolutionState,
+                    assessmentPolicy: .directEvidenceOnly,
+                    diagnostics: diagnostics,
+                    residual: residual,
+                    directEvidenceOccurrenceID: occurrenceID
+                )
+            }
+        }
+
         for anchor in byAnchor.keys.sorted(by: { $0.canonicalKey < $1.canonicalKey }) {
             let occurrences = byAnchor[anchor] ?? []
             let resolution = reconciler.reconcile(anchor: anchor, occurrences: occurrences)
@@ -658,12 +683,10 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                     assessmentPolicy: .fullInference,
                     diagnostics: group.diagnostics
                 )
-                appendSummary(
+                appendDirectEvidenceSummaries(
                     occurrenceIDs: group.residualOccurrenceIDs,
                     anchor: anchor,
-                    lexicalItemID: nil,
                     resolutionState: .resolvedSingle,
-                    assessmentPolicy: .directEvidenceOnly,
                     diagnostics: group.diagnostics,
                     residual: true
                 )
@@ -678,31 +701,25 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                         diagnostics: partition.diagnostics
                     )
                 }
-                appendSummary(
+                appendDirectEvidenceSummaries(
                     occurrenceIDs: partition.residualOccurrenceIDs,
                     anchor: anchor,
-                    lexicalItemID: nil,
                     resolutionState: .resolvedSplit,
-                    assessmentPolicy: .directEvidenceOnly,
                     diagnostics: partition.diagnostics,
                     residual: true
                 )
             case let .ambiguous(group):
-                appendSummary(
+                appendDirectEvidenceSummaries(
                     occurrenceIDs: group.occurrenceIDs,
                     anchor: anchor,
-                    lexicalItemID: nil,
                     resolutionState: .ambiguous,
-                    assessmentPolicy: .directEvidenceOnly,
                     diagnostics: group.diagnostics
                 )
             case let .unresolved(group):
-                appendSummary(
+                appendDirectEvidenceSummaries(
                     occurrenceIDs: group.occurrenceIDs,
                     anchor: anchor,
-                    lexicalItemID: nil,
                     resolutionState: .unresolved,
-                    assessmentPolicy: .directEvidenceOnly,
                     diagnostics: group.diagnostics
                 )
             }

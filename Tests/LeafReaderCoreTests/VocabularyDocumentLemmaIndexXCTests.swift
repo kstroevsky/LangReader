@@ -258,7 +258,42 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         XCTAssertEqual(noun.resolutionState, .resolvedSingle)
         XCTAssertEqual(residual.occurrenceCount, 1)
         XCTAssertEqual(residual.partOfSpeech, .unknown)
-        XCTAssertTrue(residual.canonicalKey.hasSuffix("|residual"))
+        XCTAssertTrue(residual.canonicalKey.contains("|residual|direct|"))
+    }
+
+    func testAmbiguousAnchorCreatesOccurrenceScopedDirectEvidenceUnits() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: [
+                "noun-one record remains",
+                "verb-one record this"
+            ],
+            language: .english,
+            maximumWorkerCount: 1,
+            resolutionProvider: { surface, _, _ in
+                surface == "record"
+                    ? .resolved(lemma: "record", source: .naturalLanguage)
+                    : .unresolved(surface: surface)
+            },
+            analysisProvider: { request in
+                guard request.surface == "record" else { return [] }
+                let part: VocabularyPartOfSpeech = request.context.contains("noun-") ? .noun : .verb
+                return [VocabularyMorphologicalAnalysis(
+                    lemma: "record",
+                    partOfSpeech: part,
+                    source: .validationFixture,
+                    rawScore: 1,
+                    confidence: .usable
+                )]
+            }
+        ))
+
+        let record = index.lexicalSummaries().filter { $0.lemmaKey == "record" }
+        XCTAssertEqual(record.count, 2)
+        XCTAssertTrue(record.allSatisfy { $0.resolutionState == .ambiguous })
+        XCTAssertTrue(record.allSatisfy { $0.assessmentPolicy == .directEvidenceOnly })
+        XCTAssertTrue(record.allSatisfy { $0.occurrenceCount == 1 })
+        XCTAssertEqual(Set(record.map(\.canonicalKey)).count, 2)
+        XCTAssertTrue(record.allSatisfy { $0.canonicalKey.contains("|direct|") })
     }
 
     func testOrdinaryEnglishWordsAreNotClassifiedAsConfidentNames() throws {
