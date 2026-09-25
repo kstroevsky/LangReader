@@ -2,10 +2,10 @@
   "schema_version": 1,
   "derived_view": true,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "1f07b473ec70de53d1d9cb3f16417d84afdfeb89",
+  "repository_head_reviewed": "458f2ad80654a6d0da61cf84b0ab45fdcc9067a9",
   "active_future_reservation": {
-    "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v11.json",
-    "sha256": "9c111d474a55ab1bb20262fc601e5250dbe196de4933f98c905b4fd75d6d4b81",
+    "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v12.json",
+    "sha256": "68ff70eb2dd9d2ad5b35a00c50e9db160db4cf02cc1f3e8c8a77cb2ef60cc1e0",
     "status": "reserved_not_executed"
   },
   "head_since_production_evidence": [
@@ -100,7 +100,8 @@
     "fc9762a0710572c5fc7cceee537458bdacfcb511: isolate the current ADR-0001 lexical protocol as experimental v5",
     "a4e7c16d50146fe9463800c7da07d6662e1ef440: use strict Unicode Script=Han semantics in the English-only wiki scanner and cover scanner failure modes",
     "e6f117c95934c301867516d1d5ccfaf34d0704d6: migrate the lexical reconciliation feature flag to a version-neutral key and align ADR protocol naming",
-    "1f07b473ec70de53d1d9cb3f16417d84afdfeb89: harden credible conflicting POS evidence to preserve ambiguity and advance the experimental protocol to v6"
+    "1f07b473ec70de53d1d9cb3f16417d84afdfeb89: harden credible conflicting POS evidence to preserve ambiguity and advance the experimental protocol to v6",
+    "458f2ad80654a6d0da61cf84b0ab45fdcc9067a9: make occurrence-scoped direct-evidence candidate IDs renderer-offset independent, verify reconciled PDF/EPUB/DOCX parity, and advance the experimental protocol to v7"
   ],
   "canonical_ledger": {
     "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
@@ -293,9 +294,17 @@
       "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v11.json",
       "evidence_class": "sealed synthetic development-confirmation reservation",
       "status": "reserved_not_executed",
-      "reservation_role": "active_future",
-      "interpretation": "Sole active future reservation for the ADR-0001 experimental v6 lexical protocol with lexical-reconciliation-v3 diagnostics and hardened credible-conflict ambiguity; it has three disjoint seeds and 24 opaque document identities and no candidate freeze, outcomes, consumption, or release access.",
+      "reservation_role": "historical_unexecuted",
+      "interpretation": "Historical unexecuted reservation for the ADR-0001 experimental v6 lexical protocol with lexical-reconciliation-v3 diagnostics; its source binding was superseded after occurrence-scoped candidate IDs became renderer-offset independent and advanced the experimental protocol to v7, while its identities and bytes remain sealed.",
       "sha256": "9c111d474a55ab1bb20262fc601e5250dbe196de4933f98c905b4fd75d6d4b81"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v12.json",
+      "evidence_class": "sealed synthetic development-confirmation reservation",
+      "status": "reserved_not_executed",
+      "reservation_role": "active_future",
+      "interpretation": "Sole active future reservation for the ADR-0001 experimental v7 lexical protocol with renderer-offset-independent occurrence-scoped direct-evidence IDs and lexical-reconciliation-v3 diagnostics; it has three disjoint seeds and 24 opaque document identities and no candidate freeze, outcomes, consumption, or release access.",
+      "sha256": "68ff70eb2dd9d2ad5b35a00c50e9db160db4cf02cc1f3e8c8a77cb2ef60cc1e0"
     },
     {
       "path": "docs/plans/vocabulary-validation-evidence/german-form-label-portability-development-check-2026-09-21.json",
