@@ -245,4 +245,27 @@ final class VocabularyReaderPriorStoreXCTests: XCTestCase {
             currentDate: now
         ).usedEligibleReaderPrior)
     }
+
+    func testSupersededExperimentalPriorCannotWarmCurrentLexicalProtocol() {
+        let now = Date(timeIntervalSince1970: 2_000_000_000)
+        let posterior = Array(repeating: 1.0 / 121.0, count: 121)
+        let supersededV4 = VocabularyReaderPrior(
+            languageCode: "en",
+            thetaPosterior: posterior,
+            completedSessionCount: 2,
+            verifiedEvidenceCount: 40,
+            lastUpdatedAt: now,
+            algorithmVersion: 4
+        )
+
+        XCTAssertTrue(supersededV4.isEligible(at: now))
+        XCTAssertEqual(VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion, 5)
+        XCTAssertFalse(AdaptiveVocabularyAssessment(
+            inventory: DocumentVocabularyInventory(languageCode: "en", candidates: []),
+            mode: .targetCoverage(0.98),
+            readerPrior: supersededV4,
+            currentDate: now,
+            algorithmVersion: VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+        ).usedEligibleReaderPrior)
+    }
 }

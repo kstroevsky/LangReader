@@ -105,7 +105,7 @@ package struct VocabularyLexicalReconciler: Sendable {
         package static let production = Configuration()
     }
 
-    package static let policyVersion = "lexical-reconciliation-v1"
+    package static let policyVersion = "lexical-reconciliation-v2"
 
     private let configuration: Configuration
 

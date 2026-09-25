@@ -22,6 +22,7 @@ final class VocabularyLexicalReconcilerXCTests: XCTestCase {
         XCTAssertEqual(partition.children.map(\.assignedOccurrenceIDs.count).sorted(), [2, 2])
         XCTAssertTrue(partition.residualOccurrenceIDs.isEmpty)
         XCTAssertEqual(partition.diagnostics.state, .resolvedSplit)
+        XCTAssertEqual(partition.diagnostics.reconcilerVersion, "lexical-reconciliation-v2")
     }
 
     func testOneSpuriousConflictingClassificationDoesNotCreateAChild() {

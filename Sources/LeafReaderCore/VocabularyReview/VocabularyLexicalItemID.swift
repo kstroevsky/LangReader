@@ -233,7 +233,7 @@ package enum VocabularyPartOfSpeech: String, Codable, CaseIterable, Sendable {
 }
 
 /// Reserved seam for a future validated same-POS sense splitter. No production
-/// implementation is registered in version 4.
+/// implementation is registered in the current experimental lexical protocol.
 package protocol VocabularySenseDisambiguating: Sendable {
     func senseKey(language: String, lemma: String, partOfSpeech: VocabularyPartOfSpeech, context: String) -> String?
 }
