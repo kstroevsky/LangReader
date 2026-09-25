@@ -16,6 +16,16 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
             VocabularyPartOfSpeechConfidencePolicy.classify(hypotheses: ["Noun": 0.70, "Verb": 0.51]),
             .unknown
         )
+        XCTAssertEqual(
+            VocabularyPartOfSpeechConfidencePolicy.classify(hypotheses: ["OtherWord": 1.0]),
+            .unknown,
+            "Apple OtherWord means the lexical model supplied no supported POS evidence"
+        )
+        XCTAssertEqual(
+            VocabularyPartOfSpeechConfidencePolicy.classify(hypotheses: ["Classifier": 1.0]),
+            .other,
+            "other explicitly unsupported lexical classes remain the .other bucket"
+        )
     }
 
     func testUnknownPOSReconciliationRequiresExactlyOneConfidentClass() {

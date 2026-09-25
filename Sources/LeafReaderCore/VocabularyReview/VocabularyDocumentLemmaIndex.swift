@@ -86,6 +86,7 @@ package enum VocabularyPartOfSpeechConfidencePolicy {
         case .conjunction: return .conjunction
         case .interjection: return .interjection
         case .particle: return .particle
+        case .otherWord: return .unknown
         default: return .other
         }
     }
