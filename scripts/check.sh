@@ -105,8 +105,11 @@ python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v8.py
 echo "==> Checking sealed historical conservative-reconciliation development-confirmation reservation"
 python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v9.py --self-test
 
-echo "==> Checking sealed protocol-identity development-confirmation reservation"
+echo "==> Checking sealed historical protocol-identity development-confirmation reservation"
 python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v10.py --self-test
+
+echo "==> Checking sealed conflict-ambiguity development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v11.py --self-test
 
 echo "==> Checking frozen vocabulary warm-compatibility development reservation"
 python3 ./scripts/validate_vocabulary_longitudinal_compatibility_manifest.py \
