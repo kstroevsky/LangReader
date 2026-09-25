@@ -114,6 +114,76 @@ final class VocabularyLexicalReconcilerXCTests: XCTestCase {
         )
     }
 
+    func testStrongContextPlusIndependentAttestationCanResolveSinglePopulation() {
+        let anchor = VocabularyLexicalAnchorID(language: "en", basis: .resolvedLemma("record"))
+        let sourceRange = VocabularyDocumentSourceRange(unitIndex: 0, utf16Location: 0, utf16Length: 6)
+        let occurrence = VocabularyOccurrenceAnalysis(
+            occurrenceID: VocabularyOccurrenceAnalysisID(
+                unitIndex: sourceRange.unitIndex,
+                utf16Location: sourceRange.utf16Location,
+                utf16Length: sourceRange.utf16Length
+            ),
+            sourceRange: sourceRange,
+            surface: "record",
+            anchor: anchor,
+            analyses: [
+                VocabularyMorphologicalAnalysis(
+                    lemma: "record",
+                    partOfSpeech: .noun,
+                    source: .appleNaturalLanguage,
+                    rawScore: 0.99,
+                    confidence: .strong
+                ),
+                VocabularyMorphologicalAnalysis(
+                    lemma: "record",
+                    partOfSpeech: .noun,
+                    source: .lexicalAttestation,
+                    confidence: .usable
+                )
+            ],
+            contextFingerprint: "the record survived"
+        )
+
+        XCTAssertEqual(
+            VocabularyLexicalReconciler().reconcile(anchor: anchor, occurrences: [occurrence]).state,
+            .resolvedSingle
+        )
+    }
+
+    func testDeterministicSingleRuleRequiresExplicitLanguageValidation() {
+        let anchor = VocabularyLexicalAnchorID(language: "de", basis: .resolvedLemma("folge"))
+        let sourceRange = VocabularyDocumentSourceRange(unitIndex: 0, utf16Location: 0, utf16Length: 5)
+        let occurrence = VocabularyOccurrenceAnalysis(
+            occurrenceID: VocabularyOccurrenceAnalysisID(
+                unitIndex: sourceRange.unitIndex,
+                utf16Location: sourceRange.utf16Location,
+                utf16Length: sourceRange.utf16Length
+            ),
+            sourceRange: sourceRange,
+            surface: "Folge",
+            anchor: anchor,
+            analyses: [VocabularyMorphologicalAnalysis(
+                lemma: "folge",
+                partOfSpeech: .noun,
+                source: .deterministicMorphology,
+                confidence: .usable
+            )],
+            contextFingerprint: "die Folge"
+        )
+
+        XCTAssertEqual(
+            VocabularyLexicalReconciler().reconcile(anchor: anchor, occurrences: [occurrence]).state,
+            .unresolved
+        )
+        let validated = VocabularyLexicalReconciler(configuration: .init(
+            validatedDeterministicSingleRuleLanguages: ["de"]
+        ))
+        XCTAssertEqual(
+            validated.reconcile(anchor: anchor, occurrences: [occurrence]).state,
+            .resolvedSingle
+        )
+    }
+
     func testValidSplitLeavesUnavailableOccurrenceResidual() {
         let anchor = VocabularyLexicalAnchorID(language: "en", basis: .resolvedLemma("record"))
         let occurrences = [

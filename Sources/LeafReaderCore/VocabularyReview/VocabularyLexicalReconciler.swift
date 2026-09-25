@@ -84,17 +84,22 @@ package struct VocabularyLexicalReconciler: Sendable {
         package let minimumSingleDistinctContextSupport: Int
         package let minimumSplitOccurrenceSupport: Int
         package let minimumSplitDistinctContextSupport: Int
+        package let validatedDeterministicSingleRuleLanguages: Set<String>
 
         package init(
             minimumSingleOccurrenceSupport: Int = 2,
             minimumSingleDistinctContextSupport: Int = 2,
             minimumSplitOccurrenceSupport: Int = 2,
-            minimumSplitDistinctContextSupport: Int = 2
+            minimumSplitDistinctContextSupport: Int = 2,
+            validatedDeterministicSingleRuleLanguages: Set<String> = []
         ) {
             self.minimumSingleOccurrenceSupport = max(1, minimumSingleOccurrenceSupport)
             self.minimumSingleDistinctContextSupport = max(1, minimumSingleDistinctContextSupport)
             self.minimumSplitOccurrenceSupport = max(2, minimumSplitOccurrenceSupport)
             self.minimumSplitDistinctContextSupport = max(2, minimumSplitDistinctContextSupport)
+            self.validatedDeterministicSingleRuleLanguages = Set(
+                validatedDeterministicSingleRuleLanguages.map { $0.lowercased() }
+            )
         }
 
         package static let production = Configuration()
@@ -162,7 +167,7 @@ package struct VocabularyLexicalReconciler: Sendable {
         }
 
         if supportedParts.count == 1, let part = supportedParts.first {
-            guard hasSingleResolutionSupport(part, support: support) else {
+            guard hasSingleResolutionSupport(part, language: anchor.language, support: support) else {
                 return .unresolved(VocabularyUnresolvedLexicalGroup(
                     occurrenceIDs: matching.map(\.occurrenceID),
                     diagnostics: diagnostics(
@@ -249,16 +254,28 @@ package struct VocabularyLexicalReconciler: Sendable {
 
     private func hasSingleResolutionSupport(
         _ part: VocabularyPartOfSpeech,
+        language: String,
         support: [VocabularyPartOfSpeech: PartSupport]
     ) -> Bool {
         guard let evidence = support[part] else { return false }
-        return evidence.occurrenceIDs.count >= configuration.minimumSingleOccurrenceSupport
+        let independentContextSupport = evidence.occurrenceIDs.count >= configuration.minimumSingleOccurrenceSupport
             && evidence.contexts.count >= configuration.minimumSingleDistinctContextSupport
+        let independentlyAttestedStrongContext = !evidence.strongContextualOccurrenceIDs.isEmpty
+            && !evidence.attestationSources.isEmpty
+        let validatedDeterministicRule = configuration.validatedDeterministicSingleRuleLanguages
+            .contains(language.lowercased())
+            && evidence.sources.contains(.deterministicMorphology)
+        return independentContextSupport
+            || independentlyAttestedStrongContext
+            || validatedDeterministicRule
     }
 
     private struct PartSupport {
         var occurrenceIDs = Set<VocabularyOccurrenceAnalysisID>()
         var contexts = Set<String>()
+        var sources = Set<VocabularyLinguisticEvidenceSource>()
+        var strongContextualOccurrenceIDs = Set<VocabularyOccurrenceAnalysisID>()
+        var attestationSources = Set<VocabularyLinguisticEvidenceSource>()
     }
 
     private func ofSpeechByOccurrence(
@@ -283,8 +300,22 @@ package struct VocabularyLexicalReconciler: Sendable {
         var support: [VocabularyPartOfSpeech: PartSupport] = [:]
         for occurrence in occurrences {
             guard let part = partByOccurrence[occurrence.occurrenceID] else { continue }
-            support[part, default: PartSupport()].occurrenceIDs.insert(occurrence.occurrenceID)
-            support[part, default: PartSupport()].contexts.insert(occurrence.contextFingerprint)
+            var partSupport = support[part, default: PartSupport()]
+            partSupport.occurrenceIDs.insert(occurrence.occurrenceID)
+            partSupport.contexts.insert(occurrence.contextFingerprint)
+            for analysis in occurrence.analyses
+            where analysis.confidence.isUsable && analysis.partOfSpeech == part {
+                partSupport.sources.insert(analysis.source)
+                if analysis.confidence == .strong,
+                   analysis.source == .appleNaturalLanguage {
+                    partSupport.strongContextualOccurrenceIDs.insert(occurrence.occurrenceID)
+                }
+                if analysis.source == .lexicalAttestation
+                    || analysis.source == .deterministicMorphology {
+                    partSupport.attestationSources.insert(analysis.source)
+                }
+            }
+            support[part] = partSupport
         }
         return support
     }
