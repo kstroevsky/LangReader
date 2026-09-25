@@ -64,6 +64,7 @@ python3 ./scripts/validate_vocabulary_validation_study.py --self-test
 python3 ./scripts/run_vocabulary_validation_study_rehearsal.py --self-test
 python3 ./scripts/check_vocabulary_sap_template.py --self-test
 ./scripts/test_vocabulary_pos_fixtures.sh
+bash ./scripts/test_vocabulary_lexical_partitions.sh
 
 echo "==> Testing vocabulary cross-format fixtures"
 python3 ./scripts/generate_vocabulary_preparation_fixtures.py --check
