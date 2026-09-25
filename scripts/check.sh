@@ -86,8 +86,11 @@ python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v3.py
 echo "==> Checking sealed historical German-portability development-confirmation reservation"
 python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v4.py --self-test
 
-echo "==> Checking sealed graceful-degradation development-confirmation reservation"
+echo "==> Checking sealed historical graceful-degradation development-confirmation reservation"
 python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v5.py --self-test
+
+echo "==> Checking sealed OtherWord-POS development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v6.py --self-test
 
 echo "==> Checking frozen vocabulary warm-compatibility development reservation"
 python3 ./scripts/validate_vocabulary_longitudinal_compatibility_manifest.py \

@@ -2,10 +2,10 @@
   "schema_version": 1,
   "derived_view": true,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "294294187d55d45a33eef32db11fb7f8bdb289d0",
+  "repository_head_reviewed": "4e2bd6c4f6fe0fa408d9d17d7743d5d990487207",
   "active_future_reservation": {
-    "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v5.json",
-    "sha256": "ace9fa7c0e44df40f7eff8c6572828296d4acfd09c857211c207989af6f73647",
+    "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v6.json",
+    "sha256": "15ec2bcb8baeafc36e7983c48e4335bfb46d914d6be96c8f9875e33be52f3517",
     "status": "reserved_not_executed"
   },
   "head_since_production_evidence": [
@@ -79,7 +79,8 @@
     "0dc16efd21e2816a5154b4d515c2b5272e6b8fe3: narrowed Core validation controls and development-fixture parity; production policy unchanged",
     "ca5d20f7f50a9e1a6ea46b6d248fa999ed3b8a26: German NaturalLanguage portability and context-cache correctness repair",
     "3b1aa9c07659325c86e78f46f06c7c927f340e37: narrowed capitalized-noun plural bypass after development-corpus consequence check",
-    "294294187d55d45a33eef32db11fb7f8bdb289d0: graceful exact-surface degradation when optional platform NLP models are unavailable"
+    "294294187d55d45a33eef32db11fb7f8bdb289d0: graceful exact-surface degradation when optional platform NLP models are unavailable",
+    "4e2bd6c4f6fe0fa408d9d17d7743d5d990487207: treat Apple OtherWord POS as unavailable evidence"
   ],
   "canonical_ledger": {
     "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
@@ -224,9 +225,17 @@
       "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v5.json",
       "evidence_class": "sealed synthetic development-confirmation reservation",
       "status": "reserved_not_executed",
-      "reservation_role": "active_future",
-      "interpretation": "Sole active future reservation for the graceful-degradation generator, with three disjoint seeds and 24 opaque document identities; no candidate, analysis freeze, outcomes, consumption, or release access exists.",
+      "reservation_role": "historical_unexecuted",
+      "interpretation": "Historical unexecuted reservation for the graceful-degradation generator; its source binding was superseded as the active future set after the OtherWord POS Core change, while its identities and bytes remain sealed.",
       "sha256": "ace9fa7c0e44df40f7eff8c6572828296d4acfd09c857211c207989af6f73647"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v6.json",
+      "evidence_class": "sealed synthetic development-confirmation reservation",
+      "status": "reserved_not_executed",
+      "reservation_role": "active_future",
+      "interpretation": "Sole active future reservation for the OtherWord-as-unknown generator, with three disjoint seeds and 24 opaque document identities; no candidate, analysis freeze, outcomes, consumption, or release access exists.",
+      "sha256": "15ec2bcb8baeafc36e7983c48e4335bfb46d914d6be96c8f9875e33be52f3517"
     },
     {
       "path": "docs/plans/vocabulary-validation-evidence/german-form-label-portability-development-check-2026-09-21.json",
@@ -241,6 +250,13 @@
       "status": "verified_current_candidate",
       "interpretation": "A model-less macOS runner now degrades to exact-surface lexical identity and grammatical abstention while retaining bounded LeafReader-owned rules; installed useful Apple evidence still restores higher recall.",
       "sha256": "06d2059beb945d9c23c61c21872de61e939f7b7d81a8ef251d690efb9e1e375c"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/otherword-pos-degradation-check-2026-09-25.json",
+      "evidence_class": "OtherWord POS abstention regression check",
+      "status": "verified_current_candidate",
+      "interpretation": "Apple OtherWord now maps to unknown rather than a confident other class; explicitly unsupported lexical classes such as Classifier remain in the other bucket.",
+      "sha256": "9d85f753bcdc5e548e3e5967043d3a5998d0c929c8847570a7dc6e5cb3111a6e"
     },
     {
       "path": "docs/plans/vocabulary-validation-boundary/implementation-evidence/commit-5-extraction-checkpoint.md",

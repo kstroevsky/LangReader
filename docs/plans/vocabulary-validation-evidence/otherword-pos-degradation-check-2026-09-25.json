@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "evidenceRole": "product-portability-regression-check",
+  "date": "2026-09-25",
+  "protectedOutcomesAccessed": false,
+  "priorRemoteCI": {
+    "workflow": "Architecture",
+    "runID": 36063865246,
+    "sourceRevision": "2ec15c5bf0407a0a9490a621edfafac834e5a1d1",
+    "status": "completed",
+    "conclusion": "success",
+    "verifiedVia": "GitHub Actions REST API"
+  },
+  "retainedContract": {
+    "generatorRevision": "4e2bd6c4f6fe0fa408d9d17d7743d5d990487207",
+    "invariant": "Unavailable platform POS evidence must abstain and must not become a confident lexical class.",
+    "mapping": {
+      "OtherWord": "unknown",
+      "Classifier": "other"
+    },
+    "consequence": "OtherWord cannot participate as a confident class in POS reconciliation or create a distinct confident lexical identity."
+  },
+  "verification": {
+    "command": "swift test -Xswiftc -warnings-as-errors --filter VocabularyDocumentLemmaIndexXCTests.testPartOfSpeechConfidencePolicyPreservesProductionThresholds",
+    "tests": 1,
+    "failures": 0
+  },
+  "limitations": [
+    "This check changes only the OtherWord interpretation; existing explicit POS mappings and the unsupported .other bucket remain unchanged.",
+    "Remote Architecture CI for the new generator commit must still complete after publication."
+  ]
+}

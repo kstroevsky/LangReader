@@ -57,7 +57,6 @@ def derived_document_id(run_digest: bytes, ordinal: int) -> str:
 def validate_source_lock(
     lock: dict,
     *,
-    current_inputs: dict | None = None,
     historical_inputs: dict | None = None,
 ) -> None:
     if lock.get("schemaVersion") != 1 \
@@ -71,12 +70,9 @@ def validate_source_lock(
             or lock.get("standaloneSwiftFlags") != ["-swift-version", "6", "-warnings-as-errors", "-O"]:
         raise ValueError("v5 Swift build contract changed")
 
-    current = current_inputs if current_inputs is not None else v2.current_source_lock()
     historical = historical_inputs if historical_inputs is not None else v2.historical_source_lock(SOURCE_REVISION)
     if lock.get("generatorInputs") != historical:
         raise ValueError("v5 source lock does not match its generator commit")
-    if lock.get("generatorInputs") != current:
-        raise ValueError("current generator inputs no longer match active v5 reservation")
 
     analysis = lock.get("analysisBinding", {})
     if analysis.get("status") != "provenanceOnlyNotFrozen" \
@@ -253,15 +249,6 @@ def self_test() -> None:
         raise AssertionError(f"accepted changed v5 {label}")
 
     lock = read_json(SOURCE_LOCK)
-    changed_current = copy.deepcopy(v2.current_source_lock())
-    changed_current["files"]["Package.swift"] = "0" * 64
-    try:
-        validate_source_lock(lock, current_inputs=changed_current)
-    except ValueError:
-        pass
-    else:
-        raise AssertionError("accepted mismatched current v5 generator inputs")
-
     changed_historical = copy.deepcopy(v2.historical_source_lock(SOURCE_REVISION))
     changed_historical["files"]["Package.swift"] = "0" * 64
     try:

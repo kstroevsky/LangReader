@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "phase": "graceful-degradation-v5-sealed",
+  "phase": "otherword-pos-v6-sealed",
   "source_revision": "b2b99696feda177be0699d5277a2c13c7c7c9bd5",
   "accepted_plan": "docs/plans/vocabulary-validation-boundary/revision-2026-09-19-ci-source-lock/candidate-plan.md",
   "baseline_manifest": "docs/plans/vocabulary-validation-boundary/implementation-evidence/extraction-parity-manifest.json",
@@ -8,22 +8,23 @@
   "followup_source_revision": "0dc16efd21e2816a5154b4d515c2b5272e6b8fe3",
   "followup_plan": "docs/plans/vocabulary-validation-boundary/revision-2026-09-21-boundary-followup/candidate-plan.md",
   "followup_plan_sha256": "3a67d47ad1d0ea133618bff40611e9b40a8b6a3f1a5a7f7082f8210a80985cab",
-  "completed_slices": ["baseline-checkpoint", "commit-1-boundary-scaffold", "2a-study-schemas", "2b-parallel-diagnostic-evaluator", "2c-same-tree-bank-parity", "2d-wrapper-linkage-switch", "2e-remove-core-experiment-code", "commit-3-runner-extraction", "commit-4-pos-cross-format", "commit-5-enforcement-and-handoff", "followup-register-and-v2-hardening", "followup-core-seam-cleanup", "followup-v3-seal", "german-portability-product-fix", "german-portability-v4-seal", "graceful-degradation-product-fix", "graceful-degradation-v5-seal"],
+  "completed_slices": ["baseline-checkpoint", "commit-1-boundary-scaffold", "2a-study-schemas", "2b-parallel-diagnostic-evaluator", "2c-same-tree-bank-parity", "2d-wrapper-linkage-switch", "2e-remove-core-experiment-code", "commit-3-runner-extraction", "commit-4-pos-cross-format", "commit-5-enforcement-and-handoff", "followup-register-and-v2-hardening", "followup-core-seam-cleanup", "followup-v3-seal", "german-portability-product-fix", "german-portability-v4-seal", "graceful-degradation-product-fix", "graceful-degradation-v5-seal", "otherword-pos-product-fix", "otherword-pos-v6-seal"],
   "current_slice": null,
   "protected_data_accessed": false,
   "historical_reservation_modified": false,
-  "product_generator_revision": "294294187d55d45a33eef32db11fb7f8bdb289d0",
-  "fresh_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v5.json",
-  "fresh_reservation_sha256": "ace9fa7c0e44df40f7eff8c6572828296d4acfd09c857211c207989af6f73647",
+  "product_generator_revision": "4e2bd6c4f6fe0fa408d9d17d7743d5d990487207",
+  "fresh_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v6.json",
+  "fresh_reservation_sha256": "15ec2bcb8baeafc36e7983c48e4335bfb46d914d6be96c8f9875e33be52f3517",
   "fresh_reservation_status": "reservedNotExecuted",
-  "extracted_generator_source_lock": "docs/plans/vocabulary-validation-boundary/implementation-evidence/graceful-degradation-generator-source-lock-v5.json",
-  "extracted_generator_source_lock_sha256": "749764b5ae59a3bb1e741777602a772dedf1327eaa10710f0cac1afb745dc50e",
+  "extracted_generator_source_lock": "docs/plans/vocabulary-validation-boundary/implementation-evidence/otherword-pos-generator-source-lock-v6.json",
+  "extracted_generator_source_lock_sha256": "45a9dd0a1fac1e0b477c8a3a4c8b7d33131fa2ac1c398e4bac3da701d8f22e49",
   "candidate_frozen": false,
   "verification": {
     "baseline_runs": "standard, causal, longitudinal, POS all exit 0; 13 output hashes frozen",
     "baseline_validators": "assessment, causal, longitudinal, POS, and sealed-reservation self-test exit 0",
     "historical_validator": "Git-blob verification and injected negative controls exit 0",
-    "architecture_ci": "run 35568095165 at 75df35c failed in the regression harness on the same German participle/NaturalLanguage provider assertion as baseline b2b9969 run 34875380965; validation boundary and 177 Swift tests passed before the failure",
+    "historical_architecture_ci": "run 35568095165 at 75df35c failed in the regression harness on the same German participle/NaturalLanguage provider assertion as baseline b2b9969 run 34875380965; validation boundary and 177 Swift tests passed before the failure",
+    "graceful_degradation_remote_ci": "Architecture run 36063865246 at 2ec15c5 completed successfully on the clean macos-15 runner and exercised the no-model graceful-degradation path plus v5",
     "boundary_scaffold": "SwiftPM target graph, negative boundary fixtures, focused Swift 6 target test, app-product build, and baseline standard-output parity passed",
     "study_schemas": "7 moved Swift 6 tests passed; source bodies byte-identical to HEAD except required LeafReaderCore import; historical seal unchanged",
     "parallel_evaluator": "41 Core tests and 3 Validation parity tests passed; frozen four-run candidate parity report PASS across 13 artifacts; old wrapper unchanged",
@@ -39,8 +40,10 @@
     "german_noun_development_check": "the broad capitalized-lemma predicate produced 412 labels and 36 false-positive consequences and was rejected; the retained umlaut-er predicate produced 3 labels and 0 false positives across 12,480 pinned German development tokens",
     "fresh_v4_reservation": "v1-v3 remain byte-identical and unexecuted historical evidence; v4 scans 191 prior JSON artifacts, includes all v1-v3 identities, and reserves 3 disjoint seeds plus 24 disjoint document identities for generator commit 3b1aa9c; no outcomes or protected data accessed",
     "graceful_degradation_product_fix": "missing or identity platform lemmas now permit only case-sensitive exact-surface identity; unavailable POS abstains; single, batch, line-wrap, group-reproduction, and reusable-index paths share one resolution contract; 282 logic tests and 177 Swift tests passed",
-    "fresh_v5_reservation": "v1-v4 remain byte-identical and unexecuted historical evidence; v5 scans 193 prior JSON artifacts, includes all v1-v4 identities, and reserves 3 disjoint seeds plus 24 disjoint document identities for generator commit 2942941; no outcomes or protected data accessed"
+    "fresh_v5_reservation": "v1-v4 remain byte-identical and unexecuted historical evidence; v5 scans 193 prior JSON artifacts, includes all v1-v4 identities, and reserves 3 disjoint seeds plus 24 disjoint document identities for generator commit 2942941; no outcomes or protected data accessed",
+    "otherword_pos_product_fix": "a 1.0 OtherWord hypothesis maps to unknown and cannot act as a confident reconciliation class; Classifier remains other; the focused strict Swift test passed",
+    "fresh_v6_reservation": "v1-v5 remain byte-identical and unexecuted historical evidence; v6 scans 196 prior JSON artifacts, includes all v1-v5 identities, and reserves 3 disjoint seeds plus 24 disjoint document identities for generator commit 4e2bd6c; no outcomes or protected data accessed"
   },
   "open_findings": [],
-  "remaining_gates": ["independent statistical/research/privacy review", "clean candidate and analysis/decision-rule freeze", "separate reviewed v5 consumption decision", "development-confirmation execution", "release-holdout gate", "final-tree private GUI and algorithm performance matrix"]
+  "remaining_gates": ["independent statistical/research/privacy review", "clean candidate and analysis/decision-rule freeze", "separate reviewed v6 consumption decision", "development-confirmation execution", "release-holdout gate", "final-tree private GUI and algorithm performance matrix"]
 }

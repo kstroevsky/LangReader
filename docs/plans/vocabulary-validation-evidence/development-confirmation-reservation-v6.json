@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 6,
+  "reservationID": "development-confirmation-v6",
+  "dataRole": "development-confirmation",
+  "reservationDate": "2026-09-25",
+  "reservationSourceRevision": "4e2bd6c4f6fe0fa408d9d17d7743d5d990487207",
+  "executionStatus": "reservedNotExecuted",
+  "supersedesAsActiveReservation": "development-confirmation-v5",
+  "historicalReservationStatuses": {
+    "development-confirmation-v1": "reservedNotExecuted",
+    "development-confirmation-v2": "reservedNotExecuted",
+    "development-confirmation-v3": "reservedNotExecuted",
+    "development-confirmation-v4": "reservedNotExecuted",
+    "development-confirmation-v5": "reservedNotExecuted"
+  },
+  "seedDerivation": {
+    "algorithm": "SHA256(rootBytes || UTF8('development-confirmation-v6/run/' || zeroBasedRunOrdinal)); seed=first8BytesUInt64BE, zero maps to one",
+    "seedDerivationRoot": "d9c9930b0e6e3278d2f85fa70aa7b9bb17f6af781332fd78360a0ef0880d62ac",
+    "documentIdentityAlgorithm": "first24Hex(SHA256(fullRunDigest || UTF8('/document/' || zeroBasedDocumentOrdinal)))"
+  },
+  "generatorLock": {
+    "path": "docs/plans/vocabulary-validation-boundary/implementation-evidence/otherword-pos-generator-source-lock-v6.json",
+    "sha256": "45a9dd0a1fac1e0b477c8a3a4c8b7d33131fa2ac1c398e4bac3da701d8f22e49"
+  },
+  "workload": {
+    "readersPerScenario": 64,
+    "documentsPerScenario": 8,
+    "lemmasPerDocument": 400,
+    "scenarios": ["well-specified", "item-residual", "response-noise", "idiosyncratic-knowledge"],
+    "modes": ["all-unknown", "coverage-98"],
+    "warmAndCold": true,
+    "gatePolicy": "unchanged EVAL-001 and release-regression thresholds",
+    "interpretation": "three independent reserved runs; percentages retain raw reader/document counts and are not a two-point precision claim"
+  },
+  "runs": [
+    {
+      "runOrdinal": 0,
+      "runID": "4ee646aab5b04bd7",
+      "seed": 5685309278608444375,
+      "opaqueDocumentDerivationIDs": [
+        "c58e925450185d2ebf556046", "444bfc48fbf5a161e7e053a6",
+        "73b81d40466da34aaabfb28a", "e10a2a643c703f983804fe13",
+        "7d1640680343fdab39d7e598", "82d4d3e4a375de3236f459f3",
+        "91bfa10dd60b9605b06f4adb", "7be4ae04a3a35ea20d79ca20"
+      ]
+    },
+    {
+      "runOrdinal": 1,
+      "runID": "b469d7312f2228cb",
+      "seed": 13000158405625784523,
+      "opaqueDocumentDerivationIDs": [
+        "36ec00b374a66b8517544e15", "2d8000c40b34f5e246826c04",
+        "0f6e8f7e3dc3b597c57828ed", "f3303e5304efe489233826ed",
+        "4014b77d4fb60b5f1c16f430", "7a3edc405f9152b67506e9a2",
+        "62a1e9173c8fbf2626b64022", "17101cccb72f0836edaf5670"
+      ]
+    },
+    {
+      "runOrdinal": 2,
+      "runID": "b7013da3c38205b0",
+      "seed": 13186888957486564784,
+      "opaqueDocumentDerivationIDs": [
+        "e25ff83426c8f0cf1f29c4b8", "26e652ad2e10fcce22b92842",
+        "cd2fb6d8bfb83a242dfaa969", "b5d7677a11be72bf0329f74d",
+        "9561092199abade7701a8408", "68c235b64e45d27e200c7e8a",
+        "5cbab97172f0a92663573fb4", "d6183bb1ce02c5afcba78472"
+      ]
+    }
+  ],
+  "nonOverlap": {
+    "identityCorpusRevision": "4e2bd6c4f6fe0fa408d9d17d7743d5d990487207",
+    "identityCorpusRoots": ["docs/perf", "docs/plans", "scripts/fixtures"],
+    "historicalReservationSHA256": {
+      "development-confirmation-v1": "a43e45a5fef43367b20e36e0f41684186901af325e2e597a994857591015303a",
+      "development-confirmation-v2": "19ccb4a9bddff02df1c074c85b56ffc782e7216d1a883a60cc088ac7338af89d",
+      "development-confirmation-v3": "8c25324b82cf54e7d1945ce2918c61d4eecae8522743839323e24edb58f7fb4c",
+      "development-confirmation-v4": "4717a4b2b7f2b0e55d03321a5754a52ceb31c2e7b8ac232e67464fe8a89c9006",
+      "development-confirmation-v5": "ace9fa7c0e44df40f7eff8c6572828296d4acfd09c857211c207989af6f73647"
+    },
+    "allReservedSeedsMustBeDisjoint": true,
+    "allOpaqueDocumentDerivationIDsMustBeUnique": true,
+    "opaqueDocumentNamespaceNote": "The versioned identity corpus includes all v1-v5 reservation seeds and every prior archived 24-hex JSON identity before v6 was created."
+  },
+  "freezeAndConsumption": {
+    "candidateFreeze": null,
+    "analysisFreeze": null,
+    "decisionRulesChecksum": null,
+    "outcomeArtifacts": [],
+    "outcomesInspected": false,
+    "consumedByCandidateCycle": null,
+    "releaseHoldoutAccessAllowed": false,
+    "requiredBeforeExecution": [
+      "candidate commit and clean-tree hash",
+      "model/configuration/resource hashes",
+      "analysis and decision-rule checksum",
+      "reviewed decision to consume this specific reservation"
+    ],
+    "onDesignChangeAfterExecution": "retain the result, mark this reservation consumed for that candidate-design cycle, return to development, and reserve a fresh future confirmation set",
+    "onPass": "record the frozen confirmation decision before any frozen release-holdout access"
+  }
+}
