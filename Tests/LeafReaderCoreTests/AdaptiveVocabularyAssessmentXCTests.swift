@@ -837,6 +837,76 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
             assessment.result().items.first { $0.id == direct.canonicalKey }?.classification,
             .verifiedKnown
         )
+        XCTAssertEqual(assessment.interactionAnswerCount, 2)
+        XCTAssertEqual(assessment.inferenceAnswerCount, 1)
+        XCTAssertEqual(assessment.verifiedEvidenceCount, 2)
+        XCTAssertEqual(assessment.verifiedInferenceEvidenceCount, 1)
+    }
+
+    func testDirectEvidenceOnlyAnswersDoNotSatisfyCalibrationBudget() throws {
+        let fullCandidates = (0..<20).map { index in
+            candidate(
+                key: "full-\(index)",
+                difficulty: Double(index) / 10,
+                count: 1,
+                identityPolicy: .fullInference
+            )
+        }
+        let directCandidates = (0..<20).map { index in
+            candidate(
+                key: "direct-\(index)",
+                difficulty: -4,
+                count: 1,
+                identityPolicy: .directEvidenceOnly
+            )
+        }
+        var assessment = AdaptiveVocabularyAssessment(
+            inventory: DocumentVocabularyInventory(
+                languageCode: "en",
+                candidates: fullCandidates + directCandidates
+            ),
+            mode: .allUnknown
+        )
+
+        for candidate in directCandidates {
+            assessment.record(.verifiedKnown, for: candidate.canonicalKey)
+        }
+
+        XCTAssertEqual(assessment.interactionAnswerCount, 20)
+        XCTAssertEqual(assessment.inferenceAnswerCount, 0)
+        XCTAssertEqual(assessment.verifiedEvidenceCount, 20)
+        XCTAssertEqual(assessment.verifiedInferenceEvidenceCount, 0)
+        XCTAssertFalse(assessment.isFinished)
+        XCTAssertEqual(try XCTUnwrap(assessment.nextQuestion()).identityPolicy, .fullInference)
+    }
+
+    func testOrdinaryAssessmentDoesNotQuestionDirectEvidenceOnlyCandidates() throws {
+        let full = candidate(
+            key: "full",
+            difficulty: 0,
+            count: 1,
+            identityPolicy: .fullInference
+        )
+        let direct = candidate(
+            key: "direct",
+            difficulty: -4,
+            count: 1,
+            identityPolicy: .directEvidenceOnly
+        )
+        var assessment = AdaptiveVocabularyAssessment(
+            inventory: DocumentVocabularyInventory(languageCode: "en", candidates: [full, direct]),
+            mode: .allUnknown
+        )
+
+        let question = try XCTUnwrap(assessment.nextQuestion())
+        XCTAssertEqual(question.canonicalKey, full.canonicalKey)
+        XCTAssertEqual(assessment.answers.count, 0)
+        assessment.record(.verifiedKnown, for: full.canonicalKey)
+
+        XCTAssertTrue(assessment.isFinished)
+        XCTAssertNil(assessment.nextQuestion())
+        XCTAssertEqual(assessment.inferenceAnswerCount, 1)
+        XCTAssertEqual(assessment.interactionAnswerCount, 1)
     }
 
     func testCandidateDecodeDefaultsMissingIdentityPolicyToFullInference() throws {
@@ -1020,10 +1090,16 @@ final class AdaptiveVocabularyAssessmentXCTests: XCTestCase {
         return DocumentVocabularyInventory(languageCode: "en", candidates: candidates)
     }
 
-    private func candidate(key: String, difficulty: Double, count: Int) -> DocumentVocabularyCandidate {
+    private func candidate(
+        key: String,
+        difficulty: Double,
+        count: Int,
+        identityPolicy: VocabularyAssessmentIdentityPolicy = .fullInference
+    ) -> DocumentVocabularyCandidate {
         DocumentVocabularyCandidate(
             canonicalKey: key,
             displayLemma: key,
+            identityPolicy: identityPolicy,
             observedForms: [VocabularyDocumentObservedForm(surface: key, occurrenceCount: count)],
             occurrenceCount: count,
             representativeRange: VocabularyDocumentSourceRange(unitIndex: 0, utf16Location: 0, utf16Length: key.utf16.count),

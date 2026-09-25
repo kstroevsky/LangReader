@@ -733,7 +733,9 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 Self.baseItemProbability(theta: theta, difficultyPrior: candidate.difficultyPrior)
             }
         }
-        difficultyOrderedIndexes = inventory.candidates.indices.sorted {
+        difficultyOrderedIndexes = inventory.candidates.indices.filter {
+            inventory.candidates[$0].identityPolicy == .fullInference
+        }.sorted {
             Self.difficultyOrder(inventory.candidates[$0], inventory.candidates[$1])
         }
         predictiveSeed = Self.inventorySeed(inventory, algorithmVersion: algorithmVersion)
@@ -786,19 +788,36 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         answers.lazy.filter { $0.evidence != .excluded }.count
     }
 
+    package var interactionAnswerCount: Int { answeredQuestionCount }
+
+    package var inferenceAnswerCount: Int {
+        answers.lazy.filter { answer in
+            guard answer.evidence != .excluded,
+                  let index = candidateIndexByKey[answer.canonicalKey] else { return false }
+            return inventory.candidates[index].identityPolicy == .fullInference
+        }.count
+    }
+
     private var minimumQuestionCount: Int {
         usesEligibleReaderPrior && validationAnswerCount >= 2 ? 8 : 20
     }
 
     private var validationAnswerCount: Int {
-        answers.lazy.filter { $0.wasValidation && $0.evidence != .excluded }.count
+        answers.lazy.filter { answer in
+            guard answer.wasValidation,
+                  answer.evidence != .excluded,
+                  let index = candidateIndexByKey[answer.canonicalKey] else { return false }
+            return inventory.candidates[index].identityPolicy == .fullInference
+        }.count
     }
 
     package var isFinished: Bool {
-        if answeredQuestionCount >= 80 { return true }
+        if inferenceAnswerCount >= 80 { return true }
         let remaining = answerableCandidates
-        let minimumAnswerCount = min(minimumQuestionCount, answeredQuestionCount + remaining.count)
-        guard answeredQuestionCount >= minimumAnswerCount else { return false }
+        let remainingInference = inferenceCandidates(from: remaining)
+        let minimumAnswerCount = min(minimumQuestionCount, inferenceAnswerCount + remainingInference.count)
+        guard inferenceAnswerCount >= minimumAnswerCount else { return false }
+        if remainingInference.isEmpty { return true }
         if remaining.isEmpty { return true }
         switch mode {
         case .allUnknown:
@@ -845,48 +864,54 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             return candidate(for: pendingQuestion.key)
         }
         if allowingDiagnosticStopBypass {
-            guard answeredQuestionCount < 80 else { return nil }
+            guard inferenceAnswerCount < 80 else { return nil }
         } else {
             guard !isFinished else { return nil }
         }
         let remaining = answerableCandidates
         guard !remaining.isEmpty else { return nil }
+        let inferenceRemaining = inferenceCandidates(from: remaining)
+        guard !inferenceRemaining.isEmpty else { return nil }
 
-        let questionNumber = answeredQuestionCount + 1
+        let inferenceQuestionNumber = inferenceAnswerCount + 1
+        let interactionQuestionNumber = answeredQuestionCount + 1
         let selected: (
             candidate: DocumentVocabularyCandidate,
             validationPrediction: Bool?,
             selectionType: VocabularyQuestionSelectionType
         )
         if usesEligibleReaderPrior,
-           (questionNumber == 4 || questionNumber == 8),
-           let validation = validationCandidate(from: remaining) {
+           (inferenceQuestionNumber == 4 || inferenceQuestionNumber == 8),
+           let validation = validationCandidate(from: inferenceRemaining) {
             selected = (validation.0, validation.1, .tailValidation)
-        } else if questionNumber <= 8 {
-            let fraction = (Double(questionNumber) - 0.5) / 8.0
+        } else if inferenceQuestionNumber <= 8 {
+            let fraction = (Double(inferenceQuestionNumber) - 0.5) / 8.0
             let orderedIndex = min(
                 difficultyOrderedIndexes.count - 1,
                 max(0, Int((fraction * Double(difficultyOrderedIndexes.count)).rounded(.down)))
             )
             let targetDifficulty = inventory.candidates[difficultyOrderedIndexes[orderedIndex]].difficulty
-            let nearest = remaining.min {
+            let nearest = inferenceRemaining.min {
                 let lhs = abs($0.difficulty - targetDifficulty)
                 let rhs = abs($1.difficulty - targetDifficulty)
                 if lhs != rhs { return lhs < rhs }
                 return $0.canonicalKey < $1.canonicalKey
-            } ?? remaining[0]
+            } ?? inferenceRemaining[0]
             selected = (nearest, nil, .initialCalibration)
-        } else if questionNumber > 10, questionNumber.isMultiple(of: 5), let validation = validationCandidate(from: remaining) {
+        } else if inferenceQuestionNumber > 10,
+                  inferenceQuestionNumber.isMultiple(of: 5),
+                  let validation = validationCandidate(from: inferenceRemaining) {
             selected = (validation.0, validation.1, .tailValidation)
         } else {
             let adaptive: DocumentVocabularyCandidate
             if let cachedBestQuestion,
                let cached = candidate(for: cachedBestQuestion.key),
                answerByKey[cached.canonicalKey] == nil,
-               !skippedQuestionKeys.contains(cached.canonicalKey) {
+               !skippedQuestionKeys.contains(cached.canonicalKey),
+               cached.identityPolicy == .fullInference {
                 adaptive = cached
             } else {
-                adaptive = bestQuestion(from: shortlist(from: remaining)).candidate
+                adaptive = bestQuestion(from: shortlist(from: inferenceRemaining)).candidate
             }
             selected = (adaptive, nil, .adaptiveLoss)
         }
@@ -894,7 +919,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         pendingQuestion = PendingQuestion(
             key: selected.candidate.canonicalKey,
             validationPrediction: selected.validationPrediction,
-            questionOrdinal: questionNumber,
+            questionOrdinal: interactionQuestionNumber,
             selectionType: selected.selectionType,
             predictedKnownBeforeAnswer: candidateIndex.map { currentProbabilities[$0] } ?? 0.5
         )
@@ -1034,6 +1059,14 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         answers.lazy.filter { $0.evidence.isVerifiedEvidence }.count
     }
 
+    package var verifiedInferenceEvidenceCount: Int {
+        answers.lazy.filter { answer in
+            guard answer.evidence.isVerifiedEvidence,
+                  let index = candidateIndexByKey[answer.canonicalKey] else { return false }
+            return inventory.candidates[index].identityPolicy == .fullInference
+        }.count
+    }
+
     package var usedEligibleReaderPrior: Bool { usesEligibleReaderPrior }
     package var requiredMinimumAnsweredQuestionCount: Int { minimumQuestionCount }
 
@@ -1137,7 +1170,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
             guard item.classification != .excluded else { return partial }
             return partial + min(item.knownProbability, 1 - item.knownProbability)
         }
-        let reachedQuestionLimit = answeredQuestionCount >= 80
+        let reachedQuestionLimit = inferenceAnswerCount >= 80
         let lowerTheta = posteriorQuantile(0.05)
         let upperTheta = posteriorQuantile(0.95)
         let bestReduction = bestAvailableQuestionReduction()
@@ -1179,11 +1212,19 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         unaskedCandidates.filter { !skippedQuestionKeys.contains($0.canonicalKey) }
     }
 
+    private func inferenceCandidates(
+        from candidates: [DocumentVocabularyCandidate]
+    ) -> [DocumentVocabularyCandidate] {
+        candidates.filter { $0.identityPolicy == .fullInference }
+    }
+
     private var stopReason: VocabularyAssessmentStopReason? {
-        if answeredQuestionCount >= 80 { return .questionLimit }
+        if inferenceAnswerCount >= 80 { return .questionLimit }
         let remaining = answerableCandidates
-        let minimumAnswerCount = min(minimumQuestionCount, answeredQuestionCount + remaining.count)
-        guard answeredQuestionCount >= minimumAnswerCount else { return nil }
+        let remainingInference = inferenceCandidates(from: remaining)
+        let minimumAnswerCount = min(minimumQuestionCount, inferenceAnswerCount + remainingInference.count)
+        guard inferenceAnswerCount >= minimumAnswerCount else { return nil }
+        if remainingInference.isEmpty { return .exhaustedCandidates }
         if remaining.isEmpty { return .exhaustedCandidates }
         switch mode {
         case .allUnknown:
@@ -1239,7 +1280,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                 0.25,
                 max(modelConfiguration.minimumEpsilonKnowledge, smoothedRate)
             )
-            if contradiction > 0 && answeredQuestionCount >= 20 {
+            if contradiction > 0 && inferenceAnswerCount >= 20 {
                 lowValueStreak = 0
                 stableCoverageDeckStreak = 0
                 screeningCoverageDeckStreak = 0
@@ -1308,9 +1349,11 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         guard case .targetCoverage = mode,
               modelConfiguration.coverageStoppingComputation == .fullEveryAnswer else { return false }
         let remaining = answerableCandidates
-        let minimumAnswerCount = min(minimumQuestionCount, answeredQuestionCount + remaining.count)
-        guard answeredQuestionCount < 80,
-              answeredQuestionCount >= minimumAnswerCount,
+        let remainingInference = inferenceCandidates(from: remaining)
+        let minimumAnswerCount = min(minimumQuestionCount, inferenceAnswerCount + remainingInference.count)
+        guard inferenceAnswerCount < 80,
+              inferenceAnswerCount >= minimumAnswerCount,
+              !remainingInference.isEmpty,
               !remaining.isEmpty else { return false }
 
         let stoppingUpdateWasSuppressed = suppressStoppingUpdateOnce
@@ -1363,13 +1406,15 @@ package struct AdaptiveVocabularyAssessment: Sendable {
         suppressStoppingUpdateOnce = false
         let advancesStoppingStreak = answeredKey != nil && !stoppingUpdateWasSuppressed
         let remaining = answerableCandidates
-        let minimumAnswerCount = min(minimumQuestionCount, answeredQuestionCount + remaining.count)
-        guard answeredQuestionCount < 80,
-              answeredQuestionCount >= minimumAnswerCount,
+        let remainingInference = inferenceCandidates(from: remaining)
+        let minimumAnswerCount = min(minimumQuestionCount, inferenceAnswerCount + remainingInference.count)
+        guard inferenceAnswerCount < 80,
+              inferenceAnswerCount >= minimumAnswerCount,
+              !remainingInference.isEmpty,
               !remaining.isEmpty else { return }
         switch mode {
         case .allUnknown:
-            let best = bestQuestion(from: shortlist(from: remaining))
+            let best = bestQuestion(from: shortlist(from: remainingInference))
             cachedBestQuestion = BestQuestionCache(key: best.candidate.canonicalKey, reduction: best.reduction)
             if advancesStoppingStreak {
                 lowValueStreak = best.reduction < 0.25 ? lowValueStreak + 1 : 0
@@ -1388,7 +1433,7 @@ package struct AdaptiveVocabularyAssessment: Sendable {
                     samplesBox.set(samples)
                     deckBox.set(snapshot.proposedSelection(predictiveSamples: samples))
                 } else {
-                    let best = snapshot.bestQuestion(from: snapshot.shortlist(from: remaining))
+                    let best = snapshot.bestQuestion(from: snapshot.shortlist(from: remainingInference))
                     questionBox.set(BestQuestionCache(
                         key: best.candidate.canonicalKey,
                         reduction: best.reduction
@@ -1953,21 +1998,24 @@ package struct AdaptiveVocabularyAssessment: Sendable {
 
     private func bestAvailableQuestionReduction() -> Double {
         if let cachedBestQuestion { return cachedBestQuestion.reduction }
-        if answeredQuestionCount >= 80 { return 0 }
+        if inferenceAnswerCount >= 80 { return 0 }
         let remaining = answerableCandidates
         guard !remaining.isEmpty else { return 0 }
-        return bestQuestion(from: shortlist(from: remaining)).reduction
+        let inferenceRemaining = inferenceCandidates(from: remaining)
+        guard !inferenceRemaining.isEmpty else { return 0 }
+        return bestQuestion(from: shortlist(from: inferenceRemaining)).reduction
     }
 
     private func validationCandidate(from candidates: [DocumentVocabularyCandidate]) -> (DocumentVocabularyCandidate, Bool?)? {
         let tails = candidates.compactMap { candidate -> (DocumentVocabularyCandidate, Double)? in
+            guard candidate.identityPolicy == .fullInference else { return nil }
             guard let index = candidateIndexByKey[candidate.canonicalKey] else { return nil }
             let p = currentProbabilities[index]
             guard p <= 0.15 || p >= 0.85 else { return nil }
             return (candidate, p)
         }
         guard !tails.isEmpty else { return nil }
-        let preferKnown = ((answeredQuestionCount / 5) % 2 == 0)
+        let preferKnown = ((inferenceAnswerCount / 5) % 2 == 0)
         let preferred = tails.filter { preferKnown ? $0.1 >= 0.85 : $0.1 <= 0.15 }
         let pool = preferred.isEmpty ? tails : preferred
         let selected = pool.sorted {

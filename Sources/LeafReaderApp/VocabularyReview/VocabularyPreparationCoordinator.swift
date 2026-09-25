@@ -1262,7 +1262,8 @@ final class VocabularyPreparationCoordinator {
               let inventory else { return }
         let languageCode = inventory.languageCode
         let posterior = assessment.thetaPosteriorSnapshot
-        let verifiedCount = assessment.verifiedEvidenceCount
+        let inferenceAnswerCount = assessment.inferenceAnswerCount
+        let verifiedInferenceCount = assessment.verifiedInferenceEvidenceCount
         let store = readerPriorStore
         let researchStore = researchEvidenceStore
         let answers = assessment.answers
@@ -1270,11 +1271,11 @@ final class VocabularyPreparationCoordinator {
         let algorithmVersion = session.algorithmVersion
         Task { [weak self] in
             let saved = await Task.detached {
-                let priorSaved = store.recordCompletedSession(
+                let priorSaved = inferenceAnswerCount == 0 || store.recordCompletedSession(
                     contributionID: contributionID,
                     languageCode: languageCode,
                     thetaPosterior: posterior,
-                    verifiedEvidenceCount: verifiedCount,
+                    verifiedEvidenceCount: verifiedInferenceCount,
                     completedAt: Date(),
                     algorithmVersion: algorithmVersion
                 )
