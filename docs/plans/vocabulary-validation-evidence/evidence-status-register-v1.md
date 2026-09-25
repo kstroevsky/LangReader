@@ -2,9 +2,9 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `4e2bd6c4f6fe0fa408d9d17d7743d5d990487207`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `a2bfc5c693c03f1df445820e7063f9201c5b12b8`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
-Active future reservation: `docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v6.json` (SHA-256 `15ec2bcb8baeafc36e7983c48e4335bfb46d914d6be96c8f9875e33be52f3517`; `reserved_not_executed`). Historical reservations remain indexed separately and unexecuted.
+Active future reservation: `docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v7.json` (SHA-256 `dd12e9e0f9964385f030ebec970302fc14b3c79d313e79e6b9a182faf29ef12e`; `reserved_not_executed`). Historical reservations remain indexed separately and unexecuted.
 
 Head-only changes since the production evidence candidate:
 
@@ -80,6 +80,11 @@ Head-only changes since the production evidence candidate:
 - 3b1aa9c07659325c86e78f46f06c7c927f340e37: narrowed capitalized-noun plural bypass after development-corpus consequence check
 - 294294187d55d45a33eef32db11fb7f8bdb289d0: graceful exact-surface degradation when optional platform NLP models are unavailable
 - 4e2bd6c4f6fe0fa408d9d17d7743d5d990487207: treat Apple OtherWord POS as unavailable evidence
+- 0e1f4d9c8ff838ce3fff858d24233ea850dfe980: add evidence-aware lexical reconciliation and assessment identity policy
+- 19a0ceddb41ddedcc4983e6be33fb10fea6a2a4e: document the evidence-aware lexical identity ADR
+- 9c70780bdaba4e55d188b5c20173ab2c304576d0: wire lexical-reconciliation shadow inventory behind the internal algorithm flag
+- 736fc6c68b2db2c4e147ed4c06ab83bdc622e4b6: reset vocabulary prior evidence across algorithm versions
+- a2bfc5c693c03f1df445820e7063f9201c5b12b8: add lexical partition validation metrics and safety gate
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 
@@ -218,7 +223,14 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v6.json`](development-confirmation-reservation-v6.json); SHA-256 `15ec2bcb8baeafc36e7983c48e4335bfb46d914d6be96c8f9875e33be52f3517`
 - Evidence class: sealed synthetic development-confirmation reservation
 - Status: `reserved_not_executed`
-- Interpretation: Sole active future reservation for the OtherWord-as-unknown generator, with three disjoint seeds and 24 opaque document identities; no candidate, analysis freeze, outcomes, consumption, or release access exists.
+- Interpretation: Historical unexecuted reservation for the OtherWord-as-unknown generator; its source binding was superseded as the active future set after ADR-0001 changed Core and Validation generator inputs, while its identities and bytes remain sealed.
+
+### docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v7.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v7.json`](development-confirmation-reservation-v7.json); SHA-256 `dd12e9e0f9964385f030ebec970302fc14b3c79d313e79e6b9a182faf29ef12e`
+- Evidence class: sealed synthetic development-confirmation reservation
+- Status: `reserved_not_executed`
+- Interpretation: Sole active future reservation for the evidence-aware lexical-reconciliation generator, with three disjoint seeds and 24 opaque document identities; no candidate, analysis freeze, outcomes, consumption, or release access exists.
 
 ### docs/plans/vocabulary-validation-evidence/german-form-label-portability-development-check-2026-09-21.json
 
