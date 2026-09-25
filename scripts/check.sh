@@ -96,8 +96,11 @@ python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v6.py
 echo "==> Checking sealed historical lexical-reconciliation development-confirmation reservation"
 python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v7.py --self-test
 
-echo "==> Checking sealed lexical-uncertainty development-confirmation reservation"
+echo "==> Checking sealed historical lexical-uncertainty development-confirmation reservation"
 python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v8.py --self-test
+
+echo "==> Checking sealed conservative-reconciliation development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v9.py --self-test
 
 echo "==> Checking frozen vocabulary warm-compatibility development reservation"
 python3 ./scripts/validate_vocabulary_longitudinal_compatibility_manifest.py \

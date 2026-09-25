@@ -2,9 +2,9 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `43faeaf9a987fef1ffc241fac3899f744cd3dbd7`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `d988eb7273d363c63683bbe05214e846db556751`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
-Active future reservation: `docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v8.json` (SHA-256 `dac4dafebedebc0befe719f71919f3053c32d0bce914a6eb22f545d5107a98eb`; `reserved_not_executed`). Historical reservations remain indexed separately and unexecuted.
+Active future reservation: `docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v9.json` (SHA-256 `65cc1fcd0cfc6e67b61883dc3bddcf1df539a514ee0cba4c8b8e1710649669ef`; `reserved_not_executed`). Historical reservations remain indexed separately and unexecuted.
 
 Head-only changes since the production evidence candidate:
 
@@ -87,6 +87,14 @@ Head-only changes since the production evidence candidate:
 - a2bfc5c693c03f1df445820e7063f9201c5b12b8: add lexical partition validation metrics and safety gate
 - 956f548194ee6e54ed9f6627cead77f8bd279025: seal the unexecuted lexical-reconciliation development-confirmation reservation
 - 43faeaf9a987fef1ffc241fac3899f744cd3dbd7: preserve unresolved lexical identity and active algorithm provenance across v4 flows
+- 64db38c217fc6be014d17734b4218b3c6d699966: seal the unexecuted lexical-uncertainty development-confirmation reservation
+- 3a9c627a0aaf72558455460a5e4cc4e807d4dd78: refresh generated ADR lexical-identity navigation
+- c97d4594ac178aa6f087a93f82e7159c6cef7ef2: require corroboration before resolving a single lexical POS population
+- 575693e1132d7b1cfc91ef88545c64b192177092: scope unresolved direct evidence to individual occurrences
+- 25c6a5199ee1d6360598b78640fc5ca6c03b372a: separate inference-bearing evidence and question budgets from direct interactions
+- 38903f254e6bdcb1144edab24978c84d4df800cd: stratify prediction calibration by lexical identity policy
+- a9884445bd6f7251364f37dc1232c1a1294c1ac6: model independent attestation and validated deterministic single-resolution evidence
+- d988eb7273d363c63683bbe05214e846db556751: align ADR-0001 with conservative v4 semantics
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 
@@ -239,7 +247,14 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v8.json`](development-confirmation-reservation-v8.json); SHA-256 `dac4dafebedebc0befe719f71919f3053c32d0bce914a6eb22f545d5107a98eb`
 - Evidence class: sealed synthetic development-confirmation reservation
 - Status: `reserved_not_executed`
-- Interpretation: Sole active future reservation for the evidence-aware lexical-reconciliation generator after the lexical-uncertainty provenance fixes, with three disjoint seeds and 24 opaque document identities; no candidate, analysis freeze, outcomes, consumption, or release access exists.
+- Interpretation: Historical unexecuted reservation for the lexical-uncertainty generator; its source binding was superseded after ADR-0001 conservative reconciliation semantics changed Core, while its identities and bytes remain sealed.
+
+### docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v9.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v9.json`](development-confirmation-reservation-v9.json); SHA-256 `65cc1fcd0cfc6e67b61883dc3bddcf1df539a514ee0cba4c8b8e1710649669ef`
+- Evidence class: sealed synthetic development-confirmation reservation
+- Status: `reserved_not_executed`
+- Interpretation: Sole active future reservation for the evidence-aware lexical-reconciliation generator after conservative single-resolution, occurrence-scoped direct evidence, inference-budget, and audit-stratification fixes; it has three disjoint seeds and 24 opaque document identities and no candidate freeze, outcomes, consumption, or release access.
 
 ### docs/plans/vocabulary-validation-evidence/german-form-label-portability-development-check-2026-09-21.json
 

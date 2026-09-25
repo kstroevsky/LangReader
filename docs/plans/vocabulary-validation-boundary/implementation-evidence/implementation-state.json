@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "phase": "lexical-reconciliation-v8-sealed",
+  "phase": "lexical-reconciliation-v9-sealed",
   "source_revision": "b2b99696feda177be0699d5277a2c13c7c7c9bd5",
   "accepted_plan": "docs/plans/vocabulary-validation-boundary/revision-2026-09-19-ci-source-lock/candidate-plan.md",
   "baseline_manifest": "docs/plans/vocabulary-validation-boundary/implementation-evidence/extraction-parity-manifest.json",
@@ -8,16 +8,16 @@
   "followup_source_revision": "0dc16efd21e2816a5154b4d515c2b5272e6b8fe3",
   "followup_plan": "docs/plans/vocabulary-validation-boundary/revision-2026-09-21-boundary-followup/candidate-plan.md",
   "followup_plan_sha256": "3a67d47ad1d0ea133618bff40611e9b40a8b6a3f1a5a7f7082f8210a80985cab",
-  "completed_slices": ["baseline-checkpoint", "commit-1-boundary-scaffold", "2a-study-schemas", "2b-parallel-diagnostic-evaluator", "2c-same-tree-bank-parity", "2d-wrapper-linkage-switch", "2e-remove-core-experiment-code", "commit-3-runner-extraction", "commit-4-pos-cross-format", "commit-5-enforcement-and-handoff", "followup-register-and-v2-hardening", "followup-core-seam-cleanup", "followup-v3-seal", "german-portability-product-fix", "german-portability-v4-seal", "graceful-degradation-product-fix", "graceful-degradation-v5-seal", "otherword-pos-product-fix", "otherword-pos-v6-seal", "adr-0001-lexical-reconciliation", "lexical-reconciliation-v7-seal", "adr-0001-lexical-uncertainty-provenance-fix", "lexical-reconciliation-v8-seal"],
+  "completed_slices": ["baseline-checkpoint", "commit-1-boundary-scaffold", "2a-study-schemas", "2b-parallel-diagnostic-evaluator", "2c-same-tree-bank-parity", "2d-wrapper-linkage-switch", "2e-remove-core-experiment-code", "commit-3-runner-extraction", "commit-4-pos-cross-format", "commit-5-enforcement-and-handoff", "followup-register-and-v2-hardening", "followup-core-seam-cleanup", "followup-v3-seal", "german-portability-product-fix", "german-portability-v4-seal", "graceful-degradation-product-fix", "graceful-degradation-v5-seal", "otherword-pos-product-fix", "otherword-pos-v6-seal", "adr-0001-lexical-reconciliation", "lexical-reconciliation-v7-seal", "adr-0001-lexical-uncertainty-provenance-fix", "lexical-reconciliation-v8-seal", "adr-0001-conservative-reconciliation-semantics", "lexical-reconciliation-v9-seal"],
   "current_slice": null,
   "protected_data_accessed": false,
   "historical_reservation_modified": false,
-  "product_generator_revision": "43faeaf9a987fef1ffc241fac3899f744cd3dbd7",
-  "fresh_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v8.json",
-  "fresh_reservation_sha256": "dac4dafebedebc0befe719f71919f3053c32d0bce914a6eb22f545d5107a98eb",
+  "product_generator_revision": "d988eb7273d363c63683bbe05214e846db556751",
+  "fresh_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v9.json",
+  "fresh_reservation_sha256": "65cc1fcd0cfc6e67b61883dc3bddcf1df539a514ee0cba4c8b8e1710649669ef",
   "fresh_reservation_status": "reservedNotExecuted",
-  "extracted_generator_source_lock": "docs/plans/vocabulary-validation-boundary/implementation-evidence/lexical-reconciliation-generator-source-lock-v8.json",
-  "extracted_generator_source_lock_sha256": "5e86905ca5b1b6599dc0c6e082fd0bd726040e803c527c03ef0f72f56e615324",
+  "extracted_generator_source_lock": "docs/plans/vocabulary-validation-boundary/implementation-evidence/lexical-reconciliation-generator-source-lock-v9.json",
+  "extracted_generator_source_lock_sha256": "6e96479e4bca4340b3ae33f8e2054ffbbdb01bf307bc0573b4ad744817a0255f",
   "candidate_frozen": false,
   "verification": {
     "baseline_runs": "standard, causal, longitudinal, POS all exit 0; 13 output hashes frozen",
@@ -46,8 +46,10 @@
     "adr_0001_lexical_reconciliation": "evidence-aware lexical identity, conservative reconciliation, direct-evidence-only assessment policy, shadow/internal-flag rollout, algorithm-version prior isolation, and lexical partition evaluation are implemented through a2bfc5c; production activation remains gated",
     "fresh_v7_reservation": "v1-v6 remain byte-identical and unexecuted historical evidence; v7 is bound to the ADR-0001 generator revision a2bfc5c and reserves 3 disjoint seeds plus 24 disjoint document identities; no outcomes or protected data accessed",
     "adr_0001_lexical_uncertainty_provenance_fix": "direct-evidence-only candidates no longer persist anchor keys as resolved lexical identities, research export no longer synthesizes resolved identities for unresolved candidates, and prediction audits carry the active preparation algorithm version",
-    "fresh_v8_reservation": "v1-v7 remain byte-identical and unexecuted historical evidence; v8 is bound to the ADR-0001 lexical-uncertainty fix revision 43faeaf and reserves 3 disjoint seeds plus 24 disjoint document identities; no outcomes or protected data accessed"
+    "fresh_v8_reservation": "v1-v7 remain byte-identical and unexecuted historical evidence; v8 is bound to the ADR-0001 lexical-uncertainty fix revision 43faeaf and reserves 3 disjoint seeds plus 24 disjoint document identities; no outcomes or protected data accessed",
+    "adr_0001_conservative_reconciliation_semantics": "single-POS resolution now requires independent corroboration, unresolved evidence is occurrence-scoped, reader priors and assessment budgets count only inference-bearing evidence, and prediction calibration is stratified by identity policy; v4 remains gated",
+    "fresh_v9_reservation": "v1-v8 remain byte-identical and unexecuted historical evidence; v9 is bound to the conservative ADR-0001 generator revision d988eb7 and reserves 3 disjoint seeds plus 24 disjoint document identities; no outcomes or protected data accessed"
   },
   "open_findings": [],
-  "remaining_gates": ["independent statistical/research/privacy review", "clean candidate and analysis/decision-rule freeze", "separate reviewed v8 consumption decision", "development-confirmation execution", "release-holdout gate", "final-tree private GUI and algorithm performance matrix"]
+  "remaining_gates": ["independent statistical/research/privacy review", "clean candidate and analysis/decision-rule freeze", "separate reviewed v9 consumption decision", "development-confirmation execution", "release-holdout gate", "final-tree private GUI and algorithm performance matrix"]
 }
