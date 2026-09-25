@@ -105,7 +105,7 @@ package struct VocabularyLexicalReconciler: Sendable {
         package static let production = Configuration()
     }
 
-    package static let policyVersion = "lexical-reconciliation-v2"
+    package static let policyVersion = "lexical-reconciliation-v3"
 
     private let configuration: Configuration
 
@@ -230,6 +230,23 @@ package struct VocabularyLexicalReconciler: Sendable {
         }
 
         if splitParts.count == 1, let dominant = splitParts.first {
+            let hasBlockingConflict = supportedParts.contains { part in
+                guard part != dominant, let evidence = support[part] else { return false }
+                return !evidence.strongContextualOccurrenceIDs.isEmpty
+                    || !evidence.attestationSources.isEmpty
+            }
+            if hasBlockingConflict {
+                return .ambiguous(VocabularyAmbiguousLexicalGroup(
+                    occurrenceIDs: matching.map(\.occurrenceID),
+                    diagnostics: diagnostics(
+                        anchor: anchor,
+                        state: .ambiguous,
+                        occurrences: matching,
+                        support: support,
+                        residualCount: matching.count
+                    )
+                ))
+            }
             return resolvedSingle(
                 anchor: anchor,
                 lemma: lemma,

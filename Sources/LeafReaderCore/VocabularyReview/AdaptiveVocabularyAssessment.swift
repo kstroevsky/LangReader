@@ -437,11 +437,11 @@ package enum VocabularyPreparationInvitationState: String, Codable, Equatable, S
 
 package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
     package static let currentAlgorithmVersion = 3
-    // Experimental v4 predates the conservative single-occurrence and
-    // occurrence-scoped uncertainty rules in ADR-0001. Those changes alter the
-    // candidate ontology and theta evidence, so v4 state must never be resumed
-    // or reused as a reader prior under the current protocol.
-    package static let lexicalReconciliationAlgorithmVersion = 5
+    // Experimental v4 and v5 predate the current conservative conflict rule in
+    // ADR-0001. These changes alter the candidate ontology and theta evidence,
+    // so older experimental state must never be resumed or reused as a reader
+    // prior under the current protocol.
+    package static let lexicalReconciliationAlgorithmVersion = 6
 
     package var mode: VocabularyAssessmentMode
     package var invitationState: VocabularyPreparationInvitationState

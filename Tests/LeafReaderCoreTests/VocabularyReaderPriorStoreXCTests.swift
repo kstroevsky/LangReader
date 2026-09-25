@@ -246,26 +246,28 @@ final class VocabularyReaderPriorStoreXCTests: XCTestCase {
         ).usedEligibleReaderPrior)
     }
 
-    func testSupersededExperimentalPriorCannotWarmCurrentLexicalProtocol() {
+    func testSupersededExperimentalPriorsCannotWarmCurrentLexicalProtocol() {
         let now = Date(timeIntervalSince1970: 2_000_000_000)
         let posterior = Array(repeating: 1.0 / 121.0, count: 121)
-        let supersededV4 = VocabularyReaderPrior(
-            languageCode: "en",
-            thetaPosterior: posterior,
-            completedSessionCount: 2,
-            verifiedEvidenceCount: 40,
-            lastUpdatedAt: now,
-            algorithmVersion: 4
-        )
+        XCTAssertEqual(VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion, 6)
+        for supersededVersion in [4, 5] {
+            let superseded = VocabularyReaderPrior(
+                languageCode: "en",
+                thetaPosterior: posterior,
+                completedSessionCount: 2,
+                verifiedEvidenceCount: 40,
+                lastUpdatedAt: now,
+                algorithmVersion: supersededVersion
+            )
 
-        XCTAssertTrue(supersededV4.isEligible(at: now))
-        XCTAssertEqual(VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion, 5)
-        XCTAssertFalse(AdaptiveVocabularyAssessment(
-            inventory: DocumentVocabularyInventory(languageCode: "en", candidates: []),
-            mode: .targetCoverage(0.98),
-            readerPrior: supersededV4,
-            currentDate: now,
-            algorithmVersion: VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
-        ).usedEligibleReaderPrior)
+            XCTAssertTrue(superseded.isEligible(at: now))
+            XCTAssertFalse(AdaptiveVocabularyAssessment(
+                inventory: DocumentVocabularyInventory(languageCode: "en", candidates: []),
+                mode: .targetCoverage(0.98),
+                readerPrior: superseded,
+                currentDate: now,
+                algorithmVersion: VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+            ).usedEligibleReaderPrior)
+        }
     }
 }

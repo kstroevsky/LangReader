@@ -22,7 +22,7 @@ final class VocabularyLexicalReconcilerXCTests: XCTestCase {
         XCTAssertEqual(partition.children.map(\.assignedOccurrenceIDs.count).sorted(), [2, 2])
         XCTAssertTrue(partition.residualOccurrenceIDs.isEmpty)
         XCTAssertEqual(partition.diagnostics.state, .resolvedSplit)
-        XCTAssertEqual(partition.diagnostics.reconcilerVersion, "lexical-reconciliation-v2")
+        XCTAssertEqual(partition.diagnostics.reconcilerVersion, "lexical-reconciliation-v3")
     }
 
     func testOneSpuriousConflictingClassificationDoesNotCreateAChild() {
@@ -44,6 +44,47 @@ final class VocabularyLexicalReconcilerXCTests: XCTestCase {
         XCTAssertEqual(group.lexicalItemID.partOfSpeech, .noun)
         XCTAssertEqual(group.assignedOccurrenceIDs.count, 3)
         XCTAssertEqual(group.residualOccurrenceIDs.count, 1)
+    }
+
+    func testStrongConflictingClassificationBlocksDominantSingleResolution() {
+        let anchor = VocabularyLexicalAnchorID(language: "en", basis: .resolvedLemma("record"))
+        let strongConflictRange = VocabularyDocumentSourceRange(
+            unitIndex: 0,
+            utf16Location: 30,
+            utf16Length: 6
+        )
+        let occurrences = [
+            occurrence(0, anchor: anchor, part: .noun, context: "the record survived"),
+            occurrence(1, anchor: anchor, part: .noun, context: "a record remains"),
+            VocabularyOccurrenceAnalysis(
+                occurrenceID: VocabularyOccurrenceAnalysisID(
+                    unitIndex: strongConflictRange.unitIndex,
+                    utf16Location: strongConflictRange.utf16Location,
+                    utf16Length: strongConflictRange.utf16Length
+                ),
+                sourceRange: strongConflictRange,
+                surface: "record",
+                anchor: anchor,
+                analyses: [VocabularyMorphologicalAnalysis(
+                    lemma: "record",
+                    partOfSpeech: .verb,
+                    source: .appleNaturalLanguage,
+                    rawScore: 0.99,
+                    confidence: .strong
+                )],
+                contextFingerprint: "please record this"
+            )
+        ]
+
+        guard case let .ambiguous(group) = VocabularyLexicalReconciler().reconcile(
+            anchor: anchor,
+            occurrences: occurrences
+        ) else {
+            return XCTFail("strong conflicting evidence must block single-POS propagation")
+        }
+
+        XCTAssertEqual(Set(group.occurrenceIDs), Set(occurrences.map(\.occurrenceID)))
+        XCTAssertEqual(group.diagnostics.residualOccurrenceCount, occurrences.count)
     }
 
     func testSingleUsableOccurrenceCannotCreateResolvedIdentity() {
