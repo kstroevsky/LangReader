@@ -1,0 +1,472 @@
+{
+  "schemaVersion": 1,
+  "fixtureID": "lexical-partition-policy-v1",
+  "release": "development-policy-v1",
+  "supportThresholds": [2, 3, 4],
+  "anchors": [
+    {
+      "anchorID": "en-record-corroborated-split",
+      "languageCode": "en",
+      "evaluationSplit": "development",
+      "genre": "adversarial",
+      "documentFormat": "synthetic",
+      "nlpAvailability": "available",
+      "dictionaryAttestationAvailability": "available",
+      "anchor": { "kind": "resolvedLemma", "value": "record" },
+      "attributes": {
+        "capitalizationPattern": "lowercase",
+        "inflectionPattern": "base"
+      },
+      "occurrences": [
+        {
+          "occurrenceID": "record-noun-1",
+          "surface": "record",
+          "goldLemma": "record",
+          "goldPartOfSpeech": "noun",
+          "contextFingerprint": "record-noun-context-1",
+          "analyses": [
+            {
+              "lemma": "record",
+              "partOfSpeech": "noun",
+              "source": "validationFixture",
+              "rawScore": 0.94,
+              "confidence": "strong"
+            }
+          ]
+        },
+        {
+          "occurrenceID": "record-noun-2",
+          "surface": "record",
+          "goldLemma": "record",
+          "goldPartOfSpeech": "noun",
+          "contextFingerprint": "record-noun-context-2",
+          "analyses": [
+            {
+              "lemma": "record",
+              "partOfSpeech": "noun",
+              "source": "validationFixture",
+              "rawScore": 0.88,
+              "confidence": "usable"
+            }
+          ]
+        },
+        {
+          "occurrenceID": "record-verb-1",
+          "surface": "record",
+          "goldLemma": "record",
+          "goldPartOfSpeech": "verb",
+          "contextFingerprint": "record-verb-context-1",
+          "analyses": [
+            {
+              "lemma": "record",
+              "partOfSpeech": "verb",
+              "source": "validationFixture",
+              "rawScore": 0.92,
+              "confidence": "strong"
+            }
+          ]
+        },
+        {
+          "occurrenceID": "record-verb-2",
+          "surface": "record",
+          "goldLemma": "record",
+          "goldPartOfSpeech": "verb",
+          "contextFingerprint": "record-verb-context-2",
+          "analyses": [
+            {
+              "lemma": "record",
+              "partOfSpeech": "verb",
+              "source": "validationFixture",
+              "rawScore": 0.84,
+              "confidence": "usable"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "anchorID": "en-bank-one-spurious-conflict",
+      "languageCode": "en",
+      "evaluationSplit": "development",
+      "genre": "adversarial",
+      "documentFormat": "synthetic",
+      "nlpAvailability": "available",
+      "dictionaryAttestationAvailability": "available",
+      "anchor": { "kind": "resolvedLemma", "value": "bank" },
+      "attributes": {
+        "capitalizationPattern": "lowercase",
+        "inflectionPattern": "base"
+      },
+      "occurrences": [
+        {
+          "occurrenceID": "bank-noun-1",
+          "surface": "bank",
+          "goldLemma": "bank",
+          "goldPartOfSpeech": "noun",
+          "contextFingerprint": "bank-context-1",
+          "analyses": [
+            {
+              "lemma": "bank",
+              "partOfSpeech": "noun",
+              "source": "validationFixture",
+              "rawScore": 0.90,
+              "confidence": "usable"
+            }
+          ]
+        },
+        {
+          "occurrenceID": "bank-noun-2",
+          "surface": "bank",
+          "goldLemma": "bank",
+          "goldPartOfSpeech": "noun",
+          "contextFingerprint": "bank-context-2",
+          "analyses": [
+            {
+              "lemma": "bank",
+              "partOfSpeech": "noun",
+              "source": "validationFixture",
+              "rawScore": 0.86,
+              "confidence": "usable"
+            }
+          ]
+        },
+        {
+          "occurrenceID": "bank-noun-3",
+          "surface": "bank",
+          "goldLemma": "bank",
+          "goldPartOfSpeech": "noun",
+          "contextFingerprint": "bank-context-3",
+          "analyses": [
+            {
+              "lemma": "bank",
+              "partOfSpeech": "noun",
+              "source": "validationFixture",
+              "rawScore": 0.82,
+              "confidence": "usable"
+            }
+          ]
+        },
+        {
+          "occurrenceID": "bank-spurious-verb",
+          "surface": "bank",
+          "goldLemma": "bank",
+          "goldPartOfSpeech": "noun",
+          "contextFingerprint": "bank-spurious-context",
+          "analyses": [
+            {
+              "lemma": "bank",
+              "partOfSpeech": "verb",
+              "source": "validationFixture",
+              "rawScore": 0.68,
+              "confidence": "usable"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "anchorID": "en-lead-insufficient-conflict",
+      "languageCode": "en",
+      "evaluationSplit": "development",
+      "genre": "adversarial",
+      "documentFormat": "synthetic",
+      "nlpAvailability": "available",
+      "dictionaryAttestationAvailability": "unavailable",
+      "anchor": { "kind": "resolvedLemma", "value": "lead" },
+      "attributes": {
+        "capitalizationPattern": "lowercase",
+        "inflectionPattern": "base"
+      },
+      "occurrences": [
+        {
+          "occurrenceID": "lead-noun-1",
+          "surface": "lead",
+          "goldLemma": "lead",
+          "goldPartOfSpeech": "noun",
+          "contextFingerprint": "lead-noun-context",
+          "analyses": [
+            {
+              "lemma": "lead",
+              "partOfSpeech": "noun",
+              "source": "validationFixture",
+              "rawScore": 0.77,
+              "confidence": "usable"
+            }
+          ]
+        },
+        {
+          "occurrenceID": "lead-verb-1",
+          "surface": "lead",
+          "goldLemma": "lead",
+          "goldPartOfSpeech": "verb",
+          "contextFingerprint": "lead-verb-context",
+          "analyses": [
+            {
+              "lemma": "lead",
+              "partOfSpeech": "verb",
+              "source": "validationFixture",
+              "rawScore": 0.76,
+              "confidence": "usable"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "anchorID": "de-Folgen-exact-surface-unresolved",
+      "languageCode": "de",
+      "evaluationSplit": "development",
+      "genre": "adversarial",
+      "documentFormat": "synthetic",
+      "nlpAvailability": "unavailable",
+      "dictionaryAttestationAvailability": "unavailable",
+      "anchor": { "kind": "exactSurface", "value": "Folgen" },
+      "attributes": {
+        "capitalizationPattern": "initial-capital",
+        "inflectionPattern": "base"
+      },
+      "occurrences": [
+        {
+          "occurrenceID": "Folgen-1",
+          "surface": "Folgen",
+          "goldLemma": "Folge",
+          "goldPartOfSpeech": "noun",
+          "contextFingerprint": "Folgen-context",
+          "analyses": [
+            {
+              "lemma": "Folge",
+              "partOfSpeech": "noun",
+              "source": "validationFixture",
+              "rawScore": null,
+              "confidence": "unavailable"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "anchorID": "en-seal-split-with-residual",
+      "languageCode": "en",
+      "evaluationSplit": "heldout",
+      "genre": "adversarial",
+      "documentFormat": "synthetic",
+      "nlpAvailability": "available",
+      "dictionaryAttestationAvailability": "available",
+      "anchor": { "kind": "resolvedLemma", "value": "seal" },
+      "attributes": {
+        "capitalizationPattern": "lowercase",
+        "inflectionPattern": "base"
+      },
+      "occurrences": [
+        {
+          "occurrenceID": "seal-noun-1",
+          "surface": "seal",
+          "goldLemma": "seal",
+          "goldPartOfSpeech": "noun",
+          "contextFingerprint": "seal-noun-context-1",
+          "analyses": [
+            {
+              "lemma": "seal",
+              "partOfSpeech": "noun",
+              "source": "validationFixture",
+              "rawScore": 0.91,
+              "confidence": "usable"
+            }
+          ]
+        },
+        {
+          "occurrenceID": "seal-noun-2",
+          "surface": "seal",
+          "goldLemma": "seal",
+          "goldPartOfSpeech": "noun",
+          "contextFingerprint": "seal-noun-context-2",
+          "analyses": [
+            {
+              "lemma": "seal",
+              "partOfSpeech": "noun",
+              "source": "validationFixture",
+              "rawScore": 0.87,
+              "confidence": "usable"
+            }
+          ]
+        },
+        {
+          "occurrenceID": "seal-verb-1",
+          "surface": "seal",
+          "goldLemma": "seal",
+          "goldPartOfSpeech": "verb",
+          "contextFingerprint": "seal-verb-context-1",
+          "analyses": [
+            {
+              "lemma": "seal",
+              "partOfSpeech": "verb",
+              "source": "validationFixture",
+              "rawScore": 0.89,
+              "confidence": "usable"
+            }
+          ]
+        },
+        {
+          "occurrenceID": "seal-verb-2",
+          "surface": "seal",
+          "goldLemma": "seal",
+          "goldPartOfSpeech": "verb",
+          "contextFingerprint": "seal-verb-context-2",
+          "analyses": [
+            {
+              "lemma": "seal",
+              "partOfSpeech": "verb",
+              "source": "validationFixture",
+              "rawScore": 0.85,
+              "confidence": "usable"
+            }
+          ]
+        },
+        {
+          "occurrenceID": "seal-residual",
+          "surface": "seal",
+          "goldLemma": "seal",
+          "goldPartOfSpeech": "noun",
+          "contextFingerprint": "seal-residual-context",
+          "analyses": [
+            {
+              "lemma": "seal",
+              "partOfSpeech": "unknown",
+              "source": "validationFixture",
+              "rawScore": null,
+              "confidence": "insufficient"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "anchorID": "en-bow-duplicate-contexts",
+      "languageCode": "en",
+      "evaluationSplit": "heldout",
+      "genre": "adversarial",
+      "documentFormat": "synthetic",
+      "nlpAvailability": "available",
+      "dictionaryAttestationAvailability": "available",
+      "anchor": { "kind": "resolvedLemma", "value": "bow" },
+      "attributes": {
+        "capitalizationPattern": "lowercase",
+        "inflectionPattern": "base"
+      },
+      "occurrences": [
+        {
+          "occurrenceID": "bow-noun-1",
+          "surface": "bow",
+          "goldLemma": "bow",
+          "goldPartOfSpeech": "noun",
+          "contextFingerprint": "duplicate-noun-context",
+          "analyses": [
+            {
+              "lemma": "bow",
+              "partOfSpeech": "noun",
+              "source": "validationFixture",
+              "rawScore": 0.88,
+              "confidence": "usable"
+            }
+          ]
+        },
+        {
+          "occurrenceID": "bow-noun-2",
+          "surface": "bow",
+          "goldLemma": "bow",
+          "goldPartOfSpeech": "noun",
+          "contextFingerprint": "duplicate-noun-context",
+          "analyses": [
+            {
+              "lemma": "bow",
+              "partOfSpeech": "noun",
+              "source": "validationFixture",
+              "rawScore": 0.87,
+              "confidence": "usable"
+            }
+          ]
+        },
+        {
+          "occurrenceID": "bow-verb-1",
+          "surface": "bow",
+          "goldLemma": "bow",
+          "goldPartOfSpeech": "verb",
+          "contextFingerprint": "duplicate-verb-context",
+          "analyses": [
+            {
+              "lemma": "bow",
+              "partOfSpeech": "verb",
+              "source": "validationFixture",
+              "rawScore": 0.86,
+              "confidence": "usable"
+            }
+          ]
+        },
+        {
+          "occurrenceID": "bow-verb-2",
+          "surface": "bow",
+          "goldLemma": "bow",
+          "goldPartOfSpeech": "verb",
+          "contextFingerprint": "duplicate-verb-context",
+          "analyses": [
+            {
+              "lemma": "bow",
+              "partOfSpeech": "verb",
+              "source": "validationFixture",
+              "rawScore": 0.84,
+              "confidence": "usable"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "anchorID": "en-book-single",
+      "languageCode": "en",
+      "evaluationSplit": "heldout",
+      "genre": "prose",
+      "documentFormat": "synthetic",
+      "nlpAvailability": "available",
+      "dictionaryAttestationAvailability": "available",
+      "anchor": { "kind": "resolvedLemma", "value": "book" },
+      "attributes": {
+        "capitalizationPattern": "lowercase",
+        "inflectionPattern": "base"
+      },
+      "occurrences": [
+        {
+          "occurrenceID": "book-noun-1",
+          "surface": "book",
+          "goldLemma": "book",
+          "goldPartOfSpeech": "noun",
+          "contextFingerprint": "book-context-1",
+          "analyses": [
+            {
+              "lemma": "book",
+              "partOfSpeech": "noun",
+              "source": "validationFixture",
+              "rawScore": 0.93,
+              "confidence": "strong"
+            }
+          ]
+        },
+        {
+          "occurrenceID": "book-noun-2",
+          "surface": "books",
+          "goldLemma": "book",
+          "goldPartOfSpeech": "noun",
+          "contextFingerprint": "book-context-2",
+          "analyses": [
+            {
+              "lemma": "book",
+              "partOfSpeech": "noun",
+              "source": "validationFixture",
+              "rawScore": 0.90,
+              "confidence": "usable"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

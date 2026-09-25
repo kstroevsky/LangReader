@@ -167,7 +167,8 @@ package final class VocabularyResearchEvidenceStore: VocabularyResearchEvidenceS
             guard let database, !contributionID.isEmpty else { return false }
             let byKey = Dictionary(uniqueKeysWithValues: inventory.candidates.map { ($0.canonicalKey, $0) })
             let exportable = answers.compactMap { answer -> (VocabularyAssessmentAnswer, DocumentVocabularyCandidate)? in
-                guard let candidate = byKey[answer.canonicalKey] else { return nil }
+                guard let candidate = byKey[answer.canonicalKey],
+                      candidate.lexicalItemID != nil else { return nil }
                 return (answer, candidate)
             }
             guard !exportable.isEmpty else { return true }
@@ -310,11 +311,7 @@ package final class VocabularyResearchEvidenceStore: VocabularyResearchEvidenceS
         protocolVersion: Int
     ) -> Bool {
         guard let database else { return false }
-        let lexical = candidate.lexicalItemID ?? VocabularyLexicalItemID(
-            language: inventory.languageCode,
-            lemma: candidate.lemmaKey,
-            partOfSpeech: candidate.partOfSpeech
-        )
+        guard let lexical = candidate.lexicalItemID else { return false }
         var statement: OpaquePointer?
         let placeholders = Array(repeating: "?", count: 14).joined(separator: ", ")
         guard sqlite3_prepare_v2(database, "INSERT INTO vocabulary_research_evidence VALUES (\(placeholders))", -1, &statement, nil) == SQLITE_OK else { return false }

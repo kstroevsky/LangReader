@@ -4,6 +4,7 @@ import os
 
 enum VocabularyPreparationTelemetryStage: String {
     case inventory
+    case lexicalReconciliationShadow
     case assessmentInitialization
     case assessmentAdvance
     case assessmentResults

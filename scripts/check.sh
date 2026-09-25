@@ -23,6 +23,9 @@ export CLANG_MODULE_CACHE_PATH="${CLANG_MODULE_CACHE_PATH:-/private/tmp/leafread
 echo "==> Checking whitespace"
 git diff --check
 
+echo "==> Testing wiki Han-script scanner"
+./scripts/test_check_wiki_han.sh
+
 echo "==> Checking wiki"
 ./scripts/check_wiki.sh
 
@@ -64,6 +67,7 @@ python3 ./scripts/validate_vocabulary_validation_study.py --self-test
 python3 ./scripts/run_vocabulary_validation_study_rehearsal.py --self-test
 python3 ./scripts/check_vocabulary_sap_template.py --self-test
 ./scripts/test_vocabulary_pos_fixtures.sh
+bash ./scripts/test_vocabulary_lexical_partitions.sh
 
 echo "==> Testing vocabulary cross-format fixtures"
 python3 ./scripts/generate_vocabulary_preparation_fixtures.py --check
@@ -89,8 +93,32 @@ python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v4.py
 echo "==> Checking sealed historical graceful-degradation development-confirmation reservation"
 python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v5.py --self-test
 
-echo "==> Checking sealed OtherWord-POS development-confirmation reservation"
+echo "==> Checking sealed historical OtherWord-POS development-confirmation reservation"
 python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v6.py --self-test
+
+echo "==> Checking sealed historical lexical-reconciliation development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v7.py --self-test
+
+echo "==> Checking sealed historical lexical-uncertainty development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v8.py --self-test
+
+echo "==> Checking sealed historical conservative-reconciliation development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v9.py --self-test
+
+echo "==> Checking sealed historical protocol-identity development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v10.py --self-test
+
+echo "==> Checking sealed historical conflict-ambiguity development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v11.py --self-test
+
+echo "==> Checking sealed historical cross-format candidate-identity development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v12.py --self-test
+
+echo "==> Checking sealed historical validation-alignment development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v13.py --self-test
+
+echo "==> Checking sealed reconciliation-observability development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v14.py --self-test
 
 echo "==> Checking frozen vocabulary warm-compatibility development reservation"
 python3 ./scripts/validate_vocabulary_longitudinal_compatibility_manifest.py \

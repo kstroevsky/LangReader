@@ -9,6 +9,7 @@ final class VocabularyPreparationFixtureXCTests: XCTestCase {
     private struct PipelineCandidate: Equatable {
         let canonicalKey: String
         let occurrenceCount: Int
+        let identityPolicy: VocabularyAssessmentIdentityPolicy
         let difficultySource: VocabularyItemDifficultySource
         let difficultyVersion: String
         let generalFrequencyRank: Int?
@@ -134,6 +135,70 @@ final class VocabularyPreparationFixtureXCTests: XCTestCase {
         }
     }
 
+    func testPDFEPUBAndDOCXProduceEquivalentReconciledLexicalPipelinesOnThisHost() throws {
+        let (root, manifest) = try loadManifest()
+        let host = ProcessInfo.processInfo.operatingSystemVersionString
+        for languageCode in manifest.languages.keys.sorted() {
+            var results: [(format: String, result: PipelineResult)] = []
+            for fixture in manifest.fixtures where fixture.language == languageCode {
+                let url = root.appendingPathComponent(fixture.path)
+                results.append((fixture.format, try pipelineResult(
+                    texts: extractedTextUnits(from: url, format: fixture.format),
+                    languageCode: languageCode,
+                    useReconciledLexicalIdentity: true
+                )))
+            }
+            let baseline = try XCTUnwrap(results.first)
+            for result in results.dropFirst() {
+                assertEquivalent(
+                    baseline.result,
+                    result.result,
+                    context: "reconciled \(languageCode) \(baseline.format) vs \(result.format) on \(host)"
+                )
+            }
+            let inferenceCount = baseline.result.candidates.lazy
+                .filter { $0.identityPolicy == .fullInference }
+                .count
+            XCTAssertEqual(
+                baseline.result.firstEightQuestionKeys.count,
+                min(8, inferenceCount),
+                "\(languageCode): live-platform question count should follow resolved inference coverage"
+            )
+        }
+    }
+
+    func testPDFEPUBAndDOCXProduceEquivalentReconciledLexicalPipelinesWithDeterministicEvidence() throws {
+        let (root, manifest) = try loadManifest()
+        for languageCode in manifest.languages.keys.sorted() {
+            var results: [(format: String, result: PipelineResult)] = []
+            for fixture in manifest.fixtures where fixture.language == languageCode {
+                let url = root.appendingPathComponent(fixture.path)
+                results.append((fixture.format, try pipelineResult(
+                    texts: extractedTextUnits(from: url, format: fixture.format),
+                    languageCode: languageCode,
+                    useReconciledLexicalIdentity: true,
+                    useDeterministicReconciliationEvidence: true
+                )))
+            }
+            let baseline = try XCTUnwrap(results.first)
+            for result in results.dropFirst() {
+                assertEquivalent(
+                    baseline.result,
+                    result.result,
+                    context: "deterministic reconciled \(languageCode) \(baseline.format) vs \(result.format)"
+                )
+            }
+            XCTAssertTrue(
+                baseline.result.candidates.contains { $0.identityPolicy == .fullInference },
+                "\(languageCode): controlled evidence should exercise resolved lexical candidates"
+            )
+            XCTAssertTrue(
+                baseline.result.candidates.contains { $0.identityPolicy == .directEvidenceOnly },
+                "\(languageCode): controlled evidence should exercise explicit lexical uncertainty"
+            )
+        }
+    }
+
     private func loadManifest() throws -> (URL, Manifest) {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -161,15 +226,46 @@ final class VocabularyPreparationFixtureXCTests: XCTestCase {
         }
     }
 
-    private func pipelineResult(texts: [String], languageCode: String) throws -> PipelineResult {
+    private func pipelineResult(
+        texts: [String],
+        languageCode: String,
+        useReconciledLexicalIdentity: Bool = false,
+        useDeterministicReconciliationEvidence: Bool = false
+    ) throws -> PipelineResult {
         let language: NLLanguage = languageCode == "de" ? .german : .english
-        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
-            texts: texts,
-            language: language,
-            maximumWorkerCount: 1
-        ))
+        let index: VocabularyDocumentLemmaIndex
+        if useDeterministicReconciliationEvidence {
+            let resolvedSurface = languageCode == "de" ? "band" : "record"
+            index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+                texts: texts,
+                language: language,
+                maximumWorkerCount: 1,
+                resolutionProvider: { surface, _, _ in
+                    .resolved(lemma: surface.lowercased(), source: .naturalLanguage)
+                },
+                analysisProvider: { request in
+                    guard request.surface.lowercased() == resolvedSurface else { return [] }
+                    return [VocabularyMorphologicalAnalysis(
+                        lemma: resolvedSurface,
+                        partOfSpeech: .noun,
+                        source: .validationFixture,
+                        rawScore: 1,
+                        confidence: .usable
+                    )]
+                }
+            ))
+        } else {
+            index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+                texts: texts,
+                language: language,
+                maximumWorkerCount: 1
+            ))
+        }
+        let summaries = useReconciledLexicalIdentity
+            ? index.lexicalSummaries()
+            : index.lemmaSummaries()
         let inventory = DocumentVocabularyInventory(
-            summaries: index.lemmaSummaries(),
+            summaries: summaries,
             languageCode: languageCode,
             difficultyProvider: DocumentVocabularyFrequencyProvider.calibrated(languageCode: languageCode)
         )
@@ -177,6 +273,7 @@ final class VocabularyPreparationFixtureXCTests: XCTestCase {
             PipelineCandidate(
                 canonicalKey: $0.canonicalKey,
                 occurrenceCount: $0.occurrenceCount,
+                identityPolicy: $0.identityPolicy,
                 difficultySource: $0.difficultyPrior.source,
                 difficultyVersion: $0.difficultyPrior.version,
                 generalFrequencyRank: $0.generalFrequencyRank
@@ -184,10 +281,14 @@ final class VocabularyPreparationFixtureXCTests: XCTestCase {
         }
         var assessment = AdaptiveVocabularyAssessment(inventory: inventory, mode: .allUnknown)
         var questionKeys: [String] = []
-        for ordinal in 0..<min(8, candidates.count) {
+        let inferenceCount = candidates.lazy.filter { $0.identityPolicy == .fullInference }.count
+        for ordinal in 0..<min(8, inferenceCount) {
             let question = try XCTUnwrap(assessment.nextQuestion())
             questionKeys.append(question.canonicalKey)
             assessment.record(ordinal.isMultiple(of: 3) ? .reportedUnknown : .verifiedKnown, for: question.canonicalKey)
+        }
+        if inferenceCount == 0 {
+            XCTAssertNil(assessment.nextQuestion())
         }
         return PipelineResult(
             candidates: candidates,

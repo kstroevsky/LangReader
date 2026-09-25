@@ -89,6 +89,20 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
                 baseline.matches(lemma: lemma, selectedForm: selectedForm)
             )
         }
+
+        let lexicalFingerprint: ([VocabularyDocumentLemmaSummary]) -> [String] = { summaries in
+            summaries.map {
+                [
+                    $0.canonicalKey,
+                    $0.resolutionState.rawValue,
+                    $0.assessmentPolicy.rawValue,
+                    String($0.occurrenceCount)
+                ].joined(separator: "|")
+            }
+        }
+        let baselineLexical = lexicalFingerprint(baseline.lexicalSummaries())
+        XCTAssertEqual(lexicalFingerprint(seeded.lexicalSummaries()), baselineLexical)
+        XCTAssertEqual(lexicalFingerprint(baseline.lexicalSummaries()), baselineLexical)
     }
 
     func testCancelledPriorityIndexDoesNotReturnPartialState() {
@@ -173,6 +187,115 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         XCTAssertEqual(summaries.first { $0.lemmaKey == "development" }?.occurrenceCount, 1)
     }
 
+    func testReconciledSummariesCreateSplitOnlyFromCorroboratedContexts() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: [
+                "noun-one record remains",
+                "noun-two record survives",
+                "verb-one record this",
+                "verb-two record that"
+            ],
+            language: .english,
+            maximumWorkerCount: 1,
+            resolutionProvider: { surface, _, _ in
+                surface == "record"
+                    ? .resolved(lemma: "record", source: .naturalLanguage)
+                    : .unresolved(surface: surface)
+            },
+            analysisProvider: { request in
+                guard request.surface == "record" else { return [] }
+                let part: VocabularyPartOfSpeech = request.context.contains("noun-") ? .noun : .verb
+                return [VocabularyMorphologicalAnalysis(
+                    lemma: "record",
+                    partOfSpeech: part,
+                    source: .validationFixture,
+                    rawScore: 1,
+                    confidence: .usable
+                )]
+            }
+        ))
+
+        let record = index.lexicalSummaries().filter { $0.lemmaKey == "record" }
+        XCTAssertEqual(record.count, 2)
+        XCTAssertEqual(Set(record.map(\.partOfSpeech)), [.noun, .verb])
+        XCTAssertTrue(record.allSatisfy { $0.resolutionState == .resolvedSplit })
+        XCTAssertTrue(record.allSatisfy { $0.assessmentPolicy == .fullInference })
+        XCTAssertEqual(record.map(\.occurrenceCount).sorted(), [2, 2])
+    }
+
+    func testReconciledSummariesKeepOneOffConflictAsDirectEvidenceResidual() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: [
+                "noun-one record remains",
+                "noun-two record survives",
+                "noun-three record persists",
+                "verb-one record this"
+            ],
+            language: .english,
+            maximumWorkerCount: 1,
+            resolutionProvider: { surface, _, _ in
+                surface == "record"
+                    ? .resolved(lemma: "record", source: .naturalLanguage)
+                    : .unresolved(surface: surface)
+            },
+            analysisProvider: { request in
+                guard request.surface == "record" else { return [] }
+                let part: VocabularyPartOfSpeech = request.context.contains("verb-") ? .verb : .noun
+                return [VocabularyMorphologicalAnalysis(
+                    lemma: "record",
+                    partOfSpeech: part,
+                    source: .validationFixture,
+                    rawScore: 1,
+                    confidence: .usable
+                )]
+            }
+        ))
+
+        let record = index.lexicalSummaries().filter { $0.lemmaKey == "record" }
+        let noun = try XCTUnwrap(record.first { $0.partOfSpeech == .noun })
+        let residual = try XCTUnwrap(record.first { $0.assessmentPolicy == .directEvidenceOnly })
+        XCTAssertEqual(noun.occurrenceCount, 3)
+        XCTAssertEqual(noun.resolutionState, .resolvedSingle)
+        XCTAssertEqual(residual.occurrenceCount, 1)
+        XCTAssertEqual(residual.partOfSpeech, .unknown)
+        XCTAssertTrue(residual.canonicalKey.contains("|residual|direct|"))
+    }
+
+    func testAmbiguousAnchorCreatesOccurrenceScopedDirectEvidenceUnits() throws {
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: [
+                "noun-one record remains",
+                "verb-one record this"
+            ],
+            language: .english,
+            maximumWorkerCount: 1,
+            resolutionProvider: { surface, _, _ in
+                surface == "record"
+                    ? .resolved(lemma: "record", source: .naturalLanguage)
+                    : .unresolved(surface: surface)
+            },
+            analysisProvider: { request in
+                guard request.surface == "record" else { return [] }
+                let part: VocabularyPartOfSpeech = request.context.contains("noun-") ? .noun : .verb
+                return [VocabularyMorphologicalAnalysis(
+                    lemma: "record",
+                    partOfSpeech: part,
+                    source: .validationFixture,
+                    rawScore: 1,
+                    confidence: .usable
+                )]
+            }
+        ))
+
+        let record = index.lexicalSummaries().filter { $0.lemmaKey == "record" }
+        XCTAssertEqual(record.count, 2)
+        XCTAssertTrue(record.allSatisfy { $0.resolutionState == .ambiguous })
+        XCTAssertTrue(record.allSatisfy { $0.assessmentPolicy == .directEvidenceOnly })
+        XCTAssertTrue(record.allSatisfy { $0.occurrenceCount == 1 })
+        XCTAssertEqual(Set(record.map(\.canonicalKey)).count, 2)
+        XCTAssertTrue(record.allSatisfy { $0.canonicalKey.contains("|direct|") })
+    }
+
     func testOrdinaryEnglishWordsAreNotClassifiedAsConfidentNames() throws {
         let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
             texts: ["They develop tools while readers learn vocabulary."],
@@ -211,6 +334,47 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         let match = try XCTUnwrap(wrappedIndex.matches(lemma: "curator", selectedForm: "curator").first?.first)
         XCTAssertEqual(match.range, (wrapped as NSString).range(of: "curator"))
         XCTAssertEqual(match.matchedText, "curator")
+    }
+
+    func testRendererWhitespaceDoesNotChangeOccurrenceScopedDirectEvidenceIdentity() throws {
+        func makeIndex(_ text: String) throws -> VocabularyDocumentLemmaIndex {
+            try XCTUnwrap(VocabularyDocumentLemmaIndex(
+                texts: [text],
+                language: .english,
+                maximumWorkerCount: 1,
+                resolutionProvider: { surface, _, _ in
+                    surface.lowercased() == "record"
+                        ? .resolved(lemma: "record", source: .naturalLanguage)
+                        : .unresolved(surface: surface)
+                },
+                analysisProvider: { request in
+                    guard request.surface.lowercased() == "record" else { return [] }
+                    return [VocabularyMorphologicalAnalysis(
+                        lemma: "record",
+                        partOfSpeech: .unknown,
+                        source: .validationFixture,
+                        confidence: .insufficient
+                    )]
+                }
+            ))
+        }
+
+        let inline = try makeIndex("record and record")
+        let wrapped = try makeIndex("record\n\tand   record")
+        let inlineRecord = inline.lexicalSummaries().filter { $0.lemmaKey == "record" }
+        let wrappedRecord = wrapped.lexicalSummaries().filter { $0.lemmaKey == "record" }
+
+        XCTAssertEqual(inlineRecord.count, 2)
+        XCTAssertEqual(wrappedRecord.count, 2)
+        XCTAssertTrue(inlineRecord.allSatisfy { $0.assessmentPolicy == .directEvidenceOnly })
+        XCTAssertEqual(
+            inlineRecord.map(\.canonicalKey),
+            wrappedRecord.map(\.canonicalKey)
+        )
+        XCTAssertNotEqual(
+            inlineRecord.map(\.representativeRange),
+            wrappedRecord.map(\.representativeRange)
+        )
     }
 
     func testGermanCompoundsRemainSeparateLemmas() throws {

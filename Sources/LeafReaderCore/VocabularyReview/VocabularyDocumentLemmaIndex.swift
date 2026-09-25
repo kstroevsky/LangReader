@@ -23,12 +23,44 @@ package struct VocabularyDocumentObservedForm: Codable, Equatable, Sendable {
     }
 }
 
+package struct VocabularyMorphologicalAnalysisRequest: Sendable {
+    package let surface: String
+    package let lemma: String
+    package let languageCode: String
+    package let context: String
+    package let contextFingerprint: String
+    package let appleHypotheses: [String: Double]
+
+    package init(
+        surface: String,
+        lemma: String,
+        languageCode: String,
+        context: String,
+        contextFingerprint: String,
+        appleHypotheses: [String: Double]
+    ) {
+        self.surface = surface
+        self.lemma = lemma
+        self.languageCode = languageCode
+        self.context = context
+        self.contextFingerprint = contextFingerprint
+        self.appleHypotheses = appleHypotheses
+    }
+}
+
+package typealias VocabularyMorphologicalAnalysisProvider =
+    @Sendable (VocabularyMorphologicalAnalysisRequest) -> [VocabularyMorphologicalAnalysis]
+
 package struct VocabularyDocumentLemmaSummary: Codable, Equatable, Sendable {
     package let canonicalKey: String
     package let lemmaKey: String
     package let displayLemma: String
     package let lexicalItemID: VocabularyLexicalItemID?
     package let partOfSpeech: VocabularyPartOfSpeech
+    package let anchorID: VocabularyLexicalAnchorID?
+    package let resolutionState: VocabularyLexicalResolutionState
+    package let assessmentPolicy: VocabularyAssessmentIdentityPolicy
+    package let reconciliationDiagnostics: VocabularyLexicalResolutionDiagnostics?
     package let observedForms: [VocabularyDocumentObservedForm]
     package let occurrenceCount: Int
     package let representativeRange: VocabularyDocumentSourceRange
@@ -40,6 +72,10 @@ package struct VocabularyDocumentLemmaSummary: Codable, Equatable, Sendable {
         displayLemma: String,
         lexicalItemID: VocabularyLexicalItemID? = nil,
         partOfSpeech: VocabularyPartOfSpeech = .unknown,
+        anchorID: VocabularyLexicalAnchorID? = nil,
+        resolutionState: VocabularyLexicalResolutionState? = nil,
+        assessmentPolicy: VocabularyAssessmentIdentityPolicy? = nil,
+        reconciliationDiagnostics: VocabularyLexicalResolutionDiagnostics? = nil,
         observedForms: [VocabularyDocumentObservedForm],
         occurrenceCount: Int,
         representativeRange: VocabularyDocumentSourceRange,
@@ -50,6 +86,10 @@ package struct VocabularyDocumentLemmaSummary: Codable, Equatable, Sendable {
         self.displayLemma = displayLemma
         self.lexicalItemID = lexicalItemID
         self.partOfSpeech = partOfSpeech
+        self.anchorID = anchorID
+        self.resolutionState = resolutionState ?? (lexicalItemID == nil ? .unresolved : .resolvedSingle)
+        self.assessmentPolicy = assessmentPolicy ?? (lexicalItemID == nil ? .directEvidenceOnly : .fullInference)
+        self.reconciliationDiagnostics = reconciliationDiagnostics
         self.observedForms = observedForms
         self.occurrenceCount = occurrenceCount
         self.representativeRange = representativeRange
@@ -64,18 +104,44 @@ package enum VocabularyPartOfSpeechConfidencePolicy {
     package static let minimumMargin = 0.20
 
     package static func classify(hypotheses: [String: Double]) -> VocabularyPartOfSpeech {
+        analyses(hypotheses: hypotheses, lemma: "").first {
+            $0.confidence.isUsable
+        }?.partOfSpeech ?? .unknown
+    }
+
+    package static func analyses(
+        hypotheses: [String: Double],
+        lemma: String
+    ) -> [VocabularyMorphologicalAnalysis] {
         let ordered = hypotheses
             .filter { $0.value.isFinite && $0.value >= 0 }
             .sorted {
                 if $0.value != $1.value { return $0.value > $1.value }
                 return $0.key < $1.key
             }
-        guard let leading = ordered.first,
-              leading.value >= minimumLeadingProbability,
-              leading.value - (ordered.dropFirst().first?.value ?? 0) >= minimumMargin else {
-            return .unknown
+        guard let leading = ordered.first else {
+            return [VocabularyMorphologicalAnalysis(
+                lemma: lemma,
+                partOfSpeech: .unknown,
+                source: .appleNaturalLanguage,
+                confidence: .unavailable
+            )]
         }
-        switch NLTag(rawValue: leading.key) {
+        let usable = leading.value >= minimumLeadingProbability
+            && leading.value - (ordered.dropFirst().first?.value ?? 0) >= minimumMargin
+        return ordered.prefix(2).enumerated().map { index, hypothesis in
+            VocabularyMorphologicalAnalysis(
+                lemma: lemma,
+                partOfSpeech: partOfSpeech(for: hypothesis.key),
+                source: .appleNaturalLanguage,
+                rawScore: hypothesis.value,
+                confidence: index == 0 && usable ? .usable : .insufficient
+            )
+        }
+    }
+
+    private static func partOfSpeech(for rawTag: String) -> VocabularyPartOfSpeech {
+        switch NLTag(rawValue: rawTag) {
         case .noun: return .noun
         case .verb: return .verb
         case .adjective: return .adjective
@@ -193,13 +259,20 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     private struct Page: Sendable {
         let text: String
         let occurrencesByLemmaKey: [String: [VocabularyTextOccurrence]]
-        let occurrencesByLexicalKey: [String: [VocabularyTextOccurrence]]
         let occurrencesByExactSurface: [String: [VocabularyTextOccurrence]]
-        let displayLemmaByLexicalKey: [String: String]
-        let lexicalItemByKey: [String: VocabularyLexicalItemID]
-        let formCountsByLexicalKey: [String: [String: Int]]
-        let nameOccurrenceCountsByLexicalKey: [String: Int]
+        let evidence: [PageOccurrenceEvidence]
         let lineWraps: [LineWrap]
+    }
+
+    private struct PageOccurrenceEvidence: Sendable {
+        let occurrence: VocabularyTextOccurrence
+        let anchor: VocabularyLexicalAnchorID
+        let displayLemma: String
+        let surface: String
+        let analyses: [VocabularyMorphologicalAnalysis]
+        let legacyPartOfSpeech: VocabularyPartOfSpeech
+        let contextFingerprint: String
+        let isConfidentName: Bool
     }
 
     private final class PageBuffer: @unchecked Sendable {
@@ -237,6 +310,12 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         maximumWorkerCount: Int = 4,
         seed: VocabularyDocumentLemmaIndexSeed? = nil,
         resolutionProvider: @escaping VocabularyLemmaResolutionProvider = GermanLemmaOccurrenceMatcher.naturalLanguageResolutionProvider,
+        analysisProvider: @escaping VocabularyMorphologicalAnalysisProvider = {
+            VocabularyPartOfSpeechConfidencePolicy.analyses(
+                hypotheses: $0.appleHypotheses,
+                lemma: $0.lemma
+            )
+        },
         isCancelled: @escaping @Sendable () -> Bool = { false }
     ) {
         guard !isCancelled() else { return nil }
@@ -285,7 +364,8 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                     nameTagger: nameTagger,
                     fallbackTagger: fallbackTagger,
                     lemmaMemo: &lemmaMemo,
-                    resolutionProvider: resolutionProvider
+                    resolutionProvider: resolutionProvider,
+                    analysisProvider: analysisProvider
                 ), at: pageIndex)
                 remainingIndex += workerCount
             }
@@ -301,6 +381,13 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     /// occurrence-first order. A source range identifies the first observed
     /// occurrence in the corresponding PDF page or Web text unit.
     package func lemmaSummaries() -> [VocabularyDocumentLemmaSummary] {
+        struct Entry {
+            let sourceKey: String
+            let item: VocabularyLexicalItemID
+            let evidence: PageOccurrenceEvidence
+            let sourceRange: VocabularyDocumentSourceRange
+        }
+
         struct Aggregate {
             var displayLemma: String
             var forms: [String: (surface: String, count: Int)]
@@ -309,39 +396,62 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             var representativeRange: VocabularyDocumentSourceRange
         }
 
-        let lexicalItems = pages.flatMap { $0.lexicalItemByKey.values }
+        let entries = pages.enumerated().flatMap { unitIndex, page in
+            page.evidence.map { evidence -> Entry in
+                let item = VocabularyLexicalItemID(
+                    language: languageCode,
+                    lemma: evidence.displayLemma,
+                    partOfSpeech: evidence.legacyPartOfSpeech
+                )
+                let sourceKey = evidence.anchor.resolvedLemma == nil
+                    ? Self.exactSurfaceLexicalKey(
+                        languageCode: languageCode,
+                        surface: evidence.surface,
+                        partOfSpeech: evidence.legacyPartOfSpeech
+                    )
+                    : item.canonicalKey
+                return Entry(
+                    sourceKey: sourceKey,
+                    item: item,
+                    evidence: evidence,
+                    sourceRange: VocabularyDocumentSourceRange(
+                        unitIndex: unitIndex,
+                        utf16Location: evidence.occurrence.range.location,
+                        utf16Length: evidence.occurrence.range.length
+                    )
+                )
+            }
+        }
+        let lexicalItems = entries.map(\.item)
         var lexicalItemByKey: [String: VocabularyLexicalItemID] = [:]
-        for page in pages {
-            lexicalItemByKey.merge(page.lexicalItemByKey) { existing, _ in existing }
+        for entry in entries {
+            lexicalItemByKey[entry.sourceKey] = lexicalItemByKey[entry.sourceKey] ?? entry.item
         }
         let soleConfidentPartByLemma = VocabularyPartOfSpeechReconciliationPolicy
             .soleConfidentPartByLemma(lexicalItems)
         var resolvedKeyByKey: [String: String] = [:]
 
-        // An unresolved base surface may join a uniquely resolved lemma group
-        // only when the spelling matches exactly. This restores `develop` beside
-        // resolved `developed`/`developing` without allowing case-folded
-        // homographs such as `Folgen` to enter lowercase `folgen`.
+        // Preserve the existing safe base-form repair in the legacy shadow
+        // projection while keeping case-sensitive German homographs separate.
         var resolvedKeysByExactLemma: [String: Set<String>] = [:]
-        for page in pages {
-            for (key, _) in page.lexicalItemByKey where !key.hasPrefix("exact|") {
-                guard let display = page.displayLemmaByLexicalKey[key] else { continue }
-                resolvedKeysByExactLemma[Self.exactSurfaceKey(display), default: []].insert(key)
-            }
+        for entry in entries where !entry.sourceKey.hasPrefix("exact|") {
+            resolvedKeysByExactLemma[
+                Self.exactSurfaceKey(entry.evidence.displayLemma),
+                default: []
+            ].insert(entry.sourceKey)
         }
-        for page in pages {
-            for (sourceKey, item) in page.lexicalItemByKey where sourceKey.hasPrefix("exact|") {
-                guard let display = page.displayLemmaByLexicalKey[sourceKey],
-                      let candidates = resolvedKeysByExactLemma[Self.exactSurfaceKey(display)] else { continue }
-                let compatible = candidates.filter { candidateKey in
-                    guard let candidate = lexicalItemByKey[candidateKey] else { return false }
-                    return item.partOfSpeech == .unknown
-                        || candidate.partOfSpeech == .unknown
-                        || item.partOfSpeech == candidate.partOfSpeech
-                }
-                if compatible.count == 1, let candidate = compatible.first {
-                    resolvedKeyByKey[sourceKey] = candidate
-                }
+        for entry in entries where entry.sourceKey.hasPrefix("exact|") {
+            guard let candidates = resolvedKeysByExactLemma[
+                Self.exactSurfaceKey(entry.evidence.displayLemma)
+            ] else { continue }
+            let compatible = candidates.filter { candidateKey in
+                guard let candidate = lexicalItemByKey[candidateKey] else { return false }
+                return entry.item.partOfSpeech == .unknown
+                    || candidate.partOfSpeech == .unknown
+                    || entry.item.partOfSpeech == candidate.partOfSpeech
+            }
+            if compatible.count == 1, let candidate = compatible.first {
+                resolvedKeyByKey[entry.sourceKey] = candidate
             }
         }
         for item in lexicalItems where item.partOfSpeech == .unknown {
@@ -356,35 +466,29 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         }
 
         var aggregateByKey: [String: Aggregate] = [:]
-        for (unitIndex, page) in pages.enumerated() {
-            for (sourceKey, occurrences) in page.occurrencesByLexicalKey {
-                let key = resolvedKeyByKey[sourceKey] ?? sourceKey
-                guard !key.isEmpty, let first = occurrences.first else { continue }
-                let representative = VocabularyDocumentSourceRange(
-                    unitIndex: unitIndex,
-                    utf16Location: first.range.location,
-                    utf16Length: first.range.length
-                )
-                var aggregate = aggregateByKey[key] ?? Aggregate(
-                    displayLemma: page.displayLemmaByLexicalKey[sourceKey] ?? first.matchedText,
-                    forms: [:],
-                    count: 0,
-                    nameCount: 0,
-                    representativeRange: representative
-                )
-                aggregate.count += occurrences.count
-                aggregate.nameCount += page.nameOccurrenceCountsByLexicalKey[sourceKey] ?? 0
-                for (surface, count) in page.formCountsByLexicalKey[sourceKey] ?? [:] {
-                    let surfaceKey = Self.exactSurfaceKey(surface)
-                    let existing = aggregate.forms[surfaceKey]
-                    aggregate.forms[surfaceKey] = (existing?.surface ?? surface, (existing?.count ?? 0) + count)
-                }
-                aggregateByKey[key] = aggregate
-            }
+        for entry in entries {
+            let key = resolvedKeyByKey[entry.sourceKey] ?? entry.sourceKey
+            guard !key.isEmpty else { continue }
+            var aggregate = aggregateByKey[key] ?? Aggregate(
+                displayLemma: entry.evidence.displayLemma,
+                forms: [:],
+                count: 0,
+                nameCount: 0,
+                representativeRange: entry.sourceRange
+            )
+            aggregate.count += 1
+            if entry.evidence.isConfidentName { aggregate.nameCount += 1 }
+            let surfaceKey = Self.exactSurfaceKey(entry.evidence.surface)
+            let existing = aggregate.forms[surfaceKey]
+            aggregate.forms[surfaceKey] = (
+                existing?.surface ?? entry.evidence.surface,
+                (existing?.count ?? 0) + 1
+            )
+            aggregateByKey[key] = aggregate
         }
 
         return aggregateByKey.map { key, aggregate in
-            let lexicalItemID = pages.lazy.compactMap { $0.lexicalItemByKey[key] }.first
+            let lexicalItemID = lexicalItemByKey[key]
             return VocabularyDocumentLemmaSummary(
                 canonicalKey: key,
                 lemmaKey: lexicalItemID?.lemma,
@@ -405,6 +509,249 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             if $0.occurrenceCount != $1.occurrenceCount { return $0.occurrenceCount > $1.occurrenceCount }
             if $0.canonicalKey != $1.canonicalKey { return $0.canonicalKey < $1.canonicalKey }
             return $0.representativeRange.unitIndex < $1.representativeRange.unitIndex
+        }
+    }
+
+    /// Evidence-aware reconciled projection. It remains separate from the
+    /// production projection while the ADR is in shadow rollout and activation
+    /// is gated by validation.
+    package func lexicalSummaries(
+        reconciler: VocabularyLexicalReconciler = VocabularyLexicalReconciler()
+    ) -> [VocabularyDocumentLemmaSummary] {
+        struct OccurrenceRecord {
+            let analysis: VocabularyOccurrenceAnalysis
+            let displayLemma: String
+            let isConfidentName: Bool
+        }
+
+        var records: [OccurrenceRecord] = []
+        records.reserveCapacity(pages.reduce(0) { $0 + $1.evidence.count })
+        for (unitIndex, page) in pages.enumerated() {
+            for evidence in page.evidence {
+                let sourceRange = VocabularyDocumentSourceRange(
+                    unitIndex: unitIndex,
+                    utf16Location: evidence.occurrence.range.location,
+                    utf16Length: evidence.occurrence.range.length
+                )
+                records.append(OccurrenceRecord(
+                    analysis: VocabularyOccurrenceAnalysis(
+                        occurrenceID: VocabularyOccurrenceAnalysisID(
+                            unitIndex: unitIndex,
+                            utf16Location: evidence.occurrence.range.location,
+                            utf16Length: evidence.occurrence.range.length
+                        ),
+                        sourceRange: sourceRange,
+                        surface: evidence.surface,
+                        anchor: evidence.anchor,
+                        analyses: evidence.analyses,
+                        contextFingerprint: evidence.contextFingerprint
+                    ),
+                    displayLemma: evidence.displayLemma,
+                    isConfidentName: evidence.isConfidentName
+                ))
+            }
+        }
+
+        // An identity lemma is not trustworthy by itself. If the document also
+        // contains a trustworthy resolved lemma, an exact case-sensitive base
+        // spelling may join that anchor. This preserves established base-form
+        // coverage without merging capitalized German homographs.
+        let resolvedAnchors = Set(records.compactMap { record -> VocabularyLexicalAnchorID? in
+            record.analysis.anchor.resolvedLemma == nil ? nil : record.analysis.anchor
+        })
+        records = records.map { record in
+            guard case let .exactSurface(surface) = record.analysis.anchor.basis else {
+                return record
+            }
+            let compatible = resolvedAnchors.filter { anchor in
+                guard let lemma = anchor.resolvedLemma else { return false }
+                return VocabularyTextPolicy.surfaceMatchesLemmaExactly(surface, lemma)
+            }
+            guard compatible.count == 1, let anchor = compatible.first else { return record }
+            return OccurrenceRecord(
+                analysis: VocabularyOccurrenceAnalysis(
+                    occurrenceID: record.analysis.occurrenceID,
+                    sourceRange: record.analysis.sourceRange,
+                    surface: record.analysis.surface,
+                    anchor: anchor,
+                    analyses: record.analysis.analyses,
+                    contextFingerprint: record.analysis.contextFingerprint
+                ),
+                displayLemma: record.displayLemma,
+                isConfidentName: record.isConfidentName
+            )
+        }
+
+        let recordsByID = Dictionary(uniqueKeysWithValues: records.map {
+            ($0.analysis.occurrenceID, $0)
+        })
+        let byAnchor = Dictionary(grouping: records.map(\.analysis), by: \.anchor)
+        let directEvidenceOrdinalByOccurrenceID = Dictionary(
+            uniqueKeysWithValues: Dictionary(grouping: records, by: { $0.analysis.anchor })
+                .values
+                .flatMap { anchorRecords in
+                    anchorRecords.sorted {
+                        let lhs = $0.analysis.sourceRange
+                        let rhs = $1.analysis.sourceRange
+                        if lhs.unitIndex != rhs.unitIndex { return lhs.unitIndex < rhs.unitIndex }
+                        if lhs.utf16Location != rhs.utf16Location {
+                            return lhs.utf16Location < rhs.utf16Location
+                        }
+                        return lhs.utf16Length < rhs.utf16Length
+                    }.enumerated().map { ordinal, record in
+                        (record.analysis.occurrenceID, ordinal)
+                    }
+                }
+        )
+        var summaries: [VocabularyDocumentLemmaSummary] = []
+
+        func appendSummary(
+            occurrenceIDs: [VocabularyOccurrenceAnalysisID],
+            anchor: VocabularyLexicalAnchorID,
+            lexicalItemID: VocabularyLexicalItemID?,
+            resolutionState: VocabularyLexicalResolutionState,
+            assessmentPolicy: VocabularyAssessmentIdentityPolicy,
+            diagnostics: VocabularyLexicalResolutionDiagnostics,
+            residual: Bool = false,
+            directEvidenceOccurrenceID: VocabularyOccurrenceAnalysisID? = nil
+        ) {
+            let selected = occurrenceIDs.compactMap { recordsByID[$0] }.sorted {
+                if $0.analysis.sourceRange.unitIndex != $1.analysis.sourceRange.unitIndex {
+                    return $0.analysis.sourceRange.unitIndex < $1.analysis.sourceRange.unitIndex
+                }
+                return $0.analysis.sourceRange.utf16Location < $1.analysis.sourceRange.utf16Location
+            }
+            guard let first = selected.first else { return }
+            var formCounts: [String: (surface: String, count: Int)] = [:]
+            for record in selected {
+                let key = Self.exactSurfaceKey(record.analysis.surface)
+                let existing = formCounts[key]
+                formCounts[key] = (
+                    existing?.surface ?? record.analysis.surface,
+                    (existing?.count ?? 0) + 1
+                )
+            }
+            let directEvidenceSuffix = directEvidenceOccurrenceID.flatMap {
+                directEvidenceOrdinalByOccurrenceID[$0]
+            }.map { "|direct|\($0)" } ?? ""
+            let canonicalKey = lexicalItemID?.canonicalKey
+                ?? anchor.canonicalKey + (residual ? "|residual" : "") + directEvidenceSuffix
+            summaries.append(VocabularyDocumentLemmaSummary(
+                canonicalKey: canonicalKey,
+                lemmaKey: lexicalItemID?.lemma
+                    ?? anchor.resolvedLemma
+                    ?? VocabularyTextPolicy.canonicalVocabularyKey(first.displayLemma),
+                displayLemma: lexicalItemID?.lemma ?? first.displayLemma,
+                lexicalItemID: lexicalItemID,
+                partOfSpeech: lexicalItemID?.partOfSpeech ?? .unknown,
+                anchorID: anchor,
+                resolutionState: resolutionState,
+                assessmentPolicy: assessmentPolicy,
+                reconciliationDiagnostics: diagnostics,
+                observedForms: formCounts.values
+                    .map {
+                        VocabularyDocumentObservedForm(
+                            surface: $0.surface,
+                            occurrenceCount: $0.count
+                        )
+                    }
+                    .sorted {
+                        if $0.occurrenceCount != $1.occurrenceCount {
+                            return $0.occurrenceCount > $1.occurrenceCount
+                        }
+                        return $0.surface.localizedStandardCompare($1.surface) == .orderedAscending
+                    },
+                occurrenceCount: selected.count,
+                representativeRange: first.analysis.sourceRange,
+                isConfidentName: selected.allSatisfy(\.isConfidentName)
+            ))
+        }
+
+        func appendDirectEvidenceSummaries(
+            occurrenceIDs: [VocabularyOccurrenceAnalysisID],
+            anchor: VocabularyLexicalAnchorID,
+            resolutionState: VocabularyLexicalResolutionState,
+            diagnostics: VocabularyLexicalResolutionDiagnostics,
+            residual: Bool = false
+        ) {
+            for occurrenceID in occurrenceIDs {
+                appendSummary(
+                    occurrenceIDs: [occurrenceID],
+                    anchor: anchor,
+                    lexicalItemID: nil,
+                    resolutionState: resolutionState,
+                    assessmentPolicy: .directEvidenceOnly,
+                    diagnostics: diagnostics,
+                    residual: residual,
+                    directEvidenceOccurrenceID: occurrenceID
+                )
+            }
+        }
+
+        for anchor in byAnchor.keys.sorted(by: { $0.canonicalKey < $1.canonicalKey }) {
+            let occurrences = byAnchor[anchor] ?? []
+            let resolution = reconciler.reconcile(anchor: anchor, occurrences: occurrences)
+            switch resolution {
+            case let .resolvedSingle(group):
+                appendSummary(
+                    occurrenceIDs: group.assignedOccurrenceIDs,
+                    anchor: anchor,
+                    lexicalItemID: group.lexicalItemID,
+                    resolutionState: .resolvedSingle,
+                    assessmentPolicy: .fullInference,
+                    diagnostics: group.diagnostics
+                )
+                appendDirectEvidenceSummaries(
+                    occurrenceIDs: group.residualOccurrenceIDs,
+                    anchor: anchor,
+                    resolutionState: .resolvedSingle,
+                    diagnostics: group.diagnostics,
+                    residual: true
+                )
+            case let .resolvedSplit(partition):
+                for child in partition.children {
+                    appendSummary(
+                        occurrenceIDs: child.assignedOccurrenceIDs,
+                        anchor: anchor,
+                        lexicalItemID: child.lexicalItemID,
+                        resolutionState: .resolvedSplit,
+                        assessmentPolicy: .fullInference,
+                        diagnostics: partition.diagnostics
+                    )
+                }
+                appendDirectEvidenceSummaries(
+                    occurrenceIDs: partition.residualOccurrenceIDs,
+                    anchor: anchor,
+                    resolutionState: .resolvedSplit,
+                    diagnostics: partition.diagnostics,
+                    residual: true
+                )
+            case let .ambiguous(group):
+                appendDirectEvidenceSummaries(
+                    occurrenceIDs: group.occurrenceIDs,
+                    anchor: anchor,
+                    resolutionState: .ambiguous,
+                    diagnostics: group.diagnostics
+                )
+            case let .unresolved(group):
+                appendDirectEvidenceSummaries(
+                    occurrenceIDs: group.occurrenceIDs,
+                    anchor: anchor,
+                    resolutionState: .unresolved,
+                    diagnostics: group.diagnostics
+                )
+            }
+        }
+
+        return summaries.sorted {
+            if $0.occurrenceCount != $1.occurrenceCount {
+                return $0.occurrenceCount > $1.occurrenceCount
+            }
+            if $0.canonicalKey != $1.canonicalKey { return $0.canonicalKey < $1.canonicalKey }
+            if $0.representativeRange.unitIndex != $1.representativeRange.unitIndex {
+                return $0.representativeRange.unitIndex < $1.representativeRange.unitIndex
+            }
+            return $0.representativeRange.utf16Location < $1.representativeRange.utf16Location
         }
     }
 
@@ -534,18 +881,15 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         nameTagger: NLTagger,
         fallbackTagger: NLTagger,
         lemmaMemo: inout [String: GermanLemmaResolution],
-        resolutionProvider: VocabularyLemmaResolutionProvider
+        resolutionProvider: VocabularyLemmaResolutionProvider,
+        analysisProvider: VocabularyMorphologicalAnalysisProvider
     ) -> Page {
         guard !text.isEmpty else {
             return Page(
                 text: text,
                 occurrencesByLemmaKey: [:],
-                occurrencesByLexicalKey: [:],
                 occurrencesByExactSurface: [:],
-                displayLemmaByLexicalKey: [:],
-                lexicalItemByKey: [:],
-                formCountsByLexicalKey: [:],
-                nameOccurrenceCountsByLexicalKey: [:],
+                evidence: [],
                 lineWraps: []
             )
         }
@@ -562,12 +906,8 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         }
         let lineWrapSpans = lineWrapMatches.map(\.range)
         var byLemma: [String: [VocabularyTextOccurrence]] = [:]
-        var byLexical: [String: [VocabularyTextOccurrence]] = [:]
         var bySurface: [String: [VocabularyTextOccurrence]] = [:]
-        var displayLemmaByLexicalKey: [String: String] = [:]
-        var lexicalItemByKey: [String: VocabularyLexicalItemID] = [:]
-        var formCountsByLexicalKey: [String: [String: Int]] = [:]
-        var nameOccurrenceCountsByLexicalKey: [String: Int] = [:]
+        var evidence: [PageOccurrenceEvidence] = []
 
         // Renderer line wrapping is presentation geometry, not linguistic
         // structure. PDFKit commonly inserts newlines at visual wraps while
@@ -607,36 +947,54 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             )
             let matchedLemma = resolution.value
             let occurrence = VocabularyTextOccurrence(range: range, matchedText: surface)
-            let partOfSpeech = confidentPartOfSpeech(tagger: tagger, at: tokenRange.lowerBound)
-            let lexicalItemID = VocabularyLexicalItemID(
-                language: language.rawValue,
+            let hypotheses = tagger.tagHypotheses(
+                at: tokenRange.lowerBound,
+                unit: .word,
+                scheme: .lexicalClass,
+                maximumCount: 2
+            ).0
+            let context = contextWindow(in: taggingText, range: range)
+            let fingerprint = contextFingerprint(context)
+            let analyses = analysisProvider(VocabularyMorphologicalAnalysisRequest(
+                surface: surface,
                 lemma: matchedLemma,
-                partOfSpeech: partOfSpeech
-            )
-            let lexicalKey: String
+                languageCode: language.rawValue,
+                context: context,
+                contextFingerprint: fingerprint,
+                appleHypotheses: hypotheses
+            ))
+            let partOfSpeech = analyses.first { $0.confidence.isUsable }?.partOfSpeech ?? .unknown
+            let anchor: VocabularyLexicalAnchorID
             if let lemmaKey = resolvedLemmaKey(resolution) {
                 byLemma[lemmaKey, default: []].append(occurrence)
-                lexicalKey = lexicalItemID.canonicalKey
+                anchor = VocabularyLexicalAnchorID(
+                    language: language.rawValue,
+                    basis: .resolvedLemma(lemmaKey)
+                )
             } else {
-                lexicalKey = exactSurfaceLexicalKey(
-                    language: language,
-                    surface: surface,
-                    partOfSpeech: partOfSpeech
+                anchor = VocabularyLexicalAnchorID(
+                    language: language.rawValue,
+                    basis: .exactSurface(surface)
                 )
             }
-            byLexical[lexicalKey, default: []].append(occurrence)
             bySurface[exactSurfaceKey(surface), default: []].append(occurrence)
-            displayLemmaByLexicalKey[lexicalKey] = displayLemmaByLexicalKey[lexicalKey] ?? matchedLemma
-            lexicalItemByKey[lexicalKey] = lexicalItemID
-            formCountsByLexicalKey[lexicalKey, default: [:]][surface, default: 0] += 1
             let nameTag = nameTagger.tag(
                 at: tokenRange.lowerBound,
                 unit: .word,
                 scheme: .nameType
             ).0
-            if nameTag == .personalName || nameTag == .placeName || nameTag == .organizationName {
-                nameOccurrenceCountsByLexicalKey[lexicalKey, default: 0] += 1
-            }
+            evidence.append(PageOccurrenceEvidence(
+                occurrence: occurrence,
+                anchor: anchor,
+                displayLemma: matchedLemma,
+                surface: surface,
+                analyses: analyses,
+                legacyPartOfSpeech: partOfSpeech,
+                contextFingerprint: fingerprint,
+                isConfidentName: nameTag == .personalName
+                    || nameTag == .placeName
+                    || nameTag == .organizationName
+            ))
             return true
         }
 
@@ -665,52 +1023,45 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         for lineWrap in lineWraps {
             let resolution = lineWrap.dehyphenatedResolution
             let displayLemma = resolution.value
-            let lexicalItemID = VocabularyLexicalItemID(
-                language: language.rawValue,
-                lemma: displayLemma,
-                partOfSpeech: .unknown
-            )
-            let lexicalKey: String
+            let anchor: VocabularyLexicalAnchorID
             if let lemmaKey = resolvedLemmaKey(resolution) {
                 byLemma[lemmaKey, default: []].append(lineWrap.occurrence)
-                lexicalKey = lexicalItemID.canonicalKey
+                anchor = VocabularyLexicalAnchorID(
+                    language: language.rawValue,
+                    basis: .resolvedLemma(lemmaKey)
+                )
             } else {
-                lexicalKey = exactSurfaceLexicalKey(
-                    language: language,
-                    surface: lineWrap.dehyphenated,
-                    partOfSpeech: .unknown
+                anchor = VocabularyLexicalAnchorID(
+                    language: language.rawValue,
+                    basis: .exactSurface(lineWrap.dehyphenated)
                 )
             }
-            byLexical[lexicalKey, default: []].append(lineWrap.occurrence)
             bySurface[exactSurfaceKey(lineWrap.dehyphenated), default: []].append(lineWrap.occurrence)
-            displayLemmaByLexicalKey[lexicalKey] = displayLemmaByLexicalKey[lexicalKey] ?? displayLemma
-            lexicalItemByKey[lexicalKey] = lexicalItemID
-            formCountsByLexicalKey[lexicalKey, default: [:]][lineWrap.dehyphenated, default: 0] += 1
+            evidence.append(PageOccurrenceEvidence(
+                occurrence: lineWrap.occurrence,
+                anchor: anchor,
+                displayLemma: displayLemma,
+                surface: lineWrap.dehyphenated,
+                analyses: [VocabularyMorphologicalAnalysis(
+                    lemma: displayLemma,
+                    partOfSpeech: .unknown,
+                    source: .appleNaturalLanguage,
+                    confidence: .unavailable
+                )],
+                legacyPartOfSpeech: .unknown,
+                contextFingerprint: contextFingerprint(
+                    contextWindow(in: taggingText, range: lineWrap.occurrence.range)
+                ),
+                isConfidentName: false
+            ))
         }
         return Page(
             text: text,
             occurrencesByLemmaKey: byLemma,
-            occurrencesByLexicalKey: byLexical,
             occurrencesByExactSurface: bySurface,
-            displayLemmaByLexicalKey: displayLemmaByLexicalKey,
-            lexicalItemByKey: lexicalItemByKey,
-            formCountsByLexicalKey: formCountsByLexicalKey,
-            nameOccurrenceCountsByLexicalKey: nameOccurrenceCountsByLexicalKey,
+            evidence: evidence,
             lineWraps: lineWraps
         )
-    }
-
-    private static func confidentPartOfSpeech(
-        tagger: NLTagger,
-        at index: String.Index
-    ) -> VocabularyPartOfSpeech {
-        let hypotheses = tagger.tagHypotheses(
-            at: index,
-            unit: .word,
-            scheme: .lexicalClass,
-            maximumCount: 2
-        ).0
-        return VocabularyPartOfSpeechConfidencePolicy.classify(hypotheses: hypotheses)
     }
 
     private static func resolvedLemmaKey(_ resolution: GermanLemmaResolution) -> String? {
@@ -719,15 +1070,37 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     }
 
     private static func exactSurfaceLexicalKey(
-        language: NLLanguage,
+        languageCode: String,
         surface: String,
         partOfSpeech: VocabularyPartOfSpeech
     ) -> String {
         let exact = exactSurfaceKey(surface)
             .replacingOccurrences(of: "%", with: "%25")
             .replacingOccurrences(of: "|", with: "%7C")
-        return ["exact", language.rawValue.lowercased(), exact, partOfSpeech.rawValue]
+        return ["exact", languageCode.lowercased(), exact, partOfSpeech.rawValue]
             .joined(separator: "|")
+    }
+
+    private static func contextWindow(in text: String, range: NSRange) -> String {
+        let nsText = text as NSString
+        let radius = 64
+        let lower = max(0, range.location - radius)
+        let upper = min(nsText.length, range.location + range.length + radius)
+        guard upper > lower else { return "" }
+        let window = nsText.substring(with: NSRange(location: lower, length: upper - lower))
+        return window
+            .split(whereSeparator: { $0.isWhitespace })
+            .joined(separator: " ")
+            .lowercased()
+    }
+
+    private static func contextFingerprint(_ normalizedContext: String) -> String {
+        var hash: UInt64 = 0xCBF2_9CE4_8422_2325
+        for byte in normalizedContext.utf8 {
+            hash ^= UInt64(byte)
+            hash &*= 0x0000_0100_0000_01B3
+        }
+        return String(hash, radix: 16)
     }
 
     private static func tokenResolution(

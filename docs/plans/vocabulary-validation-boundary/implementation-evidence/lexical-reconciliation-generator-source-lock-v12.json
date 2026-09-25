@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "lockRole": "lexical-reconciliation-generator-provenance-v12",
+  "createdDate": "2026-09-25",
+  "sourceRevision": "458f2ad80654a6d0da61cf84b0ab45fdcc9067a9",
+  "generatorInputsCleanAtLock": true,
+  "candidateFrozen": false,
+  "swiftMode": "Swift 6",
+  "swiftToolchainAtLock": "Apple Swift version 6.0.3 (swiftlang-6.0.3.1.10 clang-1600.0.30.1); arm64-apple-macosx15.0",
+  "standaloneSwiftFlags": [
+    "-swift-version",
+    "6",
+    "-warnings-as-errors",
+    "-O"
+  ],
+  "generatorInputs": {
+    "sourceTrees": {
+      "Sources/LeafReaderCore": {
+        "sourceFileCount": 135,
+        "pathAndContentSHA256": "8ec8b6baa464864e908b87cfe81cacbd2ec043924696e1f78e7bf5d5cecb0c60"
+      },
+      "Sources/LeafReaderValidation": {
+        "sourceFileCount": 9,
+        "pathAndContentSHA256": "0f7213904cb09e4b555c5e0098c1e3d710f1853e3e8f54688298aedf2cf58b8b"
+      }
+    },
+    "files": {
+      "Package.swift": "83e69cb638e6bf3f91cf9a51cae314cb8105535d23a3e48a62166e4b5fca9fec",
+      "scripts/build_core_module.sh": "da4ba9500f32f65b51b006d262b40d30f77133549187442362371ef9332de894",
+      "scripts/build_validation_module.sh": "d9c1a21fc3b7988ea5fe06a6ce3d212144fe750bbfd75686436c1257670e043c",
+      "scripts/evaluate_vocabulary_assessment.sh": "802671249a014c3fd6757e0f69cc94191c26a04fa65fdd56025629b34a276b87",
+      "scripts/evaluate_vocabulary_assessment.swift": "ba98adc87ce1b1928f45f5363f427f54a1dfc681932702be8c38add4a246d7c3",
+      "scripts/evaluate_vocabulary_pos_fixtures.sh": "1ecb93c3da2e99eca2d8d9713c9afce2ce32e3ee7c40de78baf3fc1cf885dee7",
+      "scripts/evaluate_vocabulary_pos_fixtures.swift": "bc341a02b2c9c778849e26826e64861f0d729752ea5ca44ace425b433fb6f770",
+      "scripts/validate_vocabulary_assessment_report.py": "4b6696fb5cdee8c9800b43cc3948dd9e5da58b8a0e9fd0829db00e34eea0ced4",
+      "scripts/summarize_vocabulary_assessment_benchmarks.py": "b4fd7d7289a139f72e83ebc420d320bb2fe375bf45fe2836dd8568344ccc65d0",
+      "scripts/compare_vocabulary_stopping_reports.py": "57356df9ad7cbb4bfd54aabd1231ceb970b91f64381e4dbe8caa45bd89f9ee57",
+      "docs/plans/vocabulary-measurement-coherence/target-ledger.json": "d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4"
+    }
+  },
+  "analysisBinding": {
+    "status": "provenanceOnlyNotFrozen",
+    "paths": [
+      "scripts/validate_vocabulary_assessment_report.py",
+      "scripts/summarize_vocabulary_assessment_benchmarks.py",
+      "scripts/compare_vocabulary_stopping_reports.py",
+      "docs/plans/vocabulary-measurement-coherence/target-ledger.json"
+    ],
+    "candidateAnalysisAndDecisionRulesChecksum": null
+  },
+  "otherWordPOSDegradationCheckSHA256": "9d85f753bcdc5e548e3e5967043d3a5998d0c929c8847570a7dc6e5cb3111a6e",
+  "protectedOutcomesAccessed": false,
+  "note": "Binds the ADR-0001 generator after occurrence-scoped direct-evidence IDs became renderer-offset independent and the experimental lexical protocol advanced to v7. Reconciliation diagnostics remain lexical-reconciliation-v3. This is not a candidate or analysis freeze. Any later relevant generator edit invalidates v12 and requires another reviewed provenance/reservation decision."
+}

@@ -488,7 +488,7 @@ package func runVocabularyLongitudinalDiagnostics(
                             contributionID: contributionID,
                             languageCode: "en",
                             thetaPosterior: assessment.thetaPosteriorSnapshot,
-                            verifiedEvidenceCount: assessment.verifiedEvidenceCount,
+                            verifiedEvidenceCount: assessment.verifiedInferenceEvidenceCount,
                             completedAt: completedAt,
                             algorithmVersion: storedAlgorithmVersion(scenario)
                         )
@@ -1482,7 +1482,7 @@ private func recordPrior(
         contributionID: contributionID,
         languageCode: "en",
         thetaPosterior: assessment.thetaPosteriorSnapshot,
-        verifiedEvidenceCount: assessment.verifiedEvidenceCount,
+        verifiedEvidenceCount: assessment.verifiedInferenceEvidenceCount,
         completedAt: completedAt,
         algorithmVersion: algorithmVersion
     )

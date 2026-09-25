@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 7,
+  "reservationID": "development-confirmation-v7",
+  "dataRole": "development-confirmation",
+  "reservationDate": "2026-09-25",
+  "reservationSourceRevision": "a2bfc5c693c03f1df445820e7063f9201c5b12b8",
+  "executionStatus": "reservedNotExecuted",
+  "supersedesAsActiveReservation": "development-confirmation-v6",
+  "historicalReservationStatuses": {
+    "development-confirmation-v1": "reservedNotExecuted",
+    "development-confirmation-v2": "reservedNotExecuted",
+    "development-confirmation-v3": "reservedNotExecuted",
+    "development-confirmation-v4": "reservedNotExecuted",
+    "development-confirmation-v5": "reservedNotExecuted",
+    "development-confirmation-v6": "reservedNotExecuted"
+  },
+  "seedDerivation": {
+    "algorithm": "SHA256(rootBytes || UTF8('development-confirmation-v7/run/' || zeroBasedRunOrdinal)); seed=first8BytesUInt64BE, zero maps to one",
+    "seedDerivationRoot": "d89d95e3a18ff7eac48a56821e6eb4b57bc7bfc29a36e5128ff1423a4ddba393",
+    "documentIdentityAlgorithm": "first24Hex(SHA256(fullRunDigest || UTF8('/document/' || zeroBasedDocumentOrdinal)))"
+  },
+  "generatorLock": {
+    "path": "docs/plans/vocabulary-validation-boundary/implementation-evidence/lexical-reconciliation-generator-source-lock-v7.json",
+    "sha256": "b9454d2d8877de112bf7d9da28b548a5dfb78ac9d31f2059508e5357396ba8a2"
+  },
+  "workload": {
+    "readersPerScenario": 64,
+    "documentsPerScenario": 8,
+    "lemmasPerDocument": 400,
+    "scenarios": [
+      "well-specified",
+      "item-residual",
+      "response-noise",
+      "idiosyncratic-knowledge"
+    ],
+    "modes": [
+      "all-unknown",
+      "coverage-98"
+    ],
+    "warmAndCold": true,
+    "gatePolicy": "unchanged EVAL-001 and release-regression thresholds",
+    "interpretation": "three independent reserved runs; percentages retain raw reader/document counts and are not a two-point precision claim"
+  },
+  "runs": [
+    {
+      "runOrdinal": 0,
+      "runID": "03a816a9ac866951",
+      "seed": 263485496200948049,
+      "opaqueDocumentDerivationIDs": [
+        "2b833a011c75b5fc5acb7aee",
+        "9bf1690899b32b9008147b7a",
+        "2325ac1ab9477fee76f72b83",
+        "a831a1471b569bde5d88bfad",
+        "24fe13479eb9248296382b57",
+        "3d798e499a52bfdd13120e6c",
+        "4cb552d960a807ecd6445daa",
+        "b78a23ab3cd36efb763ff445"
+      ]
+    },
+    {
+      "runOrdinal": 1,
+      "runID": "27ef6be1f1ab8f12",
+      "seed": 2877637305079402258,
+      "opaqueDocumentDerivationIDs": [
+        "b0d40b4c533e5b37eeea687f",
+        "88bede6bb9ee67b1e1c14e2a",
+        "b9b607cccd3b6a086951119f",
+        "b79fd9b23dfe648dcecbf721",
+        "651abd7ceee74d725713924c",
+        "d453dc0f14b18547e520cd9a",
+        "4285802e580ab66df4642bb3",
+        "05bab7f2cf86e7dc3f6c3df3"
+      ]
+    },
+    {
+      "runOrdinal": 2,
+      "runID": "135cfb25aa426897",
+      "seed": 1395266123766851735,
+      "opaqueDocumentDerivationIDs": [
+        "9b8018ac3cd00ecb5719ba0e",
+        "3e9d02edd3e78743cf6f802e",
+        "87b4bdb8154ddc2ba4937726",
+        "33471aa729e4a1680767cf69",
+        "a418c377a0bc44756c21a8ff",
+        "b7784340307b8a5f8cf0a07f",
+        "77954434dd8f7fe00fd79bac",
+        "00d358db91ad3192964e6139"
+      ]
+    }
+  ],
+  "nonOverlap": {
+    "identityCorpusRevision": "a2bfc5c693c03f1df445820e7063f9201c5b12b8",
+    "identityCorpusRoots": [
+      "docs/perf",
+      "docs/plans",
+      "scripts/fixtures"
+    ],
+    "historicalReservationSHA256": {
+      "development-confirmation-v1": "a43e45a5fef43367b20e36e0f41684186901af325e2e597a994857591015303a",
+      "development-confirmation-v2": "19ccb4a9bddff02df1c074c85b56ffc782e7216d1a883a60cc088ac7338af89d",
+      "development-confirmation-v3": "8c25324b82cf54e7d1945ce2918c61d4eecae8522743839323e24edb58f7fb4c",
+      "development-confirmation-v4": "4717a4b2b7f2b0e55d03321a5754a52ceb31c2e7b8ac232e67464fe8a89c9006",
+      "development-confirmation-v5": "ace9fa7c0e44df40f7eff8c6572828296d4acfd09c857211c207989af6f73647",
+      "development-confirmation-v6": "15ec2bcb8baeafc36e7983c48e4335bfb46d914d6be96c8f9875e33be52f3517"
+    },
+    "allReservedSeedsMustBeDisjoint": true,
+    "allOpaqueDocumentDerivationIDsMustBeUnique": true,
+    "opaqueDocumentNamespaceNote": "The versioned identity corpus includes all v1-v6 reservation seeds and every prior archived 24-hex JSON identity before v7 was created."
+  },
+  "freezeAndConsumption": {
+    "candidateFreeze": null,
+    "analysisFreeze": null,
+    "decisionRulesChecksum": null,
+    "outcomeArtifacts": [],
+    "outcomesInspected": false,
+    "consumedByCandidateCycle": null,
+    "releaseHoldoutAccessAllowed": false,
+    "requiredBeforeExecution": [
+      "candidate commit and clean-tree hash",
+      "model/configuration/resource hashes",
+      "analysis and decision-rule checksum",
+      "reviewed decision to consume this specific reservation"
+    ],
+    "onDesignChangeAfterExecution": "retain the result, mark this reservation consumed for that candidate-design cycle, return to development, and reserve a fresh future confirmation set",
+    "onPass": "record the frozen confirmation decision before any frozen release-holdout access"
+  }
+}

@@ -86,6 +86,89 @@ final class VocabularyPredictionAuditXCTests: XCTestCase {
         XCTAssertEqual(result.projectedLexicalTokenCoverage, 0.75, accuracy: 1e-12)
         XCTAssertEqual(result.brierScore, 0.345, accuracy: 1e-12)
         XCTAssertEqual(result.expectedCalibrationError, 0.5, accuracy: 1e-12)
+        XCTAssertEqual(result.fullInferenceCalibration?.itemCount, 4)
+        XCTAssertNil(result.directEvidenceOnlyCalibration)
+    }
+
+    func testCalibrationMetricsSeparateIdentityUncertaintyFromFullInference() throws {
+        let items = [
+            VocabularyPredictionAuditItem(
+                canonicalKey: "full-known",
+                displayLemma: "full-known",
+                partOfSpeech: .noun,
+                identityPolicy: .fullInference,
+                occurrenceCount: 1,
+                predictedKnownProbability: 0.9,
+                selectedForLearning: false
+            ),
+            VocabularyPredictionAuditItem(
+                canonicalKey: "full-unknown",
+                displayLemma: "full-unknown",
+                partOfSpeech: .verb,
+                identityPolicy: .fullInference,
+                occurrenceCount: 1,
+                predictedKnownProbability: 0.1,
+                selectedForLearning: true
+            ),
+            VocabularyPredictionAuditItem(
+                canonicalKey: "direct-known",
+                displayLemma: "direct-known",
+                partOfSpeech: .unknown,
+                identityPolicy: .directEvidenceOnly,
+                occurrenceCount: 1,
+                predictedKnownProbability: 0.5,
+                selectedForLearning: false
+            ),
+            VocabularyPredictionAuditItem(
+                canonicalKey: "direct-unknown",
+                displayLemma: "direct-unknown",
+                partOfSpeech: .unknown,
+                identityPolicy: .directEvidenceOnly,
+                occurrenceCount: 1,
+                predictedKnownProbability: 0.5,
+                selectedForLearning: true
+            )
+        ]
+        var audit = VocabularyPredictionAuditSession(
+            inventoryFingerprint: "mixed-identity",
+            languageCode: "en",
+            mode: .allUnknown,
+            items: items
+        )
+        audit.record(.known, for: "full-known")
+        audit.record(.unknown, for: "full-unknown")
+        audit.record(.known, for: "direct-known")
+        audit.record(.unknown, for: "direct-unknown")
+
+        let result = try XCTUnwrap(audit.result())
+        let full = try XCTUnwrap(result.fullInferenceCalibration)
+        let direct = try XCTUnwrap(result.directEvidenceOnlyCalibration)
+        XCTAssertEqual(full.itemCount, 2)
+        XCTAssertEqual(full.brierScore, 0.01, accuracy: 1e-12)
+        XCTAssertEqual(direct.itemCount, 2)
+        XCTAssertEqual(direct.brierScore, 0.25, accuracy: 1e-12)
+        XCTAssertEqual(direct.expectedCalibrationError, 0, accuracy: 1e-12)
+        XCTAssertGreaterThan(result.brierScore, full.brierScore)
+    }
+
+    func testLegacyAuditItemDefaultsMissingIdentityPolicyToFullInference() throws {
+        let item = VocabularyPredictionAuditItem(
+            canonicalKey: "legacy",
+            displayLemma: "legacy",
+            partOfSpeech: .noun,
+            occurrenceCount: 1,
+            predictedKnownProbability: 0.5,
+            selectedForLearning: false
+        )
+        let data = try JSONEncoder().encode(item)
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        object.removeValue(forKey: "identityPolicy")
+        let legacyData = try JSONSerialization.data(withJSONObject: object)
+
+        XCTAssertEqual(
+            try JSONDecoder().decode(VocabularyPredictionAuditItem.self, from: legacyData).identityPolicy,
+            .fullInference
+        )
     }
 
     func testPreparationSessionRoundTripsIncompleteAudit() throws {
@@ -107,6 +190,39 @@ final class VocabularyPredictionAuditXCTests: XCTestCase {
 
         let data = try JSONEncoder().encode(session)
         XCTAssertEqual(try JSONDecoder().decode(VocabularyPreparationSession.self, from: data), session)
+    }
+
+    func testAuditCompatibilityUsesExplicitPreparationAlgorithmVersion() {
+        let inventory = DocumentVocabularyInventory(
+            languageCode: "en",
+            candidates: [candidate(0)]
+        )
+        let prediction = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .allUnknown,
+            algorithmVersion: VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+        ).result()
+        let audit = VocabularyPredictionAuditSession(
+            inventory: inventory,
+            prediction: prediction,
+            mode: .allUnknown,
+            algorithmVersion: VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+        )
+
+        XCTAssertEqual(
+            audit.assessmentAlgorithmVersion,
+            VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+        )
+        XCTAssertTrue(audit.isCompatible(
+            inventory: inventory,
+            mode: .allUnknown,
+            algorithmVersion: VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+        ))
+        XCTAssertFalse(audit.isCompatible(
+            inventory: inventory,
+            mode: .allUnknown,
+            algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion
+        ))
     }
 
     private func candidate(_ index: Int) -> DocumentVocabularyCandidate {
