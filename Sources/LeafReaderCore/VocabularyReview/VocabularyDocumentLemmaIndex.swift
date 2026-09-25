@@ -512,8 +512,9 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         }
     }
 
-    /// Evidence-aware v4 projection. It remains a separate projection while the
-    /// ADR is in shadow rollout and production activation is gated by validation.
+    /// Evidence-aware reconciled projection. It remains separate from the
+    /// production projection while the ADR is in shadow rollout and activation
+    /// is gated by validation.
     package func lexicalSummaries(
         reconciler: VocabularyLexicalReconciler = VocabularyLexicalReconciler()
     ) -> [VocabularyDocumentLemmaSummary] {
@@ -585,6 +586,23 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             ($0.analysis.occurrenceID, $0)
         })
         let byAnchor = Dictionary(grouping: records.map(\.analysis), by: \.anchor)
+        let directEvidenceOrdinalByOccurrenceID = Dictionary(
+            uniqueKeysWithValues: Dictionary(grouping: records, by: { $0.analysis.anchor })
+                .values
+                .flatMap { anchorRecords in
+                    anchorRecords.sorted {
+                        let lhs = $0.analysis.sourceRange
+                        let rhs = $1.analysis.sourceRange
+                        if lhs.unitIndex != rhs.unitIndex { return lhs.unitIndex < rhs.unitIndex }
+                        if lhs.utf16Location != rhs.utf16Location {
+                            return lhs.utf16Location < rhs.utf16Location
+                        }
+                        return lhs.utf16Length < rhs.utf16Length
+                    }.enumerated().map { ordinal, record in
+                        (record.analysis.occurrenceID, ordinal)
+                    }
+                }
+        )
         var summaries: [VocabularyDocumentLemmaSummary] = []
 
         func appendSummary(
@@ -613,9 +631,9 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                     (existing?.count ?? 0) + 1
                 )
             }
-            let directEvidenceSuffix = directEvidenceOccurrenceID.map {
-                "|direct|\($0.unitIndex):\($0.utf16Location):\($0.utf16Length)"
-            } ?? ""
+            let directEvidenceSuffix = directEvidenceOccurrenceID.flatMap {
+                directEvidenceOrdinalByOccurrenceID[$0]
+            }.map { "|direct|\($0)" } ?? ""
             let canonicalKey = lexicalItemID?.canonicalKey
                 ?? anchor.canonicalKey + (residual ? "|residual" : "") + directEvidenceSuffix
             summaries.append(VocabularyDocumentLemmaSummary(

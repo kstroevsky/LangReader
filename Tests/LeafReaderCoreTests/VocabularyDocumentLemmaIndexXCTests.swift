@@ -336,6 +336,47 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         XCTAssertEqual(match.matchedText, "curator")
     }
 
+    func testRendererWhitespaceDoesNotChangeOccurrenceScopedDirectEvidenceIdentity() throws {
+        func makeIndex(_ text: String) throws -> VocabularyDocumentLemmaIndex {
+            try XCTUnwrap(VocabularyDocumentLemmaIndex(
+                texts: [text],
+                language: .english,
+                maximumWorkerCount: 1,
+                resolutionProvider: { surface, _, _ in
+                    surface.lowercased() == "record"
+                        ? .resolved(lemma: "record", source: .naturalLanguage)
+                        : .unresolved(surface: surface)
+                },
+                analysisProvider: { request in
+                    guard request.surface.lowercased() == "record" else { return [] }
+                    return [VocabularyMorphologicalAnalysis(
+                        lemma: "record",
+                        partOfSpeech: .unknown,
+                        source: .validationFixture,
+                        confidence: .insufficient
+                    )]
+                }
+            ))
+        }
+
+        let inline = try makeIndex("record and record")
+        let wrapped = try makeIndex("record\n\tand   record")
+        let inlineRecord = inline.lexicalSummaries().filter { $0.lemmaKey == "record" }
+        let wrappedRecord = wrapped.lexicalSummaries().filter { $0.lemmaKey == "record" }
+
+        XCTAssertEqual(inlineRecord.count, 2)
+        XCTAssertEqual(wrappedRecord.count, 2)
+        XCTAssertTrue(inlineRecord.allSatisfy { $0.assessmentPolicy == .directEvidenceOnly })
+        XCTAssertEqual(
+            inlineRecord.map(\.canonicalKey),
+            wrappedRecord.map(\.canonicalKey)
+        )
+        XCTAssertNotEqual(
+            inlineRecord.map(\.representativeRange),
+            wrappedRecord.map(\.representativeRange)
+        )
+    }
+
     func testGermanCompoundsRemainSeparateLemmas() throws {
         let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
             texts: ["Das Haus steht neben dem Krankenhaus. Die Häuser sind alt."],

@@ -9,6 +9,7 @@ final class VocabularyPreparationFixtureXCTests: XCTestCase {
     private struct PipelineCandidate: Equatable {
         let canonicalKey: String
         let occurrenceCount: Int
+        let identityPolicy: VocabularyAssessmentIdentityPolicy
         let difficultySource: VocabularyItemDifficultySource
         let difficultyVersion: String
         let generalFrequencyRank: Int?
@@ -134,6 +135,38 @@ final class VocabularyPreparationFixtureXCTests: XCTestCase {
         }
     }
 
+    func testPDFEPUBAndDOCXProduceEquivalentReconciledLexicalPipelinesOnThisHost() throws {
+        let (root, manifest) = try loadManifest()
+        let host = ProcessInfo.processInfo.operatingSystemVersionString
+        for languageCode in manifest.languages.keys.sorted() {
+            var results: [(format: String, result: PipelineResult)] = []
+            for fixture in manifest.fixtures where fixture.language == languageCode {
+                let url = root.appendingPathComponent(fixture.path)
+                results.append((fixture.format, try pipelineResult(
+                    texts: extractedTextUnits(from: url, format: fixture.format),
+                    languageCode: languageCode,
+                    useReconciledLexicalIdentity: true
+                )))
+            }
+            let baseline = try XCTUnwrap(results.first)
+            for result in results.dropFirst() {
+                assertEquivalent(
+                    baseline.result,
+                    result.result,
+                    context: "reconciled \(languageCode) \(baseline.format) vs \(result.format) on \(host)"
+                )
+            }
+            XCTAssertTrue(
+                baseline.result.candidates.contains { $0.identityPolicy == .fullInference },
+                "\(languageCode): realistic reconciled fixture should exercise resolved lexical candidates"
+            )
+            XCTAssertTrue(
+                baseline.result.candidates.contains { $0.identityPolicy == .directEvidenceOnly },
+                "\(languageCode): realistic reconciled fixture should exercise explicit lexical uncertainty"
+            )
+        }
+    }
+
     private func loadManifest() throws -> (URL, Manifest) {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -161,15 +194,22 @@ final class VocabularyPreparationFixtureXCTests: XCTestCase {
         }
     }
 
-    private func pipelineResult(texts: [String], languageCode: String) throws -> PipelineResult {
+    private func pipelineResult(
+        texts: [String],
+        languageCode: String,
+        useReconciledLexicalIdentity: Bool = false
+    ) throws -> PipelineResult {
         let language: NLLanguage = languageCode == "de" ? .german : .english
         let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
             texts: texts,
             language: language,
             maximumWorkerCount: 1
         ))
+        let summaries = useReconciledLexicalIdentity
+            ? index.lexicalSummaries()
+            : index.lemmaSummaries()
         let inventory = DocumentVocabularyInventory(
-            summaries: index.lemmaSummaries(),
+            summaries: summaries,
             languageCode: languageCode,
             difficultyProvider: DocumentVocabularyFrequencyProvider.calibrated(languageCode: languageCode)
         )
@@ -177,6 +217,7 @@ final class VocabularyPreparationFixtureXCTests: XCTestCase {
             PipelineCandidate(
                 canonicalKey: $0.canonicalKey,
                 occurrenceCount: $0.occurrenceCount,
+                identityPolicy: $0.identityPolicy,
                 difficultySource: $0.difficultyPrior.source,
                 difficultyVersion: $0.difficultyPrior.version,
                 generalFrequencyRank: $0.generalFrequencyRank

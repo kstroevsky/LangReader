@@ -249,8 +249,8 @@ final class VocabularyReaderPriorStoreXCTests: XCTestCase {
     func testSupersededExperimentalPriorsCannotWarmCurrentLexicalProtocol() {
         let now = Date(timeIntervalSince1970: 2_000_000_000)
         let posterior = Array(repeating: 1.0 / 121.0, count: 121)
-        XCTAssertEqual(VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion, 6)
-        for supersededVersion in [4, 5] {
+        XCTAssertEqual(VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion, 7)
+        for supersededVersion in [4, 5, 6] {
             let superseded = VocabularyReaderPrior(
                 languageCode: "en",
                 thetaPosterior: posterior,

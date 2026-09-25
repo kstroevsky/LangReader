@@ -70,9 +70,9 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         sessionStore.save(VocabularyPreparationSession(
             answers: [VocabularyAssessmentAnswer(canonicalKey: "legacy-item", evidence: .legacyKnown)],
             finalSelection: ["legacy-item"],
-            // Version 5 is the superseded experimental lexical protocol whose
-            // candidate/evidence semantics must not resume under current v6.
-            algorithmVersion: 5,
+            // Version 6 is the superseded experimental lexical protocol whose
+            // renderer-offset candidate identity must not resume under v7.
+            algorithmVersion: 6,
             readerPriorContributionRecorded: true,
             readerPriorContributionID: "legacy-contribution"
         ))
@@ -97,7 +97,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
             migrated.algorithmVersion,
             VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
         )
-        XCTAssertEqual(migrated.algorithmVersion, 6)
+        XCTAssertEqual(migrated.algorithmVersion, 7)
         XCTAssertTrue(migrated.answers.isEmpty)
         XCTAssertTrue(migrated.finalSelection.isEmpty)
         XCTAssertNil(migrated.predictionAudit)

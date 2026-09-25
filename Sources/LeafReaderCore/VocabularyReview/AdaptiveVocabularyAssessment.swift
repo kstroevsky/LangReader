@@ -437,11 +437,11 @@ package enum VocabularyPreparationInvitationState: String, Codable, Equatable, S
 
 package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
     package static let currentAlgorithmVersion = 3
-    // Experimental v4 and v5 predate the current conservative conflict rule in
-    // ADR-0001. These changes alter the candidate ontology and theta evidence,
-    // so older experimental state must never be resumed or reused as a reader
-    // prior under the current protocol.
-    package static let lexicalReconciliationAlgorithmVersion = 6
+    // Experimental v4-v6 predate the current reconciled candidate identity
+    // semantics in ADR-0001. These changes alter candidate IDs and theta
+    // evidence, so older experimental state must never be resumed or reused as
+    // a reader prior under the current protocol.
+    package static let lexicalReconciliationAlgorithmVersion = 7
 
     package var mode: VocabularyAssessmentMode
     package var invitationState: VocabularyPreparationInvitationState
