@@ -73,7 +73,8 @@ package struct VocabularyPredictionAuditSession: Codable, Equatable, Sendable {
     package init(
         inventory: DocumentVocabularyInventory,
         prediction: VocabularyAssessmentResult,
-        mode: VocabularyAssessmentMode
+        mode: VocabularyAssessmentMode,
+        algorithmVersion: Int = VocabularyPreparationSession.currentAlgorithmVersion
     ) {
         let byKey = Dictionary(uniqueKeysWithValues: prediction.items.map { ($0.id, $0) })
         let fingerprint = Self.fingerprint(inventory: inventory)
@@ -100,7 +101,8 @@ package struct VocabularyPredictionAuditSession: Codable, Equatable, Sendable {
             inventoryFingerprint: fingerprint,
             languageCode: inventory.languageCode,
             mode: mode,
-            items: auditItems
+            items: auditItems,
+            algorithmVersion: algorithmVersion
         )
     }
 
@@ -109,13 +111,14 @@ package struct VocabularyPredictionAuditSession: Codable, Equatable, Sendable {
         languageCode: String,
         mode: VocabularyAssessmentMode,
         items: [VocabularyPredictionAuditItem],
-        answers: [String: VocabularyPredictionAuditAnswer] = [:]
+        answers: [String: VocabularyPredictionAuditAnswer] = [:],
+        algorithmVersion: Int = VocabularyPreparationSession.currentAlgorithmVersion
     ) {
         protocolVersion = Self.currentProtocolVersion
         self.inventoryFingerprint = inventoryFingerprint
         self.languageCode = languageCode
         self.mode = mode
-        assessmentAlgorithmVersion = VocabularyPreparationSession.currentAlgorithmVersion
+        assessmentAlgorithmVersion = algorithmVersion
         knowledgeModelVersion = VocabularyKnowledgeModel.version
         observationModelVersion = VocabularyObservationModel.version
         self.items = items
@@ -144,10 +147,11 @@ package struct VocabularyPredictionAuditSession: Codable, Equatable, Sendable {
 
     package func isCompatible(
         inventory: DocumentVocabularyInventory,
-        mode: VocabularyAssessmentMode
+        mode: VocabularyAssessmentMode,
+        algorithmVersion: Int = VocabularyPreparationSession.currentAlgorithmVersion
     ) -> Bool {
         protocolVersion == Self.currentProtocolVersion
-            && assessmentAlgorithmVersion == VocabularyPreparationSession.currentAlgorithmVersion
+            && assessmentAlgorithmVersion == algorithmVersion
             && knowledgeModelVersion == VocabularyKnowledgeModel.version
             && observationModelVersion == VocabularyObservationModel.version
             && inventoryFingerprint == Self.fingerprint(inventory: inventory)

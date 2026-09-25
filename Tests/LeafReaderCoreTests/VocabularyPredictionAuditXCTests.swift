@@ -109,6 +109,39 @@ final class VocabularyPredictionAuditXCTests: XCTestCase {
         XCTAssertEqual(try JSONDecoder().decode(VocabularyPreparationSession.self, from: data), session)
     }
 
+    func testAuditCompatibilityUsesExplicitPreparationAlgorithmVersion() {
+        let inventory = DocumentVocabularyInventory(
+            languageCode: "en",
+            candidates: [candidate(0)]
+        )
+        let prediction = AdaptiveVocabularyAssessment(
+            inventory: inventory,
+            mode: .allUnknown,
+            algorithmVersion: VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+        ).result()
+        let audit = VocabularyPredictionAuditSession(
+            inventory: inventory,
+            prediction: prediction,
+            mode: .allUnknown,
+            algorithmVersion: VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+        )
+
+        XCTAssertEqual(
+            audit.assessmentAlgorithmVersion,
+            VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+        )
+        XCTAssertTrue(audit.isCompatible(
+            inventory: inventory,
+            mode: .allUnknown,
+            algorithmVersion: VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+        ))
+        XCTAssertFalse(audit.isCompatible(
+            inventory: inventory,
+            mode: .allUnknown,
+            algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion
+        ))
+    }
+
     private func candidate(_ index: Int) -> DocumentVocabularyCandidate {
         let lemma = "word-\(index)"
         return DocumentVocabularyCandidate(

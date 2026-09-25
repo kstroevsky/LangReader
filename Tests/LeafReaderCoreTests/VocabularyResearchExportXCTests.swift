@@ -98,6 +98,52 @@ final class VocabularyResearchExportXCTests: XCTestCase {
         XCTAssertEqual(reviewed.productionItemsByKey[lexical.canonicalKey]?.difficulty, 0.4)
     }
 
+    func testDirectEvidenceCandidateIsNotExportedAsResolvedLexicalEvidence() {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let store = VocabularyResearchEvidenceStore(
+            databaseURL: root.appendingPathComponent("personal-vocabulary.sqlite3")
+        )
+        let candidate = DocumentVocabularyCandidate(
+            canonicalKey: "anchor|en|lemma|record",
+            lemmaKey: "record",
+            displayLemma: "record",
+            lexicalItemID: nil,
+            partOfSpeech: .unknown,
+            identityPolicy: .directEvidenceOnly,
+            observedForms: [VocabularyDocumentObservedForm(surface: "record", occurrenceCount: 1)],
+            occurrenceCount: 1,
+            representativeRange: VocabularyDocumentSourceRange(
+                unitIndex: 0,
+                utf16Location: 0,
+                utf16Length: 6
+            ),
+            generalFrequencyRank: nil,
+            difficulty: 0
+        )
+        let inventory = DocumentVocabularyInventory(
+            languageCode: "en",
+            candidates: [candidate]
+        )
+
+        XCTAssertTrue(store.recordCompletedSession(
+            contributionID: "direct-evidence-only",
+            inventory: inventory,
+            answers: [VocabularyAssessmentAnswer(
+                canonicalKey: candidate.canonicalKey,
+                evidence: .reportedUnknown
+            )],
+            protocolVersion: 4
+        ))
+        XCTAssertEqual(store.recordCount(), 0)
+        XCTAssertTrue(store.export(profile: VocabularyResearchProfile(
+            participantPseudonym: "lr-direct",
+            firstLanguageCode: "de",
+            selfRatedProficiency: .b1B2
+        )).records.isEmpty)
+    }
+
     func testCalibrationLoaderRejectsUnreviewedPack() throws {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).json")
         defer { try? FileManager.default.removeItem(at: url) }

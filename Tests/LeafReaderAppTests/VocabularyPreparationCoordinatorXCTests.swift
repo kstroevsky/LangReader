@@ -47,6 +47,51 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         )
     }
 
+    func testLexicalReconciliationVersionChangeClearsIncompatiblePersistedSessionState() async throws {
+        let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: .pdf)
+        let sessionStore = VocabularyPreparationSessionStore(documentID: source.identity.documentID)
+        let flagKey = "LeafReader.experimentalLexicalReconciliationV4"
+        let previousFlag = UserDefaults.standard.object(forKey: flagKey)
+        defer {
+            sessionStore.clear()
+            if let previousFlag {
+                UserDefaults.standard.set(previousFlag, forKey: flagKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: flagKey)
+            }
+        }
+        sessionStore.save(VocabularyPreparationSession(
+            answers: [VocabularyAssessmentAnswer(canonicalKey: "legacy-item", evidence: .legacyKnown)],
+            finalSelection: ["legacy-item"],
+            algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion,
+            readerPriorContributionRecorded: true,
+            readerPriorContributionID: "legacy-contribution"
+        ))
+        UserDefaults.standard.set(true, forKey: flagKey)
+
+        let coordinator = VocabularyPreparationCoordinator(
+            documentSource: source,
+            library: FakeVocabularyPreparationLibrary(),
+            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            readerPriorStore: readerPriorStore,
+            researchEvidenceStore: researchEvidenceStore
+        )
+        coordinator.resetForCurrentDocument()
+        coordinator.startAnalysis()
+        try await waitUntil { coordinator.phase == .inventory }
+
+        let migrated = try XCTUnwrap(sessionStore.load())
+        XCTAssertEqual(
+            migrated.algorithmVersion,
+            VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+        )
+        XCTAssertTrue(migrated.answers.isEmpty)
+        XCTAssertTrue(migrated.finalSelection.isEmpty)
+        XCTAssertNil(migrated.predictionAudit)
+        XCTAssertEqual(migrated.readerPriorContributionRecorded, false)
+        XCTAssertNil(migrated.readerPriorContributionID)
+    }
+
     func testStaleSnapshotNeverPublishesInventory() async throws {
         let source = try FakeVocabularyPreparationSource(
             text: fixtureText,

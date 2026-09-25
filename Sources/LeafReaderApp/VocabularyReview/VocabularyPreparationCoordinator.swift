@@ -176,7 +176,11 @@ final class VocabularyPreparationCoordinator {
     }
     var hasCompatiblePredictionAudit: Bool {
         guard let audit = session.predictionAudit, let inventory else { return false }
-        return audit.isCompatible(inventory: inventory, mode: mode)
+        return audit.isCompatible(
+            inventory: inventory,
+            mode: mode,
+            algorithmVersion: desiredAlgorithmVersion
+        )
     }
 
     var predictionAuditProgressText: String {
@@ -319,7 +323,11 @@ final class VocabularyPreparationCoordinator {
     func beginPredictionAudit() {
         guard let inventory else { return }
         if let audit = session.predictionAudit,
-           audit.isCompatible(inventory: inventory, mode: mode) {
+           audit.isCompatible(
+            inventory: inventory,
+            mode: mode,
+            algorithmVersion: desiredAlgorithmVersion
+           ) {
             phase = audit.isComplete ? .predictionAuditResults : .predictionAudit
             return
         }
@@ -330,16 +338,19 @@ final class VocabularyPreparationCoordinator {
         )
         let activeRequestID = requestID
         let mode = mode
+        let algorithmVersion = desiredAlgorithmVersion
         Task.detached { [weak self] in
             let prediction = AdaptiveVocabularyAssessment(
                 inventory: inventory,
                 mode: mode,
-                readerPrior: nil
+                readerPrior: nil,
+                algorithmVersion: algorithmVersion
             ).result()
             let audit = VocabularyPredictionAuditSession(
                 inventory: inventory,
                 prediction: prediction,
-                mode: mode
+                mode: mode,
+                algorithmVersion: algorithmVersion
             )
             await self?.applyPredictionAudit(audit, requestID: activeRequestID)
         }
@@ -645,7 +656,11 @@ final class VocabularyPreparationCoordinator {
     ) {
         guard requestID == activeRequestID,
               let inventory,
-              audit.isCompatible(inventory: inventory, mode: mode),
+              audit.isCompatible(
+                inventory: inventory,
+                mode: mode,
+                algorithmVersion: desiredAlgorithmVersion
+              ),
               let identity = activeIdentity,
               documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
         session.predictionAudit = audit
@@ -1346,7 +1361,7 @@ final class VocabularyPreparationCoordinator {
                     vocabularyID: UUID().uuidString,
                     word: candidate.displayLemma,
                     lemma: candidate.displayLemma,
-                    lexicalKey: candidate.canonicalKey,
+                    lexicalKey: candidate.lexicalItemID?.canonicalKey,
                     partOfSpeech: candidate.partOfSpeech,
                     surfaceForm: candidate.observedForms.first?.surface ?? candidate.displayLemma,
                     pageIndex: range.unitIndex,
@@ -1373,7 +1388,7 @@ final class VocabularyPreparationCoordinator {
                     vocabularyID: UUID().uuidString,
                     word: candidate.displayLemma,
                     lemma: candidate.displayLemma,
-                    lexicalKey: candidate.canonicalKey,
+                    lexicalKey: candidate.lexicalItemID?.canonicalKey,
                     partOfSpeech: candidate.partOfSpeech,
                     surfaceForm: candidate.observedForms.first?.surface ?? candidate.displayLemma,
                     context: contexts[candidate.canonicalKey] ?? "",

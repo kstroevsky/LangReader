@@ -89,6 +89,20 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
                 baseline.matches(lemma: lemma, selectedForm: selectedForm)
             )
         }
+
+        let lexicalFingerprint: ([VocabularyDocumentLemmaSummary]) -> [String] = { summaries in
+            summaries.map {
+                [
+                    $0.canonicalKey,
+                    $0.resolutionState.rawValue,
+                    $0.assessmentPolicy.rawValue,
+                    String($0.occurrenceCount)
+                ].joined(separator: "|")
+            }
+        }
+        let baselineLexical = lexicalFingerprint(baseline.lexicalSummaries())
+        XCTAssertEqual(lexicalFingerprint(seeded.lexicalSummaries()), baselineLexical)
+        XCTAssertEqual(lexicalFingerprint(baseline.lexicalSummaries()), baselineLexical)
     }
 
     func testCancelledPriorityIndexDoesNotReturnPartialState() {
