@@ -97,12 +97,40 @@ check_retired_paths() {
 }
 
 check_english_only() {
-  local file
+  local file output status
   while IFS= read -r file; do
-    if LC_ALL=C perl -CSD -ne 'exit 1 if /\p{Han}/' "$file"; then
-      continue
-    fi
-    fail "$file contains Chinese text"
+    status=0
+    output="$(
+      perl -MEncode=decode,FB_CROAK -ne '
+        my $decoded;
+        eval { $decoded = decode("UTF-8", $_, FB_CROAK); 1 } or do {
+          my $error = $@;
+          chomp $error;
+          print STDERR "$ARGV:$.: UTF-8 decode error: $error\n";
+          exit 20;
+        };
+        if ($decoded =~ /\p{Han}/) {
+          my %seen;
+          my @han = grep { /\p{Han}/ && !$seen{$_}++ } split //, $decoded;
+          my $code_points = join(", ", map { sprintf("U+%04X", ord($_)) } @han);
+          print STDERR "$ARGV:$.: $code_points\n";
+          $found_han = 1;
+        }
+        END {
+          exit 10 if $found_han && $? == 0;
+        }
+      ' "$file" 2>&1
+    )" || status=$?
+    case "$status" in
+      0)
+        ;;
+      10)
+        fail "$file contains Han-script text: $output"
+        ;;
+      *)
+        fail "$file Han-script scan failed (Perl exit $status): $output"
+        ;;
+    esac
   done < <(
     # graphify-out is an internal, generated code-analysis workspace. It is not
     # published by MkDocs or synchronized to the GitHub wiki, so its captured
