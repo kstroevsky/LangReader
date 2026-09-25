@@ -50,14 +50,21 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
     func testLexicalReconciliationVersionChangeClearsIncompatiblePersistedSessionState() async throws {
         let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: .pdf)
         let sessionStore = VocabularyPreparationSessionStore(documentID: source.identity.documentID)
-        let flagKey = "LeafReader.experimentalLexicalReconciliationV4"
+        let flagKey = "LeafReader.experimentalLexicalReconciliation"
+        let legacyFlagKey = "LeafReader.experimentalLexicalReconciliationV4"
         let previousFlag = UserDefaults.standard.object(forKey: flagKey)
+        let previousLegacyFlag = UserDefaults.standard.object(forKey: legacyFlagKey)
         defer {
             sessionStore.clear()
             if let previousFlag {
                 UserDefaults.standard.set(previousFlag, forKey: flagKey)
             } else {
                 UserDefaults.standard.removeObject(forKey: flagKey)
+            }
+            if let previousLegacyFlag {
+                UserDefaults.standard.set(previousLegacyFlag, forKey: legacyFlagKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: legacyFlagKey)
             }
         }
         sessionStore.save(VocabularyPreparationSession(
@@ -69,7 +76,8 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
             readerPriorContributionRecorded: true,
             readerPriorContributionID: "legacy-contribution"
         ))
-        UserDefaults.standard.set(true, forKey: flagKey)
+        UserDefaults.standard.removeObject(forKey: flagKey)
+        UserDefaults.standard.set(true, forKey: legacyFlagKey)
 
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
@@ -78,6 +86,8 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
             readerPriorStore: readerPriorStore,
             researchEvidenceStore: researchEvidenceStore
         )
+        XCTAssertTrue(coordinator.experimentalLexicalReconciliationEnabled)
+        XCTAssertTrue(UserDefaults.standard.bool(forKey: flagKey))
         coordinator.resetForCurrentDocument()
         coordinator.startAnalysis()
         try await waitUntil { coordinator.phase == .inventory }

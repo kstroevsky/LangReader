@@ -91,34 +91,34 @@ final class VocabularyReaderPriorStoreXCTests: XCTestCase {
         XCTAssertEqual(v3.verifiedEvidenceCount, 48)
 
         XCTAssertTrue(store.recordCompletedSession(
-            contributionID: "v4-1",
+            contributionID: "v5-1",
             languageCode: "en",
             thetaPosterior: posterior,
             verifiedEvidenceCount: 24,
             completedAt: Date(timeIntervalSince1970: 3),
             algorithmVersion: VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
         ))
-        let firstV4 = try XCTUnwrap(store.load(languageCode: "en"))
+        let firstV5 = try XCTUnwrap(store.load(languageCode: "en"))
         XCTAssertEqual(
-            firstV4.algorithmVersion,
+            firstV5.algorithmVersion,
             VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
         )
-        XCTAssertEqual(firstV4.completedSessionCount, 1)
-        XCTAssertEqual(firstV4.verifiedEvidenceCount, 24)
-        XCTAssertFalse(firstV4.isEligible(at: Date(timeIntervalSince1970: 3)))
+        XCTAssertEqual(firstV5.completedSessionCount, 1)
+        XCTAssertEqual(firstV5.verifiedEvidenceCount, 24)
+        XCTAssertFalse(firstV5.isEligible(at: Date(timeIntervalSince1970: 3)))
 
         XCTAssertTrue(store.recordCompletedSession(
-            contributionID: "v4-2",
+            contributionID: "v5-2",
             languageCode: "en",
             thetaPosterior: posterior,
             verifiedEvidenceCount: 24,
             completedAt: Date(timeIntervalSince1970: 4),
             algorithmVersion: VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
         ))
-        let secondV4 = try XCTUnwrap(store.load(languageCode: "en"))
-        XCTAssertEqual(secondV4.completedSessionCount, 2)
-        XCTAssertEqual(secondV4.verifiedEvidenceCount, 48)
-        XCTAssertTrue(secondV4.isEligible(at: Date(timeIntervalSince1970: 4)))
+        let secondV5 = try XCTUnwrap(store.load(languageCode: "en"))
+        XCTAssertEqual(secondV5.completedSessionCount, 2)
+        XCTAssertEqual(secondV5.verifiedEvidenceCount, 48)
+        XCTAssertTrue(secondV5.isEligible(at: Date(timeIntervalSince1970: 4)))
     }
 
     func testWarmStartSmoothsAndMixesStoredPosterior() throws {

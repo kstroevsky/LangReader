@@ -80,6 +80,11 @@ private struct VocabularyPendingKnownScore: Equatable, Sendable {
 @MainActor
 @Observable
 final class VocabularyPreparationCoordinator {
+    private static let experimentalLexicalReconciliationKey =
+        "LeafReader.experimentalLexicalReconciliation"
+    private static let legacyExperimentalLexicalReconciliationV4Key =
+        "LeafReader.experimentalLexicalReconciliationV4"
+
     private weak var documentSource: (any VocabularyPreparationDocumentSource)?
     private weak var library: (any VocabularyPreparationLibraryAccess)?
     private let definitionProvider: any VocabularyPreparationDefinitionProviding
@@ -134,7 +139,7 @@ final class VocabularyPreparationCoordinator {
     }
 
     var experimentalLexicalReconciliationEnabled: Bool {
-        UserDefaults.standard.bool(forKey: "LeafReader.experimentalLexicalReconciliationV4")
+        UserDefaults.standard.bool(forKey: Self.experimentalLexicalReconciliationKey)
     }
 
     private var desiredAlgorithmVersion: Int {
@@ -154,11 +159,24 @@ final class VocabularyPreparationCoordinator {
         readerPriorStore: any VocabularyReaderPriorStoring = VocabularyReaderPriorStore.shared,
         researchEvidenceStore: any VocabularyResearchEvidenceStoring = VocabularyResearchEvidenceStore.shared
     ) {
+        Self.migrateLegacyExperimentalLexicalReconciliationToggle()
         self.documentSource = documentSource
         self.library = library
         self.definitionProvider = definitionProvider
         self.readerPriorStore = readerPriorStore
         self.researchEvidenceStore = researchEvidenceStore
+    }
+
+    private static func migrateLegacyExperimentalLexicalReconciliationToggle() {
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: experimentalLexicalReconciliationKey) == nil,
+              defaults.object(forKey: legacyExperimentalLexicalReconciliationV4Key) != nil else {
+            return
+        }
+        defaults.set(
+            defaults.bool(forKey: legacyExperimentalLexicalReconciliationV4Key),
+            forKey: experimentalLexicalReconciliationKey
+        )
     }
 
     var currentContext: String {
