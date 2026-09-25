@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "d988eb7273d363c63683bbe05214e846db556751",
-  "active_future_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v9.json",
+  "repository_head_reviewed": "fc9762a0710572c5fc7cceee537458bdacfcb511",
+  "active_future_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v10.json",
   "head_since_production_evidence": [
     "9df23ba57477371dc99422725329c8cab0cb7bf6: deterministic CI dependency and docs-check scope only",
     "52d439bb1ac4a2945239a7ced1e0abea8ea3d84f: unexecuted development-confirmation reservation and validator only",
@@ -90,7 +90,9 @@
     "25c6a5199ee1d6360598b78640fc5ca6c03b372a: separate inference-bearing evidence and question budgets from direct interactions",
     "38903f254e6bdcb1144edab24978c84d4df800cd: stratify prediction calibration by lexical identity policy",
     "a9884445bd6f7251364f37dc1232c1a1294c1ac6: model independent attestation and validated deterministic single-resolution evidence",
-    "d988eb7273d363c63683bbe05214e846db556751: align ADR-0001 with conservative v4 semantics"
+    "d988eb7273d363c63683bbe05214e846db556751: align ADR-0001 with conservative v4 semantics",
+    "e683bf0095ddf628e954c324f0632ddb970a0e68: distinguish Han matches from wiki scanner failures",
+    "fc9762a0710572c5fc7cceee537458bdacfcb511: isolate the current ADR-0001 lexical protocol as experimental v5"
   ],
   "canonical_ledger": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
   "retained_artifacts": [
@@ -232,8 +234,15 @@
       "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v9.json",
       "evidence_class": "sealed synthetic development-confirmation reservation",
       "status": "reserved_not_executed",
+      "reservation_role": "historical_unexecuted",
+      "interpretation": "Historical unexecuted reservation for the conservative evidence-aware lexical-reconciliation generator; its source binding was superseded after ADR-0001 advanced the experimental protocol identity from v4 to v5, while its identities and bytes remain sealed."
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v10.json",
+      "evidence_class": "sealed synthetic development-confirmation reservation",
+      "status": "reserved_not_executed",
       "reservation_role": "active_future",
-      "interpretation": "Sole active future reservation for the evidence-aware lexical-reconciliation generator after conservative single-resolution, occurrence-scoped direct evidence, inference-budget, and audit-stratification fixes; it has three disjoint seeds and 24 opaque document identities and no candidate freeze, outcomes, consumption, or release access."
+      "interpretation": "Sole active future reservation for the ADR-0001 experimental v5 lexical protocol with lexical-reconciliation-v2 diagnostics; it has three disjoint seeds and 24 opaque document identities and no candidate freeze, outcomes, consumption, or release access."
     },
     {
       "path": "docs/plans/vocabulary-validation-evidence/german-form-label-portability-development-check-2026-09-21.json",
