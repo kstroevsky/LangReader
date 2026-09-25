@@ -80,13 +80,19 @@ package enum VocabularyLexicalResolution: Codable, Equatable, Sendable {
 /// enough to instantiate one or more POS-bound lexical identities.
 package struct VocabularyLexicalReconciler: Sendable {
     package struct Configuration: Codable, Equatable, Sendable {
+        package let minimumSingleOccurrenceSupport: Int
+        package let minimumSingleDistinctContextSupport: Int
         package let minimumSplitOccurrenceSupport: Int
         package let minimumSplitDistinctContextSupport: Int
 
         package init(
+            minimumSingleOccurrenceSupport: Int = 2,
+            minimumSingleDistinctContextSupport: Int = 2,
             minimumSplitOccurrenceSupport: Int = 2,
             minimumSplitDistinctContextSupport: Int = 2
         ) {
+            self.minimumSingleOccurrenceSupport = max(1, minimumSingleOccurrenceSupport)
+            self.minimumSingleDistinctContextSupport = max(1, minimumSingleDistinctContextSupport)
             self.minimumSplitOccurrenceSupport = max(2, minimumSplitOccurrenceSupport)
             self.minimumSplitDistinctContextSupport = max(2, minimumSplitDistinctContextSupport)
         }
@@ -156,6 +162,18 @@ package struct VocabularyLexicalReconciler: Sendable {
         }
 
         if supportedParts.count == 1, let part = supportedParts.first {
+            guard hasSingleResolutionSupport(part, support: support) else {
+                return .unresolved(VocabularyUnresolvedLexicalGroup(
+                    occurrenceIDs: matching.map(\.occurrenceID),
+                    diagnostics: diagnostics(
+                        anchor: anchor,
+                        state: .unresolved,
+                        occurrences: matching,
+                        support: support,
+                        residualCount: matching.count
+                    )
+                ))
+            }
             return resolvedSingle(
                 anchor: anchor,
                 lemma: lemma,
@@ -227,6 +245,15 @@ package struct VocabularyLexicalReconciler: Sendable {
                 residualCount: matching.count
             )
         ))
+    }
+
+    private func hasSingleResolutionSupport(
+        _ part: VocabularyPartOfSpeech,
+        support: [VocabularyPartOfSpeech: PartSupport]
+    ) -> Bool {
+        guard let evidence = support[part] else { return false }
+        return evidence.occurrenceIDs.count >= configuration.minimumSingleOccurrenceSupport
+            && evidence.contexts.count >= configuration.minimumSingleDistinctContextSupport
     }
 
     private struct PartSupport {

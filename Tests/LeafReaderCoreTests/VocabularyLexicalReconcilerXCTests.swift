@@ -45,6 +45,75 @@ final class VocabularyLexicalReconcilerXCTests: XCTestCase {
         XCTAssertEqual(group.residualOccurrenceIDs.count, 1)
     }
 
+    func testSingleUsableOccurrenceCannotCreateResolvedIdentity() {
+        let anchor = VocabularyLexicalAnchorID(language: "en", basis: .resolvedLemma("record"))
+        let occurrences = [
+            occurrence(0, anchor: anchor, part: .noun, context: "the record survived")
+        ]
+
+        guard case let .unresolved(group) = VocabularyLexicalReconciler().reconcile(
+            anchor: anchor,
+            occurrences: occurrences
+        ) else {
+            return XCTFail("one POS observation must not become lexical identity")
+        }
+
+        XCTAssertEqual(group.occurrenceIDs, [occurrences[0].occurrenceID])
+    }
+
+    func testSingleUsableOccurrenceCannotAssignUnavailableOccurrences() {
+        let anchor = VocabularyLexicalAnchorID(language: "en", basis: .resolvedLemma("record"))
+        let occurrences = [
+            occurrence(0, anchor: anchor, part: .noun, context: "the record survived"),
+            occurrence(1, anchor: anchor, part: nil, context: "record one"),
+            occurrence(2, anchor: anchor, part: nil, context: "record two"),
+            occurrence(3, anchor: anchor, part: nil, context: "record three"),
+            occurrence(4, anchor: anchor, part: nil, context: "record four")
+        ]
+
+        guard case let .unresolved(group) = VocabularyLexicalReconciler().reconcile(
+            anchor: anchor,
+            occurrences: occurrences
+        ) else {
+            return XCTFail("uncorroborated POS evidence must not propagate to unavailable occurrences")
+        }
+
+        XCTAssertEqual(Set(group.occurrenceIDs), Set(occurrences.map(\.occurrenceID)))
+    }
+
+    func testCorroboratedSinglePopulationMayAssignUnavailableOccurrences() {
+        let anchor = VocabularyLexicalAnchorID(language: "en", basis: .resolvedLemma("record"))
+        let occurrences = [
+            occurrence(0, anchor: anchor, part: .noun, context: "the record survived"),
+            occurrence(1, anchor: anchor, part: .noun, context: "a record remains"),
+            occurrence(2, anchor: anchor, part: nil, context: "record")
+        ]
+
+        guard case let .resolvedSingle(group) = VocabularyLexicalReconciler().reconcile(
+            anchor: anchor,
+            occurrences: occurrences
+        ) else {
+            return XCTFail("independent corroboration should authorize a single lexical identity")
+        }
+
+        XCTAssertEqual(group.lexicalItemID.partOfSpeech, .noun)
+        XCTAssertEqual(Set(group.assignedOccurrenceIDs), Set(occurrences.map(\.occurrenceID)))
+        XCTAssertTrue(group.residualOccurrenceIDs.isEmpty)
+    }
+
+    func testDuplicateContextCannotCorroborateSinglePopulation() {
+        let anchor = VocabularyLexicalAnchorID(language: "en", basis: .resolvedLemma("record"))
+        let occurrences = [
+            occurrence(0, anchor: anchor, part: .noun, context: "same repeated template"),
+            occurrence(1, anchor: anchor, part: .noun, context: "same repeated template")
+        ]
+
+        XCTAssertEqual(
+            VocabularyLexicalReconciler().reconcile(anchor: anchor, occurrences: occurrences).state,
+            .unresolved
+        )
+    }
+
     func testValidSplitLeavesUnavailableOccurrenceResidual() {
         let anchor = VocabularyLexicalAnchorID(language: "en", basis: .resolvedLemma("record"))
         let occurrences = [
