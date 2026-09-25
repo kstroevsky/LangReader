@@ -4,15 +4,21 @@ package struct VocabularyLexicalSupportSummary: Codable, Equatable, Sendable {
     package let partOfSpeech: VocabularyPartOfSpeech
     package let supportingOccurrenceCount: Int
     package let distinctContextCount: Int
+    package let strongContextualOccurrenceCount: Int
+    package let attestationSources: [VocabularyLinguisticEvidenceSource]
 
     package init(
         partOfSpeech: VocabularyPartOfSpeech,
         supportingOccurrenceCount: Int,
-        distinctContextCount: Int
+        distinctContextCount: Int,
+        strongContextualOccurrenceCount: Int,
+        attestationSources: [VocabularyLinguisticEvidenceSource]
     ) {
         self.partOfSpeech = partOfSpeech
         self.supportingOccurrenceCount = supportingOccurrenceCount
         self.distinctContextCount = distinctContextCount
+        self.strongContextualOccurrenceCount = strongContextualOccurrenceCount
+        self.attestationSources = attestationSources
     }
 }
 
@@ -395,7 +401,9 @@ package struct VocabularyLexicalReconciler: Sendable {
                 VocabularyLexicalSupportSummary(
                     partOfSpeech: part,
                     supportingOccurrenceCount: evidence.occurrenceIDs.count,
-                    distinctContextCount: evidence.contexts.count
+                    distinctContextCount: evidence.contexts.count,
+                    strongContextualOccurrenceCount: evidence.strongContextualOccurrenceIDs.count,
+                    attestationSources: evidence.attestationSources.sorted { $0.rawValue < $1.rawValue }
                 )
             }.sorted { $0.partOfSpeech.rawValue < $1.partOfSpeech.rawValue },
             residualOccurrenceCount: residualCount,

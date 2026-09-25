@@ -23,6 +23,13 @@ final class VocabularyLexicalReconcilerXCTests: XCTestCase {
         XCTAssertTrue(partition.residualOccurrenceIDs.isEmpty)
         XCTAssertEqual(partition.diagnostics.state, .resolvedSplit)
         XCTAssertEqual(partition.diagnostics.reconcilerVersion, "lexical-reconciliation-v3")
+        XCTAssertEqual(
+            partition.diagnostics.childSupport.map(\.supportingOccurrenceCount).sorted(),
+            [2, 2]
+        )
+        XCTAssertTrue(partition.diagnostics.childSupport.allSatisfy {
+            $0.strongContextualOccurrenceCount == 0 && $0.attestationSources.isEmpty
+        })
     }
 
     func testOneSpuriousConflictingClassificationDoesNotCreateAChild() {
@@ -186,10 +193,17 @@ final class VocabularyLexicalReconcilerXCTests: XCTestCase {
             contextFingerprint: "the record survived"
         )
 
-        XCTAssertEqual(
-            VocabularyLexicalReconciler().reconcile(anchor: anchor, occurrences: [occurrence]).state,
-            .resolvedSingle
-        )
+        guard case let .resolvedSingle(group) = VocabularyLexicalReconciler().reconcile(
+            anchor: anchor,
+            occurrences: [occurrence]
+        ) else {
+            return XCTFail("strong contextual evidence plus attestation should resolve")
+        }
+        XCTAssertEqual(group.lexicalItemID.partOfSpeech, .noun)
+        let support = group.diagnostics.childSupport
+        XCTAssertEqual(support.count, 1)
+        XCTAssertEqual(support[0].strongContextualOccurrenceCount, 1)
+        XCTAssertEqual(support[0].attestationSources, [.lexicalAttestation])
     }
 
     func testDeterministicSingleRuleRequiresExplicitLanguageValidation() {
