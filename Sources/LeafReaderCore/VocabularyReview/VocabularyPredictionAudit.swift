@@ -10,14 +10,26 @@ package struct VocabularyPredictionAuditItem: Codable, Equatable, Identifiable, 
     package let canonicalKey: String
     package let displayLemma: String
     package let partOfSpeech: VocabularyPartOfSpeech
+    package let identityPolicy: VocabularyAssessmentIdentityPolicy
     package let occurrenceCount: Int
     package let predictedKnownProbability: Double
     package let selectedForLearning: Bool
+
+    private enum CodingKeys: String, CodingKey {
+        case canonicalKey
+        case displayLemma
+        case partOfSpeech
+        case identityPolicy
+        case occurrenceCount
+        case predictedKnownProbability
+        case selectedForLearning
+    }
 
     package init(
         canonicalKey: String,
         displayLemma: String,
         partOfSpeech: VocabularyPartOfSpeech,
+        identityPolicy: VocabularyAssessmentIdentityPolicy = .fullInference,
         occurrenceCount: Int,
         predictedKnownProbability: Double,
         selectedForLearning: Bool
@@ -25,15 +37,50 @@ package struct VocabularyPredictionAuditItem: Codable, Equatable, Identifiable, 
         self.canonicalKey = canonicalKey
         self.displayLemma = displayLemma
         self.partOfSpeech = partOfSpeech
+        self.identityPolicy = identityPolicy
         self.occurrenceCount = max(0, occurrenceCount)
         self.predictedKnownProbability = min(max(predictedKnownProbability, 0), 1)
         self.selectedForLearning = selectedForLearning
+    }
+
+    package init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        canonicalKey = try container.decode(String.self, forKey: .canonicalKey)
+        displayLemma = try container.decode(String.self, forKey: .displayLemma)
+        partOfSpeech = try container.decode(VocabularyPartOfSpeech.self, forKey: .partOfSpeech)
+        identityPolicy = try container.decodeIfPresent(
+            VocabularyAssessmentIdentityPolicy.self,
+            forKey: .identityPolicy
+        ) ?? .fullInference
+        occurrenceCount = max(0, try container.decode(Int.self, forKey: .occurrenceCount))
+        predictedKnownProbability = min(
+            max(try container.decode(Double.self, forKey: .predictedKnownProbability), 0),
+            1
+        )
+        selectedForLearning = try container.decode(Bool.self, forKey: .selectedForLearning)
+    }
+
+    package func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(canonicalKey, forKey: .canonicalKey)
+        try container.encode(displayLemma, forKey: .displayLemma)
+        try container.encode(partOfSpeech, forKey: .partOfSpeech)
+        try container.encode(identityPolicy, forKey: .identityPolicy)
+        try container.encode(occurrenceCount, forKey: .occurrenceCount)
+        try container.encode(predictedKnownProbability, forKey: .predictedKnownProbability)
+        try container.encode(selectedForLearning, forKey: .selectedForLearning)
     }
 }
 
 package struct VocabularyPredictionAuditScoredItem: Codable, Equatable, Sendable {
     package let item: VocabularyPredictionAuditItem
     package let answer: VocabularyPredictionAuditAnswer
+}
+
+package struct VocabularyPredictionAuditCalibrationMetrics: Codable, Equatable, Sendable {
+    package let itemCount: Int
+    package let brierScore: Double
+    package let expectedCalibrationError: Double
 }
 
 package struct VocabularyPredictionAuditResult: Codable, Equatable, Sendable {
@@ -50,13 +97,15 @@ package struct VocabularyPredictionAuditResult: Codable, Equatable, Sendable {
     package let projectedLexicalTokenCoverage: Double
     package let brierScore: Double
     package let expectedCalibrationError: Double
+    package let fullInferenceCalibration: VocabularyPredictionAuditCalibrationMetrics?
+    package let directEvidenceOnlyCalibration: VocabularyPredictionAuditCalibrationMetrics?
 }
 
 /// A local, complete, blind self-report audit of a frozen no-test prediction.
 /// It is intentionally separate from assessment evidence, reader priors, and
 /// independently scored validation-study data.
 package struct VocabularyPredictionAuditSession: Codable, Equatable, Sendable {
-    package static let currentProtocolVersion = 1
+    package static let currentProtocolVersion = 2
 
     package let protocolVersion: Int
     package let inventoryFingerprint: String
@@ -86,6 +135,7 @@ package struct VocabularyPredictionAuditSession: Codable, Equatable, Sendable {
                 canonicalKey: candidate.canonicalKey,
                 displayLemma: candidate.displayLemma,
                 partOfSpeech: candidate.partOfSpeech,
+                identityPolicy: candidate.identityPolicy,
                 occurrenceCount: candidate.occurrenceCount,
                 predictedKnownProbability: predicted.knownProbability,
                 selectedForLearning: predicted.isSelected
@@ -183,6 +233,8 @@ package struct VocabularyPredictionAuditSession: Codable, Equatable, Sendable {
             let target = scored.answer == .known ? 1.0 : 0.0
             return partial + pow(scored.item.predictedKnownProbability - target, 2)
         } / Double(max(1, scored.count))
+        let fullInference = scored.filter { $0.item.identityPolicy == .fullInference }
+        let directEvidenceOnly = scored.filter { $0.item.identityPolicy == .directEvidenceOnly }
         return VocabularyPredictionAuditResult(
             protocolVersion: protocolVersion,
             languageCode: languageCode,
@@ -204,7 +256,24 @@ package struct VocabularyPredictionAuditSession: Codable, Equatable, Sendable {
                 ? Double(projectedOccurrences) / Double(totalOccurrences)
                 : 1,
             brierScore: brier,
-            expectedCalibrationError: Self.calibrationError(scored)
+            expectedCalibrationError: Self.calibrationError(scored),
+            fullInferenceCalibration: Self.calibrationMetrics(fullInference),
+            directEvidenceOnlyCalibration: Self.calibrationMetrics(directEvidenceOnly)
+        )
+    }
+
+    private static func calibrationMetrics(
+        _ scored: [VocabularyPredictionAuditScoredItem]
+    ) -> VocabularyPredictionAuditCalibrationMetrics? {
+        guard !scored.isEmpty else { return nil }
+        let brier = scored.reduce(0.0) { partial, scored in
+            let target = scored.answer == .known ? 1.0 : 0.0
+            return partial + pow(scored.item.predictedKnownProbability - target, 2)
+        } / Double(scored.count)
+        return VocabularyPredictionAuditCalibrationMetrics(
+            itemCount: scored.count,
+            brierScore: brier,
+            expectedCalibrationError: calibrationError(scored)
         )
     }
 
@@ -246,6 +315,7 @@ package struct VocabularyPredictionAuditSession: Codable, Equatable, Sendable {
         for byte in inventory.languageCode.utf8 { mix(byte) }
         for candidate in inventory.candidates {
             for byte in candidate.canonicalKey.utf8 { mix(byte) }
+            for byte in candidate.identityPolicy.rawValue.utf8 { mix(byte) }
             withUnsafeBytes(of: UInt64(candidate.occurrenceCount).littleEndian) { bytes in
                 for byte in bytes { mix(byte) }
             }
