@@ -56,5 +56,15 @@ final class VocabularyLexicalPartitionEvaluatorXCTests: XCTestCase {
         XCTAssertTrue(report.assessmentConsequences.allSatisfy {
             $0.goldOccurrenceDenominator == $0.predictedOccurrenceDenominator
         })
+        let englishAssessment = try XCTUnwrap(report.assessmentConsequences.first {
+            $0.scope == "language:en"
+        })
+        XCTAssertEqual(englishAssessment.predictedDirectEvidenceCandidateCount, 8)
+        XCTAssertEqual(englishAssessment.predictedCandidateCount, 14)
+        let germanAssessment = try XCTUnwrap(report.assessmentConsequences.first {
+            $0.scope == "language:de"
+        })
+        XCTAssertEqual(germanAssessment.predictedDirectEvidenceCandidateCount, 1)
+        XCTAssertEqual(germanAssessment.predictedCandidateCount, 1)
     }
 }

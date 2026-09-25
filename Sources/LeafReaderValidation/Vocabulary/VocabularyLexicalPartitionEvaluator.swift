@@ -608,7 +608,7 @@ private func candidates(
 ) -> [DocumentVocabularyCandidate] {
     var seeds: [String: CandidateSeed] = [:]
     for anchor in evaluated {
-        for occurrence in anchor.result.occurrences {
+        for (occurrenceOrdinal, occurrence) in anchor.result.occurrences.enumerated() {
             let key: String
             let lexicalItemID: VocabularyLexicalItemID?
             let partOfSpeech: VocabularyPartOfSpeech
@@ -624,7 +624,9 @@ private func candidates(
             } else if predicted {
                 let isResidual = anchor.result.resolutionState == .resolvedSingle
                     || anchor.result.resolutionState == .resolvedSplit
-                key = anchor.anchor.canonicalKey + (isResidual ? "|residual" : "")
+                key = anchor.anchor.canonicalKey
+                    + (isResidual ? "|residual" : "")
+                    + "|direct|\(occurrenceOrdinal)"
                 lexicalItemID = nil
                 partOfSpeech = .unknown
                 policy = .directEvidenceOnly
