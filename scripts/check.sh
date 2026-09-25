@@ -23,6 +23,9 @@ export CLANG_MODULE_CACHE_PATH="${CLANG_MODULE_CACHE_PATH:-/private/tmp/leafread
 echo "==> Checking whitespace"
 git diff --check
 
+echo "==> Testing wiki Han-script scanner"
+./scripts/test_check_wiki_han.sh
+
 echo "==> Checking wiki"
 ./scripts/check_wiki.sh
 

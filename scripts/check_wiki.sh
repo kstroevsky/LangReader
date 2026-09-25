@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 WIKI_DIR="$ROOT_DIR/docs/wiki"
 SYNC_SCRIPT="$ROOT_DIR/scripts/sync_github_wiki.sh"
+HAN_SCANNER="$ROOT_DIR/scripts/check_wiki_han.pl"
 FAILURES=0
 
 fail() {
@@ -100,27 +101,7 @@ check_english_only() {
   local file output status
   while IFS= read -r file; do
     status=0
-    output="$(
-      perl -MEncode=decode,FB_CROAK -ne '
-        my $decoded;
-        eval { $decoded = decode("UTF-8", $_, FB_CROAK); 1 } or do {
-          my $error = $@;
-          chomp $error;
-          print STDERR "$ARGV:$.: UTF-8 decode error: $error\n";
-          exit 20;
-        };
-        if ($decoded =~ /\p{Han}/) {
-          my %seen;
-          my @han = grep { /\p{Han}/ && !$seen{$_}++ } split //, $decoded;
-          my $code_points = join(", ", map { sprintf("U+%04X", ord($_)) } @han);
-          print STDERR "$ARGV:$.: $code_points\n";
-          $found_han = 1;
-        }
-        END {
-          exit 10 if $found_han && $? == 0;
-        }
-      ' "$file" 2>&1
-    )" || status=$?
+    output="$("$HAN_SCANNER" "$file" 2>&1)" || status=$?
     case "$status" in
       0)
         ;;
@@ -144,6 +125,7 @@ check_english_only() {
 }
 
 check_scripts() {
+  perl -c "$HAN_SCANNER" >/dev/null
   bash -n "$ROOT_DIR/scripts/generate_code_wiki.sh"
   bash -n "$ROOT_DIR/scripts/generate_wiki_home.sh"
   bash -n "$ROOT_DIR/scripts/sync_github_wiki.sh"
