@@ -67,6 +67,60 @@ final class VocabularyReaderPriorStoreXCTests: XCTestCase {
         XCTAssertNotNil(store.load(languageCode: "de"))
     }
 
+    func testAlgorithmVersionChangeStartsFreshEligibilityEvidence() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("reader-prior-version-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = VocabularyReaderPriorStore(
+            databaseURL: directory.appendingPathComponent("personal-vocabulary.sqlite3")
+        )
+        let posterior = Array(repeating: 1.0 / 121.0, count: 121)
+
+        for index in 1...2 {
+            XCTAssertTrue(store.recordCompletedSession(
+                contributionID: "v3-\(index)",
+                languageCode: "en",
+                thetaPosterior: posterior,
+                verifiedEvidenceCount: 24,
+                completedAt: Date(timeIntervalSince1970: Double(index)),
+                algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion
+            ))
+        }
+        let v3 = try XCTUnwrap(store.load(languageCode: "en"))
+        XCTAssertEqual(v3.completedSessionCount, 2)
+        XCTAssertEqual(v3.verifiedEvidenceCount, 48)
+
+        XCTAssertTrue(store.recordCompletedSession(
+            contributionID: "v4-1",
+            languageCode: "en",
+            thetaPosterior: posterior,
+            verifiedEvidenceCount: 24,
+            completedAt: Date(timeIntervalSince1970: 3),
+            algorithmVersion: VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+        ))
+        let firstV4 = try XCTUnwrap(store.load(languageCode: "en"))
+        XCTAssertEqual(
+            firstV4.algorithmVersion,
+            VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+        )
+        XCTAssertEqual(firstV4.completedSessionCount, 1)
+        XCTAssertEqual(firstV4.verifiedEvidenceCount, 24)
+        XCTAssertFalse(firstV4.isEligible(at: Date(timeIntervalSince1970: 3)))
+
+        XCTAssertTrue(store.recordCompletedSession(
+            contributionID: "v4-2",
+            languageCode: "en",
+            thetaPosterior: posterior,
+            verifiedEvidenceCount: 24,
+            completedAt: Date(timeIntervalSince1970: 4),
+            algorithmVersion: VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+        ))
+        let secondV4 = try XCTUnwrap(store.load(languageCode: "en"))
+        XCTAssertEqual(secondV4.completedSessionCount, 2)
+        XCTAssertEqual(secondV4.verifiedEvidenceCount, 48)
+        XCTAssertTrue(secondV4.isEligible(at: Date(timeIntervalSince1970: 4)))
+    }
+
     func testWarmStartSmoothsAndMixesStoredPosterior() throws {
         var concentrated = Array(repeating: 0.0, count: 121)
         concentrated[90] = 1

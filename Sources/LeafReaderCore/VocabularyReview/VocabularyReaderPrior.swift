@@ -221,6 +221,14 @@ package final class VocabularyReaderPriorStore: VocabularyReaderPriorStoring, @u
                 return true
             }
             let existing = loadLocked(languageCode: languageCode)
+            // Algorithm revisions change the candidate ontology and therefore
+            // the evidence that calibrated this language-level posterior. Keep
+            // the durable row and idempotence ledger, but begin eligibility
+            // counts again for the new version instead of laundering older
+            // sessions into a newly-versioned prior.
+            let compatibleExisting = existing?.algorithmVersion == algorithmVersion
+                ? existing
+                : nil
             var statement: OpaquePointer?
             let sql = """
             INSERT OR REPLACE INTO vocabulary_reader_priors(
@@ -235,8 +243,16 @@ package final class VocabularyReaderPriorStore: VocabularyReaderPriorStoring, @u
             defer { sqlite3_finalize(statement) }
             bind(languageCode, at: 1, to: statement)
             bind(json, at: 2, to: statement)
-            sqlite3_bind_int(statement, 3, Int32((existing?.completedSessionCount ?? 0) + 1))
-            sqlite3_bind_int(statement, 4, Int32((existing?.verifiedEvidenceCount ?? 0) + max(0, verifiedEvidenceCount)))
+            sqlite3_bind_int(
+                statement,
+                3,
+                Int32((compatibleExisting?.completedSessionCount ?? 0) + 1)
+            )
+            sqlite3_bind_int(
+                statement,
+                4,
+                Int32((compatibleExisting?.verifiedEvidenceCount ?? 0) + max(0, verifiedEvidenceCount))
+            )
             sqlite3_bind_double(statement, 5, completedAt.timeIntervalSince1970)
             sqlite3_bind_int(statement, 6, Int32(algorithmVersion))
             guard sqlite3_step(statement) == SQLITE_DONE else {
