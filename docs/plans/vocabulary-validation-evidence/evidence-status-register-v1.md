@@ -2,9 +2,9 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `a2bfc5c693c03f1df445820e7063f9201c5b12b8`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `43faeaf9a987fef1ffc241fac3899f744cd3dbd7`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
-Active future reservation: `docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v7.json` (SHA-256 `dd12e9e0f9964385f030ebec970302fc14b3c79d313e79e6b9a182faf29ef12e`; `reserved_not_executed`). Historical reservations remain indexed separately and unexecuted.
+Active future reservation: `docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v8.json` (SHA-256 `dac4dafebedebc0befe719f71919f3053c32d0bce914a6eb22f545d5107a98eb`; `reserved_not_executed`). Historical reservations remain indexed separately and unexecuted.
 
 Head-only changes since the production evidence candidate:
 
@@ -85,6 +85,8 @@ Head-only changes since the production evidence candidate:
 - 9c70780bdaba4e55d188b5c20173ab2c304576d0: wire lexical-reconciliation shadow inventory behind the internal algorithm flag
 - 736fc6c68b2db2c4e147ed4c06ab83bdc622e4b6: reset vocabulary prior evidence across algorithm versions
 - a2bfc5c693c03f1df445820e7063f9201c5b12b8: add lexical partition validation metrics and safety gate
+- 956f548194ee6e54ed9f6627cead77f8bd279025: seal the unexecuted lexical-reconciliation development-confirmation reservation
+- 43faeaf9a987fef1ffc241fac3899f744cd3dbd7: preserve unresolved lexical identity and active algorithm provenance across v4 flows
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 
@@ -230,7 +232,14 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v7.json`](development-confirmation-reservation-v7.json); SHA-256 `dd12e9e0f9964385f030ebec970302fc14b3c79d313e79e6b9a182faf29ef12e`
 - Evidence class: sealed synthetic development-confirmation reservation
 - Status: `reserved_not_executed`
-- Interpretation: Sole active future reservation for the evidence-aware lexical-reconciliation generator, with three disjoint seeds and 24 opaque document identities; no candidate, analysis freeze, outcomes, consumption, or release access exists.
+- Interpretation: Historical unexecuted reservation for the initial evidence-aware lexical-reconciliation generator; its source binding was superseded after ADR-0001 lexical-uncertainty provenance fixes changed Core, while its identities and bytes remain sealed.
+
+### docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v8.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v8.json`](development-confirmation-reservation-v8.json); SHA-256 `dac4dafebedebc0befe719f71919f3053c32d0bce914a6eb22f545d5107a98eb`
+- Evidence class: sealed synthetic development-confirmation reservation
+- Status: `reserved_not_executed`
+- Interpretation: Sole active future reservation for the evidence-aware lexical-reconciliation generator after the lexical-uncertainty provenance fixes, with three disjoint seeds and 24 opaque document identities; no candidate, analysis freeze, outcomes, consumption, or release access exists.
 
 ### docs/plans/vocabulary-validation-evidence/german-form-label-portability-development-check-2026-09-21.json
 

@@ -2,10 +2,10 @@
   "schema_version": 1,
   "derived_view": true,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "a2bfc5c693c03f1df445820e7063f9201c5b12b8",
+  "repository_head_reviewed": "43faeaf9a987fef1ffc241fac3899f744cd3dbd7",
   "active_future_reservation": {
-    "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v7.json",
-    "sha256": "dd12e9e0f9964385f030ebec970302fc14b3c79d313e79e6b9a182faf29ef12e",
+    "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v8.json",
+    "sha256": "dac4dafebedebc0befe719f71919f3053c32d0bce914a6eb22f545d5107a98eb",
     "status": "reserved_not_executed"
   },
   "head_since_production_evidence": [
@@ -85,7 +85,9 @@
     "19a0ceddb41ddedcc4983e6be33fb10fea6a2a4e: document the evidence-aware lexical identity ADR",
     "9c70780bdaba4e55d188b5c20173ab2c304576d0: wire lexical-reconciliation shadow inventory behind the internal algorithm flag",
     "736fc6c68b2db2c4e147ed4c06ab83bdc622e4b6: reset vocabulary prior evidence across algorithm versions",
-    "a2bfc5c693c03f1df445820e7063f9201c5b12b8: add lexical partition validation metrics and safety gate"
+    "a2bfc5c693c03f1df445820e7063f9201c5b12b8: add lexical partition validation metrics and safety gate",
+    "956f548194ee6e54ed9f6627cead77f8bd279025: seal the unexecuted lexical-reconciliation development-confirmation reservation",
+    "43faeaf9a987fef1ffc241fac3899f744cd3dbd7: preserve unresolved lexical identity and active algorithm provenance across v4 flows"
   ],
   "canonical_ledger": {
     "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
@@ -246,9 +248,17 @@
       "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v7.json",
       "evidence_class": "sealed synthetic development-confirmation reservation",
       "status": "reserved_not_executed",
-      "reservation_role": "active_future",
-      "interpretation": "Sole active future reservation for the evidence-aware lexical-reconciliation generator, with three disjoint seeds and 24 opaque document identities; no candidate, analysis freeze, outcomes, consumption, or release access exists.",
+      "reservation_role": "historical_unexecuted",
+      "interpretation": "Historical unexecuted reservation for the initial evidence-aware lexical-reconciliation generator; its source binding was superseded after ADR-0001 lexical-uncertainty provenance fixes changed Core, while its identities and bytes remain sealed.",
       "sha256": "dd12e9e0f9964385f030ebec970302fc14b3c79d313e79e6b9a182faf29ef12e"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v8.json",
+      "evidence_class": "sealed synthetic development-confirmation reservation",
+      "status": "reserved_not_executed",
+      "reservation_role": "active_future",
+      "interpretation": "Sole active future reservation for the evidence-aware lexical-reconciliation generator after the lexical-uncertainty provenance fixes, with three disjoint seeds and 24 opaque document identities; no candidate, analysis freeze, outcomes, consumption, or release access exists.",
+      "sha256": "dac4dafebedebc0befe719f71919f3053c32d0bce914a6eb22f545d5107a98eb"
     },
     {
       "path": "docs/plans/vocabulary-validation-evidence/german-form-label-portability-development-check-2026-09-21.json",
