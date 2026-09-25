@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "phase": "lexical-reconciliation-v12-sealed",
+  "phase": "lexical-reconciliation-v13-sealed",
   "source_revision": "b2b99696feda177be0699d5277a2c13c7c7c9bd5",
   "accepted_plan": "docs/plans/vocabulary-validation-boundary/revision-2026-09-19-ci-source-lock/candidate-plan.md",
   "baseline_manifest": "docs/plans/vocabulary-validation-boundary/implementation-evidence/extraction-parity-manifest.json",
@@ -8,16 +8,16 @@
   "followup_source_revision": "0dc16efd21e2816a5154b4d515c2b5272e6b8fe3",
   "followup_plan": "docs/plans/vocabulary-validation-boundary/revision-2026-09-21-boundary-followup/candidate-plan.md",
   "followup_plan_sha256": "3a67d47ad1d0ea133618bff40611e9b40a8b6a3f1a5a7f7082f8210a80985cab",
-  "completed_slices": ["baseline-checkpoint", "commit-1-boundary-scaffold", "2a-study-schemas", "2b-parallel-diagnostic-evaluator", "2c-same-tree-bank-parity", "2d-wrapper-linkage-switch", "2e-remove-core-experiment-code", "commit-3-runner-extraction", "commit-4-pos-cross-format", "commit-5-enforcement-and-handoff", "followup-register-and-v2-hardening", "followup-core-seam-cleanup", "followup-v3-seal", "german-portability-product-fix", "german-portability-v4-seal", "graceful-degradation-product-fix", "graceful-degradation-v5-seal", "otherword-pos-product-fix", "otherword-pos-v6-seal", "adr-0001-lexical-reconciliation", "lexical-reconciliation-v7-seal", "adr-0001-lexical-uncertainty-provenance-fix", "lexical-reconciliation-v8-seal", "adr-0001-conservative-reconciliation-semantics", "lexical-reconciliation-v9-seal", "adr-0001-protocol-identity-isolation", "lexical-reconciliation-v10-seal", "adr-0001-conflict-ambiguity-hardening", "lexical-reconciliation-v11-seal", "adr-0001-cross-format-direct-evidence-identity", "lexical-reconciliation-v12-seal"],
+  "completed_slices": ["baseline-checkpoint", "commit-1-boundary-scaffold", "2a-study-schemas", "2b-parallel-diagnostic-evaluator", "2c-same-tree-bank-parity", "2d-wrapper-linkage-switch", "2e-remove-core-experiment-code", "commit-3-runner-extraction", "commit-4-pos-cross-format", "commit-5-enforcement-and-handoff", "followup-register-and-v2-hardening", "followup-core-seam-cleanup", "followup-v3-seal", "german-portability-product-fix", "german-portability-v4-seal", "graceful-degradation-product-fix", "graceful-degradation-v5-seal", "otherword-pos-product-fix", "otherword-pos-v6-seal", "adr-0001-lexical-reconciliation", "lexical-reconciliation-v7-seal", "adr-0001-lexical-uncertainty-provenance-fix", "lexical-reconciliation-v8-seal", "adr-0001-conservative-reconciliation-semantics", "lexical-reconciliation-v9-seal", "adr-0001-protocol-identity-isolation", "lexical-reconciliation-v10-seal", "adr-0001-conflict-ambiguity-hardening", "lexical-reconciliation-v11-seal", "adr-0001-cross-format-direct-evidence-identity", "lexical-reconciliation-v12-seal", "adr-0001-validation-direct-evidence-alignment", "lexical-reconciliation-v13-seal"],
   "current_slice": null,
   "protected_data_accessed": false,
   "historical_reservation_modified": false,
-  "product_generator_revision": "458f2ad80654a6d0da61cf84b0ab45fdcc9067a9",
-  "fresh_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v12.json",
-  "fresh_reservation_sha256": "68ff70eb2dd9d2ad5b35a00c50e9db160db4cf02cc1f3e8c8a77cb2ef60cc1e0",
+  "product_generator_revision": "1a1c5b0fccd4155de61c2e483acd801b86f549ac",
+  "fresh_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v13.json",
+  "fresh_reservation_sha256": "458d46e239ee80fff1dff129a2fca4859c822936c2bd3d3f685b862e1e971880",
   "fresh_reservation_status": "reservedNotExecuted",
-  "extracted_generator_source_lock": "docs/plans/vocabulary-validation-boundary/implementation-evidence/lexical-reconciliation-generator-source-lock-v12.json",
-  "extracted_generator_source_lock_sha256": "8f77942d3c0caf9b26a7597285a9d4448419b280a5c6a4b7284d293595fa3acd",
+  "extracted_generator_source_lock": "docs/plans/vocabulary-validation-boundary/implementation-evidence/lexical-reconciliation-generator-source-lock-v13.json",
+  "extracted_generator_source_lock_sha256": "4c909b8e9731139caf4f15d06ef7d7a30d469694938e5391b26a028d7dc6af02",
   "candidate_frozen": false,
   "verification": {
     "baseline_runs": "standard, causal, longitudinal, POS all exit 0; 13 output hashes frozen",
@@ -54,8 +54,10 @@
     "adr_0001_conflict_ambiguity_hardening": "credible conflicting POS evidence with strong contextual support or independent attestation now prevents dominant-single resolution unless the split criteria are actually satisfied; weak one-off conflict remains residual; experimental protocol is v6 and diagnostics are lexical-reconciliation-v3",
     "fresh_v11_reservation": "v1-v10 remain byte-identical and unexecuted historical evidence; v11 is bound to ADR-0001 conflict-semantics revision 1f07b47 and reserves 3 disjoint seeds plus 24 disjoint document identities; no outcomes or protected data accessed",
     "adr_0001_cross_format_direct_evidence_identity": "occurrence-scoped direct-evidence candidate IDs now use stable within-anchor occurrence order instead of renderer-specific UTF-16 offsets; realistic English and German reconciled PDF/EPUB/DOCX pipelines are equivalent on the current host; experimental protocol is v7 while production remains v3",
-    "fresh_v12_reservation": "v1-v11 remain byte-identical and unexecuted historical evidence; v12 is bound to ADR-0001 candidate-identity revision 458f2ad and reserves 3 disjoint seeds plus 24 disjoint document identities; no outcomes or protected data accessed"
+    "fresh_v12_reservation": "v1-v11 remain byte-identical and unexecuted historical evidence; v12 is bound to ADR-0001 candidate-identity revision 458f2ad and reserves 3 disjoint seeds plus 24 disjoint document identities; no outcomes or protected data accessed",
+    "adr_0001_validation_direct_evidence_alignment": "lexical-partition assessment consequences now preserve one directEvidenceOnly candidate per unresolved/residual occurrence using stable within-anchor ordinals, matching experimental v7 production candidate semantics; protocol and reconciliation decision policy are unchanged",
+    "fresh_v13_reservation": "v1-v12 remain byte-identical and unexecuted historical evidence; v13 is bound to validation-alignment revision 1a1c5b0 and reserves 3 disjoint seeds plus 24 disjoint document identities; no outcomes or protected data accessed"
   },
   "open_findings": [],
-  "remaining_gates": ["independent statistical/research/privacy review", "clean candidate and analysis/decision-rule freeze", "separate reviewed v12 consumption decision", "development-confirmation execution", "release-holdout gate", "final-tree private GUI and algorithm performance matrix"]
+  "remaining_gates": ["independent statistical/research/privacy review", "clean candidate and analysis/decision-rule freeze", "separate reviewed v13 consumption decision", "development-confirmation execution", "release-holdout gate", "final-tree private GUI and algorithm performance matrix"]
 }

@@ -2,9 +2,9 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `458f2ad80654a6d0da61cf84b0ab45fdcc9067a9`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `1a1c5b0fccd4155de61c2e483acd801b86f549ac`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
-Active future reservation: `docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v12.json` (SHA-256 `68ff70eb2dd9d2ad5b35a00c50e9db160db4cf02cc1f3e8c8a77cb2ef60cc1e0`; `reserved_not_executed`). Historical reservations remain indexed separately and unexecuted.
+Active future reservation: `docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v13.json` (SHA-256 `458d46e239ee80fff1dff129a2fca4859c822936c2bd3d3f685b862e1e971880`; `reserved_not_executed`). Historical reservations remain indexed separately and unexecuted.
 
 Head-only changes since the production evidence candidate:
 
@@ -101,6 +101,8 @@ Head-only changes since the production evidence candidate:
 - e6f117c95934c301867516d1d5ccfaf34d0704d6: migrate the lexical reconciliation feature flag to a version-neutral key and align ADR protocol naming
 - 1f07b473ec70de53d1d9cb3f16417d84afdfeb89: harden credible conflicting POS evidence to preserve ambiguity and advance the experimental protocol to v6
 - 458f2ad80654a6d0da61cf84b0ab45fdcc9067a9: make occurrence-scoped direct-evidence candidate IDs renderer-offset independent, verify reconciled PDF/EPUB/DOCX parity, and advance the experimental protocol to v7
+- 91be92e8996cd77066615ccbb656fbe381e3fc1f: separate live-platform reconciliation coverage from deterministic cross-format policy coverage and align ADR v7 wording
+- 1a1c5b0fccd4155de61c2e483acd801b86f549ac: preserve occurrence-scoped direct-evidence candidates in lexical-partition assessment consequences
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 
@@ -281,7 +283,14 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v12.json`](development-confirmation-reservation-v12.json); SHA-256 `68ff70eb2dd9d2ad5b35a00c50e9db160db4cf02cc1f3e8c8a77cb2ef60cc1e0`
 - Evidence class: sealed synthetic development-confirmation reservation
 - Status: `reserved_not_executed`
-- Interpretation: Sole active future reservation for the ADR-0001 experimental v7 lexical protocol with renderer-offset-independent occurrence-scoped direct-evidence IDs and lexical-reconciliation-v3 diagnostics; it has three disjoint seeds and 24 opaque document identities and no candidate freeze, outcomes, consumption, or release access.
+- Interpretation: Historical unexecuted reservation for the ADR-0001 experimental v7 lexical protocol with renderer-offset-independent occurrence-scoped direct-evidence IDs; its source binding was superseded after Validation assessment-consequence simulation was corrected to preserve the same occurrence-scoped direct-evidence units, while its identities and bytes remain sealed.
+
+### docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v13.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v13.json`](development-confirmation-reservation-v13.json); SHA-256 `458d46e239ee80fff1dff129a2fca4859c822936c2bd3d3f685b862e1e971880`
+- Evidence class: sealed synthetic development-confirmation reservation
+- Status: `reserved_not_executed`
+- Interpretation: Sole active future reservation for the ADR-0001 experimental v7 lexical protocol after Validation assessment-consequence simulation was aligned with occurrence-scoped direct-evidence candidate semantics; reconciliation diagnostics remain lexical-reconciliation-v3. It has three disjoint seeds and 24 opaque document identities and no candidate freeze, outcomes, consumption, or release access.
 
 ### docs/plans/vocabulary-validation-evidence/german-form-label-portability-development-check-2026-09-21.json
 

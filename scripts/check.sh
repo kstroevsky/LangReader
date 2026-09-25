@@ -111,8 +111,11 @@ python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v10.p
 echo "==> Checking sealed historical conflict-ambiguity development-confirmation reservation"
 python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v11.py --self-test
 
-echo "==> Checking sealed cross-format candidate-identity development-confirmation reservation"
+echo "==> Checking sealed historical cross-format candidate-identity development-confirmation reservation"
 python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v12.py --self-test
+
+echo "==> Checking sealed validation-alignment development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v13.py --self-test
 
 echo "==> Checking frozen vocabulary warm-compatibility development reservation"
 python3 ./scripts/validate_vocabulary_longitudinal_compatibility_manifest.py \
