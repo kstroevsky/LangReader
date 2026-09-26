@@ -16,10 +16,10 @@ import validate_vocabulary_development_confirmation_reservation_v2 as v2
 
 ROOT = Path(__file__).resolve().parents[1]
 ARCHIVE = ROOT / "docs/plans/vocabulary-validation-evidence"
-MANIFEST = ARCHIVE / "development-confirmation-reservation-v15.json"
+MANIFEST = ARCHIVE / "development-confirmation-reservation-v16.json"
 HISTORICAL_MANIFESTS = {
     f"development-confirmation-v{version}": ARCHIVE / f"development-confirmation-reservation-v{version}.json"
-    for version in range(1, 15)
+    for version in range(1, 16)
 }
 HISTORICAL_SHA256 = {
     "development-confirmation-v1": "a43e45a5fef43367b20e36e0f41684186901af325e2e597a994857591015303a",
@@ -36,11 +36,12 @@ HISTORICAL_SHA256 = {
     "development-confirmation-v12": "68ff70eb2dd9d2ad5b35a00c50e9db160db4cf02cc1f3e8c8a77cb2ef60cc1e0",
     "development-confirmation-v13": "458d46e239ee80fff1dff129a2fca4859c822936c2bd3d3f685b862e1e971880",
     "development-confirmation-v14": "d7a729cf73f0fa97b530452fb486bfb1f7f26fb3fa28e5e0035dd1c558e5b35d",
+    "development-confirmation-v15": "36d2230312a8c12658790516373666aab3400fd411c52d67c2e2da3755939109",
 }
-SOURCE_LOCK = ROOT / "docs/plans/vocabulary-validation-boundary/implementation-evidence/lexical-reconciliation-generator-source-lock-v15.json"
-SOURCE_REVISION = "ae1c7fd7a3b3d7cbf9f8aa7c72bb4ba9ad2360ed"
-RESERVATION_SHA256 = "36d2230312a8c12658790516373666aab3400fd411c52d67c2e2da3755939109"
-SOURCE_LOCK_SHA256 = "be359368bf581ae1578431faf2db11c845db9bfcdf42f9d87b8129212c879f53"
+SOURCE_LOCK = ROOT / "docs/plans/vocabulary-validation-boundary/implementation-evidence/lexical-reconciliation-generator-source-lock-v16.json"
+SOURCE_REVISION = "f62655052a8d1c0c98986bff898184b3f5994057"
+RESERVATION_SHA256 = "1eeebf148c6c54f88f94df875aac7d3b571ddff5b2ca10976d52daf7e07f3c31"
+SOURCE_LOCK_SHA256 = "f566704061faef3a685109fce362ff79050c3c8426b4ff7d47b93666087dfad5"
 DEVELOPMENT_CHECK = ARCHIVE / "otherword-pos-degradation-check-2026-09-25.json"
 DEVELOPMENT_CHECK_SHA256 = "9d85f753bcdc5e548e3e5967043d3a5998d0c929c8847570a7dc6e5cb3111a6e"
 
@@ -54,7 +55,7 @@ def read_json(path: Path) -> dict:
 
 
 def derived_run(root: bytes, ordinal: int) -> tuple[bytes, int, str]:
-    digest = hashlib.sha256(root + f"development-confirmation-v15/run/{ordinal}".encode()).digest()
+    digest = hashlib.sha256(root + f"development-confirmation-v16/run/{ordinal}".encode()).digest()
     return digest, int.from_bytes(digest[:8], "big") or 1, digest.hex()[:16]
 
 
@@ -63,72 +64,72 @@ def derived_document_id(run_digest: bytes, ordinal: int) -> str:
 
 
 def validate_source_lock(lock: dict, *, historical_inputs: dict | None = None) -> None:
-    if lock.get("schemaVersion") != 1 or lock.get("lockRole") != "lexical-reconciliation-generator-provenance-v15":
-        raise ValueError("unsupported v15 generator source lock")
+    if lock.get("schemaVersion") != 1 or lock.get("lockRole") != "lexical-reconciliation-generator-provenance-v16":
+        raise ValueError("unsupported v16 generator source lock")
     if lock.get("sourceRevision") != SOURCE_REVISION:
-        raise ValueError("v15 generator revision changed")
+        raise ValueError("v16 generator revision changed")
     if lock.get("generatorInputsCleanAtLock") is not True or lock.get("candidateFrozen") is not False:
-        raise ValueError("v15 lock has invalid clean-input/candidate status")
+        raise ValueError("v16 lock has invalid clean-input/candidate status")
     if lock.get("swiftMode") != "Swift 6" or lock.get("standaloneSwiftFlags") != ["-swift-version", "6", "-warnings-as-errors", "-O"]:
-        raise ValueError("v15 Swift build contract changed")
+        raise ValueError("v16 Swift build contract changed")
     historical = historical_inputs if historical_inputs is not None else v2.historical_source_lock(SOURCE_REVISION)
     if lock.get("generatorInputs") != historical:
-        raise ValueError("v15 source lock does not match its generator commit")
+        raise ValueError("v16 source lock does not match its generator commit")
     analysis = lock.get("analysisBinding", {})
     if analysis.get("status") != "provenanceOnlyNotFrozen" or analysis.get("candidateAnalysisAndDecisionRulesChecksum") is not None:
-        raise ValueError("v15 lock incorrectly claims an analysis freeze")
+        raise ValueError("v16 lock incorrectly claims an analysis freeze")
     if analysis.get("paths") != [
         "scripts/validate_vocabulary_assessment_report.py",
         "scripts/summarize_vocabulary_assessment_benchmarks.py",
         "scripts/compare_vocabulary_stopping_reports.py",
         "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
     ]:
-        raise ValueError("v15 analysis provenance paths changed")
+        raise ValueError("v16 analysis provenance paths changed")
     if lock.get("otherWordPOSDegradationCheckSHA256") != DEVELOPMENT_CHECK_SHA256 or sha256(DEVELOPMENT_CHECK.read_bytes()) != DEVELOPMENT_CHECK_SHA256:
-        raise ValueError("v15 OtherWord POS evidence changed")
+        raise ValueError("v16 OtherWord POS evidence changed")
     if lock.get("protectedOutcomesAccessed") is not False:
-        raise ValueError("v15 lock cannot claim protected outcome access")
+        raise ValueError("v16 lock cannot claim protected outcome access")
 
 
 def validate(manifest: dict, *, verify_files: bool = True) -> dict:
-    if manifest.get("schemaVersion") != 15 or manifest.get("reservationID") != "development-confirmation-v15":
-        raise ValueError("unsupported v15 development-confirmation reservation")
+    if manifest.get("schemaVersion") != 16 or manifest.get("reservationID") != "development-confirmation-v16":
+        raise ValueError("unsupported v16 development-confirmation reservation")
     if manifest.get("dataRole") != "development-confirmation" or manifest.get("executionStatus") != "reservedNotExecuted":
-        raise ValueError("v15 reservation role/status changed")
-    if manifest.get("reservationSourceRevision") != SOURCE_REVISION or manifest.get("supersedesAsActiveReservation") != "development-confirmation-v14":
-        raise ValueError("v15 source revision or active-reservation transition changed")
+        raise ValueError("v16 reservation role/status changed")
+    if manifest.get("reservationSourceRevision") != SOURCE_REVISION or manifest.get("supersedesAsActiveReservation") != "development-confirmation-v15":
+        raise ValueError("v16 source revision or active-reservation transition changed")
     if manifest.get("historicalReservationStatuses") != {
-        f"development-confirmation-v{version}": "reservedNotExecuted" for version in range(1, 15)
+        f"development-confirmation-v{version}": "reservedNotExecuted" for version in range(1, 16)
     }:
-        raise ValueError("v15 historical reservation statuses changed")
+        raise ValueError("v16 historical reservation statuses changed")
 
     derivation = manifest.get("seedDerivation", {})
     root = derivation.get("seedDerivationRoot", "")
     if not isinstance(root, str) or not re.fullmatch(r"[0-9a-f]{64}", root):
-        raise ValueError("v15 seed root must be 32 lowercase-hex bytes")
-    if derivation.get("algorithm") != "SHA256(rootBytes || UTF8('development-confirmation-v15/run/' || zeroBasedRunOrdinal)); seed=first8BytesUInt64BE, zero maps to one" or derivation.get("documentIdentityAlgorithm") != "first24Hex(SHA256(fullRunDigest || UTF8('/document/' || zeroBasedDocumentOrdinal)))":
-        raise ValueError("v15 identity derivation changed")
+        raise ValueError("v16 seed root must be 32 lowercase-hex bytes")
+    if derivation.get("algorithm") != "SHA256(rootBytes || UTF8('development-confirmation-v16/run/' || zeroBasedRunOrdinal)); seed=first8BytesUInt64BE, zero maps to one" or derivation.get("documentIdentityAlgorithm") != "first24Hex(SHA256(fullRunDigest || UTF8('/document/' || zeroBasedDocumentOrdinal)))":
+        raise ValueError("v16 identity derivation changed")
 
     workload = manifest.get("workload", {})
     if workload.get("readersPerScenario") != 64 or workload.get("documentsPerScenario") != 8 or workload.get("lemmasPerDocument") != 400 or workload.get("scenarios") != ["well-specified", "item-residual", "response-noise", "idiosyncratic-knowledge"] or workload.get("modes") != ["all-unknown", "coverage-98"] or workload.get("warmAndCold") is not True:
-        raise ValueError("v15 workload changed")
+        raise ValueError("v16 workload changed")
 
     runs = manifest.get("runs")
     if not isinstance(runs, list) or len(runs) != 3:
-        raise ValueError("v15 must contain exactly three runs")
+        raise ValueError("v16 must contain exactly three runs")
     seeds: set[int] = set()
     documents: set[str] = set()
     for ordinal, run in enumerate(runs):
         digest, seed, run_id = derived_run(bytes.fromhex(root), ordinal)
         expected_documents = [derived_document_id(digest, index) for index in range(8)]
         if run.get("runOrdinal") != ordinal or run.get("runID") != run_id or run.get("seed") != seed:
-            raise ValueError(f"v15 run {ordinal} identity changed")
+            raise ValueError(f"v16 run {ordinal} identity changed")
         if run.get("opaqueDocumentDerivationIDs") != expected_documents:
-            raise ValueError(f"v15 run {ordinal} document identities changed")
+            raise ValueError(f"v16 run {ordinal} document identities changed")
         seeds.add(seed)
         documents.update(expected_documents)
     if len(seeds) != 3 or len(documents) != 24:
-        raise ValueError("duplicate v15 identity")
+        raise ValueError("duplicate v16 identity")
 
     for name, path in HISTORICAL_MANIFESTS.items():
         if sha256(path.read_bytes()) != HISTORICAL_SHA256[name]:
@@ -138,29 +139,29 @@ def validate(manifest: dict, *, verify_files: bool = True) -> dict:
             raise ValueError(f"historical reservation is no longer sealed and unexecuted: {name}")
 
     non_overlap = manifest.get("nonOverlap", {})
-    if non_overlap.get("identityCorpusRevision") != SOURCE_REVISION or non_overlap.get("identityCorpusRoots") != list(v2.PRIOR_EVIDENCE_ROOTS) or non_overlap.get("historicalReservationSHA256") != HISTORICAL_SHA256 or non_overlap.get("allReservedSeedsMustBeDisjoint") is not True or non_overlap.get("allOpaqueDocumentDerivationIDsMustBeUnique") is not True or "v1-v14" not in str(non_overlap.get("opaqueDocumentNamespaceNote", "")):
-        raise ValueError("v15 non-overlap contract changed")
+    if non_overlap.get("identityCorpusRevision") != SOURCE_REVISION or non_overlap.get("identityCorpusRoots") != list(v2.PRIOR_EVIDENCE_ROOTS) or non_overlap.get("historicalReservationSHA256") != HISTORICAL_SHA256 or non_overlap.get("allReservedSeedsMustBeDisjoint") is not True or non_overlap.get("allOpaqueDocumentDerivationIDsMustBeUnique") is not True or "v1-v15" not in str(non_overlap.get("opaqueDocumentNamespaceNote", "")):
+        raise ValueError("v16 non-overlap contract changed")
     prior_seeds, prior_documents, file_count = v2.prior_artifact_identities(SOURCE_REVISION, MANIFEST.relative_to(ROOT).as_posix())
     if file_count < 100 or not {1, 2, 7, 17, 20260909, 20260912, 20260913, 20260914}.issubset(prior_seeds):
-        raise ValueError("v15 prior identity corpus is incomplete")
+        raise ValueError("v16 prior identity corpus is incomplete")
     v2.require_disjoint(seeds, documents, prior_seeds, prior_documents)
 
     generator = manifest.get("generatorLock", {})
     if generator.get("path") != SOURCE_LOCK.relative_to(ROOT).as_posix() or generator.get("sha256") != SOURCE_LOCK_SHA256:
-        raise ValueError("v15 generator lock binding changed")
+        raise ValueError("v16 generator lock binding changed")
     if verify_files:
         lock_bytes = SOURCE_LOCK.read_bytes()
         if sha256(lock_bytes) != SOURCE_LOCK_SHA256:
-            raise ValueError("v15 generator lock bytes changed")
+            raise ValueError("v16 generator lock bytes changed")
         validate_source_lock(json.loads(lock_bytes))
 
     freeze = manifest.get("freezeAndConsumption", {})
     if any(freeze.get(key) is not None for key in ("candidateFreeze", "analysisFreeze", "decisionRulesChecksum", "consumedByCandidateCycle")):
-        raise ValueError("v15 prematurely claims a candidate/analysis freeze or consumption")
+        raise ValueError("v16 prematurely claims a candidate/analysis freeze or consumption")
     if freeze.get("outcomeArtifacts") != [] or freeze.get("outcomesInspected") is not False or freeze.get("releaseHoldoutAccessAllowed") is not False:
-        raise ValueError("v15 contains or authorizes protected outcomes")
+        raise ValueError("v16 contains or authorizes protected outcomes")
     if freeze.get("requiredBeforeExecution") != ["candidate commit and clean-tree hash", "model/configuration/resource hashes", "analysis and decision-rule checksum", "reviewed decision to consume this specific reservation"]:
-        raise ValueError("v15 execution prerequisites changed")
+        raise ValueError("v16 execution prerequisites changed")
     return {"reservationID": manifest["reservationID"], "executionStatus": "reservedNotExecuted", "runs": 3, "documents": 24, "priorIdentityFiles": file_count}
 
 
@@ -173,7 +174,7 @@ def self_test() -> None:
         historical_seeds = {run["seed"] for run in historical["runs"]}
         historical_documents = {document for run in historical["runs"] for document in run["opaqueDocumentDerivationIDs"]}
         if not historical_seeds.issubset(prior_seeds) or not historical_documents.issubset(prior_documents):
-            raise AssertionError(f"v15 prior identity corpus omitted {name} identities")
+            raise AssertionError(f"v16 prior identity corpus omitted {name} identities")
 
     first_seed = original["runs"][0]["seed"]
     first_document = original["runs"][0]["opaqueDocumentDerivationIDs"][0]
@@ -183,7 +184,7 @@ def self_test() -> None:
         except ValueError:
             pass
         else:
-            raise AssertionError("accepted a synthetic v15 prior-identity collision")
+            raise AssertionError("accepted a synthetic v16 prior-identity collision")
 
     mutations = (
         ("seed", lambda value: value["runs"][0].__setitem__("seed", 1)),
@@ -199,7 +200,7 @@ def self_test() -> None:
             validate(changed)
         except ValueError:
             continue
-        raise AssertionError(f"accepted changed v15 {label}")
+        raise AssertionError(f"accepted changed v16 {label}")
 
     lock = read_json(SOURCE_LOCK)
     changed_historical = copy.deepcopy(v2.historical_source_lock(SOURCE_REVISION))
@@ -209,12 +210,12 @@ def self_test() -> None:
     except ValueError:
         pass
     else:
-        raise AssertionError("accepted mismatched historical v15 generator inputs")
+        raise AssertionError("accepted mismatched historical v16 generator inputs")
 
     real_read_bytes = Path.read_bytes
     def missing_lock(path: Path) -> bytes:
         if path == SOURCE_LOCK:
-            raise FileNotFoundError("synthetic missing v15 source lock")
+            raise FileNotFoundError("synthetic missing v16 source lock")
         return real_read_bytes(path)
     with patch.object(Path, "read_bytes", missing_lock):
         try:
@@ -222,8 +223,8 @@ def self_test() -> None:
         except FileNotFoundError:
             pass
         else:
-            raise AssertionError("accepted missing v15 source lock")
-    print("lexical-reconciliation development-confirmation reservation v15 self-test passed")
+            raise AssertionError("accepted missing v16 source lock")
+    print("lexical-reconciliation development-confirmation reservation v16 self-test passed")
 
 
 def main() -> None:
@@ -231,7 +232,7 @@ def main() -> None:
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     if sha256(MANIFEST.read_bytes()) != RESERVATION_SHA256:
-        raise ValueError("v15 reservation is missing or differs from its frozen checksum")
+        raise ValueError("v16 reservation is missing or differs from its frozen checksum")
     if args.self_test:
         self_test()
     else:
