@@ -38,7 +38,13 @@ extension ReaderWindowController {
         guard let language = language ?? vocabularyDocumentLanguageID else {
             return surface
         }
-        return GermanLemmaResolver.lemma(for: surface, language: language)
+        let analyzerFactory = vocabularyLanguageCatalog.resolve(language: language)?.linguisticAnalyzerFactory
+            ?? .exactForm
+        return GermanLemmaResolver.lemma(
+            for: surface,
+            language: language,
+            analyzerFactory: analyzerFactory
+        )
     }
 
     func vocabularyGroupingKey(
@@ -51,7 +57,14 @@ extension ReaderWindowController {
         guard let language = language ?? vocabularyDocumentLanguageID else {
             return VocabularyTextPolicy.canonicalVocabularyKey(fallback)
         }
-        return GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+        let analyzerFactory = vocabularyLanguageCatalog.resolve(language: language)?.linguisticAnalyzerFactory
+            ?? .exactForm
+        return GermanLemmaResolver.groupingKey(
+            word: word,
+            lemma: lemma,
+            language: language,
+            analyzerFactory: analyzerFactory
+        )
     }
 
     var vocabularyLanguageRevision: UInt64 { vocabularyState.languageRevision }

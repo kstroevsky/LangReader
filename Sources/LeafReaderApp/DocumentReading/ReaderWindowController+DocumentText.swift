@@ -98,8 +98,10 @@ extension ReaderWindowController {
         preloadedPageTexts: [Int: String] = [:],
         completion: @escaping (PDFDocumentTextSnapshot?, VocabularyDocumentLemmaIndex?) -> Void
     ) {
-        let semanticIdentity = vocabularyLanguageCatalog.resolve(language: language)?.linguisticCacheIdentity
+        let runtime = vocabularyLanguageCatalog.resolve(language: language)
+        let semanticIdentity = runtime?.linguisticCacheIdentity
             ?? VocabularyLinguisticCacheIdentity(language: language)
+        let analyzerFactory = runtime?.linguisticAnalyzerFactory ?? .exactForm
         if let snapshot = documentTextState.snapshot,
            let index = documentTextState.vocabularyIndex,
            documentTextState.vocabularyIndexSemanticIdentity == semanticIdentity {
@@ -131,6 +133,7 @@ extension ReaderWindowController {
                     maximumWorkerCount: 4,
                     seed: seed,
                     semanticIdentity: semanticIdentity,
+                    analyzerFactory: analyzerFactory,
                     isCancelled: { token.waitUntilRunnableOrCancelled() }
                 )
                 Task { @MainActor [weak self] in
@@ -177,8 +180,10 @@ extension ReaderWindowController {
         preloadedPageTexts: [Int: String] = [:],
         completion: @escaping @MainActor @Sendable (PDFVocabularyPriorityIndexResult?) -> Void
     ) {
-        let semanticIdentity = vocabularyLanguageCatalog.resolve(language: language)?.linguisticCacheIdentity
+        let runtime = vocabularyLanguageCatalog.resolve(language: language)
+        let semanticIdentity = runtime?.linguisticCacheIdentity
             ?? VocabularyLinguisticCacheIdentity(language: language)
+        let analyzerFactory = runtime?.linguisticAnalyzerFactory ?? .exactForm
         guard currentDocumentKind == .pdf,
               let documentID = currentFileMD5,
               let url = currentFileURL,
@@ -236,6 +241,7 @@ extension ReaderWindowController {
                     language: language,
                     maximumWorkerCount: 2,
                     semanticIdentity: semanticIdentity,
+                    analyzerFactory: analyzerFactory,
                     isCancelled: { token.isCancelled }
                 ) else { return nil }
                 return PDFVocabularyPriorityIndexResult(

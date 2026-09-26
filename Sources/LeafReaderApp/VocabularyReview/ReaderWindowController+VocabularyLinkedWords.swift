@@ -130,10 +130,10 @@ extension ReaderWindowController {
                     && !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             }?.answer
         } else {
-            let key = GermanLemmaResolver.groupingKey(word: word, language: language)
+            let key = vocabularyGroupingKey(word: word, language: language)
             answer = storedWebWordRecords.first {
                 ($0.language == nil || $0.language == language)
-                    && GermanLemmaResolver.groupingKey(
+                    && vocabularyGroupingKey(
                         word: $0.word,
                         lemma: $0.lemma,
                         language: $0.language ?? language

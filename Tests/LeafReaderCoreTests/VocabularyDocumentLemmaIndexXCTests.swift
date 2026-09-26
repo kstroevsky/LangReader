@@ -1,8 +1,20 @@
-import NaturalLanguage
+import Foundation
 import XCTest
 import LeafReaderCore
 
 final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
+    private static let englishLemmaFixture = VocabularyLinguisticAnalyzerFactory {
+        VocabularyDocumentLemmaFixtureAnalyzer(lemmas: [
+            "develop": "develop",
+            "developed": "develop",
+            "developing": "develop",
+            "development": "development",
+            "tools": "tool",
+            "tool": "tool",
+            "vocabulary": "vocabulary"
+        ])
+    }
+
     func testPartOfSpeechConfidencePolicyPreservesProductionThresholds() {
         XCTAssertEqual(
             VocabularyPartOfSpeechConfidencePolicy.classify(hypotheses: ["Noun": 0.80, "Verb": 0.20]),
@@ -200,7 +212,8 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
     func testInventorySummariesCollapseInflectionsButKeepDerivationsSeparate() throws {
         let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
             texts: ["They develop tools. She developed one while developing another. Development continues."],
-            language: .english
+            language: .english,
+            analyzerFactory: Self.englishLemmaFixture
         ))
 
         let summaries = index.lemmaSummaries()
@@ -376,7 +389,8 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
     func testOrdinaryEnglishWordsAreNotClassifiedAsConfidentNames() throws {
         let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
             texts: ["They develop tools while readers learn vocabulary."],
-            language: .english
+            language: .english,
+            analyzerFactory: Self.englishLemmaFixture
         ))
 
         let summaries = index.lemmaSummaries()
@@ -388,7 +402,8 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
     func testInventorySummariesAggregateAcrossUnitsAndRepairPDFLineWraps() throws {
         let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
             texts: ["A remark was develop-\ned here.", "Later they developed it again."],
-            language: .english
+            language: .english,
+            analyzerFactory: Self.englishLemmaFixture
         ))
 
         let develop = try XCTUnwrap(index.lemmaSummaries().first { $0.lemmaKey == "develop" })
@@ -534,5 +549,36 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         XCTAssertNotEqual(noun.canonicalKey, verb.canonicalKey)
         XCTAssertNil(noun.senseKey)
         XCTAssertTrue(futureSense.canonicalKey.hasSuffix("|river"))
+    }
+}
+
+private struct VocabularyDocumentLemmaFixtureAnalyzer: VocabularyLinguisticAnalyzing {
+    let lemmas: [String: String]
+
+    func tokenEvidence(
+        in text: String,
+        language: VocabularyLanguageID
+    ) -> [VocabularyLinguisticTokenEvidence] {
+        guard let regex = try? NSRegularExpression(pattern: #"\p{L}[\p{L}\p{M}]*"#) else {
+            return []
+        }
+        let nsText = text as NSString
+        return regex.matches(
+            in: text,
+            range: NSRange(location: 0, length: nsText.length)
+        ).map { match in
+            let surface = nsText.substring(with: match.range)
+            return VocabularyLinguisticTokenEvidence(
+                range: match.range,
+                taggedLemma: lemmas[surface.lowercased()]
+            )
+        }
+    }
+
+    func isolatedLemma(
+        for surfaceForm: String,
+        language: VocabularyLanguageID
+    ) -> String? {
+        lemmas[VocabularyTextPolicy.normalizedVocabularyText(surfaceForm).lowercased()]
     }
 }

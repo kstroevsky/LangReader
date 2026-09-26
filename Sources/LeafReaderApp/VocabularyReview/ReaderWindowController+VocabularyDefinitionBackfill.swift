@@ -4,13 +4,17 @@ import LeafReaderCore
 extension ReaderWindowController {
     func backfillDictionaryAnswerAsync(vocabularyID: String?, word: String) {
         let query = VocabularyTextPolicy.normalizedVocabularyText(word)
-        guard VocabularyTextPolicy.isSingleEnglishWord(query),
+        guard VocabularyTextPolicy.isSingleVocabularyWord(query),
               let documentID = currentFileMD5,
               let language = vocabularyDocumentLanguageID,
               let runtime = vocabularyLanguageCatalog.resolve(language: language),
               let provider = runtime.definitions else { return }
         let languageRevision = vocabularyLanguageRevision
-        let localLemma = GermanLemmaResolver.lemma(for: query, language: language)
+        let localLemma = GermanLemmaResolver.lemma(
+            for: query,
+            language: language,
+            analyzerFactory: runtime.linguisticAnalyzerFactory
+        )
 
         Task { [weak self] in
             guard let definition = try? await provider.definition(for: VocabularyDefinitionRequest(
@@ -56,7 +60,7 @@ extension ReaderWindowController {
     ) {
         let trimmedAnswer = answer.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedLemma = VocabularyTextPolicy.normalizedVocabularyText(lemma)
-        let wordKey = GermanLemmaResolver.groupingKey(word: word, lemma: normalizedLemma, language: language)
+        let wordKey = vocabularyGroupingKey(word: word, lemma: normalizedLemma, language: language)
         guard !trimmedAnswer.isEmpty, !wordKey.isEmpty else { return }
 
         if currentDocumentKind != .pdf {
@@ -76,7 +80,7 @@ extension ReaderWindowController {
         var didChangeLemma = false
         for index in storedWordRecords.indices {
             let matchingVocabularyID = vocabularyID.map { storedWordRecords[index].vocabularyID == $0 } ?? false
-            let matchingWord = GermanLemmaResolver.groupingKey(
+            let matchingWord = vocabularyGroupingKey(
                 word: storedWordRecords[index].word,
                 lemma: storedWordRecords[index].lemma,
                 language: storedWordRecords[index].language ?? language
@@ -131,7 +135,7 @@ extension ReaderWindowController {
         var updatedRecords: [StoredWebWordRecord] = []
         for index in storedWebWordRecords.indices {
             let matchingVocabularyID = vocabularyID.map { storedWebWordRecords[index].vocabularyID == $0 } ?? false
-            let matchingWord = GermanLemmaResolver.groupingKey(
+            let matchingWord = vocabularyGroupingKey(
                 word: storedWebWordRecords[index].word,
                 lemma: storedWebWordRecords[index].lemma,
                 language: storedWebWordRecords[index].language ?? language

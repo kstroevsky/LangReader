@@ -1,10 +1,22 @@
 import XCTest
+import NaturalLanguage
 import LeafReaderCore
 @testable import LeafReaderApp
 
 final class VocabularyLanguageCatalogXCTests: XCTestCase {
+    private let fullAppleCapabilities = AppleVocabularyLinguisticCapabilities(
+        availableTagSchemes: Set([
+            NLTagScheme.lemma.rawValue,
+            NLTagScheme.lexicalClass.rawValue,
+            NLTagScheme.nameType.rawValue
+        ])
+    )
+
     func testPreparationReleaseListComesFromCatalogCapabilities() {
-        let catalog = VocabularyLanguageCatalogFactory.live()
+        let capabilities = fullAppleCapabilities
+        let catalog = VocabularyLanguageCatalogFactory.live(
+            linguisticCapabilityProbe: { _ in capabilities }
+        )
 
         XCTAssertEqual(
             catalog.releasedLanguages(for: .vocabularyPreparation),
@@ -13,7 +25,10 @@ final class VocabularyLanguageCatalogXCTests: XCTestCase {
     }
 
     func testPartialProfilesDoNotInheritEnglishProviders() throws {
-        let catalog = VocabularyLanguageCatalogFactory.live()
+        let capabilities = fullAppleCapabilities
+        let catalog = VocabularyLanguageCatalogFactory.live(
+            linguisticCapabilityProbe: { _ in capabilities }
+        )
         let french = try XCTUnwrap(catalog.resolve(language: .french))
         let italian = try XCTUnwrap(catalog.resolve(language: .italian))
 
@@ -28,6 +43,43 @@ final class VocabularyLanguageCatalogXCTests: XCTestCase {
         XCTAssertFalse(italian.status(for: .vocabularyPreparation).isAvailable)
         XCTAssertNil(italian.definitions)
         XCTAssertNil(italian.difficulty)
+    }
+
+    func testMissingAppleSchemesDegradeLinguisticsWithoutChangingLanguage() throws {
+        let noAppleSchemes = AppleVocabularyLinguisticCapabilities(availableTagSchemes: [])
+        let catalog = VocabularyLanguageCatalogFactory.live(
+            linguisticCapabilityProbe: { _ in noAppleSchemes }
+        )
+        let german = try XCTUnwrap(catalog.resolve(language: .german))
+
+        XCTAssertEqual(german.language, .german)
+        XCTAssertTrue(german.status(for: .exactForm).isAvailable)
+        XCTAssertFalse(german.status(for: .lemmaEvidence).isAvailable)
+        XCTAssertFalse(german.status(for: .partOfSpeechEvidence).isAvailable)
+        XCTAssertFalse(german.status(for: .vocabularyPreparation).isAvailable)
+        XCTAssertEqual(
+            german.linguisticCacheIdentity.linguisticProviders.map(\.id).sorted(),
+            [
+                "linguistics.exact-form",
+                "morphology.german-deterministic"
+            ]
+        )
+    }
+
+    func testItalianPolicyDoesNotEnableAppleLemmaEvenWhenSchemeExists() throws {
+        let capabilities = fullAppleCapabilities
+        let catalog = VocabularyLanguageCatalogFactory.live(
+            linguisticCapabilityProbe: { _ in capabilities }
+        )
+        let italian = try XCTUnwrap(catalog.resolve(language: .italian))
+
+        XCTAssertEqual(italian.language, .italian)
+        XCTAssertFalse(italian.status(for: .lemmaEvidence).isAvailable)
+        XCTAssertFalse(
+            italian.linguisticCacheIdentity.linguisticProviders.contains {
+                $0.id == "linguistics.apple-natural-language"
+            }
+        )
     }
 
     func testECDICTMetadataAbstainsOutsideEnglish() {

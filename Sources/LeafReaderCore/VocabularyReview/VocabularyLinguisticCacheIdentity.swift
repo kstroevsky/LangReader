@@ -31,7 +31,17 @@ package struct VocabularyLinguisticCacheIdentity: Codable, Hashable, Sendable {
     package static let schemaVersion = 1
     package static let builtInProvider = VocabularySemanticProviderIdentity(
         id: "linguistics.apple-natural-language",
-        version: "document-lemma-index-v1",
+        version: "apple-natural-language-adapter-v2",
+        normalizationVersion: VocabularyNormalizationPolicy.currentVersion
+    )
+    package static let exactFormProvider = VocabularySemanticProviderIdentity(
+        id: "linguistics.exact-form",
+        version: "unicode-token-v1",
+        normalizationVersion: VocabularyNormalizationPolicy.currentVersion
+    )
+    package static let germanDeterministicProvider = VocabularySemanticProviderIdentity(
+        id: "morphology.german-deterministic",
+        version: "adjective-haft-v1",
         normalizationVersion: VocabularyNormalizationPolicy.currentVersion
     )
 
@@ -50,7 +60,7 @@ package struct VocabularyLinguisticCacheIdentity: Codable, Hashable, Sendable {
         normalizationVersion: String = VocabularyNormalizationPolicy.currentVersion,
         lexicalPolicyVersion: String = VocabularyLexicalReconciler.policyVersion,
         partOfSpeechPolicyVersion: String = VocabularyPartOfSpeechConfidencePolicy.policyVersion,
-        linguisticProviders: [VocabularySemanticProviderIdentity] = [Self.builtInProvider],
+        linguisticProviders: [VocabularySemanticProviderIdentity] = [Self.exactFormProvider],
         linguisticRuntimeSignature: String = Self.currentRuntimeSignature
     ) {
         fingerprintSchemaVersion = Self.schemaVersion
@@ -68,11 +78,6 @@ package struct VocabularyLinguisticCacheIdentity: Codable, Hashable, Sendable {
     }
 
     package static var currentRuntimeSignature: String {
-        let version = ProcessInfo.processInfo.operatingSystemVersion
-        return [
-            "apple-natural-language",
-            "macos-\(version.majorVersion).\(version.minorVersion).\(version.patchVersion)",
-            "schemes-lemma+lexicalClass+nameType"
-        ].joined(separator: "|")
+        "exact-form|unicode-token-v1"
     }
 }

@@ -40,7 +40,7 @@ extension ReaderWindowController {
                 didRepair = true
             }
             let lemma = VocabularyExporter.nonEmptyText(record.lemma)
-                ?? GermanLemmaResolver.lemma(for: surfaceForm, language: record.language ?? language)
+                ?? resolvedVocabularyLemma(for: surfaceForm, language: record.language ?? language)
             if repairedRecord.lemma != lemma {
                 repairedRecord.lemma = lemma
                 didRepair = true
@@ -48,7 +48,7 @@ extension ReaderWindowController {
             if let repairedWord = repairedWords[key], repairedWord != repairedRecord.word {
                 repairedRecord.word = repairedWord
                 repairedRecord.surfaceForm = repairedWord
-                repairedRecord.lemma = GermanLemmaResolver.lemma(
+                repairedRecord.lemma = resolvedVocabularyLemma(
                     for: repairedWord,
                     language: repairedRecord.language ?? language
                 )

@@ -156,6 +156,8 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
                 texts: [plainText],
                 language: language,
                 maximumWorkerCount: 1,
+                semanticIdentity: runtime.linguisticCacheIdentity,
+                analyzerFactory: runtime.linguisticAnalyzerFactory,
                 isCancelled: { Task.isCancelled }
             )
         }).value else {
@@ -179,7 +181,7 @@ extension ReaderWindowController: VocabularyPreparationLibraryAccess {
     func vocabularyPreparationExistingKeys(language: VocabularyLanguageID, kind: ReaderDocumentKind) -> Set<String> {
         if kind == .pdf {
             return Set(storedWordRecords.map {
-                $0.lexicalKey ?? GermanLemmaResolver.groupingKey(
+                $0.lexicalKey ?? vocabularyGroupingKey(
                     word: $0.word,
                     lemma: $0.lemma,
                     language: language
@@ -187,7 +189,7 @@ extension ReaderWindowController: VocabularyPreparationLibraryAccess {
             })
         }
         return Set(storedWebWordRecords.map {
-                $0.lexicalKey ?? GermanLemmaResolver.groupingKey(
+                $0.lexicalKey ?? vocabularyGroupingKey(
                     word: $0.word,
                     lemma: $0.lemma,
                     language: language
