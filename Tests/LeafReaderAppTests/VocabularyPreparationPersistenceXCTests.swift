@@ -5,6 +5,73 @@ import LeafReaderCore
 @testable import LeafReaderApp
 
 final class VocabularyPreparationPersistenceXCTests: XCTestCase {
+    func testDocumentLanguageMetadataRestoresManualChoiceAsAuthoritative() throws {
+        let suite = "VocabularyDocumentLanguagePersistenceXCTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = VocabularyDocumentLanguageStore(documentID: "document-a", defaults: defaults)
+        let manual = VocabularyLanguageResolution.resolved(VocabularyResolvedLanguage(
+            id: .german,
+            provenance: .userSelected
+        ))
+
+        XCTAssertTrue(store.save(resolution: manual))
+        XCTAssertEqual(store.load()?.restoredResolution, manual)
+    }
+
+    func testDocumentLanguageMetadataMarksAutomaticRestoreAsPersistedEvidence() throws {
+        let suite = "VocabularyDocumentLanguageAutomaticXCTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = VocabularyDocumentLanguageStore(documentID: "document-a", defaults: defaults)
+        let evidence = VocabularyLanguageEvidence(
+            provider: VocabularyProviderDescriptor(
+                id: "language.test",
+                version: "1",
+                supportedLanguageRanges: []
+            ),
+            sampledCharacterCount: 400,
+            sampledUnitCount: 2
+        )
+        let automatic = VocabularyLanguageResolution.resolved(VocabularyResolvedLanguage(
+            id: .english,
+            provenance: .automaticDetection,
+            evidence: evidence
+        ))
+
+        XCTAssertTrue(store.save(resolution: automatic))
+        let restored = try XCTUnwrap(store.load()?.restoredResolution?.resolvedLanguage)
+        XCTAssertEqual(restored.id, .english)
+        XCTAssertEqual(restored.provenance, .persistedDocumentMetadata)
+        XCTAssertEqual(restored.evidence, evidence)
+    }
+
+    func testManualLanguageResolutionRejectsLaterAutomaticOverwrite() {
+        var state = ReaderVocabularyState()
+        let manual = VocabularyLanguageResolution.resolved(VocabularyResolvedLanguage(
+            id: .german,
+            provenance: .userSelected
+        ))
+        let automatic = VocabularyLanguageResolution.resolved(VocabularyResolvedLanguage(
+            id: .english,
+            provenance: .automaticDetection
+        ))
+
+        XCTAssertTrue(state.updateLanguageResolution(manual))
+        let revision = state.languageRevision
+        XCTAssertFalse(state.updateLanguageResolution(automatic))
+        XCTAssertEqual(state.documentLanguageResolution, manual)
+        XCTAssertEqual(state.languageRevision, revision)
+
+        let changedManual = VocabularyLanguageResolution.resolved(VocabularyResolvedLanguage(
+            id: .english,
+            provenance: .userSelected
+        ))
+        XCTAssertTrue(state.updateLanguageResolution(changedManual))
+        XCTAssertEqual(state.documentLanguageResolution, changedManual)
+        XCTAssertGreaterThan(state.languageRevision, revision)
+    }
+
     func testDocumentScopedSessionRoundTripAndClear() throws {
         let suite = "VocabularyPreparationPersistenceXCTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))

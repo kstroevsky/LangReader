@@ -12,10 +12,10 @@ extension ReaderWindowController {
         }
         set {
             guard let language = VocabularyLanguageID(newValue.rawValue) else {
-                vocabularyState.updateLanguageResolution(.undetermined(.unresolved(.inconclusiveRecognition)))
+                _ = vocabularyState.updateLanguageResolution(.undetermined(.unresolved(.inconclusiveRecognition)))
                 return
             }
-            vocabularyState.updateLanguageResolution(.resolved(VocabularyResolvedLanguage(
+            setVocabularyDocumentLanguageResolution(.resolved(VocabularyResolvedLanguage(
                 id: language,
                 provenance: .persistedDocumentMetadata
             )))
@@ -33,7 +33,17 @@ extension ReaderWindowController {
     var vocabularyLanguageRevision: UInt64 { vocabularyState.languageRevision }
 
     func setVocabularyDocumentLanguageResolution(_ resolution: VocabularyLanguageResolution) {
-        vocabularyState.updateLanguageResolution(resolution)
+        guard vocabularyState.updateLanguageResolution(resolution) else { return }
+        guard let documentID = currentFileMD5 else { return }
+        _ = VocabularyDocumentLanguageStore(documentID: documentID).save(resolution: resolution)
+    }
+
+    func restoreVocabularyDocumentLanguageMetadata() {
+        guard let documentID = currentFileMD5,
+              let resolution = VocabularyDocumentLanguageStore(documentID: documentID)
+                .load()?
+                .restoredResolution else { return }
+        _ = vocabularyState.updateLanguageResolution(resolution, replacingUserSelection: true)
     }
 
     var storedWordRecords: [StoredPDFWordRecord] {

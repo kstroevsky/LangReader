@@ -22,13 +22,23 @@ struct ReaderVocabularyState {
     var renderedPDFWordAnnotations: [(page: PDFPage, annotation: PDFAnnotation)] = []
     var resolvedPDFWordBounds: [String: CGRect] = [:]
 
-    mutating func updateLanguageResolution(_ resolution: VocabularyLanguageResolution) {
-        guard documentLanguageResolution != resolution else { return }
+    @discardableResult
+    mutating func updateLanguageResolution(
+        _ resolution: VocabularyLanguageResolution,
+        replacingUserSelection: Bool = false
+    ) -> Bool {
+        if !replacingUserSelection,
+           documentLanguageResolution.resolvedLanguage?.provenance == .userSelected,
+           resolution.resolvedLanguage?.provenance != .userSelected {
+            return false
+        }
+        guard documentLanguageResolution != resolution else { return false }
         documentLanguageResolution = resolution
         languageRevision &+= 1
+        return true
     }
 
     mutating func resetLanguageResolution() {
-        updateLanguageResolution(.notYetAnalyzed)
+        _ = updateLanguageResolution(.notYetAnalyzed, replacingUserSelection: true)
     }
 }
