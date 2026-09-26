@@ -1,5 +1,4 @@
 import Foundation
-import NaturalLanguage
 
 /// A grammatical form label for an observed German surface form.
 ///
@@ -73,37 +72,10 @@ package enum GermanFormLabel: String, Equatable {
 /// cache's rawValues). New code should prefer this name.
 package typealias WordFormLabel = GermanFormLabel
 
-/// The fallible evidence supplied by Apple's tagger after LeafReader's own
-/// deterministic rules have had the first chance to resolve a form.
-package struct GermanFormLabelEvidence: Equatable {
-    package let partOfSpeech: String?
-    package let hasClauseAuxiliary: Bool
-
-    package init(partOfSpeech: String?, hasClauseAuxiliary: Bool) {
-        self.partOfSpeech = partOfSpeech
-        self.hasClauseAuxiliary = hasClauseAuxiliary
-    }
-}
-
-/// A form-label verdict together with whether it is safe to persist without
-/// sentence context. Contextual Apple NLP results may be memoized for one build,
-/// but must not become a global `(surface, lemma)` fact.
-package enum GermanFormLabelResolution: Equatable {
-    case contextIndependent(GermanFormLabel?)
-    case contextual(GermanFormLabel?)
-
-    package var label: GermanFormLabel? {
-        switch self {
-        case let .contextIndependent(label), let .contextual(label):
-            return label
-        }
-    }
-
-    package var isPersistentlyCacheable: Bool {
-        if case .contextIndependent = self { return true }
-        return false
-    }
-}
+/// Compatibility names retained while the historical German-specific cache
+/// surfaces are migrated to the provider-neutral form-label boundary.
+package typealias GermanFormLabelEvidence = VocabularyFormLabelEvidence
+package typealias GermanFormLabelResolution = VocabularyFormLabelResolution
 
 /// Derives a grammatical form label for a German surface form, offline.
 ///
@@ -119,11 +91,6 @@ package enum GermanFormLabeler {
 
     private static let auxiliaryLemmas: Set<String> = ["haben", "sein", "werden"]
     private static let umlauts = CharacterSet(charactersIn: "äöüÄÖÜ")
-    /// Token classes that end the clause an auxiliary can govern.
-    private static let clauseBarriers: Set<String> = [
-        "Conjunction", "Punctuation", "SentenceTerminator"
-    ]
-
     /// Labels `surfaceForm` given its lemma, optionally using the sentence it
     /// appeared in.
     ///
@@ -134,9 +101,15 @@ package enum GermanFormLabeler {
     package static func label(
         surfaceForm rawSurface: String,
         lemma rawLemma: String,
-        context: String? = nil
+        context: String? = nil,
+        evidenceProvider: @escaping VocabularyFormLabelEvidenceProvider = { _ in .unavailable }
     ) -> GermanFormLabel? {
-        resolution(surfaceForm: rawSurface, lemma: rawLemma, context: context).label
+        resolution(
+            surfaceForm: rawSurface,
+            lemma: rawLemma,
+            context: context,
+            evidenceProvider: evidenceProvider
+        ).label
     }
 
     /// Resolves a label and records whether the verdict consumed sentence-level
@@ -146,11 +119,11 @@ package enum GermanFormLabeler {
         surfaceForm rawSurface: String,
         lemma rawLemma: String,
         context: String? = nil,
-        evidenceProvider: (_ surface: String, _ context: String?) -> GermanFormLabelEvidence = naturalLanguageEvidence
+        evidenceProvider: @escaping VocabularyFormLabelEvidenceProvider = { _ in .unavailable }
     ) -> GermanFormLabelResolution {
         let surface = VocabularyTextPolicy.normalizedVocabularyText(rawSurface)
         let lemma = VocabularyTextPolicy.normalizedVocabularyText(rawLemma)
-        guard VocabularyTextPolicy.isSingleEnglishWord(surface), !lemma.isEmpty else {
+        guard VocabularyTextPolicy.isSingleVocabularyWord(surface), !lemma.isEmpty else {
             return .contextIndependent(nil)
         }
         let isBaseForm = VocabularyTextPolicy.canonicalVocabularyKey(surface)
@@ -165,7 +138,13 @@ package enum GermanFormLabeler {
             return .contextIndependent(.plural)
         }
 
-        let evidence = evidenceProvider(surface, context)
+        let evidence = evidenceProvider(VocabularyFormLabelEvidenceRequest(
+            surface: surface,
+            context: context,
+            language: .german,
+            auxiliaryLemmas: auxiliaryLemmas,
+            allowsTrailingAuxiliary: true
+        ))
         let label: GermanFormLabel?
         switch evidence.partOfSpeech {
         case "Verb":
@@ -239,93 +218,4 @@ package enum GermanFormLabeler {
         lemma.first(where: \Character.isLetter)?.isUppercase == true
     }
 
-    // MARK: - Tagging
-
-    package static func naturalLanguageEvidence(
-        surface: String,
-        context: String?
-    ) -> GermanFormLabelEvidence {
-        guard let context else {
-            return GermanFormLabelEvidence(
-                partOfSpeech: isolatedPartOfSpeech(surface),
-                hasClauseAuxiliary: false
-            )
-        }
-        let text = VocabularyTextPolicy.normalizedVocabularyText(context)
-        guard !text.isEmpty else {
-            return GermanFormLabelEvidence(
-                partOfSpeech: isolatedPartOfSpeech(surface),
-                hasClauseAuxiliary: false
-            )
-        }
-
-        let tagger = NLTagger(tagSchemes: [.lemma, .lexicalClass])
-        tagger.string = text
-        let range = text.startIndex..<text.endIndex
-        tagger.setLanguage(.german, range: range)
-
-        // Punctuation is deliberately kept: commas and sentence terminators act
-        // as clause barriers when searching backwards for an auxiliary.
-        var tokens: [(surface: String, lemma: String, partOfSpeech: String)] = []
-        tagger.enumerateTags(
-            in: range,
-            unit: .word,
-            scheme: .lemma,
-            options: [.omitWhitespace]
-        ) { tag, tokenRange in
-            let token = String(text[tokenRange])
-            let partOfSpeech = tagger.tag(
-                at: tokenRange.lowerBound,
-                unit: .word,
-                scheme: .lexicalClass
-            ).0?.rawValue ?? ""
-            tokens.append((token, tag?.rawValue ?? token, partOfSpeech))
-            return true
-        }
-
-        let target = VocabularyTextPolicy.canonicalVocabularyKey(surface)
-        guard let index = tokens.firstIndex(where: {
-            VocabularyTextPolicy.canonicalVocabularyKey($0.surface) == target
-        }) else {
-            return GermanFormLabelEvidence(
-                partOfSpeech: isolatedPartOfSpeech(surface),
-                hasClauseAuxiliary: false
-            )
-        }
-
-        func isAuxiliary(_ token: (surface: String, lemma: String, partOfSpeech: String)) -> Bool {
-            token.partOfSpeech == "Verb"
-                && auxiliaryLemmas.contains(
-                    VocabularyTextPolicy.canonicalVocabularyKey(token.lemma)
-                )
-        }
-
-        // Search backwards only as far as the current clause. Scanning the whole
-        // sentence would misread "Er ist müde und lief schnell", where `ist`
-        // belongs to a different clause than `lief`.
-        var precedingAuxiliary = false
-        for token in tokens[..<index].reversed() {
-            if clauseBarriers.contains(token.partOfSpeech) { break }
-            if isAuxiliary(token) {
-                precedingAuxiliary = true
-                break
-            }
-        }
-        // Only the immediately following token counts for the verb-final case
-        // ("weil er gegangen ist"), where German pushes the auxiliary to the end.
-        let trailingAuxiliary = tokens.indices.contains(index + 1) && isAuxiliary(tokens[index + 1])
-
-        return GermanFormLabelEvidence(
-            partOfSpeech: tokens[index].partOfSpeech.isEmpty ? nil : tokens[index].partOfSpeech,
-            hasClauseAuxiliary: precedingAuxiliary || trailingAuxiliary
-        )
-    }
-
-    private static func isolatedPartOfSpeech(_ word: String) -> String? {
-        let tagger = NLTagger(tagSchemes: [.lexicalClass])
-        tagger.string = word
-        let range = word.startIndex..<word.endIndex
-        tagger.setLanguage(.german, range: range)
-        return tagger.tag(at: word.startIndex, unit: .word, scheme: .lexicalClass).0?.rawValue
-    }
 }

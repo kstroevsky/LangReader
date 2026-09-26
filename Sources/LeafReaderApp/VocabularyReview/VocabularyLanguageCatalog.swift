@@ -26,8 +26,20 @@ struct VocabularyLanguageRuntime: Sendable {
     let definitions: (any VocabularyDefinitionProviding)?
     let difficulty: (any DocumentVocabularyDifficultyProviding)?
     let linguisticAnalyzerFactory: VocabularyLinguisticAnalyzerFactory
+    let formLabelEvidenceProvider: VocabularyFormLabelEvidenceProvider
     let runtimeAvailability: VocabularyLanguageFeatureAvailability
     let linguisticCacheIdentity: VocabularyLinguisticCacheIdentity
+
+    var formLabelEvidenceIdentity: String {
+        let providers = linguisticCacheIdentity.linguisticProviders
+            .map { "\($0.id)@\($0.version)#\($0.normalizationVersion)" }
+            .joined(separator: ",")
+        return [
+            providers,
+            linguisticCacheIdentity.linguisticRuntimeSignature,
+            linguisticCacheIdentity.partOfSpeechPolicyVersion
+        ].joined(separator: "|")
+    }
 
     func preparationCompatibilityFingerprint(
         algorithmVersion: Int
@@ -235,6 +247,7 @@ enum VocabularyLanguageCatalogFactory {
                 target: calibrationTarget
             ),
             linguisticAnalyzerFactory: linguisticCapabilities.analyzerFactory,
+            formLabelEvidenceProvider: linguisticCapabilities.formLabelEvidenceProvider,
             runtimeAvailability: runtimeAvailability,
             linguisticCacheIdentity: linguistic
         )
@@ -308,6 +321,7 @@ enum VocabularyLanguageCatalogFactory {
             definitions: nil,
             difficulty: nil,
             linguisticAnalyzerFactory: effectiveCapabilities.analyzerFactory,
+            formLabelEvidenceProvider: effectiveCapabilities.formLabelEvidenceProvider,
             runtimeAvailability: runtimeAvailability,
             linguisticCacheIdentity: linguistic
         )

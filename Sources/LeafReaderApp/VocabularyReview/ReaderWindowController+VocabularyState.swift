@@ -1,27 +1,7 @@
 import Foundation
-import NaturalLanguage
 import LeafReaderCore
 
 extension ReaderWindowController {
-    /// Language the current document's vocabulary is grouped by. All lemma
-    /// resolution and occurrence scanning for saved words must use this one
-    /// value so their grouping keys stay consistent.
-    var vocabularyDocumentLanguage: NLLanguage {
-        get {
-            vocabularyState.documentLanguageResolution.languageID?.appleNaturalLanguage ?? .undetermined
-        }
-        set {
-            guard let language = VocabularyLanguageID(newValue.rawValue) else {
-                _ = vocabularyState.updateLanguageResolution(.undetermined(.unresolved(.inconclusiveRecognition)))
-                return
-            }
-            setVocabularyDocumentLanguageResolution(.resolved(VocabularyResolvedLanguage(
-                id: language,
-                provenance: .persistedDocumentMetadata
-            )))
-        }
-    }
-
     var vocabularyDocumentLanguageResolution: VocabularyLanguageResolution {
         vocabularyState.documentLanguageResolution
     }

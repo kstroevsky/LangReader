@@ -21,7 +21,7 @@ enum GermanFormLabelerTests {
             surfaceForm: surface,
             lemma: lemma,
             context: context,
-            evidenceProvider: { _, _ in
+            evidenceProvider: { _ in
                 GermanFormLabelEvidence(
                     partOfSpeech: partOfSpeech,
                     hasClauseAuxiliary: hasClauseAuxiliary
@@ -169,14 +169,12 @@ enum GermanFormLabelerTests {
     }
 
     static func testOwnedNounMorphologyDoesNotDependOnApplePOS() throws {
-        var evidenceRequests = 0
         let plural = GermanFormLabeler.resolution(
             surfaceForm: "Bücher",
             lemma: "Buch",
             context: "Die Bücher liegen dort.",
-            evidenceProvider: { _, _ in
-                evidenceRequests += 1
-                return GermanFormLabelEvidence(partOfSpeech: nil, hasClauseAuxiliary: false)
+            evidenceProvider: { _ in
+                fatalError("owned noun morphology must resolve before requesting runtime evidence")
             }
         )
         try expectEqual(
@@ -184,12 +182,11 @@ enum GermanFormLabelerTests {
             .contextIndependent(.plural),
             "noun orthography plus conservative morphology should prove Bücher without Apple POS"
         )
-        try expectEqual(evidenceRequests, 0, "owned noun morphology should run before Apple evidence")
 
         let wrongPOS = GermanFormLabeler.resolution(
             surfaceForm: "Bücher",
             lemma: "Buch",
-            evidenceProvider: { _, _ in
+            evidenceProvider: { _ in
                 GermanFormLabelEvidence(partOfSpeech: "Verb", hasClauseAuxiliary: false)
             }
         )
@@ -207,7 +204,7 @@ enum GermanFormLabelerTests {
             let unresolved = GermanFormLabeler.resolution(
                 surfaceForm: surface,
                 lemma: lemma,
-                evidenceProvider: { _, _ in
+                evidenceProvider: { _ in
                     GermanFormLabelEvidence(partOfSpeech: nil, hasClauseAuxiliary: false)
                 }
             )

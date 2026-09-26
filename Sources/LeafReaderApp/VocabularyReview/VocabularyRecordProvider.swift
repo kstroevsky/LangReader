@@ -9,9 +9,7 @@ enum VocabularyRecordProvider {
     /// without the SQLite stack get the offline rules by default.
     typealias FormLabelResolver = @Sendable (_ surfaceForm: String, _ lemma: String, _ context: String) -> GermanFormLabel?
 
-    static let offlineFormLabelResolver: FormLabelResolver = { surfaceForm, lemma, context in
-        GermanFormLabeler.label(surfaceForm: surfaceForm, lemma: lemma, context: context)
-    }
+    static let offlineFormLabelResolver: FormLabelResolver = { _, _, _ in nil }
 
     static func records(
         documentKind: ReaderDocumentKind,
@@ -20,7 +18,7 @@ enum VocabularyRecordProvider {
         pdfContext: (StoredPDFWordRecord) -> String,
         formLabel: FormLabelResolver = offlineFormLabelResolver
     ) -> [VocabularyExportRecord] {
-        // Labeling a form runs NaturalLanguage tagging and, for cached words, a
+        // Labeling a form may run linguistic analysis and, for cached words, a
         // SQLite lookup — a few milliseconds each. Memoize identical requests,
         // including their context: sentence-level classification must not leak
         // from one occurrence to another. Nil is not cached, so a later, stronger

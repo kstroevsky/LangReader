@@ -47,10 +47,8 @@ extension ReaderWindowController {
         let currentWebRecords = storedWebWordRecords
         let languageID = vocabularyDocumentLanguageID
         let languageRevision = vocabularyLanguageRevision
-        let language = languageID?.appleNaturalLanguage ?? .undetermined
-        let semanticIdentity = languageID.flatMap {
-            vocabularyLanguageCatalog.resolve(language: $0)?.linguisticCacheIdentity
-        }
+        let runtime = languageID.flatMap { vocabularyLanguageCatalog.resolve(language: $0) }
+        let semanticIdentity = runtime?.linguisticCacheIdentity
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
             let currentRecords: [VocabularyExportRecord]
@@ -70,7 +68,7 @@ extension ReaderWindowController {
                         pdfRecords: currentPDFRecords,
                         webRecords: currentWebRecords,
                         pdfContext: { $0.context ?? "" },
-                        formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(language: language)
+                        formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(runtime: runtime)
                     )
                 }
             } else {
@@ -79,7 +77,7 @@ extension ReaderWindowController {
                     pdfRecords: currentPDFRecords,
                     webRecords: currentWebRecords,
                     pdfContext: { $0.context ?? "" },
-                    formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(language: language)
+                    formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(runtime: runtime)
                 )
             }
             let records = self.makeVocabularyLibraryRecords(
@@ -132,10 +130,10 @@ extension ReaderWindowController {
                     recognizer: AppleVocabularyLanguageRecognizer.shared
                 )
                 let otherLanguageID = otherLanguageResolution.languageID
-                let otherLanguage = otherLanguageID?.appleNaturalLanguage ?? .undetermined
-                let otherSemanticIdentity = otherLanguageID.flatMap {
-                    vocabularyLanguageCatalog.resolve(language: $0)?.linguisticCacheIdentity
+                let otherRuntime = otherLanguageID.flatMap {
+                    vocabularyLanguageCatalog.resolve(language: $0)
                 }
+                let otherSemanticIdentity = otherRuntime?.linguisticCacheIdentity
                 let fingerprint = VocabularyLibraryBuildCache.fingerprint(
                     pdf: pdfRecords,
                     web: webRecords,
@@ -151,7 +149,7 @@ extension ReaderWindowController {
                         pdfRecords: pdfRecords,
                         webRecords: webRecords,
                         pdfContext: { $0.context ?? "" },
-                        formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(language: otherLanguage)
+                        formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(runtime: otherRuntime)
                     )
                 }
             }
@@ -215,12 +213,15 @@ extension ReaderWindowController {
     func wordFocusInfo(for word: String) -> AIChatPanel.WordFocusInfo? {
         let key = VocabularyTextPolicy.canonicalVocabularyKey(word)
         guard !key.isEmpty else { return nil }
+        let runtime = vocabularyDocumentLanguageID.flatMap {
+            vocabularyLanguageCatalog.resolve(language: $0)
+        }
         let records = VocabularyRecordProvider.records(
             documentKind: currentDocumentKind,
             pdfRecords: storedWordRecords,
             webRecords: storedWebWordRecords,
             pdfContext: { $0.context ?? "" },
-            formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(language: vocabularyDocumentLanguage)
+            formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(runtime: runtime)
         )
         guard let record = records.first(where: { candidate in
             VocabularyTextPolicy.canonicalVocabularyKey(candidate.lemma ?? candidate.word) == key

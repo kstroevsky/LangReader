@@ -1,6 +1,23 @@
 import Foundation
-import NaturalLanguage
 import LeafReaderCore
+
+private struct VocabularyLogicFixtureAnalyzer: VocabularyLinguisticAnalyzing {
+    let lemmas: [String: String]
+
+    func tokenEvidence(
+        in text: String,
+        language: VocabularyLanguageID
+    ) -> [VocabularyLinguisticTokenEvidence] {
+        []
+    }
+
+    func isolatedLemma(
+        for surfaceForm: String,
+        language: VocabularyLanguageID
+    ) -> String? {
+        lemmas[VocabularyTextPolicy.canonicalVocabularyKey(surfaceForm)]
+    }
+}
 
 private struct StoredWordRecord: Equatable {
     let id: String
@@ -437,16 +454,26 @@ enum VocabularyLogicTests {
         )
     }
 
-    /// The reusable-tagger overload must return exactly what the allocating one
-    /// does, including when the same tagger is reused across many words.
+    /// The reusable-analyzer overload must return exactly what the factory path
+    /// does, including when the same analyzer is reused across many words.
     static func testGermanLemmaResolverTaggerReuse() throws {
         let words = ["gegangen", "ging", "Häuser", "Bücher", "sprach", "gegangen", "ging"]
-        let tagger = NLTagger(tagSchemes: [.lemma])
+        let lemmas = [
+            "gegangen": "gehen",
+            "ging": "gehen",
+            "häuser": "Haus",
+            "bücher": "Buch",
+            "sprach": "sprechen"
+        ]
+        let analyzer = VocabularyLogicFixtureAnalyzer(lemmas: lemmas)
+        let factory = VocabularyLinguisticAnalyzerFactory {
+            VocabularyLogicFixtureAnalyzer(lemmas: lemmas)
+        }
         for word in words {
             try expectEqual(
-                GermanLemmaResolver.lemma(for: word, tagger: tagger, language: .german),
-                GermanLemmaResolver.lemma(for: word, language: .german),
-                "reusing a tagger must not change the lemma resolved for '\(word)'"
+                GermanLemmaResolver.lemma(for: word, analyzer: analyzer, language: .german),
+                GermanLemmaResolver.lemma(for: word, language: .german, analyzerFactory: factory),
+                "reusing an analyzer must not change the lemma resolved for '\(word)'"
             )
         }
     }
@@ -633,38 +660,54 @@ enum VocabularyLogicTests {
     /// English gets the same grammatical labeling German has, built on the same
     /// "never guess" rule: only signals measured to be reliable are claimed.
     static func testEnglishFormLabeling() throws {
-        func label(_ surface: String, _ lemma: String, _ context: String) -> WordFormLabel? {
-            EnglishFormLabeler.label(surfaceForm: surface, lemma: lemma, context: context)
+        func label(
+            _ surface: String,
+            _ lemma: String,
+            _ context: String,
+            partOfSpeech: String?,
+            hasClauseAuxiliary: Bool = false
+        ) -> WordFormLabel? {
+            EnglishFormLabeler.label(
+                surfaceForm: surface,
+                lemma: lemma,
+                context: context,
+                evidenceProvider: { _ in
+                    VocabularyFormLabelEvidence(
+                        partOfSpeech: partOfSpeech,
+                        hasClauseAuxiliary: hasClauseAuxiliary
+                    )
+                }
+            )
         }
 
         // Verbs — each label rests on a proven signal.
-        try expectEqual(label("walk", "walk", "I walk to work every day and enjoy the long morning air."), .grundform, "surface equal to the lemma is the base form")
-        try expectEqual(label("running", "run", "They are running fast across the wide green field today."), .presentParticiple, "the -ing form is proven morphologically")
-        try expectEqual(label("walks", "walk", "He walks to work each morning before the sun comes up."), .thirdPersonSingular, "lemma+s on a verb is the third person singular")
-        try expectEqual(label("walked", "walk", "She has walked home already, so the room is now empty."), .pastParticiple, "an auxiliary in the clause proves the past participle")
+        try expectEqual(label("walk", "walk", "I walk to work every day and enjoy the long morning air.", partOfSpeech: "Verb"), .grundform, "surface equal to the lemma is the base form")
+        try expectEqual(label("running", "run", "They are running fast across the wide green field today.", partOfSpeech: "Verb"), .presentParticiple, "the -ing form is proven morphologically")
+        try expectEqual(label("walks", "walk", "He walks to work each morning before the sun comes up.", partOfSpeech: "Verb"), .thirdPersonSingular, "lemma+s on a verb is the third person singular")
+        try expectEqual(label("walked", "walk", "She has walked home already, so the room is now empty.", partOfSpeech: "Verb", hasClauseAuxiliary: true), .pastParticiple, "an auxiliary in the clause proves the past participle")
         // Morphology outranks the auxiliary rule: a lemma+s form cannot be a
         // participle, however a copular "is"/"was" sits earlier in the clause.
         try expectEqual(
-            label("looks", "look", "The reason she looks away is that the light is far too bright."),
+            label("looks", "look", "The reason she looks away is that the light is far too bright.", partOfSpeech: "Verb", hasClauseAuxiliary: true),
             .thirdPersonSingular,
             "a lemma+s verb stays third person singular despite a copula in the clause"
         )
-        try expectEqual(label("written", "write", "I have written the letter and posted it this morning."), .pastParticiple, "irregular participles are proven by the auxiliary too")
+        try expectEqual(label("written", "write", "I have written the letter and posted it this morning.", partOfSpeech: "Verb", hasClauseAuxiliary: true), .pastParticiple, "irregular participles are proven by the auxiliary too")
 
         // Nouns — English has no case system, so a differing surface is a plural.
-        try expectEqual(label("children", "child", "The children played outside for hours in the summer sun."), .plural, "irregular plurals are labeled")
-        try expectEqual(label("books", "book", "She read three books during the long quiet weekend at home."), .plural, "regular plurals are labeled")
-        try expectEqual(label("book", "book", "She read a book during the long quiet weekend at home."), .grundform, "a singular noun is the base form")
+        try expectEqual(label("children", "child", "The children played outside for hours in the summer sun.", partOfSpeech: "Noun"), .plural, "irregular plurals are labeled")
+        try expectEqual(label("books", "book", "She read three books during the long quiet weekend at home.", partOfSpeech: "Noun"), .plural, "regular plurals are labeled")
+        try expectEqual(label("book", "book", "She read a book during the long quiet weekend at home.", partOfSpeech: "Noun"), .grundform, "a singular noun is the base form")
 
         // Never guess: an attributive participle is indistinguishable from a
         // past tense here ("the completed work"), so neither is claimed.
         try expectEqual(
-            label("completed", "complete", "The completed work impressed everyone who saw it that day."),
+            label("completed", "complete", "The completed work impressed everyone who saw it that day.", partOfSpeech: "Verb"),
             .finiteVerb,
             "an ambiguous past form takes the honest coarse label, never a guessed tense"
         )
         try expectEqual(
-            label("walked", "walk", "She walked home yesterday evening after the meeting ended."),
+            label("walked", "walk", "She walked home yesterday evening after the meeting ended.", partOfSpeech: "Verb"),
             .finiteVerb,
             "a past form with no auxiliary is reported as a conjugated form"
         )
@@ -672,14 +715,15 @@ enum VocabularyLogicTests {
         // Comparatives are tagged Adverb by the tagger, exactly as in German, so
         // no adjective-specific label is trustworthy.
         try expect(
-            label("bigger", "big", "This is a bigger house than the one they lived in before.") == nil,
+            label("bigger", "big", "This is a bigger house than the one they lived in before.", partOfSpeech: "Adjective") == nil,
             "comparatives stay unlabeled rather than mislabeled"
         )
 
-        // A document in another language must never get English labels.
+        // The language router owns language identity. Without runtime evidence,
+        // the English policy abstains rather than re-detecting language itself.
         try expect(
-            label("gegangen", "gehen", "Er ist gestern nach Hause gegangen und hat nichts gesagt.") == nil,
-            "German text must not receive English grammatical labels"
+            label("walked", "walk", "She walked home yesterday.", partOfSpeech: nil) == nil,
+            "missing runtime evidence must leave the form unlabeled"
         )
     }
 
@@ -688,7 +732,15 @@ enum VocabularyLogicTests {
     static func testFormLabelingRoutesByLanguage() throws {
         let englishContext = "She has walked home already, so the room is now empty."
         try expectEqual(
-            VocabularyFormLabeling.label(surfaceForm: "walked", lemma: "walk", context: englishContext, language: .english),
+            VocabularyFormLabeling.label(
+                surfaceForm: "walked",
+                lemma: "walk",
+                context: englishContext,
+                language: .english,
+                evidenceProvider: { _ in
+                    VocabularyFormLabelEvidence(partOfSpeech: "Verb", hasClauseAuxiliary: true)
+                }
+            ),
             .pastParticiple,
             "English routes to the English labeler"
         )
@@ -707,7 +759,10 @@ enum VocabularyLogicTests {
                 surfaceForm: "books",
                 lemma: "book",
                 context: "The books are very old.",
-                language: .english
+                language: .english,
+                evidenceProvider: { _ in
+                    VocabularyFormLabelEvidence(partOfSpeech: "Noun", hasClauseAuxiliary: false)
+                }
             ),
             .plural,
             "an English document is protected by routing to the English labeler, not by the German labeler re-detecting one token"
@@ -718,13 +773,6 @@ enum VocabularyLogicTests {
         )
         try expect(VocabularyFormLabeling.hasLabeler(for: .english) && VocabularyFormLabeling.hasLabeler(for: .german), "English and German both have labelers")
         try expect(!VocabularyFormLabeling.hasLabeler(for: .french), "French has no labeler yet")
-
-        // The label cache has no language column, so the version namespaces it.
-        // Without this the same spelling in two languages would collide.
-        try expect(
-            VocabularyFormLabeling.cacheVersion(for: .english) != VocabularyFormLabeling.cacheVersion(for: .german),
-            "each language's cached labels must live in their own version namespace"
-        )
     }
 
     /// Detection must sample running prose from across the document, not the

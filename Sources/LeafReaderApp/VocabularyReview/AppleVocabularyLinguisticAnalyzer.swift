@@ -21,6 +21,15 @@ struct AppleVocabularyLinguisticCapabilities: Equatable, Sendable {
         }
     }
 
+    var formLabelEvidenceProvider: VocabularyFormLabelEvidenceProvider {
+        let capabilities = self
+        return { request in
+            AppleVocabularyFormLabelEvidenceProvider(
+                capabilities: capabilities
+            ).evidence(for: request)
+        }
+    }
+
     var runtimeSignature: String {
         let version = ProcessInfo.processInfo.operatingSystemVersion
         let schemes = availableTagSchemes.sorted().joined(separator: "+")
@@ -39,6 +48,122 @@ struct AppleVocabularyLinguisticCapabilities: Equatable, Sendable {
             language: NLLanguage(rawValue: language.bcp47)
         )
         return Self(availableTagSchemes: Set(schemes.map(\.rawValue)))
+    }
+}
+
+private struct AppleVocabularyFormLabelEvidenceProvider: Sendable {
+    private static let clauseBarriers: Set<String> = [
+        NLTag.punctuation.rawValue,
+        NLTag.sentenceTerminator.rawValue,
+        NLTag.conjunction.rawValue
+    ]
+
+    let capabilities: AppleVocabularyLinguisticCapabilities
+
+    func evidence(
+        for request: VocabularyFormLabelEvidenceRequest
+    ) -> VocabularyFormLabelEvidence {
+        guard capabilities.supportsLexicalClass else { return .unavailable }
+        guard let context = request.context.map(VocabularyTextPolicy.normalizedVocabularyText),
+              !context.isEmpty else {
+            return VocabularyFormLabelEvidence(
+                partOfSpeech: isolatedPartOfSpeech(
+                    request.surface,
+                    language: request.language
+                ),
+                hasClauseAuxiliary: false
+            )
+        }
+
+        var schemes: [NLTagScheme] = [.lexicalClass]
+        if capabilities.supportsLemma { schemes.append(.lemma) }
+        let tagger = NLTagger(tagSchemes: schemes)
+        tagger.string = context
+        let fullRange = context.startIndex..<context.endIndex
+        tagger.setLanguage(NLLanguage(rawValue: request.language.bcp47), range: fullRange)
+
+        struct Token {
+            let surface: String
+            let lemma: String
+            let partOfSpeech: String
+        }
+        var tokens: [Token] = []
+        tagger.enumerateTags(
+            in: fullRange,
+            unit: .word,
+            scheme: .lexicalClass,
+            options: [.omitWhitespace]
+        ) { lexicalTag, tokenRange in
+            let surface = String(context[tokenRange])
+            let lemma = capabilities.supportsLemma
+                ? tagger.tag(
+                    at: tokenRange.lowerBound,
+                    unit: .word,
+                    scheme: .lemma
+                ).0?.rawValue ?? surface
+                : surface
+            tokens.append(Token(
+                surface: surface,
+                lemma: lemma,
+                partOfSpeech: lexicalTag?.rawValue ?? ""
+            ))
+            return true
+        }
+
+        let target = VocabularyTextPolicy.canonicalVocabularyKey(request.surface)
+        guard let index = tokens.firstIndex(where: {
+            VocabularyTextPolicy.canonicalVocabularyKey($0.surface) == target
+        }) else {
+            return VocabularyFormLabelEvidence(
+                partOfSpeech: isolatedPartOfSpeech(
+                    request.surface,
+                    language: request.language
+                ),
+                hasClauseAuxiliary: false
+            )
+        }
+
+        func isAuxiliary(_ token: Token) -> Bool {
+            capabilities.supportsLemma
+                && token.partOfSpeech == NLTag.verb.rawValue
+                && request.auxiliaryLemmas.contains(
+                    VocabularyTextPolicy.canonicalVocabularyKey(token.lemma)
+                )
+        }
+
+        var precedingAuxiliary = false
+        for token in tokens[..<index].reversed() {
+            if Self.clauseBarriers.contains(token.partOfSpeech) { break }
+            if isAuxiliary(token) {
+                precedingAuxiliary = true
+                break
+            }
+        }
+        let trailingAuxiliary = request.allowsTrailingAuxiliary
+            && tokens.indices.contains(index + 1)
+            && isAuxiliary(tokens[index + 1])
+
+        return VocabularyFormLabelEvidence(
+            partOfSpeech: tokens[index].partOfSpeech.isEmpty ? nil : tokens[index].partOfSpeech,
+            hasClauseAuxiliary: precedingAuxiliary || trailingAuxiliary
+        )
+    }
+
+    private func isolatedPartOfSpeech(
+        _ surface: String,
+        language: VocabularyLanguageID
+    ) -> String? {
+        let word = VocabularyTextPolicy.normalizedVocabularyText(surface)
+        guard VocabularyTextPolicy.isSingleVocabularyWord(word), !word.isEmpty else { return nil }
+        let tagger = NLTagger(tagSchemes: [.lexicalClass])
+        tagger.string = word
+        let range = word.startIndex..<word.endIndex
+        tagger.setLanguage(NLLanguage(rawValue: language.bcp47), range: range)
+        return tagger.tag(
+            at: word.startIndex,
+            unit: .word,
+            scheme: .lexicalClass
+        ).0?.rawValue
     }
 }
 

@@ -1,5 +1,4 @@
 import Foundation
-import NaturalLanguage
 
 /// Derives a grammatical form label for an English surface form, offline.
 ///
@@ -22,11 +21,6 @@ package enum EnglishFormLabeler {
 
     /// Auxiliaries that prove a following/preceding participle.
     private static let auxiliaryLemmas: Set<String> = ["have", "be"]
-    /// Token classes that end the clause an auxiliary can govern.
-    private static let clauseBarriers: Set<String> = [
-        "Conjunction", "Punctuation", "SentenceTerminator"
-    ]
-
     /// Labels `surfaceForm` given its lemma, optionally using the sentence it
     /// appeared in.
     ///
@@ -35,51 +29,77 @@ package enum EnglishFormLabeler {
     package static func label(
         surfaceForm rawSurface: String,
         lemma rawLemma: String,
-        context: String? = nil
+        context: String? = nil,
+        evidenceProvider: @escaping VocabularyFormLabelEvidenceProvider = { _ in .unavailable }
     ) -> WordFormLabel? {
+        resolution(
+            surfaceForm: rawSurface,
+            lemma: rawLemma,
+            context: context,
+            evidenceProvider: evidenceProvider
+        ).label
+    }
+
+    package static func resolution(
+        surfaceForm rawSurface: String,
+        lemma rawLemma: String,
+        context: String? = nil,
+        evidenceProvider: @escaping VocabularyFormLabelEvidenceProvider = { _ in .unavailable }
+    ) -> VocabularyFormLabelResolution {
         let surface = VocabularyTextPolicy.normalizedVocabularyText(rawSurface)
         let lemma = VocabularyTextPolicy.normalizedVocabularyText(rawLemma)
-        guard VocabularyTextPolicy.isSingleEnglishWord(surface), !lemma.isEmpty else {
-            return nil
+        guard VocabularyTextPolicy.isSingleVocabularyWord(surface), !lemma.isEmpty else {
+            return .contextIndependent(nil)
         }
-        // Mirrors the German gate: the labeler decides for itself, so a document
-        // in another language never shows English grammatical labels.
-        guard isEnglish(context ?? surface) else { return nil }
 
-        let analysis = context.flatMap { analyze(surface: surface, in: $0) }
-        let partOfSpeech = analysis?.partOfSpeech ?? isolatedPartOfSpeech(surface)
+        let evidence = evidenceProvider(VocabularyFormLabelEvidenceRequest(
+            surface: surface,
+            context: context,
+            language: .english,
+            auxiliaryLemmas: auxiliaryLemmas,
+            allowsTrailingAuxiliary: false
+        ))
         let surfaceKey = VocabularyTextPolicy.canonicalVocabularyKey(surface)
         let lemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(lemma)
         let isBaseForm = surfaceKey == lemmaKey
 
-        switch partOfSpeech {
+        let label: WordFormLabel?
+        switch evidence.partOfSpeech {
         case "Verb":
-            if isBaseForm { return .grundform }
+            if isBaseForm {
+                label = .grundform
             // Morphology comes first, because it is decisive: an -ing form and a
             // lemma+s form cannot be past participles no matter what precedes
             // them. Testing the auxiliary first mislabeled "she looks" as a
             // participle whenever a copular "is"/"was" appeared earlier in the
             // clause.
-            if surfaceKey.hasSuffix("ing") { return .presentParticiple }
-            if isThirdPersonSingular(surfaceKey: surfaceKey, lemmaKey: lemmaKey) {
-                return .thirdPersonSingular
-            }
+            } else if surfaceKey.hasSuffix("ing") {
+                label = .presentParticiple
+            } else if isThirdPersonSingular(surfaceKey: surfaceKey, lemmaKey: lemmaKey) {
+                label = .thirdPersonSingular
             // An auxiliary in the clause proves the participle.
-            if analysis?.hasClauseAuxiliary == true { return .pastParticiple }
+            } else if evidence.hasClauseAuxiliary {
+                label = .pastParticiple
             // Past tense and attributive participle are indistinguishable here
             // ("walked" vs "the completed work"), so report the honest coarse
             // label rather than claiming a tense that may be wrong.
-            return .finiteVerb
+            } else {
+                label = .finiteVerb
+            }
         case "Noun":
-            if isBaseForm { return .grundform }
+            if isBaseForm {
+                label = .grundform
             // English nouns have no case system, so a noun whose surface differs
             // from its lemma is a plural — the tagger resolves even the
             // irregulars ("children" → "child", "mice" → "mouse"). Possessives
             // are the one other way a noun can differ, so they are excluded.
-            return isPossessive(surface) ? nil : .plural
+            } else {
+                label = isPossessive(surface) ? nil : .plural
+            }
         default:
-            return isBaseForm ? .grundform : nil
+            label = nil
         }
+        return .contextual(label)
     }
 
     /// Whether `surfaceKey` is the lemma's third person singular. Only the
@@ -98,82 +118,4 @@ package enum EnglishFormLabeler {
         surface.contains("'") || surface.contains("’")
     }
 
-    // MARK: - Tagging
-
-    private struct ContextAnalysis {
-        let partOfSpeech: String?
-        /// True when a form of have/be governs this token earlier in the clause
-        /// — "has written", "was carefully written", "had already walked".
-        let hasClauseAuxiliary: Bool
-    }
-
-    private static func analyze(surface: String, in context: String) -> ContextAnalysis? {
-        let text = VocabularyTextPolicy.normalizedVocabularyText(context)
-        guard !text.isEmpty else { return nil }
-
-        let tagger = NLTagger(tagSchemes: [.lemma, .lexicalClass])
-        tagger.string = text
-        let range = text.startIndex..<text.endIndex
-        tagger.setLanguage(.english, range: range)
-
-        // Punctuation is kept: it marks the clause boundary the backward search
-        // must not cross.
-        var tokens: [(surface: String, lemma: String, partOfSpeech: String)] = []
-        tagger.enumerateTags(
-            in: range,
-            unit: .word,
-            scheme: .lemma,
-            options: [.omitWhitespace]
-        ) { tag, tokenRange in
-            let token = String(text[tokenRange])
-            let partOfSpeech = tagger.tag(
-                at: tokenRange.lowerBound,
-                unit: .word,
-                scheme: .lexicalClass
-            ).0?.rawValue ?? ""
-            tokens.append((token, tag?.rawValue ?? token, partOfSpeech))
-            return true
-        }
-
-        let target = VocabularyTextPolicy.canonicalVocabularyKey(surface)
-        guard let index = tokens.firstIndex(where: {
-            VocabularyTextPolicy.canonicalVocabularyKey($0.surface) == target
-        }) else {
-            return nil
-        }
-
-        // English keeps the auxiliary before the participle, so only a backward
-        // search is needed — and only within this clause, so "He is tired and
-        // walked home" does not read `is` as governing `walked`.
-        var precedingAuxiliary = false
-        for token in tokens[..<index].reversed() {
-            if clauseBarriers.contains(token.partOfSpeech) { break }
-            if token.partOfSpeech == "Verb",
-               auxiliaryLemmas.contains(VocabularyTextPolicy.canonicalVocabularyKey(token.lemma)) {
-                precedingAuxiliary = true
-                break
-            }
-        }
-
-        return ContextAnalysis(
-            partOfSpeech: tokens[index].partOfSpeech.isEmpty ? nil : tokens[index].partOfSpeech,
-            hasClauseAuxiliary: precedingAuxiliary
-        )
-    }
-
-    private static func isEnglish(_ text: String) -> Bool {
-        let value = VocabularyTextPolicy.normalizedVocabularyText(text)
-        guard !value.isEmpty else { return false }
-        let recognizer = NLLanguageRecognizer()
-        recognizer.processString(value)
-        return recognizer.dominantLanguage == .english
-    }
-
-    private static func isolatedPartOfSpeech(_ word: String) -> String? {
-        let tagger = NLTagger(tagSchemes: [.lexicalClass])
-        tagger.string = word
-        let range = word.startIndex..<word.endIndex
-        tagger.setLanguage(.english, range: range)
-        return tagger.tag(at: word.startIndex, unit: .word, scheme: .lexicalClass).0?.rawValue
-    }
 }

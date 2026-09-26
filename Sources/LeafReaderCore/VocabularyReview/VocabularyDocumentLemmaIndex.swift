@@ -225,10 +225,11 @@ package enum VocabularyIndexPriorityPlanner {
 
 /// A document-scoped, immutable index of word occurrences by lemma.
 ///
-/// Building this once avoids running `NLTagger` over every page each time the
-/// user saves a word. Literal matching is still evaluated per query because it
-/// also supports phrases and PDF line-break spelling variants, but the costly
-/// linguistic pass is reused by every save and backfill.
+/// Building this once avoids rerunning the configured linguistic analyzer over
+/// every page each time the user saves a word. Literal matching is still
+/// evaluated per query because it also supports phrases and PDF line-break
+/// spelling variants, but the costly linguistic pass is reused by every save
+/// and backfill.
 package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     private static let ignoredTextRegexes: [NSRegularExpression] = [
         #"(?i)\b(?:https?://|www\.)[^\s<>{}\[\]]+"#,

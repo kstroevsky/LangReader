@@ -337,6 +337,72 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
         let label: String?
     }
 
+    /// Language/provider/ruleset-aware form-label cache used by ADR-0002.
+    /// The older German-only cache remains readable for compatibility, but new
+    /// multilingual form labels are never stored in its language-less keyspace.
+    func vocabularyFormLabel(
+        language: VocabularyLanguageID,
+        evidenceIdentity: String,
+        surfaceKey: String,
+        lemmaKey: String,
+        rulesetVersion: Int
+    ) -> CachedFormLabel? {
+        guard !evidenceIdentity.isEmpty, !surfaceKey.isEmpty, !lemmaKey.isEmpty else { return nil }
+        return locked {
+            loadRecords(
+                sql: """
+                SELECT label FROM vocabulary_form_labels
+                WHERE language_id = ? AND evidence_identity = ?
+                  AND surface_key = ? AND lemma_key = ? AND ruleset_version = ?
+                LIMIT 1
+                """,
+                prepareOperation: "prepare vocabulary form label lookup",
+                bind: { statement in
+                    bindSQLiteText(language.bcp47, index: 1, statement: statement)
+                    bindSQLiteText(evidenceIdentity, index: 2, statement: statement)
+                    bindSQLiteText(surfaceKey, index: 3, statement: statement)
+                    bindSQLiteText(lemmaKey, index: 4, statement: statement)
+                    sqlite3_bind_int(statement, 5, Int32(rulesetVersion))
+                },
+                decode: { statement -> CachedFormLabel in
+                    let raw = stringColumn(statement, 0) ?? ""
+                    return CachedFormLabel(label: raw.isEmpty ? nil : raw)
+                }
+            ).first
+        }
+    }
+
+    @discardableResult
+    func saveVocabularyFormLabel(
+        language: VocabularyLanguageID,
+        evidenceIdentity: String,
+        surfaceKey: String,
+        lemmaKey: String,
+        label: String?,
+        rulesetVersion: Int
+    ) -> Bool {
+        guard !evidenceIdentity.isEmpty, !surfaceKey.isEmpty, !lemmaKey.isEmpty else { return false }
+        return locked {
+            executeStatement(
+                sql: """
+                INSERT OR REPLACE INTO vocabulary_form_labels
+                    (language_id, evidence_identity, surface_key, lemma_key, label, ruleset_version, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                prepareOperation: "prepare insert vocabulary form label",
+                stepOperation: "insert vocabulary form label"
+            ) { statement in
+                bindSQLiteText(language.bcp47, index: 1, statement: statement)
+                bindSQLiteText(evidenceIdentity, index: 2, statement: statement)
+                bindSQLiteText(surfaceKey, index: 3, statement: statement)
+                bindSQLiteText(lemmaKey, index: 4, statement: statement)
+                bindSQLiteText(label ?? "", index: 5, statement: statement)
+                sqlite3_bind_int(statement, 6, Int32(rulesetVersion))
+                sqlite3_bind_double(statement, 7, Date().timeIntervalSince1970)
+            }
+        }
+    }
+
     /// The cached label for a `(surface, lemma)` pair computed by the given
     /// labeler version, or nil when the pair has never been labeled (or was
     /// labeled by a different version and must be recomputed).
@@ -667,6 +733,18 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
         );
         CREATE INDEX IF NOT EXISTS idx_german_form_labels_lemma
             ON german_form_labels(lemma_key);
+        CREATE TABLE IF NOT EXISTS vocabulary_form_labels (
+            language_id TEXT NOT NULL,
+            evidence_identity TEXT NOT NULL,
+            surface_key TEXT NOT NULL,
+            lemma_key TEXT NOT NULL,
+            label TEXT NOT NULL,
+            ruleset_version INTEGER NOT NULL,
+            created_at REAL NOT NULL,
+            PRIMARY KEY(language_id, evidence_identity, ruleset_version, surface_key, lemma_key)
+        );
+        CREATE INDEX IF NOT EXISTS idx_vocabulary_form_labels_lemma
+            ON vocabulary_form_labels(language_id, lemma_key);
         """
         executeRaw(sql, operation: "create word record tables")
         migrateColumns()

@@ -284,6 +284,21 @@ package enum GermanLemmaOccurrenceMatcher {
         let key = VocabularyTextPolicy.canonicalVocabularyKey(groupLemma)
         let surfaceKey = VocabularyTextPolicy.canonicalVocabularyKey(surfaceForm)
         guard !key.isEmpty, !surfaceKey.isEmpty, !context.isEmpty else { return false }
+
+        // Exact base-form records do not need linguistic evidence to prove group
+        // membership. Preserve whole-word and hyphen-component occurrences here
+        // so an exact-form analyzer that keeps `IT-Abteilung` as one token does
+        // not make load-time cleanup delete the saved `Abteilung` occurrence.
+        // Arbitrary inner substrings such as `folg` in `Erfolg` still fail the
+        // language-independent artifact gate below.
+        if VocabularyTextPolicy.surfaceMatchesLemmaExactly(surfaceForm, groupLemma),
+           context.range(of: surfaceForm, options: [.caseInsensitive]) != nil,
+           !VocabularyTextPolicy.surfaceOccursOnlyAsInnerSubstring(
+               surface: surfaceForm,
+               context: context
+           ) {
+            return true
+        }
         return matches(
             lemmasByKey: [key: groupLemma],
             in: context,
