@@ -38,6 +38,10 @@ struct VocabularyPreparationInventoryPayload: Sendable {
     let inventoryModelMilliseconds: Double
     let contextMaterializationMilliseconds: Double
     let algorithmVersion: Int
+    let compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint
+    let documentIdentity: String
+    let textIdentity: String
+    let candidateInventoryIdentity: String
     let lexicalShadowMilliseconds: Double
     let lexicalShadowCandidateDelta: Int
     let lexicalShadowDirectEvidenceCount: Int
@@ -728,6 +732,9 @@ final class VocabularyPreparationCoordinator {
         let algorithmVersion = reconciledIdentityEnabled
             ? VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
             : VocabularyPreparationSession.currentAlgorithmVersion
+        guard let compatibilityFingerprint = snapshot.runtime.preparationCompatibilityFingerprint(
+            algorithmVersion: algorithmVersion
+        ) else { return }
         let restoredDomain = session.documentDomain
         let priorStore = readerPriorStore
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -787,6 +794,13 @@ final class VocabularyPreparationCoordinator {
                 inventoryModelMilliseconds: inventoryModelMilliseconds,
                 contextMaterializationMilliseconds: contextMaterializationMilliseconds,
                 algorithmVersion: algorithmVersion,
+                compatibilityFingerprint: compatibilityFingerprint,
+                documentIdentity: snapshot.identity.documentID,
+                textIdentity: VocabularyPreparationStateIdentity.text(
+                    documentID: snapshot.identity.documentID,
+                    texts: snapshot.texts
+                ),
+                candidateInventoryIdentity: VocabularyPreparationStateIdentity.inventory(domainInventory),
                 lexicalShadowMilliseconds: lexicalShadowMilliseconds,
                 lexicalShadowCandidateDelta: reconciledSummaries.count - legacySummaries.count,
                 lexicalShadowDirectEvidenceCount: reconciledSummaries.lazy.filter {
@@ -807,14 +821,33 @@ final class VocabularyPreparationCoordinator {
 
     private func apply(payload: VocabularyPreparationInventoryPayload, durationMilliseconds: Double) {
         let mainWorkStartedAt = ProcessInfo.processInfo.systemUptime
-        if session.algorithmVersion != payload.algorithmVersion {
-            session.answers = []
-            session.finalSelection = []
-            session.predictionAudit = nil
-            session.readerPriorContributionRecorded = false
-            session.readerPriorContributionID = nil
-            session.algorithmVersion = payload.algorithmVersion
-            sessionStore?.save(session)
+        let isCompatible = session.compatibilityFingerprint == payload.compatibilityFingerprint
+            && session.documentIdentity == payload.documentIdentity
+            && session.textIdentity == payload.textIdentity
+            && session.candidateInventoryIdentity == payload.candidateInventoryIdentity
+        if !isCompatible {
+            let fresh = VocabularyPreparationSession(
+                mode: session.mode,
+                invitationState: session.invitationState,
+                algorithmVersion: payload.algorithmVersion,
+                documentDomain: session.documentDomain,
+                compatibilityFingerprint: payload.compatibilityFingerprint,
+                documentIdentity: payload.documentIdentity,
+                textIdentity: payload.textIdentity,
+                candidateInventoryIdentity: payload.candidateInventoryIdentity
+            )
+            if let sessionStore,
+               !sessionStore.archiveAndReplace(
+                with: fresh,
+                reason: "incompatible-preparation-semantics"
+               ) {
+                phase = .error(AppText.localized(
+                    "无法安全迁移旧的词汇准备会话。",
+                    "The previous vocabulary preparation session could not be migrated safely."
+                ))
+                return
+            }
+            session = fresh
         }
         inventory = payload.inventory
         domainDetection = payload.domainDetection

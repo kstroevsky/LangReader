@@ -100,6 +100,49 @@ final class VocabularyPreparationPersistenceXCTests: XCTestCase {
         XCTAssertNil(store.load())
     }
 
+    func testLegacySessionPayloadIsArchivedBeforeIncompatibleReplacementAndSurvivesReopen() throws {
+        let suite = "VocabularyPreparationLegacyArchiveXCTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let documentID = "document-legacy"
+        let key = "bookSession.\(documentID).vocabularyPreparation"
+        let legacy = VocabularyPreparationSession(
+            invitationState: .started,
+            answers: [VocabularyAssessmentAnswer(canonicalKey: "legacy", evidence: .legacyKnown)],
+            finalSelection: ["legacy"],
+            algorithmVersion: 6,
+            readerPriorContributionRecorded: true,
+            readerPriorContributionID: "legacy-contribution"
+        )
+        let legacyPayload = try JSONEncoder().encode(legacy)
+        defaults.set(legacyPayload, forKey: key)
+        let store = VocabularyPreparationSessionStore(documentID: documentID, defaults: defaults)
+
+        var invitationUpdate = try XCTUnwrap(store.load())
+        invitationUpdate.invitationState = .dismissed
+        XCTAssertTrue(store.save(invitationUpdate))
+
+        let fresh = VocabularyPreparationSession(
+            invitationState: .dismissed,
+            compatibilityFingerprint: fingerprint(language: .english),
+            documentIdentity: documentID,
+            textIdentity: "text-v2",
+            candidateInventoryIdentity: "inventory-v2"
+        )
+        XCTAssertTrue(store.archiveAndReplace(
+            with: fresh,
+            reason: "incompatible-preparation-semantics",
+            archivedAt: Date(timeIntervalSince1970: 123)
+        ))
+
+        let reopened = VocabularyPreparationSessionStore(documentID: documentID, defaults: defaults)
+        XCTAssertEqual(reopened.load(), fresh)
+        let archived = try XCTUnwrap(reopened.archivedSessions().only)
+        XCTAssertEqual(archived.archivedAt, Date(timeIntervalSince1970: 123))
+        XCTAssertEqual(archived.reason, "incompatible-preparation-semantics")
+        XCTAssertEqual(archived.session, legacy)
+    }
+
     func testBatchImportRollsBackAllRecordsWhenOneInsertFails() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("VocabularyPreparationRollback-\(UUID().uuidString)", isDirectory: true)
@@ -145,4 +188,27 @@ final class VocabularyPreparationPersistenceXCTests: XCTestCase {
             srs: VocabularySRSState.initial(createdAt: date)
         )
     }
+
+    private func fingerprint(language: VocabularyLanguageID) -> VocabularyPreparationCompatibilityFingerprint {
+        VocabularyPreparationCompatibilityFingerprint(
+            algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion,
+            language: language,
+            languageProfileVersion: "test-profile-v1",
+            linguisticProviders: [VocabularyLinguisticCacheIdentity.builtInProvider],
+            linguisticRuntimeSignature: "test-runtime",
+            difficultyProvider: VocabularyDifficultyProviderSemanticIdentity(
+                providerID: "difficulty.test",
+                providerVersion: "1"
+            ),
+            definitionProvider: VocabularySemanticProviderIdentity(
+                id: "definition.test",
+                version: "1",
+                normalizationVersion: VocabularyNormalizationPolicy.currentVersion
+            )
+        )
+    }
+}
+
+private extension Array {
+    var only: Element? { count == 1 ? first : nil }
 }

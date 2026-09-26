@@ -101,8 +101,15 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         XCTAssertTrue(migrated.answers.isEmpty)
         XCTAssertTrue(migrated.finalSelection.isEmpty)
         XCTAssertNil(migrated.predictionAudit)
-        XCTAssertEqual(migrated.readerPriorContributionRecorded, false)
+        XCTAssertNil(migrated.readerPriorContributionRecorded)
         XCTAssertNil(migrated.readerPriorContributionID)
+        XCTAssertNotNil(migrated.compatibilityFingerprint)
+        XCTAssertEqual(migrated.documentIdentity, source.identity.documentID)
+        let archivedSessions = sessionStore.archivedSessions()
+        XCTAssertEqual(archivedSessions.count, 1)
+        let archived = try XCTUnwrap(archivedSessions.first)
+        XCTAssertEqual(archived.session.algorithmVersion, 6)
+        XCTAssertEqual(archived.session.finalSelection, ["legacy-item"])
     }
 
     func testStaleSnapshotNeverPublishesInventory() async throws {

@@ -170,11 +170,19 @@ package struct VocabularyItemDifficultyPrior: Codable, Equatable, Sendable {
 
 package protocol DocumentVocabularyDifficultyProviding: Sendable {
     var frequencyScale: VocabularyFrequencyScale { get }
+    var semanticIdentity: VocabularyDifficultyProviderSemanticIdentity { get }
     func bestRank(for summary: VocabularyDocumentLemmaSummary) -> Int?
     func difficultyPrior(for summary: VocabularyDocumentLemmaSummary) -> VocabularyItemDifficultyPrior
 }
 
 package extension DocumentVocabularyDifficultyProviding {
+    var semanticIdentity: VocabularyDifficultyProviderSemanticIdentity {
+        VocabularyDifficultyProviderSemanticIdentity(
+            providerID: "difficulty.\(frequencyScale.sourceID)",
+            providerVersion: frequencyScale.version
+        )
+    }
+
     func difficultyPrior(for summary: VocabularyDocumentLemmaSummary) -> VocabularyItemDifficultyPrior {
         VocabularyItemDifficultyPrior.frequencyRank(bestRank(for: summary), scale: frequencyScale)
     }
@@ -219,6 +227,7 @@ package struct GermanCorpusDocumentVocabularyDifficultyProvider: DocumentVocabul
 
 package struct CalibratedDocumentVocabularyDifficultyProvider: DocumentVocabularyDifficultyProviding {
     package let frequencyScale: VocabularyFrequencyScale
+    package let semanticIdentity: VocabularyDifficultyProviderSemanticIdentity
     private let base: any DocumentVocabularyDifficultyProviding
     private let items: [String: VocabularyItemCalibrationPack.Item]
 
@@ -229,6 +238,11 @@ package struct CalibratedDocumentVocabularyDifficultyProvider: DocumentVocabular
             sourceID: base.frequencyScale.sourceID,
             version: items.isEmpty ? base.frequencyScale.version : "\(base.frequencyScale.version)+\(pack.version)",
             maximumRank: base.frequencyScale.maximumRank
+        )
+        semanticIdentity = VocabularyDifficultyProviderSemanticIdentity(
+            providerID: base.semanticIdentity.providerID,
+            providerVersion: frequencyScale.version,
+            calibrationPackIDAndVersion: items.isEmpty ? nil : "\(pack.model):\(pack.version)"
         )
     }
 

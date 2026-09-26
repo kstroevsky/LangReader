@@ -14,6 +14,24 @@ struct VocabularyLanguageRuntime: Sendable {
         )
     }
 
+    func preparationCompatibilityFingerprint(
+        algorithmVersion: Int
+    ) -> VocabularyPreparationCompatibilityFingerprint? {
+        guard let definitions, let difficulty else { return nil }
+        let linguistic = linguisticCacheIdentity
+        return VocabularyPreparationCompatibilityFingerprint(
+            algorithmVersion: algorithmVersion,
+            language: language,
+            languageProfileVersion: profile.version,
+            lexicalPolicyVersion: linguistic.lexicalPolicyVersion,
+            linguisticProviders: linguistic.linguisticProviders,
+            linguisticRuntimeSignature: linguistic.linguisticRuntimeSignature,
+            difficultyProvider: difficulty.semanticIdentity,
+            definitionProvider: VocabularySemanticProviderIdentity(definitions.descriptor),
+            normalizationVersion: linguistic.normalizationVersion
+        )
+    }
+
     func status(for capability: VocabularyLanguageCapability) -> VocabularyCapabilityAvailability {
         profile.featureAvailability.status(for: capability)
     }
