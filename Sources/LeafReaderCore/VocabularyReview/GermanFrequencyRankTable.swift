@@ -241,7 +241,7 @@ package struct CalibratedDocumentVocabularyDifficultyProvider: DocumentVocabular
         )
         semanticIdentity = VocabularyDifficultyProviderSemanticIdentity(
             providerID: base.semanticIdentity.providerID,
-            providerVersion: frequencyScale.version,
+            providerVersion: base.semanticIdentity.providerVersion,
             calibrationPackIDAndVersion: items.isEmpty ? nil : "\(pack.model):\(pack.version)"
         )
     }
@@ -261,17 +261,11 @@ package enum DocumentVocabularyFrequencyProvider {
     package static let english: any DocumentVocabularyDifficultyProviding = ECDICTDocumentVocabularyDifficultyProvider()
     package static let german: any DocumentVocabularyDifficultyProviding = GermanCorpusDocumentVocabularyDifficultyProvider()
 
-    package static func calibrated(language: VocabularyLanguageID) -> (any DocumentVocabularyDifficultyProviding)? {
-        let base: any DocumentVocabularyDifficultyProviding
-        switch language {
-        case .english:
-            base = english
-        case .german:
-            base = german
-        default:
-            return nil
-        }
-        guard let pack = VocabularyItemCalibrationPackLoader.loadReviewed(languageCode: language.bcp47) else {
+    package static func calibrated(
+        base: any DocumentVocabularyDifficultyProviding,
+        target: VocabularyCalibrationCompatibilityTarget
+    ) -> any DocumentVocabularyDifficultyProviding {
+        guard let pack = VocabularyItemCalibrationPackLoader.loadReviewed(target: target) else {
             return base
         }
         return CalibratedDocumentVocabularyDifficultyProvider(base: base, pack: pack)

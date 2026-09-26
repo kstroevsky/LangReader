@@ -101,6 +101,19 @@ final class VocabularyPreparationCompatibilityXCTests: XCTestCase {
         )
     }
 
+    func testCalibrationTargetExcludesPackIdentityButBindsBaseDifficultySemantics() throws {
+        let withoutPack = try makeFingerprint(calibrationPackIDAndVersion: nil)
+        let withPack = try makeFingerprint(calibrationPackIDAndVersion: "rasch:pack-v1")
+        let changedBase = try makeFingerprint(
+            difficultyProviderVersion: "2",
+            calibrationPackIDAndVersion: "rasch:pack-v1"
+        )
+
+        XCTAssertNotEqual(withoutPack.stableDigest, withPack.stableDigest)
+        XCTAssertEqual(withoutPack.calibrationTarget, withPack.calibrationTarget)
+        XCTAssertNotEqual(withPack.calibrationTarget, changedBase.calibrationTarget)
+    }
+
     private func makeFingerprint(
         language: String = "en",
         languageProfileVersion: String = "profile-v1",

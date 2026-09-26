@@ -81,8 +81,7 @@ enum VocabularyLanguageCatalogFactory {
                 language: .english,
                 version: "en-profile-v1",
                 definitions: englishDefinitions,
-                difficulty: DocumentVocabularyFrequencyProvider.calibrated(language: .english)
-                    ?? DocumentVocabularyFrequencyProvider.english,
+                difficulty: DocumentVocabularyFrequencyProvider.english,
                 formLabels: true,
                 domainResources: true
             ),
@@ -90,8 +89,7 @@ enum VocabularyLanguageCatalogFactory {
                 language: .german,
                 version: "de-profile-v1",
                 definitions: germanDefinitions,
-                difficulty: DocumentVocabularyFrequencyProvider.calibrated(language: .german)
-                    ?? DocumentVocabularyFrequencyProvider.german,
+                difficulty: DocumentVocabularyFrequencyProvider.german,
                 formLabels: true,
                 domainResources: true
             ),
@@ -139,11 +137,27 @@ enum VocabularyLanguageCatalogFactory {
                 .vocabularyPreparation: .production
             ]
         )
+        let linguistic = VocabularyLinguisticCacheIdentity(
+            language: language,
+            languageProfileVersion: version
+        )
+        let calibrationTarget = VocabularyCalibrationCompatibilityTarget(
+            language: language,
+            languageProfileVersion: version,
+            lexicalPolicyVersion: linguistic.lexicalPolicyVersion,
+            linguisticProviders: linguistic.linguisticProviders,
+            linguisticRuntimeSignature: linguistic.linguisticRuntimeSignature,
+            difficultyProvider: difficulty.semanticIdentity,
+            normalizationVersion: linguistic.normalizationVersion
+        )
         return VocabularyLanguageRuntime(
             language: language,
             profile: profile,
             definitions: definitions,
-            difficulty: difficulty
+            difficulty: DocumentVocabularyFrequencyProvider.calibrated(
+                base: difficulty,
+                target: calibrationTarget
+            )
         )
     }
 

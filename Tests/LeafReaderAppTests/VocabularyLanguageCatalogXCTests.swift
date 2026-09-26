@@ -30,11 +30,6 @@ final class VocabularyLanguageCatalogXCTests: XCTestCase {
         XCTAssertNil(italian.difficulty)
     }
 
-    func testUnsupportedDifficultyDoesNotFallBackToEnglish() {
-        XCTAssertNil(DocumentVocabularyFrequencyProvider.calibrated(language: .italian))
-        XCTAssertNil(DocumentVocabularyFrequencyProvider.calibrated(language: .french))
-    }
-
     func testECDICTMetadataAbstainsOutsideEnglish() {
         XCTAssertNil(VocabularyDictionaryMetadataService.metadata(for: "Haus", language: .german))
         XCTAssertNil(VocabularyDictionaryMetadataService.metadata(for: "casa", language: .italian))

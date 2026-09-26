@@ -265,10 +265,14 @@ final class VocabularyPreparationFixtureXCTests: XCTestCase {
         let summaries = useReconciledLexicalIdentity
             ? index.lexicalSummaries()
             : index.lemmaSummaries()
+        let fixtureDifficultyProviders: [VocabularyLanguageID: any DocumentVocabularyDifficultyProviding] = [
+            .english: DocumentVocabularyFrequencyProvider.english,
+            .german: DocumentVocabularyFrequencyProvider.german
+        ]
         let inventory = DocumentVocabularyInventory(
             summaries: summaries,
             languageCode: languageCode,
-            difficultyProvider: try XCTUnwrap(DocumentVocabularyFrequencyProvider.calibrated(language: languageID))
+            difficultyProvider: try XCTUnwrap(fixtureDifficultyProviders[languageID])
         )
         let candidates = inventory.candidates.map {
             PipelineCandidate(

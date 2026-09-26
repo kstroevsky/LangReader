@@ -1369,7 +1369,8 @@ final class VocabularyPreparationCoordinator {
                     contributionID: contributionID,
                     inventory: inventory,
                     answers: answers,
-                    protocolVersion: algorithmVersion
+                    protocolVersion: algorithmVersion,
+                    compatibilityFingerprint: compatibilityFingerprint
                 )
                 return priorSaved
             }.value

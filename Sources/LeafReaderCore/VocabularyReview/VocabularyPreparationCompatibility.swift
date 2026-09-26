@@ -26,6 +26,51 @@ package enum VocabularyAssessmentCompatibilityPolicy {
     ].joined(separator: "|")
 }
 
+/// Compatibility projection for applying an empirical difficulty calibration.
+/// It deliberately describes the base model and excludes the calibration pack
+/// itself so a pack can declare the model it is intended to wrap without a
+/// circular identity.
+package struct VocabularyCalibrationCompatibilityTarget: Codable, Equatable, Hashable, Sendable {
+    package static let schemaVersion = 1
+
+    package let targetSchemaVersion: Int
+    package let language: VocabularyLanguageID
+    package let languageProfileVersion: String
+    package let lexicalPolicyVersion: String
+    package let linguisticProviders: [VocabularySemanticProviderIdentity]
+    package let linguisticRuntimeSignature: String
+    package let difficultyProviderID: String
+    package let difficultyProviderVersion: String
+    package let normalizationVersion: String
+    package let assessmentPolicyVersion: String
+
+    package init(
+        language: VocabularyLanguageID,
+        languageProfileVersion: String,
+        lexicalPolicyVersion: String = VocabularyLexicalReconciler.policyVersion,
+        linguisticProviders: [VocabularySemanticProviderIdentity],
+        linguisticRuntimeSignature: String,
+        difficultyProvider: VocabularyDifficultyProviderSemanticIdentity,
+        normalizationVersion: String = VocabularyNormalizationPolicy.currentVersion,
+        assessmentPolicyVersion: String = VocabularyAssessmentCompatibilityPolicy.version
+    ) {
+        targetSchemaVersion = Self.schemaVersion
+        self.language = language
+        self.languageProfileVersion = languageProfileVersion
+        self.lexicalPolicyVersion = lexicalPolicyVersion
+        self.linguisticProviders = linguisticProviders.sorted {
+            if $0.id != $1.id { return $0.id < $1.id }
+            if $0.version != $1.version { return $0.version < $1.version }
+            return $0.normalizationVersion < $1.normalizationVersion
+        }
+        self.linguisticRuntimeSignature = linguisticRuntimeSignature
+        difficultyProviderID = difficultyProvider.providerID
+        difficultyProviderVersion = difficultyProvider.providerVersion
+        self.normalizationVersion = normalizationVersion
+        self.assessmentPolicyVersion = assessmentPolicyVersion
+    }
+}
+
 /// Complete semantic identity for restoring assessment-derived state. The
 /// representation is intentionally Codable with canonical key ordering; never
 /// replace this with Swift's process-randomized `hashValue`.
@@ -82,6 +127,22 @@ package struct VocabularyPreparationCompatibilityFingerprint: Codable, Equatable
 
     package var stableDigest: String {
         Self.sha256(Self.canonicalData(self))
+    }
+
+    package var calibrationTarget: VocabularyCalibrationCompatibilityTarget {
+        VocabularyCalibrationCompatibilityTarget(
+            language: language,
+            languageProfileVersion: languageProfileVersion,
+            lexicalPolicyVersion: lexicalPolicyVersion,
+            linguisticProviders: linguisticProviders,
+            linguisticRuntimeSignature: linguisticRuntimeSignature,
+            difficultyProvider: VocabularyDifficultyProviderSemanticIdentity(
+                providerID: difficultyProviderID,
+                providerVersion: difficultyProviderVersion
+            ),
+            normalizationVersion: normalizationVersion,
+            assessmentPolicyVersion: assessmentPolicyVersion
+        )
     }
 
     private static func canonicalData<T: Encodable>(_ value: T) -> Data {

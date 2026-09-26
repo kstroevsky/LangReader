@@ -22,7 +22,8 @@ DEFAULT_OBSERVATION_MANIFEST = ROOT / "scripts" / "fixtures" / "vocabulary-obser
 REQUIRED = {
     "languageCode", "lexicalItemID", "documentDomain", "difficultyMean",
     "difficultyStandardDeviation", "difficultySource", "difficultyVersion",
-    "evidence", "protocolVersion", "sessionOrdinal",
+    "evidence", "protocolVersion", "sessionOrdinal", "compatibilityFingerprint",
+    "compatibilityFingerprintDigest",
 }
 DIF_MINIMUM_GROUP_LEARNERS = 30
 DIF_FDR_ALPHA = 0.05
@@ -162,12 +163,44 @@ def fisher_information(likelihood: float, derivative: float) -> float:
     return derivative * derivative / max(likelihood * (1 - likelihood), 1e-9)
 
 
+def canonical_fingerprint_digest(fingerprint: dict) -> str:
+    encoded = json.dumps(
+        fingerprint, ensure_ascii=False, separators=(",", ":"), sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def calibration_target(fingerprint: dict) -> dict:
+    required = (
+        "language", "languageProfileVersion", "lexicalPolicyVersion",
+        "linguisticProviders", "linguisticRuntimeSignature", "difficultyProviderID",
+        "difficultyProviderVersion", "normalizationVersion", "assessmentPolicyVersion",
+    )
+    missing = [field for field in required if field not in fingerprint]
+    if missing:
+        raise ValueError(f"compatibility fingerprint missing calibration target fields {missing}")
+    return {
+        "targetSchemaVersion": 1,
+        "language": fingerprint["language"],
+        "languageProfileVersion": fingerprint["languageProfileVersion"],
+        "lexicalPolicyVersion": fingerprint["lexicalPolicyVersion"],
+        "linguisticProviders": fingerprint["linguisticProviders"],
+        "linguisticRuntimeSignature": fingerprint["linguisticRuntimeSignature"],
+        "difficultyProviderID": fingerprint["difficultyProviderID"],
+        "difficultyProviderVersion": fingerprint["difficultyProviderVersion"],
+        "normalizationVersion": fingerprint["normalizationVersion"],
+        "assessmentPolicyVersion": fingerprint["assessmentPolicyVersion"],
+    }
+
+
 def load_exports(paths: list[Path], observation_model: ObservationModel) -> list[dict]:
     rows: list[dict] = []
     seen: dict[tuple[str, str, int, str], str] = {}
+    observation_fingerprint: dict | None = None
+    observation_digest: str | None = None
     for path in paths:
         payload = json.loads(path.read_text(encoding="utf-8"))
-        if payload.get("schemaVersion") not in (1, 2):
+        if payload.get("schemaVersion") not in (1, 2, 3):
             raise ValueError(f"{path}: unsupported schemaVersion")
         participant = payload.get("participant", {})
         pseudonym = participant.get("participantPseudonym", "").strip()
@@ -177,6 +210,19 @@ def load_exports(paths: list[Path], observation_model: ObservationModel) -> list
             missing = REQUIRED - record.keys()
             if missing:
                 raise ValueError(f"{path}: record missing {sorted(missing)}")
+            fingerprint = record["compatibilityFingerprint"]
+            digest = record["compatibilityFingerprintDigest"]
+            if not isinstance(fingerprint, dict) or not isinstance(digest, str) or not digest:
+                raise ValueError(f"{path}: unknown observation compatibility semantics")
+            if canonical_fingerprint_digest(fingerprint) != digest:
+                raise ValueError(f"{path}: compatibility fingerprint digest mismatch")
+            if fingerprint.get("language") != record["languageCode"]:
+                raise ValueError(f"{path}: compatibility language mismatch")
+            if observation_digest is None:
+                observation_fingerprint = fingerprint
+                observation_digest = digest
+            elif digest != observation_digest or fingerprint != observation_fingerprint:
+                raise ValueError(f"{path}: mixed incompatible observation semantics")
             evidence = record["evidence"]
             if evidence == "excluded":
                 continue
@@ -186,6 +232,8 @@ def load_exports(paths: list[Path], observation_model: ObservationModel) -> list
             for field in ("language", "lemma", "partOfSpeech"):
                 if not lexical.get(field):
                     raise ValueError(f"{path}: lexicalItemID missing {field}")
+            if lexical["language"] != record["languageCode"]:
+                raise ValueError(f"{path}: lexical language mismatch")
             normalized = {
                 **record,
                 "participant": pseudonym,
@@ -195,6 +243,8 @@ def load_exports(paths: list[Path], observation_model: ObservationModel) -> list
                     lexical["language"], lexical["lemma"], lexical["partOfSpeech"],
                     lexical.get("senseKey") or "",
                 ]),
+                "_compatibilityFingerprint": fingerprint,
+                "_compatibilityFingerprintDigest": digest,
             }
             identity = (
                 pseudonym,
@@ -566,6 +616,18 @@ def analyze_dif(
 def fit_pack(
     rows: list[dict], version: str, observation_model: ObservationModel,
 ) -> tuple[dict, dict]:
+    fingerprints = {
+        json.dumps(row.get("_compatibilityFingerprint"), sort_keys=True, separators=(",", ":"))
+        for row in rows
+    }
+    digests = {row.get("_compatibilityFingerprintDigest") for row in rows}
+    if len(fingerprints) != 1 or len(digests) != 1 or None in digests:
+        raise ValueError("mixed or unknown observation compatibility semantics")
+    fingerprint = rows[0].get("_compatibilityFingerprint")
+    digest = rows[0].get("_compatibilityFingerprintDigest")
+    if not isinstance(fingerprint, dict) or not isinstance(digest, str):
+        raise ValueError("unknown observation compatibility semantics")
+    target = calibration_target(fingerprint)
     theta, difficulty = fit_rasch(rows, observation_model)
     dif_analysis = analyze_dif(rows, theta, difficulty, observation_model)
     dif_items = set(dif_analysis["flaggedItemKeys"])
@@ -609,6 +671,8 @@ def fit_pack(
         "version": version,
         "reviewed": False,
         "model": "rasch",
+        "target": target,
+        "observationCompatibilityFingerprintDigest": digest,
         "observationModel": observation_model.metadata(),
         "items": [
             {
@@ -624,6 +688,8 @@ def fit_pack(
         "items": len(items),
         "eligibleItems": sum(item["productionEligible"] for item in items),
         "itemsWithMaterialDIF": sum(item["hasMaterialDIF"] for item in items),
+        "calibrationTarget": target,
+        "observationCompatibilityFingerprintDigest": digest,
         "difAnalysis": dif_analysis,
         "observationModel": observation_model.metadata(),
         **comparison,
@@ -646,6 +712,30 @@ def self_test(observation_model: ObservationModel) -> None:
         assert likelihood > 0
         assert math.isclose(derivative, (upper - lower) / (2 * step), rel_tol=1e-7)
 
+    fingerprint = {
+        "fingerprintSchemaVersion": 1,
+        "algorithmVersion": 3,
+        "language": "en",
+        "languageProfileVersion": "en-profile-v1",
+        "lexicalPolicyVersion": "lexical-v1",
+        "linguisticProviders": [{
+            "id": "linguistics.test",
+            "version": "1",
+            "normalizationVersion": "normalization-v1",
+        }],
+        "linguisticRuntimeSignature": "runtime-v1",
+        "difficultyProviderID": "difficulty.test",
+        "difficultyProviderVersion": "base-v1",
+        "definitionProvider": {
+            "id": "definition.test",
+            "version": "1",
+            "normalizationVersion": "normalization-v1",
+        },
+        "normalizationVersion": "normalization-v1",
+        "assessmentPolicyVersion": "assessment-v1",
+        "degradedModes": [],
+    }
+    fingerprint_digest = canonical_fingerprint_digest(fingerprint)
     rows = []
     for person in range(120):
         theta = (person - 60) / 25
@@ -657,6 +747,8 @@ def self_test(observation_model: ObservationModel) -> None:
                 "difficultyMean": difficulty, "difficultyStandardDeviation": 0.5,
                 "lexicalItemID": {"language": "en", "lemma": f"word{index}", "partOfSpeech": "noun"},
                 "l1": "de" if person % 2 else "fr", "proficiency": "broad",
+                "_compatibilityFingerprint": fingerprint,
+                "_compatibilityFingerprintDigest": fingerprint_digest,
             })
     theta, difficulty = fit_rasch(rows, observation_model)
     assert min(theta.values()) < 0 < max(theta.values())
@@ -667,6 +759,8 @@ def self_test(observation_model: ObservationModel) -> None:
     assert report["participants"] == 120
     assert pack["reviewed"] is False
     assert pack["observationModel"] == observation_model.metadata()
+    assert pack["target"] == calibration_target(fingerprint)
+    assert pack["observationCompatibilityFingerprintDigest"] == fingerprint_digest
     assert all("y" not in row for row in rows)
 
     export_record = {
@@ -682,15 +776,17 @@ def self_test(observation_model: ObservationModel) -> None:
         "evidence": "verifiedKnown",
         "protocolVersion": 3,
         "sessionOrdinal": 1,
+        "compatibilityFingerprint": fingerprint,
+        "compatibilityFingerprintDigest": fingerprint_digest,
     }
     with tempfile.TemporaryDirectory() as directory:
         paths = []
-        for schema_version, proficiency in ((1, "legacy free text"), (2, "B1/B2")):
-            path = Path(directory) / f"schema-{schema_version}.json"
+        for index, proficiency in enumerate(("A1/A2", "B1/B2"), start=1):
+            path = Path(directory) / f"schema-3-{index}.json"
             path.write_text(json.dumps({
-                "schemaVersion": schema_version,
+                "schemaVersion": 3,
                 "participant": {
-                    "participantPseudonym": f"p-schema-{schema_version}",
+                    "participantPseudonym": f"p-schema-{index}",
                     "selfRatedProficiency": proficiency,
                 },
                 "records": [export_record],
@@ -698,8 +794,42 @@ def self_test(observation_model: ObservationModel) -> None:
             paths.append(path)
         compatible_rows = load_exports(paths, observation_model)
         assert [row["proficiency"] for row in compatible_rows] == [
-            "legacy free text", "B1/B2",
+            "A1/A2", "B1/B2",
         ]
+
+        legacy_path = Path(directory) / "legacy-schema-2.json"
+        legacy_record = {
+            key: value for key, value in export_record.items()
+            if key not in {"compatibilityFingerprint", "compatibilityFingerprintDigest"}
+        }
+        legacy_path.write_text(json.dumps({
+            "schemaVersion": 2,
+            "participant": {"participantPseudonym": "legacy"},
+            "records": [legacy_record],
+        }), encoding="utf-8")
+        try:
+            load_exports([legacy_path], observation_model)
+            raise AssertionError("legacy observation semantics must be rejected")
+        except ValueError as error:
+            assert "record missing" in str(error)
+
+        mixed_path = Path(directory) / "mixed-schema-3.json"
+        mixed_fingerprint = {**fingerprint, "languageProfileVersion": "en-profile-v2"}
+        mixed_record = {
+            **export_record,
+            "compatibilityFingerprint": mixed_fingerprint,
+            "compatibilityFingerprintDigest": canonical_fingerprint_digest(mixed_fingerprint),
+        }
+        mixed_path.write_text(json.dumps({
+            "schemaVersion": 3,
+            "participant": {"participantPseudonym": "mixed"},
+            "records": [mixed_record],
+        }), encoding="utf-8")
+        try:
+            load_exports([paths[0], mixed_path], observation_model)
+            raise AssertionError("mixed observation semantics must be rejected")
+        except ValueError as error:
+            assert "mixed incompatible observation semantics" in str(error)
 
     dif_rows = []
     dif_theta = {}
