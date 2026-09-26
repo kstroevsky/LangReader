@@ -66,9 +66,14 @@ final class VocabularyDetailModel {
 
     var metadataText: String {
         guard let record else { return "" }
+        let frequencyText = record.dictionaryFrequency.map { frequency in
+            let base = AppText.localized("词频 #\(frequency)", "Frequency #\(frequency)")
+            guard !record.isDictionaryFrequencyVerified else { return base }
+            return base + AppText.localized("（未验证）", " (unverified)")
+        }
         return [
             record.dictionaryTags,
-            record.dictionaryFrequency.map { AppText.localized("词频 #\($0)", "Frequency #\($0)") },
+            frequencyText,
             record.forms.count > 1
                 ? AppText.localized("\(record.forms.count) 个词形", "\(record.forms.count) forms")
                 : nil,

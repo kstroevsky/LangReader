@@ -36,7 +36,12 @@ extension ReaderWindowController {
                 vocabularyID: vocabularyID,
                 word: query,
                 lemma: definition.resolvedLemma ?? localLemma,
-                language: language
+                language: language,
+                frequencyProvenance: VocabularyFrequencyProvenance(
+                    language: language,
+                    languageProfileVersion: runtime.profile.version,
+                    provider: definition.provenance
+                )
             )
         }
     }
@@ -47,7 +52,8 @@ extension ReaderWindowController {
         vocabularyID: String?,
         word: String,
         lemma: String,
-        language: VocabularyLanguageID
+        language: VocabularyLanguageID,
+        frequencyProvenance: VocabularyFrequencyProvenance
     ) {
         let appleLanguage = language.appleNaturalLanguage
         let trimmedAnswer = answer.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -62,7 +68,8 @@ extension ReaderWindowController {
                 vocabularyID: vocabularyID,
                 wordKey: wordKey,
                 lemma: normalizedLemma,
-                language: language
+                language: language,
+                frequencyProvenance: frequencyProvenance
             )
             return
         }
@@ -91,6 +98,9 @@ extension ReaderWindowController {
             }
             if storedWordRecords[index].dictionaryFrequency == nil {
                 storedWordRecords[index].dictionaryFrequency = metadata.frequency
+                if metadata.frequency != nil {
+                    storedWordRecords[index].dictionaryFrequencyProvenance = frequencyProvenance
+                }
             }
             updatedRecords.append(storedWordRecords[index])
         }
@@ -117,7 +127,8 @@ extension ReaderWindowController {
         vocabularyID: String?,
         wordKey: String,
         lemma: String,
-        language: VocabularyLanguageID
+        language: VocabularyLanguageID,
+        frequencyProvenance: VocabularyFrequencyProvenance
     ) {
         let appleLanguage = language.appleNaturalLanguage
         var updatedRecords: [StoredWebWordRecord] = []
@@ -140,6 +151,9 @@ extension ReaderWindowController {
             }
             if storedWebWordRecords[index].dictionaryFrequency == nil {
                 storedWebWordRecords[index].dictionaryFrequency = metadata.frequency
+                if metadata.frequency != nil {
+                    storedWebWordRecords[index].dictionaryFrequencyProvenance = frequencyProvenance
+                }
             }
             updatedRecords.append(storedWebWordRecords[index])
         }

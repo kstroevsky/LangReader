@@ -147,6 +147,7 @@ enum VocabularyReviewScoringService {
                 answer: old.answer,
                 dictionaryTags: old.dictionaryTags,
                 dictionaryFrequency: old.dictionaryFrequency,
+                dictionaryFrequencyProvenance: old.dictionaryFrequencyProvenance,
                 location: old.location,
                 context: old.context,
                 createdAt: old.createdAt,

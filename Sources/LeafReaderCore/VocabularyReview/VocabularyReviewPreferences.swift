@@ -34,12 +34,18 @@ package struct VocabularyReviewPreferences: @unchecked Sendable {
         }
     }
 
-    package var isFrequencyBackfilled: Bool {
-        defaults.bool(forKey: frequencyBackfilledKey)
+    package var frequencyBackfillCompletion: VocabularyFrequencyBackfillCompletion? {
+        guard let data = defaults.data(forKey: frequencyBackfillCompletionKey) else { return nil }
+        return try? JSONDecoder().decode(VocabularyFrequencyBackfillCompletion.self, from: data)
     }
 
-    package func markFrequencyBackfilled() {
-        defaults.set(true, forKey: frequencyBackfilledKey)
+    package func isFrequencyBackfilled(for scope: VocabularyFrequencyBackfillScope) -> Bool {
+        frequencyBackfillCompletion?.scope == scope
+    }
+
+    package func markFrequencyBackfilled(_ completion: VocabularyFrequencyBackfillCompletion) {
+        guard let data = try? JSONEncoder().encode(completion) else { return }
+        defaults.set(data, forKey: frequencyBackfillCompletionKey)
     }
 
     private var reviewPriorityKey: String {
@@ -50,7 +56,7 @@ package struct VocabularyReviewPreferences: @unchecked Sendable {
         "bookSession.\(fileID).vocabularyDailyReviewGoal"
     }
 
-    private var frequencyBackfilledKey: String {
-        "bookSession.\(fileID).vocabularyFrequencyBackfilled"
+    private var frequencyBackfillCompletionKey: String {
+        "bookSession.\(fileID).vocabularyFrequencyBackfillCompletion.v1"
     }
 }

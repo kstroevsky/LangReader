@@ -77,6 +77,7 @@ extension ReaderWindowController {
                 answer: trimmedAnswer,
                 dictionaryTags: pending.dictionaryTags,
                 dictionaryFrequency: pending.dictionaryFrequency,
+                dictionaryFrequencyProvenance: pending.dictionaryFrequencyProvenance,
                 createdAt: pending.createdAt,
                 srs: VocabularySRSState.initial(createdAt: pending.createdAt)
             )
@@ -101,6 +102,7 @@ extension ReaderWindowController {
                 answer: trimmedAnswer,
                 dictionaryTags: pending.dictionaryTags,
                 dictionaryFrequency: pending.dictionaryFrequency,
+                dictionaryFrequencyProvenance: pending.dictionaryFrequencyProvenance,
                 createdAt: pending.createdAt,
                 srs: VocabularySRSState.initial(createdAt: pending.createdAt)
             )

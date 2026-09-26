@@ -53,6 +53,7 @@ extension ReaderWindowController {
                 answer: reusable.answer,
                 dictionaryTags: reusable.dictionaryTags,
                 dictionaryFrequency: reusable.dictionaryFrequency,
+                dictionaryFrequencyProvenance: reusable.dictionaryFrequencyProvenance,
                 createdAt: Date(),
                 srs: reusable.srs ?? VocabularySRSState.initial()
             )
@@ -131,6 +132,7 @@ extension ReaderWindowController {
                 answer: reusable.answer,
                 dictionaryTags: reusable.dictionaryTags,
                 dictionaryFrequency: reusable.dictionaryFrequency,
+                dictionaryFrequencyProvenance: reusable.dictionaryFrequencyProvenance,
                 createdAt: Date(),
                 srs: reusable.srs ?? VocabularySRSState.initial()
             )

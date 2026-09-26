@@ -76,6 +76,7 @@ package struct VocabularyLibraryRecord {
     package let answer: String
     package let dictionaryTags: String?
     package let dictionaryFrequency: Int?
+    package let dictionaryFrequencyProvenance: VocabularyFrequencyProvenance?
     package let occurrences: [VocabularyLibraryOccurrence]
 
     package init(
@@ -89,6 +90,7 @@ package struct VocabularyLibraryRecord {
         answer: String,
         dictionaryTags: String?,
         dictionaryFrequency: Int?,
+        dictionaryFrequencyProvenance: VocabularyFrequencyProvenance? = nil,
         occurrences: [VocabularyLibraryOccurrence]
     ) {
         self.id = id
@@ -101,7 +103,18 @@ package struct VocabularyLibraryRecord {
         self.answer = answer
         self.dictionaryTags = dictionaryTags
         self.dictionaryFrequency = dictionaryFrequency
+        self.dictionaryFrequencyProvenance = dictionaryFrequencyProvenance
         self.occurrences = occurrences
+    }
+
+    package var isDictionaryFrequencyVerified: Bool {
+        guard dictionaryFrequency != nil,
+              let provenance = dictionaryFrequencyProvenance,
+              provenance.provider.supports(provenance.language),
+              language == nil || language == provenance.language else {
+            return false
+        }
+        return true
     }
 
     package var latestCreatedAt: Date {
@@ -136,7 +149,14 @@ package enum VocabularyLibraryRecordProvider {
             let tags = entries
                 .compactMap { $0.record.dictionaryTags?.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .first { !$0.isEmpty }
-            let frequency = entries.compactMap { $0.record.dictionaryFrequency }.min()
+            let frequencyEntry = entries
+                .filter { $0.record.dictionaryFrequency != nil }
+                .min { lhs, rhs in
+                    let lhsVerified = lhs.record.verifiedDictionaryFrequency != nil
+                    let rhsVerified = rhs.record.verifiedDictionaryFrequency != nil
+                    if lhsVerified != rhsVerified { return lhsVerified && !rhsVerified }
+                    return (lhs.record.dictionaryFrequency ?? .max) < (rhs.record.dictionaryFrequency ?? .max)
+                }
             // Surface forms recovered from occurrences carry no label of their
             // own; they are merged after the labeled forms so an existing label
             // always wins over a bare surface form for the same spelling.
@@ -162,7 +182,8 @@ package enum VocabularyLibraryRecordProvider {
                 forms: forms,
                 answer: answerEntry?.record.answer ?? "",
                 dictionaryTags: tags,
-                dictionaryFrequency: frequency,
+                dictionaryFrequency: frequencyEntry?.record.dictionaryFrequency,
+                dictionaryFrequencyProvenance: frequencyEntry?.record.dictionaryFrequencyProvenance,
                 occurrences: occurrences
             )
         }.sorted {

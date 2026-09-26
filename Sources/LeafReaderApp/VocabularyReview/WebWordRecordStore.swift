@@ -18,6 +18,7 @@ struct StoredWebWordRecord: Codable, Sendable {
     var answer: String
     var dictionaryTags: String? = nil
     var dictionaryFrequency: Int? = nil
+    var dictionaryFrequencyProvenance: VocabularyFrequencyProvenance? = nil
     let createdAt: Date
     var srs: VocabularySRSState?
 

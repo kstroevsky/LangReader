@@ -63,6 +63,7 @@ enum VocabularyRecordProvider {
                         answer: $0.answer,
                         dictionaryTags: $0.dictionaryTags,
                         dictionaryFrequency: $0.dictionaryFrequency,
+                        dictionaryFrequencyProvenance: $0.dictionaryFrequencyProvenance,
                         location: location,
                         context: context,
                         createdAt: $0.createdAt,
@@ -115,6 +116,7 @@ enum VocabularyRecordProvider {
                         answer: $0.answer,
                         dictionaryTags: $0.dictionaryTags,
                         dictionaryFrequency: $0.dictionaryFrequency,
+                        dictionaryFrequencyProvenance: $0.dictionaryFrequencyProvenance,
                         location: location,
                         context: $0.context,
                         createdAt: $0.createdAt,
@@ -199,9 +201,14 @@ enum VocabularyRecordProvider {
             let dictionaryTags = group
                 .compactMap(\.dictionaryTags)
                 .first { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-            let dictionaryFrequency = group
-                .compactMap(\.dictionaryFrequency)
-                .min()
+            let frequencyRecord = group
+                .filter { $0.dictionaryFrequency != nil }
+                .min { lhs, rhs in
+                    let lhsVerified = lhs.verifiedDictionaryFrequency != nil
+                    let rhsVerified = rhs.verifiedDictionaryFrequency != nil
+                    if lhsVerified != rhsVerified { return lhsVerified && !rhsVerified }
+                    return (lhs.dictionaryFrequency ?? .max) < (rhs.dictionaryFrequency ?? .max)
+                }
             let occurrences = group
                 .flatMap(\.occurrences)
                 .sorted(by: occurrenceSort)
@@ -223,7 +230,8 @@ enum VocabularyRecordProvider {
                 forms: forms,
                 answer: answer,
                 dictionaryTags: dictionaryTags,
-                dictionaryFrequency: dictionaryFrequency,
+                dictionaryFrequency: frequencyRecord?.dictionaryFrequency,
+                dictionaryFrequencyProvenance: frequencyRecord?.dictionaryFrequencyProvenance,
                 location: locationText,
                 context: context,
                 createdAt: first.createdAt,

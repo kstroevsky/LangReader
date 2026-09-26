@@ -113,6 +113,7 @@ package struct VocabularyExportRecord {
     package let answer: String
     package let dictionaryTags: String?
     package let dictionaryFrequency: Int?
+    package let dictionaryFrequencyProvenance: VocabularyFrequencyProvenance?
     package let location: String
     package let context: String
     package let createdAt: Date
@@ -131,6 +132,7 @@ package struct VocabularyExportRecord {
         answer: String,
         dictionaryTags: String?,
         dictionaryFrequency: Int?,
+        dictionaryFrequencyProvenance: VocabularyFrequencyProvenance? = nil,
         location: String,
         context: String,
         createdAt: Date,
@@ -148,6 +150,7 @@ package struct VocabularyExportRecord {
         self.answer = answer
         self.dictionaryTags = dictionaryTags
         self.dictionaryFrequency = dictionaryFrequency
+        self.dictionaryFrequencyProvenance = dictionaryFrequencyProvenance
         self.location = location
         self.context = context
         self.createdAt = createdAt
@@ -155,7 +158,21 @@ package struct VocabularyExportRecord {
         self.occurrences = occurrences
     }
 
-    package func withDictionaryMetadata(tags: String? = nil, frequency: Int? = nil) -> VocabularyExportRecord {
+    package var verifiedDictionaryFrequency: Int? {
+        guard let dictionaryFrequency,
+              let provenance = dictionaryFrequencyProvenance,
+              provenance.provider.supports(provenance.language),
+              language == nil || language == provenance.language else {
+            return nil
+        }
+        return dictionaryFrequency
+    }
+
+    package func withDictionaryMetadata(
+        tags: String? = nil,
+        frequency: Int? = nil,
+        frequencyProvenance: VocabularyFrequencyProvenance? = nil
+    ) -> VocabularyExportRecord {
         VocabularyExportRecord(
             ids: ids,
             learningOwnerIDs: learningOwnerIDs,
@@ -168,6 +185,9 @@ package struct VocabularyExportRecord {
             answer: answer,
             dictionaryTags: tags ?? dictionaryTags,
             dictionaryFrequency: frequency ?? dictionaryFrequency,
+            dictionaryFrequencyProvenance: frequency == nil
+                ? dictionaryFrequencyProvenance
+                : frequencyProvenance,
             location: location,
             context: context,
             createdAt: createdAt,

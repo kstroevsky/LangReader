@@ -18,6 +18,7 @@ struct StoredPDFWordRecord {
     var answer: String
     var dictionaryTags: String?
     var dictionaryFrequency: Int?
+    var dictionaryFrequencyProvenance: VocabularyFrequencyProvenance? = nil
     let createdAt: Date
     var srs: VocabularySRSState?
 
@@ -42,6 +43,7 @@ struct StoredWebWordRecord {
     var answer: String
     var dictionaryTags: String?
     var dictionaryFrequency: Int?
+    var dictionaryFrequencyProvenance: VocabularyFrequencyProvenance? = nil
     let createdAt: Date
     var srs: VocabularySRSState?
 

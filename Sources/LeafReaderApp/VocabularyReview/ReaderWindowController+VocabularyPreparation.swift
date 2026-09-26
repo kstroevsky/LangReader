@@ -71,6 +71,9 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
         guard currentFileMD5 != nil else {
             throw VocabularyPreparationSourceError.noDocument
         }
+        guard let identity = vocabularyPreparationIdentity else {
+            throw VocabularyPreparationSourceError.noDocument
+        }
         let resolution: VocabularyLanguageResolution
         switch selection {
         case .manual(let language):
@@ -79,10 +82,21 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
                 provenance: .userSelected
             ))
         case .auto:
-            if currentDocumentKind == .pdf, let document = pdfView.document {
+            if currentDocumentKind == .pdf {
+                let snapshot: PDFDocumentTextSnapshot? = await withCheckedContinuation { continuation in
+                    ensurePDFDocumentTextSnapshot { snapshot in
+                        continuation.resume(returning: snapshot)
+                    }
+                }
+                guard acceptsVocabularyPreparationIdentity(identity) else {
+                    throw VocabularyPreparationSourceError.cancelled
+                }
+                guard let snapshot else {
+                    throw VocabularyPreparationSourceError.textNotReady
+                }
                 resolution = VocabularyLanguageDetector.resolution(
-                    pageCount: document.pageCount,
-                    pageText: { document.page(at: $0)?.string },
+                    pageCount: snapshot.pageTexts.count,
+                    pageText: { snapshot.pageTexts.indices.contains($0) ? snapshot.pageTexts[$0] : nil },
                     recognizer: AppleVocabularyLanguageRecognizer.shared
                 )
             } else {
@@ -108,9 +122,6 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
               runtime.definitions != nil,
               runtime.difficulty != nil else {
             throw VocabularyPreparationSourceError.unsupportedLanguage(language)
-        }
-        guard let identity = vocabularyPreparationIdentity else {
-            throw VocabularyPreparationSourceError.noDocument
         }
 
         if currentDocumentKind == .pdf {

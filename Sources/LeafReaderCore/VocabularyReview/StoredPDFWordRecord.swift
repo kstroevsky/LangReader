@@ -22,6 +22,7 @@ package struct StoredPDFWordRecord: Codable, Sendable {
     package var answer: String
     package var dictionaryTags: String?
     package var dictionaryFrequency: Int?
+    package var dictionaryFrequencyProvenance: VocabularyFrequencyProvenance?
     package let createdAt: Date
     package var srs: VocabularySRSState?
 
@@ -42,6 +43,7 @@ package struct StoredPDFWordRecord: Codable, Sendable {
         answer: String,
         dictionaryTags: String? = nil,
         dictionaryFrequency: Int? = nil,
+        dictionaryFrequencyProvenance: VocabularyFrequencyProvenance? = nil,
         createdAt: Date,
         srs: VocabularySRSState? = nil
     ) {
@@ -61,6 +63,7 @@ package struct StoredPDFWordRecord: Codable, Sendable {
         self.answer = answer
         self.dictionaryTags = dictionaryTags
         self.dictionaryFrequency = dictionaryFrequency
+        self.dictionaryFrequencyProvenance = dictionaryFrequencyProvenance
         self.createdAt = createdAt
         self.srs = srs
     }

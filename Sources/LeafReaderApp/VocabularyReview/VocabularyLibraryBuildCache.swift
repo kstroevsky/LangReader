@@ -91,6 +91,7 @@ final class VocabularyLibraryBuildCache: @unchecked Sendable {
             hasher.combine(record.context)
             hasher.combine(record.dictionaryTags)
             hasher.combine(record.dictionaryFrequency)
+            hasher.combine(record.dictionaryFrequencyProvenance)
         }
         hasher.combine(web.count)
         for record in web {
@@ -107,6 +108,7 @@ final class VocabularyLibraryBuildCache: @unchecked Sendable {
             hasher.combine(record.context)
             hasher.combine(record.dictionaryTags)
             hasher.combine(record.dictionaryFrequency)
+            hasher.combine(record.dictionaryFrequencyProvenance)
         }
         return hasher.finalize()
     }

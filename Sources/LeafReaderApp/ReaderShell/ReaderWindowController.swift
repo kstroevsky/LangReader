@@ -18,6 +18,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
         let context: String
         var dictionaryTags: String?
         var dictionaryFrequency: Int?
+        var dictionaryFrequencyProvenance: VocabularyFrequencyProvenance? = nil
         let createdAt: Date
     }
 
@@ -33,6 +34,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
         let scrollProgress: Double
         var dictionaryTags: String?
         var dictionaryFrequency: Int?
+        var dictionaryFrequencyProvenance: VocabularyFrequencyProvenance? = nil
         let createdAt: Date
     }
 

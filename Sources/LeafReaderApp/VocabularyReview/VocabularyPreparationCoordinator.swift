@@ -1379,6 +1379,7 @@ final class VocabularyPreparationCoordinator {
         guard let library, let kind = activeDocumentKind,
               let languageCode = inventory?.languageCode,
               let language = VocabularyLanguageID(languageCode),
+              let runtime = activeRuntime,
               self.requestID == requestID,
               documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
         self.definitions = definitions
@@ -1387,6 +1388,30 @@ final class VocabularyPreparationCoordinator {
         let existingKeys = existingVocabularyKeys()
         let candidates = selected.filter { !existingKeys.contains($0.canonicalKey) }
         let texts = sourceTexts
+
+        func frequencyProvenance(
+            candidate: DocumentVocabularyCandidate,
+            definition: VocabularyPreparedDefinition?
+        ) -> VocabularyFrequencyProvenance? {
+            if candidate.generalFrequencyRank != nil, let difficulty = runtime.difficulty {
+                let scale = difficulty.frequencyScale
+                return VocabularyFrequencyProvenance(
+                    language: language,
+                    languageProfileVersion: runtime.profile.version,
+                    provider: VocabularyProviderDescriptor(
+                        id: "difficulty.\(scale.sourceID)",
+                        version: scale.version,
+                        supportedLanguageRanges: [VocabularyLanguageRange(language: language, includesDescendants: true)]
+                    )
+                )
+            }
+            guard definition?.frequency != nil, let definition else { return nil }
+            return VocabularyFrequencyProvenance(
+                language: language,
+                languageProfileVersion: runtime.profile.version,
+                provider: definition.provenance
+            )
+        }
 
         let pdfRecords: [StoredPDFWordRecord]
         let webRecords: [StoredWebWordRecord]
@@ -1417,6 +1442,10 @@ final class VocabularyPreparationCoordinator {
                     answer: definition?.markdown ?? "",
                     dictionaryTags: definition?.tags,
                     dictionaryFrequency: candidate.generalFrequencyRank ?? definition?.frequency,
+                    dictionaryFrequencyProvenance: frequencyProvenance(
+                        candidate: candidate,
+                        definition: definition
+                    ),
                     createdAt: createdAt,
                     srs: VocabularySRSState.initial(createdAt: createdAt)
                 )
@@ -1444,6 +1473,10 @@ final class VocabularyPreparationCoordinator {
                     answer: definition?.markdown ?? "",
                     dictionaryTags: definition?.tags,
                     dictionaryFrequency: candidate.generalFrequencyRank ?? definition?.frequency,
+                    dictionaryFrequencyProvenance: frequencyProvenance(
+                        candidate: candidate,
+                        definition: definition
+                    ),
                     createdAt: createdAt,
                     srs: VocabularySRSState.initial(createdAt: createdAt)
                 )
