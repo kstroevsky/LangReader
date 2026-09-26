@@ -222,6 +222,7 @@ package final class VocabularyResearchEvidenceStore: VocabularyResearchEvidenceS
             var records: [VocabularyResearchEvidenceRecord] = []
             while sqlite3_step(statement) == SQLITE_ROW {
                 guard let language = text(statement, 0),
+                  let languageID = VocabularyLanguageID(language),
                   let lemma = text(statement, 1),
                   let posRaw = text(statement, 2),
                   let domainRaw = text(statement, 4),
@@ -235,7 +236,7 @@ package final class VocabularyResearchEvidenceStore: VocabularyResearchEvidenceS
                 records.append(VocabularyResearchEvidenceRecord(
                     languageCode: language,
                     lexicalItemID: VocabularyLexicalItemID(
-                        language: language,
+                        language: languageID,
                         lemma: lemma,
                         partOfSpeech: partOfSpeech,
                         senseKey: text(statement, 3)

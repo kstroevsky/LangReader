@@ -26,7 +26,7 @@ package struct VocabularyDocumentObservedForm: Codable, Equatable, Sendable {
 package struct VocabularyMorphologicalAnalysisRequest: Sendable {
     package let surface: String
     package let lemma: String
-    package let languageCode: String
+    package let language: VocabularyLanguageID
     package let context: String
     package let contextFingerprint: String
     package let appleHypotheses: [String: Double]
@@ -34,14 +34,14 @@ package struct VocabularyMorphologicalAnalysisRequest: Sendable {
     package init(
         surface: String,
         lemma: String,
-        languageCode: String,
+        language: VocabularyLanguageID,
         context: String,
         contextFingerprint: String,
         appleHypotheses: [String: Double]
     ) {
         self.surface = surface
         self.lemma = lemma
-        self.languageCode = languageCode
+        self.language = language
         self.context = context
         self.contextFingerprint = contextFingerprint
         self.appleHypotheses = appleHypotheses
@@ -298,7 +298,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     }
 
     private let pages: [Page]
-    private let languageCode: String
+    private let language: VocabularyLanguageID
     package let reusedPageCount: Int
 
     /// Builds an index using a deliberately bounded worker pool. Natural
@@ -306,7 +306,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     /// made the app compete with PDF rendering and increased peak memory.
     package init?(
         texts: [String],
-        language: NLLanguage = .english,
+        language: NLLanguage,
         maximumWorkerCount: Int = 4,
         seed: VocabularyDocumentLemmaIndexSeed? = nil,
         resolutionProvider: @escaping VocabularyLemmaResolutionProvider = GermanLemmaOccurrenceMatcher.naturalLanguageResolutionProvider,
@@ -319,7 +319,8 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         isCancelled: @escaping @Sendable () -> Bool = { false }
     ) {
         guard !isCancelled() else { return nil }
-        languageCode = language.rawValue
+        guard let languageID = VocabularyLanguageID(language.rawValue) else { return nil }
+        self.language = languageID
         guard !texts.isEmpty else {
             pages = []
             reusedPageCount = 0
@@ -329,7 +330,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let buffer = PageBuffer(count: texts.count)
         var reusedIndexes = Set<Int>()
         if let seed,
-           seed.index.languageCode == language.rawValue,
+           seed.index.language == languageID,
            seed.pageIndexes.count == seed.index.pages.count {
             for (sliceIndex, pageIndex) in seed.pageIndexes.enumerated() {
                 guard pageIndex >= 0,
@@ -399,13 +400,13 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let entries = pages.enumerated().flatMap { unitIndex, page in
             page.evidence.map { evidence -> Entry in
                 let item = VocabularyLexicalItemID(
-                    language: languageCode,
+                    language: language,
                     lemma: evidence.displayLemma,
                     partOfSpeech: evidence.legacyPartOfSpeech
                 )
                 let sourceKey = evidence.anchor.resolvedLemma == nil
                     ? Self.exactSurfaceLexicalKey(
-                        languageCode: languageCode,
+                        language: language,
                         surface: evidence.surface,
                         partOfSpeech: evidence.legacyPartOfSpeech
                     )
@@ -979,7 +980,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             let analyses = analysisProvider(VocabularyMorphologicalAnalysisRequest(
                 surface: surface,
                 lemma: matchedLemma,
-                languageCode: language.rawValue,
+                language: VocabularyLanguageID(language.rawValue)!,
                 context: context,
                 contextFingerprint: fingerprint,
                 appleHypotheses: hypotheses
@@ -989,12 +990,12 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             if let lemmaKey = resolvedLemmaKey(resolution) {
                 byLemma[lemmaKey, default: []].append(occurrence)
                 anchor = VocabularyLexicalAnchorID(
-                    language: language.rawValue,
+                    language: VocabularyLanguageID(language.rawValue),
                     basis: .resolvedLemma(lemmaKey)
                 )
             } else {
                 anchor = VocabularyLexicalAnchorID(
-                    language: language.rawValue,
+                    language: VocabularyLanguageID(language.rawValue),
                     basis: .exactSurface(surface)
                 )
             }
@@ -1048,12 +1049,12 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             if let lemmaKey = resolvedLemmaKey(resolution) {
                 byLemma[lemmaKey, default: []].append(lineWrap.occurrence)
                 anchor = VocabularyLexicalAnchorID(
-                    language: language.rawValue,
+                    language: VocabularyLanguageID(language.rawValue),
                     basis: .resolvedLemma(lemmaKey)
                 )
             } else {
                 anchor = VocabularyLexicalAnchorID(
-                    language: language.rawValue,
+                    language: VocabularyLanguageID(language.rawValue),
                     basis: .exactSurface(lineWrap.dehyphenated)
                 )
             }
@@ -1091,14 +1092,14 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     }
 
     private static func exactSurfaceLexicalKey(
-        languageCode: String,
+        language: VocabularyLanguageID,
         surface: String,
         partOfSpeech: VocabularyPartOfSpeech
     ) -> String {
         let exact = exactSurfaceKey(surface)
             .replacingOccurrences(of: "%", with: "%25")
             .replacingOccurrences(of: "|", with: "%7C")
-        return ["exact", languageCode.lowercased(), exact, partOfSpeech.rawValue]
+        return ["exact", language.bcp47, exact, partOfSpeech.rawValue]
             .joined(separator: "|")
     }
 

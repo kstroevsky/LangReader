@@ -119,8 +119,9 @@ private func assessable(
     languageCode: String,
     isConfidentName: Bool
 ) -> Bool {
+    guard let language = VocabularyLanguageID(languageCode) else { return false }
     let lexical = VocabularyLexicalItemID(
-        language: languageCode,
+        language: language,
         lemma: lemma,
         partOfSpeech: partOfSpeech
     )
@@ -209,6 +210,22 @@ private func consequence(
     cases: [Case],
     results: [CaseResult]
 ) -> LanguageConsequence {
+    guard let language = VocabularyLanguageID(languageCode) else {
+        return LanguageConsequence(
+            languageCode: languageCode,
+            goldOccurrenceDenominator: 0,
+            predictedOccurrenceDenominator: 0,
+            denominatorDelta: 0,
+            erroneousExcludedMass: 0,
+            erroneousIncludedMass: 0,
+            goldFirstQuestion: nil,
+            predictedFirstQuestion: nil,
+            questionIdentityChanged: false,
+            goldSelectedKeys: [],
+            predictedSelectedKeys: [],
+            selectedDeckSymmetricDifferenceCount: 0
+        )
+    }
     let paired = zip(cases, results).filter {
         $0.0.languageCode == languageCode
             && (evaluationSplit == nil || $0.1.evaluationSplit == evaluationSplit)
@@ -216,13 +233,13 @@ private func consequence(
     let gold = aggregateCandidates(paired.compactMap { item -> DocumentVocabularyCandidate? in
         guard !item.1.expectedExcluded else { return nil }
         let pos = expectedPOS(item.0.goldUPOS)
-        let id = VocabularyLexicalItemID(language: languageCode, lemma: item.0.goldLemma, partOfSpeech: pos)
+        let id = VocabularyLexicalItemID(language: language, lemma: item.0.goldLemma, partOfSpeech: pos)
         return candidate(key: id.canonicalKey, lemma: item.0.goldLemma, pos: pos, weight: item.0.occurrenceWeight)
     })
     let predicted = aggregateCandidates(paired.compactMap { item -> DocumentVocabularyCandidate? in
         guard !item.1.predictedExcluded, let lemma = item.1.predictedLemma,
               let pos = VocabularyPartOfSpeech(rawValue: item.1.predictedPartOfSpeech) else { return nil }
-        let id = VocabularyLexicalItemID(language: languageCode, lemma: lemma, partOfSpeech: pos)
+        let id = VocabularyLexicalItemID(language: language, lemma: lemma, partOfSpeech: pos)
         return candidate(key: id.canonicalKey, lemma: lemma, pos: pos, weight: item.0.occurrenceWeight)
     })
     func assessment(_ values: [DocumentVocabularyCandidate]) -> (String?, [String]) {

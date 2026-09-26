@@ -261,6 +261,7 @@ private func evaluate(
     return try anchors.map { fixtureAnchor in
         guard !fixtureAnchor.anchorID.isEmpty,
               !fixtureAnchor.languageCode.isEmpty,
+              let language = VocabularyLanguageID(fixtureAnchor.languageCode),
               !fixtureAnchor.occurrences.isEmpty else {
             throw CocoaError(.coderReadCorrupt)
         }
@@ -268,12 +269,12 @@ private func evaluate(
         switch fixtureAnchor.anchor.kind {
         case .resolvedLemma:
             anchor = VocabularyLexicalAnchorID(
-                language: fixtureAnchor.languageCode,
+                language: language,
                 basis: .resolvedLemma(fixtureAnchor.anchor.value)
             )
         case .exactSurface:
             anchor = VocabularyLexicalAnchorID(
-                language: fixtureAnchor.languageCode,
+                language: language,
                 basis: .exactSurface(fixtureAnchor.anchor.value)
             )
         }
@@ -337,7 +338,7 @@ private func evaluate(
 
         let occurrenceResults = fixtureAnchor.occurrences.map { fixtureOccurrence in
             let gold = VocabularyLexicalItemID(
-                language: fixtureAnchor.languageCode,
+                language: language,
                 lemma: fixtureOccurrence.goldLemma,
                 partOfSpeech: fixtureOccurrence.goldPartOfSpeech
             ).canonicalKey
@@ -638,11 +639,13 @@ private func candidates(
                 }
                 let goldLemma = fixtureOccurrence?.goldLemma ?? anchor.anchor.displayValue
                 let goldPart = fixtureOccurrence?.goldPartOfSpeech ?? .unknown
-                lexicalItemID = VocabularyLexicalItemID(
-                    language: anchor.fixture.languageCode,
-                    lemma: goldLemma,
-                    partOfSpeech: goldPart
-                )
+                lexicalItemID = VocabularyLanguageID(anchor.fixture.languageCode).map {
+                    VocabularyLexicalItemID(
+                        language: $0,
+                        lemma: goldLemma,
+                        partOfSpeech: goldPart
+                    )
+                }
                 partOfSpeech = goldPart
                 policy = .fullInference
                 lemma = goldLemma

@@ -8,25 +8,25 @@ import Foundation
 /// `senseKey` is deliberately reserved but remains nil in production until the
 /// sense-disambiguation validation gate is met.
 package struct VocabularyLexicalItemID: Codable, Hashable, Sendable {
-    package let language: String
+    package let language: VocabularyLanguageID
     package let lemma: String
     package let partOfSpeech: VocabularyPartOfSpeech
     package let senseKey: String?
 
     package init(
-        language: String,
+        language: VocabularyLanguageID,
         lemma: String,
         partOfSpeech: VocabularyPartOfSpeech,
         senseKey: String? = nil
     ) {
-        self.language = language.lowercased()
+        self.language = language
         self.lemma = VocabularyTextPolicy.canonicalVocabularyKey(lemma)
         self.partOfSpeech = partOfSpeech
         self.senseKey = senseKey?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
     }
 
     package var canonicalKey: String {
-        [language, lemma, partOfSpeech.rawValue, senseKey ?? ""]
+        [language.bcp47, lemma, partOfSpeech.rawValue, senseKey ?? ""]
             .map(Self.escape)
             .joined(separator: "|")
     }
@@ -46,11 +46,11 @@ package struct VocabularyLexicalAnchorID: Codable, Hashable, Sendable {
         case exactSurface(String)
     }
 
-    package let language: String
+    package let language: VocabularyLanguageID?
     package let basis: Basis
 
-    package init(language: String, basis: Basis) {
-        self.language = language.lowercased()
+    package init(language: VocabularyLanguageID?, basis: Basis) {
+        self.language = language
         switch basis {
         case let .resolvedLemma(lemma):
             self.basis = .resolvedLemma(VocabularyTextPolicy.canonicalVocabularyKey(lemma))
@@ -73,7 +73,7 @@ package struct VocabularyLexicalAnchorID: Codable, Hashable, Sendable {
             kind = "surface"
             value = surface
         }
-        return ["anchor", language, kind, Self.escape(value)]
+        return ["anchor", language?.bcp47 ?? "language-unknown", kind, Self.escape(value)]
             .joined(separator: "|")
     }
 
@@ -235,7 +235,12 @@ package enum VocabularyPartOfSpeech: String, Codable, CaseIterable, Sendable {
 /// Reserved seam for a future validated same-POS sense splitter. No production
 /// implementation is registered in the current experimental lexical protocol.
 package protocol VocabularySenseDisambiguating: Sendable {
-    func senseKey(language: String, lemma: String, partOfSpeech: VocabularyPartOfSpeech, context: String) -> String?
+    func senseKey(
+        language: VocabularyLanguageID,
+        lemma: String,
+        partOfSpeech: VocabularyPartOfSpeech,
+        context: String
+    ) -> String?
 }
 
 private extension String {
