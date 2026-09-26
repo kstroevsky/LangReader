@@ -789,7 +789,10 @@ final class VocabularyPreparationCoordinator {
                 domainDetection: domainDetection,
                 contexts: contexts,
                 sourceTexts: snapshot.texts,
-                readerPrior: priorStore.load(languageCode: snapshot.language.bcp47),
+                readerPrior: priorStore.load(
+                    languageCode: snapshot.language.bcp47,
+                    compatibilityFingerprint: compatibilityFingerprint
+                ),
                 sourceSnapshotMilliseconds: sourceSnapshotMilliseconds,
                 inventoryModelMilliseconds: inventoryModelMilliseconds,
                 contextMaterializationMilliseconds: contextMaterializationMilliseconds,
@@ -1350,6 +1353,7 @@ final class VocabularyPreparationCoordinator {
         let answers = assessment.answers
         let activeRequestID = requestID
         let algorithmVersion = session.algorithmVersion
+        guard let compatibilityFingerprint = session.compatibilityFingerprint else { return }
         Task { [weak self] in
             let saved = await Task.detached {
                 let priorSaved = inferenceAnswerCount == 0 || store.recordCompletedSession(
@@ -1358,7 +1362,8 @@ final class VocabularyPreparationCoordinator {
                     thetaPosterior: posterior,
                     verifiedEvidenceCount: verifiedInferenceCount,
                     completedAt: Date(),
-                    algorithmVersion: algorithmVersion
+                    algorithmVersion: algorithmVersion,
+                    compatibilityFingerprint: compatibilityFingerprint
                 )
                 _ = researchStore.recordCompletedSession(
                     contributionID: contributionID,

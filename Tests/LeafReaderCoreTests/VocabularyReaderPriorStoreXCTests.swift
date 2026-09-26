@@ -1,4 +1,5 @@
 import Foundation
+import SQLite3
 import XCTest
 @testable import LeafReaderCore
 
@@ -270,4 +271,225 @@ final class VocabularyReaderPriorStoreXCTests: XCTestCase {
             ).usedEligibleReaderPrior)
         }
     }
+
+    func testSemanticFingerprintChangeArchivesPriorAndStartsFreshProfileAfterReopen() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("reader-prior-semantic-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let databaseURL = directory.appendingPathComponent("personal-vocabulary.sqlite3")
+        let firstFingerprint = try compatibilityFingerprint(profileVersion: "profile-v1")
+        let secondFingerprint = try compatibilityFingerprint(profileVersion: "profile-v2")
+        let posterior = Array(repeating: 1.0 / 121.0, count: 121)
+
+        do {
+            let store = VocabularyReaderPriorStore(databaseURL: databaseURL)
+            for index in 1...2 {
+                XCTAssertTrue(store.recordCompletedSession(
+                    contributionID: "first-\(index)",
+                    languageCode: "en",
+                    thetaPosterior: posterior,
+                    verifiedEvidenceCount: 24,
+                    completedAt: Date(timeIntervalSince1970: Double(index)),
+                    algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion,
+                    compatibilityFingerprint: firstFingerprint
+                ))
+            }
+            XCTAssertEqual(
+                store.load(languageCode: "en", compatibilityFingerprint: firstFingerprint)?.completedSessionCount,
+                2
+            )
+            XCTAssertNil(store.load(languageCode: "en", compatibilityFingerprint: secondFingerprint))
+
+            XCTAssertTrue(store.recordCompletedSession(
+                contributionID: "second-1",
+                languageCode: "en",
+                thetaPosterior: posterior,
+                verifiedEvidenceCount: 24,
+                completedAt: Date(timeIntervalSince1970: 3),
+                algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion,
+                compatibilityFingerprint: secondFingerprint
+            ))
+            let active = try XCTUnwrap(store.load(
+                languageCode: "en",
+                compatibilityFingerprint: secondFingerprint
+            ))
+            XCTAssertEqual(active.completedSessionCount, 1)
+            XCTAssertEqual(active.verifiedEvidenceCount, 24)
+            XCTAssertEqual(active.compatibilityFingerprintDigest, secondFingerprint.stableDigest)
+
+            let archived = try XCTUnwrap(store.archivedPriors(languageCode: "en").only)
+            XCTAssertEqual(archived.prior.completedSessionCount, 2)
+            XCTAssertEqual(archived.prior.verifiedEvidenceCount, 48)
+            XCTAssertEqual(archived.prior.compatibilityFingerprintDigest, firstFingerprint.stableDigest)
+        }
+
+        let reopened = VocabularyReaderPriorStore(databaseURL: databaseURL)
+        XCTAssertEqual(
+            reopened.load(languageCode: "en", compatibilityFingerprint: secondFingerprint)?.completedSessionCount,
+            1
+        )
+        XCTAssertEqual(reopened.archivedPriors(languageCode: "en").count, 1)
+        XCTAssertTrue(reopened.recordCompletedSession(
+            contributionID: "second-1",
+            languageCode: "en",
+            thetaPosterior: posterior,
+            verifiedEvidenceCount: 24,
+            completedAt: Date(timeIntervalSince1970: 3),
+            algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion,
+            compatibilityFingerprint: secondFingerprint
+        ))
+        XCTAssertEqual(reopened.archivedPriors(languageCode: "en").count, 1)
+        XCTAssertEqual(
+            reopened.load(languageCode: "en", compatibilityFingerprint: secondFingerprint)?.completedSessionCount,
+            1
+        )
+    }
+
+    func testLegacyPriorWithoutFingerprintIsIneligibleAndRecoverableAfterSemanticReplacement() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("reader-prior-legacy-semantic-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let databaseURL = directory.appendingPathComponent("personal-vocabulary.sqlite3")
+        let fingerprint = try compatibilityFingerprint(profileVersion: "profile-v1")
+        let posterior = Array(repeating: 1.0 / 121.0, count: 121)
+        let store = VocabularyReaderPriorStore(databaseURL: databaseURL)
+
+        XCTAssertTrue(store.recordCompletedSession(
+            contributionID: "legacy",
+            languageCode: "en",
+            thetaPosterior: posterior,
+            verifiedEvidenceCount: 24,
+            completedAt: Date(timeIntervalSince1970: 1),
+            algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion
+        ))
+        XCTAssertNil(store.load(languageCode: "en", compatibilityFingerprint: fingerprint))
+
+        XCTAssertTrue(store.recordCompletedSession(
+            contributionID: "semantic",
+            languageCode: "en",
+            thetaPosterior: posterior,
+            verifiedEvidenceCount: 24,
+            completedAt: Date(timeIntervalSince1970: 2),
+            algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion,
+            compatibilityFingerprint: fingerprint
+        ))
+        XCTAssertEqual(
+            store.load(languageCode: "en", compatibilityFingerprint: fingerprint)?.completedSessionCount,
+            1
+        )
+        let archived = try XCTUnwrap(store.archivedPriors(languageCode: "en").only)
+        XCTAssertEqual(archived.prior.completedSessionCount, 1)
+        XCTAssertNil(archived.prior.compatibilityFingerprintDigest)
+
+        XCTAssertTrue(store.reset(languageCode: "en"))
+        XCTAssertNil(store.load(languageCode: "en"))
+        XCTAssertTrue(store.archivedPriors(languageCode: "en").isEmpty)
+    }
+
+    func testArchiveFailureRollsBackReplacementAndContributionForRetry() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("reader-prior-archive-failure-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let databaseURL = directory.appendingPathComponent("personal-vocabulary.sqlite3")
+        let firstFingerprint = try compatibilityFingerprint(profileVersion: "profile-v1")
+        let secondFingerprint = try compatibilityFingerprint(profileVersion: "profile-v2")
+        let posterior = Array(repeating: 1.0 / 121.0, count: 121)
+        let store = VocabularyReaderPriorStore(databaseURL: databaseURL)
+
+        XCTAssertTrue(store.recordCompletedSession(
+            contributionID: "first",
+            languageCode: "en",
+            thetaPosterior: posterior,
+            verifiedEvidenceCount: 24,
+            completedAt: Date(timeIntervalSince1970: 1),
+            algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion,
+            compatibilityFingerprint: firstFingerprint
+        ))
+
+        try executeSQLite(
+            databaseURL: databaseURL,
+            sql: """
+            CREATE TRIGGER fail_reader_prior_archive
+            BEFORE INSERT ON vocabulary_reader_prior_archives
+            BEGIN
+                SELECT RAISE(ABORT, 'injected archive failure');
+            END
+            """
+        )
+        XCTAssertFalse(store.recordCompletedSession(
+            contributionID: "second",
+            languageCode: "en",
+            thetaPosterior: posterior,
+            verifiedEvidenceCount: 24,
+            completedAt: Date(timeIntervalSince1970: 2),
+            algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion,
+            compatibilityFingerprint: secondFingerprint
+        ))
+        XCTAssertEqual(
+            store.load(languageCode: "en", compatibilityFingerprint: firstFingerprint)?.completedSessionCount,
+            1
+        )
+        XCTAssertNil(store.load(languageCode: "en", compatibilityFingerprint: secondFingerprint))
+        XCTAssertTrue(store.archivedPriors(languageCode: "en").isEmpty)
+
+        try executeSQLite(databaseURL: databaseURL, sql: "DROP TRIGGER fail_reader_prior_archive")
+        XCTAssertTrue(store.recordCompletedSession(
+            contributionID: "second",
+            languageCode: "en",
+            thetaPosterior: posterior,
+            verifiedEvidenceCount: 24,
+            completedAt: Date(timeIntervalSince1970: 2),
+            algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion,
+            compatibilityFingerprint: secondFingerprint
+        ))
+        XCTAssertEqual(
+            store.load(languageCode: "en", compatibilityFingerprint: secondFingerprint)?.completedSessionCount,
+            1
+        )
+        XCTAssertEqual(store.archivedPriors(languageCode: "en").count, 1)
+    }
+
+    private func compatibilityFingerprint(
+        profileVersion: String
+    ) throws -> VocabularyPreparationCompatibilityFingerprint {
+        VocabularyPreparationCompatibilityFingerprint(
+            algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion,
+            language: try XCTUnwrap(VocabularyLanguageID("en")),
+            languageProfileVersion: profileVersion,
+            linguisticProviders: [
+                VocabularySemanticProviderIdentity(
+                    id: "linguistic.test",
+                    version: "1",
+                    normalizationVersion: "normalization-v1"
+                )
+            ],
+            linguisticRuntimeSignature: "runtime-v1",
+            difficultyProvider: VocabularyDifficultyProviderSemanticIdentity(
+                providerID: "difficulty.test",
+                providerVersion: "1"
+            ),
+            definitionProvider: VocabularySemanticProviderIdentity(
+                id: "definition.test",
+                version: "1",
+                normalizationVersion: "normalization-v1"
+            ),
+            normalizationVersion: "normalization-v1",
+            assessmentPolicyVersion: "assessment-v1"
+        )
+    }
+
+    private func executeSQLite(databaseURL: URL, sql: String) throws {
+        var database: OpaquePointer?
+        XCTAssertEqual(sqlite3_open(databaseURL.path, &database), SQLITE_OK)
+        defer { sqlite3_close(database) }
+        var errorMessage: UnsafeMutablePointer<CChar>?
+        let result = sqlite3_exec(database, sql, nil, nil, &errorMessage)
+        let message = errorMessage.map { String(cString: $0) }
+        sqlite3_free(errorMessage)
+        XCTAssertEqual(result, SQLITE_OK, message ?? "SQLite statement failed")
+    }
+}
+
+private extension Array {
+    var only: Element? { count == 1 ? first : nil }
 }

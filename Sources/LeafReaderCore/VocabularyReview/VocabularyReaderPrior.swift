@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import SQLite3
 
@@ -8,6 +9,7 @@ package struct VocabularyReaderPrior: Codable, Equatable, Sendable {
     package let verifiedEvidenceCount: Int
     package let lastUpdatedAt: Date
     package let algorithmVersion: Int
+    package let compatibilityFingerprintDigest: String?
 
     package init(
         languageCode: String,
@@ -15,7 +17,8 @@ package struct VocabularyReaderPrior: Codable, Equatable, Sendable {
         completedSessionCount: Int,
         verifiedEvidenceCount: Int,
         lastUpdatedAt: Date,
-        algorithmVersion: Int
+        algorithmVersion: Int,
+        compatibilityFingerprintDigest: String? = nil
     ) {
         self.languageCode = languageCode.lowercased()
         self.thetaPosterior = Self.normalized(thetaPosterior)
@@ -23,6 +26,7 @@ package struct VocabularyReaderPrior: Codable, Equatable, Sendable {
         self.verifiedEvidenceCount = max(0, verifiedEvidenceCount)
         self.lastUpdatedAt = lastUpdatedAt
         self.algorithmVersion = algorithmVersion
+        self.compatibilityFingerprintDigest = compatibilityFingerprintDigest
     }
 
     package func isEligible(at date: Date = Date()) -> Bool {
@@ -65,6 +69,16 @@ package struct VocabularyReaderPrior: Codable, Equatable, Sendable {
     }
 }
 
+package struct VocabularyReaderPriorArchive: Equatable, Sendable {
+    package let prior: VocabularyReaderPrior
+    package let archivedAt: Date
+
+    package init(prior: VocabularyReaderPrior, archivedAt: Date) {
+        self.prior = prior
+        self.archivedAt = archivedAt
+    }
+}
+
 package struct VocabularyReaderPriorSummary: Equatable, Sendable {
     package let languageCode: String
     package let completedSessionCount: Int
@@ -86,6 +100,10 @@ package struct VocabularyReaderPriorSummary: Equatable, Sendable {
 
 package protocol VocabularyReaderPriorStoring: Sendable {
     func load(languageCode: String) -> VocabularyReaderPrior?
+    func load(
+        languageCode: String,
+        compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint
+    ) -> VocabularyReaderPrior?
     func summaries() -> [VocabularyReaderPriorSummary]
     @discardableResult
     func recordCompletedSession(
@@ -96,7 +114,50 @@ package protocol VocabularyReaderPriorStoring: Sendable {
         completedAt: Date,
         algorithmVersion: Int
     ) -> Bool
+    @discardableResult
+    func recordCompletedSession(
+        contributionID: String,
+        languageCode: String,
+        thetaPosterior: [Double],
+        verifiedEvidenceCount: Int,
+        completedAt: Date,
+        algorithmVersion: Int,
+        compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint
+    ) -> Bool
     @discardableResult func reset(languageCode: String) -> Bool
+}
+
+package extension VocabularyReaderPriorStoring {
+    func load(
+        languageCode: String,
+        compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint
+    ) -> VocabularyReaderPrior? {
+        guard let prior = load(languageCode: languageCode),
+              prior.compatibilityFingerprintDigest == compatibilityFingerprint.stableDigest else {
+            return nil
+        }
+        return prior
+    }
+
+    @discardableResult
+    func recordCompletedSession(
+        contributionID: String,
+        languageCode: String,
+        thetaPosterior: [Double],
+        verifiedEvidenceCount: Int,
+        completedAt: Date,
+        algorithmVersion: Int,
+        compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint
+    ) -> Bool {
+        recordCompletedSession(
+            contributionID: contributionID,
+            languageCode: languageCode,
+            thetaPosterior: thetaPosterior,
+            verifiedEvidenceCount: verifiedEvidenceCount,
+            completedAt: completedAt,
+            algorithmVersion: algorithmVersion
+        )
+    }
 }
 
 package final class VocabularyReaderPriorStore: VocabularyReaderPriorStoring, @unchecked Sendable {
@@ -133,14 +194,26 @@ package final class VocabularyReaderPriorStore: VocabularyReaderPriorStoring, @u
             completed_sessions INTEGER NOT NULL,
             verified_evidence INTEGER NOT NULL,
             updated_at REAL NOT NULL,
-            algorithm_version INTEGER NOT NULL
+            algorithm_version INTEGER NOT NULL,
+            compatibility_fingerprint TEXT
         )
         """)
+        // Existing databases predate semantic fingerprints. A duplicate-column
+        // failure is expected after the first migration and can be ignored.
+        execute("ALTER TABLE vocabulary_reader_priors ADD COLUMN compatibility_fingerprint TEXT")
         execute("""
         CREATE TABLE IF NOT EXISTS vocabulary_reader_prior_sessions (
             contribution_id TEXT PRIMARY KEY,
             language_code TEXT NOT NULL,
             completed_at REAL NOT NULL
+        )
+        """)
+        execute("""
+        CREATE TABLE IF NOT EXISTS vocabulary_reader_prior_archives (
+            archive_identity TEXT PRIMARY KEY,
+            language_code TEXT NOT NULL,
+            archived_at REAL NOT NULL,
+            prior_json BLOB NOT NULL
         )
         """)
     }
@@ -149,6 +222,49 @@ package final class VocabularyReaderPriorStore: VocabularyReaderPriorStoring, @u
 
     package func load(languageCode: String) -> VocabularyReaderPrior? {
         lock.withLock { loadLocked(languageCode: languageCode) }
+    }
+
+    package func load(
+        languageCode: String,
+        compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint
+    ) -> VocabularyReaderPrior? {
+        lock.withLock {
+            guard let prior = loadLocked(languageCode: languageCode),
+                  prior.compatibilityFingerprintDigest == compatibilityFingerprint.stableDigest else {
+                return nil
+            }
+            return prior
+        }
+    }
+
+    package func archivedPriors(languageCode: String) -> [VocabularyReaderPriorArchive] {
+        lock.withLock {
+            guard let db else { return [] }
+            var statement: OpaquePointer?
+            let sql = """
+            SELECT archived_at, prior_json
+            FROM vocabulary_reader_prior_archives
+            WHERE language_code = ?
+            ORDER BY archived_at, archive_identity
+            """
+            guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return [] }
+            defer { sqlite3_finalize(statement) }
+            bind(languageCode.lowercased(), at: 1, to: statement)
+            var archives: [VocabularyReaderPriorArchive] = []
+            while sqlite3_step(statement) == SQLITE_ROW,
+                  let bytes = sqlite3_column_blob(statement, 1) {
+                let count = Int(sqlite3_column_bytes(statement, 1))
+                let data = Data(bytes: bytes, count: count)
+                guard let prior = try? JSONDecoder().decode(VocabularyReaderPrior.self, from: data) else {
+                    continue
+                }
+                archives.append(VocabularyReaderPriorArchive(
+                    prior: prior,
+                    archivedAt: Date(timeIntervalSince1970: sqlite3_column_double(statement, 0))
+                ))
+            }
+            return archives
+        }
     }
 
     package func summaries() -> [VocabularyReaderPriorSummary] {
@@ -186,6 +302,47 @@ package final class VocabularyReaderPriorStore: VocabularyReaderPriorStoring, @u
         completedAt: Date,
         algorithmVersion: Int
     ) -> Bool {
+        recordCompletedSession(
+            contributionID: contributionID,
+            languageCode: languageCode,
+            thetaPosterior: thetaPosterior,
+            verifiedEvidenceCount: verifiedEvidenceCount,
+            completedAt: completedAt,
+            algorithmVersion: algorithmVersion,
+            compatibilityFingerprintDigest: nil
+        )
+    }
+
+    @discardableResult
+    package func recordCompletedSession(
+        contributionID: String,
+        languageCode: String,
+        thetaPosterior: [Double],
+        verifiedEvidenceCount: Int,
+        completedAt: Date,
+        algorithmVersion: Int,
+        compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint
+    ) -> Bool {
+        recordCompletedSession(
+            contributionID: contributionID,
+            languageCode: languageCode,
+            thetaPosterior: thetaPosterior,
+            verifiedEvidenceCount: verifiedEvidenceCount,
+            completedAt: completedAt,
+            algorithmVersion: algorithmVersion,
+            compatibilityFingerprintDigest: compatibilityFingerprint.stableDigest
+        )
+    }
+
+    private func recordCompletedSession(
+        contributionID: String,
+        languageCode: String,
+        thetaPosterior: [Double],
+        verifiedEvidenceCount: Int,
+        completedAt: Date,
+        algorithmVersion: Int,
+        compatibilityFingerprintDigest: String?
+    ) -> Bool {
         lock.withLock {
             guard let db,
                   !contributionID.isEmpty,
@@ -221,20 +378,21 @@ package final class VocabularyReaderPriorStore: VocabularyReaderPriorStoring, @u
                 return true
             }
             let existing = loadLocked(languageCode: languageCode)
-            // Algorithm revisions change the candidate ontology and therefore
-            // the evidence that calibrated this language-level posterior. Keep
-            // the durable row and idempotence ledger, but begin eligibility
-            // counts again for the new version instead of laundering older
-            // sessions into a newly-versioned prior.
             let compatibleExisting = existing?.algorithmVersion == algorithmVersion
+                && existing?.compatibilityFingerprintDigest == compatibilityFingerprintDigest
                 ? existing
                 : nil
+            if let existing, compatibleExisting == nil,
+               !archiveLocked(existing, archivedAt: Date()) {
+                sqlite3_exec(db, "ROLLBACK", nil, nil, nil)
+                return false
+            }
             var statement: OpaquePointer?
             let sql = """
             INSERT OR REPLACE INTO vocabulary_reader_priors(
                 language_code, posterior_json, completed_sessions, verified_evidence,
-                updated_at, algorithm_version
-            ) VALUES (?, ?, ?, ?, ?, ?)
+                updated_at, algorithm_version, compatibility_fingerprint
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
             """
             guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else {
                 sqlite3_exec(db, "ROLLBACK", nil, nil, nil)
@@ -255,6 +413,11 @@ package final class VocabularyReaderPriorStore: VocabularyReaderPriorStoring, @u
             )
             sqlite3_bind_double(statement, 5, completedAt.timeIntervalSince1970)
             sqlite3_bind_int(statement, 6, Int32(algorithmVersion))
+            if let compatibilityFingerprintDigest {
+                bind(compatibilityFingerprintDigest, at: 7, to: statement)
+            } else {
+                sqlite3_bind_null(statement, 7)
+            }
             guard sqlite3_step(statement) == SQLITE_DONE else {
                 sqlite3_exec(db, "ROLLBACK", nil, nil, nil)
                 return false
@@ -289,6 +452,24 @@ package final class VocabularyReaderPriorStore: VocabularyReaderPriorStoring, @u
                 sqlite3_exec(db, "ROLLBACK", nil, nil, nil)
                 return false
             }
+            var archiveStatement: OpaquePointer?
+            guard sqlite3_prepare_v2(
+                db,
+                "DELETE FROM vocabulary_reader_prior_archives WHERE language_code = ?",
+                -1,
+                &archiveStatement,
+                nil
+            ) == SQLITE_OK else {
+                sqlite3_exec(db, "ROLLBACK", nil, nil, nil)
+                return false
+            }
+            bind(languageCode, at: 1, to: archiveStatement)
+            let removedArchives = sqlite3_step(archiveStatement) == SQLITE_DONE
+            sqlite3_finalize(archiveStatement)
+            guard removedArchives else {
+                sqlite3_exec(db, "ROLLBACK", nil, nil, nil)
+                return false
+            }
             var statement: OpaquePointer?
             guard sqlite3_prepare_v2(
                 db,
@@ -314,7 +495,8 @@ package final class VocabularyReaderPriorStore: VocabularyReaderPriorStoring, @u
         guard let db else { return nil }
         var statement: OpaquePointer?
         let sql = """
-        SELECT posterior_json, completed_sessions, verified_evidence, updated_at, algorithm_version
+        SELECT posterior_json, completed_sessions, verified_evidence, updated_at,
+               algorithm_version, compatibility_fingerprint
         FROM vocabulary_reader_priors WHERE language_code = ? LIMIT 1
         """
         guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return nil }
@@ -325,14 +507,42 @@ package final class VocabularyReaderPriorStore: VocabularyReaderPriorStoring, @u
               let data = String(cString: json).data(using: .utf8),
               let posterior = try? JSONDecoder().decode([Double].self, from: data),
               posterior.count == 121 else { return nil }
+        let compatibilityFingerprintDigest = sqlite3_column_type(statement, 5) == SQLITE_NULL
+            ? nil
+            : sqlite3_column_text(statement, 5).map { String(cString: $0) }
         return VocabularyReaderPrior(
             languageCode: languageCode,
             thetaPosterior: posterior,
             completedSessionCount: Int(sqlite3_column_int(statement, 1)),
             verifiedEvidenceCount: Int(sqlite3_column_int(statement, 2)),
             lastUpdatedAt: Date(timeIntervalSince1970: sqlite3_column_double(statement, 3)),
-            algorithmVersion: Int(sqlite3_column_int(statement, 4))
+            algorithmVersion: Int(sqlite3_column_int(statement, 4)),
+            compatibilityFingerprintDigest: compatibilityFingerprintDigest
         )
+    }
+
+    private func archiveLocked(_ prior: VocabularyReaderPrior, archivedAt: Date) -> Bool {
+        guard let db else { return false }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+        guard let data = try? encoder.encode(prior) else { return false }
+        let archiveIdentity = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        var statement: OpaquePointer?
+        let sql = """
+        INSERT OR IGNORE INTO vocabulary_reader_prior_archives(
+            archive_identity, language_code, archived_at, prior_json
+        ) VALUES (?, ?, ?, ?)
+        """
+        guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return false }
+        defer { sqlite3_finalize(statement) }
+        bind(archiveIdentity, at: 1, to: statement)
+        bind(prior.languageCode, at: 2, to: statement)
+        sqlite3_bind_double(statement, 3, archivedAt.timeIntervalSince1970)
+        let bindResult = data.withUnsafeBytes { bytes in
+            sqlite3_bind_blob(statement, 4, bytes.baseAddress, Int32(bytes.count), unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+        }
+        guard bindResult == SQLITE_OK else { return false }
+        return sqlite3_step(statement) == SQLITE_DONE
     }
 
     @discardableResult
