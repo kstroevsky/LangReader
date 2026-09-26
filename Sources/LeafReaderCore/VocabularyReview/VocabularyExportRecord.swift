@@ -1,7 +1,20 @@
 import Foundation
 
+package struct VocabularyLearningOwnerID: Codable, Hashable, Sendable {
+    package let rawValue: String
+
+    package init(_ rawValue: String) {
+        self.rawValue = rawValue
+    }
+}
+
 package struct VocabularyOccurrence: Equatable {
     package let id: String
+    package let learningOwnerID: VocabularyLearningOwnerID?
+    package let language: VocabularyLanguageID?
+    package let lemma: String?
+    package let lexicalKey: String?
+    package let partOfSpeech: VocabularyPartOfSpeech?
     package let pageIndex: Int?
     package let bounds: StoredPDFWordRect?
     package let location: String
@@ -11,6 +24,11 @@ package struct VocabularyOccurrence: Equatable {
 
     package init(
         id: String,
+        learningOwnerID: VocabularyLearningOwnerID? = nil,
+        language: VocabularyLanguageID? = nil,
+        lemma: String? = nil,
+        lexicalKey: String? = nil,
+        partOfSpeech: VocabularyPartOfSpeech? = nil,
         pageIndex: Int?,
         bounds: StoredPDFWordRect?,
         location: String,
@@ -19,6 +37,11 @@ package struct VocabularyOccurrence: Equatable {
         createdAt: Date
     ) {
         self.id = id
+        self.learningOwnerID = learningOwnerID
+        self.language = language
+        self.lemma = lemma
+        self.lexicalKey = lexicalKey
+        self.partOfSpeech = partOfSpeech
         self.pageIndex = pageIndex
         self.bounds = bounds
         self.location = location
@@ -80,6 +103,7 @@ package enum VocabularyFormMerger {
 
 package struct VocabularyExportRecord {
     package let ids: [String]
+    package let learningOwnerIDs: [VocabularyLearningOwnerID]
     package let word: String
     package let language: VocabularyLanguageID?
     package let lemma: String?
@@ -97,6 +121,7 @@ package struct VocabularyExportRecord {
 
     package init(
         ids: [String],
+        learningOwnerIDs: [VocabularyLearningOwnerID] = [],
         word: String,
         language: VocabularyLanguageID? = nil,
         lemma: String? = nil,
@@ -113,6 +138,7 @@ package struct VocabularyExportRecord {
         occurrences: [VocabularyOccurrence] = []
     ) {
         self.ids = ids
+        self.learningOwnerIDs = learningOwnerIDs
         self.word = word
         self.language = language
         self.lemma = lemma
@@ -132,6 +158,7 @@ package struct VocabularyExportRecord {
     package func withDictionaryMetadata(tags: String? = nil, frequency: Int? = nil) -> VocabularyExportRecord {
         VocabularyExportRecord(
             ids: ids,
+            learningOwnerIDs: learningOwnerIDs,
             word: word,
             language: language,
             lemma: lemma,
@@ -150,9 +177,10 @@ package struct VocabularyExportRecord {
     }
 
     /// Stable aggregation identity for persisted/exported vocabulary. Resolved
-    /// lexical identity wins; otherwise known language scopes the legacy lemma
-    /// key. Callers must provide a source scope before aggregating unresolved
-    /// records across documents.
+    /// lexical identity wins. Any record without a validated lexical identity
+    /// stays source-scoped when crossing document boundaries, even when its
+    /// language is known; language + lemma alone is not enough evidence for a
+    /// global lexical merge.
     package func identityGroupingKey(unresolvedScope: String? = nil) -> String? {
         if let lexicalKey = lexicalKey?.trimmingCharacters(in: .whitespacesAndNewlines),
            !lexicalKey.isEmpty {
@@ -160,11 +188,12 @@ package struct VocabularyExportRecord {
         }
         let lemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(lemma ?? word)
         guard !lemmaKey.isEmpty else { return nil }
+        if let unresolvedScope {
+            let languageKey = language?.bcp47 ?? "unknown"
+            return "unresolved|\(unresolvedScope)|\(languageKey)|\(lemmaKey)"
+        }
         if let language {
             return "language|\(language.bcp47)|\(lemmaKey)"
-        }
-        if let unresolvedScope {
-            return "language-unknown|\(unresolvedScope)|\(lemmaKey)"
         }
         return "language-unknown|\(lemmaKey)"
     }

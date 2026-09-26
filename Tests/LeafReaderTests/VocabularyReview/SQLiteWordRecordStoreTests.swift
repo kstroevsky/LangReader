@@ -288,9 +288,20 @@ struct SQLiteWordRecordStoreTestRunner {
             lemmaResolver: { _, _ in "gehen" }
         )
         assert(parityRepair.didChange, "legacy web rows without parity metadata should be repaired")
-        assert(Set(parityRepair.records.compactMap(\.vocabularyID)) == ["legacy-first"], "inflected web occurrences should receive one stable vocabulary identity")
+        assert(Set(parityRepair.records.compactMap(\.vocabularyID)) == ["legacy-first", "legacy-second"], "metadata repair should preserve row-local legacy ownership instead of regrouping by lemma")
         assert(parityRepair.records.allSatisfy { $0.lemma == "gehen" }, "web repair should attach the resolved lemma")
         assert(parityRepair.records.map(\.occurrenceSurfaceForm) == ["ging", "gegangen"], "web repair should preserve exact occurrence surfaces")
+
+        let preownedWeb = [
+            webRecord(id: "owned-a", word: "ging", answer: "went", createdAt: 3, vocabularyID: "owner-a"),
+            webRecord(id: "owned-b", word: "gegangen", answer: "gone", createdAt: 4, vocabularyID: "owner-b")
+        ]
+        let preownedRepair = WebWordRecordMetadataRepair.repair(
+            preownedWeb,
+            language: .german,
+            lemmaResolver: { _, _ in "gehen" }
+        )
+        assert(preownedRepair.records.map(\.vocabularyID) == ["owner-a", "owner-b"], "web repair must never reparent existing learning owners")
 
         assert(store.deleteWebRecords(documentID: documentID, ids: ["web-a"]), "Web delete(ids:) should succeed")
         assert(store.loadWebRecords(documentID: documentID).map(\.id) == ["web-b"], "Web delete(ids:) should remove only selected rows")

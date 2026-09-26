@@ -4,6 +4,7 @@ import LeafReaderCore
 
 struct StoredPDFWordRecord {
     let id: String
+    var vocabularyID: String? = nil
     let word: String
     var language: VocabularyLanguageID? = nil
     var lemma: String? = nil
@@ -58,6 +59,7 @@ private func assert(_ condition: @autoclosure () -> Bool, _ message: String) {
 
 private func pdfRecord(
     id: String,
+    vocabularyID: String? = nil,
     word: String,
     lemma: String? = nil,
     surfaceForm: String? = nil,
@@ -69,6 +71,7 @@ private func pdfRecord(
 ) -> StoredPDFWordRecord {
     StoredPDFWordRecord(
         id: id,
+        vocabularyID: vocabularyID,
         word: word,
         lemma: lemma,
         surfaceForm: surfaceForm,
@@ -151,6 +154,52 @@ struct VocabularyRecordProviderTestRunner {
         assert(grouped.occurrences.map(\.surfaceForm) == ["übersende", "Übersende", "übersendet"], "navigation models should retain every exact surface form")
         assert(grouped.occurrences[0].bounds?.cgRect == earlier.bounds.cgRect, "navigation models should retain exact PDF bounds")
         assert(grouped.occurrences[0].context == earlier.context, "navigation models should retain selectable context text")
+
+        let legacyOwnerResolved = StoredPDFWordRecord(
+            id: "legacy-owner-resolved",
+            vocabularyID: "legacy-owner",
+            word: "lief",
+            language: .german,
+            lemma: "laufen",
+            lexicalKey: "de|laufen|verb|",
+            partOfSpeech: .verb,
+            surfaceForm: "lief",
+            pageIndex: 8,
+            bounds: StoredPDFWordRect(CGRect(x: 20, y: 440, width: 50, height: 14)),
+            context: "Er lief schnell.",
+            question: "",
+            answer: "ran",
+            dictionaryTags: nil,
+            dictionaryFrequency: nil,
+            createdAt: Date(timeIntervalSince1970: 9),
+            srs: nil
+        )
+        let legacyOwnerUnresolved = StoredPDFWordRecord(
+            id: "legacy-owner-unresolved",
+            vocabularyID: "legacy-owner",
+            word: "lief",
+            pageIndex: 9,
+            bounds: StoredPDFWordRect(CGRect(x: 20, y: 420, width: 50, height: 14)),
+            context: "Sie lief nach Hause.",
+            question: "",
+            answer: "ran",
+            dictionaryTags: nil,
+            dictionaryFrequency: nil,
+            createdAt: Date(timeIntervalSince1970: 10),
+            srs: nil
+        )
+        let preservedLegacyOwner = VocabularyRecordProvider.records(
+            documentKind: .pdf,
+            pdfRecords: [legacyOwnerResolved, legacyOwnerUnresolved],
+            webRecords: [],
+            pdfContext: { $0.context ?? "" }
+        )
+        assert(preservedLegacyOwner.count == 1, "one PDF learning owner must remain one review group during partial enrichment")
+        assert(preservedLegacyOwner[0].ids.count == 2, "the preserved learning group should retain both exact occurrences")
+        assert(preservedLegacyOwner[0].learningOwnerIDs == [VocabularyLearningOwnerID("legacy-owner")], "the review group should expose its typed learning owner")
+        assert(preservedLegacyOwner[0].lexicalKey == nil, "a partially enriched shared owner must stay unresolved at group level")
+        assert(preservedLegacyOwner[0].occurrences.first { $0.id == "legacy-owner-resolved" }?.lexicalKey == "de|laufen|verb|", "resolved evidence should remain attached to the enriched occurrence")
+        assert(preservedLegacyOwner[0].occurrences.first { $0.id == "legacy-owner-unresolved" }?.lexicalKey == nil, "the unresolved sibling should remain unresolved")
 
         // MARK: - Labels flow through the provider
 
@@ -251,6 +300,7 @@ struct VocabularyRecordProviderTestRunner {
         assert(webRecords.first?.forms.first?.surface == "gegangen", "EPUB/DOCX surface form should reach the vocabulary model")
         assert(webRecords.first?.forms.first?.label == .partizipII, "EPUB/DOCX surface labels should use the same pipeline as PDF")
         assert(webRecords.first?.occurrences.first?.surfaceForm == "gegangen", "web navigation occurrence should retain the exact surface")
+        assert(webRecords.first?.learningOwnerIDs == [VocabularyLearningOwnerID("web-inflected")], "web learning ownership should stay row-local")
 
         // MARK: - Form merging
 

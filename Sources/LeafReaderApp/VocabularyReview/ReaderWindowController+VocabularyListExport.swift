@@ -97,10 +97,10 @@ extension ReaderWindowController {
             return occurrences.map { occurrence in
                 VocabularyExporter.Record(
                     word: record.word,
-                    language: record.language,
-                    lemma: record.lemma,
-                    lexicalKey: record.lexicalKey,
-                    partOfSpeech: record.partOfSpeech,
+                    language: occurrence.language ?? record.language,
+                    lemma: occurrence.lemma ?? record.lemma,
+                    lexicalKey: occurrence.lexicalKey ?? record.lexicalKey,
+                    partOfSpeech: occurrence.partOfSpeech ?? record.partOfSpeech,
                     surfaceForm: occurrence.surfaceForm ?? record.word,
                     answer: record.answer,
                     location: occurrence.location,

@@ -67,6 +67,8 @@ struct VocabularyLibraryRecordProviderTestRunner {
                     word: "Überlegen",
                     language: .german,
                     lemma: "überlegen",
+                    lexicalKey: "de|überlegen|verb|",
+                    partOfSpeech: .verb,
                     surfaceForm: "Überlegen",
                     answer: "to consider",
                     location: "p. 4",
@@ -83,6 +85,8 @@ struct VocabularyLibraryRecordProviderTestRunner {
                     word: "überlegte",
                     language: .german,
                     lemma: "überlegen",
+                    lexicalKey: "de|überlegen|verb|",
+                    partOfSpeech: .verb,
                     surfaceForm: "überlegte",
                     answer: "to think over carefully",
                     location: "42%",
@@ -140,6 +144,24 @@ struct VocabularyLibraryRecordProviderTestRunner {
         let languageScoped = VocabularyLibraryRecordProvider.records(sources: [englishGift, germanGift])
         assert(languageScoped.count == 2, "known-different languages must never merge by spelling or lemma")
         assert(Set(languageScoped.compactMap(\.language)) == [.english, .german], "library records should preserve known language identity")
+
+        let germanUnresolvedElsewhere = VocabularyLibrarySource(
+            documentURL: URL(fileURLWithPath: "/tmp/german-elsewhere.pdf"),
+            documentTitle: "German Elsewhere",
+            documentKind: .pdf,
+            records: [record(
+                id: "de-gift-elsewhere",
+                word: "Gift",
+                language: .german,
+                lemma: "gift",
+                answer: "poison",
+                location: "p. 3",
+                context: "Gift bleibt gefährlich.",
+                createdAt: 3
+            )]
+        )
+        let sameLanguageUnresolved = VocabularyLibraryRecordProvider.records(sources: [germanGift, germanUnresolvedElsewhere])
+        assert(sameLanguageUnresolved.count == 2, "known language plus lemma without a validated lexical key must remain document-scoped")
 
         let unknownFirst = VocabularyLibrarySource(
             documentURL: URL(fileURLWithPath: "/tmp/unknown-a.pdf"),

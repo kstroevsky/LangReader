@@ -21,6 +21,11 @@ package struct VocabularyLibrarySource {
 
 package struct VocabularyLibraryOccurrence {
     package let recordID: String
+    package let learningOwnerID: VocabularyLearningOwnerID?
+    package let language: VocabularyLanguageID?
+    package let lemma: String?
+    package let lexicalKey: String?
+    package let partOfSpeech: VocabularyPartOfSpeech?
     package let documentURL: URL
     package let documentTitle: String
     package let documentKind: ReaderDocumentKind
@@ -31,6 +36,11 @@ package struct VocabularyLibraryOccurrence {
 
     package init(
         recordID: String,
+        learningOwnerID: VocabularyLearningOwnerID? = nil,
+        language: VocabularyLanguageID? = nil,
+        lemma: String? = nil,
+        lexicalKey: String? = nil,
+        partOfSpeech: VocabularyPartOfSpeech? = nil,
         documentURL: URL,
         documentTitle: String,
         documentKind: ReaderDocumentKind,
@@ -40,6 +50,11 @@ package struct VocabularyLibraryOccurrence {
         createdAt: Date
     ) {
         self.recordID = recordID
+        self.learningOwnerID = learningOwnerID
+        self.language = language
+        self.lemma = lemma
+        self.lexicalKey = lexicalKey
+        self.partOfSpeech = partOfSpeech
         self.documentURL = documentURL
         self.documentTitle = documentTitle
         self.documentKind = documentKind
@@ -173,6 +188,11 @@ package enum VocabularyLibraryRecordProvider {
         return occurrences.map {
             VocabularyLibraryOccurrence(
                 recordID: $0.id,
+                learningOwnerID: $0.learningOwnerID,
+                language: $0.language,
+                lemma: $0.lemma,
+                lexicalKey: $0.lexicalKey,
+                partOfSpeech: $0.partOfSpeech,
                 documentURL: source.documentURL.standardizedFileURL,
                 documentTitle: source.documentTitle,
                 documentKind: source.documentKind,

@@ -226,6 +226,11 @@ run_swift_test /tmp/leafreader-personal-vocabulary-tests \
   -parse-as-library \
   -lsqlite3
 
+run_swift_test /tmp/leafreader-vocabulary-scoring-tests \
+  "$TEST_SOURCE_ROOT/VocabularyReview/VocabularyReviewScoringServiceTests.swift" \
+  "$APP_SOURCE_ROOT/VocabularyReview/VocabularyReviewScoringService.swift" \
+  -parse-as-library
+
 run_swift_test /tmp/leafreader-pdf-embedding-store-tests \
   "$TEST_SOURCE_ROOT/DocumentReading/PDFEmbeddingStoreTests.swift" \
   "$APP_SOURCE_ROOT/AIConversation/PDFDocumentAgentIndex.swift" \

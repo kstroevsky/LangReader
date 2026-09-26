@@ -61,37 +61,10 @@ struct WebWordRecordMetadataRepair {
             return record
         }
 
-        let orderedIndices = enriched.indices.sorted {
-            let lhs = enriched[$0]
-            let rhs = enriched[$1]
-            if lhs.createdAt != rhs.createdAt { return lhs.createdAt < rhs.createdAt }
-            return lhs.id < rhs.id
-        }
-        var vocabularyIDByKey: [String: String] = [:]
-        for index in orderedIndices {
-            let record = enriched[index]
-            let key = GermanLemmaResolver.groupingKey(
-                word: record.word,
-                lemma: record.lemma,
-                language: language
-            )
-            guard !key.isEmpty, vocabularyIDByKey[key] == nil,
-                  let vocabularyID = record.vocabularyID,
-                  !vocabularyID.isEmpty else { continue }
-            vocabularyIDByKey[key] = vocabularyID
-        }
-        for index in orderedIndices {
-            let record = enriched[index]
-            let key = GermanLemmaResolver.groupingKey(
-                word: record.word,
-                lemma: record.lemma,
-                language: language
-            )
-            guard !key.isEmpty else { continue }
-            let vocabularyID = vocabularyIDByKey[key] ?? record.id
-            vocabularyIDByKey[key] = vocabularyID
-            if enriched[index].vocabularyID != vocabularyID { didChange = true }
-            enriched[index].vocabularyID = vocabularyID
+        for index in enriched.indices {
+            guard enriched[index].vocabularyID?.isEmpty != false else { continue }
+            enriched[index].vocabularyID = enriched[index].id
+            didChange = true
         }
 
         return Result(records: enriched, didChange: didChange)
