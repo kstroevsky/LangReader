@@ -7,6 +7,13 @@ struct VocabularyLanguageRuntime: Sendable {
     let definitions: (any VocabularyDefinitionProviding)?
     let difficulty: (any DocumentVocabularyDifficultyProviding)?
 
+    var linguisticCacheIdentity: VocabularyLinguisticCacheIdentity {
+        VocabularyLinguisticCacheIdentity(
+            language: language,
+            languageProfileVersion: profile.version
+        )
+    }
+
     func status(for capability: VocabularyLanguageCapability) -> VocabularyCapabilityAvailability {
         profile.featureAvailability.status(for: capability)
     }

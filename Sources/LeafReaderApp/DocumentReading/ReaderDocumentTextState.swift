@@ -75,7 +75,7 @@ struct ReaderDocumentTextState {
     var pendingSnapshotCallbacks: [(PDFDocumentTextSnapshot?) -> Void] = []
 
     var vocabularyIndex: VocabularyDocumentLemmaIndex?
-    var vocabularyIndexLanguageCode: String?
+    var vocabularyIndexSemanticIdentity: VocabularyLinguisticCacheIdentity?
     var isBuildingVocabularyIndex = false
     var vocabularyIndexCancellationToken: PDFDocumentTextCancellationToken?
     var vocabularyIndexBuildStartedAt: TimeInterval?

@@ -22,17 +22,44 @@ final class VocabularyLibraryBuildCacheXCTests: XCTestCase {
         )
     }
 
+    func testFingerprintChangesWithLinguisticRuntimeSemantics() {
+        let base = record(language: .english, lexicalKey: "en|gift|noun|", partOfSpeech: .noun)
+        let current = VocabularyLinguisticCacheIdentity(
+            language: .english,
+            languageProfileVersion: "en-profile-v1",
+            linguisticRuntimeSignature: "runtime-a"
+        )
+        let changed = VocabularyLinguisticCacheIdentity(
+            language: .english,
+            languageProfileVersion: "en-profile-v1",
+            linguisticRuntimeSignature: "runtime-b"
+        )
+
+        XCTAssertNotEqual(fingerprint(base, semanticIdentity: current), fingerprint(base, semanticIdentity: changed))
+    }
+
     private func fingerprint(
         _ record: StoredWebWordRecord,
         language: VocabularyLanguageID?,
         profileVersion: String?
     ) -> Int {
+        fingerprint(
+            record,
+            semanticIdentity: language.map {
+                VocabularyLinguisticCacheIdentity(language: $0, languageProfileVersion: profileVersion)
+            }
+        )
+    }
+
+    private func fingerprint(
+        _ record: StoredWebWordRecord,
+        semanticIdentity: VocabularyLinguisticCacheIdentity?
+    ) -> Int {
         VocabularyLibraryBuildCache.fingerprint(
             pdf: [],
             web: [record],
             labelGeneration: 1,
-            language: language,
-            languageProfileVersion: profileVersion
+            semanticIdentity: semanticIdentity
         )
     }
 

@@ -48,7 +48,9 @@ extension ReaderWindowController {
         let languageID = vocabularyDocumentLanguageID
         let languageRevision = vocabularyLanguageRevision
         let language = languageID?.appleNaturalLanguage ?? .undetermined
-        let profileVersion = languageID.flatMap { vocabularyLanguageCatalog.resolve(language: $0)?.profile.version }
+        let semanticIdentity = languageID.flatMap {
+            vocabularyLanguageCatalog.resolve(language: $0)?.linguisticCacheIdentity
+        }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
             let currentRecords: [VocabularyExportRecord]
@@ -57,8 +59,7 @@ extension ReaderWindowController {
                     pdf: currentPDFRecords,
                     web: currentWebRecords,
                     labelGeneration: GermanLabelCacheGeneration.current,
-                    language: languageID,
-                    languageProfileVersion: profileVersion
+                    semanticIdentity: semanticIdentity
                 )
                 currentRecords = self.vocabularyLibraryBuildCache.records(
                     documentID: currentDocumentID,
@@ -132,15 +133,14 @@ extension ReaderWindowController {
                 )
                 let otherLanguageID = otherLanguageResolution.languageID
                 let otherLanguage = otherLanguageID?.appleNaturalLanguage ?? .undetermined
-                let otherProfileVersion = otherLanguageID.flatMap {
-                    vocabularyLanguageCatalog.resolve(language: $0)?.profile.version
+                let otherSemanticIdentity = otherLanguageID.flatMap {
+                    vocabularyLanguageCatalog.resolve(language: $0)?.linguisticCacheIdentity
                 }
                 let fingerprint = VocabularyLibraryBuildCache.fingerprint(
                     pdf: pdfRecords,
                     web: webRecords,
                     labelGeneration: GermanLabelCacheGeneration.current,
-                    language: otherLanguageID,
-                    languageProfileVersion: otherProfileVersion
+                    semanticIdentity: otherSemanticIdentity
                 )
                 records = vocabularyLibraryBuildCache.records(
                     documentID: documentID,

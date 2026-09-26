@@ -100,6 +100,7 @@ package struct VocabularyDocumentLemmaSummary: Codable, Equatable, Sendable {
 /// The production confidence boundary for lexical-class hypotheses. Offline
 /// POS fixtures call this same owner instead of reproducing its thresholds.
 package enum VocabularyPartOfSpeechConfidencePolicy {
+    package static let policyVersion = "apple-pos-confidence-v1"
     package static let minimumLeadingProbability = 0.65
     package static let minimumMargin = 0.20
 
@@ -299,6 +300,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
 
     private let pages: [Page]
     private let language: VocabularyLanguageID
+    package let semanticIdentity: VocabularyLinguisticCacheIdentity
     package let reusedPageCount: Int
 
     /// Builds an index using a deliberately bounded worker pool. Natural
@@ -309,6 +311,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         language: NLLanguage,
         maximumWorkerCount: Int = 4,
         seed: VocabularyDocumentLemmaIndexSeed? = nil,
+        semanticIdentity: VocabularyLinguisticCacheIdentity? = nil,
         resolutionProvider: @escaping VocabularyLemmaResolutionProvider = GermanLemmaOccurrenceMatcher.naturalLanguageResolutionProvider,
         analysisProvider: @escaping VocabularyMorphologicalAnalysisProvider = {
             VocabularyPartOfSpeechConfidencePolicy.analyses(
@@ -321,6 +324,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         guard !isCancelled() else { return nil }
         guard let languageID = VocabularyLanguageID(language.rawValue) else { return nil }
         self.language = languageID
+        self.semanticIdentity = semanticIdentity ?? VocabularyLinguisticCacheIdentity(language: languageID)
         guard !texts.isEmpty else {
             pages = []
             reusedPageCount = 0
@@ -331,6 +335,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         var reusedIndexes = Set<Int>()
         if let seed,
            seed.index.language == languageID,
+           seed.index.semanticIdentity == self.semanticIdentity,
            seed.pageIndexes.count == seed.index.pages.count {
             for (sliceIndex, pageIndex) in seed.pageIndexes.enumerated() {
                 guard pageIndex >= 0,

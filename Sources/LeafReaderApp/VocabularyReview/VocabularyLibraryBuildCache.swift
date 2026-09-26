@@ -69,14 +69,11 @@ final class VocabularyLibraryBuildCache: @unchecked Sendable {
         pdf: [StoredPDFWordRecord],
         web: [StoredWebWordRecord],
         labelGeneration: Int,
-        language: VocabularyLanguageID?,
-        languageProfileVersion: String?
+        semanticIdentity: VocabularyLinguisticCacheIdentity?
     ) -> Int {
         var hasher = Hasher()
-        hasher.combine(VocabularyNormalizationPolicy.currentVersion)
         hasher.combine(labelGeneration)
-        hasher.combine(language?.bcp47)
-        hasher.combine(languageProfileVersion)
+        hasher.combine(semanticIdentity)
         hasher.combine(pdf.count)
         for record in pdf {
             hasher.combine(record.id)

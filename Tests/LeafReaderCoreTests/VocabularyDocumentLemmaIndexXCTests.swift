@@ -105,6 +105,33 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         XCTAssertEqual(lexicalFingerprint(baseline.lexicalSummaries()), baselineLexical)
     }
 
+    func testPrioritySeedIsRejectedWhenLinguisticSemanticsChange() throws {
+        let pages = ["Wir gehen heute.", "Sie ging gestern."]
+        let priorityIdentity = VocabularyLinguisticCacheIdentity(
+            language: .german,
+            languageProfileVersion: "de-profile-v1",
+            linguisticRuntimeSignature: "runtime-a"
+        )
+        let fullIdentity = VocabularyLinguisticCacheIdentity(
+            language: .german,
+            languageProfileVersion: "de-profile-v2",
+            linguisticRuntimeSignature: "runtime-b"
+        )
+        let priority = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: [pages[0]],
+            language: .german,
+            semanticIdentity: priorityIdentity
+        ))
+        let full = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: pages,
+            language: .german,
+            seed: VocabularyDocumentLemmaIndexSeed(pageIndexes: [0], index: priority),
+            semanticIdentity: fullIdentity
+        ))
+
+        XCTAssertEqual(full.reusedPageCount, 0)
+    }
+
     func testCancelledPriorityIndexDoesNotReturnPartialState() {
         XCTAssertNil(VocabularyDocumentLemmaIndex(
             texts: ["gehen", "ging"],
