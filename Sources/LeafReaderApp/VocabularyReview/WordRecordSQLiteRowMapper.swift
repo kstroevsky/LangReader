@@ -126,7 +126,10 @@ struct PDFVocabularySQLiteMapper {
     }
 
     static let selectSQL = """
-    SELECT occurrence.id, word.id, word.word, occurrence.language_id, word.lemma, word.lexical_key, word.part_of_speech,
+    SELECT occurrence.id, word.id, word.word, occurrence.language_id,
+           COALESCE(occurrence.lemma, word.lemma),
+           COALESCE(occurrence.lexical_key, word.lexical_key),
+           COALESCE(occurrence.part_of_speech, word.part_of_speech),
            occurrence.surface_form,
            occurrence.page_index, occurrence.bounds_json, occurrence.text_anchor_json,
            occurrence.context, word.question, word.answer, word.dictionary_tags,

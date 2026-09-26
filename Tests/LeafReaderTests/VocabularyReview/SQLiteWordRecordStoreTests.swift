@@ -110,8 +110,20 @@ struct SQLiteWordRecordStoreTestRunner {
         let updated = pdfRecord(id: "pdf-a", word: "alpha", answer: "updated", createdAt: 2, language: .english, textAnchor: anchor, srs: srs)
         let second = pdfRecord(id: "pdf-b", word: "beta", answer: "two", createdAt: 3)
         let other = pdfRecord(id: "pdf-other", word: "other", answer: "other", createdAt: 4)
-        let batchBlank = pdfRecord(id: "pdf-c", word: "übersende", answer: "", createdAt: 5)
-        let batchSecond = pdfRecord(id: "pdf-d", word: "Straße", answer: "", createdAt: 6)
+        let batchBlank = pdfRecord(
+            id: "pdf-c",
+            word: "übersende",
+            answer: "",
+            createdAt: 5,
+            bounds: CGRect(x: 50, y: 20, width: 30, height: 12)
+        )
+        let batchSecond = pdfRecord(
+            id: "pdf-d",
+            word: "Straße",
+            answer: "",
+            createdAt: 6,
+            bounds: CGRect(x: 90, y: 20, width: 30, height: 12)
+        )
 
         let defaultsSuite = "LeafVocabularyTests.PDFLocation.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: defaultsSuite)!
@@ -138,7 +150,7 @@ struct SQLiteWordRecordStoreTestRunner {
             PDFWordRecordStore(fileMD5: otherDocumentID, defaults: defaults).needsMetadataRepair,
             "metadata repair versions should remain document-scoped"
         )
-        let sameLocation = CGRect(x: 10.2, y: 20.2, width: 30.2, height: 12.2)
+        let sameLocation = CGRect(x: 50.2, y: 20.2, width: 30.2, height: 12.2)
         assert(
             locationStore.existingRecord(in: [batchBlank], pageIndex: 4, bounds: sameLocation)?.id == batchBlank.id,
             "PDF occurrence deduplication should use rounded page-and-bounds location instead of record IDs"
@@ -203,7 +215,7 @@ struct SQLiteWordRecordStoreTestRunner {
             "semantic occurrence upsert should succeed across changed geometry"
         )
         let semanticOccurrences = store.loadPDFRecords(documentID: semanticDocumentID)
-        assert(semanticOccurrences.map(\.id) == ["semantic-second"], "one semantic anchor should remain one occurrence after geometry changes")
+        assert(semanticOccurrences.map(\.id) == ["semantic-first"], "one semantic anchor should preserve its original occurrence UUID after geometry changes")
 
         let unresolvedDocumentID = "sqlite-unresolved-semantic-doc"
         assert(
@@ -329,6 +341,227 @@ struct SQLiteWordRecordStoreTestRunner {
         assert(uniqueLoaded.allSatisfy { $0.answer == "incorrect" }, "one definition should be shared by every inflected occurrence")
         assert(store.deletePDFRecords(documentID: uniqueDocumentID, ids: uniqueLoaded.map(\.id)), "deleting all occurrences should succeed")
         assert(store.loadPDFRecords(documentID: uniqueDocumentID).isEmpty, "deleting all occurrences should remove the orphaned word")
+
+        // ADR-0002 §59: enriching one occurrence of a legacy shared owner must
+        // keep the original occurrence and learning owner while storing the new
+        // linguistic evidence on that occurrence.
+        let sharedOwnerURL = dbDirectory.appendingPathComponent("legacy-shared-owner.sqlite3")
+        let sharedOwnerDocumentID = "legacy-shared-owner-doc"
+        let sharedSource = "lief lief lief"
+        let sharedFirstAnchor = TextQuoteAnchor(
+            unitOrdinal: 0,
+            sourceRange: NSRange(location: 0, length: 4),
+            sourceText: sharedSource
+        )!
+        let sharedSecondAnchor = TextQuoteAnchor(
+            unitOrdinal: 0,
+            sourceRange: NSRange(location: 5, length: 4),
+            sourceText: sharedSource
+        )!
+        let sharedThirdAnchor = TextQuoteAnchor(
+            unitOrdinal: 0,
+            sourceRange: NSRange(location: 10, length: 4),
+            sourceText: sharedSource
+        )!
+        do {
+            let sharedStore = WordRecordSQLiteStore(databaseURL: sharedOwnerURL)
+            let legacyFirst = pdfRecord(
+                id: "legacy-occurrence-a",
+                word: "lief",
+                answer: "ran",
+                createdAt: 30,
+                textAnchor: sharedFirstAnchor,
+                srs: srs
+            )
+            let legacySecond = pdfRecord(
+                id: "legacy-occurrence-b",
+                word: "lief",
+                answer: "ran",
+                createdAt: 31,
+                textAnchor: sharedSecondAnchor,
+                srs: srs
+            )
+            assert(
+                sharedStore.savePDFRecords(
+                    documentID: sharedOwnerDocumentID,
+                    records: [legacyFirst, legacySecond]
+                ),
+                "legacy shared-owner fixture should save"
+            )
+            let legacyLoaded = sharedStore.loadPDFRecords(documentID: sharedOwnerDocumentID)
+            assert(legacyLoaded.count == 2, "legacy shared-owner fixture should retain both occurrences")
+            let legacyOwnerIDs = Set(legacyLoaded.compactMap(\.vocabularyID))
+            assert(legacyOwnerIDs.count == 1, "legacy occurrences should begin under one learning owner")
+            let legacyOwnerID = legacyOwnerIDs.first!
+
+            let enriched = StoredPDFWordRecord(
+                id: "legacy-occurrence-a",
+                vocabularyID: legacyOwnerID,
+                word: "lief",
+                language: .german,
+                lemma: "laufen",
+                lexicalKey: "de|laufen|verb|",
+                partOfSpeech: .verb,
+                surfaceForm: "lief",
+                pageIndex: 4,
+                bounds: legacyFirst.bounds,
+                textAnchor: sharedFirstAnchor,
+                context: legacyFirst.context,
+                question: "stale enrichment question",
+                answer: "stale enrichment answer",
+                createdAt: legacyFirst.createdAt,
+                srs: VocabularySRSState.initial(createdAt: legacyFirst.createdAt)
+            )
+            assert(
+                sharedStore.upsertPDFRecord(documentID: sharedOwnerDocumentID, record: enriched),
+                "legacy occurrence enrichment should succeed"
+            )
+            var afterEnrichment = sharedStore.loadPDFRecords(documentID: sharedOwnerDocumentID)
+            let enrichedLoaded = afterEnrichment.first { $0.id == "legacy-occurrence-a" }
+            let untouchedLoaded = afterEnrichment.first { $0.id == "legacy-occurrence-b" }
+            assert(enrichedLoaded?.vocabularyID == legacyOwnerID, "enrichment must preserve the legacy learning owner")
+            assert(untouchedLoaded?.vocabularyID == legacyOwnerID, "enrichment must not split the shared learning owner")
+            assert(enrichedLoaded?.language == .german, "enrichment should persist occurrence language")
+            assert(enrichedLoaded?.lexicalKey == "de|laufen|verb|", "enrichment should persist occurrence lexical identity")
+            assert(enrichedLoaded?.partOfSpeech == .verb, "enrichment should persist occurrence POS")
+            assert(untouchedLoaded?.lexicalKey == nil, "enriching one occurrence must not relabel its sibling")
+            assert(afterEnrichment.allSatisfy { $0.answer == "ran" }, "enrichment must preserve the shared answer")
+            assert(afterEnrichment.allSatisfy { $0.srs?.reviewCount == 2 }, "enrichment must preserve shared SRS history")
+
+            let retryWithFreshID = StoredPDFWordRecord(
+                id: "fresh-retry-id",
+                vocabularyID: "candidate-new-owner",
+                word: "lief",
+                language: .german,
+                lemma: "laufen",
+                lexicalKey: "de|laufen|verb|",
+                partOfSpeech: .verb,
+                surfaceForm: "lief",
+                pageIndex: 4,
+                bounds: legacyFirst.bounds,
+                textAnchor: sharedFirstAnchor,
+                context: legacyFirst.context,
+                question: "retry question",
+                answer: "retry answer",
+                createdAt: Date(timeIntervalSince1970: 40),
+                srs: VocabularySRSState.initial(createdAt: Date(timeIntervalSince1970: 40))
+            )
+            assert(
+                sharedStore.upsertPDFRecord(documentID: sharedOwnerDocumentID, record: retryWithFreshID),
+                "fresh-ID retry for the same stable source occurrence should succeed"
+            )
+            afterEnrichment = sharedStore.loadPDFRecords(documentID: sharedOwnerDocumentID)
+            assert(afterEnrichment.count == 2, "fresh-ID retry must not duplicate the occurrence")
+            assert(Set(afterEnrichment.map(\.id)) == ["legacy-occurrence-a", "legacy-occurrence-b"], "fresh-ID retry must preserve the original occurrence UUID")
+            assert(afterEnrichment.allSatisfy { $0.vocabularyID == legacyOwnerID }, "fresh-ID retry must preserve the learning owner")
+            assert(afterEnrichment.allSatisfy { $0.answer == "ran" }, "fresh-ID retry must not overwrite the shared answer")
+            assert(afterEnrichment.allSatisfy { $0.srs?.reviewCount == 2 }, "fresh-ID retry must not overwrite shared SRS")
+
+            var reviewed = afterEnrichment.first { $0.id == "legacy-occurrence-a" }!
+            reviewed.answer = "ran; sprinted"
+            reviewed.srs = reviewed.srs?.reviewed(grade: 3, at: Date(timeIntervalSince1970: 50))
+            assert(
+                sharedStore.upsertPDFRecord(documentID: sharedOwnerDocumentID, record: reviewed),
+                "review update should remain writable through the preserved learning owner"
+            )
+            let afterReview = sharedStore.loadPDFRecords(documentID: sharedOwnerDocumentID)
+            assert(afterReview.allSatisfy { $0.answer == "ran; sprinted" }, "shared-owner answer edits should remain shared")
+            assert(afterReview.allSatisfy { $0.srs?.reviewCount == 3 }, "shared-owner review should score the owner once")
+
+            var undone = afterReview.first { $0.id == "legacy-occurrence-a" }!
+            undone.answer = "ran"
+            undone.srs = srs
+            assert(
+                sharedStore.upsertPDFRecord(documentID: sharedOwnerDocumentID, record: undone),
+                "undo should remain writable through the preserved learning owner"
+            )
+
+            let resolvedNewOccurrence = StoredPDFWordRecord(
+                id: "resolved-new-occurrence",
+                vocabularyID: legacyOwnerID,
+                word: "lief",
+                language: .german,
+                lemma: "laufen",
+                lexicalKey: "de|laufen|verb|",
+                partOfSpeech: .verb,
+                surfaceForm: "lief",
+                pageIndex: 4,
+                bounds: StoredPDFWordRect(CGRect(x: 80, y: 20, width: 30, height: 12)),
+                textAnchor: sharedThirdAnchor,
+                context: "lief lief lief",
+                question: "What is lief?",
+                answer: "ran",
+                createdAt: Date(timeIntervalSince1970: 60),
+                srs: srs
+            )
+            assert(
+                sharedStore.upsertPDFRecord(documentID: sharedOwnerDocumentID, record: resolvedNewOccurrence),
+                "a genuinely new resolved occurrence should save"
+            )
+            let withResolvedOwner = sharedStore.loadPDFRecords(documentID: sharedOwnerDocumentID)
+            let newOwnerID = withResolvedOwner.first { $0.id == "resolved-new-occurrence" }?.vocabularyID
+            assert(newOwnerID != nil && newOwnerID != legacyOwnerID, "new resolved occurrences must not be absorbed into a legacy wildcard owner")
+            assert(Set(withResolvedOwner.filter { $0.id != "resolved-new-occurrence" }.compactMap(\.vocabularyID)) == [legacyOwnerID], "legacy owner membership must remain unchanged")
+
+            let snapshot = withResolvedOwner
+            assert(
+                sharedStore.savePDFRecords(documentID: sharedOwnerDocumentID, records: Array(snapshot.reversed())),
+                "full save should preserve ownership with reversed input order"
+            )
+            assert(
+                sharedStore.savePDFRecords(documentID: sharedOwnerDocumentID, records: snapshot),
+                "full save should preserve ownership with original input order"
+            )
+        }
+        do {
+            let reopened = WordRecordSQLiteStore(databaseURL: sharedOwnerURL)
+            let reopenedRecords = reopened.loadPDFRecords(documentID: sharedOwnerDocumentID)
+            let reopenedLegacy = reopenedRecords.filter { $0.id != "resolved-new-occurrence" }
+            assert(reopenedLegacy.count == 2, "reopen should preserve both legacy occurrences")
+            assert(Set(reopenedLegacy.compactMap(\.vocabularyID)).count == 1, "reopen should preserve the shared legacy learning owner")
+            assert(reopenedLegacy.first { $0.id == "legacy-occurrence-a" }?.lexicalKey == "de|laufen|verb|", "reopen should preserve additive occurrence evidence")
+            assert(reopenedLegacy.first { $0.id == "legacy-occurrence-b" }?.lexicalKey == nil, "reopen should preserve the unresolved sibling")
+            assert(reopenedLegacy.allSatisfy { $0.answer == "ran" }, "reopen should preserve the restored shared answer")
+            assert(reopenedLegacy.allSatisfy { $0.srs?.reviewCount == 2 }, "reopen should preserve restored shared SRS history")
+        }
+
+        let ambiguousURL = dbDirectory.appendingPathComponent("ambiguous-source.sqlite3")
+        do {
+            let ambiguousStore = WordRecordSQLiteStore(databaseURL: ambiguousURL)
+            let ambiguousDocumentID = "ambiguous-source-doc"
+            let ambiguousFirst = pdfRecord(id: "ambiguous-a", word: "alpha", answer: "one", createdAt: 1)
+            let ambiguousSecond = pdfRecord(
+                id: "ambiguous-b",
+                word: "beta",
+                answer: "two",
+                createdAt: 2,
+                bounds: CGRect(x: 100, y: 200, width: 30, height: 12)
+            )
+            assert(
+                ambiguousStore.savePDFRecords(documentID: ambiguousDocumentID, records: [ambiguousFirst, ambiguousSecond]),
+                "ambiguous-source fixture should save"
+            )
+            forcePDFOccurrenceLocationKey(
+                at: ambiguousURL,
+                documentID: ambiguousDocumentID,
+                occurrenceID: ambiguousSecond.id,
+                locationKey: ambiguousFirst.occurrenceKey
+            )
+            let ambiguousRetry = pdfRecord(
+                id: "ambiguous-retry",
+                word: "gamma",
+                answer: "three",
+                createdAt: 3,
+                bounds: ambiguousFirst.bounds.cgRect
+            )
+            assert(
+                !ambiguousStore.upsertPDFRecord(documentID: ambiguousDocumentID, record: ambiguousRetry),
+                "ambiguous stable-source matching must fail closed"
+            )
+            let afterAmbiguousRetry = ambiguousStore.loadPDFRecords(documentID: ambiguousDocumentID)
+            assert(afterAmbiguousRetry.count == 2, "ambiguous retry must not write a duplicate occurrence")
+            assert(!afterAmbiguousRetry.contains { $0.id == "ambiguous-retry" }, "ambiguous retry must leave the original rows unchanged")
+        }
         }
 
         do {
@@ -722,9 +955,21 @@ struct SQLiteWordRecordStoreTestRunner {
             let store = WordRecordSQLiteStore(databaseURL: url)
             var base = pdfRecord(id: "base", word: "Haus", answer: "house", createdAt: 100)
             base.lemma = "Haus"
-            var sameSpot = pdfRecord(id: "infl", word: "Häuser", answer: "houses", createdAt: 50)
+            var sameSpot = pdfRecord(
+                id: "infl",
+                word: "Häuser",
+                answer: "houses",
+                createdAt: 50,
+                bounds: CGRect(x: 50, y: 60, width: 30, height: 12)
+            )
             sameSpot.lemma = "Häuser"
             _ = store.savePDFRecords(documentID: "doc", records: [base, sameSpot])
+            forcePDFOccurrenceLocationKey(
+                at: url,
+                documentID: "doc",
+                occurrenceID: sameSpot.id,
+                locationKey: base.occurrenceKey
+            )
             assert(store.loadPDFRecords(documentID: "doc").count == 2, "both start out present")
 
             _ = store.regroupVocabulary(fromKey: "häuser", intoKey: "haus", lemma: "Haus")
@@ -816,6 +1061,25 @@ private func vocabularyCreatedAt(at url: URL, documentID: String, canonicalKey: 
     sqlite3_bind_text(statement, 2, (canonicalKey as NSString).utf8String, -1, nil)
     guard sqlite3_step(statement) == SQLITE_ROW else { return nil }
     return sqlite3_column_double(statement, 0)
+}
+
+private func forcePDFOccurrenceLocationKey(
+    at url: URL,
+    documentID: String,
+    occurrenceID: String,
+    locationKey: String
+) {
+    var db: OpaquePointer?
+    assert(sqlite3_open(url.path, &db) == SQLITE_OK, "ambiguous-source fixture should open")
+    defer { sqlite3_close(db) }
+    var statement: OpaquePointer?
+    let sql = "UPDATE pdf_vocabulary_occurrences SET location_key = ? WHERE document_id = ? AND id = ?"
+    assert(sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK, "ambiguous-source fixture update should prepare")
+    defer { sqlite3_finalize(statement) }
+    sqlite3_bind_text(statement, 1, (locationKey as NSString).utf8String, -1, nil)
+    sqlite3_bind_text(statement, 2, (documentID as NSString).utf8String, -1, nil)
+    sqlite3_bind_text(statement, 3, (occurrenceID as NSString).utf8String, -1, nil)
+    assert(sqlite3_step(statement) == SQLITE_DONE, "ambiguous-source fixture should create two owners for one location")
 }
 
 private func createLegacyPDFDatabase(at url: URL) {

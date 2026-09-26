@@ -55,23 +55,18 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
     func savePDFRecords(documentID: String, records: [StoredPDFWordRecord]) -> Bool {
         locked {
             guard beginTransaction() else { return false }
-            guard execute(
-                sql: "DELETE FROM pdf_vocabulary_words WHERE document_id = ?",
-                bindings: [documentID],
-                operation: "delete existing PDF vocabulary"
-            ) else {
-                rollbackTransaction()
-                return false
-            }
-
-            var didFail = false
+            var persistedOccurrenceIDs = Set<String>()
             for record in records {
-                guard insertNormalizedPDFRecord(documentID: documentID, record: record) else {
-                    didFail = true
-                    break
+                guard let occurrenceID = insertNormalizedPDFRecord(documentID: documentID, record: record) else {
+                    rollbackTransaction()
+                    return false
                 }
+                persistedOccurrenceIDs.insert(occurrenceID)
             }
-            if didFail {
+            guard deletePDFOccurrencesExcept(
+                documentID: documentID,
+                occurrenceIDs: persistedOccurrenceIDs
+            ) else {
                 rollbackTransaction()
                 return false
             }
@@ -91,11 +86,7 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
     func upsertPDFRecord(documentID: String, record: StoredPDFWordRecord) -> Bool {
         locked {
             guard beginTransaction() else { return false }
-            guard insertNormalizedPDFRecord(documentID: documentID, record: record) else {
-                rollbackTransaction()
-                return false
-            }
-            guard deleteOrphanedPDFVocabularyWords(documentID: documentID) else {
+            guard insertNormalizedPDFRecord(documentID: documentID, record: record) != nil else {
                 rollbackTransaction()
                 return false
             }
@@ -113,14 +104,10 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
         return locked {
             guard beginTransaction() else { return false }
             for record in records {
-                guard insertNormalizedPDFRecord(documentID: documentID, record: record) else {
+                guard insertNormalizedPDFRecord(documentID: documentID, record: record) != nil else {
                     rollbackTransaction()
                     return false
                 }
-            }
-            guard deleteOrphanedPDFVocabularyWords(documentID: documentID) else {
-                rollbackTransaction()
-                return false
             }
             guard commitTransaction() else {
                 rollbackTransaction()
@@ -472,6 +459,18 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
                     decode: { stringColumn($0, 0) }
                 )
 
+                guard execute(
+                    sql: """
+                    UPDATE pdf_vocabulary_occurrences SET lemma = ?
+                    WHERE document_id = ? AND vocabulary_id = ?
+                    """,
+                    bindings: [lemma, source.documentID, source.id],
+                    operation: "update regrouped occurrence lemma"
+                ) else {
+                    rollbackTransaction()
+                    return 0
+                }
+
                 guard let targetID = existing.first else {
                     // No record under the lemma yet: re-key in place.
                     guard execute(
@@ -599,6 +598,9 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             context TEXT,
             surface_form TEXT,
             language_id TEXT,
+            lemma TEXT,
+            lexical_key TEXT,
+            part_of_speech TEXT,
             created_at REAL NOT NULL,
             PRIMARY KEY(document_id, id),
             UNIQUE(document_id, vocabulary_id, location_key),
@@ -686,6 +688,9 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
         ensureColumn(table: "pdf_vocabulary_occurrences", name: "surface_form", definition: "TEXT")
         ensureColumn(table: "pdf_vocabulary_occurrences", name: "text_anchor_json", definition: "TEXT")
         ensureColumn(table: "pdf_vocabulary_occurrences", name: "language_id", definition: "TEXT")
+        ensureColumn(table: "pdf_vocabulary_occurrences", name: "lemma", definition: "TEXT")
+        ensureColumn(table: "pdf_vocabulary_occurrences", name: "lexical_key", definition: "TEXT")
+        ensureColumn(table: "pdf_vocabulary_occurrences", name: "part_of_speech", definition: "TEXT")
     }
 
     private func ensureColumn(table: String, name: String, definition: String) {
@@ -773,19 +778,49 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
         return true
     }
 
-    private func insertNormalizedPDFRecord(documentID: String, record: StoredPDFWordRecord) -> Bool {
+    private struct PDFOccurrenceIdentity {
+        let id: String
+        let vocabularyID: String
+        let language: String?
+        let lemma: String?
+        let lexicalKey: String?
+        let partOfSpeech: String?
+    }
+
+    private enum PDFOccurrenceLookup {
+        case none
+        case existing(PDFOccurrenceIdentity)
+        case ambiguous
+    }
+
+    private func insertNormalizedPDFRecord(documentID: String, record: StoredPDFWordRecord) -> String? {
         let lemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(record.vocabularyGroupingText)
         let canonicalKey = record.lexicalKey ?? lemmaKey
-        guard !canonicalKey.isEmpty else { return false }
-        let exactVocabularyID = existingPDFVocabularyID(documentID: documentID, canonicalKey: canonicalKey)
-        let wildcardVocabularyID = record.lexicalKey == nil
-            ? nil
-            : existingPDFVocabularyID(documentID: documentID, canonicalKey: lemmaKey)
-        let preservesLegacyWildcard = exactVocabularyID == nil && wildcardVocabularyID != nil
-        let storedLexicalKey = preservesLegacyWildcard ? nil : record.lexicalKey
-        let storedPartOfSpeech = preservesLegacyWildcard ? nil : record.partOfSpeech?.rawValue
+        guard !canonicalKey.isEmpty else { return nil }
+        let locationKey = pdfLocationKey(record: record)
+        let occurrenceLookup = existingPDFOccurrence(
+            documentID: documentID,
+            occurrenceID: record.id,
+            locationKey: locationKey
+        )
+        if case .ambiguous = occurrenceLookup {
+            return nil
+        }
+        let existingOccurrence: PDFOccurrenceIdentity?
+        if case let .existing(existing) = occurrenceLookup {
+            existingOccurrence = existing
+        } else {
+            existingOccurrence = nil
+        }
+
+        let occurrenceID = existingOccurrence?.id ?? record.id
+        let storedOwnerLemma = existingOccurrence == nil ? record.lemma : nil
+        let storedOwnerLexicalKey = existingOccurrence == nil ? record.lexicalKey : nil
+        let storedOwnerPartOfSpeech = existingOccurrence == nil ? record.partOfSpeech?.rawValue : nil
         let vocabularyID: String
-        if let existing = exactVocabularyID ?? wildcardVocabularyID {
+        if let existingOccurrence {
+            vocabularyID = existingOccurrence.vocabularyID
+        } else if let existing = existingPDFVocabularyID(documentID: documentID, canonicalKey: canonicalKey) {
             vocabularyID = existing
         } else if let preferred = record.vocabularyID {
             let existingKey = pdfVocabularyCanonicalKey(documentID: documentID, vocabularyID: preferred)
@@ -811,9 +846,9 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             bindSQLiteText(vocabularyID, index: 2, statement: statement)
             bindSQLiteText(canonicalKey, index: 3, statement: statement)
             bindSQLiteText(record.word, index: 4, statement: statement)
-            bindSQLiteOptionalText(record.lemma, index: 5, statement: statement)
-            bindSQLiteOptionalText(storedLexicalKey, index: 6, statement: statement)
-            bindSQLiteOptionalText(storedPartOfSpeech, index: 7, statement: statement)
+            bindSQLiteOptionalText(storedOwnerLemma, index: 5, statement: statement)
+            bindSQLiteOptionalText(storedOwnerLexicalKey, index: 6, statement: statement)
+            bindSQLiteOptionalText(storedOwnerPartOfSpeech, index: 7, statement: statement)
             bindSQLiteText(record.question, index: 8, statement: statement)
             bindSQLiteText(record.answer, index: 9, statement: statement)
             bindSQLiteOptionalText(record.dictionaryTags, index: 10, statement: statement)
@@ -822,8 +857,18 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             bindSQLiteOptionalText(srsJSON, index: 13, statement: statement)
             }
         ) else {
-            return false
+            return nil
         }
+
+        let addsLinguisticEvidence = existingOccurrence.map { existing in
+            (existing.language == nil && record.language != nil)
+                || (existing.lemma == nil && record.lemma != nil)
+                || (existing.lexicalKey == nil && record.lexicalKey != nil)
+                || (existing.partOfSpeech == nil && record.partOfSpeech != nil)
+        } ?? false
+        let matchedByStableSourceIdentity = existingOccurrence?.id != record.id
+        let preservesExistingLearningState = existingOccurrence != nil
+            && (addsLinguisticEvidence || matchedByStableSourceIdentity)
 
         let hasDefinition = !record.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             || !record.question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -845,60 +890,145 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
                   srs_json = COALESCE(?, srs_json)
               WHERE document_id = ? AND id = ?
               """
-        guard executeStatement(
-            sql: updateSQL,
-            prepareOperation: "prepare update PDF vocabulary word",
-            stepOperation: "update PDF vocabulary word",
-            bind: { statement in
-            if hasDefinition {
-                bindSQLiteOptionalText(record.lemma, index: 1, statement: statement)
-                bindSQLiteOptionalText(storedLexicalKey, index: 2, statement: statement)
-                bindSQLiteOptionalText(storedPartOfSpeech, index: 3, statement: statement)
-                bindSQLiteText(record.question, index: 4, statement: statement)
-                bindSQLiteText(record.answer, index: 5, statement: statement)
-                bindSQLiteOptionalText(record.dictionaryTags, index: 6, statement: statement)
-                bindSQLiteOptionalInt(record.dictionaryFrequency, index: 7, statement: statement)
-                bindSQLiteOptionalText(srsJSON, index: 8, statement: statement)
-                bindSQLiteText(documentID, index: 9, statement: statement)
-                bindSQLiteText(vocabularyID, index: 10, statement: statement)
-            } else {
-                bindSQLiteOptionalText(record.lemma, index: 1, statement: statement)
-                bindSQLiteOptionalText(storedLexicalKey, index: 2, statement: statement)
-                bindSQLiteOptionalText(storedPartOfSpeech, index: 3, statement: statement)
-                bindSQLiteOptionalText(record.dictionaryTags, index: 4, statement: statement)
-                bindSQLiteOptionalInt(record.dictionaryFrequency, index: 5, statement: statement)
-                bindSQLiteOptionalText(srsJSON, index: 6, statement: statement)
-                bindSQLiteText(documentID, index: 7, statement: statement)
-                bindSQLiteText(vocabularyID, index: 8, statement: statement)
+        if !preservesExistingLearningState {
+            guard executeStatement(
+                sql: updateSQL,
+                prepareOperation: "prepare update PDF vocabulary word",
+                stepOperation: "update PDF vocabulary word",
+                bind: { statement in
+                if hasDefinition {
+                    bindSQLiteOptionalText(storedOwnerLemma, index: 1, statement: statement)
+                    bindSQLiteOptionalText(storedOwnerLexicalKey, index: 2, statement: statement)
+                    bindSQLiteOptionalText(storedOwnerPartOfSpeech, index: 3, statement: statement)
+                    bindSQLiteText(record.question, index: 4, statement: statement)
+                    bindSQLiteText(record.answer, index: 5, statement: statement)
+                    bindSQLiteOptionalText(record.dictionaryTags, index: 6, statement: statement)
+                    bindSQLiteOptionalInt(record.dictionaryFrequency, index: 7, statement: statement)
+                    bindSQLiteOptionalText(srsJSON, index: 8, statement: statement)
+                    bindSQLiteText(documentID, index: 9, statement: statement)
+                    bindSQLiteText(vocabularyID, index: 10, statement: statement)
+                } else {
+                    bindSQLiteOptionalText(storedOwnerLemma, index: 1, statement: statement)
+                    bindSQLiteOptionalText(storedOwnerLexicalKey, index: 2, statement: statement)
+                    bindSQLiteOptionalText(storedOwnerPartOfSpeech, index: 3, statement: statement)
+                    bindSQLiteOptionalText(record.dictionaryTags, index: 4, statement: statement)
+                    bindSQLiteOptionalInt(record.dictionaryFrequency, index: 5, statement: statement)
+                    bindSQLiteOptionalText(srsJSON, index: 6, statement: statement)
+                    bindSQLiteText(documentID, index: 7, statement: statement)
+                    bindSQLiteText(vocabularyID, index: 8, statement: statement)
+                }
+                }
+            ) else {
+                return nil
             }
-            }
-        ) else {
-            return false
         }
 
-        return executeStatement(
+        guard executeStatement(
             sql: """
-            INSERT OR REPLACE INTO pdf_vocabulary_occurrences(
+            INSERT INTO pdf_vocabulary_occurrences(
                 document_id, id, vocabulary_id, location_key, page_index, bounds_json,
-                text_anchor_json, context, surface_form, language_id, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                text_anchor_json, context, surface_form, language_id, lemma, lexical_key, part_of_speech, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(document_id, id) DO UPDATE SET
+                location_key = excluded.location_key,
+                page_index = excluded.page_index,
+                bounds_json = excluded.bounds_json,
+                text_anchor_json = COALESCE(excluded.text_anchor_json, pdf_vocabulary_occurrences.text_anchor_json),
+                context = COALESCE(excluded.context, pdf_vocabulary_occurrences.context),
+                surface_form = COALESCE(excluded.surface_form, pdf_vocabulary_occurrences.surface_form),
+                language_id = COALESCE(pdf_vocabulary_occurrences.language_id, excluded.language_id),
+                lemma = COALESCE(pdf_vocabulary_occurrences.lemma, excluded.lemma),
+                lexical_key = COALESCE(pdf_vocabulary_occurrences.lexical_key, excluded.lexical_key),
+                part_of_speech = COALESCE(pdf_vocabulary_occurrences.part_of_speech, excluded.part_of_speech)
             """,
             prepareOperation: "prepare insert PDF vocabulary occurrence",
             stepOperation: "insert PDF vocabulary occurrence",
             bind: { statement in
             bindSQLiteText(documentID, index: 1, statement: statement)
-            bindSQLiteText(record.id, index: 2, statement: statement)
+            bindSQLiteText(occurrenceID, index: 2, statement: statement)
             bindSQLiteText(vocabularyID, index: 3, statement: statement)
-            bindSQLiteText(pdfLocationKey(record: record), index: 4, statement: statement)
+            bindSQLiteText(locationKey, index: 4, statement: statement)
             sqlite3_bind_int(statement, 5, Int32(record.pageIndex))
             bindSQLiteText(codec.encode(record.bounds) ?? "{}", index: 6, statement: statement)
             bindSQLiteOptionalText(codec.encode(record.textAnchor), index: 7, statement: statement)
             bindSQLiteOptionalText(record.context, index: 8, statement: statement)
             bindSQLiteText(record.occurrenceSurfaceForm, index: 9, statement: statement)
             bindSQLiteOptionalText(record.language?.bcp47, index: 10, statement: statement)
-            sqlite3_bind_double(statement, 11, record.createdAt.timeIntervalSince1970)
+            bindSQLiteOptionalText(record.lemma, index: 11, statement: statement)
+            bindSQLiteOptionalText(record.lexicalKey, index: 12, statement: statement)
+            bindSQLiteOptionalText(record.partOfSpeech?.rawValue, index: 13, statement: statement)
+            sqlite3_bind_double(statement, 14, record.createdAt.timeIntervalSince1970)
             }
+        ) else {
+            return nil
+        }
+        return occurrenceID
+    }
+
+    private func existingPDFOccurrence(
+        documentID: String,
+        occurrenceID: String,
+        locationKey: String
+    ) -> PDFOccurrenceLookup {
+        if let exact = pdfOccurrences(
+            sql: """
+            SELECT id, vocabulary_id, language_id, lemma, lexical_key, part_of_speech
+            FROM pdf_vocabulary_occurrences
+            WHERE document_id = ? AND id = ?
+            LIMIT 1
+            """,
+            bindings: [documentID, occurrenceID]
+        ).first {
+            return .existing(exact)
+        }
+        let matches = pdfOccurrences(
+            sql: """
+            SELECT id, vocabulary_id, language_id, lemma, lexical_key, part_of_speech
+            FROM pdf_vocabulary_occurrences
+            WHERE document_id = ? AND location_key = ?
+            LIMIT 2
+            """,
+            bindings: [documentID, locationKey]
         )
+        switch matches.count {
+        case 0:
+            return .none
+        case 1:
+            return .existing(matches[0])
+        default:
+            return .ambiguous
+        }
+    }
+
+    private func pdfOccurrences(
+        sql: String,
+        bindings: [String]
+    ) -> [PDFOccurrenceIdentity] {
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else {
+            logSQLiteFailure("prepare PDF occurrence identity lookup")
+            return []
+        }
+        defer { sqlite3_finalize(statement) }
+        for (offset, value) in bindings.enumerated() {
+            bindSQLiteText(value, index: Int32(offset + 1), statement: statement)
+        }
+        var result: [PDFOccurrenceIdentity] = []
+        while sqlite3_step(statement) == SQLITE_ROW {
+            guard let id = stringColumn(statement, 0),
+                  let vocabularyID = stringColumn(statement, 1) else {
+                continue
+            }
+            result.append(PDFOccurrenceIdentity(
+                id: id,
+                vocabularyID: vocabularyID,
+                language: optionalStringColumn(statement, 2),
+                lemma: optionalStringColumn(statement, 3),
+                lexicalKey: optionalStringColumn(statement, 4),
+                partOfSpeech: optionalStringColumn(statement, 5)
+            ))
+        }
+        return result
     }
 
     private func existingPDFVocabularyID(documentID: String, canonicalKey: String) -> String? {
@@ -927,6 +1057,31 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             bindings: [documentID, documentID],
             operation: "delete orphaned PDF vocabulary words"
         )
+    }
+
+    private func deletePDFOccurrencesExcept(
+        documentID: String,
+        occurrenceIDs: Set<String>
+    ) -> Bool {
+        guard !occurrenceIDs.isEmpty else {
+            return execute(
+                sql: "DELETE FROM pdf_vocabulary_occurrences WHERE document_id = ?",
+                bindings: [documentID],
+                operation: "delete omitted PDF vocabulary occurrences"
+            )
+        }
+        let sortedIDs = occurrenceIDs.sorted()
+        let placeholders = Array(repeating: "?", count: sortedIDs.count).joined(separator: ", ")
+        return executeStatement(
+            sql: "DELETE FROM pdf_vocabulary_occurrences WHERE document_id = ? AND id NOT IN (\(placeholders))",
+            prepareOperation: "prepare delete omitted PDF vocabulary occurrences",
+            stepOperation: "delete omitted PDF vocabulary occurrences"
+        ) { statement in
+            bindSQLiteText(documentID, index: 1, statement: statement)
+            for (offset, occurrenceID) in sortedIDs.enumerated() {
+                bindSQLiteText(occurrenceID, index: Int32(offset + 2), statement: statement)
+            }
+        }
     }
 
     private func pdfLocationKey(pageIndex: Int, bounds: CGRect) -> String {
@@ -979,7 +1134,7 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             let vocabularyID = vocabularyIDs[groupingKey] ?? record.id
             vocabularyIDs[groupingKey] = vocabularyID
             record.vocabularyID = vocabularyID
-            guard insertNormalizedPDFRecord(documentID: item.documentID, record: record) else {
+            guard insertNormalizedPDFRecord(documentID: item.documentID, record: record) != nil else {
                 rollbackTransaction()
                 return
             }
