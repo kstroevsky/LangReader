@@ -483,7 +483,21 @@ extension ReaderWindowController {
         let cancellationToken = PDFDocumentTextCancellationToken()
         vocabularyState.occurrenceSearchID = searchID
         vocabularyState.occurrenceSearchCancellationToken = cancellationToken
-        guard let language else { return }
+        guard let language else {
+            beginPDFExactVocabularyOccurrenceDiscovery(
+                word: word,
+                lemma: lemma,
+                selectedRecord: selectedRecord,
+                selectedPageIndex: selectedPageIndex,
+                selectedPageText: selectedPageText,
+                document: document,
+                documentID: documentID,
+                searchID: searchID,
+                cancellationToken: cancellationToken,
+                saveStartedAt: Date()
+            )
+            return
+        }
         beginPDFVocabularyOccurrenceDiscovery(
             word: word,
             lemma: lemma,
@@ -497,6 +511,86 @@ extension ReaderWindowController {
             cancellationToken: cancellationToken,
             saveStartedAt: Date()
         )
+    }
+
+    /// Undetermined language still supports the ADR-0002 exact-form path. This
+    /// scans the shared document-text snapshot directly and never constructs a
+    /// language runtime, lemma identity, or language-specific provider request.
+    private func beginPDFExactVocabularyOccurrenceDiscovery(
+        word: String,
+        lemma: String,
+        selectedRecord: StoredPDFWordRecord,
+        selectedPageIndex: Int,
+        selectedPageText: String,
+        document: PDFDocument,
+        documentID: String,
+        searchID: UUID,
+        cancellationToken: PDFDocumentTextCancellationToken,
+        saveStartedAt: Date
+    ) {
+        let loadGeneration = documentSession.documentLoadGeneration
+        let documentIdentity = ObjectIdentifier(document)
+        let exactFound = max(
+            1,
+            VocabularyOccurrenceMatcher.matches(query: word, in: selectedPageText).count
+        )
+        selectionActionToolbar.showExactSaveProgress(
+            found: exactFound,
+            totalPages: document.pageCount
+        )
+        ensurePDFDocumentTextSnapshot(
+            preloadedPageTexts: [selectedPageIndex: selectedPageText]
+        ) { [weak self] snapshot in
+            guard let self,
+                  self.vocabularyState.occurrenceSearchID == searchID,
+                  self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
+                  self.currentFileMD5 == documentID,
+                  self.documentSession.documentLoadGeneration == loadGeneration,
+                  self.pdfView.document.map(ObjectIdentifier.init) == documentIdentity,
+                  let snapshot,
+                  snapshot.documentID == documentID else {
+                return
+            }
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                let queryStartedAt = Date()
+                guard let perPage = VocabularyOccurrenceMatcher.matches(
+                    query: word,
+                    inTexts: snapshot.pageTexts,
+                    isCancelled: { cancellationToken.isCancelled }
+                ) else { return }
+                let queryMilliseconds = Date().timeIntervalSince(queryStartedAt) * 1000
+                let matches = perPage.enumerated().flatMap { pageIndex, occurrences in
+                    occurrences.map {
+                        PDFVocabularyPageMatch(
+                            pageIndex: pageIndex,
+                            text: snapshot.pageTexts[pageIndex],
+                            occurrence: $0
+                        )
+                    }
+                }
+                DispatchQueue.main.async {
+                    guard let self,
+                          self.vocabularyState.occurrenceSearchID == searchID,
+                          self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
+                          self.currentFileMD5 == documentID,
+                          self.documentSession.documentLoadGeneration == loadGeneration,
+                          let currentDocument = self.pdfView.document,
+                          ObjectIdentifier(currentDocument) == documentIdentity else {
+                        return
+                    }
+                    ReaderPerformance.record(.vocabularyOccurrenceQuery, milliseconds: queryMilliseconds)
+                    self.finishSavingAllPDFVocabularyOccurrences(
+                        word: word,
+                        lemma: lemma,
+                        selectedRecord: selectedRecord,
+                        matches: matches,
+                        document: currentDocument,
+                        documentID: documentID,
+                        saveStartedAt: saveStartedAt
+                    )
+                }
+            }
+        }
     }
 
     private func beginPDFVocabularyOccurrenceDiscovery(
