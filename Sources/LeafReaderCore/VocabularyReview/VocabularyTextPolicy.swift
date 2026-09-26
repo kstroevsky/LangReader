@@ -104,15 +104,21 @@ package enum VocabularyTextPolicy {
         return collapsedWhitespace(result as String)
     }
 
-    package static func isSingleEnglishWord(_ text: String) -> Bool {
+    package static func isSingleVocabularyWord(_ text: String) -> Bool {
         let value = normalizedVocabularyText(text)
         guard value.count <= maxSingleWordLength else { return false }
         return value.range(of: singleWordPattern, options: .regularExpression) != nil
     }
 
+    /// Compatibility spelling retained while callers migrate. The token grammar
+    /// is Unicode-letter based and has never been English-specific.
+    package static func isSingleEnglishWord(_ text: String) -> Bool {
+        isSingleVocabularyWord(text)
+    }
+
     package static func speakableWord(_ text: String) -> String? {
         let value = normalizedVocabularyText(text)
-        return isSingleEnglishWord(value) ? value : nil
+        return isSingleVocabularyWord(value) ? value : nil
     }
 
     package static func isVocabularySelection(_ text: String) -> Bool {

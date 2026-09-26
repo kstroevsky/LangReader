@@ -167,7 +167,6 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
     static let maxInitialSavedConversationBubbles = 40
 
     let client = AIClient()
-    let dictionaryLookupService: DictionaryLookupService = LocalDictionaryLookupService.shared
     lazy var llmAnswerProvider: StreamingAnswerProvider = LLMAnswerProvider(client: client)
     /// State behind the SwiftUI header and status row.
     let chromeModel = AIPanelChromeModel()
@@ -187,7 +186,8 @@ final class AIChatPanel: NSView, NSTextFieldDelegate {
     var lastFailedAIRequest: FailedAIRequest?
 
     var onAskSelectedText: ((String) -> String?)?
-    var onVocabularyAnswerRequested: ((String) -> String?)?
+    var onVocabularyDefinitionContextRequested: (() -> VocabularyDefinitionRoutingContext?)?
+    var onVocabularyAnswerRequested: ((String, VocabularyLanguageID) -> String?)?
     var onLinkedAnswerCompleted: ((String, String, String) -> Void)?
     var onLinkedAnswerFailed: ((String) -> Void)?
     var onLinkedBubbleSelected: ((String) -> Void)?

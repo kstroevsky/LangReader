@@ -47,14 +47,23 @@ extension ReaderWindowController {
     }
 
     private func configureAIPanelVocabularyCallbacks() {
+        aiPanel.onVocabularyDefinitionContextRequested = { [weak self] in
+            guard let self,
+                  let language = self.vocabularyDocumentLanguageID else { return nil }
+            return VocabularyDefinitionRoutingContext(
+                language: language,
+                languageRevision: self.vocabularyLanguageRevision,
+                provider: self.vocabularyLanguageCatalog.definitionProvider(for: language)
+            )
+        }
         aiPanel.onLinkedAnswerCompleted = { [weak self] linkID, question, answer in
             self?.updateStoredLinkedWordAnswer(linkID: linkID, question: question, answer: answer)
         }
         aiPanel.onLinkedAnswerFailed = { [weak self] linkID in
             self?.discardPendingLinkedWord(linkID: linkID)
         }
-        aiPanel.onVocabularyAnswerRequested = { [weak self] word in
-            self?.vocabularyAnswer(for: word)
+        aiPanel.onVocabularyAnswerRequested = { [weak self] word, language in
+            self?.vocabularyAnswer(for: word, language: language)
         }
         aiPanel.onLinkedBubbleSelected = { [weak self] linkID in
             self?.jumpToStoredLinkedWord(linkID: linkID)

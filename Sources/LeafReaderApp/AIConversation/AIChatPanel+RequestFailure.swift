@@ -15,7 +15,8 @@ extension AIChatPanel {
         linkedQuestion: String?,
         fallbackAnswer: String?,
         answerSuffix: String?,
-        focusedWord: String?
+        focusedWord: String?,
+        definitionRoutingIdentity: VocabularyDefinitionRoutingIdentity?
     ) {
         let shouldUseDictionaryFallback = shouldUseLocalDictionaryFallback(for: error)
         logAIRequestFailure(error, usesDictionaryFallback: shouldUseDictionaryFallback)
@@ -40,7 +41,8 @@ extension AIChatPanel {
             linkedQuestion: linkedQuestion,
             fallbackAnswer: fallbackAnswer,
             answerSuffix: answerSuffix,
-            focusedWord: focusedWord
+            focusedWord: focusedWord,
+            definitionRoutingIdentity: definitionRoutingIdentity
         )
         showAIRequestError(error, streamedText: streamedText, assistantBody: assistantBody)
         appendRetryButton()

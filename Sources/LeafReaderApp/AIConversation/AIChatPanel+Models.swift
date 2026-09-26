@@ -26,5 +26,6 @@ extension AIChatPanel {
         let fallbackAnswer: String?
         let answerSuffix: String?
         let focusedWord: String?
+        let definitionRoutingIdentity: VocabularyDefinitionRoutingIdentity?
     }
 }

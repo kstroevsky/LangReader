@@ -35,6 +35,51 @@ final class VocabularyLanguageCatalogXCTests: XCTestCase {
         XCTAssertNil(VocabularyDictionaryMetadataService.metadata(for: "casa", language: .italian))
     }
 
+    func testDefinitionProvidersAreSelectedOnlyForCompatibleLanguages() throws {
+        let catalog = VocabularyLanguageCatalogFactory.live()
+
+        XCTAssertEqual(
+            catalog.definitionProvider(for: .english)?.descriptor.id,
+            "dictionary.ecdict"
+        )
+        XCTAssertEqual(
+            catalog.definitionProvider(for: .german)?.descriptor.id,
+            "dictionary.de-wiktionary"
+        )
+        XCTAssertNil(catalog.definitionProvider(for: .french))
+
+        let regionalEnglish = try XCTUnwrap(VocabularyLanguageID("en-GB"))
+        XCTAssertEqual(
+            catalog.definitionProvider(for: regionalEnglish)?.descriptor.id,
+            "dictionary.ecdict"
+        )
+    }
+
+    @MainActor
+    func testDefinitionRoutingIdentityRejectsLanguageRevisionChanges() throws {
+        let provider = try XCTUnwrap(
+            VocabularyLanguageCatalogFactory.live().definitionProvider(for: .english)
+        )
+        let panel = AIChatPanel(frame: .zero)
+        let initial = VocabularyDefinitionRoutingContext(
+            language: .english,
+            languageRevision: 3,
+            provider: provider
+        )
+        panel.onVocabularyDefinitionContextRequested = { initial }
+
+        XCTAssertTrue(panel.isDefinitionRoutingIdentityCurrent(initial.identity))
+
+        panel.onVocabularyDefinitionContextRequested = {
+            VocabularyDefinitionRoutingContext(
+                language: .english,
+                languageRevision: 4,
+                provider: provider
+            )
+        }
+        XCTAssertFalse(panel.isDefinitionRoutingIdentityCurrent(initial.identity))
+    }
+
     func testEnglishDefinitionProviderRejectsGermanRequest() async {
         let provider = EnglishECDICTVocabularyDefinitionProvider()
         do {

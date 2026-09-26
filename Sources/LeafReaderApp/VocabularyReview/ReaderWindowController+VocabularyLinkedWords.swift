@@ -120,10 +120,28 @@ extension ReaderWindowController {
         }
     }
 
-    func vocabularyAnswer(for word: String) -> String? {
-        let answer = currentDocumentKind == .pdf
-            ? reusablePDFWordRecord(for: word)?.answer
-            : reusableWebWordRecord(for: word)?.answer
+    func vocabularyAnswer(for word: String, language: VocabularyLanguageID) -> String? {
+        let normalized = normalizedVocabularyKey(word)
+        let answer: String?
+        if currentDocumentKind == .pdf {
+            answer = storedWordRecords.first {
+                ($0.language == nil || $0.language == language)
+                    && normalizedVocabularyKey($0.word) == normalized
+                    && !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            }?.answer
+        } else {
+            let groupingLanguage = language.appleNaturalLanguage
+            let key = GermanLemmaResolver.groupingKey(word: word, language: groupingLanguage)
+            answer = storedWebWordRecords.first {
+                ($0.language == nil || $0.language == language)
+                    && GermanLemmaResolver.groupingKey(
+                        word: $0.word,
+                        lemma: $0.lemma,
+                        language: groupingLanguage
+                    ) == key
+                    && !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            }?.answer
+        }
         let trimmed = answer?.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed?.isEmpty == false ? trimmed : nil
     }

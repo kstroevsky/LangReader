@@ -1,6 +1,25 @@
 import Foundation
 import LeafReaderCore
 
+struct VocabularyDefinitionRoutingContext: Sendable {
+    let language: VocabularyLanguageID
+    let languageRevision: UInt64
+    let provider: (any VocabularyDefinitionProviding)?
+
+    var providerDescriptor: VocabularyProviderDescriptor? { provider?.descriptor }
+    var identity: VocabularyDefinitionRoutingIdentity {
+        VocabularyDefinitionRoutingIdentity(
+            language: language,
+            languageRevision: languageRevision,
+            providerDescriptor: providerDescriptor
+        )
+    }
+
+    func isSemanticallyEqual(to other: VocabularyDefinitionRoutingContext) -> Bool {
+        identity == other.identity
+    }
+}
+
 struct VocabularyLanguageRuntime: Sendable {
     let language: VocabularyLanguageID
     let profile: VocabularyLanguageProfileDescriptor
@@ -50,6 +69,24 @@ struct VocabularyLanguageCatalog: Sendable {
 
     func resolve(language: VocabularyLanguageID) -> VocabularyLanguageRuntime? {
         runtimes[language]
+    }
+
+    func definitionProvider(for language: VocabularyLanguageID) -> (any VocabularyDefinitionProviding)? {
+        var providersByDescriptor: [VocabularyProviderDescriptor: any VocabularyDefinitionProviding] = [:]
+        for runtime in runtimes.values.sorted(by: { $0.language.bcp47 < $1.language.bcp47 }) {
+            guard let provider = runtime.definitions else { continue }
+            providersByDescriptor[provider.descriptor] = providersByDescriptor[provider.descriptor] ?? provider
+        }
+        let providers = Array(providersByDescriptor.values)
+        switch VocabularyProviderSelection.select(
+            language: language,
+            descriptors: providers.map(\.descriptor)
+        ) {
+        case .selected(let descriptor):
+            return providersByDescriptor[descriptor]
+        case .unavailable, .ambiguous:
+            return nil
+        }
     }
 
     var profiles: [VocabularyLanguageProfileDescriptor] {

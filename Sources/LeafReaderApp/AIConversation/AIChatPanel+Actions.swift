@@ -9,19 +9,22 @@ extension AIChatPanel {
     @objc func startQuestion() {
         let text = trimmedText(selectedText)
         guard !text.isEmpty, !isBusy else { return }
+        let isVocabularyItem = isVocabularySelection(text)
+        let definitionRoutingContext = isVocabularyItem
+            ? onVocabularyDefinitionContextRequested?()
+            : nil
         guard canUseSelectedModel() else {
-            if handleLocalDictionaryQuestion(text) {
-                return
-            }
-            if handleGermanDictionaryQuestion(text) {
+            if handleDefinitionQuestion(text, routingContext: definitionRoutingContext) {
                 return
             }
             onSettingsRequired?()
             return
         }
 
-        let isVocabularyItem = isVocabularySelection(text)
-        let canUseLocalDictionary = shouldUseLocalDictionary(for: text)
+        let canUseLocalDictionary = shouldUseDefinitionProvider(
+            for: text,
+            routingContext: definitionRoutingContext
+        )
         speakSelectedWordIfNeeded(text)
         let selectedContext = isVocabularyItem ? contextForWordQuestion(text: text) : ""
         let prompt = isVocabularyItem ? wordPrompt(for: text, context: selectedContext) : sentencePrompt(for: text)
@@ -29,15 +32,29 @@ extension AIChatPanel {
         appendBubble(role: AppText.userRole, text: displayedQuestion, collapsible: true)
         recordTranscript(role: AppText.userRole, text: displayedQuestion)
         clearSelectedText()
-        let answerRequest = AnswerProviderRequest(text: text, context: selectedContext, linkID: nil)
-        if isVocabularyItem, let reusedAnswer = cachedVocabularyAnswer(for: text) {
+        let answerRequest = AnswerProviderRequest(
+            text: text,
+            context: selectedContext,
+            linkID: nil,
+            sourceLanguage: definitionRoutingContext?.language
+        )
+        if isVocabularyItem,
+           let reusedAnswer = cachedVocabularyAnswer(
+            for: text,
+            routingContext: definitionRoutingContext
+           ) {
             let answer = reusedAnswer.answer
             appendMessage(ChatMessage(role: "user", content: prompt))
             showFocusedWord(word: text, answer: answer, linkID: nil)
             return
         }
         appendMessage(ChatMessage(role: "user", content: prompt))
-        let localAnswer = canUseLocalDictionary ? cachedLocalDictionaryAnswer(for: answerRequest) : nil
+        let localAnswer = canUseLocalDictionary
+            ? cachedLocalDictionaryAnswer(
+                for: answerRequest,
+                routingContext: definitionRoutingContext
+            )
+            : nil
         let fallbackAnswer = localAnswer?.answer
         let answerSuffix = canUseLocalDictionary
             ? localDictionaryTagSuffix(fallbackMetadata: localAnswer?.dictionaryMetadata)
@@ -45,7 +62,8 @@ extension AIChatPanel {
         requestAI(
             fallbackAnswer: fallbackAnswer,
             answerSuffix: answerSuffix,
-            focusedWord: isVocabularyItem ? text : nil
+            focusedWord: isVocabularyItem ? text : nil,
+            definitionRoutingIdentity: definitionRoutingContext?.identity
         )
     }
 

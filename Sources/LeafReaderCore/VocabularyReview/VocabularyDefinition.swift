@@ -1,5 +1,21 @@
 import Foundation
 
+package struct VocabularyDefinitionRoutingIdentity: Equatable, Sendable {
+    package let language: VocabularyLanguageID
+    package let languageRevision: UInt64
+    package let providerDescriptor: VocabularyProviderDescriptor?
+
+    package init(
+        language: VocabularyLanguageID,
+        languageRevision: UInt64,
+        providerDescriptor: VocabularyProviderDescriptor?
+    ) {
+        self.language = language
+        self.languageRevision = languageRevision
+        self.providerDescriptor = providerDescriptor
+    }
+}
+
 package struct VocabularyDefinitionRequest: Sendable {
     package let language: VocabularyLanguageID
     package let lemma: String
@@ -51,4 +67,11 @@ package enum VocabularyDefinitionProviderError: Error, Equatable, Sendable {
 package protocol VocabularyDefinitionProviding: Sendable {
     var descriptor: VocabularyProviderDescriptor { get }
     func definition(for request: VocabularyDefinitionRequest) async throws -> VocabularyDefinition?
+    func cachedDefinition(for request: VocabularyDefinitionRequest) -> VocabularyDefinition?
+}
+
+package extension VocabularyDefinitionProviding {
+    func cachedDefinition(for request: VocabularyDefinitionRequest) -> VocabularyDefinition? {
+        nil
+    }
 }

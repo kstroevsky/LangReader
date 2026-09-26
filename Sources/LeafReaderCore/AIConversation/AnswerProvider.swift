@@ -4,11 +4,21 @@ package struct AnswerProviderRequest {
     package let text: String
     package let context: String
     package let linkID: String?
+    package let sourceLanguage: VocabularyLanguageID?
+    package let lexicalItemID: VocabularyLexicalItemID?
 
-    package init(text: String, context: String, linkID: String?) {
+    package init(
+        text: String,
+        context: String,
+        linkID: String?,
+        sourceLanguage: VocabularyLanguageID?,
+        lexicalItemID: VocabularyLexicalItemID? = nil
+    ) {
         self.text = text
         self.context = context
         self.linkID = linkID
+        self.sourceLanguage = sourceLanguage
+        self.lexicalItemID = lexicalItemID
     }
 }
 
@@ -51,28 +61,31 @@ package struct CachedVocabularyAnswerProvider: AnswerProvider {
 }
 
 package struct LocalDictionaryAnswerProvider: AnswerProvider {
-    package let dictionaryLookupService: DictionaryLookupService
-    package let isDictionaryInstalled: () -> Bool
+    package let definitionProvider: any VocabularyDefinitionProviding
 
-    package init(
-        dictionaryLookupService: DictionaryLookupService = LocalDictionaryLookupService.shared,
-        isDictionaryInstalled: @escaping () -> Bool = { ECDICTDictionary.shared.isInstalled }
-    ) {
-        self.dictionaryLookupService = dictionaryLookupService
-        self.isDictionaryInstalled = isDictionaryInstalled
+    package init(definitionProvider: any VocabularyDefinitionProviding) {
+        self.definitionProvider = definitionProvider
     }
 
     package func answer(for request: AnswerProviderRequest) -> AnswerProviderResult? {
-        guard VocabularyTextPolicy.isSingleEnglishWord(request.text) else { return nil }
-        if let answer = dictionaryLookupService.dictionaryAnswer(for: request.text, context: request.context) {
-            return AnswerProviderResult(
-                answer: answer.markdown,
-                source: .localDictionary,
-                dictionaryMetadata: answer.metadata
+        guard let sourceLanguage = request.sourceLanguage,
+              VocabularyTextPolicy.isSingleVocabularyWord(request.text),
+              definitionProvider.descriptor.supports(sourceLanguage),
+              let definition = definitionProvider.cachedDefinition(for: VocabularyDefinitionRequest(
+                language: sourceLanguage,
+                lemma: request.text,
+                surfaceForm: request.text,
+                context: request.context,
+                lexicalItemID: request.lexicalItemID
+              )) else { return nil }
+        return AnswerProviderResult(
+            answer: definition.markdown,
+            source: .localDictionary,
+            dictionaryMetadata: VocabularyDictionaryMetadata(
+                tags: definition.tags,
+                frequency: definition.frequency
             )
-        }
-        _ = isDictionaryInstalled()
-        return nil
+        )
     }
 }
 

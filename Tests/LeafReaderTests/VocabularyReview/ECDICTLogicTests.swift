@@ -48,27 +48,61 @@ enum ECDICTLogicTests {
         let cachedProvider = CachedVocabularyAnswerProvider { linkID in
             linkID == "known" ? " cached answer " : nil
         }
-        let cached = cachedProvider.answer(for: AnswerProviderRequest(text: "word", context: "", linkID: "known"))
+        let cached = cachedProvider.answer(for: AnswerProviderRequest(
+            text: "word",
+            context: "",
+            linkID: "known",
+            sourceLanguage: .english
+        ))
         try expectEqual(cached?.answer, "cached answer", "cached answer provider should trim stored answers")
         try expectEqual(cached?.source, .cachedVocabulary, "cached answer provider should report cached source")
 
         let dictionaryProvider = LocalDictionaryAnswerProvider(
-            dictionaryLookupService: MockDictionaryLookupService(answer: "**word**\n\n- local", metadata: VocabularyDictionaryMetadata(tags: nil, frequency: nil)),
-            isDictionaryInstalled: { true }
+            definitionProvider: MockVocabularyDefinitionProvider(answer: "**word**\n\n- local")
         )
-        let dictionary = dictionaryProvider.answer(for: AnswerProviderRequest(text: "word", context: "context", linkID: nil))
+        let dictionary = dictionaryProvider.answer(for: AnswerProviderRequest(
+            text: "word",
+            context: "context",
+            linkID: nil,
+            sourceLanguage: .english
+        ))
         try expectEqual(dictionary?.answer, "**word**\n\n- local", "dictionary provider should return local dictionary answers")
         try expectEqual(dictionary?.source, .localDictionary, "dictionary provider should report dictionary source")
 
-        let phrase = dictionaryProvider.answer(for: AnswerProviderRequest(text: "more than one", context: "context", linkID: nil))
+        let phrase = dictionaryProvider.answer(for: AnswerProviderRequest(
+            text: "more than one",
+            context: "context",
+            linkID: nil,
+            sourceLanguage: .english
+        ))
         try expectEqual(phrase?.answer, nil, "dictionary provider should ignore multi-word selections")
 
         let missingProvider = LocalDictionaryAnswerProvider(
-            dictionaryLookupService: MockDictionaryLookupService(answer: nil, metadata: VocabularyDictionaryMetadata(tags: nil, frequency: nil)),
-            isDictionaryInstalled: { true }
+            definitionProvider: MockVocabularyDefinitionProvider(answer: nil)
         )
-        let missing = missingProvider.answer(for: AnswerProviderRequest(text: "Word", context: "", linkID: nil))
-        try expectEqual(missing, nil, "dictionary misses should fall through to the German dictionary or configured model")
+        let missing = missingProvider.answer(for: AnswerProviderRequest(
+            text: "Word",
+            context: "",
+            linkID: nil,
+            sourceLanguage: .english
+        ))
+        try expectEqual(missing, nil, "dictionary misses should remain misses for the selected provider")
+
+        let wrongLanguage = dictionaryProvider.answer(for: AnswerProviderRequest(
+            text: "Gift",
+            context: "",
+            linkID: nil,
+            sourceLanguage: .german
+        ))
+        try expectEqual(wrongLanguage, nil, "German requests must never query an English-only definition provider")
+
+        let unresolvedLanguage = dictionaryProvider.answer(for: AnswerProviderRequest(
+            text: "word",
+            context: "",
+            linkID: nil,
+            sourceLanguage: nil
+        ))
+        try expectEqual(unresolvedLanguage, nil, "undetermined source language must disable dictionary fallback")
 
         let suffix = VocabularyTagFormatter.suffix(for: "cet4 gre")
         try expectEqual(suffix, "\n\n`CET4` `GRE`", "dictionary tag suffix should render markdown tags")
@@ -132,23 +166,20 @@ enum ECDICTLogicTests {
     }
 }
 
-private struct MockDictionaryLookupService: DictionaryLookupService {
+private struct MockVocabularyDefinitionProvider: VocabularyDefinitionProviding {
     let answer: String?
-    let metadata: VocabularyDictionaryMetadata
+    let descriptor = VocabularyProviderDescriptor(
+        id: "dictionary.test-english",
+        version: "1",
+        supportedLanguageRanges: [VocabularyLanguageRange(language: .english, includesDescendants: true)]
+    )
 
-        func lookup(_ query: String) -> ECDICTEntry? {
-            nil
-        }
+    func definition(for request: VocabularyDefinitionRequest) async throws -> VocabularyDefinition? {
+        cachedDefinition(for: request)
+    }
 
-        func markdownAnswer(for query: String, context: String) -> String? {
-            answer
-        }
-
-        func dictionaryAnswer(for query: String, context: String) -> VocabularyDictionaryAnswer? {
-            answer.map { VocabularyDictionaryAnswer(markdown: $0, metadata: metadata) }
-        }
-
-        func metadata(for word: String) -> VocabularyDictionaryMetadata {
-            metadata
+    func cachedDefinition(for request: VocabularyDefinitionRequest) -> VocabularyDefinition? {
+        guard descriptor.supports(request.language), let answer else { return nil }
+        return VocabularyDefinition(markdown: answer, provenance: descriptor)
     }
 }

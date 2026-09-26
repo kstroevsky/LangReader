@@ -102,6 +102,21 @@ struct EnglishECDICTVocabularyDefinitionProvider: VocabularyDefinitionProviding 
             )
         }.value
     }
+
+    func cachedDefinition(for request: VocabularyDefinitionRequest) -> VocabularyDefinition? {
+        guard descriptor.supports(request.language),
+              let lookup = LocalDictionaryLookupService.shared.cachedDictionaryAnswer(
+                for: request.lemma,
+                context: request.context
+              ) else { return nil }
+        return VocabularyDefinition(
+            markdown: lookup.markdown,
+            resolvedLemma: request.lemma,
+            tags: lookup.metadata.tags,
+            frequency: lookup.metadata.frequency,
+            provenance: descriptor
+        )
+    }
 }
 
 struct GermanWiktionaryVocabularyDefinitionProvider: VocabularyDefinitionProviding {
@@ -130,6 +145,20 @@ struct GermanWiktionaryVocabularyDefinitionProvider: VocabularyDefinitionProvidi
         } catch GermanWiktionaryDictionary.LookupError.noEntry {
             return nil
         }
+    }
+
+    func cachedDefinition(for request: VocabularyDefinitionRequest) -> VocabularyDefinition? {
+        guard descriptor.supports(request.language),
+              let entry = GermanWiktionaryDictionary.shared.cachedEntry(for: request.lemma) else {
+            return nil
+        }
+        return VocabularyDefinition(
+            markdown: entry.markdown,
+            resolvedLemma: entry.lemma,
+            tags: entry.metadata.tags,
+            frequency: entry.metadata.frequency,
+            provenance: descriptor
+        )
     }
 }
 

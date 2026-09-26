@@ -29,7 +29,7 @@ extension AIChatPanel {
             || normalized.hasPrefix("释义：")
             || normalized.hasPrefix("释义:")
             || normalized.lowercased().hasPrefix("definition:")
-            || isSingleEnglishWord(normalized)
+            || VocabularyTextPolicy.isSingleVocabularyWord(normalized)
     }
 
     func vocabularyWord(from text: String) -> String {
