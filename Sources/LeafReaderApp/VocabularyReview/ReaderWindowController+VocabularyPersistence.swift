@@ -95,7 +95,7 @@ extension ReaderWindowController {
         }
         let word = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let surfaceForm = VocabularyTextPolicy.normalizedVocabularyText(word)
-        let lemma = GermanLemmaResolver.lemma(for: surfaceForm, language: vocabularyDocumentLanguage)
+        let lemma = resolvedVocabularyLemma(for: surfaceForm)
         let vocabularyID = existingWebVocabularyID(for: word, lemma: lemma) ?? UUID().uuidString
         recordPersonalVocabularyQuery(word)
         let context = sanitizedVocabularyContext(precomputedContext ?? selectionState.webSelectionContext)

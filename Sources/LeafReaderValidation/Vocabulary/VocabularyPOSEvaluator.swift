@@ -164,7 +164,7 @@ private func expectedPOS(_ upos: String) -> VocabularyPartOfSpeech {
     }
 }
 
-private func language(_ code: String) -> NLLanguage {
+private func language(_ code: String) -> VocabularyLanguageID {
     code == "de" ? .german : .english
 }
 

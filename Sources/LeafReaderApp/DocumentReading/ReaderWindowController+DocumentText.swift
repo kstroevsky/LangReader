@@ -93,17 +93,13 @@ extension ReaderWindowController {
     }
 
     func ensurePDFVocabularyIndex(
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         seed: VocabularyDocumentLemmaIndexSeed? = nil,
         preloadedPageTexts: [Int: String] = [:],
         completion: @escaping (PDFDocumentTextSnapshot?, VocabularyDocumentLemmaIndex?) -> Void
     ) {
-        guard let languageID = VocabularyLanguageID(language.rawValue) else {
-            completion(nil, nil)
-            return
-        }
-        let semanticIdentity = vocabularyLanguageCatalog.resolve(language: languageID)?.linguisticCacheIdentity
-            ?? VocabularyLinguisticCacheIdentity(language: languageID)
+        let semanticIdentity = vocabularyLanguageCatalog.resolve(language: language)?.linguisticCacheIdentity
+            ?? VocabularyLinguisticCacheIdentity(language: language)
         if let snapshot = documentTextState.snapshot,
            let index = documentTextState.vocabularyIndex,
            documentTextState.vocabularyIndexSemanticIdentity == semanticIdentity {
@@ -176,17 +172,13 @@ extension ReaderWindowController {
     /// result is explicitly partial and can later seed the complete index, so
     /// the early NLP work is reused instead of repeated.
     func buildPDFVocabularyPriorityIndex(
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         pageIndexes: [Int],
         preloadedPageTexts: [Int: String] = [:],
         completion: @escaping @MainActor @Sendable (PDFVocabularyPriorityIndexResult?) -> Void
     ) {
-        guard let languageID = VocabularyLanguageID(language.rawValue) else {
-            completion(nil)
-            return
-        }
-        let semanticIdentity = vocabularyLanguageCatalog.resolve(language: languageID)?.linguisticCacheIdentity
-            ?? VocabularyLinguisticCacheIdentity(language: languageID)
+        let semanticIdentity = vocabularyLanguageCatalog.resolve(language: language)?.linguisticCacheIdentity
+            ?? VocabularyLinguisticCacheIdentity(language: language)
         guard currentDocumentKind == .pdf,
               let documentID = currentFileMD5,
               let url = currentFileURL,

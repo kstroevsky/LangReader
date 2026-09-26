@@ -17,7 +17,8 @@ extension ReaderWindowController {
             store.load()
         }
         updatePDFVocabularyDocumentLanguage(from: records)
-        guard store.needsMetadataRepair else { return records }
+        guard store.needsMetadataRepair,
+              let language = vocabularyDocumentLanguageID else { return records }
         let repairSpan = ReaderPerformance.begin(.vocabularyRecordRepair)
         defer { ReaderPerformance.end(repairSpan) }
         var repairedWords: [String: String] = [:]
@@ -39,7 +40,7 @@ extension ReaderWindowController {
                 didRepair = true
             }
             let lemma = VocabularyExporter.nonEmptyText(record.lemma)
-                ?? GermanLemmaResolver.lemma(for: surfaceForm, language: vocabularyDocumentLanguage)
+                ?? GermanLemmaResolver.lemma(for: surfaceForm, language: record.language ?? language)
             if repairedRecord.lemma != lemma {
                 repairedRecord.lemma = lemma
                 didRepair = true
@@ -47,7 +48,10 @@ extension ReaderWindowController {
             if let repairedWord = repairedWords[key], repairedWord != repairedRecord.word {
                 repairedRecord.word = repairedWord
                 repairedRecord.surfaceForm = repairedWord
-                repairedRecord.lemma = GermanLemmaResolver.lemma(for: repairedWord, language: vocabularyDocumentLanguage)
+                repairedRecord.lemma = GermanLemmaResolver.lemma(
+                    for: repairedWord,
+                    language: repairedRecord.language ?? language
+                )
                 didRepair = true
             }
             if let context = repairedRecord.context {
@@ -112,7 +116,7 @@ extension ReaderWindowController {
                 surfaceForm: surface,
                 groupLemma: groupLemma,
                 in: context,
-                language: vocabularyDocumentLanguage
+                language: record.language ?? language
             )
         }.map(\.id))
         let cleanedRecords = repairedRecords.filter { !staleIDs.contains($0.id) }
@@ -164,7 +168,7 @@ extension ReaderWindowController {
         guard let language = resolution.languageID else { return records }
         let repaired = WebWordRecordMetadataRepair.repair(
             records,
-            language: language.appleNaturalLanguage
+            language: language
         )
         if repaired.didChange {
             let didSave = ReaderPerformance.measure(.vocabularyDatabaseWrite) {

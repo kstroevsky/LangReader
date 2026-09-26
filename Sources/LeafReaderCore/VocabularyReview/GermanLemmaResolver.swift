@@ -9,7 +9,7 @@ package enum GermanLemmaSource: Equatable, Sendable {
 package typealias VocabularyLemmaResolutionProvider = @Sendable (
     _ surfaceForm: String,
     _ taggedLemma: String?,
-    _ language: NLLanguage
+    _ language: VocabularyLanguageID
 ) -> GermanLemmaResolution
 
 /// Distinguishes an actual lemma resolution from retaining the surface as a
@@ -29,16 +29,17 @@ package enum GermanLemmaResolution: Equatable, Sendable {
 
 // Despite the "German" name, the resolver and matcher are language-neutral:
 // the grouping, line-wrap, and homograph logic are the same everywhere and only
-// the tagger's language differs. Callers pass an `NLLanguage`, defaulting to
-// English; the app always passes the detected document language explicitly.
+// the tagger's language differs. Callers must pass the resolved domain language
+// explicitly; uncertainty is handled by exact-form behavior before reaching
+// this language-sensitive API.
 package enum GermanLemmaResolver {
-    package static func lemma(for surfaceForm: String, language: NLLanguage = .english) -> String {
+    package static func lemma(for surfaceForm: String, language: VocabularyLanguageID) -> String {
         resolution(for: surfaceForm, language: language).value
     }
 
     package static func resolution(
         for surfaceForm: String,
-        language: NLLanguage = .english
+        language: VocabularyLanguageID
     ) -> GermanLemmaResolution {
         resolution(
             for: surfaceForm,
@@ -54,14 +55,14 @@ package enum GermanLemmaResolver {
     ///   words, but it must not be shared across threads or reentered from
     ///   inside its own `enumerateTags` callback.
     /// - Parameter language: the document's language, used to lemmatize.
-    package static func lemma(for surfaceForm: String, tagger: NLTagger, language: NLLanguage = .english) -> String {
+    package static func lemma(for surfaceForm: String, tagger: NLTagger, language: VocabularyLanguageID) -> String {
         resolution(for: surfaceForm, tagger: tagger, language: language).value
     }
 
     package static func resolution(
         for surfaceForm: String,
         tagger: NLTagger,
-        language: NLLanguage = .english
+        language: VocabularyLanguageID
     ) -> GermanLemmaResolution {
         let word = VocabularyTextPolicy.normalizedVocabularyText(surfaceForm)
         guard VocabularyTextPolicy.isSingleEnglishWord(word),
@@ -69,7 +70,7 @@ package enum GermanLemmaResolver {
 
         tagger.string = word
         let fullRange = word.startIndex..<word.endIndex
-        tagger.setLanguage(language, range: fullRange)
+        tagger.setLanguage(NLLanguage(rawValue: language.bcp47), range: fullRange)
         let taggedLemma = tagger.tag(
             at: word.startIndex,
             unit: .word,
@@ -88,7 +89,7 @@ package enum GermanLemmaResolver {
     package static func resolution(
         for surfaceForm: String,
         taggedLemma: String?,
-        language: NLLanguage
+        language: VocabularyLanguageID
     ) -> GermanLemmaResolution {
         resolution(
             for: surfaceForm,
@@ -101,7 +102,7 @@ package enum GermanLemmaResolver {
     package static func resolution(
         for surfaceForm: String,
         taggedLemma: String?,
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         isKnownGermanWord: (String) -> Bool
     ) -> GermanLemmaResolution {
         let word = VocabularyTextPolicy.normalizedVocabularyText(surfaceForm)
@@ -128,7 +129,11 @@ package enum GermanLemmaResolver {
         return .unresolved(surface: word)
     }
 
-    package static func groupingKey(word: String, lemma: String? = nil, language: NLLanguage = .english) -> String {
+    package static func groupingKey(
+        word: String,
+        lemma: String? = nil,
+        language: VocabularyLanguageID
+    ) -> String {
         let trimmedLemma = lemma?.trimmingCharacters(in: .whitespacesAndNewlines)
         let resolved = trimmedLemma.flatMap { value in
             value.isEmpty ? nil : value
@@ -212,7 +217,7 @@ package enum GermanLemmaOccurrenceMatcher {
         lemma rawLemma: String,
         selectedForm: String,
         inTexts texts: [String],
-        language: NLLanguage = .english,
+        language: VocabularyLanguageID,
         resolutionProvider: @escaping VocabularyLemmaResolutionProvider = naturalLanguageResolutionProvider
     ) -> [[VocabularyTextOccurrence]] {
         guard !texts.isEmpty else { return [] }
@@ -273,7 +278,7 @@ package enum GermanLemmaOccurrenceMatcher {
         surfaceForm: String,
         groupLemma: String,
         in context: String,
-        language: NLLanguage = .english,
+        language: VocabularyLanguageID,
         resolutionProvider: @escaping VocabularyLemmaResolutionProvider = naturalLanguageResolutionProvider
     ) -> Bool {
         let key = VocabularyTextPolicy.canonicalVocabularyKey(groupLemma)
@@ -293,7 +298,7 @@ package enum GermanLemmaOccurrenceMatcher {
         lemma rawLemma: String,
         selectedForm: String,
         in text: String,
-        language: NLLanguage = .english,
+        language: VocabularyLanguageID,
         resolutionProvider: @escaping VocabularyLemmaResolutionProvider = naturalLanguageResolutionProvider
     ) -> [VocabularyTextOccurrence] {
         matches(
@@ -313,7 +318,7 @@ package enum GermanLemmaOccurrenceMatcher {
         in text: String,
         compiledQuery: VocabularyOccurrenceMatcher.CompiledQuery?,
         tagger: NLTagger,
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         resolutionProvider: @escaping VocabularyLemmaResolutionProvider
     ) -> [VocabularyTextOccurrence] {
         var memo: [String: GermanLemmaResolution] = [:]
@@ -348,7 +353,7 @@ package enum GermanLemmaOccurrenceMatcher {
         tagger: NLTagger,
         fallbackTagger: NLTagger,
         lemmaMemo: inout [String: GermanLemmaResolution],
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         resolutionProvider: @escaping VocabularyLemmaResolutionProvider
     ) -> [VocabularyTextOccurrence] {
         let lemma = VocabularyTextPolicy.normalizedVocabularyText(rawLemma)
@@ -380,7 +385,7 @@ package enum GermanLemmaOccurrenceMatcher {
 
         tagger.string = text
         let fullRange = text.startIndex..<text.endIndex
-        tagger.setLanguage(language, range: fullRange)
+        tagger.setLanguage(NLLanguage(rawValue: language.bcp47), range: fullRange)
         tagger.enumerateTags(
             in: fullRange,
             unit: .word,
@@ -444,7 +449,7 @@ package enum GermanLemmaOccurrenceMatcher {
     package static func matches(
         lemmasByKey: [String: String],
         in text: String,
-        language: NLLanguage = .english,
+        language: VocabularyLanguageID,
         resolutionProvider: @escaping VocabularyLemmaResolutionProvider = naturalLanguageResolutionProvider
     ) -> [String: [VocabularyTextOccurrence]] {
         guard !lemmasByKey.isEmpty, !text.isEmpty else { return [:] }
@@ -484,7 +489,7 @@ package enum GermanLemmaOccurrenceMatcher {
         var lemmaMemo: [String: GermanLemmaResolution] = [:]
         tagger.string = text
         let fullRange = text.startIndex..<text.endIndex
-        tagger.setLanguage(language, range: fullRange)
+        tagger.setLanguage(NLLanguage(rawValue: language.bcp47), range: fullRange)
         tagger.enumerateTags(
             in: fullRange,
             unit: .word,
@@ -554,7 +559,7 @@ package enum GermanLemmaOccurrenceMatcher {
     private static func tokenResolution(
         surfaceForm: String,
         taggedLemma: String?,
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         fallbackTagger: NLTagger,
         lemmaMemo: inout [String: GermanLemmaResolution],
         resolutionProvider: VocabularyLemmaResolutionProvider
@@ -574,7 +579,7 @@ package enum GermanLemmaOccurrenceMatcher {
 
     private static func isolatedResolution(
         surfaceForm: String,
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         tagger: NLTagger,
         resolutionProvider: VocabularyLemmaResolutionProvider
     ) -> GermanLemmaResolution {
@@ -584,7 +589,7 @@ package enum GermanLemmaOccurrenceMatcher {
         }
         tagger.string = word
         let range = word.startIndex..<word.endIndex
-        tagger.setLanguage(language, range: range)
+        tagger.setLanguage(NLLanguage(rawValue: language.bcp47), range: range)
         let taggedLemma = tagger.tag(
             at: word.startIndex,
             unit: .word,

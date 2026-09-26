@@ -129,11 +129,11 @@ extension ReaderWindowController {
             NSSound.beep()
             return
         }
-        let language = vocabularyDocumentLanguage
-        let lemma = GermanLemmaResolver.lemma(for: word, language: language)
-        let requestedKey = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+        let language = vocabularyDocumentLanguageID
+        let lemma = resolvedVocabularyLemma(for: word, language: language)
+        let requestedKey = vocabularyGroupingKey(word: word, lemma: lemma, language: language)
         if preferredWord != nil, !selectedWord.isEmpty {
-            let selectedKey = GermanLemmaResolver.groupingKey(word: selectedWord, language: language)
+            let selectedKey = vocabularyGroupingKey(word: selectedWord, language: language)
             guard selectedKey == requestedKey else {
                 NSSound.beep()
                 return
@@ -234,8 +234,8 @@ extension ReaderWindowController {
             .sorted { $0.createdAt < $1.createdAt }
             .compactMap { record -> PDFVocabularyLemmaGroup? in
                 let lemma = VocabularyExporter.nonEmptyText(record.lemma)
-                    ?? GermanLemmaResolver.lemma(for: record.occurrenceSurfaceForm, language: vocabularyDocumentLanguage)
-                let key = GermanLemmaResolver.groupingKey(word: record.word, lemma: lemma, language: vocabularyDocumentLanguage)
+                    ?? resolvedVocabularyLemma(for: record.occurrenceSurfaceForm, language: record.language)
+                let key = vocabularyGroupingKey(word: record.word, lemma: lemma, language: record.language)
                 guard !key.isEmpty,
                       seenKeys.insert(key).inserted,
                       let vocabularyID = record.vocabularyID else { return nil }
@@ -251,7 +251,7 @@ extension ReaderWindowController {
 
     func backfillGermanLemmaOccurrences(word: String, lemma: String, vocabularyID: String?) {
         guard let vocabularyID else { return }
-        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: vocabularyDocumentLanguage)
+        let key = vocabularyGroupingKey(word: word, lemma: lemma)
         guard !key.isEmpty else { return }
         backfillGermanLemmaOccurrences([
             PDFVocabularyLemmaGroup(key: key, word: word, lemma: lemma, vocabularyID: vocabularyID)
@@ -267,7 +267,7 @@ extension ReaderWindowController {
         let searchID = UUID()
         vocabularyState.occurrenceSearchCancellationToken?.cancel()
         let cancellationToken = PDFDocumentTextCancellationToken()
-        let language = vocabularyDocumentLanguage
+        guard let language = vocabularyDocumentLanguageID else { return }
         vocabularyState.occurrenceSearchID = searchID
         vocabularyState.occurrenceSearchCancellationToken = cancellationToken
         ensurePDFVocabularyIndex(language: language) { [weak self] snapshot, index in
@@ -416,11 +416,11 @@ extension ReaderWindowController {
             NSSound.beep()
             return
         }
-        let language = vocabularyDocumentLanguage
-        let lemma = GermanLemmaResolver.lemma(for: word, language: language)
+        let language = vocabularyDocumentLanguageID
+        let lemma = resolvedVocabularyLemma(for: word, language: language)
         if preferredWord != nil {
-            let selectedKey = GermanLemmaResolver.groupingKey(word: selectedWord, language: language)
-            let requestedKey = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+            let selectedKey = vocabularyGroupingKey(word: selectedWord, language: language)
+            let requestedKey = vocabularyGroupingKey(word: word, lemma: lemma, language: language)
             guard selectedKey == requestedKey else {
                 NSSound.beep()
                 return
@@ -483,6 +483,7 @@ extension ReaderWindowController {
         let cancellationToken = PDFDocumentTextCancellationToken()
         vocabularyState.occurrenceSearchID = searchID
         vocabularyState.occurrenceSearchCancellationToken = cancellationToken
+        guard let language else { return }
         beginPDFVocabularyOccurrenceDiscovery(
             word: word,
             lemma: lemma,
@@ -501,7 +502,7 @@ extension ReaderWindowController {
     private func beginPDFVocabularyOccurrenceDiscovery(
         word: String,
         lemma: String,
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         selectedRecord: StoredPDFWordRecord,
         selectedPageIndex: Int,
         selectedPageText: String,
@@ -556,7 +557,7 @@ extension ReaderWindowController {
         priorityResult: PDFVocabularyPriorityIndexResult?,
         word: String,
         lemma: String,
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         selectedRecord: StoredPDFWordRecord,
         documentID: String,
         searchID: UUID,
@@ -910,10 +911,10 @@ extension ReaderWindowController {
     }
 
     func existingPDFVocabularyID(for word: String, lemma: String? = nil) -> String? {
-        let language = vocabularyDocumentLanguage
-        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+        let language = vocabularyDocumentLanguageID
+        let key = vocabularyGroupingKey(word: word, lemma: lemma, language: language)
         return storedWordRecords.first {
-            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key
+            vocabularyGroupingKey(word: $0.word, lemma: $0.lemma, language: $0.language ?? language) == key
         }?.vocabularyID
     }
 
@@ -922,16 +923,16 @@ extension ReaderWindowController {
     }
 
     private func vocabularyRecordIDs(for word: String, lemma: String? = nil) -> [String] {
-        let language = vocabularyDocumentLanguage
-        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+        let language = vocabularyDocumentLanguageID
+        let key = vocabularyGroupingKey(word: word, lemma: lemma, language: language)
         guard !key.isEmpty else { return [] }
         if currentDocumentKind == .pdf {
             return storedWordRecords.compactMap {
-                GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key ? $0.id : nil
+                vocabularyGroupingKey(word: $0.word, lemma: $0.lemma, language: $0.language ?? language) == key ? $0.id : nil
             }
         }
         return storedWebWordRecords.compactMap {
-            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key ? $0.id : nil
+            vocabularyGroupingKey(word: $0.word, lemma: $0.lemma, language: $0.language ?? language) == key ? $0.id : nil
         }
     }
 

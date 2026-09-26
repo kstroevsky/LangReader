@@ -30,6 +30,30 @@ extension ReaderWindowController {
         vocabularyState.documentLanguageResolution.languageID
     }
 
+    func resolvedVocabularyLemma(
+        for surfaceForm: String,
+        language: VocabularyLanguageID? = nil
+    ) -> String {
+        let surface = VocabularyTextPolicy.normalizedVocabularyText(surfaceForm)
+        guard let language = language ?? vocabularyDocumentLanguageID else {
+            return surface
+        }
+        return GermanLemmaResolver.lemma(for: surface, language: language)
+    }
+
+    func vocabularyGroupingKey(
+        word: String,
+        lemma: String? = nil,
+        language: VocabularyLanguageID? = nil
+    ) -> String {
+        let fallback = VocabularyExporter.nonEmptyText(lemma)
+            ?? VocabularyTextPolicy.normalizedVocabularyText(word)
+        guard let language = language ?? vocabularyDocumentLanguageID else {
+            return VocabularyTextPolicy.canonicalVocabularyKey(fallback)
+        }
+        return GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+    }
+
     var vocabularyLanguageRevision: UInt64 { vocabularyState.languageRevision }
 
     func setVocabularyDocumentLanguageResolution(_ resolution: VocabularyLanguageResolution) {

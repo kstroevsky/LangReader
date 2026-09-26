@@ -308,7 +308,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     /// made the app compete with PDF rendering and increased peak memory.
     package init?(
         texts: [String],
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         maximumWorkerCount: Int = 4,
         seed: VocabularyDocumentLemmaIndexSeed? = nil,
         semanticIdentity: VocabularyLinguisticCacheIdentity? = nil,
@@ -322,9 +322,8 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         isCancelled: @escaping @Sendable () -> Bool = { false }
     ) {
         guard !isCancelled() else { return nil }
-        guard let languageID = VocabularyLanguageID(language.rawValue) else { return nil }
-        self.language = languageID
-        self.semanticIdentity = semanticIdentity ?? VocabularyLinguisticCacheIdentity(language: languageID)
+        self.language = language
+        self.semanticIdentity = semanticIdentity ?? VocabularyLinguisticCacheIdentity(language: language)
         guard !texts.isEmpty else {
             pages = []
             reusedPageCount = 0
@@ -334,7 +333,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let buffer = PageBuffer(count: texts.count)
         var reusedIndexes = Set<Int>()
         if let seed,
-           seed.index.language == languageID,
+           seed.index.language == language,
            seed.index.semanticIdentity == self.semanticIdentity,
            seed.pageIndexes.count == seed.index.pages.count {
             for (sliceIndex, pageIndex) in seed.pageIndexes.enumerated() {
@@ -903,7 +902,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
 
     private static func buildPage(
         text: String,
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         tagger: NLTagger,
         nameTagger: NLTagger,
         fallbackTagger: NLTagger,
@@ -946,8 +945,9 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         tagger.string = taggingText
         nameTagger.string = taggingText
         let fullRange = taggingText.startIndex..<taggingText.endIndex
-        tagger.setLanguage(language, range: fullRange)
-        nameTagger.setLanguage(language, range: fullRange)
+        let appleLanguage = NLLanguage(rawValue: language.bcp47)
+        tagger.setLanguage(appleLanguage, range: fullRange)
+        nameTagger.setLanguage(appleLanguage, range: fullRange)
         tagger.enumerateTags(
             in: fullRange,
             unit: .word,
@@ -985,7 +985,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             let analyses = analysisProvider(VocabularyMorphologicalAnalysisRequest(
                 surface: surface,
                 lemma: matchedLemma,
-                language: VocabularyLanguageID(language.rawValue)!,
+                language: language,
                 context: context,
                 contextFingerprint: fingerprint,
                 appleHypotheses: hypotheses
@@ -995,12 +995,12 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             if let lemmaKey = resolvedLemmaKey(resolution) {
                 byLemma[lemmaKey, default: []].append(occurrence)
                 anchor = VocabularyLexicalAnchorID(
-                    language: VocabularyLanguageID(language.rawValue),
+                    language: language,
                     basis: .resolvedLemma(lemmaKey)
                 )
             } else {
                 anchor = VocabularyLexicalAnchorID(
-                    language: VocabularyLanguageID(language.rawValue),
+                    language: language,
                     basis: .exactSurface(surface)
                 )
             }
@@ -1054,12 +1054,12 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             if let lemmaKey = resolvedLemmaKey(resolution) {
                 byLemma[lemmaKey, default: []].append(lineWrap.occurrence)
                 anchor = VocabularyLexicalAnchorID(
-                    language: VocabularyLanguageID(language.rawValue),
+                    language: language,
                     basis: .resolvedLemma(lemmaKey)
                 )
             } else {
                 anchor = VocabularyLexicalAnchorID(
-                    language: VocabularyLanguageID(language.rawValue),
+                    language: language,
                     basis: .exactSurface(lineWrap.dehyphenated)
                 )
             }
@@ -1133,7 +1133,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     private static func tokenResolution(
         surfaceForm: String,
         taggedLemma: String?,
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         fallbackTagger: NLTagger,
         lemmaMemo: inout [String: GermanLemmaResolution],
         resolutionProvider: VocabularyLemmaResolutionProvider
@@ -1153,7 +1153,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
 
     private static func isolatedResolution(
         surfaceForm: String,
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         tagger: NLTagger,
         resolutionProvider: VocabularyLemmaResolutionProvider
     ) -> GermanLemmaResolution {
@@ -1163,7 +1163,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         }
         tagger.string = word
         let range = word.startIndex..<word.endIndex
-        tagger.setLanguage(language, range: range)
+        tagger.setLanguage(NLLanguage(rawValue: language.bcp47), range: range)
         let taggedLemma = tagger.tag(
             at: word.startIndex,
             unit: .word,

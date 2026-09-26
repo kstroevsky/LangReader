@@ -125,9 +125,8 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
         }
 
         if currentDocumentKind == .pdf {
-            let appleLanguage = language.appleNaturalLanguage
             return try await withCheckedThrowingContinuation { continuation in
-                ensurePDFVocabularyIndex(language: appleLanguage) { [weak self] snapshot, index in
+                ensurePDFVocabularyIndex(language: language) { [weak self] snapshot, index in
                     guard let self, self.acceptsVocabularyPreparationIdentity(identity) else {
                         continuation.resume(throwing: VocabularyPreparationSourceError.cancelled)
                         return
@@ -152,11 +151,10 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
         guard !plainText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw VocabularyPreparationSourceError.textNotReady
         }
-        let appleLanguage = language.appleNaturalLanguage
         guard let index = await Task.detached(priority: .userInitiated, operation: {
             VocabularyDocumentLemmaIndex(
                 texts: [plainText],
-                language: appleLanguage,
+                language: language,
                 maximumWorkerCount: 1,
                 isCancelled: { Task.isCancelled }
             )
@@ -179,13 +177,12 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
 
 extension ReaderWindowController: VocabularyPreparationLibraryAccess {
     func vocabularyPreparationExistingKeys(language: VocabularyLanguageID, kind: ReaderDocumentKind) -> Set<String> {
-        let appleLanguage = language.appleNaturalLanguage
         if kind == .pdf {
             return Set(storedWordRecords.map {
                 $0.lexicalKey ?? GermanLemmaResolver.groupingKey(
                     word: $0.word,
                     lemma: $0.lemma,
-                    language: appleLanguage
+                    language: language
                 )
             })
         }
@@ -193,7 +190,7 @@ extension ReaderWindowController: VocabularyPreparationLibraryAccess {
                 $0.lexicalKey ?? GermanLemmaResolver.groupingKey(
                     word: $0.word,
                     lemma: $0.lemma,
-                    language: appleLanguage
+                    language: language
                 )
             })
     }

@@ -232,14 +232,13 @@ final class VocabularyPreparationFixtureXCTests: XCTestCase {
         useReconciledLexicalIdentity: Bool = false,
         useDeterministicReconciliationEvidence: Bool = false
     ) throws -> PipelineResult {
-        let language: NLLanguage = languageCode == "de" ? .german : .english
         let languageID = try XCTUnwrap(VocabularyLanguageID(languageCode))
         let index: VocabularyDocumentLemmaIndex
         if useDeterministicReconciliationEvidence {
             let resolvedSurface = languageCode == "de" ? "band" : "record"
             index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
                 texts: texts,
-                language: language,
+                language: languageID,
                 maximumWorkerCount: 1,
                 resolutionProvider: { surface, _, _ in
                     .resolved(lemma: surface.lowercased(), source: .naturalLanguage)
@@ -258,7 +257,7 @@ final class VocabularyPreparationFixtureXCTests: XCTestCase {
         } else {
             index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
                 texts: texts,
-                language: language,
+                language: languageID,
                 maximumWorkerCount: 1
             ))
         }

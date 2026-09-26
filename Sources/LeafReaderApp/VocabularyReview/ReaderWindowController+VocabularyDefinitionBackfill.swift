@@ -10,8 +10,7 @@ extension ReaderWindowController {
               let runtime = vocabularyLanguageCatalog.resolve(language: language),
               let provider = runtime.definitions else { return }
         let languageRevision = vocabularyLanguageRevision
-        let appleLanguage = language.appleNaturalLanguage
-        let localLemma = GermanLemmaResolver.lemma(for: query, language: appleLanguage)
+        let localLemma = GermanLemmaResolver.lemma(for: query, language: language)
 
         Task { [weak self] in
             guard let definition = try? await provider.definition(for: VocabularyDefinitionRequest(
@@ -55,10 +54,9 @@ extension ReaderWindowController {
         language: VocabularyLanguageID,
         frequencyProvenance: VocabularyFrequencyProvenance
     ) {
-        let appleLanguage = language.appleNaturalLanguage
         let trimmedAnswer = answer.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedLemma = VocabularyTextPolicy.normalizedVocabularyText(lemma)
-        let wordKey = GermanLemmaResolver.groupingKey(word: word, lemma: normalizedLemma, language: appleLanguage)
+        let wordKey = GermanLemmaResolver.groupingKey(word: word, lemma: normalizedLemma, language: language)
         guard !trimmedAnswer.isEmpty, !wordKey.isEmpty else { return }
 
         if currentDocumentKind != .pdf {
@@ -81,7 +79,7 @@ extension ReaderWindowController {
             let matchingWord = GermanLemmaResolver.groupingKey(
                 word: storedWordRecords[index].word,
                 lemma: storedWordRecords[index].lemma,
-                language: appleLanguage
+                language: storedWordRecords[index].language ?? language
             ) == wordKey
             guard matchingVocabularyID || matchingWord,
                   storedWordRecords[index].answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
@@ -130,14 +128,13 @@ extension ReaderWindowController {
         language: VocabularyLanguageID,
         frequencyProvenance: VocabularyFrequencyProvenance
     ) {
-        let appleLanguage = language.appleNaturalLanguage
         var updatedRecords: [StoredWebWordRecord] = []
         for index in storedWebWordRecords.indices {
             let matchingVocabularyID = vocabularyID.map { storedWebWordRecords[index].vocabularyID == $0 } ?? false
             let matchingWord = GermanLemmaResolver.groupingKey(
                 word: storedWebWordRecords[index].word,
                 lemma: storedWebWordRecords[index].lemma,
-                language: appleLanguage
+                language: storedWebWordRecords[index].language ?? language
             ) == wordKey
             guard matchingVocabularyID || matchingWord,
                   storedWebWordRecords[index].answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {

@@ -1,5 +1,4 @@
 import Foundation
-import NaturalLanguage
 import LeafReaderCore
 
 struct StoredWebWordRecord: Codable, Sendable {
@@ -41,11 +40,11 @@ struct WebWordRecordMetadataRepair {
         let didChange: Bool
     }
 
-    typealias LemmaResolver = @Sendable (String, NLLanguage) -> String
+    typealias LemmaResolver = @Sendable (String, VocabularyLanguageID) -> String
 
     static func repair(
         _ records: [StoredWebWordRecord],
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         lemmaResolver: LemmaResolver = { GermanLemmaResolver.lemma(for: $0, language: $1) }
     ) -> Result {
         var didChange = false
