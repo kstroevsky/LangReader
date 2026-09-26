@@ -38,12 +38,17 @@ extension ReaderWindowController {
     /// other document in the list is already handled, so the current document is
     /// no longer a special, slow case.
     func reloadVocabularyLibraryInBackground() {
+        let requestID = UUID()
+        vocabularyState.libraryReloadRequestID = requestID
         let currentPath = currentFileURL?.standardizedFileURL.path
         let currentDocumentID = currentFileURL.flatMap { fileMD5(for: $0) }
         let currentKind = currentDocumentKind
         let currentPDFRecords = storedWordRecords
         let currentWebRecords = storedWebWordRecords
-        let language = vocabularyDocumentLanguage
+        let languageID = vocabularyDocumentLanguageID
+        let languageRevision = vocabularyLanguageRevision
+        let language = languageID?.appleNaturalLanguage ?? .undetermined
+        let profileVersion = languageID.flatMap { vocabularyLanguageCatalog.resolve(language: $0)?.profile.version }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
             let currentRecords: [VocabularyExportRecord]
@@ -52,7 +57,8 @@ extension ReaderWindowController {
                     pdf: currentPDFRecords,
                     web: currentWebRecords,
                     labelGeneration: GermanLabelCacheGeneration.current,
-                    language: language
+                    language: languageID,
+                    languageProfileVersion: profileVersion
                 )
                 currentRecords = self.vocabularyLibraryBuildCache.records(
                     documentID: currentDocumentID,
@@ -80,6 +86,9 @@ extension ReaderWindowController {
                 currentRecords: currentRecords
             )
             DispatchQueue.main.async {
+                guard self.vocabularyState.libraryReloadRequestID == requestID,
+                      self.currentFileMD5 == currentDocumentID,
+                      self.vocabularyLanguageRevision == languageRevision else { return }
                 self.vocabularyLibraryWindowController.apply(records: records)
             }
         }
@@ -110,32 +119,28 @@ extension ReaderWindowController {
             } else {
                 let pdfRecords = PDFWordRecordStore(fileMD5: documentID).load()
                 let webStore = WebWordRecordStore(fileMD5: documentID)
-                let loadedWebRecords = webStore.load()
-                // This document is not the open one, so its language has to come
-                // from the contexts saved with its own words.
-                let otherLanguageResolution = VocabularyLanguageDetector.resolution(
-                    forContexts: pdfRecords.compactMap(\.context) + loadedWebRecords.map(\.context),
+                let webRecords = webStore.load()
+                // Library building is a read-only projection. Persisted document
+                // metadata is authoritative when present; otherwise detection is
+                // temporary evidence for this projection only.
+                let persistedResolution = VocabularyDocumentLanguageStore(documentID: documentID)
+                    .load()?
+                    .restoredResolution
+                let otherLanguageResolution = persistedResolution ?? VocabularyLanguageDetector.resolution(
+                    forContexts: pdfRecords.compactMap(\.context) + webRecords.map(\.context),
                     recognizer: AppleVocabularyLanguageRecognizer.shared
                 )
-                let webRecords: [StoredWebWordRecord]
-                if let otherLanguage = otherLanguageResolution.languageID {
-                    let repairedWeb = WebWordRecordMetadataRepair.repair(
-                        loadedWebRecords,
-                        language: otherLanguage.appleNaturalLanguage
-                    )
-                    webRecords = repairedWeb.records
-                    if repairedWeb.didChange {
-                        webStore.save(webRecords)
-                    }
-                } else {
-                    webRecords = loadedWebRecords
+                let otherLanguageID = otherLanguageResolution.languageID
+                let otherLanguage = otherLanguageID?.appleNaturalLanguage ?? .undetermined
+                let otherProfileVersion = otherLanguageID.flatMap {
+                    vocabularyLanguageCatalog.resolve(language: $0)?.profile.version
                 }
-                let otherLanguage = otherLanguageResolution.languageID?.appleNaturalLanguage ?? .undetermined
                 let fingerprint = VocabularyLibraryBuildCache.fingerprint(
                     pdf: pdfRecords,
                     web: webRecords,
                     labelGeneration: GermanLabelCacheGeneration.current,
-                    language: otherLanguage
+                    language: otherLanguageID,
+                    languageProfileVersion: otherProfileVersion
                 )
                 records = vocabularyLibraryBuildCache.records(
                     documentID: documentID,
