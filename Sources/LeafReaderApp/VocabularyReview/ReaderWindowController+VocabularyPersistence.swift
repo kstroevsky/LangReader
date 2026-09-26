@@ -157,7 +157,13 @@ extension ReaderWindowController {
     }
 
     func dictionaryMetadata(for word: String) -> (tags: String?, frequency: Int?) {
-        let metadata = VocabularyDictionaryMetadataService.metadata(for: word)
+        guard let language = vocabularyDocumentLanguageID,
+              let metadata = VocabularyDictionaryMetadataService.metadata(
+                for: word,
+                language: language
+              ) else {
+            return (nil, nil)
+        }
         return (metadata.tags, metadata.frequency)
     }
 

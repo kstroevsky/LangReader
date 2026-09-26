@@ -1,4 +1,5 @@
 import Foundation
+import LeafReaderCore
 
 extension ReaderWindowController {
     func backfillVocabularyFrequenciesIfNeeded(
@@ -9,23 +10,42 @@ extension ReaderWindowController {
             completion()
             return
         }
-        let items = pendingVocabularyFrequencyBackfillItems()
+        guard let language = vocabularyDocumentLanguageID,
+              language == .english else {
+            completion()
+            return
+        }
+        let languageRevision = vocabularyLanguageRevision
+        let items = pendingVocabularyFrequencyBackfillItems(language: language)
         let service = VocabularyFrequencyBackfillService(preferences: preferences)
         service.backfillIfNeeded(items: items, progress: { progressState in
             progress(progressState.word, progressState.current, progressState.total)
         }) { [weak self] result in
-            guard let self else { return }
+            guard let self,
+                  self.vocabularyLanguageRevision == languageRevision,
+                  self.vocabularyDocumentLanguageID == language else {
+                completion()
+                return
+            }
             self.applyVocabularyFrequencies(result.frequenciesByID)
             completion()
         }
     }
 
-    private func pendingVocabularyFrequencyBackfillItems() -> [VocabularyDictionaryBackfillItem] {
+    private func pendingVocabularyFrequencyBackfillItems(
+        language: VocabularyLanguageID
+    ) -> [VocabularyDictionaryBackfillItem] {
         switch currentDocumentKind {
         case .pdf:
-            return VocabularyDictionaryMetadataService.pdfFrequencyBackfillItems(storedWordRecords)
+            return VocabularyDictionaryMetadataService.pdfFrequencyBackfillItems(
+                storedWordRecords,
+                language: language
+            )
         case .epub, .docx:
-            return VocabularyDictionaryMetadataService.webFrequencyBackfillItems(storedWebWordRecords)
+            return VocabularyDictionaryMetadataService.webFrequencyBackfillItems(
+                storedWebWordRecords,
+                language: language
+            )
         }
     }
 

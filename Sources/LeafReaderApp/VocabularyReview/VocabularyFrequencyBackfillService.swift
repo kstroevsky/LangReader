@@ -44,7 +44,10 @@ final class VocabularyFrequencyBackfillService {
                 DispatchQueue.main.async {
                     callbacks.report(VocabularyFrequencyBackfillProgress(word: item.word, current: offset + 1, total: items.count))
                 }
-                guard let frequency = metadataService.metadata(for: item.word).frequency else {
+                guard let frequency = metadataService.metadata(
+                    for: item.word,
+                    language: item.language
+                )?.frequency else {
                     continue
                 }
                 frequenciesByID[item.id] = frequency

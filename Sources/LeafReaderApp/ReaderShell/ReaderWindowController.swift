@@ -134,6 +134,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var readingNotesPanelController: ReadingNotesPanelController?
     var vocabularyPanelController: VocabularyPanelController!
     var vocabularyLibraryWindowController: VocabularyLibraryWindowController!
+    let vocabularyLanguageCatalog: VocabularyLanguageCatalog
     var vocabularyPreparationCoordinator: VocabularyPreparationCoordinator!
     var vocabularyPreparationPanelController: VocabularyPreparationPanelController!
     nonisolated let vocabularyLibraryBuildCache = VocabularyLibraryBuildCache()
@@ -144,18 +145,21 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
     var localEventMonitor: Any?
 
     override init(window: NSWindow?) {
+        let preparationDefinitionProvider: (any VocabularyDefinitionProviding)? =
+            ProcessInfo.processInfo.environment["LEAFVOCAB_PREPARATION_AUTOMATION"] == "1"
+                ? FixtureVocabularyPreparationDefinitionProvider()
+                : nil
+        vocabularyLanguageCatalog = VocabularyLanguageCatalogFactory.live(
+            definitionProviderOverride: preparationDefinitionProvider
+        )
         super.init(window: window)
         readerPresentation.preferredAIWidth = Self.loadPreferredAIWidth()
         vocabularyPanelController = VocabularyPanelController(owner: self)
         vocabularyLibraryWindowController = VocabularyLibraryWindowController(owner: self)
-        let preparationDefinitionProvider: any VocabularyPreparationDefinitionProviding =
-            ProcessInfo.processInfo.environment["LEAFVOCAB_PREPARATION_AUTOMATION"] == "1"
-                ? FixtureVocabularyPreparationDefinitionProvider()
-                : LiveVocabularyPreparationDefinitionProvider()
         vocabularyPreparationCoordinator = VocabularyPreparationCoordinator(
             documentSource: self,
             library: self,
-            definitionProvider: preparationDefinitionProvider
+            languageCatalog: vocabularyLanguageCatalog
         )
         vocabularyPreparationPanelController = VocabularyPreparationPanelController(
             coordinator: vocabularyPreparationCoordinator

@@ -233,6 +233,7 @@ final class VocabularyPreparationFixtureXCTests: XCTestCase {
         useDeterministicReconciliationEvidence: Bool = false
     ) throws -> PipelineResult {
         let language: NLLanguage = languageCode == "de" ? .german : .english
+        let languageID = try XCTUnwrap(VocabularyLanguageID(languageCode))
         let index: VocabularyDocumentLemmaIndex
         if useDeterministicReconciliationEvidence {
             let resolvedSurface = languageCode == "de" ? "band" : "record"
@@ -267,7 +268,7 @@ final class VocabularyPreparationFixtureXCTests: XCTestCase {
         let inventory = DocumentVocabularyInventory(
             summaries: summaries,
             languageCode: languageCode,
-            difficultyProvider: DocumentVocabularyFrequencyProvider.calibrated(languageCode: languageCode)
+            difficultyProvider: try XCTUnwrap(DocumentVocabularyFrequencyProvider.calibrated(language: languageID))
         )
         let candidates = inventory.candidates.map {
             PipelineCandidate(

@@ -187,19 +187,21 @@ extension ReaderWindowController {
     /// or lemma grouping so every grouping key uses the same language.
     func updateVocabularyDocumentLanguage() {
         if currentDocumentKind == .pdf, let document = pdfView.document {
-            vocabularyDocumentLanguage = VocabularyLanguageDetector.language(
+            setVocabularyDocumentLanguageResolution(VocabularyLanguageDetector.resolution(
                 pageCount: document.pageCount,
-                pageText: { document.page(at: $0)?.string }
-            )
+                pageText: { document.page(at: $0)?.string },
+                recognizer: AppleVocabularyLanguageRecognizer.shared
+            ))
             return
         }
         // Web and EPUB documents have no page text to sample here, so the
         // contexts saved with their words stand in. This must still run for
         // them: leaving the previous document's language in place would
         // lemmatize an English article with, say, German grammar.
-        vocabularyDocumentLanguage = VocabularyLanguageDetector.language(
-            forContexts: storedWebWordRecords.map(\.context)
-        )
+        setVocabularyDocumentLanguageResolution(VocabularyLanguageDetector.resolution(
+            forContexts: storedWebWordRecords.map(\.context),
+            recognizer: AppleVocabularyLanguageRecognizer.shared
+        ))
     }
 
     /// Establishes the PDF vocabulary language without re-extracting a spread
@@ -208,14 +210,21 @@ extension ReaderWindowController {
     /// back to one visible/first page. Whole-document text extraction belongs
     /// to the reusable snapshot/index pipeline, not the first-page path.
     func updatePDFVocabularyDocumentLanguage(from records: [StoredPDFWordRecord]) {
-        vocabularyDocumentLanguage = ReaderPerformance.measure(.vocabularyLanguageDetection) {
+        let resolution = ReaderPerformance.measure(.vocabularyLanguageDetection) {
             let contexts = records.compactMap(\.context)
             if contexts.contains(where: { $0.count >= 40 }) {
-                return VocabularyLanguageDetector.language(forContexts: contexts)
+                return VocabularyLanguageDetector.resolution(
+                    forContexts: contexts,
+                    recognizer: AppleVocabularyLanguageRecognizer.shared
+                )
             }
             let page = pdfView.currentPage ?? pdfView.document?.page(at: 0)
-            return VocabularyLanguageDetector.language(forSample: page?.string ?? "")
+            return VocabularyLanguageDetector.resolution(
+                forSample: page?.string ?? "",
+                recognizer: AppleVocabularyLanguageRecognizer.shared
+            )
         }
+        setVocabularyDocumentLanguageResolution(resolution)
     }
 
     func backfillStoredGermanLemmaOccurrences() {

@@ -247,9 +247,17 @@ package enum DocumentVocabularyFrequencyProvider {
     package static let english: any DocumentVocabularyDifficultyProviding = ECDICTDocumentVocabularyDifficultyProvider()
     package static let german: any DocumentVocabularyDifficultyProviding = GermanCorpusDocumentVocabularyDifficultyProvider()
 
-    package static func calibrated(languageCode: String) -> any DocumentVocabularyDifficultyProviding {
-        let base = languageCode.lowercased() == "de" ? german : english
-        guard let pack = VocabularyItemCalibrationPackLoader.loadReviewed(languageCode: languageCode) else {
+    package static func calibrated(language: VocabularyLanguageID) -> (any DocumentVocabularyDifficultyProviding)? {
+        let base: any DocumentVocabularyDifficultyProviding
+        switch language {
+        case .english:
+            base = english
+        case .german:
+            base = german
+        default:
+            return nil
+        }
+        guard let pack = VocabularyItemCalibrationPackLoader.loadReviewed(languageCode: language.bcp47) else {
             return base
         }
         return CalibratedDocumentVocabularyDifficultyProvider(base: base, pack: pack)

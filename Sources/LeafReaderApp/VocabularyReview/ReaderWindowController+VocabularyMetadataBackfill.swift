@@ -4,13 +4,23 @@ import LeafReaderCore
 extension ReaderWindowController {
     func backfillDictionaryMetadataAsync(linkID: String, word: String) {
         let trimmedWord = word.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedWord.isEmpty else { return }
+        guard !trimmedWord.isEmpty,
+              let documentID = currentFileMD5,
+              let language = vocabularyDocumentLanguageID else { return }
+        let languageRevision = vocabularyLanguageRevision
 
         DispatchQueue.global(qos: .utility).async { [weak self] in
-            let metadata = VocabularyDictionaryMetadataService.metadata(for: trimmedWord)
+            guard let metadata = VocabularyDictionaryMetadataService.metadata(
+                for: trimmedWord,
+                language: language
+            ) else { return }
             guard metadata.tags != nil || metadata.frequency != nil else { return }
             DispatchQueue.main.async {
-                self?.applyDictionaryMetadata(metadata, linkID: linkID)
+                guard let self,
+                      self.currentFileMD5 == documentID,
+                      self.vocabularyLanguageRevision == languageRevision,
+                      self.vocabularyDocumentLanguageID == language else { return }
+                self.applyDictionaryMetadata(metadata, linkID: linkID)
             }
         }
     }

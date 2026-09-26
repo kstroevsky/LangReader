@@ -113,17 +113,24 @@ extension ReaderWindowController {
                 let loadedWebRecords = webStore.load()
                 // This document is not the open one, so its language has to come
                 // from the contexts saved with its own words.
-                let otherLanguage = VocabularyLanguageDetector.language(
-                    forContexts: pdfRecords.compactMap(\.context) + loadedWebRecords.map(\.context)
+                let otherLanguageResolution = VocabularyLanguageDetector.resolution(
+                    forContexts: pdfRecords.compactMap(\.context) + loadedWebRecords.map(\.context),
+                    recognizer: AppleVocabularyLanguageRecognizer.shared
                 )
-                let repairedWeb = WebWordRecordMetadataRepair.repair(
-                    loadedWebRecords,
-                    language: otherLanguage
-                )
-                let webRecords = repairedWeb.records
-                if repairedWeb.didChange {
-                    webStore.save(webRecords)
+                let webRecords: [StoredWebWordRecord]
+                if let otherLanguage = otherLanguageResolution.languageID {
+                    let repairedWeb = WebWordRecordMetadataRepair.repair(
+                        loadedWebRecords,
+                        language: otherLanguage.appleNaturalLanguage
+                    )
+                    webRecords = repairedWeb.records
+                    if repairedWeb.didChange {
+                        webStore.save(webRecords)
+                    }
+                } else {
+                    webRecords = loadedWebRecords
                 }
+                let otherLanguage = otherLanguageResolution.languageID?.appleNaturalLanguage ?? .undetermined
                 let fingerprint = VocabularyLibraryBuildCache.fingerprint(
                     pdf: pdfRecords,
                     web: webRecords,

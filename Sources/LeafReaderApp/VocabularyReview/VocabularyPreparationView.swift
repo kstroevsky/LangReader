@@ -602,10 +602,12 @@ struct VocabularyPreparationView: View {
     }
 
     private var languagePicker: some View {
-        Picker(AppText.localized("语言", "Language"), selection: $coordinator.selectedLanguageCode) {
-            Text(AppText.localized("自动检测", "Auto-detect")).tag("auto")
-            Text("English").tag("en")
-            Text("Deutsch").tag("de")
+        Picker(AppText.localized("语言", "Language"), selection: $coordinator.selectedLanguage) {
+            Text(AppText.localized("自动检测", "Auto-detect")).tag(VocabularyLanguageSelection.auto)
+            ForEach(coordinator.preparationLanguageChoices, id: \.self) { language in
+                Text(Locale.current.localizedString(forLanguageCode: language.primaryLanguage) ?? language.bcp47)
+                    .tag(VocabularyLanguageSelection.manual(language))
+            }
         }
         .frame(width: 150)
     }

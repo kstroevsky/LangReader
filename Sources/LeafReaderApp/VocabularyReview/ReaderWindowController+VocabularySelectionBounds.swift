@@ -163,9 +163,11 @@ extension ReaderWindowController {
             lineBrokenHyphenRange: lineBrokenHyphenRange,
             isKnownHyphenatedWord: hasLocalSpellingEntry,
             isKnownWord: { candidate in
-                let metadata = VocabularyDictionaryMetadataService.metadata(for: candidate)
-                return metadata.frequency != nil
-                    || metadata.tags != nil
+                let metadata = vocabularyDocumentLanguageID.flatMap {
+                    VocabularyDictionaryMetadataService.metadata(for: candidate, language: $0)
+                }
+                return metadata?.frequency != nil
+                    || metadata?.tags != nil
                     || hasLocalSpellingEntry(candidate)
             }
         )
@@ -176,9 +178,11 @@ extension ReaderWindowController {
             text,
             isKnownHyphenatedWord: hasLocalSpellingEntry,
             isKnownWord: { candidate in
-                let metadata = VocabularyDictionaryMetadataService.metadata(for: candidate)
-                return metadata.frequency != nil
-                    || metadata.tags != nil
+                let metadata = vocabularyDocumentLanguageID.flatMap {
+                    VocabularyDictionaryMetadataService.metadata(for: candidate, language: $0)
+                }
+                return metadata?.frequency != nil
+                    || metadata?.tags != nil
                     || hasLocalSpellingEntry(candidate)
             }
         )

@@ -4,14 +4,17 @@ import LeafReaderCore
 struct VocabularyDictionaryBackfillItem {
     let id: String
     let word: String
+    let language: VocabularyLanguageID
 }
 
 enum VocabularyDictionaryMetadataService {
     static func metadata(
         for word: String,
+        language: VocabularyLanguageID,
         lookupService: DictionaryLookupService = LocalDictionaryLookupService.shared
-    ) -> VocabularyDictionaryMetadata {
-        lookupService.metadata(for: word)
+    ) -> VocabularyDictionaryMetadata? {
+        guard language == .english else { return nil }
+        return lookupService.metadata(for: word)
     }
 
     static func frequency(from value: String) -> Int? {
@@ -27,18 +30,26 @@ enum VocabularyDictionaryMetadataService {
         return VocabularyTextPolicy.speakableWord(word) != nil
     }
 
-    static func pdfFrequencyBackfillItems(_ records: [StoredPDFWordRecord]) -> [VocabularyDictionaryBackfillItem] {
-        records.compactMap { record in
+    static func pdfFrequencyBackfillItems(
+        _ records: [StoredPDFWordRecord],
+        language: VocabularyLanguageID
+    ) -> [VocabularyDictionaryBackfillItem] {
+        guard language == .english else { return [] }
+        return records.compactMap { record in
             shouldBackfillFrequency(word: record.word, answer: record.answer, frequency: record.dictionaryFrequency)
-                ? VocabularyDictionaryBackfillItem(id: record.id, word: record.word)
+                ? VocabularyDictionaryBackfillItem(id: record.id, word: record.word, language: language)
                 : nil
         }
     }
 
-    static func webFrequencyBackfillItems(_ records: [StoredWebWordRecord]) -> [VocabularyDictionaryBackfillItem] {
-        records.compactMap { record in
+    static func webFrequencyBackfillItems(
+        _ records: [StoredWebWordRecord],
+        language: VocabularyLanguageID
+    ) -> [VocabularyDictionaryBackfillItem] {
+        guard language == .english else { return [] }
+        return records.compactMap { record in
             shouldBackfillFrequency(word: record.word, answer: record.answer, frequency: record.dictionaryFrequency)
-                ? VocabularyDictionaryBackfillItem(id: record.id, word: record.word)
+                ? VocabularyDictionaryBackfillItem(id: record.id, word: record.word, language: language)
                 : nil
         }
     }

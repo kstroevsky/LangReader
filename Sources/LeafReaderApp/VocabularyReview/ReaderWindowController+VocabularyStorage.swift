@@ -157,8 +157,15 @@ extension ReaderWindowController {
         guard store.needsMetadataRepair else { return records }
         let repairSpan = ReaderPerformance.begin(.vocabularyRecordRepair)
         defer { ReaderPerformance.end(repairSpan) }
-        let language = VocabularyLanguageDetector.language(forContexts: records.map(\.context))
-        let repaired = WebWordRecordMetadataRepair.repair(records, language: language)
+        let resolution = VocabularyLanguageDetector.resolution(
+            forContexts: records.map(\.context),
+            recognizer: AppleVocabularyLanguageRecognizer.shared
+        )
+        guard let language = resolution.languageID else { return records }
+        let repaired = WebWordRecordMetadataRepair.repair(
+            records,
+            language: language.appleNaturalLanguage
+        )
         if repaired.didChange {
             let didSave = ReaderPerformance.measure(.vocabularyDatabaseWrite) {
                 store.save(repaired.records)

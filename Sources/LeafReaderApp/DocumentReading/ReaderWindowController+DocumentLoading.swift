@@ -180,6 +180,7 @@ extension ReaderWindowController {
 
     func activateDocumentSession(url: URL, kind: ReaderDocumentKind) {
         documentSession.adopt(url: url, kind: kind, documentID: fileMD5(for: url))
+        vocabularyState.resetLanguageResolution()
         documentPresentationState.resetForDocumentChange()
         invalidateDocumentTextState()
         aiConversationStore = currentFileMD5.map { AIConversationStore(fileMD5: $0) }

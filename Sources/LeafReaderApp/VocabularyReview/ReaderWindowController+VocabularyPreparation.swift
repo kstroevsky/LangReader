@@ -56,7 +56,8 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
         return VocabularyPreparationDocumentIdentity(
             documentID: documentID,
             loadGeneration: documentLoadGeneration,
-            webPlainTextGeneration: currentDocumentKind == .pdf ? nil : webPlainTextGeneration
+            webPlainTextGeneration: currentDocumentKind == .pdf ? nil : webPlainTextGeneration,
+            languageRevision: vocabularyLanguageRevision
         )
     }
 
@@ -65,18 +66,57 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
     }
 
     func vocabularyPreparationSnapshot(
-        requestedLanguage: NLLanguage?
+        selection: VocabularyLanguageSelection
     ) async throws -> VocabularyPreparationSourceSnapshot {
+        guard currentFileMD5 != nil else {
+            throw VocabularyPreparationSourceError.noDocument
+        }
+        let resolution: VocabularyLanguageResolution
+        switch selection {
+        case .manual(let language):
+            resolution = .resolved(VocabularyResolvedLanguage(
+                id: language,
+                provenance: .userSelected
+            ))
+        case .auto:
+            if currentDocumentKind == .pdf, let document = pdfView.document {
+                resolution = VocabularyLanguageDetector.resolution(
+                    pageCount: document.pageCount,
+                    pageText: { document.page(at: $0)?.string },
+                    recognizer: AppleVocabularyLanguageRecognizer.shared
+                )
+            } else {
+                let plainText = currentWebPlainText
+                guard !plainText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    throw VocabularyPreparationSourceError.textNotReady
+                }
+                resolution = VocabularyLanguageDetector.resolution(
+                    pageCount: 1,
+                    pageText: { _ in plainText },
+                    recognizer: AppleVocabularyLanguageRecognizer.shared
+                )
+            }
+        }
+
+        setVocabularyDocumentLanguageResolution(resolution)
+        guard let language = resolution.languageID else {
+            throw VocabularyPreparationSourceError.undeterminedLanguage
+        }
+        guard let runtime = vocabularyLanguageCatalog.resolve(language: language),
+              runtime.status(for: .vocabularyPreparation).isAvailable,
+              runtime.releaseState(for: .vocabularyPreparation) != .disabled,
+              runtime.definitions != nil,
+              runtime.difficulty != nil else {
+            throw VocabularyPreparationSourceError.unsupportedLanguage(language)
+        }
         guard let identity = vocabularyPreparationIdentity else {
             throw VocabularyPreparationSourceError.noDocument
         }
+
         if currentDocumentKind == .pdf {
-            let language = requestedLanguage ?? vocabularyDocumentLanguage
-            guard language == .english || language == .german else {
-                throw VocabularyPreparationSourceError.unsupportedLanguage
-            }
+            let appleLanguage = language.appleNaturalLanguage
             return try await withCheckedThrowingContinuation { continuation in
-                ensurePDFVocabularyIndex(language: language) { [weak self] snapshot, index in
+                ensurePDFVocabularyIndex(language: appleLanguage) { [weak self] snapshot, index in
                     guard let self, self.acceptsVocabularyPreparationIdentity(identity) else {
                         continuation.resume(throwing: VocabularyPreparationSourceError.cancelled)
                         return
@@ -88,7 +128,8 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
                     continuation.resume(returning: VocabularyPreparationSourceSnapshot(
                         identity: identity,
                         kind: .pdf,
-                        language: language,
+                        languageResolution: resolution,
+                        runtime: runtime,
                         texts: snapshot.pageTexts,
                         index: index
                     ))
@@ -100,16 +141,11 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
         guard !plainText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw VocabularyPreparationSourceError.textNotReady
         }
-        let language = requestedLanguage
-            ?? VocabularyLanguageDetector.language(forSample: String(plainText.prefix(8_000)))
-        guard language == .english || language == .german else {
-            throw VocabularyPreparationSourceError.unsupportedLanguage
-        }
-        vocabularyDocumentLanguage = language
+        let appleLanguage = language.appleNaturalLanguage
         guard let index = await Task.detached(priority: .userInitiated, operation: {
             VocabularyDocumentLemmaIndex(
                 texts: [plainText],
-                language: language,
+                language: appleLanguage,
                 maximumWorkerCount: 1,
                 isCancelled: { Task.isCancelled }
             )
@@ -122,7 +158,8 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
         return VocabularyPreparationSourceSnapshot(
             identity: identity,
             kind: currentDocumentKind,
-            language: language,
+            languageResolution: resolution,
+            runtime: runtime,
             texts: [plainText],
             index: index
         )
@@ -130,23 +167,24 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
 }
 
 extension ReaderWindowController: VocabularyPreparationLibraryAccess {
-    func vocabularyPreparationExistingKeys(language: NLLanguage, kind: ReaderDocumentKind) -> Set<String> {
+    func vocabularyPreparationExistingKeys(language: VocabularyLanguageID, kind: ReaderDocumentKind) -> Set<String> {
+        let appleLanguage = language.appleNaturalLanguage
         if kind == .pdf {
             return Set(storedWordRecords.map {
                 $0.lexicalKey ?? GermanLemmaResolver.groupingKey(
                     word: $0.word,
                     lemma: $0.lemma,
-                    language: language
+                    language: appleLanguage
                 )
             })
         }
         return Set(storedWebWordRecords.map {
-            $0.lexicalKey ?? GermanLemmaResolver.groupingKey(
-                word: $0.word,
-                lemma: $0.lemma,
-                language: language
-            )
-        })
+                $0.lexicalKey ?? GermanLemmaResolver.groupingKey(
+                    word: $0.word,
+                    lemma: $0.lemma,
+                    language: appleLanguage
+                )
+            })
     }
 
     func persistVocabularyPreparationBatch(
