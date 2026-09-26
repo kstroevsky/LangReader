@@ -81,7 +81,10 @@ package enum VocabularyFormMerger {
 package struct VocabularyExportRecord {
     package let ids: [String]
     package let word: String
+    package let language: VocabularyLanguageID?
     package let lemma: String?
+    package let lexicalKey: String?
+    package let partOfSpeech: VocabularyPartOfSpeech?
     package let forms: [VocabularyForm]
     package let answer: String
     package let dictionaryTags: String?
@@ -95,7 +98,10 @@ package struct VocabularyExportRecord {
     package init(
         ids: [String],
         word: String,
+        language: VocabularyLanguageID? = nil,
         lemma: String? = nil,
+        lexicalKey: String? = nil,
+        partOfSpeech: VocabularyPartOfSpeech? = nil,
         forms: [VocabularyForm] = [],
         answer: String,
         dictionaryTags: String?,
@@ -108,7 +114,10 @@ package struct VocabularyExportRecord {
     ) {
         self.ids = ids
         self.word = word
+        self.language = language
         self.lemma = lemma
+        self.lexicalKey = lexicalKey
+        self.partOfSpeech = partOfSpeech
         self.forms = forms
         self.answer = answer
         self.dictionaryTags = dictionaryTags
@@ -124,7 +133,10 @@ package struct VocabularyExportRecord {
         VocabularyExportRecord(
             ids: ids,
             word: word,
+            language: language,
             lemma: lemma,
+            lexicalKey: lexicalKey,
+            partOfSpeech: partOfSpeech,
             forms: forms,
             answer: answer,
             dictionaryTags: tags ?? dictionaryTags,
@@ -135,5 +147,25 @@ package struct VocabularyExportRecord {
             srs: srs,
             occurrences: occurrences
         )
+    }
+
+    /// Stable aggregation identity for persisted/exported vocabulary. Resolved
+    /// lexical identity wins; otherwise known language scopes the legacy lemma
+    /// key. Callers must provide a source scope before aggregating unresolved
+    /// records across documents.
+    package func identityGroupingKey(unresolvedScope: String? = nil) -> String? {
+        if let lexicalKey = lexicalKey?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !lexicalKey.isEmpty {
+            return "lexical|\(lexicalKey)"
+        }
+        let lemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(lemma ?? word)
+        guard !lemmaKey.isEmpty else { return nil }
+        if let language {
+            return "language|\(language.bcp47)|\(lemmaKey)"
+        }
+        if let unresolvedScope {
+            return "language-unknown|\(unresolvedScope)|\(lemmaKey)"
+        }
+        return "language-unknown|\(lemmaKey)"
     }
 }

@@ -108,24 +108,25 @@ struct PDFVocabularySQLiteMapper {
         case occurrenceID = 0
         case vocabularyID = 1
         case word = 2
-        case lemma = 3
-        case lexicalKey = 4
-        case partOfSpeech = 5
-        case surfaceForm = 6
-        case pageIndex = 7
-        case boundsJSON = 8
-        case textAnchorJSON = 9
-        case context = 10
-        case question = 11
-        case answer = 12
-        case dictionaryTags = 13
-        case dictionaryFrequency = 14
-        case createdAt = 15
-        case srsJSON = 16
+        case language = 3
+        case lemma = 4
+        case lexicalKey = 5
+        case partOfSpeech = 6
+        case surfaceForm = 7
+        case pageIndex = 8
+        case boundsJSON = 9
+        case textAnchorJSON = 10
+        case context = 11
+        case question = 12
+        case answer = 13
+        case dictionaryTags = 14
+        case dictionaryFrequency = 15
+        case createdAt = 16
+        case srsJSON = 17
     }
 
     static let selectSQL = """
-    SELECT occurrence.id, word.id, word.word, word.lemma, word.lexical_key, word.part_of_speech,
+    SELECT occurrence.id, word.id, word.word, occurrence.language_id, word.lemma, word.lexical_key, word.part_of_speech,
            occurrence.surface_form,
            occurrence.page_index, occurrence.bounds_json, occurrence.text_anchor_json,
            occurrence.context, word.question, word.answer, word.dictionary_tags,
@@ -153,6 +154,7 @@ struct PDFVocabularySQLiteMapper {
             id: id,
             vocabularyID: vocabularyID,
             word: word,
+            language: vocabularyLanguageColumn(statement, Column.language.rawValue),
             lemma: optionalStringColumn(statement, Column.lemma.rawValue),
             lexicalKey: optionalStringColumn(statement, Column.lexicalKey.rawValue),
             partOfSpeech: optionalStringColumn(statement, Column.partOfSpeech.rawValue)
@@ -177,19 +179,20 @@ struct WebWordRecordSQLiteMapper {
         case id = 0
         case vocabularyID = 1
         case word = 2
-        case lemma = 3
-        case lexicalKey = 4
-        case partOfSpeech = 5
-        case surfaceForm = 6
-        case context = 7
-        case occurrenceIndex = 8
-        case scrollProgress = 9
-        case question = 10
-        case answer = 11
-        case dictionaryTags = 12
-        case dictionaryFrequency = 13
-        case createdAt = 14
-        case srsJSON = 15
+        case language = 3
+        case lemma = 4
+        case lexicalKey = 5
+        case partOfSpeech = 6
+        case surfaceForm = 7
+        case context = 8
+        case occurrenceIndex = 9
+        case scrollProgress = 10
+        case question = 11
+        case answer = 12
+        case dictionaryTags = 13
+        case dictionaryFrequency = 14
+        case createdAt = 15
+        case srsJSON = 16
     }
 
     private enum Bind: Int32 {
@@ -197,23 +200,24 @@ struct WebWordRecordSQLiteMapper {
         case id = 2
         case vocabularyID = 3
         case word = 4
-        case lemma = 5
-        case lexicalKey = 6
-        case partOfSpeech = 7
-        case surfaceForm = 8
-        case context = 9
-        case occurrenceIndex = 10
-        case scrollProgress = 11
-        case question = 12
-        case answer = 13
-        case dictionaryTags = 14
-        case dictionaryFrequency = 15
-        case createdAt = 16
-        case srsJSON = 17
+        case language = 5
+        case lemma = 6
+        case lexicalKey = 7
+        case partOfSpeech = 8
+        case surfaceForm = 9
+        case context = 10
+        case occurrenceIndex = 11
+        case scrollProgress = 12
+        case question = 13
+        case answer = 14
+        case dictionaryTags = 15
+        case dictionaryFrequency = 16
+        case createdAt = 17
+        case srsJSON = 18
     }
 
     static let selectSQL = """
-    SELECT id, vocabulary_id, word, lemma, lexical_key, part_of_speech, surface_form, context,
+    SELECT id, vocabulary_id, word, language_id, lemma, lexical_key, part_of_speech, surface_form, context,
            occurrence_index, scroll_progress, question, answer,
            dictionary_tags, dictionary_frequency, created_at, srs_json
     FROM web_word_records
@@ -223,11 +227,11 @@ struct WebWordRecordSQLiteMapper {
 
     static let insertSQL = """
     INSERT OR REPLACE INTO web_word_records(
-        document_id, id, vocabulary_id, word, lemma, lexical_key, part_of_speech, surface_form, context,
+        document_id, id, vocabulary_id, word, language_id, lemma, lexical_key, part_of_speech, surface_form, context,
         occurrence_index, scroll_progress, question, answer, dictionary_tags,
         dictionary_frequency, created_at, srs_json
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
     let codec: WordRecordSQLiteJSONCodec
@@ -244,6 +248,7 @@ struct WebWordRecordSQLiteMapper {
             id: id,
             vocabularyID: optionalStringColumn(statement, Column.vocabularyID.rawValue),
             word: word,
+            language: vocabularyLanguageColumn(statement, Column.language.rawValue),
             lemma: optionalStringColumn(statement, Column.lemma.rawValue),
             lexicalKey: optionalStringColumn(statement, Column.lexicalKey.rawValue),
             partOfSpeech: optionalStringColumn(statement, Column.partOfSpeech.rawValue)
@@ -268,6 +273,7 @@ struct WebWordRecordSQLiteMapper {
         bindText(record.id, index: Bind.id.rawValue, statement: statement)
         bindOptionalText(record.vocabularyID, index: Bind.vocabularyID.rawValue, statement: statement)
         bindText(record.word, index: Bind.word.rawValue, statement: statement)
+        bindOptionalText(record.language?.bcp47, index: Bind.language.rawValue, statement: statement)
         bindOptionalText(record.lemma, index: Bind.lemma.rawValue, statement: statement)
         bindOptionalText(record.lexicalKey, index: Bind.lexicalKey.rawValue, statement: statement)
         bindOptionalText(record.partOfSpeech?.rawValue, index: Bind.partOfSpeech.rawValue, statement: statement)
@@ -335,6 +341,11 @@ func optionalStringColumn(_ statement: OpaquePointer?, _ index: Int32) -> String
 
 func optionalIntColumn(_ statement: OpaquePointer?, _ index: Int32) -> Int? {
     sqlite3_column_type(statement, index) == SQLITE_NULL ? nil : Int(sqlite3_column_int(statement, index))
+}
+
+func vocabularyLanguageColumn(_ statement: OpaquePointer?, _ index: Int32) -> VocabularyLanguageID? {
+    guard let rawValue = optionalStringColumn(statement, index) else { return nil }
+    return VocabularyLanguageID(rawValue)
 }
 
 let WORD_RECORD_SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)

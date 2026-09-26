@@ -622,11 +622,11 @@ enum VocabularyLogicTests {
             "an identity lemma in any language is unresolved rather than inferred knowledge"
         )
 
-        // Short inputs take the deterministic fallback without asking the runtime.
+        // Short inputs remain unresolved rather than inventing a language.
         try expectEqual(
             VocabularyLanguageDetector.language(forSample: "kort"),
-            VocabularyLanguageDetector.fallback,
-            "too-short samples fall back rather than guessing"
+            .undetermined,
+            "too-short samples remain unresolved rather than guessing"
         )
     }
 
@@ -1045,7 +1045,10 @@ enum VocabularyLogicTests {
             VocabularyExporter.Record(word: "empty", answer: "   ", location: "p. 2", context: "", source: "Book", createdAt: createdAt),
             VocabularyExporter.Record(
                 word: "Fehlerhafte",
+                language: .german,
                 lemma: "fehlerhaft",
+                lexicalKey: "de|fehlerhaft|adjective|",
+                partOfSpeech: .adjective,
                 surfaceForm: "fehlerhaften",
                 answer: "incorrect",
                 location: "p. 4",
@@ -1078,15 +1081,18 @@ enum VocabularyLogicTests {
         try expect(markdown.contains("- Location：p. 3"), "markdown should list every occurrence")
         try expectEqual(markdown.components(separatedBy: "## alpha").count - 1, 1, "markdown should group case-insensitive occurrences under one heading")
         try expect(markdown.contains("## Fehlerhafte"), "markdown should preserve the first selected German form as its heading")
+        try expect(markdown.contains("- Language：de"), "markdown should carry language identity")
+        try expect(markdown.contains("- Lexical identity：de|fehlerhaft|adjective|"), "markdown should carry resolved lexical identity")
+        try expect(markdown.contains("- Part of speech：adjective"), "markdown should carry resolved part of speech")
         try expect(markdown.contains("**fehlerhaften**"), "markdown should retain the exact inflected form for an occurrence")
 
         let csv = VocabularyExporter.csv(records: exportable) { record in
             record.answer
         }
-        try expect(csv.contains("Word,Page,Context,Source,Created At,Answer"), "CSV should include occurrence-oriented header")
-        try expect(csv.contains("\"alpha\",\"p. 1\",\"context\",\"Book\""), "CSV should include escaped occurrence records")
-        try expect(csv.contains("\"empty\",\"p. 2\",\"\",\"Book\""), "CSV should include answerless occurrences")
-        try expect(csv.contains("\"fehlerhaften\",\"p. 4\""), "CSV should export the exact Unicode surface form for each occurrence")
+        try expect(csv.contains("Word,Language,Lexical Key,Part of Speech,Page,Context,Source,Created At,Answer"), "CSV should include occurrence identity columns")
+        try expect(csv.contains("\"alpha\",\"\",\"\",\"\",\"p. 1\",\"context\",\"Book\""), "CSV should include escaped occurrence records")
+        try expect(csv.contains("\"empty\",\"\",\"\",\"\",\"p. 2\",\"\",\"Book\""), "CSV should include answerless occurrences")
+        try expect(csv.contains("\"fehlerhaften\",\"de\",\"de|fehlerhaft|adjective|\",\"adjective\",\"p. 4\""), "CSV should carry lexical identity with the exact Unicode surface form")
     }
 
     static func testVocabularyAnswerFormatter() throws {

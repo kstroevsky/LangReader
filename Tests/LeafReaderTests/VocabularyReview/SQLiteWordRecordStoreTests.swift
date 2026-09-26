@@ -24,6 +24,7 @@ private func pdfRecord(
     word: String,
     answer: String,
     createdAt: TimeInterval,
+    language: VocabularyLanguageID? = nil,
     textAnchor: TextQuoteAnchor? = nil,
     bounds: CGRect = CGRect(x: 10, y: 20, width: 30, height: 12),
     srs: VocabularySRSState? = nil
@@ -31,6 +32,7 @@ private func pdfRecord(
     StoredPDFWordRecord(
         id: id,
         word: word,
+        language: language,
         pageIndex: 4,
         bounds: StoredPDFWordRect(bounds),
         textAnchor: textAnchor,
@@ -48,6 +50,7 @@ private func webRecord(
     answer: String,
     createdAt: TimeInterval,
     vocabularyID: String? = nil,
+    language: VocabularyLanguageID? = nil,
     lemma: String? = nil,
     lexicalKey: String? = nil,
     partOfSpeech: VocabularyPartOfSpeech? = nil,
@@ -58,6 +61,7 @@ private func webRecord(
         id: id,
         vocabularyID: vocabularyID,
         word: word,
+        language: language,
         lemma: lemma,
         lexicalKey: lexicalKey,
         partOfSpeech: partOfSpeech,
@@ -102,8 +106,8 @@ struct SQLiteWordRecordStoreTestRunner {
         assert(anchor?.exactQuote == "alpha", "semantic anchors should retain the exact quote")
         assert(anchor?.prefix == "Start ", "semantic anchors should retain bounded prefix context")
         assert(anchor?.suffix == " end", "semantic anchors should retain bounded suffix context")
-        let first = pdfRecord(id: "pdf-a", word: "alpha", answer: "one", createdAt: 1, textAnchor: anchor, srs: srs)
-        let updated = pdfRecord(id: "pdf-a", word: "alpha", answer: "updated", createdAt: 2, textAnchor: anchor, srs: srs)
+        let first = pdfRecord(id: "pdf-a", word: "alpha", answer: "one", createdAt: 1, language: .english, textAnchor: anchor, srs: srs)
+        let updated = pdfRecord(id: "pdf-a", word: "alpha", answer: "updated", createdAt: 2, language: .english, textAnchor: anchor, srs: srs)
         let second = pdfRecord(id: "pdf-b", word: "beta", answer: "two", createdAt: 3)
         let other = pdfRecord(id: "pdf-other", word: "other", answer: "other", createdAt: 4)
         let batchBlank = pdfRecord(id: "pdf-c", word: "übersende", answer: "", createdAt: 5)
@@ -173,6 +177,7 @@ struct SQLiteWordRecordStoreTestRunner {
         let loadedPDF = store.loadPDFRecords(documentID: documentID)
         assert(loadedPDF.map(\.id) == ["pdf-a", "pdf-b"], "PDF records should load ordered records for one document only")
         assert(loadedPDF.first?.answer == "updated", "PDF upsert should replace existing rows")
+        assert(loadedPDF.first?.language == .english, "PDF language identity should round-trip through production SQLite store")
         assert(loadedPDF.first?.textAnchor == anchor, "PDF semantic text anchors should round-trip through production SQLite store")
         assert(loadedPDF.first?.srs?.reviewCount == 2, "PDF SRS state should round-trip through production SQLite store")
         assert(store.loadPDFRecords(documentID: otherDocumentID).map(\.id) == ["pdf-other"], "PDF records should stay scoped by document")
@@ -226,6 +231,7 @@ struct SQLiteWordRecordStoreTestRunner {
             answer: "one",
             createdAt: 1,
             vocabularyID: "web-vocabulary-go",
+            language: .german,
             lemma: "gehen",
             lexicalKey: "de|gehen|verb|",
             partOfSpeech: .verb,
@@ -238,6 +244,7 @@ struct SQLiteWordRecordStoreTestRunner {
             answer: "updated",
             createdAt: 2,
             vocabularyID: "web-vocabulary-go",
+            language: .german,
             lemma: "gehen",
             lexicalKey: "de|gehen|verb|",
             partOfSpeech: .verb,
@@ -252,6 +259,7 @@ struct SQLiteWordRecordStoreTestRunner {
         assert(loadedWeb.map(\.id) == ["web-a", "web-b"], "Web records should load ordered records")
         assert(loadedWeb.first?.answer == "updated", "Web upsert should replace existing rows")
         assert(loadedWeb.first?.vocabularyID == "web-vocabulary-go", "Web vocabulary identity should round-trip")
+        assert(loadedWeb.first?.language == .german, "Web language identity should round-trip")
         assert(loadedWeb.first?.lemma == "gehen", "Web lemma should round-trip")
         assert(loadedWeb.first?.lexicalKey == "de|gehen|verb|", "Web lexical key should round-trip")
         assert(loadedWeb.first?.partOfSpeech == .verb, "Web part of speech should round-trip")
@@ -336,6 +344,7 @@ struct SQLiteWordRecordStoreTestRunner {
             assert(migrated.count == 2, "legacy occurrence rows should migrate without data loss")
             assert(Set(migrated.compactMap(\.vocabularyID)).count == 1, "legacy duplicate words should migrate into one canonical vocabulary row")
             assert(migrated.allSatisfy { $0.answer == "legacy definition" }, "legacy definitions should be shared after migration")
+            assert(migrated.allSatisfy { $0.language == nil }, "legacy PDF rows without language metadata should remain unresolved")
         }
 
         let legacyWebDBURL = dbDirectory.appendingPathComponent("legacy-web-word-records.sqlite3")
@@ -345,9 +354,11 @@ struct SQLiteWordRecordStoreTestRunner {
             let legacy = legacyStore.loadWebRecords(documentID: "legacy-web-doc")
             assert(legacy.count == 1, "additive web migration should preserve legacy rows")
             assert(legacy.first?.occurrenceSurfaceForm == "ging", "legacy web rows should fall back to their saved word as surface")
+            assert(legacy.first?.language == nil, "legacy web rows without language metadata should remain unresolved")
 
             var repaired = legacy[0]
             repaired.vocabularyID = "legacy-go"
+            repaired.language = .german
             repaired.lemma = "gehen"
             repaired.surfaceForm = "ging"
             assert(legacyStore.upsertWebRecord(documentID: "legacy-web-doc", record: repaired), "migrated web columns should accept parity metadata")
@@ -356,6 +367,7 @@ struct SQLiteWordRecordStoreTestRunner {
             let reopened = WordRecordSQLiteStore(databaseURL: legacyWebDBURL)
             let repaired = reopened.loadWebRecords(documentID: "legacy-web-doc").first
             assert(repaired?.vocabularyID == "legacy-go", "migrated web vocabulary identity should persist after reopen")
+            assert(repaired?.language == .german, "migrated web language identity should persist after reopen")
             assert(repaired?.lemma == "gehen", "migrated web lemma should persist after reopen")
             assert(repaired?.surfaceForm == "ging", "migrated web surface should persist after reopen")
         }

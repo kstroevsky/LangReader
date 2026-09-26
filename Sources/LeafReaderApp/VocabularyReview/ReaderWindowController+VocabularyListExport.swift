@@ -97,7 +97,10 @@ extension ReaderWindowController {
             return occurrences.map { occurrence in
                 VocabularyExporter.Record(
                     word: record.word,
+                    language: record.language,
                     lemma: record.lemma,
+                    lexicalKey: record.lexicalKey,
+                    partOfSpeech: record.partOfSpeech,
                     surfaceForm: occurrence.surfaceForm ?? record.word,
                     answer: record.answer,
                     location: occurrence.location,
@@ -122,6 +125,9 @@ extension ReaderWindowController {
                 titleSuffix: AppText.localized("背单词", "Vocabulary"),
                 exportedAt: AppText.localized("导出时间", "Exported at"),
                 wordCount: AppText.localized("单词数量", "Word count"),
+                language: AppText.localized("语言", "Language"),
+                lexicalIdentity: AppText.localized("词汇标识", "Lexical identity"),
+                partOfSpeech: AppText.localized("词性", "Part of speech"),
                 location: AppText.localized("位置", "Location"),
                 context: AppText.localized("原文上下文", "Original context")
             )

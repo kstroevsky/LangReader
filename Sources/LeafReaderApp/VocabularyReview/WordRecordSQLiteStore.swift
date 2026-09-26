@@ -598,6 +598,7 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             text_anchor_json TEXT,
             context TEXT,
             surface_form TEXT,
+            language_id TEXT,
             created_at REAL NOT NULL,
             PRIMARY KEY(document_id, id),
             UNIQUE(document_id, vocabulary_id, location_key),
@@ -615,6 +616,7 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             id TEXT NOT NULL,
             vocabulary_id TEXT,
             word TEXT NOT NULL,
+            language_id TEXT,
             lemma TEXT,
             lexical_key TEXT,
             part_of_speech TEXT,
@@ -669,6 +671,7 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
     private func migrateColumns() {
         ensureColumn(table: "web_word_records", name: "occurrence_index", definition: "INTEGER")
         ensureColumn(table: "web_word_records", name: "vocabulary_id", definition: "TEXT")
+        ensureColumn(table: "web_word_records", name: "language_id", definition: "TEXT")
         ensureColumn(table: "web_word_records", name: "lemma", definition: "TEXT")
         ensureColumn(table: "web_word_records", name: "lexical_key", definition: "TEXT")
         ensureColumn(table: "web_word_records", name: "part_of_speech", definition: "TEXT")
@@ -682,6 +685,7 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
         ensureColumn(table: "pdf_vocabulary_words", name: "part_of_speech", definition: "TEXT")
         ensureColumn(table: "pdf_vocabulary_occurrences", name: "surface_form", definition: "TEXT")
         ensureColumn(table: "pdf_vocabulary_occurrences", name: "text_anchor_json", definition: "TEXT")
+        ensureColumn(table: "pdf_vocabulary_occurrences", name: "language_id", definition: "TEXT")
     }
 
     private func ensureColumn(table: String, name: String, definition: String) {
@@ -876,8 +880,8 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             sql: """
             INSERT OR REPLACE INTO pdf_vocabulary_occurrences(
                 document_id, id, vocabulary_id, location_key, page_index, bounds_json,
-                text_anchor_json, context, surface_form, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                text_anchor_json, context, surface_form, language_id, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             prepareOperation: "prepare insert PDF vocabulary occurrence",
             stepOperation: "insert PDF vocabulary occurrence",
@@ -891,7 +895,8 @@ final class WordRecordSQLiteStore: @unchecked Sendable {
             bindSQLiteOptionalText(codec.encode(record.textAnchor), index: 7, statement: statement)
             bindSQLiteOptionalText(record.context, index: 8, statement: statement)
             bindSQLiteText(record.occurrenceSurfaceForm, index: 9, statement: statement)
-            sqlite3_bind_double(statement, 10, record.createdAt.timeIntervalSince1970)
+            bindSQLiteOptionalText(record.language?.bcp47, index: 10, statement: statement)
+            sqlite3_bind_double(statement, 11, record.createdAt.timeIntervalSince1970)
             }
         )
     }

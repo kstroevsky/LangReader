@@ -53,7 +53,10 @@ package struct VocabularyLibraryOccurrence {
 package struct VocabularyLibraryRecord {
     package let id: String
     package let word: String
+    package let language: VocabularyLanguageID?
     package let lemma: String?
+    package let lexicalKey: String?
+    package let partOfSpeech: VocabularyPartOfSpeech?
     package let forms: [VocabularyForm]
     package let answer: String
     package let dictionaryTags: String?
@@ -63,7 +66,10 @@ package struct VocabularyLibraryRecord {
     package init(
         id: String,
         word: String,
+        language: VocabularyLanguageID? = nil,
         lemma: String?,
+        lexicalKey: String? = nil,
+        partOfSpeech: VocabularyPartOfSpeech? = nil,
         forms: [VocabularyForm],
         answer: String,
         dictionaryTags: String?,
@@ -72,7 +78,10 @@ package struct VocabularyLibraryRecord {
     ) {
         self.id = id
         self.word = word
+        self.language = language
         self.lemma = lemma
+        self.lexicalKey = lexicalKey
+        self.partOfSpeech = partOfSpeech
         self.forms = forms
         self.answer = answer
         self.dictionaryTags = dictionaryTags
@@ -96,8 +105,8 @@ package enum VocabularyLibraryRecordProvider {
 
         for source in sources {
             for record in source.records {
-                let key = VocabularyTextPolicy.canonicalVocabularyKey(record.lemma ?? record.word)
-                guard !key.isEmpty else { continue }
+                let unresolvedScope = source.documentURL.standardizedFileURL.path
+                guard let key = record.identityGroupingKey(unresolvedScope: unresolvedScope) else { continue }
                 grouped[key, default: []].append((source, record))
             }
         }
@@ -131,7 +140,10 @@ package enum VocabularyLibraryRecordProvider {
             return VocabularyLibraryRecord(
                 id: key,
                 word: VocabularyTextPolicy.normalizedVocabularyText(first.record.word),
+                language: entries.compactMap(\.record.language).first,
                 lemma: first.record.lemma,
+                lexicalKey: entries.compactMap(\.record.lexicalKey).first,
+                partOfSpeech: entries.compactMap(\.record.partOfSpeech).first,
                 forms: forms,
                 answer: answerEntry?.record.answer ?? "",
                 dictionaryTags: tags,

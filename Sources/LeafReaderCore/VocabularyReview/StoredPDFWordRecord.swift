@@ -9,6 +9,7 @@ package struct StoredPDFWordRecord: Codable, Sendable {
     package let id: String
     package var vocabularyID: String?
     package var word: String
+    package var language: VocabularyLanguageID?
     package var lemma: String?
     package var lexicalKey: String?
     package var partOfSpeech: VocabularyPartOfSpeech?
@@ -28,6 +29,7 @@ package struct StoredPDFWordRecord: Codable, Sendable {
         id: String,
         vocabularyID: String? = nil,
         word: String,
+        language: VocabularyLanguageID? = nil,
         lemma: String? = nil,
         lexicalKey: String? = nil,
         partOfSpeech: VocabularyPartOfSpeech? = nil,
@@ -46,6 +48,7 @@ package struct StoredPDFWordRecord: Codable, Sendable {
         self.id = id
         self.vocabularyID = vocabularyID
         self.word = word
+        self.language = language
         self.lemma = lemma
         self.lexicalKey = lexicalKey
         self.partOfSpeech = partOfSpeech

@@ -5,7 +5,10 @@ import LeafReaderCore
 struct StoredPDFWordRecord {
     let id: String
     let word: String
+    var language: VocabularyLanguageID? = nil
     var lemma: String? = nil
+    var lexicalKey: String? = nil
+    var partOfSpeech: VocabularyPartOfSpeech? = nil
     var surfaceForm: String? = nil
     let pageIndex: Int
     let bounds: StoredPDFWordRect
@@ -26,7 +29,10 @@ struct StoredWebWordRecord {
     let id: String
     var vocabularyID: String? = nil
     let word: String
+    var language: VocabularyLanguageID? = nil
     var lemma: String? = nil
+    var lexicalKey: String? = nil
+    var partOfSpeech: VocabularyPartOfSpeech? = nil
     var surfaceForm: String? = nil
     let context: String
     let occurrenceIndex: Int?

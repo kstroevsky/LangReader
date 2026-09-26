@@ -45,7 +45,10 @@ enum VocabularyRecordProvider {
                     return VocabularyExportRecord(
                         ids: [$0.id],
                         word: $0.word,
+                        language: $0.language,
                         lemma: $0.lemma,
+                        lexicalKey: $0.lexicalKey,
+                        partOfSpeech: $0.partOfSpeech,
                         forms: [
                             VocabularyForm(
                                 surface: $0.occurrenceSurfaceForm,
@@ -86,7 +89,10 @@ enum VocabularyRecordProvider {
                     return VocabularyExportRecord(
                         ids: [$0.id],
                         word: $0.word,
+                        language: $0.language,
                         lemma: $0.lemma,
+                        lexicalKey: $0.lexicalKey,
+                        partOfSpeech: $0.partOfSpeech,
                         forms: [
                             VocabularyForm(
                                 surface: $0.occurrenceSurfaceForm,
@@ -125,8 +131,7 @@ enum VocabularyRecordProvider {
         var order: [String] = []
         var grouped: [String: [VocabularyExportRecord]] = [:]
         for record in records.sorted(by: { $0.createdAt < $1.createdAt }) {
-            let key = VocabularyTextPolicy.canonicalVocabularyKey(record.lemma ?? record.word)
-            guard !key.isEmpty else { continue }
+            guard let key = record.identityGroupingKey() else { continue }
             if grouped[key] == nil {
                 order.append(key)
                 grouped[key] = []
@@ -170,7 +175,10 @@ enum VocabularyRecordProvider {
             return VocabularyExportRecord(
                 ids: group.flatMap(\.ids),
                 word: displayWord(first.word),
+                language: group.compactMap(\.language).first,
                 lemma: first.lemma,
+                lexicalKey: group.compactMap(\.lexicalKey).first,
+                partOfSpeech: group.compactMap(\.partOfSpeech).first,
                 forms: forms,
                 answer: answer,
                 dictionaryTags: dictionaryTags,

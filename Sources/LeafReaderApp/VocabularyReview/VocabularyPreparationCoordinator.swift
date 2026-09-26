@@ -1377,6 +1377,8 @@ final class VocabularyPreparationCoordinator {
         importStartedAt: TimeInterval
     ) async {
         guard let library, let kind = activeDocumentKind,
+              let languageCode = inventory?.languageCode,
+              let language = VocabularyLanguageID(languageCode),
               self.requestID == requestID,
               documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
         self.definitions = definitions
@@ -1402,6 +1404,7 @@ final class VocabularyPreparationCoordinator {
                     id: UUID().uuidString,
                     vocabularyID: UUID().uuidString,
                     word: candidate.displayLemma,
+                    language: language,
                     lemma: candidate.displayLemma,
                     lexicalKey: candidate.lexicalItemID?.canonicalKey,
                     partOfSpeech: candidate.partOfSpeech,
@@ -1429,6 +1432,7 @@ final class VocabularyPreparationCoordinator {
                     id: UUID().uuidString,
                     vocabularyID: UUID().uuidString,
                     word: candidate.displayLemma,
+                    language: language,
                     lemma: candidate.displayLemma,
                     lexicalKey: candidate.lexicalItemID?.canonicalKey,
                     partOfSpeech: candidate.partOfSpeech,

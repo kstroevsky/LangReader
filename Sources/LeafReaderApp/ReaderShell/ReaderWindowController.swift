@@ -11,6 +11,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
         let id: String
         let vocabularyID: String
         let word: String
+        let language: VocabularyLanguageID?
         let pageIndex: Int
         let bounds: StoredPDFWordRect
         let textAnchor: TextQuoteAnchor?
@@ -24,6 +25,7 @@ final class ReaderWindowController: NSWindowController, NSWindowDelegate, PDFVie
         let id: String
         let vocabularyID: String
         let word: String
+        let language: VocabularyLanguageID?
         let lemma: String
         let surfaceForm: String
         let context: String
