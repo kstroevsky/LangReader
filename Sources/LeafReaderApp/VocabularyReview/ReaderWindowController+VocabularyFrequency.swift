@@ -10,7 +10,8 @@ extension ReaderWindowController {
             completion()
             return
         }
-        guard let language = vocabularyDocumentLanguageID,
+        guard let workIdentity = vocabularyDocumentWorkIdentity,
+              let language = vocabularyDocumentLanguageID,
               let runtime = vocabularyLanguageCatalog.resolve(language: language),
               let provenance = VocabularyDictionaryMetadataService.frequencyProvenance(
                 language: language,
@@ -19,7 +20,6 @@ extension ReaderWindowController {
             completion()
             return
         }
-        let languageRevision = vocabularyLanguageRevision
         let plan = vocabularyFrequencyBackfillPlan(provenance: provenance)
         guard !preferences.isFrequencyBackfilled(for: plan.scope) else {
             completion()
@@ -30,7 +30,7 @@ extension ReaderWindowController {
             progress(progressState.word, progressState.current, progressState.total)
         }) { [weak self] result in
             guard let self,
-                  self.vocabularyLanguageRevision == languageRevision,
+                  self.acceptsVocabularyDocumentWorkIdentity(workIdentity),
                   self.vocabularyDocumentLanguageID == language else {
                 completion()
                 return

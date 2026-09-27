@@ -49,6 +49,24 @@ extension ReaderWindowController {
 
     var vocabularyLanguageRevision: UInt64 { vocabularyState.languageRevision }
 
+    /// Semantic owner identity captured by vocabulary async work. Including the
+    /// document/text generations prevents an old completion from publishing
+    /// after a close/reopen or deferred Web text refresh even when the document
+    /// ID and resolved language happen to match again.
+    var vocabularyDocumentWorkIdentity: VocabularyPreparationDocumentIdentity? {
+        guard let documentID = currentFileMD5 else { return nil }
+        return VocabularyPreparationDocumentIdentity(
+            documentID: documentID,
+            loadGeneration: documentLoadGeneration,
+            webPlainTextGeneration: currentDocumentKind == .pdf ? nil : webPlainTextGeneration,
+            languageRevision: vocabularyLanguageRevision
+        )
+    }
+
+    func acceptsVocabularyDocumentWorkIdentity(_ identity: VocabularyPreparationDocumentIdentity) -> Bool {
+        vocabularyDocumentWorkIdentity == identity
+    }
+
     func setVocabularyDocumentLanguageResolution(
         _ resolution: VocabularyLanguageResolution,
         replacingUserSelection: Bool = false

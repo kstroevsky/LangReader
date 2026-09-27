@@ -112,27 +112,80 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         XCTAssertEqual(archived.session.finalSelection, ["legacy-item"])
     }
 
-    func testStaleSnapshotNeverPublishesInventory() async throws {
-        let source = try FakeVocabularyPreparationSource(
-            text: fixtureText,
-            kind: .docx,
-            snapshotDelayNanoseconds: 80_000_000
-        )
-        let library = FakeVocabularyPreparationLibrary()
-        let coordinator = VocabularyPreparationCoordinator(
-            documentSource: source,
-            library: library,
-            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: FakeVocabularyPreparationDefinitionProvider()),
-            readerPriorStore: readerPriorStore,
-            researchEvidenceStore: researchEvidenceStore
-        )
-        coordinator.resetForCurrentDocument()
-        coordinator.startAnalysis()
-        source.advanceGeneration()
+    func testStaleSnapshotNeverPublishesInventoryAcrossPDFAndWebReopen() async throws {
+        for kind in [ReaderDocumentKind.pdf, .epub] {
+            let source = try FakeVocabularyPreparationSource(
+                text: fixtureText,
+                kind: kind,
+                snapshotDelayNanoseconds: 80_000_000
+            )
+            let coordinator = VocabularyPreparationCoordinator(
+                documentSource: source,
+                library: FakeVocabularyPreparationLibrary(),
+                languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: FakeVocabularyPreparationDefinitionProvider()),
+                readerPriorStore: readerPriorStore,
+                researchEvidenceStore: researchEvidenceStore
+            )
+            coordinator.resetForCurrentDocument()
+            coordinator.startAnalysis()
+            source.advanceGeneration()
 
-        try await Task.sleep(nanoseconds: 150_000_000)
-        XCTAssertNil(coordinator.inventory)
-        XCTAssertNotEqual(coordinator.phase, .inventory)
+            try await Task.sleep(nanoseconds: 150_000_000)
+            XCTAssertNil(coordinator.inventory, "stale \(kind) snapshot must not publish after reopen")
+            XCTAssertNotEqual(coordinator.phase, .inventory)
+        }
+    }
+
+    func testDelayedDefinitionNeverPublishesAfterLanguageRevisionAcrossPDFAndWeb() async throws {
+        for kind in [ReaderDocumentKind.pdf, .epub] {
+            let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: kind)
+            let provider = ControlledVocabularyPreparationDefinitionProvider()
+            let coordinator = VocabularyPreparationCoordinator(
+                documentSource: source,
+                library: FakeVocabularyPreparationLibrary(),
+                languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: provider),
+                readerPriorStore: readerPriorStore,
+                researchEvidenceStore: researchEvidenceStore
+            )
+            coordinator.resetForCurrentDocument()
+            coordinator.startAnalysis()
+            try await waitUntil { coordinator.phase == .inventory }
+            coordinator.beginAssessment()
+            try await waitUntil { await provider.requestCount() == 1 }
+
+            source.advanceLanguageRevision()
+            await provider.release()
+            try await waitUntil { await provider.completedCount() == 1 }
+            await Task.yield()
+
+            XCTAssertEqual(coordinator.definitionState, .hidden, "stale \(kind) definition must not publish after language change")
+        }
+    }
+
+    func testDelayedDefinitionNeverPublishesAfterSameDocumentReopenAcrossPDFAndWeb() async throws {
+        for kind in [ReaderDocumentKind.pdf, .epub] {
+            let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: kind)
+            let provider = ControlledVocabularyPreparationDefinitionProvider()
+            let coordinator = VocabularyPreparationCoordinator(
+                documentSource: source,
+                library: FakeVocabularyPreparationLibrary(),
+                languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: provider),
+                readerPriorStore: readerPriorStore,
+                researchEvidenceStore: researchEvidenceStore
+            )
+            coordinator.resetForCurrentDocument()
+            coordinator.startAnalysis()
+            try await waitUntil { coordinator.phase == .inventory }
+            coordinator.beginAssessment()
+            try await waitUntil { await provider.requestCount() == 1 }
+
+            source.advanceGeneration()
+            await provider.release()
+            try await waitUntil { await provider.completedCount() == 1 }
+            await Task.yield()
+
+            XCTAssertEqual(coordinator.definitionState, .hidden, "stale \(kind) definition must not publish after reopen")
+        }
     }
 
     func testPrefetchStaysHiddenUntilRevealAndRetryRecovers() async throws {
@@ -641,6 +694,47 @@ private final class FakeVocabularyPreparationSource: VocabularyPreparationDocume
             webPlainTextGeneration: identity.webPlainTextGeneration.map { $0 + 1 },
             languageRevision: identity.languageRevision
         )
+    }
+
+    func advanceLanguageRevision() {
+        identity = VocabularyPreparationDocumentIdentity(
+            documentID: identity.documentID,
+            loadGeneration: identity.loadGeneration,
+            webPlainTextGeneration: identity.webPlainTextGeneration,
+            languageRevision: identity.languageRevision + 1
+        )
+    }
+}
+
+private actor ControlledVocabularyPreparationDefinitionProvider: VocabularyDefinitionProviding {
+    nonisolated let descriptor = VocabularyProviderDescriptor(
+        id: "dictionary.controlled-test-fixture",
+        version: "1",
+        supportedLanguageRanges: [VocabularyLanguageRange(language: .english, includesDescendants: true)]
+    )
+    private var calls = 0
+    private var completions = 0
+    private var continuation: CheckedContinuation<Void, Never>?
+
+    func definition(for request: VocabularyDefinitionRequest) async throws -> VocabularyDefinition? {
+        calls += 1
+        await withCheckedContinuation { continuation = $0 }
+        completions += 1
+        return VocabularyDefinition(
+            markdown: "Definition of \(request.lemma)",
+            resolvedLemma: request.lemma,
+            tags: nil,
+            frequency: nil,
+            provenance: descriptor
+        )
+    }
+
+    func requestCount() -> Int { calls }
+    func completedCount() -> Int { completions }
+
+    func release() {
+        continuation?.resume()
+        continuation = nil
     }
 }
 

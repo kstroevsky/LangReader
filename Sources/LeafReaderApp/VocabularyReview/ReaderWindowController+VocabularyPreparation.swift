@@ -51,17 +51,11 @@ extension ReaderWindowController {
 
 extension ReaderWindowController: VocabularyPreparationDocumentSource {
     var vocabularyPreparationIdentity: VocabularyPreparationDocumentIdentity? {
-        guard let documentID = currentFileMD5 else { return nil }
-        return VocabularyPreparationDocumentIdentity(
-            documentID: documentID,
-            loadGeneration: documentLoadGeneration,
-            webPlainTextGeneration: currentDocumentKind == .pdf ? nil : webPlainTextGeneration,
-            languageRevision: vocabularyLanguageRevision
-        )
+        vocabularyDocumentWorkIdentity
     }
 
     func acceptsVocabularyPreparationIdentity(_ identity: VocabularyPreparationDocumentIdentity) -> Bool {
-        vocabularyPreparationIdentity == identity
+        acceptsVocabularyDocumentWorkIdentity(identity)
     }
 
     func vocabularyPreparationSnapshot(

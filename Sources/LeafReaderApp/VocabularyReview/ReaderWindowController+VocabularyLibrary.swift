@@ -46,7 +46,7 @@ extension ReaderWindowController {
         let currentPDFRecords = storedWordRecords
         let currentWebRecords = storedWebWordRecords
         let languageID = vocabularyDocumentLanguageID
-        let languageRevision = vocabularyLanguageRevision
+        let workIdentity = vocabularyDocumentWorkIdentity
         let runtime = languageID.flatMap { vocabularyLanguageCatalog.resolve(language: $0) }
         let semanticIdentity = runtime?.linguisticCacheIdentity
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -87,7 +87,7 @@ extension ReaderWindowController {
             DispatchQueue.main.async {
                 guard self.vocabularyState.libraryReloadRequestID == requestID,
                       self.currentFileMD5 == currentDocumentID,
-                      self.vocabularyLanguageRevision == languageRevision else { return }
+                      self.vocabularyDocumentWorkIdentity == workIdentity else { return }
                 self.vocabularyLibraryWindowController.apply(records: records)
             }
         }

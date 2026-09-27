@@ -5,15 +5,13 @@ extension ReaderWindowController {
     func backfillDictionaryMetadataAsync(linkID: String, word: String) {
         let trimmedWord = word.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedWord.isEmpty,
-              let documentID = currentFileMD5,
+              let workIdentity = vocabularyDocumentWorkIdentity,
               let language = vocabularyDocumentLanguageID,
               let runtime = vocabularyLanguageCatalog.resolve(language: language),
               let frequencyProvenance = VocabularyDictionaryMetadataService.frequencyProvenance(
                 language: language,
                 languageProfileVersion: runtime.profile.version
               ) else { return }
-        let languageRevision = vocabularyLanguageRevision
-
         DispatchQueue.global(qos: .utility).async { [weak self] in
             guard let metadata = VocabularyDictionaryMetadataService.metadata(
                 for: trimmedWord,
@@ -22,8 +20,7 @@ extension ReaderWindowController {
             guard metadata.tags != nil || metadata.frequency != nil else { return }
             DispatchQueue.main.async {
                 guard let self,
-                      self.currentFileMD5 == documentID,
-                      self.vocabularyLanguageRevision == languageRevision,
+                      self.acceptsVocabularyDocumentWorkIdentity(workIdentity),
                       self.vocabularyDocumentLanguageID == language else { return }
                 self.applyDictionaryMetadata(
                     metadata,

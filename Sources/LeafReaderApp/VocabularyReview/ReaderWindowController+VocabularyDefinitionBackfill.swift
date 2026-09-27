@@ -5,11 +5,10 @@ extension ReaderWindowController {
     func backfillDictionaryAnswerAsync(vocabularyID: String?, word: String) {
         let query = VocabularyTextPolicy.normalizedVocabularyText(word)
         guard VocabularyTextPolicy.isSingleVocabularyWord(query),
-              let documentID = currentFileMD5,
+              let workIdentity = vocabularyDocumentWorkIdentity,
               let language = vocabularyDocumentLanguageID,
               let runtime = vocabularyLanguageCatalog.resolve(language: language),
               let provider = runtime.definitions else { return }
-        let languageRevision = vocabularyLanguageRevision
         let localLemma = VocabularyLemmaResolver.lemma(
             for: query,
             language: language,
@@ -25,8 +24,7 @@ extension ReaderWindowController {
             )),
                   !Task.isCancelled,
                   let self,
-                  self.currentFileMD5 == documentID,
-                  self.vocabularyLanguageRevision == languageRevision,
+                  self.acceptsVocabularyDocumentWorkIdentity(workIdentity),
                   self.vocabularyDocumentLanguageID == language else {
                 return
             }
