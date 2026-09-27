@@ -139,13 +139,6 @@ struct SQLiteWordRecordStoreTestRunner {
             try? FileManager.default.removeItem(at: plist)
         }
         let locationStore = PDFWordRecordStore(fileMD5: documentID, defaults: defaults)
-        assert(locationStore.needsMetadataRepair, "PDF metadata repair should run once for an unversioned document")
-        locationStore.markMetadataRepairCompleted()
-        assert(!locationStore.needsMetadataRepair, "PDF metadata repair should be skipped after its version is recorded")
-        assert(
-            PDFWordRecordStore(fileMD5: otherDocumentID, defaults: defaults).needsMetadataRepair,
-            "metadata repair versions should remain document-scoped"
-        )
         let sameLocation = CGRect(x: 50.2, y: 20.2, width: 30.2, height: 12.2)
         assert(
             locationStore.existingRecord(in: [batchBlank], pageIndex: 4, bounds: sameLocation)?.id == batchBlank.id,
@@ -188,6 +181,13 @@ struct SQLiteWordRecordStoreTestRunner {
         assert(loadedPDF.first?.language == .english, "PDF language identity should round-trip through production SQLite store")
         assert(loadedPDF.first?.textAnchor == anchor, "PDF semantic text anchors should round-trip through production SQLite store")
         assert(loadedPDF.first?.srs?.reviewCount == 2, "PDF SRS state should round-trip through production SQLite store")
+        let unresolvedPDF = loadedPDF.first { $0.id == "pdf-b" }
+        assert(unresolvedPDF?.language == nil, "legacy PDF rows must remain language-unresolved without explicit evidence")
+        assert(unresolvedPDF?.lemma == nil, "legacy PDF rows must not gain an inferred lemma during storage round-trip")
+        assert(unresolvedPDF?.lexicalKey == nil, "legacy PDF rows must not gain a lexical identity during storage round-trip")
+        assert(unresolvedPDF?.partOfSpeech == nil, "legacy PDF rows must not gain inferred part of speech during storage round-trip")
+        assert(unresolvedPDF?.surfaceForm == "beta", "legacy PDF rows may use the existing word-as-surface compatibility projection")
+        assert(unresolvedPDF?.answer == "two", "legacy PDF answers must survive unresolved storage round-trip")
         assert(store.loadPDFRecords(documentID: otherDocumentID).map(\.id) == ["pdf-other"], "PDF records should stay scoped by document")
 
         let semanticDocumentID = "sqlite-semantic-location-doc"

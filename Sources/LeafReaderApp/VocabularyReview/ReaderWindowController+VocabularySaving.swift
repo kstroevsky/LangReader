@@ -227,27 +227,6 @@ extension ReaderWindowController {
         setVocabularyDocumentLanguageResolution(resolution)
     }
 
-    func backfillStoredGermanLemmaOccurrences() {
-        var seenKeys = Set<String>()
-        let groups = storedWordRecords
-            .sorted { $0.createdAt < $1.createdAt }
-            .compactMap { record -> PDFVocabularyLemmaGroup? in
-                let lemma = VocabularyExporter.nonEmptyText(record.lemma)
-                    ?? resolvedVocabularyLemma(for: record.occurrenceSurfaceForm, language: record.language)
-                let key = vocabularyGroupingKey(word: record.word, lemma: lemma, language: record.language)
-                guard !key.isEmpty,
-                      seenKeys.insert(key).inserted,
-                      let vocabularyID = record.vocabularyID else { return nil }
-                return PDFVocabularyLemmaGroup(
-                    key: key,
-                    word: record.word,
-                    lemma: lemma,
-                    vocabularyID: vocabularyID
-                )
-            }
-        backfillGermanLemmaOccurrences(groups)
-    }
-
     func backfillGermanLemmaOccurrences(word: String, lemma: String, vocabularyID: String?) {
         guard let vocabularyID else { return }
         let key = vocabularyGroupingKey(word: word, lemma: lemma)
