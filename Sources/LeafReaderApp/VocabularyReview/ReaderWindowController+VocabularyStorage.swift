@@ -155,32 +155,9 @@ extension ReaderWindowController {
 
     func loadStoredWebWordRecords() -> [StoredWebWordRecord] {
         guard let store = webWordRecordStore else { return [] }
-        let records = ReaderPerformance.measure(.vocabularyRecordLoad) {
+        return ReaderPerformance.measure(.vocabularyRecordLoad) {
             store.load()
         }
-        guard store.needsMetadataRepair else { return records }
-        let repairSpan = ReaderPerformance.begin(.vocabularyRecordRepair)
-        defer { ReaderPerformance.end(repairSpan) }
-        let resolution = VocabularyLanguageDetector.resolution(
-            forContexts: records.map(\.context),
-            recognizer: AppleVocabularyLanguageRecognizer.shared
-        )
-        guard let language = resolution.languageID else { return records }
-        let repaired = WebWordRecordMetadataRepair.repair(
-            records,
-            language: language
-        )
-        if repaired.didChange {
-            let didSave = ReaderPerformance.measure(.vocabularyDatabaseWrite) {
-                store.save(repaired.records)
-            }
-            if didSave {
-                store.markMetadataRepairCompleted()
-            }
-        } else {
-            store.markMetadataRepairCompleted()
-        }
-        return repaired.records
     }
 
     func saveStoredWebWordRecords() {

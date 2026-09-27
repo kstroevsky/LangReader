@@ -34,65 +34,17 @@ struct StoredWebWordRecord: Codable, Sendable {
     }
 }
 
-struct WebWordRecordMetadataRepair {
-    struct Result {
-        let records: [StoredWebWordRecord]
-        let didChange: Bool
-    }
-
-    typealias LemmaResolver = @Sendable (String, VocabularyLanguageID) -> String
-
-    static func repair(
-        _ records: [StoredWebWordRecord],
-        language: VocabularyLanguageID,
-        lemmaResolver: LemmaResolver = { GermanLemmaResolver.lemma(for: $0, language: $1) }
-    ) -> Result {
-        var didChange = false
-        var enriched = records.map { record -> StoredWebWordRecord in
-            var record = record
-            let surface = record.occurrenceSurfaceForm
-            if record.surfaceForm != surface { didChange = true }
-            record.surfaceForm = surface
-            let lemma = record.lemma?.trimmingCharacters(in: .whitespacesAndNewlines)
-            let resolvedLemma = lemma.flatMap { $0.isEmpty ? nil : $0 }
-                ?? lemmaResolver(surface, language)
-            if record.lemma != resolvedLemma { didChange = true }
-            record.lemma = resolvedLemma
-            return record
-        }
-
-        for index in enriched.indices {
-            guard enriched[index].vocabularyID?.isEmpty != false else { continue }
-            enriched[index].vocabularyID = enriched[index].id
-            didChange = true
-        }
-
-        return Result(records: enriched, didChange: didChange)
-    }
-}
-
 struct WebWordRecordStore {
-    private static let metadataRepairVersion = 1
     private let defaults: UserDefaults
     private let documentID: String
     private let storageKey: String
     private let migrationKey: String
-    private let metadataRepairKey: String
 
     init(fileMD5: String, defaults: UserDefaults = .standard) {
         self.defaults = defaults
         documentID = fileMD5
         storageKey = "bookSession.\(fileMD5).webWordRecords"
         migrationKey = "\(storageKey).sqliteMigrated"
-        metadataRepairKey = "\(storageKey).metadataRepairVersion"
-    }
-
-    var needsMetadataRepair: Bool {
-        defaults.integer(forKey: metadataRepairKey) < Self.metadataRepairVersion
-    }
-
-    func markMetadataRepairCompleted() {
-        defaults.set(Self.metadataRepairVersion, forKey: metadataRepairKey)
     }
 
     func load() -> [StoredWebWordRecord] {

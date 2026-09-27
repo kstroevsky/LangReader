@@ -139,13 +139,9 @@ struct SQLiteWordRecordStoreTestRunner {
             try? FileManager.default.removeItem(at: plist)
         }
         let locationStore = PDFWordRecordStore(fileMD5: documentID, defaults: defaults)
-        let webLocationStore = WebWordRecordStore(fileMD5: documentID, defaults: defaults)
         assert(locationStore.needsMetadataRepair, "PDF metadata repair should run once for an unversioned document")
-        assert(webLocationStore.needsMetadataRepair, "web metadata repair should run once for an unversioned document")
         locationStore.markMetadataRepairCompleted()
-        webLocationStore.markMetadataRepairCompleted()
         assert(!locationStore.needsMetadataRepair, "PDF metadata repair should be skipped after its version is recorded")
-        assert(!webLocationStore.needsMetadataRepair, "web metadata repair should be skipped after its version is recorded")
         assert(
             PDFWordRecordStore(fileMD5: otherDocumentID, defaults: defaults).needsMetadataRepair,
             "metadata repair versions should remain document-scoped"
@@ -277,31 +273,14 @@ struct SQLiteWordRecordStoreTestRunner {
         assert(loadedWeb.first?.partOfSpeech == .verb, "Web part of speech should round-trip")
         assert(loadedWeb.first?.occurrenceSurfaceForm == "Ging", "Web surface form should round-trip exactly")
         assert(loadedWeb.first?.srs?.dueDate == Date(timeIntervalSince1970: 20), "Web SRS state should round-trip")
-
-        let ungroupedWeb = [
-            webRecord(id: "legacy-first", word: "ging", answer: "went", createdAt: 1),
-            webRecord(id: "legacy-second", word: "gegangen", answer: "gone", createdAt: 2)
-        ]
-        let parityRepair = WebWordRecordMetadataRepair.repair(
-            ungroupedWeb,
-            language: .german,
-            lemmaResolver: { _, _ in "gehen" }
-        )
-        assert(parityRepair.didChange, "legacy web rows without parity metadata should be repaired")
-        assert(Set(parityRepair.records.compactMap(\.vocabularyID)) == ["legacy-first", "legacy-second"], "metadata repair should preserve row-local legacy ownership instead of regrouping by lemma")
-        assert(parityRepair.records.allSatisfy { $0.lemma == "gehen" }, "web repair should attach the resolved lemma")
-        assert(parityRepair.records.map(\.occurrenceSurfaceForm) == ["ging", "gegangen"], "web repair should preserve exact occurrence surfaces")
-
-        let preownedWeb = [
-            webRecord(id: "owned-a", word: "ging", answer: "went", createdAt: 3, vocabularyID: "owner-a"),
-            webRecord(id: "owned-b", word: "gegangen", answer: "gone", createdAt: 4, vocabularyID: "owner-b")
-        ]
-        let preownedRepair = WebWordRecordMetadataRepair.repair(
-            preownedWeb,
-            language: .german,
-            lemmaResolver: { _, _ in "gehen" }
-        )
-        assert(preownedRepair.records.map(\.vocabularyID) == ["owner-a", "owner-b"], "web repair must never reparent existing learning owners")
+        let unresolvedWeb = loadedWeb.first { $0.id == "web-b" }
+        assert(unresolvedWeb?.vocabularyID == nil, "legacy Web rows must not gain a vocabulary owner during storage round-trip")
+        assert(unresolvedWeb?.language == nil, "legacy Web rows must remain language-unresolved without explicit evidence")
+        assert(unresolvedWeb?.lemma == nil, "legacy Web rows must not gain an inferred lemma during storage round-trip")
+        assert(unresolvedWeb?.lexicalKey == nil, "legacy Web rows must not gain a lexical identity during storage round-trip")
+        assert(unresolvedWeb?.partOfSpeech == nil, "legacy Web rows must not gain inferred part of speech during storage round-trip")
+        assert(unresolvedWeb?.surfaceForm == nil, "legacy Web rows must preserve nullable surface metadata during storage round-trip")
+        assert(unresolvedWeb?.answer == "two", "legacy Web answers must survive unresolved storage round-trip")
 
         assert(store.deleteWebRecords(documentID: documentID, ids: ["web-a"]), "Web delete(ids:) should succeed")
         assert(store.loadWebRecords(documentID: documentID).map(\.id) == ["web-b"], "Web delete(ids:) should remove only selected rows")
