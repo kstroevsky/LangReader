@@ -125,8 +125,17 @@ python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v13.p
 echo "==> Checking sealed historical reconciliation-observability development-confirmation reservation"
 python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v14.py --self-test
 
-echo "==> Checking sealed immutable-observation development-confirmation reservation"
+echo "==> Checking sealed historical immutable-observation development-confirmation reservation"
 python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v15.py --self-test
+
+echo "==> Checking sealed historical language-frequency-provenance development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v16.py --self-test
+
+echo "==> Checking sealed historical language-identity-capability development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v17.py --self-test
+
+echo "==> Checking sealed validation-language-identity development-confirmation reservation"
+python3 ./scripts/validate_vocabulary_development_confirmation_reservation_v18.py --self-test
 
 echo "==> Checking frozen vocabulary warm-compatibility development reservation"
 python3 ./scripts/validate_vocabulary_longitudinal_compatibility_manifest.py \

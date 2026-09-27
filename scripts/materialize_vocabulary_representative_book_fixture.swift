@@ -1,7 +1,6 @@
 import CryptoKit
 import Foundation
 import LeafReaderCore
-import NaturalLanguage
 import PDFKit
 
 private struct AnnotationTemplate: Decodable {
@@ -249,7 +248,9 @@ private func materialize(annotationURL: URL, sourceURL: URL, outputURL: URL) thr
         throw MaterializeError.invalid("sampled PDF text changed since annotation generation")
     }
 
-    let language = NLLanguage(rawValue: template.source.languageCode)
+    guard let language = VocabularyLanguageID(template.source.languageCode) else {
+        throw MaterializeError.invalid("source language code is not a resolved BCP-47 identity")
+    }
     guard let index = VocabularyDocumentLemmaIndex(
         texts: texts,
         language: language,

@@ -2,10 +2,10 @@
   "schema_version": 1,
   "derived_view": true,
   "production_evidence_candidate": "cfb5468beddac86fd9dd0d39b2627656a92c3320",
-  "repository_head_reviewed": "ae1c7fd7a3b3d7cbf9f8aa7c72bb4ba9ad2360ed",
+  "repository_head_reviewed": "0911fbcdc76f238bd6e1a22a7e2a8020adcb153f",
   "active_future_reservation": {
-    "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v15.json",
-    "sha256": "36d2230312a8c12658790516373666aab3400fd411c52d67c2e2da3755939109",
+    "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v18.json",
+    "sha256": "bebe49682308836eaf9b662ba9cf7622562cdd7891c2c275ee9cdfaa4e80c49e",
     "status": "reserved_not_executed"
   },
   "head_since_production_evidence": [
@@ -107,7 +107,27 @@
     "4a4cce0a113953a4bef7a071d08977d126ecdf13: expose per-child strong-context and attestation provenance in lexical-reconciliation diagnostics without changing reconciliation decisions",
     "8cc86ace42cadcd0bf521398d02bb79935b69697: development-only representative-book annotation workflow; no corpus outcomes or production policy changes",
     "e02c8b2baa5c5b3fb161275a89474f137a9d1f75: immutable occurrence-evidence observation seam and reviewed-fixture materializer; candidate semantics unchanged",
-    "ae1c7fd7a3b3d7cbf9f8aa7c72bb4ba9ad2360ed: safe representative-book development metadata only; annotations remain unreviewed and unscored"
+    "ae1c7fd7a3b3d7cbf9f8aa7c72bb4ba9ad2360ed: safe representative-book development metadata only; annotations remain unreviewed and unscored",
+    "f62655052a8d1c0c98986bff898184b3f5994057: make vocabulary frequency backfill language-aware, provenance-verified, versioned by exact eligible record coverage, and safe across PDF/Web persistence",
+    "83e298c9a58cc25826dc6ed7fe16f1c4c9a3f666: Namespace vocabulary caches by linguistic semantics",
+    "3ba16d8dd3fc63aa2145914579bc34f19fd3acbb: Archive incompatible vocabulary preparation sessions",
+    "4638d13900698c87eabe875e5f91ceacf1745d76: Archive incompatible vocabulary reader priors",
+    "9aa8a7c37126862a8b007db7ff57ec9409580401: Bind vocabulary calibration to semantic provenance",
+    "d915d25b75adefeb1f9fbe9defae3fe1b73d8492: Route vocabulary definitions by source language",
+    "cf669de3882dc395c954f467cf8aa09def12b6a6: Require explicit vocabulary language identity",
+    "7125873872a95e1bcea18a7530d9a36c2c20f509: Move vocabulary linguistics behind runtime adapters",
+    "fe102ad2f951c34f5cace57d76e90d6dd7af661f: Namespace vocabulary form labels by language",
+    "677d289cfe7e7e887c4bb32058c4ede31c06f569: Preserve exact discovery without language",
+    "c6104c571159b5a3465033384e16a8d55ec2be3a: Harden vocabulary language boundaries",
+    "5bf5c37e906fa19d038df6c36b332b61e878394f: Compose regional vocabulary capabilities safely",
+    "479404f29d9c7fc44dfc35fda52f6a03e30bf3d4: Reject stale vocabulary index semantics",
+    "41e5bdf05c318b72f3550a6883fadac9657d757c: Fail closed on difficulty language mismatch",
+    "ad9f2be1702600deee4219c157f07c4b5f6591b0: Rebase preparation after language selection",
+    "a2c0f997d79689d5156f9fe7b9106588e2f55a2e: Keep legacy web vocabulary reads non-destructive",
+    "1231a4b8fd4fbd05684ca06ae464a41d12503038: Keep legacy PDF vocabulary reads non-destructive",
+    "0e1644cfda1905b891a5ff3f1d4467311e30fcbf: Rename multilingual lemma boundary",
+    "e16929e053f352ee5b4d0cb98f9ac02a9a438110: Guard vocabulary async work across document revisions",
+    "0911fbcdc76f238bd6e1a22a7e2a8020adcb153f: fail closed in the Validation POS evaluator on explicit BCP-47 language identity and prevent canonical-key language inference"
   ],
   "canonical_ledger": {
     "path": "docs/plans/vocabulary-measurement-coherence/target-ledger.json",
@@ -325,16 +345,40 @@
       "evidence_class": "sealed synthetic development-confirmation reservation",
       "status": "reserved_not_executed",
       "reservation_role": "historical_unexecuted",
-      "interpretation": "Historical unexecuted reservation for the ADR-0001 experimental v7 lexical protocol after reconciliation observability was completed; its source binding was superseded when Core gained the immutable occurrence-evidence observation seam used by reviewed fixture materialization, while its identities and bytes remain sealed.",
+      "interpretation": "Historical unexecuted reservation for the ADR-0001 experimental v7 lexical protocol after reconciliation observability; its source binding was superseded when Core gained the immutable occurrence-evidence observation seam used by reviewed fixture materialization, while its identities and bytes remain sealed.",
       "sha256": "d7a729cf73f0fa97b530452fb486bfb1f7f26fb3fa28e5e0035dd1c558e5b35d"
     },
     {
       "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v15.json",
       "evidence_class": "sealed synthetic development-confirmation reservation",
       "status": "reserved_not_executed",
-      "reservation_role": "active_future",
-      "interpretation": "Sole active future reservation for the ADR-0001 experimental v7 lexical protocol after adding the immutable occurrence-evidence observation seam required for reviewed representative-book fixture materialization. Reconciliation decisions remain lexical-reconciliation-v3. It has three disjoint seeds and 24 opaque document identities and no candidate freeze, outcomes, consumption, or release access.",
+      "reservation_role": "historical_unexecuted",
+      "interpretation": "Historical unexecuted reservation for the ADR-0001 experimental v7 lexical protocol after adding the immutable occurrence-evidence observation seam required for reviewed representative-book fixture materialization; its source binding was superseded when ADR-0002 added language-aware frequency provenance, while its identities and bytes remain sealed.",
       "sha256": "36d2230312a8c12658790516373666aab3400fd411c52d67c2e2da3755939109"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v16.json",
+      "evidence_class": "sealed synthetic development-confirmation reservation",
+      "status": "reserved_not_executed",
+      "reservation_role": "historical_unexecuted",
+      "interpretation": "Historical unexecuted reservation for the initial ADR-0002 language-frequency-provenance generator at rebased revision f626550; its source binding was superseded after the remainder of ADR-0002 changed Core/Validation generator inputs with explicit language identity, capability routing, semantic cache/index isolation, non-destructive legacy reads, and document-revision async guards, while its identities and bytes remain sealed.",
+      "sha256": "1eeebf148c6c54f88f94df875aac7d3b571ddff5b2ca10976d52daf7e07f3c31"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v17.json",
+      "evidence_class": "sealed synthetic development-confirmation reservation",
+      "status": "reserved_not_executed",
+      "reservation_role": "historical_unexecuted",
+      "interpretation": "Historical unexecuted reservation for the complete ADR-0002 generator at rebased revision e16929e; its source binding was superseded after the Validation POS evaluator removed the remaining implicit non-German-to-English routing and canonical-key language inference, while its identities and bytes remain sealed.",
+      "sha256": "4c10a5f068f82c923b0a2285c1473b4a976151f76cdef38ff7763fbe89441fdb"
+    },
+    {
+      "path": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v18.json",
+      "evidence_class": "sealed synthetic development-confirmation reservation",
+      "status": "reserved_not_executed",
+      "reservation_role": "active_future",
+      "interpretation": "Sole active future reservation for the ADR-0002 generator at rebased revision 0911fbc after Validation language identity was made fail-closed. Explicit BCP-47 identity remains intact in production and validation routing; ADR-0001 experimental candidate semantics remain protocol v7 and reconciliation decisions remain lexical-reconciliation-v3. It has three disjoint seeds and 24 opaque document identities and no candidate freeze, outcomes, consumption, or release access.",
+      "sha256": "bebe49682308836eaf9b662ba9cf7622562cdd7891c2c275ee9cdfaa4e80c49e"
     },
     {
       "path": "docs/plans/vocabulary-validation-evidence/german-form-label-portability-development-check-2026-09-21.json",
