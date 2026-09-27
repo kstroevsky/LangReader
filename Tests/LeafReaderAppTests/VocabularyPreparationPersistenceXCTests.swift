@@ -72,6 +72,27 @@ final class VocabularyPreparationPersistenceXCTests: XCTestCase {
         XCTAssertGreaterThan(state.languageRevision, revision)
     }
 
+    func testExplicitAutoSelectionCanReplaceManualLanguageResolution() {
+        var state = ReaderVocabularyState()
+        let manual = VocabularyLanguageResolution.resolved(VocabularyResolvedLanguage(
+            id: .german,
+            provenance: .userSelected
+        ))
+        let automatic = VocabularyLanguageResolution.resolved(VocabularyResolvedLanguage(
+            id: .english,
+            provenance: .automaticDetection
+        ))
+
+        XCTAssertTrue(state.updateLanguageResolution(manual))
+        let revision = state.languageRevision
+        XCTAssertTrue(state.updateLanguageResolution(
+            automatic,
+            replacingUserSelection: true
+        ))
+        XCTAssertEqual(state.documentLanguageResolution, automatic)
+        XCTAssertGreaterThan(state.languageRevision, revision)
+    }
+
     func testDocumentScopedSessionRoundTripAndClear() throws {
         let suite = "VocabularyPreparationPersistenceXCTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))

@@ -70,7 +70,7 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
         guard currentFileMD5 != nil else {
             throw VocabularyPreparationSourceError.noDocument
         }
-        guard let identity = vocabularyPreparationIdentity else {
+        guard let initialIdentity = vocabularyPreparationIdentity else {
             throw VocabularyPreparationSourceError.noDocument
         }
         let resolution: VocabularyLanguageResolution
@@ -87,7 +87,7 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
                         continuation.resume(returning: snapshot)
                     }
                 }
-                guard acceptsVocabularyPreparationIdentity(identity) else {
+                guard acceptsVocabularyPreparationIdentity(initialIdentity) else {
                     throw VocabularyPreparationSourceError.cancelled
                 }
                 guard let snapshot else {
@@ -111,7 +111,23 @@ extension ReaderWindowController: VocabularyPreparationDocumentSource {
             }
         }
 
-        setVocabularyDocumentLanguageResolution(resolution)
+        let replacingUserSelection: Bool
+        switch selection {
+        case .auto:
+            replacingUserSelection = true
+        case .manual:
+            replacingUserSelection = false
+        }
+        setVocabularyDocumentLanguageResolution(
+            resolution,
+            replacingUserSelection: replacingUserSelection
+        )
+        guard let identity = vocabularyPreparationIdentity,
+              identity.documentID == initialIdentity.documentID,
+              identity.loadGeneration == initialIdentity.loadGeneration,
+              identity.webPlainTextGeneration == initialIdentity.webPlainTextGeneration else {
+            throw VocabularyPreparationSourceError.cancelled
+        }
         guard let language = resolution.languageID else {
             throw VocabularyPreparationSourceError.undeterminedLanguage
         }

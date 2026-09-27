@@ -49,8 +49,14 @@ extension ReaderWindowController {
 
     var vocabularyLanguageRevision: UInt64 { vocabularyState.languageRevision }
 
-    func setVocabularyDocumentLanguageResolution(_ resolution: VocabularyLanguageResolution) {
-        guard vocabularyState.updateLanguageResolution(resolution) else { return }
+    func setVocabularyDocumentLanguageResolution(
+        _ resolution: VocabularyLanguageResolution,
+        replacingUserSelection: Bool = false
+    ) {
+        guard vocabularyState.updateLanguageResolution(
+            resolution,
+            replacingUserSelection: replacingUserSelection
+        ) else { return }
         guard let documentID = currentFileMD5 else { return }
         _ = VocabularyDocumentLanguageStore(documentID: documentID).save(resolution: resolution)
     }
