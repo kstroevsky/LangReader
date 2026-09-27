@@ -184,7 +184,7 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         ] {
             XCTAssertEqual(
                 index.matches(lemma: lemma, selectedForm: selectedForm),
-                GermanLemmaOccurrenceMatcher.matches(
+                VocabularyLemmaOccurrenceMatcher.matches(
                     lemma: lemma,
                     selectedForm: selectedForm,
                     inTexts: pages,

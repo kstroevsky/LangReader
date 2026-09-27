@@ -10,7 +10,7 @@ extension ReaderWindowController {
               let runtime = vocabularyLanguageCatalog.resolve(language: language),
               let provider = runtime.definitions else { return }
         let languageRevision = vocabularyLanguageRevision
-        let localLemma = GermanLemmaResolver.lemma(
+        let localLemma = VocabularyLemmaResolver.lemma(
             for: query,
             language: language,
             analyzerFactory: runtime.linguisticAnalyzerFactory

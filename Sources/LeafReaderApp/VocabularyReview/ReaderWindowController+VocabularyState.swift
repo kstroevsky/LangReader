@@ -20,7 +20,7 @@ extension ReaderWindowController {
         }
         let analyzerFactory = vocabularyLanguageCatalog.resolve(language: language)?.linguisticAnalyzerFactory
             ?? .exactForm
-        return GermanLemmaResolver.lemma(
+        return VocabularyLemmaResolver.lemma(
             for: surface,
             language: language,
             analyzerFactory: analyzerFactory
@@ -39,7 +39,7 @@ extension ReaderWindowController {
         }
         let analyzerFactory = vocabularyLanguageCatalog.resolve(language: language)?.linguisticAnalyzerFactory
             ?? .exactForm
-        return GermanLemmaResolver.groupingKey(
+        return VocabularyLemmaResolver.groupingKey(
             word: word,
             lemma: lemma,
             language: language,

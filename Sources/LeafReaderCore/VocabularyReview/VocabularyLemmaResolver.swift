@@ -1,21 +1,21 @@
 import Foundation
 
-package enum GermanLemmaSource: Equatable, Sendable {
+package enum VocabularyLemmaSource: Equatable, Sendable {
     case naturalLanguage
-    case deterministicAdjectiveMorphology
+    case deterministicGermanAdjectiveMorphology
 }
 
 package typealias VocabularyLemmaResolutionProvider = @Sendable (
     _ surfaceForm: String,
     _ taggedLemma: String?,
     _ language: VocabularyLanguageID
-) -> GermanLemmaResolution
+) -> VocabularyLemmaResolution
 
 /// Distinguishes an actual lemma resolution from retaining the surface as a
 /// safe fallback. Callers that still need a String can use `value`, while new
 /// policy can avoid treating an unresolved identity as authoritative.
-package enum GermanLemmaResolution: Equatable, Sendable {
-    case resolved(lemma: String, source: GermanLemmaSource)
+package enum VocabularyLemmaResolution: Equatable, Sendable {
+    case resolved(lemma: String, source: VocabularyLemmaSource)
     case unresolved(surface: String)
 
     package var value: String {
@@ -26,12 +26,11 @@ package enum GermanLemmaResolution: Equatable, Sendable {
     }
 }
 
-// Despite the "German" name, the resolver and matcher are language-neutral:
-// the grouping, line-wrap, and homograph logic are the same everywhere and only
-// the tagger's language differs. Callers must pass the resolved domain language
-// explicitly; uncertainty is handled by exact-form behavior before reaching
-// this language-sensitive API.
-package enum GermanLemmaResolver {
+// Language-neutral resolver and matcher boundary. Grouping, line-wrap, and
+// homograph logic are shared; language-specific evidence is selected explicitly
+// from the resolved domain language. Uncertainty is handled by exact-form
+// behavior before reaching this language-sensitive API.
+package enum VocabularyLemmaResolver {
     package static func lemma(
         for surfaceForm: String,
         language: VocabularyLanguageID,
@@ -48,7 +47,7 @@ package enum GermanLemmaResolver {
         for surfaceForm: String,
         language: VocabularyLanguageID,
         analyzerFactory: VocabularyLinguisticAnalyzerFactory = .exactForm
-    ) -> GermanLemmaResolution {
+    ) -> VocabularyLemmaResolution {
         let analyzer = analyzerFactory.makeAnalyzer()
         return resolution(for: surfaceForm, analyzer: analyzer, language: language)
     }
@@ -68,7 +67,7 @@ package enum GermanLemmaResolver {
         for surfaceForm: String,
         analyzer: any VocabularyLinguisticAnalyzing,
         language: VocabularyLanguageID
-    ) -> GermanLemmaResolution {
+    ) -> VocabularyLemmaResolution {
         let word = VocabularyTextPolicy.normalizedVocabularyText(surfaceForm)
         guard VocabularyTextPolicy.isSingleVocabularyWord(word),
               !word.isEmpty else { return .unresolved(surface: word) }
@@ -87,7 +86,7 @@ package enum GermanLemmaResolver {
         for surfaceForm: String,
         taggedLemma: String?,
         language: VocabularyLanguageID
-    ) -> GermanLemmaResolution {
+    ) -> VocabularyLemmaResolution {
         resolution(
             for: surfaceForm,
             taggedLemma: taggedLemma,
@@ -101,7 +100,7 @@ package enum GermanLemmaResolver {
         taggedLemma: String?,
         language: VocabularyLanguageID,
         isKnownGermanWord: (String) -> Bool
-    ) -> GermanLemmaResolution {
+    ) -> VocabularyLemmaResolution {
         let word = VocabularyTextPolicy.normalizedVocabularyText(surfaceForm)
         guard VocabularyTextPolicy.isSingleVocabularyWord(word), !word.isEmpty else {
             return .unresolved(surface: word)
@@ -121,7 +120,7 @@ package enum GermanLemmaResolver {
                for: word,
                isKnownGermanWord: isKnownGermanWord
            ) {
-            return .resolved(lemma: lemma, source: .deterministicAdjectiveMorphology)
+            return .resolved(lemma: lemma, source: .deterministicGermanAdjectiveMorphology)
         }
         return .unresolved(surface: word)
     }
@@ -167,10 +166,10 @@ package enum GermanLemmaResolver {
     }
 }
 
-package enum GermanLemmaOccurrenceMatcher {
+package enum VocabularyLemmaOccurrenceMatcher {
     package static let naturalLanguageResolutionProvider: VocabularyLemmaResolutionProvider = {
         surfaceForm, taggedLemma, language in
-        GermanLemmaResolver.resolution(
+        VocabularyLemmaResolver.resolution(
             for: surfaceForm,
             taggedLemma: taggedLemma,
             language: language
@@ -247,7 +246,7 @@ package enum GermanLemmaOccurrenceMatcher {
         let workerCount = min(texts.count, min(4, availableWorkers))
         DispatchQueue.concurrentPerform(iterations: workerCount) { worker in
             let analyzer = analyzerFactory.makeAnalyzer()
-            var lemmaMemo: [String: GermanLemmaResolution] = [:]
+            var lemmaMemo: [String: VocabularyLemmaResolution] = [:]
             var index = worker
             while index < texts.count {
                 results.store(matches(
@@ -338,7 +337,7 @@ package enum GermanLemmaOccurrenceMatcher {
         language: VocabularyLanguageID,
         resolutionProvider: @escaping VocabularyLemmaResolutionProvider
     ) -> [VocabularyTextOccurrence] {
-        var memo: [String: GermanLemmaResolution] = [:]
+        var memo: [String: VocabularyLemmaResolution] = [:]
         return matches(
             lemma: rawLemma,
             selectedForm: selectedForm,
@@ -364,7 +363,7 @@ package enum GermanLemmaOccurrenceMatcher {
         in text: String,
         compiledQuery: VocabularyOccurrenceMatcher.CompiledQuery?,
         analyzer: any VocabularyLinguisticAnalyzing,
-        lemmaMemo: inout [String: GermanLemmaResolution],
+        lemmaMemo: inout [String: VocabularyLemmaResolution],
         language: VocabularyLanguageID,
         resolutionProvider: @escaping VocabularyLemmaResolutionProvider
     ) -> [VocabularyTextOccurrence] {
@@ -490,7 +489,7 @@ package enum GermanLemmaOccurrenceMatcher {
         let lineWrapSpans = lineWrapMatches.map(\.range)
 
         let analyzer = analyzerFactory.makeAnalyzer()
-        var lemmaMemo: [String: GermanLemmaResolution] = [:]
+        var lemmaMemo: [String: VocabularyLemmaResolution] = [:]
         for token in analyzer.tokenEvidence(in: text, language: language) {
             let range = token.range
             if lineWrapSpans.contains(where: { NSIntersectionRange(range, $0).length > 0 }) {
@@ -547,7 +546,7 @@ package enum GermanLemmaOccurrenceMatcher {
         }
     }
 
-    private static func resolvedLemmaKey(_ resolution: GermanLemmaResolution) -> String? {
+    private static func resolvedLemmaKey(_ resolution: VocabularyLemmaResolution) -> String? {
         guard case let .resolved(lemma, _) = resolution else { return nil }
         return VocabularyTextPolicy.canonicalVocabularyKey(lemma)
     }
@@ -557,9 +556,9 @@ package enum GermanLemmaOccurrenceMatcher {
         taggedLemma: String?,
         language: VocabularyLanguageID,
         analyzer: any VocabularyLinguisticAnalyzing,
-        lemmaMemo: inout [String: GermanLemmaResolution],
+        lemmaMemo: inout [String: VocabularyLemmaResolution],
         resolutionProvider: VocabularyLemmaResolutionProvider
-    ) -> GermanLemmaResolution {
+    ) -> VocabularyLemmaResolution {
         let contextual = resolutionProvider(surfaceForm, taggedLemma, language)
         if case .resolved = contextual { return contextual }
         if let cached = lemmaMemo[surfaceForm] { return cached }
@@ -578,7 +577,7 @@ package enum GermanLemmaOccurrenceMatcher {
         language: VocabularyLanguageID,
         analyzer: any VocabularyLinguisticAnalyzing,
         resolutionProvider: VocabularyLemmaResolutionProvider
-    ) -> GermanLemmaResolution {
+    ) -> VocabularyLemmaResolution {
         let word = VocabularyTextPolicy.normalizedVocabularyText(surfaceForm)
         guard VocabularyTextPolicy.isSingleVocabularyWord(word), !word.isEmpty else {
             return .unresolved(surface: word)

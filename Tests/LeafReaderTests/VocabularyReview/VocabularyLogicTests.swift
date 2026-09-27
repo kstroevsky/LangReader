@@ -73,7 +73,7 @@ enum VocabularyLogicTests {
 
     private static let unavailableGermanWithOwnedFallback: VocabularyLemmaResolutionProvider = {
         surfaceForm, _, language in
-        GermanLemmaResolver.resolution(
+        VocabularyLemmaResolver.resolution(
             for: surfaceForm,
             taggedLemma: nil,
             language: language,
@@ -309,9 +309,9 @@ enum VocabularyLogicTests {
 
         for (lemma, selected) in [("gehen", "gegangen"), ("Haus", "Häuser"), ("gehen", "ging")] {
             let sequential = pages.map {
-                GermanLemmaOccurrenceMatcher.matches(lemma: lemma, selectedForm: selected, in: $0, language: .german)
+                VocabularyLemmaOccurrenceMatcher.matches(lemma: lemma, selectedForm: selected, in: $0, language: .german)
             }
-            let batch = GermanLemmaOccurrenceMatcher.matches(
+            let batch = VocabularyLemmaOccurrenceMatcher.matches(
                 lemma: lemma,
                 selectedForm: selected,
                 inTexts: pages,
@@ -331,11 +331,11 @@ enum VocabularyLogicTests {
 
         // Boundary cases around the parallel path.
         try expectEqual(
-            GermanLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", inTexts: [], language: .german),
+            VocabularyLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", inTexts: [], language: .german),
             [],
             "an empty page list yields no results"
         )
-        let single = GermanLemmaOccurrenceMatcher.matches(
+        let single = VocabularyLemmaOccurrenceMatcher.matches(
             lemma: "gehen",
             selectedForm: "gegangen",
             inTexts: [pages[0]],
@@ -343,11 +343,11 @@ enum VocabularyLogicTests {
         )
         try expectEqual(
             single,
-            [GermanLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", in: pages[0], language: .german)],
+            [VocabularyLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", in: pages[0], language: .german)],
             "the single-page path should agree with the per-page scanner"
         )
         try expectEqual(
-            GermanLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", inTexts: ["", "", ""], language: .german),
+            VocabularyLemmaOccurrenceMatcher.matches(lemma: "gehen", selectedForm: "gegangen", inTexts: ["", "", ""], language: .german),
             [[], [], []],
             "empty pages should produce empty results rather than being skipped"
         )
@@ -376,7 +376,7 @@ enum VocabularyLogicTests {
             ("gehen", "ging"),
             ("E-Mail", "E-Mail")
         ] {
-            let expected = GermanLemmaOccurrenceMatcher.matches(
+            let expected = VocabularyLemmaOccurrenceMatcher.matches(
                 lemma: lemma,
                 selectedForm: selected,
                 inTexts: pages,
@@ -393,7 +393,7 @@ enum VocabularyLogicTests {
         let groups = ["gehen": "gehen", "e-mail": "E-Mail"]
         let indexedGroups = index.matches(lemmasByKey: groups)
         let expectedGroups = pages.map {
-            GermanLemmaOccurrenceMatcher.matches(
+            VocabularyLemmaOccurrenceMatcher.matches(
                 lemmasByKey: groups,
                 in: $0,
                 language: .german,
@@ -456,7 +456,7 @@ enum VocabularyLogicTests {
 
     /// The reusable-analyzer overload must return exactly what the factory path
     /// does, including when the same analyzer is reused across many words.
-    static func testGermanLemmaResolverTaggerReuse() throws {
+    static func testVocabularyLemmaResolverTaggerReuse() throws {
         let words = ["gegangen", "ging", "Häuser", "Bücher", "sprach", "gegangen", "ging"]
         let lemmas = [
             "gegangen": "gehen",
@@ -471,15 +471,15 @@ enum VocabularyLogicTests {
         }
         for word in words {
             try expectEqual(
-                GermanLemmaResolver.lemma(for: word, analyzer: analyzer, language: .german),
-                GermanLemmaResolver.lemma(for: word, language: .german, analyzerFactory: factory),
+                VocabularyLemmaResolver.lemma(for: word, analyzer: analyzer, language: .german),
+                VocabularyLemmaResolver.lemma(for: word, language: .german, analyzerFactory: factory),
                 "reusing an analyzer must not change the lemma resolved for '\(word)'"
             )
         }
     }
 
     static func testGermanLemmaGrouping() throws {
-        let unavailable = GermanLemmaResolver.resolution(
+        let unavailable = VocabularyLemmaResolver.resolution(
             for: "fehlerhafte",
             taggedLemma: nil,
             language: .german,
@@ -487,10 +487,10 @@ enum VocabularyLogicTests {
         )
         try expectEqual(
             unavailable,
-            .resolved(lemma: "fehlerhaft", source: .deterministicAdjectiveMorphology),
+            .resolved(lemma: "fehlerhaft", source: .deterministicGermanAdjectiveMorphology),
             "an unavailable Apple lemma should use the bounded -haft adjective fallback"
         )
-        let identity = GermanLemmaResolver.resolution(
+        let identity = VocabularyLemmaResolver.resolution(
             for: "fehlerhaften",
             taggedLemma: "fehlerhaften",
             language: .german,
@@ -498,11 +498,11 @@ enum VocabularyLogicTests {
         )
         try expectEqual(
             identity,
-            .resolved(lemma: "fehlerhaft", source: .deterministicAdjectiveMorphology),
+            .resolved(lemma: "fehlerhaft", source: .deterministicGermanAdjectiveMorphology),
             "an identity Apple lemma should remain distinguishable and invoke the fallback"
         )
         try expectEqual(
-            GermanLemmaResolver.resolution(
+            VocabularyLemmaResolver.resolution(
                 for: "erwirtschafte",
                 taggedLemma: nil,
                 language: .german,
@@ -512,7 +512,7 @@ enum VocabularyLogicTests {
             "-schaft verb stems must not be mistaken for -haft adjectives"
         )
         try expectEqual(
-            GermanLemmaResolver.resolution(
+            VocabularyLemmaResolver.resolution(
                 for: "fehlerhafte",
                 taggedLemma: nil,
                 language: .german,
@@ -522,16 +522,16 @@ enum VocabularyLogicTests {
             "morphology without independent lexical evidence must abstain"
         )
 
-        try expectEqual(GermanLemmaResolver.lemma(for: "fehlerhafte", language: .german), "fehlerhaft", "German adjective inflection should resolve to its lemma")
-        try expectEqual(GermanLemmaResolver.lemma(for: "fehlerhaften", language: .german), "fehlerhaft", "related German adjective forms should share one lemma")
+        try expectEqual(VocabularyLemmaResolver.lemma(for: "fehlerhafte", language: .german), "fehlerhaft", "German adjective inflection should resolve to its lemma")
+        try expectEqual(VocabularyLemmaResolver.lemma(for: "fehlerhaften", language: .german), "fehlerhaft", "related German adjective forms should share one lemma")
         try expectEqual(
-            GermanLemmaResolver.groupingKey(word: "Fehlerhaften", language: .german),
-            GermanLemmaResolver.groupingKey(word: "fehlerhafte", language: .german),
+            VocabularyLemmaResolver.groupingKey(word: "Fehlerhaften", language: .german),
+            VocabularyLemmaResolver.groupingKey(word: "fehlerhafte", language: .german),
             "German inflected forms should share a case-insensitive grouping key"
         )
 
         let text = "Eine fehlerhafte Rechnung entstand wegen eines fehlerhaften Eintrags. Ein fehlerhaf-\nten Eintrag. Ein Fehler blieb."
-        let matches = GermanLemmaOccurrenceMatcher.matches(
+        let matches = VocabularyLemmaOccurrenceMatcher.matches(
             lemma: "fehlerhaft",
             selectedForm: "fehlerhafte",
             in: text,
@@ -543,7 +543,7 @@ enum VocabularyLogicTests {
             ["fehlerhafte", "fehlerhaften", "fehlerhaf-\nten"],
             "lemma scanning should find different inflected forms without matching unrelated nouns"
         )
-        let batchMatches = GermanLemmaOccurrenceMatcher.matches(
+        let batchMatches = VocabularyLemmaOccurrenceMatcher.matches(
             lemmasByKey: ["fehlerhaft": "fehlerhaft"],
             in: text,
             language: .german,
@@ -563,7 +563,7 @@ enum VocabularyLogicTests {
     static func testGermanLemmaLineWrapFragmentIsNotAFalseMatch() throws {
         let text = "Für den Er-\nfolg muss das Portal gewählt werden. Wir folgen dem Plan und folgten gestern."
 
-        let matches = GermanLemmaOccurrenceMatcher.matches(
+        let matches = VocabularyLemmaOccurrenceMatcher.matches(
             lemma: "folgen",
             selectedForm: "folgen",
             in: text,
@@ -580,7 +580,7 @@ enum VocabularyLogicTests {
             "without a lemma model only the exact base surface should match"
         )
 
-        let batch = GermanLemmaOccurrenceMatcher.matches(
+        let batch = VocabularyLemmaOccurrenceMatcher.matches(
             lemmasByKey: ["folgen": "folgen"],
             in: text,
             language: .german,
@@ -603,7 +603,7 @@ enum VocabularyLogicTests {
             }
             return .unresolved(surface: surface)
         }
-        let englishGroups = GermanLemmaOccurrenceMatcher.matches(
+        let englishGroups = VocabularyLemmaOccurrenceMatcher.matches(
             lemmasByKey: ["run": "run"],
             in: text,
             language: .english,
@@ -617,7 +617,7 @@ enum VocabularyLogicTests {
 
         // The identical English text under the German model retains only the
         // exact base-form surface, proving the language parameter is load-bearing.
-        let englishUnderGerman = GermanLemmaOccurrenceMatcher.matches(
+        let englishUnderGerman = VocabularyLemmaOccurrenceMatcher.matches(
             lemmasByKey: ["run": "run"],
             in: text,
             language: .german,
@@ -629,7 +629,7 @@ enum VocabularyLogicTests {
         )
 
         try expectEqual(
-            GermanLemmaResolver.resolution(
+            VocabularyLemmaResolver.resolution(
                 for: "running",
                 taggedLemma: "run",
                 language: .english,
@@ -639,7 +639,7 @@ enum VocabularyLogicTests {
             "a useful non-identity Apple lemma remains resolved"
         )
         try expectEqual(
-            GermanLemmaResolver.resolution(
+            VocabularyLemmaResolver.resolution(
                 for: "части",
                 taggedLemma: "части",
                 language: .russian,
@@ -874,7 +874,7 @@ enum VocabularyLogicTests {
         // The homograph gate needs the lemma, so it is language-dependent — but
         // it only ever keeps extra records when the language is unknown.
         try expect(
-            !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
+            !VocabularyLemmaOccurrenceMatcher.groupReproducesOccurrence(
                 surfaceForm: "Folgen", groupLemma: "folgen",
                 in: "Welche Folgen hätte das?", language: .german,
                 resolutionProvider: unavailableLemmaResolution
@@ -882,7 +882,7 @@ enum VocabularyLogicTests {
             "the noun 'Folgen' is not a member of the German verb group 'folgen'"
         )
         try expect(
-            GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
+            VocabularyLemmaOccurrenceMatcher.groupReproducesOccurrence(
                 surfaceForm: "Abteilung", groupLemma: "Abteilung",
                 in: "Und ihr von der IT-Abteilung organisiert das doch, oder?", language: .german
             ),
@@ -924,7 +924,7 @@ enum VocabularyLogicTests {
         let text = "Wir folgen dem Plan. Welche Folgen hätte das? Der Fehler folgt daraus."
 
         // Backfill / group-expansion path (no exact-form query).
-        let batch = GermanLemmaOccurrenceMatcher.matches(
+        let batch = VocabularyLemmaOccurrenceMatcher.matches(
             lemmasByKey: ["folgen": "folgen"],
             in: text,
             language: .german,
@@ -942,7 +942,7 @@ enum VocabularyLogicTests {
 
         // An exact query for another saved form keeps that form plus the exact
         // base, but does not infer any additional forms or fold the noun's case.
-        let sequential = GermanLemmaOccurrenceMatcher.matches(
+        let sequential = VocabularyLemmaOccurrenceMatcher.matches(
             lemma: "folgen",
             selectedForm: "folgt",
             in: text,
@@ -961,7 +961,7 @@ enum VocabularyLogicTests {
 
         // Group membership (used by the load-time prune) excludes the noun.
         try expect(
-            !GermanLemmaOccurrenceMatcher.groupReproducesOccurrence(
+            !VocabularyLemmaOccurrenceMatcher.groupReproducesOccurrence(
                 surfaceForm: "Folgen", groupLemma: "folgen", in: "Welche Folgen hätte das?",
                 language: .german,
                 resolutionProvider: unavailableLemmaResolution
@@ -990,7 +990,7 @@ enum VocabularyLogicTests {
             }
             return .unresolved(surface: surface)
         }
-        let assisted = GermanLemmaOccurrenceMatcher.matches(
+        let assisted = VocabularyLemmaOccurrenceMatcher.matches(
             lemmasByKey: ["folgen": "folgen"],
             in: text,
             language: .german,

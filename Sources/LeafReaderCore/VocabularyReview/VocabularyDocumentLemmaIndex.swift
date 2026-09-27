@@ -253,8 +253,8 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let occurrence: VocabularyTextOccurrence
         let dehyphenated: String
         let hyphenated: String
-        let dehyphenatedResolution: GermanLemmaResolution
-        let hyphenatedResolution: GermanLemmaResolution
+        let dehyphenatedResolution: VocabularyLemmaResolution
+        let hyphenatedResolution: VocabularyLemmaResolution
     }
 
     private struct Page: Sendable {
@@ -313,7 +313,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         seed: VocabularyDocumentLemmaIndexSeed? = nil,
         semanticIdentity: VocabularyLinguisticCacheIdentity? = nil,
         analyzerFactory: VocabularyLinguisticAnalyzerFactory = .exactForm,
-        resolutionProvider: @escaping VocabularyLemmaResolutionProvider = GermanLemmaOccurrenceMatcher.naturalLanguageResolutionProvider,
+        resolutionProvider: @escaping VocabularyLemmaResolutionProvider = VocabularyLemmaOccurrenceMatcher.naturalLanguageResolutionProvider,
         analysisProvider: @escaping VocabularyMorphologicalAnalysisProvider = {
             VocabularyPartOfSpeechConfidencePolicy.analyses(
                 hypotheses: $0.appleHypotheses,
@@ -357,7 +357,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let workerCount = min(remainingPageIndexes.count, max(1, min(maximumWorkerCount, availableWorkers)))
         DispatchQueue.concurrentPerform(iterations: workerCount) { worker in
             let analyzer = analyzerFactory.makeAnalyzer()
-            var lemmaMemo: [String: GermanLemmaResolution] = [:]
+            var lemmaMemo: [String: VocabularyLemmaResolution] = [:]
             var remainingIndex = worker
             while remainingIndex < remainingPageIndexes.count, !isCancelled() {
                 let pageIndex = remainingPageIndexes[remainingIndex]
@@ -901,7 +901,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         text: String,
         language: VocabularyLanguageID,
         analyzer: any VocabularyLinguisticAnalyzing,
-        lemmaMemo: inout [String: GermanLemmaResolution],
+        lemmaMemo: inout [String: VocabularyLemmaResolution],
         resolutionProvider: VocabularyLemmaResolutionProvider,
         analysisProvider: VocabularyMorphologicalAnalysisProvider
     ) -> Page {
@@ -919,7 +919,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let ignoredRanges = ignoredTextRegexes.flatMap {
             $0.matches(in: text, range: NSRange(location: 0, length: nsText.length)).map(\.range)
         }
-        let lineWrapMatches = (GermanLemmaOccurrenceMatcher.lineWrapRegex?.matches(
+        let lineWrapMatches = (VocabularyLemmaOccurrenceMatcher.lineWrapRegex?.matches(
             in: text,
             range: NSRange(location: 0, length: nsText.length)
         ) ?? []).filter { match in
@@ -1061,7 +1061,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         )
     }
 
-    private static func resolvedLemmaKey(_ resolution: GermanLemmaResolution) -> String? {
+    private static func resolvedLemmaKey(_ resolution: VocabularyLemmaResolution) -> String? {
         guard case let .resolved(lemma, _) = resolution else { return nil }
         return VocabularyTextPolicy.canonicalVocabularyKey(lemma)
     }
@@ -1105,9 +1105,9 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         taggedLemma: String?,
         language: VocabularyLanguageID,
         analyzer: any VocabularyLinguisticAnalyzing,
-        lemmaMemo: inout [String: GermanLemmaResolution],
+        lemmaMemo: inout [String: VocabularyLemmaResolution],
         resolutionProvider: VocabularyLemmaResolutionProvider
-    ) -> GermanLemmaResolution {
+    ) -> VocabularyLemmaResolution {
         let contextual = resolutionProvider(surfaceForm, taggedLemma, language)
         if case .resolved = contextual { return contextual }
         if let cached = lemmaMemo[surfaceForm] { return cached }
@@ -1126,7 +1126,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         language: VocabularyLanguageID,
         analyzer: any VocabularyLinguisticAnalyzing,
         resolutionProvider: VocabularyLemmaResolutionProvider
-    ) -> GermanLemmaResolution {
+    ) -> VocabularyLemmaResolution {
         let word = VocabularyTextPolicy.normalizedVocabularyText(surfaceForm)
         guard VocabularyTextPolicy.isSingleVocabularyWord(word), !word.isEmpty else {
             return .unresolved(surface: word)
