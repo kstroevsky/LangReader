@@ -109,22 +109,34 @@ extension ReaderWindowController {
             return
         }
 
+        let staleCallbacks = documentTextState.cancelVocabularyIndexBuildIfSemanticsChanged(
+            to: semanticIdentity
+        )
+        staleCallbacks.forEach { $0(nil, nil) }
+
         documentTextState.pendingVocabularyIndexCallbacks.append(completion)
         guard !documentTextState.isBuildingVocabularyIndex else { return }
         documentTextState.isBuildingVocabularyIndex = true
+        documentTextState.vocabularyIndexBuildSemanticIdentity = semanticIdentity
+        let token = PDFDocumentTextCancellationToken()
+        documentTextState.vocabularyIndexCancellationToken = token
         ensurePDFDocumentTextSnapshot(preloadedPageTexts: preloadedPageTexts) { [weak self] snapshot in
-            guard let self, let snapshot else {
-                self?.finishPDFVocabularyIndex(
+            guard let self,
+                  self.documentTextState.vocabularyIndexCancellationToken === token,
+                  self.documentTextState.vocabularyIndexBuildSemanticIdentity == semanticIdentity else {
+                return
+            }
+            guard let snapshot else {
+                self.finishPDFVocabularyIndex(
                     nil,
                     snapshot: nil,
                     semanticIdentity: semanticIdentity,
-                    generation: self?.documentTextState.generation ?? -1
+                    generation: self.documentTextState.generation,
+                    token: token
                 )
                 return
             }
             let generation = self.documentTextState.generation
-            let token = PDFDocumentTextCancellationToken()
-            self.documentTextState.vocabularyIndexCancellationToken = token
             self.documentTextState.vocabularyIndexBuildStartedAt = ProcessInfo.processInfo.systemUptime
             DispatchQueue.global(qos: .utility).async { [weak self] in
                 let index = VocabularyDocumentLemmaIndex(
@@ -141,7 +153,8 @@ extension ReaderWindowController {
                         index,
                         snapshot: snapshot,
                         semanticIdentity: semanticIdentity,
-                        generation: generation
+                        generation: generation,
+                        token: token
                     )
                 }
             }
@@ -152,12 +165,18 @@ extension ReaderWindowController {
         _ index: VocabularyDocumentLemmaIndex?,
         snapshot: PDFDocumentTextSnapshot?,
         semanticIdentity: VocabularyLinguisticCacheIdentity,
-        generation: Int
+        generation: Int,
+        token: PDFDocumentTextCancellationToken
     ) {
-        guard generation == documentTextState.generation else { return }
+        guard generation == documentTextState.generation,
+              documentTextState.vocabularyIndexCancellationToken === token,
+              documentTextState.vocabularyIndexBuildSemanticIdentity == semanticIdentity else {
+            return
+        }
         documentTextState.vocabularyIndex = index
         documentTextState.vocabularyIndexSemanticIdentity = index == nil ? nil : semanticIdentity
         documentTextState.isBuildingVocabularyIndex = false
+        documentTextState.vocabularyIndexBuildSemanticIdentity = nil
         documentTextState.vocabularyIndexCancellationToken = nil
         if let startedAt = documentTextState.vocabularyIndexBuildStartedAt {
             ReaderPerformance.record(
@@ -283,6 +302,7 @@ extension ReaderWindowController {
         documentTextState.vocabularyIndex = nil
         documentTextState.vocabularyIndexSemanticIdentity = nil
         documentTextState.isBuildingVocabularyIndex = false
+        documentTextState.vocabularyIndexBuildSemanticIdentity = nil
         documentTextState.vocabularyIndexCancellationToken = nil
         documentTextState.vocabularyIndexBuildStartedAt = nil
         documentTextState.pendingVocabularyIndexCallbacks.removeAll()

@@ -77,9 +77,27 @@ struct ReaderDocumentTextState {
     var vocabularyIndex: VocabularyDocumentLemmaIndex?
     var vocabularyIndexSemanticIdentity: VocabularyLinguisticCacheIdentity?
     var isBuildingVocabularyIndex = false
+    var vocabularyIndexBuildSemanticIdentity: VocabularyLinguisticCacheIdentity?
     var vocabularyIndexCancellationToken: PDFDocumentTextCancellationToken?
     var vocabularyIndexBuildStartedAt: TimeInterval?
     var pendingVocabularyIndexCallbacks: [(PDFDocumentTextSnapshot?, VocabularyDocumentLemmaIndex?) -> Void] = []
 
     var vocabularyPriorityCancellationToken: PDFDocumentTextCancellationToken?
+
+    mutating func cancelVocabularyIndexBuildIfSemanticsChanged(
+        to semanticIdentity: VocabularyLinguisticCacheIdentity
+    ) -> [(PDFDocumentTextSnapshot?, VocabularyDocumentLemmaIndex?) -> Void] {
+        guard isBuildingVocabularyIndex,
+              vocabularyIndexBuildSemanticIdentity != semanticIdentity else {
+            return []
+        }
+        vocabularyIndexCancellationToken?.cancel()
+        let staleCallbacks = pendingVocabularyIndexCallbacks
+        pendingVocabularyIndexCallbacks.removeAll()
+        isBuildingVocabularyIndex = false
+        vocabularyIndexBuildSemanticIdentity = nil
+        vocabularyIndexCancellationToken = nil
+        vocabularyIndexBuildStartedAt = nil
+        return staleCallbacks
+    }
 }
