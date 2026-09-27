@@ -8,9 +8,11 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 CORE_VOCABULARY = ROOT / "Sources" / "LeafReaderCore" / "VocabularyReview"
+VALIDATION_VOCABULARY = ROOT / "Sources" / "LeafReaderValidation" / "Vocabulary"
 VOCABULARY_ROOTS = [
     CORE_VOCABULARY,
     ROOT / "Sources" / "LeafReaderApp" / "VocabularyReview",
+    VALIDATION_VOCABULARY,
 ]
 
 
@@ -45,6 +47,12 @@ implicit_english_default = re.compile(
     re.MULTILINE,
 )
 fallback_english = re.compile(r"\?\?\s*(?:VocabularyLanguageID\.)?english\b")
+conditional_english_fallback = re.compile(
+    r"\?\s*(?:VocabularyLanguageID\.)?[A-Za-z][A-Za-z0-9_]*\s*:\s*(?:VocabularyLanguageID\.)?english\b"
+)
+canonical_key_language_guess = re.compile(
+    r"hasPrefix\(\s*\"de\\\|\"\s*\)\s*\?\s*\"de\"\s*:\s*\"en\""
+)
 default_offenders: list[tuple[pathlib.Path, str]] = []
 for root in VOCABULARY_ROOTS:
     for path in swift_files(root):
@@ -53,6 +61,10 @@ for root in VOCABULARY_ROOTS:
             default_offenders.append((path, f"implicit English language default `{match.group(0).strip()}`"))
         if match := fallback_english.search(text):
             default_offenders.append((path, f"implicit English nil fallback `{match.group(0)}`"))
+        if match := conditional_english_fallback.search(text):
+            default_offenders.append((path, f"implicit English conditional fallback `{match.group(0)}`"))
+        if match := canonical_key_language_guess.search(text):
+            default_offenders.append((path, f"language inferred from canonical-key prefix `{match.group(0)}`"))
 if default_offenders:
     fail("language-sensitive vocabulary routing must require identity explicitly", default_offenders)
 
