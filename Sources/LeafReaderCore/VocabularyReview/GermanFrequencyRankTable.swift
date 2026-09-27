@@ -166,6 +166,13 @@ package struct VocabularyItemDifficultyPrior: Codable, Equatable, Sendable {
             version: version
         )
     }
+
+    package static let unavailable = VocabularyItemDifficultyPrior(
+        mean: 4,
+        standardDeviation: 1.5,
+        source: .unrankedFrequency,
+        version: "unavailable"
+    )
 }
 
 package protocol DocumentVocabularyDifficultyProviding: Sendable {
@@ -177,6 +184,22 @@ package protocol DocumentVocabularyDifficultyProviding: Sendable {
 }
 
 package extension DocumentVocabularyDifficultyProviding {
+    func bestRank(
+        for summary: VocabularyDocumentLemmaSummary,
+        language: VocabularyLanguageID
+    ) -> Int? {
+        guard descriptor.supports(language) else { return nil }
+        return bestRank(for: summary)
+    }
+
+    func difficultyPrior(
+        for summary: VocabularyDocumentLemmaSummary,
+        language: VocabularyLanguageID
+    ) -> VocabularyItemDifficultyPrior {
+        guard descriptor.supports(language) else { return .unavailable }
+        return difficultyPrior(for: summary)
+    }
+
     var semanticIdentity: VocabularyDifficultyProviderSemanticIdentity {
         VocabularyDifficultyProviderSemanticIdentity(
             providerID: descriptor.id,

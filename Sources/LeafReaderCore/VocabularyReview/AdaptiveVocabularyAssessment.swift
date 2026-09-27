@@ -271,9 +271,12 @@ package struct DocumentVocabularyInventory: Codable, Equatable, Sendable {
         languageCode: String,
         difficultyProvider: any DocumentVocabularyDifficultyProviding
     ) {
+        let language = VocabularyLanguageID(languageCode)
         let valid = summaries.filter(Self.isAssessable)
         candidates = valid.map { summary in
-            let resolvedRank = difficultyProvider.bestRank(for: summary)
+            let resolvedRank = language.flatMap {
+                difficultyProvider.bestRank(for: summary, language: $0)
+            }
             return DocumentVocabularyCandidate(
                 canonicalKey: summary.canonicalKey,
                 lemmaKey: summary.lemmaKey,
@@ -285,7 +288,9 @@ package struct DocumentVocabularyInventory: Codable, Equatable, Sendable {
                 occurrenceCount: summary.occurrenceCount,
                 representativeRange: summary.representativeRange,
                 generalFrequencyRank: resolvedRank,
-                difficultyPrior: difficultyProvider.difficultyPrior(for: summary)
+                difficultyPrior: language.map {
+                    difficultyProvider.difficultyPrior(for: summary, language: $0)
+                } ?? .unavailable
             )
         }.sorted(by: Self.inventoryOrder)
         self.languageCode = languageCode
