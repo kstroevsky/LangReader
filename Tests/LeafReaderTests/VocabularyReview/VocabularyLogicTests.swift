@@ -130,12 +130,12 @@ enum VocabularyLogicTests {
     }
 
     static func testVocabularyTextPolicy() throws {
-        try expect(VocabularyTextPolicy.isSingleEnglishWord("high-pitched"), "hyphenated words should count as one vocabulary word")
-        try expect(VocabularyTextPolicy.isSingleEnglishWord("reader’s"), "curly apostrophes should be accepted in vocabulary words")
-        try expect(VocabularyTextPolicy.isSingleEnglishWord("übersende"), "German umlauts should be accepted in vocabulary words")
-        try expect(VocabularyTextPolicy.isSingleEnglishWord("Straße"), "German sharp s should be accepted in vocabulary words")
+        try expect(VocabularyTextPolicy.isSingleVocabularyWord("high-pitched"), "hyphenated words should count as one vocabulary word")
+        try expect(VocabularyTextPolicy.isSingleVocabularyWord("reader’s"), "curly apostrophes should be accepted in vocabulary words")
+        try expect(VocabularyTextPolicy.isSingleVocabularyWord("übersende"), "German umlauts should be accepted in vocabulary words")
+        try expect(VocabularyTextPolicy.isSingleVocabularyWord("Straße"), "German sharp s should be accepted in vocabulary words")
         try expect(VocabularyTextPolicy.isVocabularySelection("persönliches Gespräch"), "short German phrases should be vocabulary selections")
-        try expect(!VocabularyTextPolicy.isSingleEnglishWord("Nine-"), "trailing hyphen should not be saved as a complete word")
+        try expect(!VocabularyTextPolicy.isSingleVocabularyWord("Nine-"), "trailing hyphen should not be saved as a complete word")
         try expectEqual(VocabularyTextPolicy.speakableWord("Nine-\ntenths"), "Nine-tenths", "PDF line-broken hyphenated words should be saved as one word")
         try expectEqual(VocabularyTextPolicy.normalizedPDFVocabularyText("con-\ntemptuous"), "contemptuous", "PDF line-broken plain words should drop the layout hyphen")
         try expectEqual(VocabularyTextPolicy.normalizedPDFVocabularyText("si-\ncherzustellen"), "sicherzustellen", "short-prefix German line wraps should restore the whole word")
@@ -229,7 +229,7 @@ enum VocabularyLogicTests {
             1,
             "a selection from the second line of a PDF-wrapped word should find its complete word"
         )
-        try expect(!VocabularyTextPolicy.isSingleEnglishWord("two words"), "phrases should not count as a single word")
+        try expect(!VocabularyTextPolicy.isSingleVocabularyWord("two words"), "phrases should not count as a single word")
         try expectEqual(VocabularyTextPolicy.speakableWord(" high-pitched "), "high-pitched", "speakable words should be trimmed")
 
         try expect(VocabularyTextPolicy.isVocabularySelection("high-pitched voice"), "short English phrases should be vocabulary selections")
@@ -650,9 +650,11 @@ enum VocabularyLogicTests {
         )
 
         // Short inputs remain unresolved rather than inventing a language.
-        try expectEqual(
-            VocabularyLanguageDetector.language(forSample: "kort"),
-            .undetermined,
+        try expect(
+            VocabularyLanguageDetector.resolution(
+                forSample: "kort",
+                recognizer: AppleVocabularyLanguageRecognizer.shared
+            ).languageID == nil,
             "too-short samples remain unresolved rather than guessing"
         )
     }
@@ -795,8 +797,12 @@ enum VocabularyLogicTests {
         // 12 pages: front matter first, prose in the body — the shape that broke.
         let pages = [frontMatter, frontMatter, frontMatter] + Array(repeating: prose, count: 9)
         try expectEqual(
-            VocabularyLanguageDetector.language(pageCount: pages.count, pageText: { pages[$0] }),
-            .english,
+            VocabularyLanguageDetector.resolution(
+                pageCount: pages.count,
+                pageText: { pages[$0] },
+                recognizer: AppleVocabularyLanguageRecognizer.shared
+            ).languageID,
+            VocabularyLanguageID.english,
             "detection should follow the body prose, not the front matter"
         )
 

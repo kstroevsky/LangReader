@@ -4,6 +4,43 @@ import LeafReaderCore
 @testable import LeafReaderApp
 
 final class VocabularyLanguageCatalogXCTests: XCTestCase {
+    func testFeatureMatrixIsGeneratedFromDeclaredProfilesNotRuntimeAssets() throws {
+        let noAppleAssets = VocabularyLanguageCatalogFactory.live(
+            linguisticCapabilityProbe: { _ in
+                AppleVocabularyLinguisticCapabilities(availableTagSchemes: [])
+            }
+        )
+        let rows = noAppleAssets.declaredFeatureMatrixRows
+
+        let english = try XCTUnwrap(rows.first { $0.language == .english })
+        XCTAssertEqual(english.exact, .production)
+        XCTAssertEqual(english.lemma, .production)
+        XCTAssertEqual(english.partOfSpeech, .production)
+        XCTAssertEqual(english.forms, .production)
+        XCTAssertEqual(english.definition, .production)
+        XCTAssertEqual(english.difficulty, .production)
+        XCTAssertEqual(english.preparation, .production)
+
+        let french = try XCTUnwrap(rows.first { $0.language == .french })
+        XCTAssertEqual(french.exact, .production)
+        XCTAssertEqual(french.lemma, .experimental)
+        XCTAssertEqual(french.partOfSpeech, .experimental)
+        XCTAssertEqual(french.forms, .disabled)
+        XCTAssertEqual(french.definition, .disabled)
+        XCTAssertEqual(french.difficulty, .disabled)
+        XCTAssertEqual(french.preparation, .disabled)
+
+        let italian = try XCTUnwrap(rows.first { $0.language == .italian })
+        XCTAssertEqual(italian.exact, .production)
+        XCTAssertEqual(italian.lemma, .disabled)
+        XCTAssertEqual(italian.partOfSpeech, .disabled)
+        XCTAssertEqual(italian.preparation, .disabled)
+
+        XCTAssertTrue(noAppleAssets.declaredFeatureMatrixMarkdown.hasPrefix(
+            "Language | Exact | Lemma | POS | Forms | Definition | Difficulty | Preparation\n"
+        ))
+    }
+
     private let fullAppleCapabilities = AppleVocabularyLinguisticCapabilities(
         availableTagSchemes: Set([
             NLTagScheme.lemma.rawValue,

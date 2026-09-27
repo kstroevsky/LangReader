@@ -38,6 +38,9 @@ echo "==> Checking core portability"
 echo "==> Checking Core semantic ownership"
 ./scripts/check_core_semantics.sh
 
+echo "==> Checking vocabulary language boundaries"
+python3 ./scripts/check_vocabulary_language_boundaries.py
+
 echo "==> Checking one-way validation boundary"
 python3 ./scripts/check_validation_boundary.py --self-test --final
 

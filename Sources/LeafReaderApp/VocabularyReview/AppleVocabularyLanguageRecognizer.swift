@@ -36,29 +36,3 @@ struct AppleVocabularyLanguageRecognizer: VocabularyLanguageRecognizing {
         )
     }
 }
-
-extension VocabularyLanguageID {
-    var appleNaturalLanguage: NLLanguage { NLLanguage(rawValue: bcp47) }
-}
-
-/// Temporary App-only compatibility for seams that still consume NLLanguage.
-/// Unknown resolution becomes `.undetermined`; it never becomes English.
-extension VocabularyLanguageDetector {
-    static func language(forSample sample: String) -> NLLanguage {
-        resolution(forSample: sample, recognizer: AppleVocabularyLanguageRecognizer.shared)
-            .languageID?.appleNaturalLanguage ?? .undetermined
-    }
-
-    static func language(forContexts contexts: [String]) -> NLLanguage {
-        resolution(forContexts: contexts, recognizer: AppleVocabularyLanguageRecognizer.shared)
-            .languageID?.appleNaturalLanguage ?? .undetermined
-    }
-
-    static func language(pageCount: Int, pageText: (Int) -> String?) -> NLLanguage {
-        resolution(
-            pageCount: pageCount,
-            pageText: pageText,
-            recognizer: AppleVocabularyLanguageRecognizer.shared
-        ).languageID?.appleNaturalLanguage ?? .undetermined
-    }
-}

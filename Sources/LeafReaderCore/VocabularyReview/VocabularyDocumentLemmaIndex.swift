@@ -781,8 +781,8 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     package func matches(lemma rawLemma: String, selectedForm: String) -> [[VocabularyTextOccurrence]] {
         let lemma = VocabularyTextPolicy.normalizedVocabularyText(rawLemma)
         let selected = VocabularyTextPolicy.normalizedVocabularyText(selectedForm)
-        guard VocabularyTextPolicy.isSingleEnglishWord(lemma),
-              VocabularyTextPolicy.isSingleEnglishWord(selected),
+        guard VocabularyTextPolicy.isSingleVocabularyWord(lemma),
+              VocabularyTextPolicy.isSingleVocabularyWord(selected),
               Self.canUseTokenPostings(selected) else {
             return pages.map { VocabularyOccurrenceMatcher.matches(query: selectedForm, in: $0.text) }
         }

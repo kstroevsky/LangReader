@@ -101,6 +101,14 @@ struct VocabularyLanguageCatalog: Sendable {
         runtimes.values.map(\.profile).sorted { $0.language.bcp47 < $1.language.bcp47 }
     }
 
+    var declaredFeatureMatrixRows: [VocabularyLanguageFeatureMatrixRow] {
+        VocabularyLanguageFeatureMatrix.rows(profiles: profiles)
+    }
+
+    var declaredFeatureMatrixMarkdown: String {
+        VocabularyLanguageFeatureMatrix.markdown(profiles: profiles)
+    }
+
     func releasedLanguages(for capability: VocabularyLanguageCapability) -> [VocabularyLanguageID] {
         runtimes.values.compactMap { runtime in
             guard runtime.status(for: capability).isAvailable,

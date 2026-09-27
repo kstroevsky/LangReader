@@ -63,7 +63,7 @@ package enum VocabularyTextPolicy {
         let candidates = lineBrokenHyphenNormalizationCandidates(for: lineBrokenText)
         let dehyphenated = candidates.dehyphenated
         let hyphenated = candidates.hyphenated
-        if isSingleEnglishWord(dehyphenated) {
+        if isSingleVocabularyWord(dehyphenated) {
             if isKnownWord(dehyphenated) {
                 return dehyphenated
             }
@@ -110,12 +110,6 @@ package enum VocabularyTextPolicy {
         return value.range(of: singleWordPattern, options: .regularExpression) != nil
     }
 
-    /// Compatibility spelling retained while callers migrate. The token grammar
-    /// is Unicode-letter based and has never been English-specific.
-    package static func isSingleEnglishWord(_ text: String) -> Bool {
-        isSingleVocabularyWord(text)
-    }
-
     package static func speakableWord(_ text: String) -> String? {
         let value = normalizedVocabularyText(text)
         return isSingleVocabularyWord(value) ? value : nil
@@ -143,7 +137,7 @@ package enum VocabularyTextPolicy {
     package static func surfaceOccursOnlyAsInnerSubstring(surface surfaceForm: String, context: String) -> Bool {
         let surface = normalizedVocabularyText(surfaceForm)
         let trimmedContext = context.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !surface.isEmpty, !trimmedContext.isEmpty, isSingleEnglishWord(surface) else {
+        guard !surface.isEmpty, !trimmedContext.isEmpty, isSingleVocabularyWord(surface) else {
             return false
         }
         // Absent from its own context ⇒ the context does not describe it; leave it.
@@ -231,7 +225,7 @@ package enum VocabularyTextPolicy {
 
     package static func lineBrokenDehyphenatedSearchPattern(for query: String) -> String? {
         let value = normalized(query)
-        guard isSingleEnglishWord(value), !value.contains("-"), value.count >= 4 else {
+        guard isSingleVocabularyWord(value), !value.contains("-"), value.count >= 4 else {
             return nil
         }
         let characters = Array(value)
@@ -247,7 +241,7 @@ package enum VocabularyTextPolicy {
     package static func emphasisPattern(for word: String) -> String {
         let value = normalized(word)
         let escaped = NSRegularExpression.escapedPattern(for: value)
-        guard isSingleEnglishWord(value) else { return escaped }
+        guard isSingleVocabularyWord(value) else { return escaped }
         return wordBoundaryBefore + escaped + wordBoundaryAfter
     }
 
@@ -263,7 +257,7 @@ package enum VocabularyTextPolicy {
             guard context.range(of: spacedWord, options: [.caseInsensitive]) != nil else { continue }
 
             let candidate = nsWord.replacingCharacters(in: match.range, with: "")
-            guard isSingleEnglishWord(candidate) else { continue }
+            guard isSingleVocabularyWord(candidate) else { continue }
             return candidate
         }
         return nil
@@ -314,7 +308,7 @@ package enum VocabularyTextPolicy {
     }
 
     private static func shouldPreferDehyphenatedLineBreak(original: String, dehyphenated: String) -> Bool {
-        guard isSingleEnglishWord(dehyphenated),
+        guard isSingleVocabularyWord(dehyphenated),
               let match = original.range(
                 of: #"(?i)\p{L}[\p{L}\p{M}]*[‐‑‒–—-]\s+\p{L}[\p{L}\p{M}]*"#,
                 options: .regularExpression

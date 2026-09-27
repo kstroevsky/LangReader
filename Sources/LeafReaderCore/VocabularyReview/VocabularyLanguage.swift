@@ -378,6 +378,72 @@ package struct VocabularyLanguageProfileDescriptor: Codable, Hashable, Sendable 
     }
 }
 
+package struct VocabularyLanguageFeatureMatrixRow: Equatable, Sendable {
+    package let language: VocabularyLanguageID
+    package let exact: VocabularyFeatureReleaseState
+    package let lemma: VocabularyFeatureReleaseState
+    package let partOfSpeech: VocabularyFeatureReleaseState
+    package let forms: VocabularyFeatureReleaseState
+    package let definition: VocabularyFeatureReleaseState
+    package let difficulty: VocabularyFeatureReleaseState
+    package let preparation: VocabularyFeatureReleaseState
+}
+
+/// Deterministic product capability report derived from profile declarations.
+/// Runtime asset availability is intentionally excluded: this matrix answers
+/// what the product registers/releases, while runtime status answers what this
+/// particular machine can execute right now.
+package enum VocabularyLanguageFeatureMatrix {
+    package static func rows(
+        profiles: [VocabularyLanguageProfileDescriptor]
+    ) -> [VocabularyLanguageFeatureMatrixRow] {
+        profiles
+            .sorted { $0.language.bcp47 < $1.language.bcp47 }
+            .map { profile in
+                VocabularyLanguageFeatureMatrixRow(
+                    language: profile.language,
+                    exact: declaredState(profile, .exactForm),
+                    lemma: declaredState(profile, .lemmaEvidence),
+                    partOfSpeech: declaredState(profile, .partOfSpeechEvidence),
+                    forms: declaredState(profile, .formLabels),
+                    definition: declaredState(profile, .definitions),
+                    difficulty: declaredState(profile, .difficulty),
+                    preparation: declaredState(profile, .vocabularyPreparation)
+                )
+            }
+    }
+
+    package static func markdown(
+        profiles: [VocabularyLanguageProfileDescriptor]
+    ) -> String {
+        let header = "Language | Exact | Lemma | POS | Forms | Definition | Difficulty | Preparation"
+        let separator = "--- | --- | --- | --- | --- | --- | --- | ---"
+        let body = rows(profiles: profiles).map { row in
+            [
+                row.language.bcp47,
+                row.exact.rawValue,
+                row.lemma.rawValue,
+                row.partOfSpeech.rawValue,
+                row.forms.rawValue,
+                row.definition.rawValue,
+                row.difficulty.rawValue,
+                row.preparation.rawValue
+            ].joined(separator: " | ")
+        }
+        return ([header, separator] + body).joined(separator: "\n")
+    }
+
+    private static func declaredState(
+        _ profile: VocabularyLanguageProfileDescriptor,
+        _ capability: VocabularyLanguageCapability
+    ) -> VocabularyFeatureReleaseState {
+        guard profile.featureAvailability.status(for: capability).isAvailable else {
+            return .disabled
+        }
+        return profile.releaseState(for: capability)
+    }
+}
+
 package enum VocabularyNormalizationPolicy {
     /// Preserves the existing EN/DE persisted-key behavior during ADR-0002's
     /// initial migration. Future multilingual normalization must allocate a new

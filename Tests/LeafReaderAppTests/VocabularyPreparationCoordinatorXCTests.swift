@@ -591,6 +591,9 @@ private final class FakeVocabularyPreparationSource: VocabularyPreparationDocume
         )
         self.identity = identity
         self.snapshotDelayNanoseconds = snapshotDelayNanoseconds
+        let runtime = try XCTUnwrap(
+            VocabularyLanguageCatalogFactory.live().resolve(language: .english)
+        )
         snapshotTemplate = VocabularyPreparationSourceSnapshot(
             identity: identity,
             kind: kind,
@@ -598,12 +601,14 @@ private final class FakeVocabularyPreparationSource: VocabularyPreparationDocume
                 id: .english,
                 provenance: .automaticDetection
             )),
-            runtime: try XCTUnwrap(VocabularyLanguageCatalogFactory.live().resolve(language: .english)),
+            runtime: runtime,
             texts: [text],
             index: try XCTUnwrap(VocabularyDocumentLemmaIndex(
                 texts: [text],
                 language: .english,
-                maximumWorkerCount: 1
+                maximumWorkerCount: 1,
+                semanticIdentity: runtime.linguisticCacheIdentity,
+                analyzerFactory: runtime.linguisticAnalyzerFactory
             ))
         )
     }

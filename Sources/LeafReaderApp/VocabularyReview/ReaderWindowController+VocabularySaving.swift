@@ -1,5 +1,4 @@
 import Cocoa
-import NaturalLanguage
 import PDFKit
 import LeafReaderCore
 
@@ -268,13 +267,16 @@ extension ReaderWindowController {
         vocabularyState.occurrenceSearchCancellationToken?.cancel()
         let cancellationToken = PDFDocumentTextCancellationToken()
         guard let language = vocabularyDocumentLanguageID else { return }
+        let languageRevision = vocabularyLanguageRevision
         vocabularyState.occurrenceSearchID = searchID
         vocabularyState.occurrenceSearchCancellationToken = cancellationToken
         ensurePDFVocabularyIndex(language: language) { [weak self] snapshot, index in
             guard let self,
                   self.vocabularyState.occurrenceSearchID == searchID,
                   self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
-                  self.currentFileMD5 == documentID else { return }
+                  self.currentFileMD5 == documentID,
+                  self.vocabularyLanguageRevision == languageRevision,
+                  self.vocabularyDocumentLanguageID == language else { return }
             guard let snapshot, let index else {
                 self.vocabularyState.occurrenceSearchID = nil
                 self.vocabularyState.occurrenceSearchCancellationToken = nil
@@ -305,6 +307,8 @@ extension ReaderWindowController {
                           self.vocabularyState.occurrenceSearchID == searchID,
                           self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
                           self.currentFileMD5 == documentID,
+                          self.vocabularyLanguageRevision == languageRevision,
+                          self.vocabularyDocumentLanguageID == language,
                           let document = self.pdfView.document else { return }
                     self.finishBackfillingGermanLemmaOccurrences(
                         groups: groups,
@@ -417,6 +421,7 @@ extension ReaderWindowController {
             return
         }
         let language = vocabularyDocumentLanguageID
+        let languageRevision = vocabularyLanguageRevision
         let lemma = resolvedVocabularyLemma(for: word, language: language)
         if preferredWord != nil {
             let selectedKey = vocabularyGroupingKey(word: selectedWord, language: language)
@@ -502,6 +507,7 @@ extension ReaderWindowController {
             word: word,
             lemma: lemma,
             language: language,
+            languageRevision: languageRevision,
             selectedRecord: selectedRecord,
             selectedPageIndex: selectedPageIndex,
             selectedPageText: selectedPageText,
@@ -597,6 +603,7 @@ extension ReaderWindowController {
         word: String,
         lemma: String,
         language: VocabularyLanguageID,
+        languageRevision: UInt64,
         selectedRecord: StoredPDFWordRecord,
         selectedPageIndex: Int,
         selectedPageText: String,
@@ -615,7 +622,9 @@ extension ReaderWindowController {
                 guard let self,
                       self.vocabularyState.occurrenceSearchID == searchID,
                       self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
-                      self.currentFileMD5 == documentID else { return }
+                      self.currentFileMD5 == documentID,
+                      self.vocabularyLanguageRevision == languageRevision,
+                      self.vocabularyDocumentLanguageID == language else { return }
                 self.selectionActionToolbar.showExactSaveProgress(
                     found: exactFound,
                     totalPages: totalPageCount
@@ -636,6 +645,7 @@ extension ReaderWindowController {
                         word: word,
                         lemma: lemma,
                         language: language,
+                        languageRevision: languageRevision,
                         selectedRecord: selectedRecord,
                         documentID: documentID,
                         searchID: searchID,
@@ -652,6 +662,7 @@ extension ReaderWindowController {
         word: String,
         lemma: String,
         language: VocabularyLanguageID,
+        languageRevision: UInt64,
         selectedRecord: StoredPDFWordRecord,
         documentID: String,
         searchID: UUID,
@@ -660,7 +671,9 @@ extension ReaderWindowController {
     ) {
         guard vocabularyState.occurrenceSearchID == searchID,
               vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
-              currentFileMD5 == documentID else { return }
+              currentFileMD5 == documentID,
+              vocabularyLanguageRevision == languageRevision,
+              vocabularyDocumentLanguageID == language else { return }
         if let priorityResult {
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 let found = max(
@@ -673,7 +686,9 @@ extension ReaderWindowController {
                     guard let self,
                           self.vocabularyState.occurrenceSearchID == searchID,
                           self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
-                          self.currentFileMD5 == documentID else { return }
+                          self.currentFileMD5 == documentID,
+                          self.vocabularyLanguageRevision == languageRevision,
+                          self.vocabularyDocumentLanguageID == language else { return }
                     self.selectionActionToolbar.showSaveProgress(
                         found: found,
                         indexedPages: priorityResult.pageIndexes.count,
@@ -690,7 +705,9 @@ extension ReaderWindowController {
             guard let self,
                   self.vocabularyState.occurrenceSearchID == searchID,
                   self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
-                  self.currentFileMD5 == documentID else { return }
+                  self.currentFileMD5 == documentID,
+                  self.vocabularyLanguageRevision == languageRevision,
+                  self.vocabularyDocumentLanguageID == language else { return }
             guard let snapshot, let index else {
                 self.vocabularyState.occurrenceSearchID = nil
                 self.vocabularyState.occurrenceSearchCancellationToken = nil
@@ -724,6 +741,8 @@ extension ReaderWindowController {
                           self.vocabularyState.occurrenceSearchID == searchID,
                           self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
                           self.currentFileMD5 == documentID,
+                          self.vocabularyLanguageRevision == languageRevision,
+                          self.vocabularyDocumentLanguageID == language,
                           let document = self.pdfView.document else {
                         return
                     }
