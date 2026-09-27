@@ -358,19 +358,27 @@ package struct VocabularyLanguageFeatureAvailability: Codable, Hashable, Sendabl
 package struct VocabularyLanguageProfileDescriptor: Codable, Hashable, Sendable {
     package let language: VocabularyLanguageID
     package let version: String
+    package let supportedLanguageRanges: [VocabularyLanguageRange]
     package let featureAvailability: VocabularyLanguageFeatureAvailability
     package let releaseStates: [VocabularyLanguageCapability: VocabularyFeatureReleaseState]
 
     package init(
         language: VocabularyLanguageID,
         version: String,
+        supportedLanguageRanges: [VocabularyLanguageRange]? = nil,
         featureAvailability: VocabularyLanguageFeatureAvailability,
         releaseStates: [VocabularyLanguageCapability: VocabularyFeatureReleaseState]
     ) {
         self.language = language
         self.version = version
+        self.supportedLanguageRanges = supportedLanguageRanges
+            ?? [VocabularyLanguageRange(language: language)]
         self.featureAvailability = featureAvailability
         self.releaseStates = releaseStates
+    }
+
+    package func matchSpecificity(for requested: VocabularyLanguageID) -> Int? {
+        supportedLanguageRanges.compactMap { $0.matchSpecificity(for: requested) }.max()
     }
 
     package func releaseState(for capability: VocabularyLanguageCapability) -> VocabularyFeatureReleaseState {

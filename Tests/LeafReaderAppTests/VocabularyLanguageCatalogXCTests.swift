@@ -144,6 +144,83 @@ final class VocabularyLanguageCatalogXCTests: XCTestCase {
         )
     }
 
+    func testRegionalEnglishKeepsRequestedIdentityAndComposesCapabilitiesIndependently() throws {
+        let regionalEnglish = try XCTUnwrap(VocabularyLanguageID("en-GB"))
+        let capabilities = fullAppleCapabilities
+        let catalog = VocabularyLanguageCatalogFactory.live(
+            linguisticCapabilityProbe: { language in
+                language == regionalEnglish
+                    ? capabilities
+                    : AppleVocabularyLinguisticCapabilities(availableTagSchemes: [])
+            }
+        )
+
+        let runtime = try XCTUnwrap(catalog.resolve(language: regionalEnglish))
+        XCTAssertEqual(runtime.language, regionalEnglish)
+        XCTAssertEqual(runtime.profile.language, regionalEnglish)
+        XCTAssertEqual(runtime.linguisticCacheIdentity.language, regionalEnglish)
+        XCTAssertEqual(runtime.definitions?.descriptor.id, "dictionary.ecdict")
+        XCTAssertNil(runtime.difficulty)
+        XCTAssertTrue(runtime.status(for: .lemmaEvidence).isAvailable)
+        XCTAssertFalse(runtime.status(for: .difficulty).isAvailable)
+        XCTAssertFalse(runtime.status(for: .formLabels).isAvailable)
+        XCTAssertFalse(runtime.status(for: .domainResources).isAvailable)
+        XCTAssertFalse(runtime.status(for: .vocabularyPreparation).isAvailable)
+    }
+
+    func testRegionalGermanUsesDeclaredProfileWithoutBorrowingGermanDifficulty() throws {
+        let regionalGerman = try XCTUnwrap(VocabularyLanguageID("de-AT"))
+        let capabilities = fullAppleCapabilities
+        let catalog = VocabularyLanguageCatalogFactory.live(
+            linguisticCapabilityProbe: { language in
+                language == regionalGerman
+                    ? capabilities
+                    : AppleVocabularyLinguisticCapabilities(availableTagSchemes: [])
+            }
+        )
+
+        let runtime = try XCTUnwrap(catalog.resolve(language: regionalGerman))
+        XCTAssertEqual(runtime.language, regionalGerman)
+        XCTAssertEqual(runtime.definitions?.descriptor.id, "dictionary.de-wiktionary")
+        XCTAssertNil(runtime.difficulty)
+        XCTAssertFalse(runtime.linguisticCacheIdentity.linguisticProviders.contains {
+            $0.id == "morphology.german-deterministic"
+        })
+        XCTAssertFalse(runtime.status(for: .vocabularyPreparation).isAvailable)
+    }
+
+    func testRegionalPartialProfileKeepsIdentityWithoutInventingProviders() throws {
+        let regionalPortuguese = try XCTUnwrap(VocabularyLanguageID("pt-BR"))
+        let capabilities = fullAppleCapabilities
+        let catalog = VocabularyLanguageCatalogFactory.live(
+            linguisticCapabilityProbe: { language in
+                language == regionalPortuguese
+                    ? capabilities
+                    : AppleVocabularyLinguisticCapabilities(availableTagSchemes: [])
+            }
+        )
+
+        let runtime = try XCTUnwrap(catalog.resolve(language: regionalPortuguese))
+        XCTAssertEqual(runtime.language, regionalPortuguese)
+        XCTAssertEqual(runtime.profile.language, regionalPortuguese)
+        XCTAssertTrue(runtime.status(for: .lemmaEvidence).isAvailable)
+        XCTAssertNil(runtime.definitions)
+        XCTAssertNil(runtime.difficulty)
+        XCTAssertFalse(runtime.status(for: .vocabularyPreparation).isAvailable)
+    }
+
+    func testDifficultyCompatibilityDoesNotInheritDictionaryRange() throws {
+        let catalog = VocabularyLanguageCatalogFactory.live()
+        let regionalEnglish = try XCTUnwrap(VocabularyLanguageID("en-GB"))
+        let regionalGerman = try XCTUnwrap(VocabularyLanguageID("de-AT"))
+
+        XCTAssertNotNil(catalog.difficultyProvider(for: .english))
+        XCTAssertNotNil(catalog.difficultyProvider(for: .german))
+        XCTAssertNil(catalog.difficultyProvider(for: regionalEnglish))
+        XCTAssertNil(catalog.difficultyProvider(for: regionalGerman))
+        XCTAssertNil(catalog.difficultyProvider(for: .french))
+    }
+
     @MainActor
     func testDefinitionRoutingIdentityRejectsLanguageRevisionChanges() throws {
         let provider = try XCTUnwrap(

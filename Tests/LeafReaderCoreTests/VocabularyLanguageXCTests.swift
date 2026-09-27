@@ -122,6 +122,23 @@ final class VocabularyLanguageXCTests: XCTestCase {
         )
     }
 
+    func testScriptSpecificProviderRangeNeverCrossesScript() throws {
+        let simplified = VocabularyProviderDescriptor(
+            id: "dictionary.zh-hans",
+            version: "1",
+            supportedLanguageRanges: [try XCTUnwrap(VocabularyLanguageRange("zh-Hans-*"))]
+        )
+        let traditional = try XCTUnwrap(VocabularyLanguageID("zh-Hant-TW"))
+
+        XCTAssertEqual(
+            VocabularyProviderSelection.select(
+                language: traditional,
+                descriptors: [simplified]
+            ),
+            .unavailable
+        )
+    }
+
     func testDetectionAbstainsForShortAndInconclusiveSamples() {
         let short = VocabularyLanguageDetector.resolution(
             forSample: "kort",

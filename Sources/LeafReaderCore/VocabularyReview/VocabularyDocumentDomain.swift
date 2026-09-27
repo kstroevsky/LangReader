@@ -288,6 +288,7 @@ package enum VocabularyDocumentDomainResources {
 /// Reserved experiment boundary. Callers must explicitly enable it; the live
 /// preparation flow continues using the general-language provider.
 package struct ExperimentalDomainBlendedDifficultyProvider: DocumentVocabularyDifficultyProviding {
+    package let descriptor: VocabularyProviderDescriptor
     package let frequencyScale: VocabularyFrequencyScale
     private let general: any DocumentVocabularyDifficultyProviding
     private let table: VocabularyDomainRankTable
@@ -298,9 +299,18 @@ package struct ExperimentalDomainBlendedDifficultyProvider: DocumentVocabularyDi
         table: VocabularyDomainRankTable,
         domainWeight: Double = 0.30
     ) {
+        guard let language = VocabularyLanguageID(table.metadata.languageCode),
+              general.descriptor.supports(language) else {
+            preconditionFailure("Domain difficulty resources must match the general provider language")
+        }
         self.general = general
         self.table = table
         self.domainWeight = min(max(domainWeight, 0), 1)
+        descriptor = VocabularyProviderDescriptor(
+            id: "difficulty.experimental-domain-blend.\(table.metadata.resourceID)",
+            version: "developer-only-v1",
+            supportedLanguageRanges: [VocabularyLanguageRange(language: language)]
+        )
         frequencyScale = VocabularyFrequencyScale(
             sourceID: "experimental-blend:\(general.frequencyScale.sourceID)+\(table.metadata.resourceID)",
             version: "developer-only-v1",

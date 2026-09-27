@@ -169,6 +169,7 @@ package struct VocabularyItemDifficultyPrior: Codable, Equatable, Sendable {
 }
 
 package protocol DocumentVocabularyDifficultyProviding: Sendable {
+    var descriptor: VocabularyProviderDescriptor { get }
     var frequencyScale: VocabularyFrequencyScale { get }
     var semanticIdentity: VocabularyDifficultyProviderSemanticIdentity { get }
     func bestRank(for summary: VocabularyDocumentLemmaSummary) -> Int?
@@ -178,8 +179,8 @@ package protocol DocumentVocabularyDifficultyProviding: Sendable {
 package extension DocumentVocabularyDifficultyProviding {
     var semanticIdentity: VocabularyDifficultyProviderSemanticIdentity {
         VocabularyDifficultyProviderSemanticIdentity(
-            providerID: "difficulty.\(frequencyScale.sourceID)",
-            providerVersion: frequencyScale.version
+            providerID: descriptor.id,
+            providerVersion: descriptor.version
         )
     }
 
@@ -190,6 +191,11 @@ package extension DocumentVocabularyDifficultyProviding {
 
 package struct ECDICTDocumentVocabularyDifficultyProvider: DocumentVocabularyDifficultyProviding {
     package static let pinnedMaximumRank = 47_062
+    package let descriptor = VocabularyProviderDescriptor(
+        id: "difficulty.ECDICT.frq",
+        version: "bundled-lite-v1",
+        supportedLanguageRanges: [VocabularyLanguageRange(language: .english)]
+    )
     package let frequencyScale = VocabularyFrequencyScale(
         sourceID: "ECDICT.frq",
         version: "bundled-lite-v1",
@@ -209,6 +215,11 @@ package struct ECDICTDocumentVocabularyDifficultyProvider: DocumentVocabularyDif
 }
 
 package struct GermanCorpusDocumentVocabularyDifficultyProvider: DocumentVocabularyDifficultyProviding {
+    package let descriptor = VocabularyProviderDescriptor(
+        id: "difficulty.Leipzig.deu_news_2025_1M",
+        version: "2025-1M-top-200000",
+        supportedLanguageRanges: [VocabularyLanguageRange(language: .german)]
+    )
     package let frequencyScale = VocabularyFrequencyScale(
         sourceID: "Leipzig.deu_news_2025_1M",
         version: "2025-1M-top-200000",
@@ -226,6 +237,7 @@ package struct GermanCorpusDocumentVocabularyDifficultyProvider: DocumentVocabul
 }
 
 package struct CalibratedDocumentVocabularyDifficultyProvider: DocumentVocabularyDifficultyProviding {
+    package let descriptor: VocabularyProviderDescriptor
     package let frequencyScale: VocabularyFrequencyScale
     package let semanticIdentity: VocabularyDifficultyProviderSemanticIdentity
     private let base: any DocumentVocabularyDifficultyProviding
@@ -234,6 +246,7 @@ package struct CalibratedDocumentVocabularyDifficultyProvider: DocumentVocabular
     package init(base: any DocumentVocabularyDifficultyProviding, pack: VocabularyItemCalibrationPack) {
         self.base = base
         items = pack.productionItemsByKey
+        descriptor = base.descriptor
         frequencyScale = VocabularyFrequencyScale(
             sourceID: base.frequencyScale.sourceID,
             version: items.isEmpty ? base.frequencyScale.version : "\(base.frequencyScale.version)+\(pack.version)",

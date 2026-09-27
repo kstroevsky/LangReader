@@ -1,6 +1,10 @@
 import Foundation
 import LeafReaderCore
 
+typealias VocabularyLinguisticCapabilityProbe = @Sendable (
+    VocabularyLanguageID
+) -> AppleVocabularyLinguisticCapabilities
+
 struct VocabularyDefinitionRoutingContext: Sendable {
     let language: VocabularyLanguageID
     let languageRevision: UInt64
@@ -70,13 +74,32 @@ struct VocabularyLanguageRuntime: Sendable {
 
 struct VocabularyLanguageCatalog: Sendable {
     private let runtimes: [VocabularyLanguageID: VocabularyLanguageRuntime]
+    private let difficultyProvidersByDescriptor: [VocabularyProviderDescriptor: any DocumentVocabularyDifficultyProviding]
+    private let linguisticCapabilityProbe: VocabularyLinguisticCapabilityProbe
 
-    init(runtimes: [VocabularyLanguageRuntime]) {
+    init(
+        runtimes: [VocabularyLanguageRuntime],
+        difficultyProviders: [any DocumentVocabularyDifficultyProviding],
+        linguisticCapabilityProbe: @escaping VocabularyLinguisticCapabilityProbe
+    ) {
         self.runtimes = Dictionary(uniqueKeysWithValues: runtimes.map { ($0.language, $0) })
+        difficultyProvidersByDescriptor = Dictionary(
+            difficultyProviders.map { ($0.descriptor, $0) },
+            uniquingKeysWith: { existing, _ in existing }
+        )
+        self.linguisticCapabilityProbe = linguisticCapabilityProbe
     }
 
     func resolve(language: VocabularyLanguageID) -> VocabularyLanguageRuntime? {
-        runtimes[language]
+        if let exact = runtimes[language] { return exact }
+        guard let template = compatibleProfileRuntime(for: language) else { return nil }
+        return VocabularyLanguageCatalogFactory.compatibleRuntime(
+            language: language,
+            template: template,
+            definitions: definitionProvider(for: language),
+            difficulty: difficultyProvider(for: language),
+            linguisticCapabilities: linguisticCapabilityProbe(language)
+        )
     }
 
     func definitionProvider(for language: VocabularyLanguageID) -> (any VocabularyDefinitionProviding)? {
@@ -92,6 +115,16 @@ struct VocabularyLanguageCatalog: Sendable {
         ) {
         case .selected(let descriptor):
             return providersByDescriptor[descriptor]
+        case .unavailable, .ambiguous:
+            return nil
+        }
+    }
+
+    func difficultyProvider(for language: VocabularyLanguageID) -> (any DocumentVocabularyDifficultyProviding)? {
+        let descriptors = Array(difficultyProvidersByDescriptor.keys)
+        switch VocabularyProviderSelection.select(language: language, descriptors: descriptors) {
+        case .selected(let descriptor):
+            return difficultyProvidersByDescriptor[descriptor]
         case .unavailable, .ambiguous:
             return nil
         }
@@ -118,28 +151,39 @@ struct VocabularyLanguageCatalog: Sendable {
             return runtime.language
         }.sorted { $0.bcp47 < $1.bcp47 }
     }
+
+    private func compatibleProfileRuntime(
+        for language: VocabularyLanguageID
+    ) -> VocabularyLanguageRuntime? {
+        let matches = runtimes.values.compactMap { runtime -> (VocabularyLanguageRuntime, Int)? in
+            guard let specificity = runtime.profile.matchSpecificity(for: language) else { return nil }
+            return (runtime, specificity)
+        }
+        guard let bestSpecificity = matches.map({ $0.1 }).max() else { return nil }
+        let finalists = matches.filter { $0.1 == bestSpecificity }.map { $0.0 }
+        guard finalists.count == 1 else { return nil }
+        return finalists[0]
+    }
 }
 
 enum VocabularyLanguageCatalogFactory {
-    typealias LinguisticCapabilityProbe = @Sendable (
-        VocabularyLanguageID
-    ) -> AppleVocabularyLinguisticCapabilities
-
     static func live(
         definitionProviderOverride: (any VocabularyDefinitionProviding)? = nil,
-        linguisticCapabilityProbe: @escaping LinguisticCapabilityProbe = AppleVocabularyLinguisticCapabilities.probe
+        linguisticCapabilityProbe: @escaping VocabularyLinguisticCapabilityProbe = AppleVocabularyLinguisticCapabilities.probe
     ) -> VocabularyLanguageCatalog {
         let englishDefinitions: any VocabularyDefinitionProviding = definitionProviderOverride
             ?? EnglishECDICTVocabularyDefinitionProvider()
         let germanDefinitions: any VocabularyDefinitionProviding = definitionProviderOverride
             ?? GermanWiktionaryVocabularyDefinitionProvider()
+        let englishDifficulty = DocumentVocabularyFrequencyProvider.english
+        let germanDifficulty = DocumentVocabularyFrequencyProvider.german
 
-        return VocabularyLanguageCatalog(runtimes: [
+        let runtimes = [
             preparationRuntime(
                 language: .english,
                 version: "en-profile-v1",
                 definitions: englishDefinitions,
-                difficulty: DocumentVocabularyFrequencyProvider.english,
+                difficulty: englishDifficulty,
                 formLabels: true,
                 domainResources: true,
                 linguisticCapabilities: linguisticCapabilityProbe(.english)
@@ -148,7 +192,7 @@ enum VocabularyLanguageCatalogFactory {
                 language: .german,
                 version: "de-profile-v1",
                 definitions: germanDefinitions,
-                difficulty: DocumentVocabularyFrequencyProvider.german,
+                difficulty: germanDifficulty,
                 formLabels: true,
                 domainResources: true,
                 linguisticCapabilities: linguisticCapabilityProbe(.german)
@@ -189,7 +233,75 @@ enum VocabularyLanguageCatalogFactory {
                 lemmaEvidence: false,
                 linguisticCapabilities: linguisticCapabilityProbe(.italian)
             )
-        ])
+        ]
+        return VocabularyLanguageCatalog(
+            runtimes: runtimes,
+            difficultyProviders: [englishDifficulty, germanDifficulty],
+            linguisticCapabilityProbe: linguisticCapabilityProbe
+        )
+    }
+
+    fileprivate static func compatibleRuntime(
+        language: VocabularyLanguageID,
+        template: VocabularyLanguageRuntime,
+        definitions: (any VocabularyDefinitionProviding)?,
+        difficulty: (any DocumentVocabularyDifficultyProviding)?,
+        linguisticCapabilities: AppleVocabularyLinguisticCapabilities
+    ) -> VocabularyLanguageRuntime {
+        let declaredProfile = template.profile
+        let usesLinguisticAssets = declaredProfile.featureAvailability.status(for: .lemmaEvidence).isAvailable
+            || declaredProfile.featureAvailability.status(for: .partOfSpeechEvidence).isAvailable
+            || declaredProfile.featureAvailability.status(for: .morphologicalEvidence).isAvailable
+            || declaredProfile.featureAvailability.status(for: .formLabels).isAvailable
+        let effectiveCapabilities = usesLinguisticAssets
+            ? linguisticCapabilities
+            : AppleVocabularyLinguisticCapabilities(availableTagSchemes: [])
+        let profile = VocabularyLanguageProfileDescriptor(
+            language: language,
+            version: declaredProfile.version,
+            supportedLanguageRanges: declaredProfile.supportedLanguageRanges,
+            featureAvailability: declaredProfile.featureAvailability,
+            releaseStates: declaredProfile.releaseStates
+        )
+        let linguistic = linguisticIdentity(
+            language: language,
+            profileVersion: profile.version,
+            capabilities: effectiveCapabilities
+        )
+        let calibratedDifficulty: (any DocumentVocabularyDifficultyProviding)?
+        if let difficulty {
+            let calibrationTarget = VocabularyCalibrationCompatibilityTarget(
+                language: language,
+                languageProfileVersion: profile.version,
+                lexicalPolicyVersion: linguistic.lexicalPolicyVersion,
+                linguisticProviders: linguistic.linguisticProviders,
+                linguisticRuntimeSignature: linguistic.linguisticRuntimeSignature,
+                difficultyProvider: difficulty.semanticIdentity,
+                normalizationVersion: linguistic.normalizationVersion
+            )
+            calibratedDifficulty = DocumentVocabularyFrequencyProvider.calibrated(
+                base: difficulty,
+                target: calibrationTarget
+            )
+        } else {
+            calibratedDifficulty = nil
+        }
+        let availability = compatibleRuntimeAvailability(
+            profile: profile,
+            definitions: definitions,
+            difficulty: calibratedDifficulty,
+            capabilities: effectiveCapabilities
+        )
+        return VocabularyLanguageRuntime(
+            language: language,
+            profile: profile,
+            definitions: definitions,
+            difficulty: calibratedDifficulty,
+            linguisticAnalyzerFactory: effectiveCapabilities.analyzerFactory,
+            formLabelEvidenceProvider: effectiveCapabilities.formLabelEvidenceProvider,
+            runtimeAvailability: availability,
+            linguisticCacheIdentity: linguistic
+        )
     }
 
     private static func preparationRuntime(
@@ -215,6 +327,9 @@ enum VocabularyLanguageCatalogFactory {
         let profile = VocabularyLanguageProfileDescriptor(
             language: language,
             version: version,
+            supportedLanguageRanges: [
+                VocabularyLanguageRange(language: language, includesDescendants: true)
+            ],
             featureAvailability: availability,
             releaseStates: [
                 .exactForm: .production,
@@ -285,6 +400,9 @@ enum VocabularyLanguageCatalogFactory {
         let profile = VocabularyLanguageProfileDescriptor(
             language: language,
             version: version,
+            supportedLanguageRanges: [
+                VocabularyLanguageRange(language: language, includesDescendants: true)
+            ],
             featureAvailability: availability,
             releaseStates: [
                 .exactForm: .production,
@@ -370,6 +488,103 @@ enum VocabularyLanguageCatalogFactory {
             .domainResources: profile.featureAvailability.status(for: .domainResources),
             .vocabularyPreparation: preparation
         ])
+    }
+
+    private static func compatibleRuntimeAvailability(
+        profile: VocabularyLanguageProfileDescriptor,
+        definitions: (any VocabularyDefinitionProviding)?,
+        difficulty: (any DocumentVocabularyDifficultyProviding)?,
+        capabilities: AppleVocabularyLinguisticCapabilities
+    ) -> VocabularyLanguageFeatureAvailability {
+        let exact = profile.featureAvailability.status(for: .exactForm)
+        let lemma = compatibleSchemeAvailability(
+            profile: profile,
+            capability: .lemmaEvidence,
+            available: capabilities.supportsLemma,
+            missingReason: "Apple lemma tag scheme unavailable"
+        )
+        let partOfSpeech = compatibleSchemeAvailability(
+            profile: profile,
+            capability: .partOfSpeechEvidence,
+            available: capabilities.supportsLexicalClass,
+            missingReason: "Apple lexical-class tag scheme unavailable"
+        )
+        let morphology = compatibleSchemeAvailability(
+            profile: profile,
+            capability: .morphologicalEvidence,
+            available: capabilities.supportsLexicalClass,
+            missingReason: "Apple lexical-class tag scheme unavailable"
+        )
+        let definitionStatus = compatibleProviderAvailability(
+            profile: profile,
+            capability: .definitions,
+            providerAvailable: definitions != nil,
+            missingReason: "no compatible definition provider"
+        )
+        let difficultyStatus = compatibleProviderAvailability(
+            profile: profile,
+            capability: .difficulty,
+            providerAvailable: difficulty != nil,
+            missingReason: "no compatible difficulty provider"
+        )
+        let formLabels = profile.featureAvailability.status(for: .formLabels).isAvailable
+            ? VocabularyCapabilityAvailability.unavailable(
+                reason: "no compatible regional form-label ruleset registered"
+            )
+            : profile.featureAvailability.status(for: .formLabels)
+        let domainResources = profile.featureAvailability.status(for: .domainResources).isAvailable
+            ? VocabularyCapabilityAvailability.unavailable(
+                reason: "no compatible regional domain resources registered"
+            )
+            : profile.featureAvailability.status(for: .domainResources)
+        let preparationDeclared = profile.featureAvailability.status(for: .vocabularyPreparation).isAvailable
+        let preparationReady = lemma.isAvailable
+            && partOfSpeech.isAvailable
+            && definitionStatus.isAvailable
+            && difficultyStatus.isAvailable
+        let preparation: VocabularyCapabilityAvailability
+        if !preparationDeclared {
+            preparation = profile.featureAvailability.status(for: .vocabularyPreparation)
+        } else if preparationReady {
+            preparation = .available
+        } else {
+            preparation = .unavailable(
+                reason: "required providers or linguistic assets are unavailable for the requested language"
+            )
+        }
+        return VocabularyLanguageFeatureAvailability([
+            .exactForm: exact,
+            .lemmaEvidence: lemma,
+            .partOfSpeechEvidence: partOfSpeech,
+            .morphologicalEvidence: morphology,
+            .formLabels: formLabels,
+            .definitions: definitionStatus,
+            .difficulty: difficultyStatus,
+            .domainResources: domainResources,
+            .vocabularyPreparation: preparation
+        ])
+    }
+
+    private static func compatibleSchemeAvailability(
+        profile: VocabularyLanguageProfileDescriptor,
+        capability: VocabularyLanguageCapability,
+        available: Bool,
+        missingReason: String
+    ) -> VocabularyCapabilityAvailability {
+        let declared = profile.featureAvailability.status(for: capability)
+        guard declared.isAvailable else { return declared }
+        return schemeAvailability(available: available, missingReason: missingReason)
+    }
+
+    private static func compatibleProviderAvailability(
+        profile: VocabularyLanguageProfileDescriptor,
+        capability: VocabularyLanguageCapability,
+        providerAvailable: Bool,
+        missingReason: String
+    ) -> VocabularyCapabilityAvailability {
+        let declared = profile.featureAvailability.status(for: capability)
+        guard declared.isAvailable else { return declared }
+        return providerAvailable ? .available : .unavailable(reason: missingReason)
     }
 
     private static func schemeAvailability(
