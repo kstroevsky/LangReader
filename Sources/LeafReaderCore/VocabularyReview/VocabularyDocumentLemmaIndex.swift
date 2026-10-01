@@ -512,6 +512,40 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         }
     }
 
+    private static func lexicalOccurrenceAnalysis(
+        unitIndex: Int,
+        evidence: PageOccurrenceEvidence
+    ) -> VocabularyOccurrenceAnalysis {
+        let sourceRange = VocabularyDocumentSourceRange(
+            unitIndex: unitIndex,
+            utf16Location: evidence.occurrence.range.location,
+            utf16Length: evidence.occurrence.range.length
+        )
+        return VocabularyOccurrenceAnalysis(
+            occurrenceID: VocabularyOccurrenceAnalysisID(
+                unitIndex: unitIndex,
+                utf16Location: evidence.occurrence.range.location,
+                utf16Length: evidence.occurrence.range.length
+            ),
+            sourceRange: sourceRange,
+            surface: evidence.surface,
+            anchor: evidence.anchor,
+            analyses: evidence.analyses,
+            contextFingerprint: evidence.contextFingerprint
+        )
+    }
+
+    /// Immutable production occurrence evidence for Validation-owned scoring.
+    /// This is observation-only: callers cannot alter page evidence or Core
+    /// reconciliation policy through this seam.
+    package func lexicalOccurrenceAnalyses() -> [VocabularyOccurrenceAnalysis] {
+        pages.enumerated().flatMap { unitIndex, page in
+            page.evidence.map { evidence in
+                Self.lexicalOccurrenceAnalysis(unitIndex: unitIndex, evidence: evidence)
+            }
+        }
+    }
+
     /// Evidence-aware reconciled projection. It remains separate from the
     /// production projection while the ADR is in shadow rollout and activation
     /// is gated by validation.
@@ -528,23 +562,10 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         records.reserveCapacity(pages.reduce(0) { $0 + $1.evidence.count })
         for (unitIndex, page) in pages.enumerated() {
             for evidence in page.evidence {
-                let sourceRange = VocabularyDocumentSourceRange(
-                    unitIndex: unitIndex,
-                    utf16Location: evidence.occurrence.range.location,
-                    utf16Length: evidence.occurrence.range.length
-                )
                 records.append(OccurrenceRecord(
-                    analysis: VocabularyOccurrenceAnalysis(
-                        occurrenceID: VocabularyOccurrenceAnalysisID(
-                            unitIndex: unitIndex,
-                            utf16Location: evidence.occurrence.range.location,
-                            utf16Length: evidence.occurrence.range.length
-                        ),
-                        sourceRange: sourceRange,
-                        surface: evidence.surface,
-                        anchor: evidence.anchor,
-                        analyses: evidence.analyses,
-                        contextFingerprint: evidence.contextFingerprint
+                    analysis: Self.lexicalOccurrenceAnalysis(
+                        unitIndex: unitIndex,
+                        evidence: evidence
                     ),
                     displayLemma: evidence.displayLemma,
                     isConfidentName: evidence.isConfidentName

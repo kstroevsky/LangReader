@@ -223,6 +223,56 @@ final class VocabularyDocumentLemmaIndexXCTests: XCTestCase {
         XCTAssertEqual(record.map(\.occurrenceCount).sorted(), [2, 2])
     }
 
+    func testLexicalOccurrenceAnalysesExposeTheSameImmutableEvidenceUsedByReconciliation() throws {
+        let texts = [
+            "noun-one record remains",
+            "noun-two record survives",
+            "verb-one record this",
+            "verb-two record that"
+        ]
+        let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
+            texts: texts,
+            language: .english,
+            maximumWorkerCount: 1,
+            resolutionProvider: { surface, _, _ in
+                surface == "record"
+                    ? .resolved(lemma: "record", source: .naturalLanguage)
+                    : .unresolved(surface: surface)
+            },
+            analysisProvider: { request in
+                guard request.surface == "record" else { return [] }
+                let part: VocabularyPartOfSpeech = request.context.contains("noun-") ? .noun : .verb
+                return [VocabularyMorphologicalAnalysis(
+                    lemma: "record",
+                    partOfSpeech: part,
+                    source: .validationFixture,
+                    rawScore: 1,
+                    confidence: .usable
+                )]
+            }
+        ))
+
+        let observations = index.lexicalOccurrenceAnalyses()
+            .filter { $0.anchor.resolvedLemma == "record" }
+            .sorted { $0.sourceRange.unitIndex < $1.sourceRange.unitIndex }
+        XCTAssertEqual(observations.count, 4)
+        XCTAssertEqual(observations.map(\.surface), ["record", "record", "record", "record"])
+        XCTAssertEqual(observations.map { $0.sourceRange.unitIndex }, [0, 1, 2, 3])
+        XCTAssertEqual(
+            observations.map { $0.sourceRange.utf16Location },
+            texts.map { ($0 as NSString).range(of: "record").location }
+        )
+        XCTAssertEqual(
+            observations.map { $0.analyses.first?.partOfSpeech },
+            [.noun, .noun, .verb, .verb]
+        )
+
+        let summaries = index.lexicalSummaries().filter { $0.lemmaKey == "record" }
+        XCTAssertEqual(Set(summaries.map(\.partOfSpeech)), [.noun, .verb])
+        XCTAssertEqual(summaries.reduce(0) { $0 + $1.occurrenceCount }, observations.count)
+        XCTAssertEqual(index.lexicalOccurrenceAnalyses(), index.lexicalOccurrenceAnalyses())
+    }
+
     func testReconciledSummariesKeepOneOffConflictAsDirectEvidenceResidual() throws {
         let index = try XCTUnwrap(VocabularyDocumentLemmaIndex(
             texts: [

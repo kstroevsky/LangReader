@@ -24,6 +24,9 @@ private struct SourceDescriptor: Codable {
 private struct CandidateOccurrence: Codable {
     let occurrenceID: String
     let pageNumber: Int
+    let sampledUnitIndex: Int
+    let utf16Location: Int
+    let utf16Length: Int
     let surface: String
     let observedLemma: String?
     let observedPartOfSpeech: String?
@@ -48,6 +51,7 @@ private struct CandidateAnchor: Codable {
 private struct AnnotationTemplate: Codable {
     let schemaVersion: Int
     let candidateSelectionPolicyVersion: String
+    let sampledTextSHA256: String
     let source: SourceDescriptor
     let instructions: [String]
     let anchors: [CandidateAnchor]
@@ -67,7 +71,10 @@ private struct SafeMetadata: Codable {
 
 private struct RawOccurrence {
     let pageNumber: Int
+    let sampledUnitIndex: Int
     let ordinal: Int
+    let utf16Location: Int
+    let utf16Length: Int
     let surface: String
     let lemma: String?
     let partOfSpeech: String?
@@ -168,7 +175,12 @@ private func lexicalClassName(_ tag: NLTag?) -> String? {
     }
 }
 
-private func rawOccurrences(pageNumber: Int, text: String, language: NLLanguage) -> [RawOccurrence] {
+private func rawOccurrences(
+    pageNumber: Int,
+    sampledUnitIndex: Int,
+    text: String,
+    language: NLLanguage
+) -> [RawOccurrence] {
     let tagger = NLTagger(tagSchemes: [.lemma, .lexicalClass])
     tagger.string = text
     tagger.setLanguage(language, range: text.startIndex..<text.endIndex)
@@ -187,9 +199,13 @@ private func rawOccurrences(pageNumber: Int, text: String, language: NLLanguage)
         let lexicalClass = lexicalClassName(
             tagger.tag(at: range.lowerBound, unit: .word, scheme: .lexicalClass).0
         )
+        let utf16Range = NSRange(range, in: text)
         result.append(RawOccurrence(
             pageNumber: pageNumber,
+            sampledUnitIndex: sampledUnitIndex,
             ordinal: ordinal,
+            utf16Location: utf16Range.location,
+            utf16Length: utf16Range.length,
             surface: surface,
             lemma: lemmaTag.flatMap(canonicalToken),
             partOfSpeech: lexicalClass,
@@ -233,6 +249,9 @@ private func candidateAnchors(
                 CandidateOccurrence(
                     occurrenceID: "\(alias)-p\(row.pageNumber)-t\(row.ordinal)",
                     pageNumber: row.pageNumber,
+                    sampledUnitIndex: row.sampledUnitIndex,
+                    utf16Location: row.utf16Location,
+                    utf16Length: row.utf16Length,
                     surface: row.surface,
                     observedLemma: row.lemma,
                     observedPartOfSpeech: row.partOfSpeech,
@@ -331,12 +350,16 @@ private func build(_ options: Options) throws {
     let pages = sampledPageIndexes(pageCount: document.pageCount, requestedCount: options.samplePages)
     var occurrences: [RawOccurrence] = []
     var sampledTexts: [String] = []
+    var sampledPageNumbers: [Int] = []
     for pageIndex in pages {
         let text = document.page(at: pageIndex)?.string ?? ""
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { continue }
+        let sampledUnitIndex = sampledTexts.count
         sampledTexts.append(text)
+        sampledPageNumbers.append(pageIndex + 1)
         occurrences.append(contentsOf: rawOccurrences(
             pageNumber: pageIndex + 1,
+            sampledUnitIndex: sampledUnitIndex,
             text: text,
             language: language
         ))
@@ -355,6 +378,7 @@ private func build(_ options: Options) throws {
     }
     let sourceData = try Data(contentsOf: options.pdf)
     let sampledText = sampledTexts.joined(separator: "\n\u{001E}\n")
+    let sampledTextSHA256 = sha256(Data(sampledText.utf8))
     let source = SourceDescriptor(
         alias: options.alias,
         fileName: options.pdf.lastPathComponent,
@@ -364,13 +388,14 @@ private func build(_ options: Options) throws {
         documentFormat: "pdf",
         dataRole: "development",
         pageCount: document.pageCount,
-        sampledPageNumbers: pages.map { $0 + 1 },
+        sampledPageNumbers: sampledPageNumbers,
         sampledCharacterCount: sampledTexts.reduce(0) { $0 + $1.count },
         sampledTokenCount: occurrences.count
     )
     let template = AnnotationTemplate(
         schemaVersion: 1,
         candidateSelectionPolicyVersion: policyVersion,
+        sampledTextSHA256: sampledTextSHA256,
         source: source,
         instructions: [
             "Development material only. Do not convert this source into a held-out fixture after inspecting predictions.",
@@ -390,7 +415,7 @@ private func build(_ options: Options) throws {
             Set($0.observedPartsOfSpeech).intersection(["noun", "verb", "adjective", "adverb"]).count >= 2
         }.count,
         otherWordAnchorCount: anchors.filter { $0.observedPartsOfSpeech.contains("otherWord") }.count,
-        sampledTextSHA256: sha256(Data(sampledText.utf8)),
+        sampledTextSHA256: sampledTextSHA256,
         containsExtractedProse: false
     )
     try writeJSON(template, to: options.template)
