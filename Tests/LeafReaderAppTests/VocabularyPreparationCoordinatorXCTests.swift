@@ -47,6 +47,64 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         )
     }
 
+    func testLexicalReconciliationVersionChangeClearsIncompatiblePersistedSessionState() async throws {
+        let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: .pdf)
+        let sessionStore = VocabularyPreparationSessionStore(documentID: source.identity.documentID)
+        let flagKey = "LeafReader.experimentalLexicalReconciliation"
+        let legacyFlagKey = "LeafReader.experimentalLexicalReconciliationV4"
+        let previousFlag = UserDefaults.standard.object(forKey: flagKey)
+        let previousLegacyFlag = UserDefaults.standard.object(forKey: legacyFlagKey)
+        defer {
+            sessionStore.clear()
+            if let previousFlag {
+                UserDefaults.standard.set(previousFlag, forKey: flagKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: flagKey)
+            }
+            if let previousLegacyFlag {
+                UserDefaults.standard.set(previousLegacyFlag, forKey: legacyFlagKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: legacyFlagKey)
+            }
+        }
+        sessionStore.save(VocabularyPreparationSession(
+            answers: [VocabularyAssessmentAnswer(canonicalKey: "legacy-item", evidence: .legacyKnown)],
+            finalSelection: ["legacy-item"],
+            // Version 6 is the superseded experimental lexical protocol whose
+            // renderer-offset candidate identity must not resume under v7.
+            algorithmVersion: 6,
+            readerPriorContributionRecorded: true,
+            readerPriorContributionID: "legacy-contribution"
+        ))
+        UserDefaults.standard.removeObject(forKey: flagKey)
+        UserDefaults.standard.set(true, forKey: legacyFlagKey)
+
+        let coordinator = VocabularyPreparationCoordinator(
+            documentSource: source,
+            library: FakeVocabularyPreparationLibrary(),
+            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            readerPriorStore: readerPriorStore,
+            researchEvidenceStore: researchEvidenceStore
+        )
+        XCTAssertTrue(coordinator.experimentalLexicalReconciliationEnabled)
+        XCTAssertTrue(UserDefaults.standard.bool(forKey: flagKey))
+        coordinator.resetForCurrentDocument()
+        coordinator.startAnalysis()
+        try await waitUntil { coordinator.phase == .inventory }
+
+        let migrated = try XCTUnwrap(sessionStore.load())
+        XCTAssertEqual(
+            migrated.algorithmVersion,
+            VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+        )
+        XCTAssertEqual(migrated.algorithmVersion, 7)
+        XCTAssertTrue(migrated.answers.isEmpty)
+        XCTAssertTrue(migrated.finalSelection.isEmpty)
+        XCTAssertNil(migrated.predictionAudit)
+        XCTAssertEqual(migrated.readerPriorContributionRecorded, false)
+        XCTAssertNil(migrated.readerPriorContributionID)
+    }
+
     func testStaleSnapshotNeverPublishesInventory() async throws {
         let source = try FakeVocabularyPreparationSource(
             text: fixtureText,

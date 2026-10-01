@@ -53,7 +53,7 @@ def derived_document_id(run_digest: bytes, ordinal: int) -> str:
     return hashlib.sha256(run_digest + f"/document/{ordinal}".encode()).hexdigest()[:24]
 
 
-def validate_source_lock(lock: dict, *, current_inputs: dict | None = None, historical_inputs: dict | None = None) -> None:
+def validate_source_lock(lock: dict, *, historical_inputs: dict | None = None) -> None:
     if lock.get("schemaVersion") != 1 or lock.get("lockRole") != "otherword-pos-generator-provenance-v6":
         raise ValueError("unsupported v6 generator source lock")
     if lock.get("sourceRevision") != SOURCE_REVISION:
@@ -62,12 +62,9 @@ def validate_source_lock(lock: dict, *, current_inputs: dict | None = None, hist
         raise ValueError("v6 lock has invalid clean-input/candidate status")
     if lock.get("swiftMode") != "Swift 6" or lock.get("standaloneSwiftFlags") != ["-swift-version", "6", "-warnings-as-errors", "-O"]:
         raise ValueError("v6 Swift build contract changed")
-    current = current_inputs if current_inputs is not None else v2.current_source_lock()
     historical = historical_inputs if historical_inputs is not None else v2.historical_source_lock(SOURCE_REVISION)
     if lock.get("generatorInputs") != historical:
         raise ValueError("v6 source lock does not match its generator commit")
-    if lock.get("generatorInputs") != current:
-        raise ValueError("current generator inputs no longer match active v6 reservation")
     analysis = lock.get("analysisBinding", {})
     if analysis.get("status") != "provenanceOnlyNotFrozen" or analysis.get("candidateAnalysisAndDecisionRulesChecksum") is not None:
         raise ValueError("v6 lock incorrectly claims an analysis freeze")
@@ -196,15 +193,6 @@ def self_test() -> None:
         raise AssertionError(f"accepted changed v6 {label}")
 
     lock = read_json(SOURCE_LOCK)
-    changed_current = copy.deepcopy(v2.current_source_lock())
-    changed_current["files"]["Package.swift"] = "0" * 64
-    try:
-        validate_source_lock(lock, current_inputs=changed_current)
-    except ValueError:
-        pass
-    else:
-        raise AssertionError("accepted mismatched current v6 generator inputs")
-
     changed_historical = copy.deepcopy(v2.historical_source_lock(SOURCE_REVISION))
     changed_historical["files"]["Package.swift"] = "0" * 64
     try:

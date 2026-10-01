@@ -37,6 +37,10 @@ struct VocabularyPreparationInventoryPayload: Sendable {
     let sourceSnapshotMilliseconds: Double
     let inventoryModelMilliseconds: Double
     let contextMaterializationMilliseconds: Double
+    let algorithmVersion: Int
+    let lexicalShadowMilliseconds: Double
+    let lexicalShadowCandidateDelta: Int
+    let lexicalShadowDirectEvidenceCount: Int
 }
 
 private final class VocabularyPreparationCancellationToken: @unchecked Sendable {
@@ -76,6 +80,11 @@ private struct VocabularyPendingKnownScore: Equatable, Sendable {
 @MainActor
 @Observable
 final class VocabularyPreparationCoordinator {
+    private static let experimentalLexicalReconciliationKey =
+        "LeafReader.experimentalLexicalReconciliation"
+    private static let legacyExperimentalLexicalReconciliationV4Key =
+        "LeafReader.experimentalLexicalReconciliationV4"
+
     private weak var documentSource: (any VocabularyPreparationDocumentSource)?
     private weak var library: (any VocabularyPreparationLibraryAccess)?
     private let definitionProvider: any VocabularyPreparationDefinitionProviding
@@ -129,6 +138,16 @@ final class VocabularyPreparationCoordinator {
         UserDefaults.standard.bool(forKey: "LeafReader.experimentalVocabularyDomains")
     }
 
+    var experimentalLexicalReconciliationEnabled: Bool {
+        UserDefaults.standard.bool(forKey: Self.experimentalLexicalReconciliationKey)
+    }
+
+    private var desiredAlgorithmVersion: Int {
+        experimentalLexicalReconciliationEnabled
+            ? VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+            : VocabularyPreparationSession.currentAlgorithmVersion
+    }
+
     var selectedDocumentDomain: VocabularyDocumentDomain {
         session.documentDomain ?? domainDetection?.suggestedDomain ?? .general
     }
@@ -140,11 +159,24 @@ final class VocabularyPreparationCoordinator {
         readerPriorStore: any VocabularyReaderPriorStoring = VocabularyReaderPriorStore.shared,
         researchEvidenceStore: any VocabularyResearchEvidenceStoring = VocabularyResearchEvidenceStore.shared
     ) {
+        Self.migrateLegacyExperimentalLexicalReconciliationToggle()
         self.documentSource = documentSource
         self.library = library
         self.definitionProvider = definitionProvider
         self.readerPriorStore = readerPriorStore
         self.researchEvidenceStore = researchEvidenceStore
+    }
+
+    private static func migrateLegacyExperimentalLexicalReconciliationToggle() {
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: experimentalLexicalReconciliationKey) == nil,
+              defaults.object(forKey: legacyExperimentalLexicalReconciliationV4Key) != nil else {
+            return
+        }
+        defaults.set(
+            defaults.bool(forKey: legacyExperimentalLexicalReconciliationV4Key),
+            forKey: experimentalLexicalReconciliationKey
+        )
     }
 
     var currentContext: String {
@@ -162,7 +194,11 @@ final class VocabularyPreparationCoordinator {
     }
     var hasCompatiblePredictionAudit: Bool {
         guard let audit = session.predictionAudit, let inventory else { return false }
-        return audit.isCompatible(inventory: inventory, mode: mode)
+        return audit.isCompatible(
+            inventory: inventory,
+            mode: mode,
+            algorithmVersion: desiredAlgorithmVersion
+        )
     }
 
     var predictionAuditProgressText: String {
@@ -269,7 +305,7 @@ final class VocabularyPreparationCoordinator {
     func beginAssessment() {
         guard let inventory else { return }
         var restored = session.answers
-        if session.algorithmVersion > VocabularyPreparationSession.currentAlgorithmVersion {
+        if session.algorithmVersion != desiredAlgorithmVersion {
             restored = []
         }
         phase = .analyzing
@@ -277,6 +313,7 @@ final class VocabularyPreparationCoordinator {
         let activeRequestID = requestID
         let mode = mode
         let readerPrior = readerPrior
+        let algorithmVersion = session.algorithmVersion
         if session.readerPriorContributionID == nil {
             session.readerPriorContributionID = UUID().uuidString
             sessionStore?.save(session)
@@ -287,7 +324,8 @@ final class VocabularyPreparationCoordinator {
                 inventory: inventory,
                 mode: mode,
                 restoredAnswers: restored,
-                readerPrior: readerPrior
+                readerPrior: readerPrior,
+                algorithmVersion: algorithmVersion
             )
             let advance = Self.advance(
                 assessment,
@@ -303,7 +341,11 @@ final class VocabularyPreparationCoordinator {
     func beginPredictionAudit() {
         guard let inventory else { return }
         if let audit = session.predictionAudit,
-           audit.isCompatible(inventory: inventory, mode: mode) {
+           audit.isCompatible(
+            inventory: inventory,
+            mode: mode,
+            algorithmVersion: desiredAlgorithmVersion
+           ) {
             phase = audit.isComplete ? .predictionAuditResults : .predictionAudit
             return
         }
@@ -314,16 +356,19 @@ final class VocabularyPreparationCoordinator {
         )
         let activeRequestID = requestID
         let mode = mode
+        let algorithmVersion = desiredAlgorithmVersion
         Task.detached { [weak self] in
             let prediction = AdaptiveVocabularyAssessment(
                 inventory: inventory,
                 mode: mode,
-                readerPrior: nil
+                readerPrior: nil,
+                algorithmVersion: algorithmVersion
             ).result()
             let audit = VocabularyPredictionAuditSession(
                 inventory: inventory,
                 prediction: prediction,
-                mode: mode
+                mode: mode,
+                algorithmVersion: algorithmVersion
             )
             await self?.applyPredictionAudit(audit, requestID: activeRequestID)
         }
@@ -373,7 +418,7 @@ final class VocabularyPreparationCoordinator {
         session.finalSelection = []
         session.readerPriorContributionRecorded = false
         session.readerPriorContributionID = nil
-        session.algorithmVersion = VocabularyPreparationSession.currentAlgorithmVersion
+        session.algorithmVersion = desiredAlgorithmVersion
         sessionStore?.save(session)
         phase = inventory == nil ? .welcome : .inventory
     }
@@ -629,7 +674,11 @@ final class VocabularyPreparationCoordinator {
     ) {
         guard requestID == activeRequestID,
               let inventory,
-              audit.isCompatible(inventory: inventory, mode: mode),
+              audit.isCompatible(
+                inventory: inventory,
+                mode: mode,
+                algorithmVersion: desiredAlgorithmVersion
+              ),
               let identity = activeIdentity,
               documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
         session.predictionAudit = audit
@@ -647,12 +696,24 @@ final class VocabularyPreparationCoordinator {
         sourceSnapshotMilliseconds: Double
     ) {
         let domainsEnabled = experimentalDomainsEnabled
+        let reconciledIdentityEnabled = experimentalLexicalReconciliationEnabled
+        let algorithmVersion = reconciledIdentityEnabled
+            ? VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
+            : VocabularyPreparationSession.currentAlgorithmVersion
         let restoredDomain = session.documentDomain
         let priorStore = readerPriorStore
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard !cancellationToken.isCancelled else { return }
             let inventoryModelStartedAt = ProcessInfo.processInfo.systemUptime
-            let summaries = snapshot.index.lemmaSummaries()
+            let legacySummaries = snapshot.index.lemmaSummaries()
+            guard !cancellationToken.isCancelled else { return }
+            let lexicalShadowStartedAt = ProcessInfo.processInfo.systemUptime
+            let reconciledSummaries = snapshot.index.lexicalSummaries()
+            let lexicalShadowMilliseconds = (
+                ProcessInfo.processInfo.systemUptime - lexicalShadowStartedAt
+            ) * 1_000
+            guard !cancellationToken.isCancelled else { return }
+            let summaries = reconciledIdentityEnabled ? reconciledSummaries : legacySummaries
             let difficultyProvider = DocumentVocabularyFrequencyProvider.calibrated(
                 languageCode: snapshot.language.rawValue
             )
@@ -698,7 +759,13 @@ final class VocabularyPreparationCoordinator {
                 readerPrior: priorStore.load(languageCode: snapshot.language.rawValue),
                 sourceSnapshotMilliseconds: sourceSnapshotMilliseconds,
                 inventoryModelMilliseconds: inventoryModelMilliseconds,
-                contextMaterializationMilliseconds: contextMaterializationMilliseconds
+                contextMaterializationMilliseconds: contextMaterializationMilliseconds,
+                algorithmVersion: algorithmVersion,
+                lexicalShadowMilliseconds: lexicalShadowMilliseconds,
+                lexicalShadowCandidateDelta: reconciledSummaries.count - legacySummaries.count,
+                lexicalShadowDirectEvidenceCount: reconciledSummaries.lazy.filter {
+                    $0.assessmentPolicy == .directEvidenceOnly
+                }.count
             )
             Task { @MainActor [weak self] in
                 guard let self,
@@ -714,6 +781,15 @@ final class VocabularyPreparationCoordinator {
 
     private func apply(payload: VocabularyPreparationInventoryPayload, durationMilliseconds: Double) {
         let mainWorkStartedAt = ProcessInfo.processInfo.systemUptime
+        if session.algorithmVersion != payload.algorithmVersion {
+            session.answers = []
+            session.finalSelection = []
+            session.predictionAudit = nil
+            session.readerPriorContributionRecorded = false
+            session.readerPriorContributionID = nil
+            session.algorithmVersion = payload.algorithmVersion
+            sessionStore?.save(session)
+        }
         inventory = payload.inventory
         domainDetection = payload.domainDetection
         contexts = payload.contexts
@@ -736,6 +812,12 @@ final class VocabularyPreparationCoordinator {
         ReaderPerformance.record(
             .vocabularyPreparationContextMaterialization,
             milliseconds: payload.contextMaterializationMilliseconds
+        )
+        ReaderPerformance.logVocabularyPreparation(
+            .lexicalReconciliationShadow,
+            milliseconds: payload.lexicalShadowMilliseconds,
+            itemCount: payload.lexicalShadowCandidateDelta,
+            auxiliaryCount: payload.lexicalShadowDirectEvidenceCount
         )
         ReaderPerformance.record(.vocabularyPreparationInventoryBuild, milliseconds: durationMilliseconds)
         ReaderPerformance.logVocabularyPreparation(
@@ -1198,26 +1280,28 @@ final class VocabularyPreparationCoordinator {
               let inventory else { return }
         let languageCode = inventory.languageCode
         let posterior = assessment.thetaPosteriorSnapshot
-        let verifiedCount = assessment.verifiedEvidenceCount
+        let inferenceAnswerCount = assessment.inferenceAnswerCount
+        let verifiedInferenceCount = assessment.verifiedInferenceEvidenceCount
         let store = readerPriorStore
         let researchStore = researchEvidenceStore
         let answers = assessment.answers
         let activeRequestID = requestID
+        let algorithmVersion = session.algorithmVersion
         Task { [weak self] in
             let saved = await Task.detached {
-                let priorSaved = store.recordCompletedSession(
+                let priorSaved = inferenceAnswerCount == 0 || store.recordCompletedSession(
                     contributionID: contributionID,
                     languageCode: languageCode,
                     thetaPosterior: posterior,
-                    verifiedEvidenceCount: verifiedCount,
+                    verifiedEvidenceCount: verifiedInferenceCount,
                     completedAt: Date(),
-                    algorithmVersion: VocabularyPreparationSession.currentAlgorithmVersion
+                    algorithmVersion: algorithmVersion
                 )
                 _ = researchStore.recordCompletedSession(
                     contributionID: contributionID,
                     inventory: inventory,
                     answers: answers,
-                    protocolVersion: VocabularyPreparationSession.currentAlgorithmVersion
+                    protocolVersion: algorithmVersion
                 )
                 return priorSaved
             }.value
@@ -1232,7 +1316,6 @@ final class VocabularyPreparationCoordinator {
         guard let assessment else { return }
         session.mode = mode
         session.answers = assessment.answers
-        session.algorithmVersion = VocabularyPreparationSession.currentAlgorithmVersion
         sessionStore?.save(session)
     }
 
@@ -1297,7 +1380,7 @@ final class VocabularyPreparationCoordinator {
                     vocabularyID: UUID().uuidString,
                     word: candidate.displayLemma,
                     lemma: candidate.displayLemma,
-                    lexicalKey: candidate.canonicalKey,
+                    lexicalKey: candidate.lexicalItemID?.canonicalKey,
                     partOfSpeech: candidate.partOfSpeech,
                     surfaceForm: candidate.observedForms.first?.surface ?? candidate.displayLemma,
                     pageIndex: range.unitIndex,
@@ -1324,7 +1407,7 @@ final class VocabularyPreparationCoordinator {
                     vocabularyID: UUID().uuidString,
                     word: candidate.displayLemma,
                     lemma: candidate.displayLemma,
-                    lexicalKey: candidate.canonicalKey,
+                    lexicalKey: candidate.lexicalItemID?.canonicalKey,
                     partOfSpeech: candidate.partOfSpeech,
                     surfaceForm: candidate.observedForms.first?.surface ?? candidate.displayLemma,
                     context: contexts[candidate.canonicalKey] ?? "",

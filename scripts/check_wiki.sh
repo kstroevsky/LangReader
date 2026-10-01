@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 WIKI_DIR="$ROOT_DIR/docs/wiki"
 SYNC_SCRIPT="$ROOT_DIR/scripts/sync_github_wiki.sh"
+HAN_SCANNER="$ROOT_DIR/scripts/check_wiki_han.pl"
 FAILURES=0
 
 fail() {
@@ -97,12 +98,20 @@ check_retired_paths() {
 }
 
 check_english_only() {
-  local file
+  local file output status
   while IFS= read -r file; do
-    if LC_ALL=C perl -CSD -ne 'exit 1 if /\p{Han}/' "$file"; then
-      continue
-    fi
-    fail "$file contains Chinese text"
+    status=0
+    output="$("$HAN_SCANNER" "$file" 2>&1)" || status=$?
+    case "$status" in
+      0)
+        ;;
+      10)
+        fail "$file contains Han-script text: $output"
+        ;;
+      *)
+        fail "$file Han-script scan failed (Perl exit $status): $output"
+        ;;
+    esac
   done < <(
     # graphify-out is an internal, generated code-analysis workspace. It is not
     # published by MkDocs or synchronized to the GitHub wiki, so its captured
@@ -116,6 +125,7 @@ check_english_only() {
 }
 
 check_scripts() {
+  perl -c "$HAN_SCANNER" >/dev/null
   bash -n "$ROOT_DIR/scripts/generate_code_wiki.sh"
   bash -n "$ROOT_DIR/scripts/generate_wiki_home.sh"
   bash -n "$ROOT_DIR/scripts/sync_github_wiki.sh"

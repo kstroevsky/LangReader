@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 12,
+  "reservationID": "development-confirmation-v12",
+  "dataRole": "development-confirmation",
+  "reservationDate": "2026-09-25",
+  "reservationSourceRevision": "458f2ad80654a6d0da61cf84b0ab45fdcc9067a9",
+  "executionStatus": "reservedNotExecuted",
+  "supersedesAsActiveReservation": "development-confirmation-v11",
+  "historicalReservationStatuses": {
+    "development-confirmation-v1": "reservedNotExecuted",
+    "development-confirmation-v2": "reservedNotExecuted",
+    "development-confirmation-v3": "reservedNotExecuted",
+    "development-confirmation-v4": "reservedNotExecuted",
+    "development-confirmation-v5": "reservedNotExecuted",
+    "development-confirmation-v6": "reservedNotExecuted",
+    "development-confirmation-v7": "reservedNotExecuted",
+    "development-confirmation-v8": "reservedNotExecuted",
+    "development-confirmation-v9": "reservedNotExecuted",
+    "development-confirmation-v10": "reservedNotExecuted",
+    "development-confirmation-v11": "reservedNotExecuted"
+  },
+  "seedDerivation": {
+    "algorithm": "SHA256(rootBytes || UTF8('development-confirmation-v12/run/' || zeroBasedRunOrdinal)); seed=first8BytesUInt64BE, zero maps to one",
+    "seedDerivationRoot": "cc0fbe866131bde52ceb4f0f8d13195c9e2ee57f851a21c34c9e2888889382f3",
+    "documentIdentityAlgorithm": "first24Hex(SHA256(fullRunDigest || UTF8('/document/' || zeroBasedDocumentOrdinal)))"
+  },
+  "generatorLock": {
+    "path": "docs/plans/vocabulary-validation-boundary/implementation-evidence/lexical-reconciliation-generator-source-lock-v12.json",
+    "sha256": "8f77942d3c0caf9b26a7597285a9d4448419b280a5c6a4b7284d293595fa3acd"
+  },
+  "workload": {
+    "readersPerScenario": 64,
+    "documentsPerScenario": 8,
+    "lemmasPerDocument": 400,
+    "scenarios": [
+      "well-specified",
+      "item-residual",
+      "response-noise",
+      "idiosyncratic-knowledge"
+    ],
+    "modes": [
+      "all-unknown",
+      "coverage-98"
+    ],
+    "warmAndCold": true,
+    "gatePolicy": "unchanged EVAL-001 and release-regression thresholds",
+    "interpretation": "three independent reserved runs; percentages retain raw reader/document counts and are not a two-point precision claim"
+  },
+  "runs": [
+    {
+      "runOrdinal": 0,
+      "runID": "adfbf5a8f3cd0c0b",
+      "seed": 12536884093709519883,
+      "opaqueDocumentDerivationIDs": [
+        "746ae46defb6547502078427",
+        "5751c18d662e900b666e3426",
+        "620019bc1ead5ccee5fedf1c",
+        "9d747e945221a49cb72c973c",
+        "10f3b8644a976670886dd0f4",
+        "d820279dc6a693d19fc05ca5",
+        "2975b8d2422595c444548ab4",
+        "ded722519355cbca16d67ebf"
+      ]
+    },
+    {
+      "runOrdinal": 1,
+      "runID": "dfd7bfd2caac36e5",
+      "seed": 16129571502515042021,
+      "opaqueDocumentDerivationIDs": [
+        "e1b0abf5962853004d2b4ac9",
+        "2faa5c5989239e2c420b81fe",
+        "b3f4f9701ff6e669ffebf96b",
+        "330bc2857db9aa7d118d1855",
+        "27ebf77cbe58e79f144d92ad",
+        "12bead9cfc875ea7f8096e49",
+        "eaed4d539412f11582841437",
+        "ac65bc22fb026dd40efa6547"
+      ]
+    },
+    {
+      "runOrdinal": 2,
+      "runID": "d1b1fcfc7f1febf5",
+      "seed": 15110136386199481333,
+      "opaqueDocumentDerivationIDs": [
+        "a69076cfd29eb9e3cdddd4f8",
+        "2ba271f460bc6cbdf2b4bfe7",
+        "454dde0dd2f80733a9771939",
+        "b31cc63f1f86f97abd1fbda6",
+        "2fc7fcb6fa74daaaa17b85ba",
+        "30512f82ce7a270abfbb0dfc",
+        "1bda9102688017f51c3972b5",
+        "b43dbf877675e87005b53937"
+      ]
+    }
+  ],
+  "nonOverlap": {
+    "identityCorpusRevision": "458f2ad80654a6d0da61cf84b0ab45fdcc9067a9",
+    "identityCorpusRoots": [
+      "docs/perf",
+      "docs/plans",
+      "scripts/fixtures"
+    ],
+    "historicalReservationSHA256": {
+      "development-confirmation-v1": "a43e45a5fef43367b20e36e0f41684186901af325e2e597a994857591015303a",
+      "development-confirmation-v2": "19ccb4a9bddff02df1c074c85b56ffc782e7216d1a883a60cc088ac7338af89d",
+      "development-confirmation-v3": "8c25324b82cf54e7d1945ce2918c61d4eecae8522743839323e24edb58f7fb4c",
+      "development-confirmation-v4": "4717a4b2b7f2b0e55d03321a5754a52ceb31c2e7b8ac232e67464fe8a89c9006",
+      "development-confirmation-v5": "ace9fa7c0e44df40f7eff8c6572828296d4acfd09c857211c207989af6f73647",
+      "development-confirmation-v6": "15ec2bcb8baeafc36e7983c48e4335bfb46d914d6be96c8f9875e33be52f3517",
+      "development-confirmation-v7": "dd12e9e0f9964385f030ebec970302fc14b3c79d313e79e6b9a182faf29ef12e",
+      "development-confirmation-v8": "dac4dafebedebc0befe719f71919f3053c32d0bce914a6eb22f545d5107a98eb",
+      "development-confirmation-v9": "65cc1fcd0cfc6e67b61883dc3bddcf1df539a514ee0cba4c8b8e1710649669ef",
+      "development-confirmation-v10": "24f278fdae0ec3f16e56b75067deabc6b7e34a90158c3cdd24d8399cdaf198fa",
+      "development-confirmation-v11": "9c111d474a55ab1bb20262fc601e5250dbe196de4933f98c905b4fd75d6d4b81"
+    },
+    "allReservedSeedsMustBeDisjoint": true,
+    "allOpaqueDocumentDerivationIDsMustBeUnique": true,
+    "opaqueDocumentNamespaceNote": "The versioned identity corpus includes all v1-v11 reservation seeds and every prior archived 24-hex JSON identity before v12 was created."
+  },
+  "freezeAndConsumption": {
+    "candidateFreeze": null,
+    "analysisFreeze": null,
+    "decisionRulesChecksum": null,
+    "outcomeArtifacts": [],
+    "outcomesInspected": false,
+    "consumedByCandidateCycle": null,
+    "releaseHoldoutAccessAllowed": false,
+    "requiredBeforeExecution": [
+      "candidate commit and clean-tree hash",
+      "model/configuration/resource hashes",
+      "analysis and decision-rule checksum",
+      "reviewed decision to consume this specific reservation"
+    ],
+    "onDesignChangeAfterExecution": "retain the result, mark this reservation consumed for that candidate-design cycle, return to development, and reserve a fresh future confirmation set",
+    "onPass": "record the frozen confirmation decision before any frozen release-holdout access"
+  }
+}
