@@ -2,9 +2,9 @@
 
 This is a derived execution view. It does not amend the canonical ledger, change any gate, or treat the canonical word `active` as completion. Every canonical requirement remains listed until an explicit final decision retires or supersedes it.
 
-Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `4a4cce0a113953a4bef7a071d08977d126ecdf13`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
+Production evidence candidate: `cfb5468beddac86fd9dd0d39b2627656a92c3320`. Repository head reviewed: `ae1c7fd7a3b3d7cbf9f8aa7c72bb4ba9ad2360ed`. The commit that refreshes this derived register may follow the reviewed head but does not itself alter production behavior.
 
-Active future reservation: `docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v14.json` (SHA-256 `d7a729cf73f0fa97b530452fb486bfb1f7f26fb3fa28e5e0035dd1c558e5b35d`; `reserved_not_executed`). Historical reservations remain indexed separately and unexecuted.
+Active future reservation: `docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v15.json` (SHA-256 `36d2230312a8c12658790516373666aab3400fd411c52d67c2e2da3755939109`; `reserved_not_executed`). Historical reservations remain indexed separately and unexecuted.
 
 Head-only changes since the production evidence candidate:
 
@@ -104,6 +104,9 @@ Head-only changes since the production evidence candidate:
 - 91be92e8996cd77066615ccbb656fbe381e3fc1f: separate live-platform reconciliation coverage from deterministic cross-format policy coverage and align ADR v7 wording
 - 1a1c5b0fccd4155de61c2e483acd801b86f549ac: preserve occurrence-scoped direct-evidence candidates in lexical-partition assessment consequences
 - 4a4cce0a113953a4bef7a071d08977d126ecdf13: expose per-child strong-context and attestation provenance in lexical-reconciliation diagnostics without changing reconciliation decisions
+- 8cc86ace42cadcd0bf521398d02bb79935b69697: development-only representative-book annotation workflow; no corpus outcomes or production policy changes
+- e02c8b2baa5c5b3fb161275a89474f137a9d1f75: immutable occurrence-evidence observation seam and reviewed-fixture materializer; candidate semantics unchanged
+- ae1c7fd7a3b3d7cbf9f8aa7c72bb4ba9ad2360ed: safe representative-book development metadata only; annotations remain unreviewed and unscored
 
 Canonical ledger: `docs/plans/vocabulary-measurement-coherence/target-ledger.json` (`54` requirements; file SHA-256 `d7e46db017f1ba647ae4d0f81ae91df6ca65bcd7dffe7d9d4d084fe973e038d4`).
 
@@ -298,7 +301,14 @@ The status inventory is descriptive, not a completion percentage: `awaiting_exte
 - Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v14.json`](development-confirmation-reservation-v14.json); SHA-256 `d7a729cf73f0fa97b530452fb486bfb1f7f26fb3fa28e5e0035dd1c558e5b35d`
 - Evidence class: sealed synthetic development-confirmation reservation
 - Status: `reserved_not_executed`
-- Interpretation: Sole active future reservation for the ADR-0001 experimental v7 lexical protocol after reconciliation observability was completed with per-child strong-context counts and attestation provenance. Reconciliation decisions remain lexical-reconciliation-v3. It has three disjoint seeds and 24 opaque document identities and no candidate freeze, outcomes, consumption, or release access.
+- Interpretation: Historical unexecuted reservation for the ADR-0001 experimental v7 lexical protocol after reconciliation observability was completed; its source binding was superseded when Core gained the immutable occurrence-evidence observation seam used by reviewed fixture materialization, while its identities and bytes remain sealed.
+
+### docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v15.json
+
+- Artifact/checksum: [`docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v15.json`](development-confirmation-reservation-v15.json); SHA-256 `36d2230312a8c12658790516373666aab3400fd411c52d67c2e2da3755939109`
+- Evidence class: sealed synthetic development-confirmation reservation
+- Status: `reserved_not_executed`
+- Interpretation: Sole active future reservation for the ADR-0001 experimental v7 lexical protocol after adding the immutable occurrence-evidence observation seam required for reviewed representative-book fixture materialization. Reconciliation decisions remain lexical-reconciliation-v3. It has three disjoint seeds and 24 opaque document identities and no candidate freeze, outcomes, consumption, or release access.
 
 ### docs/plans/vocabulary-validation-evidence/german-form-label-portability-development-check-2026-09-21.json
 
