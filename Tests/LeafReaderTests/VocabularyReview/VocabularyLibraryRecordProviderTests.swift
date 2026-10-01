@@ -12,7 +12,10 @@ private func assert(_ condition: @autoclosure () -> Bool, _ message: String) {
 private func record(
     id: String,
     word: String,
+    language: VocabularyLanguageID? = nil,
     lemma: String? = nil,
+    lexicalKey: String? = nil,
+    partOfSpeech: VocabularyPartOfSpeech? = nil,
     surfaceForm: String? = nil,
     answer: String,
     location: String,
@@ -23,7 +26,10 @@ private func record(
     return VocabularyExportRecord(
         ids: [id],
         word: word,
+        language: language,
         lemma: lemma,
+        lexicalKey: lexicalKey,
+        partOfSpeech: partOfSpeech,
         forms: [VocabularyForm(surface: surfaceForm ?? word)],
         answer: answer,
         dictionaryTags: nil,
@@ -59,7 +65,10 @@ struct VocabularyLibraryRecordProviderTestRunner {
                 records: [record(
                     id: "pdf-1",
                     word: "Überlegen",
+                    language: .german,
                     lemma: "überlegen",
+                    lexicalKey: "de|überlegen|verb|",
+                    partOfSpeech: .verb,
                     surfaceForm: "Überlegen",
                     answer: "to consider",
                     location: "p. 4",
@@ -74,7 +83,10 @@ struct VocabularyLibraryRecordProviderTestRunner {
                 records: [record(
                     id: "web-1",
                     word: "überlegte",
+                    language: .german,
                     lemma: "überlegen",
+                    lexicalKey: "de|überlegen|verb|",
+                    partOfSpeech: .verb,
                     surfaceForm: "überlegte",
                     answer: "to think over carefully",
                     location: "42%",
@@ -98,6 +110,89 @@ struct VocabularyLibraryRecordProviderTestRunner {
             "Wir müssen uns das noch überlegen.",
             "Sie wollte den Vorschlag überlegen."
         ], "occurrences should retain their document context")
+
+        let englishGift = VocabularyLibrarySource(
+            documentURL: URL(fileURLWithPath: "/tmp/english.pdf"),
+            documentTitle: "English",
+            documentKind: .pdf,
+            records: [record(
+                id: "en-gift",
+                word: "Gift",
+                language: .english,
+                lemma: "gift",
+                answer: "present",
+                location: "p. 1",
+                context: "This gift is for you.",
+                createdAt: 1
+            )]
+        )
+        let germanGift = VocabularyLibrarySource(
+            documentURL: URL(fileURLWithPath: "/tmp/german.pdf"),
+            documentTitle: "German",
+            documentKind: .pdf,
+            records: [record(
+                id: "de-gift",
+                word: "Gift",
+                language: .german,
+                lemma: "gift",
+                answer: "poison",
+                location: "p. 1",
+                context: "Das Gift ist gefährlich.",
+                createdAt: 2
+            )]
+        )
+        let languageScoped = VocabularyLibraryRecordProvider.records(sources: [englishGift, germanGift])
+        assert(languageScoped.count == 2, "known-different languages must never merge by spelling or lemma")
+        assert(Set(languageScoped.compactMap(\.language)) == [.english, .german], "library records should preserve known language identity")
+
+        let germanUnresolvedElsewhere = VocabularyLibrarySource(
+            documentURL: URL(fileURLWithPath: "/tmp/german-elsewhere.pdf"),
+            documentTitle: "German Elsewhere",
+            documentKind: .pdf,
+            records: [record(
+                id: "de-gift-elsewhere",
+                word: "Gift",
+                language: .german,
+                lemma: "gift",
+                answer: "poison",
+                location: "p. 3",
+                context: "Gift bleibt gefährlich.",
+                createdAt: 3
+            )]
+        )
+        let sameLanguageUnresolved = VocabularyLibraryRecordProvider.records(sources: [germanGift, germanUnresolvedElsewhere])
+        assert(sameLanguageUnresolved.count == 2, "known language plus lemma without a validated lexical key must remain document-scoped")
+
+        let unknownFirst = VocabularyLibrarySource(
+            documentURL: URL(fileURLWithPath: "/tmp/unknown-a.pdf"),
+            documentTitle: "Unknown A",
+            documentKind: .pdf,
+            records: [record(
+                id: "unknown-a",
+                word: "die",
+                lemma: "die",
+                answer: "",
+                location: "p. 1",
+                context: "",
+                createdAt: 1
+            )]
+        )
+        let unknownSecond = VocabularyLibrarySource(
+            documentURL: URL(fileURLWithPath: "/tmp/unknown-b.pdf"),
+            documentTitle: "Unknown B",
+            documentKind: .pdf,
+            records: [record(
+                id: "unknown-b",
+                word: "die",
+                lemma: "die",
+                answer: "",
+                location: "p. 2",
+                context: "",
+                createdAt: 2
+            )]
+        )
+        let unknownScoped = VocabularyLibraryRecordProvider.records(sources: [unknownFirst, unknownSecond])
+        assert(unknownScoped.count == 2, "unresolved records from unrelated documents must not merge by spelling alone")
 
         print("VocabularyLibraryRecordProviderTests passed")
     }

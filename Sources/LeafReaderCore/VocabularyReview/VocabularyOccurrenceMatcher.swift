@@ -33,6 +33,25 @@ package enum VocabularyOccurrenceMatcher {
         return matches(compiled: compiled, in: text)
     }
 
+    /// Exact-form discovery across a document. The query is compiled once and
+    /// page order is preserved so callers can map results back to renderer
+    /// locations without introducing a language identity or linguistic provider.
+    /// A nil result means cancellation; an empty result is a completed search.
+    package static func matches(
+        query: String,
+        inTexts texts: [String],
+        isCancelled: () -> Bool = { false }
+    ) -> [[VocabularyTextOccurrence]]? {
+        guard let compiled = compile(query: query) else { return [] }
+        var results: [[VocabularyTextOccurrence]] = []
+        results.reserveCapacity(texts.count)
+        for text in texts {
+            guard !isCancelled() else { return nil }
+            results.append(matches(compiled: compiled, in: text))
+        }
+        return isCancelled() ? nil : results
+    }
+
     package static func matches(compiled: CompiledQuery, in text: String) -> [VocabularyTextOccurrence] {
         guard !text.isEmpty else { return [] }
 

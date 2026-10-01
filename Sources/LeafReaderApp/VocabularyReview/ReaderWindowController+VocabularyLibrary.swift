@@ -38,12 +38,17 @@ extension ReaderWindowController {
     /// other document in the list is already handled, so the current document is
     /// no longer a special, slow case.
     func reloadVocabularyLibraryInBackground() {
+        let requestID = UUID()
+        vocabularyState.libraryReloadRequestID = requestID
         let currentPath = currentFileURL?.standardizedFileURL.path
         let currentDocumentID = currentFileURL.flatMap { fileMD5(for: $0) }
         let currentKind = currentDocumentKind
         let currentPDFRecords = storedWordRecords
         let currentWebRecords = storedWebWordRecords
-        let language = vocabularyDocumentLanguage
+        let languageID = vocabularyDocumentLanguageID
+        let workIdentity = vocabularyDocumentWorkIdentity
+        let runtime = languageID.flatMap { vocabularyLanguageCatalog.resolve(language: $0) }
+        let semanticIdentity = runtime?.linguisticCacheIdentity
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
             let currentRecords: [VocabularyExportRecord]
@@ -52,7 +57,7 @@ extension ReaderWindowController {
                     pdf: currentPDFRecords,
                     web: currentWebRecords,
                     labelGeneration: GermanLabelCacheGeneration.current,
-                    language: language
+                    semanticIdentity: semanticIdentity
                 )
                 currentRecords = self.vocabularyLibraryBuildCache.records(
                     documentID: currentDocumentID,
@@ -63,7 +68,7 @@ extension ReaderWindowController {
                         pdfRecords: currentPDFRecords,
                         webRecords: currentWebRecords,
                         pdfContext: { $0.context ?? "" },
-                        formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(language: language)
+                        formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(runtime: runtime)
                     )
                 }
             } else {
@@ -72,7 +77,7 @@ extension ReaderWindowController {
                     pdfRecords: currentPDFRecords,
                     webRecords: currentWebRecords,
                     pdfContext: { $0.context ?? "" },
-                    formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(language: language)
+                    formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(runtime: runtime)
                 )
             }
             let records = self.makeVocabularyLibraryRecords(
@@ -80,6 +85,9 @@ extension ReaderWindowController {
                 currentRecords: currentRecords
             )
             DispatchQueue.main.async {
+                guard self.vocabularyState.libraryReloadRequestID == requestID,
+                      self.currentFileMD5 == currentDocumentID,
+                      self.vocabularyDocumentWorkIdentity == workIdentity else { return }
                 self.vocabularyLibraryWindowController.apply(records: records)
             }
         }
@@ -110,25 +118,27 @@ extension ReaderWindowController {
             } else {
                 let pdfRecords = PDFWordRecordStore(fileMD5: documentID).load()
                 let webStore = WebWordRecordStore(fileMD5: documentID)
-                let loadedWebRecords = webStore.load()
-                // This document is not the open one, so its language has to come
-                // from the contexts saved with its own words.
-                let otherLanguage = VocabularyLanguageDetector.language(
-                    forContexts: pdfRecords.compactMap(\.context) + loadedWebRecords.map(\.context)
+                let webRecords = webStore.load()
+                // Library building is a read-only projection. Persisted document
+                // metadata is authoritative when present; otherwise detection is
+                // temporary evidence for this projection only.
+                let persistedResolution = VocabularyDocumentLanguageStore(documentID: documentID)
+                    .load()?
+                    .restoredResolution
+                let otherLanguageResolution = persistedResolution ?? VocabularyLanguageDetector.resolution(
+                    forContexts: pdfRecords.compactMap(\.context) + webRecords.map(\.context),
+                    recognizer: AppleVocabularyLanguageRecognizer.shared
                 )
-                let repairedWeb = WebWordRecordMetadataRepair.repair(
-                    loadedWebRecords,
-                    language: otherLanguage
-                )
-                let webRecords = repairedWeb.records
-                if repairedWeb.didChange {
-                    webStore.save(webRecords)
+                let otherLanguageID = otherLanguageResolution.languageID
+                let otherRuntime = otherLanguageID.flatMap {
+                    vocabularyLanguageCatalog.resolve(language: $0)
                 }
+                let otherSemanticIdentity = otherRuntime?.linguisticCacheIdentity
                 let fingerprint = VocabularyLibraryBuildCache.fingerprint(
                     pdf: pdfRecords,
                     web: webRecords,
                     labelGeneration: GermanLabelCacheGeneration.current,
-                    language: otherLanguage
+                    semanticIdentity: otherSemanticIdentity
                 )
                 records = vocabularyLibraryBuildCache.records(
                     documentID: documentID,
@@ -139,7 +149,7 @@ extension ReaderWindowController {
                         pdfRecords: pdfRecords,
                         webRecords: webRecords,
                         pdfContext: { $0.context ?? "" },
-                        formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(language: otherLanguage)
+                        formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(runtime: otherRuntime)
                     )
                 }
             }
@@ -203,12 +213,15 @@ extension ReaderWindowController {
     func wordFocusInfo(for word: String) -> AIChatPanel.WordFocusInfo? {
         let key = VocabularyTextPolicy.canonicalVocabularyKey(word)
         guard !key.isEmpty else { return nil }
+        let runtime = vocabularyDocumentLanguageID.flatMap {
+            vocabularyLanguageCatalog.resolve(language: $0)
+        }
         let records = VocabularyRecordProvider.records(
             documentKind: currentDocumentKind,
             pdfRecords: storedWordRecords,
             webRecords: storedWebWordRecords,
             pdfContext: { $0.context ?? "" },
-            formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(language: vocabularyDocumentLanguage)
+            formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(runtime: runtime)
         )
         guard let record = records.first(where: { candidate in
             VocabularyTextPolicy.canonicalVocabularyKey(candidate.lemma ?? candidate.word) == key

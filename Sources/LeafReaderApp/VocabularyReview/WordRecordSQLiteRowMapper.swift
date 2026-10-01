@@ -28,8 +28,9 @@ enum WordRecordSQLiteBindIndex: Int32 {
     case answer = 8
     case dictionaryTags = 9
     case dictionaryFrequency = 10
-    case createdAt = 11
-    case srsJSON = 12
+    case dictionaryFrequencyProvenanceJSON = 11
+    case createdAt = 12
+    case srsJSON = 13
 }
 
 struct PDFWordRecordSQLiteMapper {
@@ -43,12 +44,14 @@ struct PDFWordRecordSQLiteMapper {
         case answer = 6
         case dictionaryTags = 7
         case dictionaryFrequency = 8
-        case createdAt = 9
-        case srsJSON = 10
+        case dictionaryFrequencyProvenanceJSON = 9
+        case createdAt = 10
+        case srsJSON = 11
     }
 
     static let selectSQL = """
-    SELECT id, word, page_index, bounds_json, context, question, answer, dictionary_tags, dictionary_frequency, created_at, srs_json
+    SELECT id, word, page_index, bounds_json, context, question, answer, dictionary_tags, dictionary_frequency,
+           dictionary_frequency_provenance_json, created_at, srs_json
     FROM pdf_word_records
     WHERE document_id = ?
     ORDER BY created_at ASC, id ASC
@@ -56,9 +59,10 @@ struct PDFWordRecordSQLiteMapper {
 
     static let insertSQL = """
     INSERT OR REPLACE INTO pdf_word_records(
-        document_id, id, word, page_index, bounds_json, context, question, answer, dictionary_tags, dictionary_frequency, created_at, srs_json
+        document_id, id, word, page_index, bounds_json, context, question, answer, dictionary_tags, dictionary_frequency,
+        dictionary_frequency_provenance_json, created_at, srs_json
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
     let codec: WordRecordSQLiteJSONCodec
@@ -82,6 +86,10 @@ struct PDFWordRecordSQLiteMapper {
             answer: answer,
             dictionaryTags: optionalStringColumn(statement, Column.dictionaryTags.rawValue),
             dictionaryFrequency: optionalIntColumn(statement, Column.dictionaryFrequency.rawValue),
+            dictionaryFrequencyProvenance: codec.decode(
+                VocabularyFrequencyProvenance.self,
+                from: optionalStringColumn(statement, Column.dictionaryFrequencyProvenanceJSON.rawValue)
+            ),
             createdAt: Date(timeIntervalSince1970: sqlite3_column_double(statement, Column.createdAt.rawValue)),
             srs: codec.decode(VocabularySRSState.self, from: optionalStringColumn(statement, Column.srsJSON.rawValue))
         )
@@ -98,6 +106,11 @@ struct PDFWordRecordSQLiteMapper {
         bindText(record.answer, at: .answer, statement: statement)
         bindOptionalText(record.dictionaryTags, at: .dictionaryTags, statement: statement)
         bindOptionalInt(record.dictionaryFrequency, at: .dictionaryFrequency, statement: statement)
+        bindOptionalText(
+            codec.encode(record.dictionaryFrequencyProvenance),
+            at: .dictionaryFrequencyProvenanceJSON,
+            statement: statement
+        )
         sqlite3_bind_double(statement, WordRecordSQLiteBindIndex.createdAt.rawValue, record.createdAt.timeIntervalSince1970)
         bindOptionalText(codec.encode(record.srs), at: .srsJSON, statement: statement)
     }
@@ -108,28 +121,34 @@ struct PDFVocabularySQLiteMapper {
         case occurrenceID = 0
         case vocabularyID = 1
         case word = 2
-        case lemma = 3
-        case lexicalKey = 4
-        case partOfSpeech = 5
-        case surfaceForm = 6
-        case pageIndex = 7
-        case boundsJSON = 8
-        case textAnchorJSON = 9
-        case context = 10
-        case question = 11
-        case answer = 12
-        case dictionaryTags = 13
-        case dictionaryFrequency = 14
-        case createdAt = 15
-        case srsJSON = 16
+        case language = 3
+        case lemma = 4
+        case lexicalKey = 5
+        case partOfSpeech = 6
+        case surfaceForm = 7
+        case pageIndex = 8
+        case boundsJSON = 9
+        case textAnchorJSON = 10
+        case context = 11
+        case question = 12
+        case answer = 13
+        case dictionaryTags = 14
+        case dictionaryFrequency = 15
+        case dictionaryFrequencyProvenanceJSON = 16
+        case createdAt = 17
+        case srsJSON = 18
     }
 
     static let selectSQL = """
-    SELECT occurrence.id, word.id, word.word, word.lemma, word.lexical_key, word.part_of_speech,
+    SELECT occurrence.id, word.id, word.word, occurrence.language_id,
+           COALESCE(occurrence.lemma, word.lemma),
+           COALESCE(occurrence.lexical_key, word.lexical_key),
+           COALESCE(occurrence.part_of_speech, word.part_of_speech),
            occurrence.surface_form,
            occurrence.page_index, occurrence.bounds_json, occurrence.text_anchor_json,
            occurrence.context, word.question, word.answer, word.dictionary_tags,
-           word.dictionary_frequency, occurrence.created_at, word.srs_json
+           word.dictionary_frequency, word.dictionary_frequency_provenance_json,
+           occurrence.created_at, word.srs_json
     FROM pdf_vocabulary_occurrences AS occurrence
     JOIN pdf_vocabulary_words AS word
       ON word.document_id = occurrence.document_id AND word.id = occurrence.vocabulary_id
@@ -153,6 +172,7 @@ struct PDFVocabularySQLiteMapper {
             id: id,
             vocabularyID: vocabularyID,
             word: word,
+            language: vocabularyLanguageColumn(statement, Column.language.rawValue),
             lemma: optionalStringColumn(statement, Column.lemma.rawValue),
             lexicalKey: optionalStringColumn(statement, Column.lexicalKey.rawValue),
             partOfSpeech: optionalStringColumn(statement, Column.partOfSpeech.rawValue)
@@ -166,6 +186,10 @@ struct PDFVocabularySQLiteMapper {
             answer: answer,
             dictionaryTags: optionalStringColumn(statement, Column.dictionaryTags.rawValue),
             dictionaryFrequency: optionalIntColumn(statement, Column.dictionaryFrequency.rawValue),
+            dictionaryFrequencyProvenance: codec.decode(
+                VocabularyFrequencyProvenance.self,
+                from: optionalStringColumn(statement, Column.dictionaryFrequencyProvenanceJSON.rawValue)
+            ),
             createdAt: Date(timeIntervalSince1970: sqlite3_column_double(statement, Column.createdAt.rawValue)),
             srs: codec.decode(VocabularySRSState.self, from: optionalStringColumn(statement, Column.srsJSON.rawValue))
         )
@@ -177,19 +201,21 @@ struct WebWordRecordSQLiteMapper {
         case id = 0
         case vocabularyID = 1
         case word = 2
-        case lemma = 3
-        case lexicalKey = 4
-        case partOfSpeech = 5
-        case surfaceForm = 6
-        case context = 7
-        case occurrenceIndex = 8
-        case scrollProgress = 9
-        case question = 10
-        case answer = 11
-        case dictionaryTags = 12
-        case dictionaryFrequency = 13
-        case createdAt = 14
-        case srsJSON = 15
+        case language = 3
+        case lemma = 4
+        case lexicalKey = 5
+        case partOfSpeech = 6
+        case surfaceForm = 7
+        case context = 8
+        case occurrenceIndex = 9
+        case scrollProgress = 10
+        case question = 11
+        case answer = 12
+        case dictionaryTags = 13
+        case dictionaryFrequency = 14
+        case dictionaryFrequencyProvenanceJSON = 15
+        case createdAt = 16
+        case srsJSON = 17
     }
 
     private enum Bind: Int32 {
@@ -197,25 +223,27 @@ struct WebWordRecordSQLiteMapper {
         case id = 2
         case vocabularyID = 3
         case word = 4
-        case lemma = 5
-        case lexicalKey = 6
-        case partOfSpeech = 7
-        case surfaceForm = 8
-        case context = 9
-        case occurrenceIndex = 10
-        case scrollProgress = 11
-        case question = 12
-        case answer = 13
-        case dictionaryTags = 14
-        case dictionaryFrequency = 15
-        case createdAt = 16
-        case srsJSON = 17
+        case language = 5
+        case lemma = 6
+        case lexicalKey = 7
+        case partOfSpeech = 8
+        case surfaceForm = 9
+        case context = 10
+        case occurrenceIndex = 11
+        case scrollProgress = 12
+        case question = 13
+        case answer = 14
+        case dictionaryTags = 15
+        case dictionaryFrequency = 16
+        case dictionaryFrequencyProvenanceJSON = 17
+        case createdAt = 18
+        case srsJSON = 19
     }
 
     static let selectSQL = """
-    SELECT id, vocabulary_id, word, lemma, lexical_key, part_of_speech, surface_form, context,
+    SELECT id, vocabulary_id, word, language_id, lemma, lexical_key, part_of_speech, surface_form, context,
            occurrence_index, scroll_progress, question, answer,
-           dictionary_tags, dictionary_frequency, created_at, srs_json
+           dictionary_tags, dictionary_frequency, dictionary_frequency_provenance_json, created_at, srs_json
     FROM web_word_records
     WHERE document_id = ?
     ORDER BY created_at ASC, id ASC
@@ -223,11 +251,11 @@ struct WebWordRecordSQLiteMapper {
 
     static let insertSQL = """
     INSERT OR REPLACE INTO web_word_records(
-        document_id, id, vocabulary_id, word, lemma, lexical_key, part_of_speech, surface_form, context,
+        document_id, id, vocabulary_id, word, language_id, lemma, lexical_key, part_of_speech, surface_form, context,
         occurrence_index, scroll_progress, question, answer, dictionary_tags,
-        dictionary_frequency, created_at, srs_json
+        dictionary_frequency, dictionary_frequency_provenance_json, created_at, srs_json
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
     let codec: WordRecordSQLiteJSONCodec
@@ -244,6 +272,7 @@ struct WebWordRecordSQLiteMapper {
             id: id,
             vocabularyID: optionalStringColumn(statement, Column.vocabularyID.rawValue),
             word: word,
+            language: vocabularyLanguageColumn(statement, Column.language.rawValue),
             lemma: optionalStringColumn(statement, Column.lemma.rawValue),
             lexicalKey: optionalStringColumn(statement, Column.lexicalKey.rawValue),
             partOfSpeech: optionalStringColumn(statement, Column.partOfSpeech.rawValue)
@@ -258,6 +287,10 @@ struct WebWordRecordSQLiteMapper {
             answer: answer,
             dictionaryTags: optionalStringColumn(statement, Column.dictionaryTags.rawValue),
             dictionaryFrequency: optionalIntColumn(statement, Column.dictionaryFrequency.rawValue),
+            dictionaryFrequencyProvenance: codec.decode(
+                VocabularyFrequencyProvenance.self,
+                from: optionalStringColumn(statement, Column.dictionaryFrequencyProvenanceJSON.rawValue)
+            ),
             createdAt: Date(timeIntervalSince1970: sqlite3_column_double(statement, Column.createdAt.rawValue)),
             srs: codec.decode(VocabularySRSState.self, from: optionalStringColumn(statement, Column.srsJSON.rawValue))
         )
@@ -268,6 +301,7 @@ struct WebWordRecordSQLiteMapper {
         bindText(record.id, index: Bind.id.rawValue, statement: statement)
         bindOptionalText(record.vocabularyID, index: Bind.vocabularyID.rawValue, statement: statement)
         bindText(record.word, index: Bind.word.rawValue, statement: statement)
+        bindOptionalText(record.language?.bcp47, index: Bind.language.rawValue, statement: statement)
         bindOptionalText(record.lemma, index: Bind.lemma.rawValue, statement: statement)
         bindOptionalText(record.lexicalKey, index: Bind.lexicalKey.rawValue, statement: statement)
         bindOptionalText(record.partOfSpeech?.rawValue, index: Bind.partOfSpeech.rawValue, statement: statement)
@@ -279,6 +313,11 @@ struct WebWordRecordSQLiteMapper {
         bindText(record.answer, index: Bind.answer.rawValue, statement: statement)
         bindOptionalText(record.dictionaryTags, index: Bind.dictionaryTags.rawValue, statement: statement)
         bindOptionalInt(record.dictionaryFrequency, index: Bind.dictionaryFrequency.rawValue, statement: statement)
+        bindOptionalText(
+            codec.encode(record.dictionaryFrequencyProvenance),
+            index: Bind.dictionaryFrequencyProvenanceJSON.rawValue,
+            statement: statement
+        )
         sqlite3_bind_double(statement, Bind.createdAt.rawValue, record.createdAt.timeIntervalSince1970)
         bindOptionalText(codec.encode(record.srs), index: Bind.srsJSON.rawValue, statement: statement)
     }
@@ -335,6 +374,11 @@ func optionalStringColumn(_ statement: OpaquePointer?, _ index: Int32) -> String
 
 func optionalIntColumn(_ statement: OpaquePointer?, _ index: Int32) -> Int? {
     sqlite3_column_type(statement, index) == SQLITE_NULL ? nil : Int(sqlite3_column_int(statement, index))
+}
+
+func vocabularyLanguageColumn(_ statement: OpaquePointer?, _ index: Int32) -> VocabularyLanguageID? {
+    guard let rawValue = optionalStringColumn(statement, index) else { return nil }
+    return VocabularyLanguageID(rawValue)
 }
 
 let WORD_RECORD_SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)

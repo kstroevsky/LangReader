@@ -1,14 +1,90 @@
 import Foundation
-import NaturalLanguage
 import LeafReaderCore
 
 extension ReaderWindowController {
-    /// Language the current document's vocabulary is grouped by. All lemma
-    /// resolution and occurrence scanning for saved words must use this one
-    /// value so their grouping keys stay consistent.
-    var vocabularyDocumentLanguage: NLLanguage {
-        get { vocabularyState.documentLanguage }
-        set { vocabularyState.documentLanguage = newValue }
+    var vocabularyDocumentLanguageResolution: VocabularyLanguageResolution {
+        vocabularyState.documentLanguageResolution
+    }
+
+    var vocabularyDocumentLanguageID: VocabularyLanguageID? {
+        vocabularyState.documentLanguageResolution.languageID
+    }
+
+    func resolvedVocabularyLemma(
+        for surfaceForm: String,
+        language: VocabularyLanguageID? = nil
+    ) -> String {
+        let surface = VocabularyTextPolicy.normalizedVocabularyText(surfaceForm)
+        guard let language = language ?? vocabularyDocumentLanguageID else {
+            return surface
+        }
+        let analyzerFactory = vocabularyLanguageCatalog.resolve(language: language)?.linguisticAnalyzerFactory
+            ?? .exactForm
+        return VocabularyLemmaResolver.lemma(
+            for: surface,
+            language: language,
+            analyzerFactory: analyzerFactory
+        )
+    }
+
+    func vocabularyGroupingKey(
+        word: String,
+        lemma: String? = nil,
+        language: VocabularyLanguageID? = nil
+    ) -> String {
+        let fallback = VocabularyExporter.nonEmptyText(lemma)
+            ?? VocabularyTextPolicy.normalizedVocabularyText(word)
+        guard let language = language ?? vocabularyDocumentLanguageID else {
+            return VocabularyTextPolicy.canonicalVocabularyKey(fallback)
+        }
+        let analyzerFactory = vocabularyLanguageCatalog.resolve(language: language)?.linguisticAnalyzerFactory
+            ?? .exactForm
+        return VocabularyLemmaResolver.groupingKey(
+            word: word,
+            lemma: lemma,
+            language: language,
+            analyzerFactory: analyzerFactory
+        )
+    }
+
+    var vocabularyLanguageRevision: UInt64 { vocabularyState.languageRevision }
+
+    /// Semantic owner identity captured by vocabulary async work. Including the
+    /// document/text generations prevents an old completion from publishing
+    /// after a close/reopen or deferred Web text refresh even when the document
+    /// ID and resolved language happen to match again.
+    var vocabularyDocumentWorkIdentity: VocabularyPreparationDocumentIdentity? {
+        guard let documentID = currentFileMD5 else { return nil }
+        return VocabularyPreparationDocumentIdentity(
+            documentID: documentID,
+            loadGeneration: documentLoadGeneration,
+            webPlainTextGeneration: currentDocumentKind == .pdf ? nil : webPlainTextGeneration,
+            languageRevision: vocabularyLanguageRevision
+        )
+    }
+
+    func acceptsVocabularyDocumentWorkIdentity(_ identity: VocabularyPreparationDocumentIdentity) -> Bool {
+        vocabularyDocumentWorkIdentity == identity
+    }
+
+    func setVocabularyDocumentLanguageResolution(
+        _ resolution: VocabularyLanguageResolution,
+        replacingUserSelection: Bool = false
+    ) {
+        guard vocabularyState.updateLanguageResolution(
+            resolution,
+            replacingUserSelection: replacingUserSelection
+        ) else { return }
+        guard let documentID = currentFileMD5 else { return }
+        _ = VocabularyDocumentLanguageStore(documentID: documentID).save(resolution: resolution)
+    }
+
+    func restoreVocabularyDocumentLanguageMetadata() {
+        guard let documentID = currentFileMD5,
+              let resolution = VocabularyDocumentLanguageStore(documentID: documentID)
+                .load()?
+                .restoredResolution else { return }
+        _ = vocabularyState.updateLanguageResolution(resolution, replacingUserSelection: true)
     }
 
     var storedWordRecords: [StoredPDFWordRecord] {

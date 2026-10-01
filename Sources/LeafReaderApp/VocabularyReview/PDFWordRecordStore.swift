@@ -29,27 +29,16 @@ enum PDFTextQuoteAnchorBuilder {
 }
 
 struct PDFWordRecordStore {
-    private static let metadataRepairVersion = 1
     private let defaults: UserDefaults
     private let documentID: String
     private let storageKey: String
     private let migrationKey: String
-    private let metadataRepairKey: String
 
     init(fileMD5: String, defaults: UserDefaults = .standard) {
         self.defaults = defaults
         documentID = fileMD5
         storageKey = "bookSession.\(fileMD5).wordRecords"
         migrationKey = "\(storageKey).sqliteMigrated"
-        metadataRepairKey = "\(storageKey).metadataRepairVersion"
-    }
-
-    var needsMetadataRepair: Bool {
-        defaults.integer(forKey: metadataRepairKey) < Self.metadataRepairVersion
-    }
-
-    func markMetadataRepairCompleted() {
-        defaults.set(Self.metadataRepairVersion, forKey: metadataRepairKey)
     }
 
     func load() -> [StoredPDFWordRecord] {

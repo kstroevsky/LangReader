@@ -8,6 +8,7 @@ extension AIChatPanel {
         fallbackAnswer: String? = nil,
         answerSuffix: String? = nil,
         focusedWord: String? = nil,
+        definitionRoutingIdentity: VocabularyDefinitionRoutingIdentity? = nil,
         replacing assistantBodyToReplace: NSTextField? = nil
     ) {
         trimMessagesIfNeeded()
@@ -20,7 +21,8 @@ extension AIChatPanel {
                 messages: requestMessages,
                 fallbackAnswer: fallbackAnswer,
                 answerSuffix: answerSuffix,
-                focusedWord: focusedWord
+                focusedWord: focusedWord,
+                definitionRoutingIdentity: definitionRoutingIdentity
             )
             : nil
         let assistantBody: NSTextField
@@ -78,6 +80,11 @@ extension AIChatPanel {
                 self.requestState.finish(id: requestID)
                 self.flushStreamUpdate(assistantBody)
                 self.setBusy(false, text: "")
+                if let definitionRoutingIdentity,
+                   !self.isDefinitionRoutingIdentityCurrent(definitionRoutingIdentity) {
+                    self.resetTranscript()
+                    return
+                }
                 switch result {
                 case .success(let content):
                     NetworkConnectivityMonitor.shared.markRequestSucceeded()
@@ -124,7 +131,8 @@ extension AIChatPanel {
                         linkedQuestion: linkedQuestion,
                         fallbackAnswer: fallbackAnswer,
                         answerSuffix: answerSuffix,
-                        focusedWord: focusedWord
+                        focusedWord: focusedWord,
+                        definitionRoutingIdentity: definitionRoutingIdentity
                     )
                 }
             }
@@ -173,7 +181,8 @@ extension AIChatPanel {
             linkedQuestion: request.linkedQuestion,
             fallbackAnswer: request.fallbackAnswer,
             answerSuffix: request.answerSuffix,
-            focusedWord: request.focusedWord
+            focusedWord: request.focusedWord,
+            definitionRoutingIdentity: request.definitionRoutingIdentity
         )
     }
 
@@ -190,6 +199,7 @@ extension AIChatPanel {
             fallbackAnswer: request.fallbackAnswer,
             answerSuffix: request.answerSuffix,
             focusedWord: request.focusedWord,
+            definitionRoutingIdentity: request.definitionRoutingIdentity,
             replacing: body
         )
     }

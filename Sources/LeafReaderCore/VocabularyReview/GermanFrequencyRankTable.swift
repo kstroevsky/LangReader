@@ -166,15 +166,47 @@ package struct VocabularyItemDifficultyPrior: Codable, Equatable, Sendable {
             version: version
         )
     }
+
+    package static let unavailable = VocabularyItemDifficultyPrior(
+        mean: 4,
+        standardDeviation: 1.5,
+        source: .unrankedFrequency,
+        version: "unavailable"
+    )
 }
 
 package protocol DocumentVocabularyDifficultyProviding: Sendable {
+    var descriptor: VocabularyProviderDescriptor { get }
     var frequencyScale: VocabularyFrequencyScale { get }
+    var semanticIdentity: VocabularyDifficultyProviderSemanticIdentity { get }
     func bestRank(for summary: VocabularyDocumentLemmaSummary) -> Int?
     func difficultyPrior(for summary: VocabularyDocumentLemmaSummary) -> VocabularyItemDifficultyPrior
 }
 
 package extension DocumentVocabularyDifficultyProviding {
+    func bestRank(
+        for summary: VocabularyDocumentLemmaSummary,
+        language: VocabularyLanguageID
+    ) -> Int? {
+        guard descriptor.supports(language) else { return nil }
+        return bestRank(for: summary)
+    }
+
+    func difficultyPrior(
+        for summary: VocabularyDocumentLemmaSummary,
+        language: VocabularyLanguageID
+    ) -> VocabularyItemDifficultyPrior {
+        guard descriptor.supports(language) else { return .unavailable }
+        return difficultyPrior(for: summary)
+    }
+
+    var semanticIdentity: VocabularyDifficultyProviderSemanticIdentity {
+        VocabularyDifficultyProviderSemanticIdentity(
+            providerID: descriptor.id,
+            providerVersion: descriptor.version
+        )
+    }
+
     func difficultyPrior(for summary: VocabularyDocumentLemmaSummary) -> VocabularyItemDifficultyPrior {
         VocabularyItemDifficultyPrior.frequencyRank(bestRank(for: summary), scale: frequencyScale)
     }
@@ -182,6 +214,11 @@ package extension DocumentVocabularyDifficultyProviding {
 
 package struct ECDICTDocumentVocabularyDifficultyProvider: DocumentVocabularyDifficultyProviding {
     package static let pinnedMaximumRank = 47_062
+    package let descriptor = VocabularyProviderDescriptor(
+        id: "difficulty.ECDICT.frq",
+        version: "bundled-lite-v1",
+        supportedLanguageRanges: [VocabularyLanguageRange(language: .english)]
+    )
     package let frequencyScale = VocabularyFrequencyScale(
         sourceID: "ECDICT.frq",
         version: "bundled-lite-v1",
@@ -201,6 +238,11 @@ package struct ECDICTDocumentVocabularyDifficultyProvider: DocumentVocabularyDif
 }
 
 package struct GermanCorpusDocumentVocabularyDifficultyProvider: DocumentVocabularyDifficultyProviding {
+    package let descriptor = VocabularyProviderDescriptor(
+        id: "difficulty.Leipzig.deu_news_2025_1M",
+        version: "2025-1M-top-200000",
+        supportedLanguageRanges: [VocabularyLanguageRange(language: .german)]
+    )
     package let frequencyScale = VocabularyFrequencyScale(
         sourceID: "Leipzig.deu_news_2025_1M",
         version: "2025-1M-top-200000",
@@ -218,17 +260,25 @@ package struct GermanCorpusDocumentVocabularyDifficultyProvider: DocumentVocabul
 }
 
 package struct CalibratedDocumentVocabularyDifficultyProvider: DocumentVocabularyDifficultyProviding {
+    package let descriptor: VocabularyProviderDescriptor
     package let frequencyScale: VocabularyFrequencyScale
+    package let semanticIdentity: VocabularyDifficultyProviderSemanticIdentity
     private let base: any DocumentVocabularyDifficultyProviding
     private let items: [String: VocabularyItemCalibrationPack.Item]
 
     package init(base: any DocumentVocabularyDifficultyProviding, pack: VocabularyItemCalibrationPack) {
         self.base = base
         items = pack.productionItemsByKey
+        descriptor = base.descriptor
         frequencyScale = VocabularyFrequencyScale(
             sourceID: base.frequencyScale.sourceID,
             version: items.isEmpty ? base.frequencyScale.version : "\(base.frequencyScale.version)+\(pack.version)",
             maximumRank: base.frequencyScale.maximumRank
+        )
+        semanticIdentity = VocabularyDifficultyProviderSemanticIdentity(
+            providerID: base.semanticIdentity.providerID,
+            providerVersion: base.semanticIdentity.providerVersion,
+            calibrationPackIDAndVersion: items.isEmpty ? nil : "\(pack.model):\(pack.version)"
         )
     }
 
@@ -247,9 +297,11 @@ package enum DocumentVocabularyFrequencyProvider {
     package static let english: any DocumentVocabularyDifficultyProviding = ECDICTDocumentVocabularyDifficultyProvider()
     package static let german: any DocumentVocabularyDifficultyProviding = GermanCorpusDocumentVocabularyDifficultyProvider()
 
-    package static func calibrated(languageCode: String) -> any DocumentVocabularyDifficultyProviding {
-        let base = languageCode.lowercased() == "de" ? german : english
-        guard let pack = VocabularyItemCalibrationPackLoader.loadReviewed(languageCode: languageCode) else {
+    package static func calibrated(
+        base: any DocumentVocabularyDifficultyProviding,
+        target: VocabularyCalibrationCompatibilityTarget
+    ) -> any DocumentVocabularyDifficultyProviding {
+        guard let pack = VocabularyItemCalibrationPackLoader.loadReviewed(target: target) else {
             return base
         }
         return CalibratedDocumentVocabularyDifficultyProvider(base: base, pack: pack)

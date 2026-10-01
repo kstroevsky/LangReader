@@ -3,7 +3,10 @@ import Foundation
 package struct VocabularyExporter {
     package struct Record {
         package let word: String
+        package let language: VocabularyLanguageID?
         package let lemma: String?
+        package let lexicalKey: String?
+        package let partOfSpeech: VocabularyPartOfSpeech?
         package let surfaceForm: String?
         package let answer: String
         package let location: String
@@ -13,7 +16,10 @@ package struct VocabularyExporter {
 
         package init(
             word: String,
+            language: VocabularyLanguageID? = nil,
             lemma: String? = nil,
+            lexicalKey: String? = nil,
+            partOfSpeech: VocabularyPartOfSpeech? = nil,
             surfaceForm: String? = nil,
             answer: String,
             location: String,
@@ -22,7 +28,10 @@ package struct VocabularyExporter {
             createdAt: Date
         ) {
             self.word = word
+            self.language = language
             self.lemma = lemma
+            self.lexicalKey = lexicalKey
+            self.partOfSpeech = partOfSpeech
             self.surfaceForm = surfaceForm
             self.answer = answer
             self.location = location
@@ -36,6 +45,9 @@ package struct VocabularyExporter {
         package let titleSuffix: String
         package let exportedAt: String
         package let wordCount: String
+        package let language: String
+        package let lexicalIdentity: String
+        package let partOfSpeech: String
         package let location: String
         package let context: String
 
@@ -43,12 +55,18 @@ package struct VocabularyExporter {
             titleSuffix: String,
             exportedAt: String,
             wordCount: String,
+            language: String = "Language",
+            lexicalIdentity: String = "Lexical identity",
+            partOfSpeech: String = "Part of speech",
             location: String,
             context: String
         ) {
             self.titleSuffix = titleSuffix
             self.exportedAt = exportedAt
             self.wordCount = wordCount
+            self.language = language
+            self.lexicalIdentity = lexicalIdentity
+            self.partOfSpeech = partOfSpeech
             self.location = location
             self.context = context
         }
@@ -69,13 +87,13 @@ package struct VocabularyExporter {
             "# \(documentTitle) \(labels.titleSuffix)",
             "",
             "- \(labels.exportedAt)：\(DateFormatter.localizedString(from: exportedAt, dateStyle: .medium, timeStyle: .short))",
-            "- \(labels.wordCount)：\(Set(records.map { VocabularyTextPolicy.canonicalVocabularyKey($0.lemma ?? $0.word) }).count)",
+            "- \(labels.wordCount)：\(Set(records.compactMap(identityGroupingKey)).count)",
             ""
         ]
         var order: [String] = []
         var grouped: [String: [Record]] = [:]
         for record in records {
-            let key = VocabularyTextPolicy.canonicalVocabularyKey(record.lemma ?? record.word)
+            guard let key = identityGroupingKey(record) else { continue }
             if grouped[key] == nil {
                 order.append(key)
             }
@@ -85,6 +103,15 @@ package struct VocabularyExporter {
             guard let group = grouped[key], let first = group.first else { continue }
             lines.append("## \(first.word)")
             lines.append("")
+            if let language = first.language {
+                lines.append("- \(labels.language)：\(language.bcp47)")
+            }
+            if let lexicalKey = nonEmptyText(first.lexicalKey) {
+                lines.append("- \(labels.lexicalIdentity)：\(lexicalKey)")
+            }
+            if let partOfSpeech = first.partOfSpeech?.displayName {
+                lines.append("- \(labels.partOfSpeech)：\(partOfSpeech)")
+            }
             for record in group {
                 let form = nonEmptyText(record.surfaceForm)
                 let formSuffix = form.map {
@@ -107,11 +134,14 @@ package struct VocabularyExporter {
     }
 
     package static func csv(records: [Record], answerBody: (Record) -> String) -> String {
-        var rows = ["Word,Page,Context,Source,Created At,Answer"]
+        var rows = ["Word,Language,Lexical Key,Part of Speech,Page,Context,Source,Created At,Answer"]
         let formatter = ISO8601DateFormatter()
         for record in records {
             rows.append([
                 nonEmptyText(record.surfaceForm) ?? record.word,
+                record.language?.bcp47 ?? "",
+                record.lexicalKey ?? "",
+                record.partOfSpeech?.rawValue ?? "",
                 record.location,
                 record.context,
                 record.source,
@@ -146,5 +176,17 @@ package struct VocabularyExporter {
 
     package static func hasTrimmedText(_ text: String) -> Bool {
         !trimmed(text).isEmpty
+    }
+
+    private static func identityGroupingKey(_ record: Record) -> String? {
+        if let lexicalKey = nonEmptyText(record.lexicalKey) {
+            return "lexical|\(lexicalKey)"
+        }
+        let lemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(record.lemma ?? record.word)
+        guard !lemmaKey.isEmpty else { return nil }
+        if let language = record.language {
+            return "language|\(language.bcp47)|\(lemmaKey)"
+        }
+        return "language-unknown|\(record.source)|\(lemmaKey)"
     }
 }

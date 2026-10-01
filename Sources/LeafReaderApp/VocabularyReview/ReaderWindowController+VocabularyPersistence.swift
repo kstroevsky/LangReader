@@ -44,6 +44,7 @@ extension ReaderWindowController {
                 id: UUID().uuidString,
                 vocabularyID: reusable.vocabularyID,
                 word: word,
+                language: vocabularyDocumentLanguageID ?? reusable.language,
                 pageIndex: pageIndex,
                 bounds: StoredPDFWordRect(bounds),
                 textAnchor: textAnchor,
@@ -52,6 +53,7 @@ extension ReaderWindowController {
                 answer: reusable.answer,
                 dictionaryTags: reusable.dictionaryTags,
                 dictionaryFrequency: reusable.dictionaryFrequency,
+                dictionaryFrequencyProvenance: reusable.dictionaryFrequencyProvenance,
                 createdAt: Date(),
                 srs: reusable.srs ?? VocabularySRSState.initial()
             )
@@ -70,6 +72,7 @@ extension ReaderWindowController {
             id: id,
             vocabularyID: vocabularyID,
             word: word,
+            language: vocabularyDocumentLanguageID,
             pageIndex: pageIndex,
             bounds: StoredPDFWordRect(bounds),
             textAnchor: textAnchor,
@@ -92,7 +95,7 @@ extension ReaderWindowController {
         }
         let word = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let surfaceForm = VocabularyTextPolicy.normalizedVocabularyText(word)
-        let lemma = GermanLemmaResolver.lemma(for: surfaceForm, language: vocabularyDocumentLanguage)
+        let lemma = resolvedVocabularyLemma(for: surfaceForm)
         let vocabularyID = existingWebVocabularyID(for: word, lemma: lemma) ?? UUID().uuidString
         recordPersonalVocabularyQuery(word)
         let context = sanitizedVocabularyContext(precomputedContext ?? selectionState.webSelectionContext)
@@ -119,6 +122,7 @@ extension ReaderWindowController {
                 id: id,
                 vocabularyID: reusable.vocabularyID ?? vocabularyID,
                 word: reusable.word,
+                language: vocabularyDocumentLanguageID ?? reusable.language,
                 lemma: reusable.lemma ?? lemma,
                 surfaceForm: surfaceForm,
                 context: context,
@@ -128,6 +132,7 @@ extension ReaderWindowController {
                 answer: reusable.answer,
                 dictionaryTags: reusable.dictionaryTags,
                 dictionaryFrequency: reusable.dictionaryFrequency,
+                dictionaryFrequencyProvenance: reusable.dictionaryFrequencyProvenance,
                 createdAt: Date(),
                 srs: reusable.srs ?? VocabularySRSState.initial()
             )
@@ -143,6 +148,7 @@ extension ReaderWindowController {
             id: id,
             vocabularyID: vocabularyID,
             word: word,
+            language: vocabularyDocumentLanguageID,
             lemma: lemma,
             surfaceForm: surfaceForm,
             context: context,
@@ -157,7 +163,13 @@ extension ReaderWindowController {
     }
 
     func dictionaryMetadata(for word: String) -> (tags: String?, frequency: Int?) {
-        let metadata = VocabularyDictionaryMetadataService.metadata(for: word)
+        guard let language = vocabularyDocumentLanguageID,
+              let metadata = VocabularyDictionaryMetadataService.metadata(
+                for: word,
+                language: language
+              ) else {
+            return (nil, nil)
+        }
         return (metadata.tags, metadata.frequency)
     }
 

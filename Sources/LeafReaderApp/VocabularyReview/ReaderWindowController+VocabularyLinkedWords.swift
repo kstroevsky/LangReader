@@ -35,20 +35,20 @@ extension ReaderWindowController {
         if let index = storedWebWordRecords.firstIndex(where: { $0.id == linkID }) {
             let target = storedWebWordRecords[index]
             let targetKey = target.vocabularyID
-                ?? GermanLemmaResolver.groupingKey(
+                ?? vocabularyGroupingKey(
                     word: target.word,
                     lemma: target.lemma,
-                    language: vocabularyDocumentLanguage
+                    language: target.language
                 )
             var proposedRecords = storedWebWordRecords
             var changedRecords: [StoredWebWordRecord] = []
             for recordIndex in proposedRecords.indices {
                 let record = proposedRecords[recordIndex]
                 let recordKey = record.vocabularyID
-                    ?? GermanLemmaResolver.groupingKey(
+                    ?? vocabularyGroupingKey(
                         word: record.word,
                         lemma: record.lemma,
-                        language: vocabularyDocumentLanguage
+                        language: record.language
                 )
                 guard recordKey == targetKey else { continue }
                 proposedRecords[recordIndex].question = question
@@ -68,6 +68,7 @@ extension ReaderWindowController {
                 id: pending.id,
                 vocabularyID: pending.vocabularyID,
                 word: pending.word,
+                language: pending.language,
                 pageIndex: pending.pageIndex,
                 bounds: pending.bounds,
                 textAnchor: pending.textAnchor,
@@ -76,6 +77,7 @@ extension ReaderWindowController {
                 answer: trimmedAnswer,
                 dictionaryTags: pending.dictionaryTags,
                 dictionaryFrequency: pending.dictionaryFrequency,
+                dictionaryFrequencyProvenance: pending.dictionaryFrequencyProvenance,
                 createdAt: pending.createdAt,
                 srs: VocabularySRSState.initial(createdAt: pending.createdAt)
             )
@@ -90,6 +92,7 @@ extension ReaderWindowController {
                 id: pending.id,
                 vocabularyID: pending.vocabularyID,
                 word: pending.word,
+                language: pending.language,
                 lemma: pending.lemma,
                 surfaceForm: pending.surfaceForm,
                 context: pending.context,
@@ -99,6 +102,7 @@ extension ReaderWindowController {
                 answer: trimmedAnswer,
                 dictionaryTags: pending.dictionaryTags,
                 dictionaryFrequency: pending.dictionaryFrequency,
+                dictionaryFrequencyProvenance: pending.dictionaryFrequencyProvenance,
                 createdAt: pending.createdAt,
                 srs: VocabularySRSState.initial(createdAt: pending.createdAt)
             )
@@ -116,10 +120,27 @@ extension ReaderWindowController {
         }
     }
 
-    func vocabularyAnswer(for word: String) -> String? {
-        let answer = currentDocumentKind == .pdf
-            ? reusablePDFWordRecord(for: word)?.answer
-            : reusableWebWordRecord(for: word)?.answer
+    func vocabularyAnswer(for word: String, language: VocabularyLanguageID) -> String? {
+        let normalized = normalizedVocabularyKey(word)
+        let answer: String?
+        if currentDocumentKind == .pdf {
+            answer = storedWordRecords.first {
+                ($0.language == nil || $0.language == language)
+                    && normalizedVocabularyKey($0.word) == normalized
+                    && !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            }?.answer
+        } else {
+            let key = vocabularyGroupingKey(word: word, language: language)
+            answer = storedWebWordRecords.first {
+                ($0.language == nil || $0.language == language)
+                    && vocabularyGroupingKey(
+                        word: $0.word,
+                        lemma: $0.lemma,
+                        language: $0.language ?? language
+                    ) == key
+                    && !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            }?.answer
+        }
         let trimmed = answer?.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed?.isEmpty == false ? trimmed : nil
     }
@@ -132,19 +153,19 @@ extension ReaderWindowController {
     }
 
     func reusableWebWordRecord(for word: String) -> StoredWebWordRecord? {
-        let language = vocabularyDocumentLanguage
-        let key = GermanLemmaResolver.groupingKey(word: word, language: language)
+        let language = vocabularyDocumentLanguageID
+        let key = vocabularyGroupingKey(word: word, language: language)
         return storedWebWordRecords.first {
-            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key
+            vocabularyGroupingKey(word: $0.word, lemma: $0.lemma, language: $0.language ?? language) == key
                 && !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
     }
 
     func existingWebVocabularyID(for word: String, lemma: String? = nil) -> String? {
-        let language = vocabularyDocumentLanguage
-        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+        let language = vocabularyDocumentLanguageID
+        let key = vocabularyGroupingKey(word: word, lemma: lemma, language: language)
         return storedWebWordRecords.first {
-            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key
+            vocabularyGroupingKey(word: $0.word, lemma: $0.lemma, language: $0.language ?? language) == key
         }?.vocabularyID
     }
 

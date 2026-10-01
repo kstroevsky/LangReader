@@ -39,8 +39,10 @@ package enum VocabularyReviewQueueBuilder {
                 return lhs.srs.isNew
             }
         case .frequencyFirst:
-            if lhs.dictionaryFrequency != rhs.dictionaryFrequency {
-                switch (lhs.dictionaryFrequency, rhs.dictionaryFrequency) {
+            let lhsFrequency = lhs.verifiedDictionaryFrequency
+            let rhsFrequency = rhs.verifiedDictionaryFrequency
+            if lhsFrequency != rhsFrequency {
+                switch (lhsFrequency, rhsFrequency) {
                 case let (lhs?, rhs?):
                     return lhs < rhs
                 case (_?, nil):

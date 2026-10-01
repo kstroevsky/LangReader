@@ -1,11 +1,11 @@
 import Foundation
-import NaturalLanguage
 import LeafReaderCore
 
 struct StoredWebWordRecord: Codable, Sendable {
     let id: String
     var vocabularyID: String? = nil
     let word: String
+    var language: VocabularyLanguageID? = nil
     var lemma: String? = nil
     var lexicalKey: String? = nil
     var partOfSpeech: VocabularyPartOfSpeech? = nil
@@ -17,6 +17,7 @@ struct StoredWebWordRecord: Codable, Sendable {
     var answer: String
     var dictionaryTags: String? = nil
     var dictionaryFrequency: Int? = nil
+    var dictionaryFrequencyProvenance: VocabularyFrequencyProvenance? = nil
     let createdAt: Date
     var srs: VocabularySRSState?
 
@@ -33,92 +34,17 @@ struct StoredWebWordRecord: Codable, Sendable {
     }
 }
 
-struct WebWordRecordMetadataRepair {
-    struct Result {
-        let records: [StoredWebWordRecord]
-        let didChange: Bool
-    }
-
-    typealias LemmaResolver = @Sendable (String, NLLanguage) -> String
-
-    static func repair(
-        _ records: [StoredWebWordRecord],
-        language: NLLanguage,
-        lemmaResolver: LemmaResolver = { GermanLemmaResolver.lemma(for: $0, language: $1) }
-    ) -> Result {
-        var didChange = false
-        var enriched = records.map { record -> StoredWebWordRecord in
-            var record = record
-            let surface = record.occurrenceSurfaceForm
-            if record.surfaceForm != surface { didChange = true }
-            record.surfaceForm = surface
-            let lemma = record.lemma?.trimmingCharacters(in: .whitespacesAndNewlines)
-            let resolvedLemma = lemma.flatMap { $0.isEmpty ? nil : $0 }
-                ?? lemmaResolver(surface, language)
-            if record.lemma != resolvedLemma { didChange = true }
-            record.lemma = resolvedLemma
-            return record
-        }
-
-        let orderedIndices = enriched.indices.sorted {
-            let lhs = enriched[$0]
-            let rhs = enriched[$1]
-            if lhs.createdAt != rhs.createdAt { return lhs.createdAt < rhs.createdAt }
-            return lhs.id < rhs.id
-        }
-        var vocabularyIDByKey: [String: String] = [:]
-        for index in orderedIndices {
-            let record = enriched[index]
-            let key = GermanLemmaResolver.groupingKey(
-                word: record.word,
-                lemma: record.lemma,
-                language: language
-            )
-            guard !key.isEmpty, vocabularyIDByKey[key] == nil,
-                  let vocabularyID = record.vocabularyID,
-                  !vocabularyID.isEmpty else { continue }
-            vocabularyIDByKey[key] = vocabularyID
-        }
-        for index in orderedIndices {
-            let record = enriched[index]
-            let key = GermanLemmaResolver.groupingKey(
-                word: record.word,
-                lemma: record.lemma,
-                language: language
-            )
-            guard !key.isEmpty else { continue }
-            let vocabularyID = vocabularyIDByKey[key] ?? record.id
-            vocabularyIDByKey[key] = vocabularyID
-            if enriched[index].vocabularyID != vocabularyID { didChange = true }
-            enriched[index].vocabularyID = vocabularyID
-        }
-
-        return Result(records: enriched, didChange: didChange)
-    }
-}
-
 struct WebWordRecordStore {
-    private static let metadataRepairVersion = 1
     private let defaults: UserDefaults
     private let documentID: String
     private let storageKey: String
     private let migrationKey: String
-    private let metadataRepairKey: String
 
     init(fileMD5: String, defaults: UserDefaults = .standard) {
         self.defaults = defaults
         documentID = fileMD5
         storageKey = "bookSession.\(fileMD5).webWordRecords"
         migrationKey = "\(storageKey).sqliteMigrated"
-        metadataRepairKey = "\(storageKey).metadataRepairVersion"
-    }
-
-    var needsMetadataRepair: Bool {
-        defaults.integer(forKey: metadataRepairKey) < Self.metadataRepairVersion
-    }
-
-    func markMetadataRepairCompleted() {
-        defaults.set(Self.metadataRepairVersion, forKey: metadataRepairKey)
     }
 
     func load() -> [StoredWebWordRecord] {

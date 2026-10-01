@@ -9,9 +9,7 @@ enum VocabularyRecordProvider {
     /// without the SQLite stack get the offline rules by default.
     typealias FormLabelResolver = @Sendable (_ surfaceForm: String, _ lemma: String, _ context: String) -> GermanFormLabel?
 
-    static let offlineFormLabelResolver: FormLabelResolver = { surfaceForm, lemma, context in
-        GermanFormLabeler.label(surfaceForm: surfaceForm, lemma: lemma, context: context)
-    }
+    static let offlineFormLabelResolver: FormLabelResolver = { _, _, _ in nil }
 
     static func records(
         documentKind: ReaderDocumentKind,
@@ -20,7 +18,7 @@ enum VocabularyRecordProvider {
         pdfContext: (StoredPDFWordRecord) -> String,
         formLabel: FormLabelResolver = offlineFormLabelResolver
     ) -> [VocabularyExportRecord] {
-        // Labeling a form runs NaturalLanguage tagging and, for cached words, a
+        // Labeling a form may run linguistic analysis and, for cached words, a
         // SQLite lookup — a few milliseconds each. Memoize identical requests,
         // including their context: sentence-level classification must not leak
         // from one occurrence to another. Nil is not cached, so a later, stronger
@@ -44,8 +42,12 @@ enum VocabularyRecordProvider {
                     let context = pdfContext($0)
                     return VocabularyExportRecord(
                         ids: [$0.id],
+                        learningOwnerIDs: [VocabularyLearningOwnerID($0.vocabularyID ?? $0.id)],
                         word: $0.word,
+                        language: $0.language,
                         lemma: $0.lemma,
+                        lexicalKey: $0.lexicalKey,
+                        partOfSpeech: $0.partOfSpeech,
                         forms: [
                             VocabularyForm(
                                 surface: $0.occurrenceSurfaceForm,
@@ -59,6 +61,7 @@ enum VocabularyRecordProvider {
                         answer: $0.answer,
                         dictionaryTags: $0.dictionaryTags,
                         dictionaryFrequency: $0.dictionaryFrequency,
+                        dictionaryFrequencyProvenance: $0.dictionaryFrequencyProvenance,
                         location: location,
                         context: context,
                         createdAt: $0.createdAt,
@@ -66,6 +69,11 @@ enum VocabularyRecordProvider {
                         occurrences: [
                             VocabularyOccurrence(
                                 id: $0.id,
+                                learningOwnerID: VocabularyLearningOwnerID($0.vocabularyID ?? $0.id),
+                                language: $0.language,
+                                lemma: $0.lemma,
+                                lexicalKey: $0.lexicalKey,
+                                partOfSpeech: $0.partOfSpeech,
                                 pageIndex: $0.pageIndex,
                                 bounds: $0.bounds,
                                 location: location,
@@ -85,8 +93,14 @@ enum VocabularyRecordProvider {
                     )
                     return VocabularyExportRecord(
                         ids: [$0.id],
+                        // Web SRS/answers are row-owned even when vocabularyID
+                        // groups several occurrences for display.
+                        learningOwnerIDs: [VocabularyLearningOwnerID($0.id)],
                         word: $0.word,
+                        language: $0.language,
                         lemma: $0.lemma,
+                        lexicalKey: $0.lexicalKey,
+                        partOfSpeech: $0.partOfSpeech,
                         forms: [
                             VocabularyForm(
                                 surface: $0.occurrenceSurfaceForm,
@@ -100,6 +114,7 @@ enum VocabularyRecordProvider {
                         answer: $0.answer,
                         dictionaryTags: $0.dictionaryTags,
                         dictionaryFrequency: $0.dictionaryFrequency,
+                        dictionaryFrequencyProvenance: $0.dictionaryFrequencyProvenance,
                         location: location,
                         context: $0.context,
                         createdAt: $0.createdAt,
@@ -107,6 +122,11 @@ enum VocabularyRecordProvider {
                         occurrences: [
                             VocabularyOccurrence(
                                 id: $0.id,
+                                learningOwnerID: VocabularyLearningOwnerID($0.id),
+                                language: $0.language,
+                                lemma: $0.lemma,
+                                lexicalKey: $0.lexicalKey,
+                                partOfSpeech: $0.partOfSpeech,
                                 pageIndex: nil,
                                 bounds: nil,
                                 location: location,
@@ -122,11 +142,29 @@ enum VocabularyRecordProvider {
     }
 
     static func aggregate(_ records: [VocabularyExportRecord]) -> [VocabularyExportRecord] {
+        let sortedRecords = records.sorted(by: { $0.createdAt < $1.createdAt })
+        var identityKeysByLearningOwner: [VocabularyLearningOwnerID: Set<String>] = [:]
+        for record in sortedRecords {
+            guard let identityKey = record.identityGroupingKey() else { continue }
+            for ownerID in record.learningOwnerIDs {
+                identityKeysByLearningOwner[ownerID, default: []].insert(identityKey)
+            }
+        }
+        let unresolvedSharedOwners = Set(identityKeysByLearningOwner.compactMap { ownerID, keys in
+            keys.count > 1 ? ownerID : nil
+        })
+
         var order: [String] = []
         var grouped: [String: [VocabularyExportRecord]] = [:]
-        for record in records.sorted(by: { $0.createdAt < $1.createdAt }) {
-            let key = VocabularyTextPolicy.canonicalVocabularyKey(record.lemma ?? record.word)
-            guard !key.isEmpty else { continue }
+        for record in sortedRecords {
+            let constrainedOwners = record.learningOwnerIDs.filter { unresolvedSharedOwners.contains($0) }
+            let key: String?
+            if !constrainedOwners.isEmpty {
+                key = "learning-owner|" + constrainedOwners.map(\.rawValue).sorted().joined(separator: "|")
+            } else {
+                key = record.identityGroupingKey()
+            }
+            guard let key else { continue }
             if grouped[key] == nil {
                 order.append(key)
                 grouped[key] = []
@@ -161,20 +199,37 @@ enum VocabularyRecordProvider {
             let dictionaryTags = group
                 .compactMap(\.dictionaryTags)
                 .first { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-            let dictionaryFrequency = group
-                .compactMap(\.dictionaryFrequency)
-                .min()
+            let frequencyRecord = group
+                .filter { $0.dictionaryFrequency != nil }
+                .min { lhs, rhs in
+                    let lhsVerified = lhs.verifiedDictionaryFrequency != nil
+                    let rhsVerified = rhs.verifiedDictionaryFrequency != nil
+                    if lhsVerified != rhsVerified { return lhsVerified && !rhsVerified }
+                    return (lhs.dictionaryFrequency ?? .max) < (rhs.dictionaryFrequency ?? .max)
+                }
             let occurrences = group
                 .flatMap(\.occurrences)
                 .sorted(by: occurrenceSort)
+            let learningOwnerIDs = Array(Set(group.flatMap(\.learningOwnerIDs))).sorted {
+                $0.rawValue < $1.rawValue
+            }
+            let language = unanimous(group.map(\.language))
+            let lemma = unanimousNonEmptyText(group.map(\.lemma))
+            let lexicalKey = unanimousNonEmptyText(group.map(\.lexicalKey))
+            let partOfSpeech = unanimous(group.map(\.partOfSpeech))
             return VocabularyExportRecord(
                 ids: group.flatMap(\.ids),
+                learningOwnerIDs: learningOwnerIDs,
                 word: displayWord(first.word),
-                lemma: first.lemma,
+                language: language,
+                lemma: lemma,
+                lexicalKey: lexicalKey,
+                partOfSpeech: partOfSpeech,
                 forms: forms,
                 answer: answer,
                 dictionaryTags: dictionaryTags,
-                dictionaryFrequency: dictionaryFrequency,
+                dictionaryFrequency: frequencyRecord?.dictionaryFrequency,
+                dictionaryFrequencyProvenance: frequencyRecord?.dictionaryFrequencyProvenance,
                 location: locationText,
                 context: context,
                 createdAt: first.createdAt,
@@ -182,6 +237,26 @@ enum VocabularyRecordProvider {
                 occurrences: occurrences
             )
         }
+    }
+
+    private static func unanimous<T: Hashable>(_ values: [T?]) -> T? {
+        guard !values.isEmpty, values.allSatisfy({ $0 != nil }) else { return nil }
+        let resolved = Set(values.compactMap { $0 })
+        return resolved.count == 1 ? resolved.first : nil
+    }
+
+    private static func unanimousNonEmptyText(_ values: [String?]) -> String? {
+        guard !values.isEmpty else { return nil }
+        let normalized = values.map { value -> String? in
+            guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines), !value.isEmpty else {
+                return nil
+            }
+            return value
+        }
+        guard normalized.allSatisfy({ $0 != nil }) else { return nil }
+        let keys = Set(normalized.compactMap { $0 }.map(VocabularyTextPolicy.canonicalVocabularyKey))
+        guard keys.count == 1 else { return nil }
+        return normalized.compactMap { $0 }.first
     }
 
     static func displayWord(_ word: String) -> String {

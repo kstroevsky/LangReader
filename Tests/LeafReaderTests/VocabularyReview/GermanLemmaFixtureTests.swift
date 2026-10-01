@@ -107,7 +107,7 @@ enum GermanLemmaFixtureTests {
         ]
         for (surface, expected) in cases {
             try characterizeEqual(
-                GermanLemmaResolver.lemma(for: surface, language: .german),
+                VocabularyLemmaResolver.lemma(for: surface, language: .german),
                 expected,
                 "German verb '\(surface)' should lemmatize to '\(expected)'"
             )
@@ -152,7 +152,7 @@ enum GermanLemmaFixtureTests {
         ]
         for (surface, expected) in cases {
             try characterizeEqual(
-                GermanLemmaResolver.lemma(for: surface, language: .german),
+                VocabularyLemmaResolver.lemma(for: surface, language: .german),
                 expected,
                 "German plural '\(surface)' should lemmatize to '\(expected)'"
             )
@@ -233,7 +233,7 @@ enum GermanLemmaFixtureTests {
         // 'aßen' in isolation lemmatizes correctly but is tagged Adjective,
         // confirming that isolated-word POS is unreliable and context is required.
         try characterizeEqual(
-            GermanLemmaResolver.lemma(for: "aßen", language: .german),
+            VocabularyLemmaResolver.lemma(for: "aßen", language: .german),
             "essen",
             "isolated 'aßen' still lemmatizes correctly"
         )
@@ -270,7 +270,7 @@ enum GermanLemmaFixtureTests {
 
     static func testAdditionalLanguageModelCharacterization() throws {
         try characterizeEqual(
-            GermanLemmaResolver.lemma(for: "части", language: .russian),
+            VocabularyLemmaResolver.lemma(for: "части", language: .russian),
             "часть",
             "Russian inflected noun availability is host-runtime characterization"
         )

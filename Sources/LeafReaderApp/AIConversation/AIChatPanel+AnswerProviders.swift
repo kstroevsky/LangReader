@@ -2,26 +2,25 @@ import Foundation
 import LeafReaderCore
 
 extension AIChatPanel {
-    func cachedVocabularyAnswer(for word: String) -> AnswerProviderResult? {
-        guard let answer = onVocabularyAnswerRequested?(word)?.trimmingCharacters(in: .whitespacesAndNewlines),
+    func cachedVocabularyAnswer(
+        for word: String,
+        routingContext: VocabularyDefinitionRoutingContext?
+    ) -> AnswerProviderResult? {
+        guard let language = routingContext?.language,
+              let answer = onVocabularyAnswerRequested?(word, language)?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
               !answer.isEmpty else { return nil }
         return AnswerProviderResult(answer: answer, source: .cachedVocabulary)
     }
 
-    func localOnlyAnswerProvider() -> AnswerProvider {
-        LocalDictionaryAnswerProvider(dictionaryLookupService: dictionaryLookupService)
-    }
-
-    func cachedLocalDictionaryAnswer(for request: AnswerProviderRequest) -> AnswerProviderResult? {
-        guard VocabularyTextPolicy.isSingleEnglishWord(request.text),
-              let answer = dictionaryLookupService.cachedDictionaryAnswer(for: request.text, context: request.context) else {
-            return nil
-        }
-        return AnswerProviderResult(
-            answer: answer.markdown,
-            source: .localDictionary,
-            dictionaryMetadata: answer.metadata
-        )
+    func cachedLocalDictionaryAnswer(
+        for request: AnswerProviderRequest,
+        routingContext: VocabularyDefinitionRoutingContext?
+    ) -> AnswerProviderResult? {
+        guard let routingContext,
+              request.sourceLanguage == routingContext.language,
+              let provider = routingContext.provider else { return nil }
+        return LocalDictionaryAnswerProvider(definitionProvider: provider).answer(for: request)
     }
 
     func localDictionaryTagSuffix(fallbackMetadata: VocabularyDictionaryMetadata?) -> String? {

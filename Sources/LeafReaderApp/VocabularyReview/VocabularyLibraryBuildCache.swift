@@ -1,5 +1,4 @@
 import Foundation
-import NaturalLanguage
 import LeafReaderCore
 
 /// Per-session cache of built export records, keyed by document.
@@ -70,22 +69,26 @@ final class VocabularyLibraryBuildCache: @unchecked Sendable {
         pdf: [StoredPDFWordRecord],
         web: [StoredWebWordRecord],
         labelGeneration: Int,
-        language: NLLanguage
+        semanticIdentity: VocabularyLinguisticCacheIdentity?
     ) -> Int {
         var hasher = Hasher()
         hasher.combine(labelGeneration)
-        hasher.combine(language.rawValue)
+        hasher.combine(semanticIdentity)
         hasher.combine(pdf.count)
         for record in pdf {
             hasher.combine(record.id)
             hasher.combine(record.createdAt)
             hasher.combine(record.word)
+            hasher.combine(record.language?.bcp47)
             hasher.combine(record.lemma)
+            hasher.combine(record.lexicalKey)
+            hasher.combine(record.partOfSpeech?.rawValue)
             hasher.combine(record.surfaceForm)
             hasher.combine(record.answer)
             hasher.combine(record.context)
             hasher.combine(record.dictionaryTags)
             hasher.combine(record.dictionaryFrequency)
+            hasher.combine(record.dictionaryFrequencyProvenance)
         }
         hasher.combine(web.count)
         for record in web {
@@ -93,12 +96,16 @@ final class VocabularyLibraryBuildCache: @unchecked Sendable {
             hasher.combine(record.createdAt)
             hasher.combine(record.word)
             hasher.combine(record.vocabularyID)
+            hasher.combine(record.language?.bcp47)
             hasher.combine(record.lemma)
+            hasher.combine(record.lexicalKey)
+            hasher.combine(record.partOfSpeech?.rawValue)
             hasher.combine(record.surfaceForm)
             hasher.combine(record.answer)
             hasher.combine(record.context)
             hasher.combine(record.dictionaryTags)
             hasher.combine(record.dictionaryFrequency)
+            hasher.combine(record.dictionaryFrequencyProvenance)
         }
         return hasher.finalize()
     }

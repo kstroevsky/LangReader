@@ -68,6 +68,7 @@ struct RegenerationRequest {
     let fallbackAnswer: String?
     let answerSuffix: String?
     let focusedWord: String?
+    let definitionRoutingIdentity: VocabularyDefinitionRoutingIdentity?
 }
 
 /// The AI panel's transcript: an ordered list of bubbles plus the queries the

@@ -33,7 +33,10 @@ extension ReaderWindowController {
     }
 
     func makeCurrentVocabularyExportRecords() -> [VocabularyExportRecord] {
-        VocabularyRecordProvider.records(
+        let runtime = vocabularyDocumentLanguageID.flatMap {
+            vocabularyLanguageCatalog.resolve(language: $0)
+        }
+        return VocabularyRecordProvider.records(
             documentKind: currentDocumentKind,
             pdfRecords: storedWordRecords,
             webRecords: storedWebWordRecords,
@@ -44,7 +47,7 @@ extension ReaderWindowController {
                 )
                 return self?.normalizedPDFVocabularyContext(context) ?? context
             },
-            formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(language: vocabularyDocumentLanguage)
+            formLabel: VocabularyFormLabeling.persistentCachedFormLabelResolver(runtime: runtime)
         )
     }
 

@@ -93,30 +93,50 @@ extension ReaderWindowController {
     }
 
     func ensurePDFVocabularyIndex(
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         seed: VocabularyDocumentLemmaIndexSeed? = nil,
         preloadedPageTexts: [Int: String] = [:],
         completion: @escaping (PDFDocumentTextSnapshot?, VocabularyDocumentLemmaIndex?) -> Void
     ) {
-        let languageCode = language.rawValue
+        let runtime = vocabularyLanguageCatalog.resolve(language: language)
+        let semanticIdentity = runtime?.linguisticCacheIdentity
+            ?? VocabularyLinguisticCacheIdentity(language: language)
+        let analyzerFactory = runtime?.linguisticAnalyzerFactory ?? .exactForm
         if let snapshot = documentTextState.snapshot,
            let index = documentTextState.vocabularyIndex,
-           documentTextState.vocabularyIndexLanguageCode == languageCode {
+           documentTextState.vocabularyIndexSemanticIdentity == semanticIdentity {
             completion(snapshot, index)
             return
         }
 
+        let staleCallbacks = documentTextState.cancelVocabularyIndexBuildIfSemanticsChanged(
+            to: semanticIdentity
+        )
+        staleCallbacks.forEach { $0(nil, nil) }
+
         documentTextState.pendingVocabularyIndexCallbacks.append(completion)
         guard !documentTextState.isBuildingVocabularyIndex else { return }
         documentTextState.isBuildingVocabularyIndex = true
+        documentTextState.vocabularyIndexBuildSemanticIdentity = semanticIdentity
+        let token = PDFDocumentTextCancellationToken()
+        documentTextState.vocabularyIndexCancellationToken = token
         ensurePDFDocumentTextSnapshot(preloadedPageTexts: preloadedPageTexts) { [weak self] snapshot in
-            guard let self, let snapshot else {
-                self?.finishPDFVocabularyIndex(nil, snapshot: nil, languageCode: languageCode, generation: self?.documentTextState.generation ?? -1)
+            guard let self,
+                  self.documentTextState.vocabularyIndexCancellationToken === token,
+                  self.documentTextState.vocabularyIndexBuildSemanticIdentity == semanticIdentity else {
+                return
+            }
+            guard let snapshot else {
+                self.finishPDFVocabularyIndex(
+                    nil,
+                    snapshot: nil,
+                    semanticIdentity: semanticIdentity,
+                    generation: self.documentTextState.generation,
+                    token: token
+                )
                 return
             }
             let generation = self.documentTextState.generation
-            let token = PDFDocumentTextCancellationToken()
-            self.documentTextState.vocabularyIndexCancellationToken = token
             self.documentTextState.vocabularyIndexBuildStartedAt = ProcessInfo.processInfo.systemUptime
             DispatchQueue.global(qos: .utility).async { [weak self] in
                 let index = VocabularyDocumentLemmaIndex(
@@ -124,14 +144,17 @@ extension ReaderWindowController {
                     language: language,
                     maximumWorkerCount: 4,
                     seed: seed,
+                    semanticIdentity: semanticIdentity,
+                    analyzerFactory: analyzerFactory,
                     isCancelled: { token.waitUntilRunnableOrCancelled() }
                 )
                 Task { @MainActor [weak self] in
                     self?.finishPDFVocabularyIndex(
                         index,
                         snapshot: snapshot,
-                        languageCode: languageCode,
-                        generation: generation
+                        semanticIdentity: semanticIdentity,
+                        generation: generation,
+                        token: token
                     )
                 }
             }
@@ -141,13 +164,19 @@ extension ReaderWindowController {
     private func finishPDFVocabularyIndex(
         _ index: VocabularyDocumentLemmaIndex?,
         snapshot: PDFDocumentTextSnapshot?,
-        languageCode: String,
-        generation: Int
+        semanticIdentity: VocabularyLinguisticCacheIdentity,
+        generation: Int,
+        token: PDFDocumentTextCancellationToken
     ) {
-        guard generation == documentTextState.generation else { return }
+        guard generation == documentTextState.generation,
+              documentTextState.vocabularyIndexCancellationToken === token,
+              documentTextState.vocabularyIndexBuildSemanticIdentity == semanticIdentity else {
+            return
+        }
         documentTextState.vocabularyIndex = index
-        documentTextState.vocabularyIndexLanguageCode = index == nil ? nil : languageCode
+        documentTextState.vocabularyIndexSemanticIdentity = index == nil ? nil : semanticIdentity
         documentTextState.isBuildingVocabularyIndex = false
+        documentTextState.vocabularyIndexBuildSemanticIdentity = nil
         documentTextState.vocabularyIndexCancellationToken = nil
         if let startedAt = documentTextState.vocabularyIndexBuildStartedAt {
             ReaderPerformance.record(
@@ -165,11 +194,15 @@ extension ReaderWindowController {
     /// result is explicitly partial and can later seed the complete index, so
     /// the early NLP work is reused instead of repeated.
     func buildPDFVocabularyPriorityIndex(
-        language: NLLanguage,
+        language: VocabularyLanguageID,
         pageIndexes: [Int],
         preloadedPageTexts: [Int: String] = [:],
         completion: @escaping @MainActor @Sendable (PDFVocabularyPriorityIndexResult?) -> Void
     ) {
+        let runtime = vocabularyLanguageCatalog.resolve(language: language)
+        let semanticIdentity = runtime?.linguisticCacheIdentity
+            ?? VocabularyLinguisticCacheIdentity(language: language)
+        let analyzerFactory = runtime?.linguisticAnalyzerFactory ?? .exactForm
         guard currentDocumentKind == .pdf,
               let documentID = currentFileMD5,
               let url = currentFileURL,
@@ -178,7 +211,7 @@ extension ReaderWindowController {
             return
         }
         if documentTextState.vocabularyIndex != nil,
-           documentTextState.vocabularyIndexLanguageCode == language.rawValue {
+           documentTextState.vocabularyIndexSemanticIdentity == semanticIdentity {
             completion(nil)
             return
         }
@@ -226,6 +259,8 @@ extension ReaderWindowController {
                     texts: pageTexts,
                     language: language,
                     maximumWorkerCount: 2,
+                    semanticIdentity: semanticIdentity,
+                    analyzerFactory: analyzerFactory,
                     isCancelled: { token.isCancelled }
                 ) else { return nil }
                 return PDFVocabularyPriorityIndexResult(
@@ -265,8 +300,9 @@ extension ReaderWindowController {
         documentTextState.snapshotBuildStartedAt = nil
         documentTextState.pendingSnapshotCallbacks.removeAll()
         documentTextState.vocabularyIndex = nil
-        documentTextState.vocabularyIndexLanguageCode = nil
+        documentTextState.vocabularyIndexSemanticIdentity = nil
         documentTextState.isBuildingVocabularyIndex = false
+        documentTextState.vocabularyIndexBuildSemanticIdentity = nil
         documentTextState.vocabularyIndexCancellationToken = nil
         documentTextState.vocabularyIndexBuildStartedAt = nil
         documentTextState.pendingVocabularyIndexCallbacks.removeAll()

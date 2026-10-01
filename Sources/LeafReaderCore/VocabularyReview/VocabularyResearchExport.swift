@@ -37,6 +37,8 @@ package struct VocabularyResearchEvidenceRecord: Codable, Equatable, Sendable {
     package let evidence: VocabularyKnowledgeEvidence
     package let protocolVersion: Int
     package let sessionOrdinal: Int
+    package let compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint?
+    package let compatibilityFingerprintDigest: String?
 
     package init(
         languageCode: String,
@@ -48,7 +50,9 @@ package struct VocabularyResearchEvidenceRecord: Codable, Equatable, Sendable {
         difficultyVersion: String,
         evidence: VocabularyKnowledgeEvidence,
         protocolVersion: Int,
-        sessionOrdinal: Int
+        sessionOrdinal: Int,
+        compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint? = nil,
+        compatibilityFingerprintDigest: String? = nil
     ) {
         self.languageCode = languageCode
         self.lexicalItemID = lexicalItemID
@@ -60,11 +64,13 @@ package struct VocabularyResearchEvidenceRecord: Codable, Equatable, Sendable {
         self.evidence = evidence
         self.protocolVersion = protocolVersion
         self.sessionOrdinal = sessionOrdinal
+        self.compatibilityFingerprint = compatibilityFingerprint
+        self.compatibilityFingerprintDigest = compatibilityFingerprintDigest
     }
 }
 
 package struct VocabularyResearchExport: Codable, Equatable, Sendable {
-    package static let currentSchemaVersion = 2
+    package static let currentSchemaVersion = 3
     package let schemaVersion: Int
     package let participant: VocabularyResearchProfile
     package let records: [VocabularyResearchEvidenceRecord]
@@ -94,8 +100,34 @@ package protocol VocabularyResearchEvidenceStoring: Sendable {
         answers: [VocabularyAssessmentAnswer],
         protocolVersion: Int
     ) -> Bool
+    @discardableResult
+    func recordCompletedSession(
+        contributionID: String,
+        inventory: DocumentVocabularyInventory,
+        answers: [VocabularyAssessmentAnswer],
+        protocolVersion: Int,
+        compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint
+    ) -> Bool
     func export(profile: VocabularyResearchProfile) -> VocabularyResearchExport
     func recordCount() -> Int
+}
+
+package extension VocabularyResearchEvidenceStoring {
+    @discardableResult
+    func recordCompletedSession(
+        contributionID: String,
+        inventory: DocumentVocabularyInventory,
+        answers: [VocabularyAssessmentAnswer],
+        protocolVersion: Int,
+        compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint
+    ) -> Bool {
+        recordCompletedSession(
+            contributionID: contributionID,
+            inventory: inventory,
+            answers: answers,
+            protocolVersion: protocolVersion
+        )
+    }
 }
 
 /// Local-only storage. It intentionally contains no document identity, title,
@@ -130,9 +162,13 @@ package final class VocabularyResearchEvidenceStore: VocabularyResearchEvidenceS
             session_ordinal INTEGER NOT NULL,
             document_domain TEXT NOT NULL,
             protocol_version INTEGER NOT NULL,
+            compatibility_fingerprint_json TEXT,
+            compatibility_fingerprint_digest TEXT,
             UNIQUE(language_code, session_ordinal)
         )
         """)
+        execute("ALTER TABLE vocabulary_research_sessions ADD COLUMN compatibility_fingerprint_json TEXT")
+        execute("ALTER TABLE vocabulary_research_sessions ADD COLUMN compatibility_fingerprint_digest TEXT")
         execute("""
         CREATE TABLE IF NOT EXISTS vocabulary_research_evidence (
             contribution_id TEXT NOT NULL,
@@ -163,8 +199,51 @@ package final class VocabularyResearchEvidenceStore: VocabularyResearchEvidenceS
         answers: [VocabularyAssessmentAnswer],
         protocolVersion: Int
     ) -> Bool {
+        recordCompletedSession(
+            contributionID: contributionID,
+            inventory: inventory,
+            answers: answers,
+            protocolVersion: protocolVersion,
+            compatibilityFingerprint: nil
+        )
+    }
+
+    @discardableResult
+    package func recordCompletedSession(
+        contributionID: String,
+        inventory: DocumentVocabularyInventory,
+        answers: [VocabularyAssessmentAnswer],
+        protocolVersion: Int,
+        compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint
+    ) -> Bool {
+        recordCompletedSession(
+            contributionID: contributionID,
+            inventory: inventory,
+            answers: answers,
+            protocolVersion: protocolVersion,
+            compatibilityFingerprint: Optional(compatibilityFingerprint)
+        )
+    }
+
+    private func recordCompletedSession(
+        contributionID: String,
+        inventory: DocumentVocabularyInventory,
+        answers: [VocabularyAssessmentAnswer],
+        protocolVersion: Int,
+        compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint?
+    ) -> Bool {
         lock.withLock {
             guard let database, !contributionID.isEmpty else { return false }
+            let compatibilityJSON: String?
+            if let compatibilityFingerprint {
+                let encoder = JSONEncoder()
+                encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+                guard let data = try? encoder.encode(compatibilityFingerprint),
+                      let json = String(data: data, encoding: .utf8) else { return false }
+                compatibilityJSON = json
+            } else {
+                compatibilityJSON = nil
+            }
             let byKey = Dictionary(uniqueKeysWithValues: inventory.candidates.map { ($0.canonicalKey, $0) })
             let exportable = answers.compactMap { answer -> (VocabularyAssessmentAnswer, DocumentVocabularyCandidate)? in
                 guard let candidate = byKey[answer.canonicalKey],
@@ -183,7 +262,9 @@ package final class VocabularyResearchEvidenceStore: VocabularyResearchEvidenceS
                 languageCode: inventory.languageCode,
                 ordinal: ordinal,
                 domain: inventory.documentDomain,
-                protocolVersion: protocolVersion
+                protocolVersion: protocolVersion,
+                compatibilityFingerprintJSON: compatibilityJSON,
+                compatibilityFingerprintDigest: compatibilityFingerprint?.stableDigest
             ) else {
                 sqlite3_exec(database, "ROLLBACK", nil, nil, nil)
                 return false
@@ -209,11 +290,13 @@ package final class VocabularyResearchEvidenceStore: VocabularyResearchEvidenceS
             guard let database else { return VocabularyResearchExport(participant: profile, records: []) }
             var statement: OpaquePointer?
             let sql = """
-            SELECT language_code, lemma, part_of_speech, sense_key, document_domain,
-                   difficulty_mean, difficulty_sd, difficulty_source, difficulty_version,
-                   evidence, protocol_version, session_ordinal
-            FROM vocabulary_research_evidence
-            ORDER BY language_code, session_ordinal, item_order
+            SELECT e.language_code, e.lemma, e.part_of_speech, e.sense_key, e.document_domain,
+                   e.difficulty_mean, e.difficulty_sd, e.difficulty_source, e.difficulty_version,
+                   e.evidence, e.protocol_version, e.session_ordinal,
+                   s.compatibility_fingerprint_json, s.compatibility_fingerprint_digest
+            FROM vocabulary_research_evidence e
+            JOIN vocabulary_research_sessions s ON s.contribution_id = e.contribution_id
+            ORDER BY e.language_code, e.session_ordinal, e.item_order
             """
             guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
                 return VocabularyResearchExport(participant: profile, records: [])
@@ -222,6 +305,7 @@ package final class VocabularyResearchEvidenceStore: VocabularyResearchEvidenceS
             var records: [VocabularyResearchEvidenceRecord] = []
             while sqlite3_step(statement) == SQLITE_ROW {
                 guard let language = text(statement, 0),
+                  let languageID = VocabularyLanguageID(language),
                   let lemma = text(statement, 1),
                   let posRaw = text(statement, 2),
                   let domainRaw = text(statement, 4),
@@ -232,10 +316,25 @@ package final class VocabularyResearchEvidenceStore: VocabularyResearchEvidenceS
                   let domain = VocabularyDocumentDomain(rawValue: domainRaw),
                   let source = VocabularyItemDifficultySource(rawValue: sourceRaw),
                   let evidence = VocabularyKnowledgeEvidence(rawValue: evidenceRaw) else { continue }
+                let storedDigest = text(statement, 13)
+                let decodedFingerprint = text(statement, 12)
+                    .flatMap { $0.data(using: .utf8) }
+                    .flatMap { try? JSONDecoder().decode(VocabularyPreparationCompatibilityFingerprint.self, from: $0) }
+                let compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint?
+                let compatibilityFingerprintDigest: String?
+                if let decodedFingerprint,
+                   let storedDigest,
+                   decodedFingerprint.stableDigest == storedDigest {
+                    compatibilityFingerprint = decodedFingerprint
+                    compatibilityFingerprintDigest = storedDigest
+                } else {
+                    compatibilityFingerprint = nil
+                    compatibilityFingerprintDigest = nil
+                }
                 records.append(VocabularyResearchEvidenceRecord(
                     languageCode: language,
                     lexicalItemID: VocabularyLexicalItemID(
-                        language: language,
+                        language: languageID,
                         lemma: lemma,
                         partOfSpeech: partOfSpeech,
                         senseKey: text(statement, 3)
@@ -247,7 +346,9 @@ package final class VocabularyResearchEvidenceStore: VocabularyResearchEvidenceS
                     difficultyVersion: difficultyVersion,
                     evidence: evidence,
                     protocolVersion: Int(sqlite3_column_int(statement, 10)),
-                    sessionOrdinal: Int(sqlite3_column_int(statement, 11))
+                    sessionOrdinal: Int(sqlite3_column_int(statement, 11)),
+                    compatibilityFingerprint: compatibilityFingerprint,
+                    compatibilityFingerprintDigest: compatibilityFingerprintDigest
                 ))
             }
             return VocabularyResearchExport(participant: profile, records: records)
@@ -287,17 +388,35 @@ package final class VocabularyResearchEvidenceStore: VocabularyResearchEvidenceS
         languageCode: String,
         ordinal: Int,
         domain: VocabularyDocumentDomain,
-        protocolVersion: Int
+        protocolVersion: Int,
+        compatibilityFingerprintJSON: String?,
+        compatibilityFingerprintDigest: String?
     ) -> Bool {
         guard let database else { return false }
         var statement: OpaquePointer?
-        guard sqlite3_prepare_v2(database, "INSERT INTO vocabulary_research_sessions VALUES (?, ?, ?, ?, ?)", -1, &statement, nil) == SQLITE_OK else { return false }
+        let sql = """
+        INSERT INTO vocabulary_research_sessions(
+            contribution_id, language_code, session_ordinal, document_domain,
+            protocol_version, compatibility_fingerprint_json, compatibility_fingerprint_digest
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        """
+        guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else { return false }
         defer { sqlite3_finalize(statement) }
         bind(contributionID, at: 1, to: statement)
         bind(languageCode, at: 2, to: statement)
         sqlite3_bind_int(statement, 3, Int32(ordinal))
         bind(domain.rawValue, at: 4, to: statement)
         sqlite3_bind_int(statement, 5, Int32(protocolVersion))
+        if let compatibilityFingerprintJSON {
+            bind(compatibilityFingerprintJSON, at: 6, to: statement)
+        } else {
+            sqlite3_bind_null(statement, 6)
+        }
+        if let compatibilityFingerprintDigest {
+            bind(compatibilityFingerprintDigest, at: 7, to: statement)
+        } else {
+            sqlite3_bind_null(statement, 7)
+        }
         return sqlite3_step(statement) == SQLITE_DONE
     }
 
@@ -383,20 +502,52 @@ package struct VocabularyItemCalibrationPack: Codable, Equatable, Sendable {
     package let version: String
     package let reviewed: Bool
     package let model: String
+    package let target: VocabularyCalibrationCompatibilityTarget?
+    package let observationCompatibilityFingerprintDigest: String?
     package let items: [Item]
 
-    package init(version: String, reviewed: Bool, model: String, items: [Item]) {
+    package init(
+        version: String,
+        reviewed: Bool,
+        model: String,
+        target: VocabularyCalibrationCompatibilityTarget? = nil,
+        observationCompatibilityFingerprintDigest: String? = nil,
+        items: [Item]
+    ) {
         self.version = version
         self.reviewed = reviewed
         self.model = model
+        self.target = target
+        self.observationCompatibilityFingerprintDigest = observationCompatibilityFingerprintDigest
         self.items = items
     }
 
     package var productionItemsByKey: [String: Item] {
-        guard reviewed, model == "rasch" else { return [:] }
+        guard isStructurallyValid else { return [:] }
         return Dictionary(uniqueKeysWithValues: items.filter(\.isProductionEligible).map {
             ($0.lexicalItemID.canonicalKey, $0)
         })
+    }
+
+    fileprivate var isStructurallyValid: Bool {
+        guard reviewed,
+              model == "rasch",
+              let target,
+              observationCompatibilityFingerprintDigest?.isEmpty == false else {
+            return false
+        }
+        var keys = Set<String>()
+        for item in items {
+            guard item.lexicalItemID.language == target.language,
+                  item.difficulty.isFinite,
+                  item.standardError.isFinite,
+                  item.standardError >= 0,
+                  item.independentLearnerCount >= 0,
+                  keys.insert(item.lexicalItemID.canonicalKey).inserted else {
+                return false
+            }
+        }
+        return true
     }
 }
 
@@ -404,7 +555,7 @@ package enum VocabularyItemCalibrationPackLoader {
     /// Only explicitly reviewed bundled packs are returned. Research-tool
     /// output starts with reviewed=false and is inert by construction.
     package static func loadReviewed(
-        languageCode: String,
+        target: VocabularyCalibrationCompatibilityTarget,
         resourceURLs: [URL]? = nil
     ) -> VocabularyItemCalibrationPack? {
         let urls: [URL]
@@ -419,13 +570,13 @@ package enum VocabularyItemCalibrationPackLoader {
                 URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
                     .appendingPathComponent("Sources/LeafReaderApp/Resources/VocabularyCalibration", isDirectory: true)
             )
-            urls = roots.map { $0.appendingPathComponent("\(languageCode.lowercased()).json") }
+            urls = roots.map { $0.appendingPathComponent("\(target.language.bcp47.lowercased()).json") }
         }
         for url in urls where FileManager.default.fileExists(atPath: url.path) {
             guard let data = try? Data(contentsOf: url),
                   let pack = try? JSONDecoder().decode(VocabularyItemCalibrationPack.self, from: data),
-                  pack.reviewed,
-                  pack.model == "rasch" else { continue }
+                  pack.target == target,
+                  pack.isStructurallyValid else { continue }
             return pack
         }
         return nil

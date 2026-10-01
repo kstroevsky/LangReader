@@ -9,6 +9,55 @@ import LeafReaderCore
 // mapping without SQLite, and the storage tests build the store without the
 // NaturalLanguage-backed labeler.
 extension GermanFormLabeler {
+    /// ADR-0002 cache path with explicit language and linguistic-provider
+    /// namespace. The legacy overload below remains for compatibility with the
+    /// pre-ADR German-only cache and its migration tests.
+    static func persistentCachedLabel(
+        surfaceForm: String,
+        lemma: String,
+        context: String? = nil,
+        language: VocabularyLanguageID,
+        evidenceIdentity: String,
+        evidenceProvider: @escaping VocabularyFormLabelEvidenceProvider,
+        labelStore: WordRecordSQLiteStore = .shared,
+        flexionStore: GermanFlexionStore = .shared
+    ) -> GermanFormLabel? {
+        if let refined = flexionLabel(surfaceForm: surfaceForm, lemma: lemma, store: flexionStore) {
+            return refined
+        }
+
+        let surfaceKey = VocabularyTextPolicy.canonicalVocabularyKey(surfaceForm)
+        let lemmaKey = VocabularyTextPolicy.canonicalVocabularyKey(lemma)
+        let cacheable = !surfaceKey.isEmpty && !lemmaKey.isEmpty
+        if cacheable,
+           let hit = labelStore.vocabularyFormLabel(
+               language: language,
+               evidenceIdentity: evidenceIdentity,
+               surfaceKey: surfaceKey,
+               lemmaKey: lemmaKey,
+               rulesetVersion: labelingVersion
+           ) {
+            return hit.label.flatMap(GermanFormLabel.init(rawValue:))
+        }
+
+        let offline = resolution(
+            surfaceForm: surfaceForm,
+            lemma: lemma,
+            context: context,
+            evidenceProvider: evidenceProvider
+        )
+        if cacheable, offline.isPersistentlyCacheable {
+            labelStore.saveVocabularyFormLabel(
+                language: language,
+                evidenceIdentity: evidenceIdentity,
+                surfaceKey: surfaceKey,
+                lemmaKey: lemmaKey,
+                label: offline.label?.rawValue,
+                rulesetVersion: labelingVersion
+            )
+        }
+        return offline.label
+    }
 
     /// Cache-backed resolver shaped for `VocabularyRecordProvider.records`.
     ///

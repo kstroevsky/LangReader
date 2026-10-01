@@ -1,37 +1,64 @@
 import Foundation
-import NaturalLanguage
 import LeafReaderCore
 
 struct VocabularyPreparationDocumentIdentity: Equatable, Sendable {
     let documentID: String
     let loadGeneration: Int
     let webPlainTextGeneration: Int?
+    let languageRevision: UInt64
 }
 
 struct VocabularyPreparationSourceSnapshot: Sendable {
     let identity: VocabularyPreparationDocumentIdentity
     let kind: ReaderDocumentKind
-    let language: NLLanguage
+    let languageResolution: VocabularyLanguageResolution
+    let runtime: VocabularyLanguageRuntime
     let texts: [String]
     let index: VocabularyDocumentLemmaIndex
+
+    var language: VocabularyLanguageID { runtime.language }
 }
 
 enum VocabularyPreparationSourceError: LocalizedError {
     case noDocument
     case textNotReady
-    case unsupportedLanguage
+    case undeterminedLanguage
+    case unsupportedLanguage(VocabularyLanguageID)
     case cancelled
 
     var errorDescription: String? {
         switch self {
         case .noDocument:
-            AppText.localized("没有打开的文档。", "No document is open.")
+            return AppText.localized("没有打开的文档。", "No document is open.")
         case .textNotReady:
-            AppText.localized("文档文本仍在载入。请稍后重试。", "Document text is still loading. Please retry shortly.")
-        case .unsupportedLanguage:
-            AppText.localized("此版本只支持英语和德语文档。", "This version supports English and German documents only.")
+            return AppText.localized("文档文本仍在载入。请稍后重试。", "Document text is still loading. Please retry shortly.")
+        case .undeterminedLanguage:
+            return AppText.localized(
+                "无法确定文档语言。请选择一种语言后再准备词汇。",
+                "The document language could not be determined. Choose a language to prepare vocabulary."
+            )
+        case .unsupportedLanguage(let language):
+            let name = Locale.current.localizedString(forLanguageCode: language.primaryLanguage) ?? language.bcp47
+            return AppText.localized(
+                "已检测到\(name)，但当前不能为该语言准备词汇。",
+                "Detected \(name). Vocabulary preparation is not available for this language yet."
+            )
         case .cancelled:
-            AppText.localized("词汇准备已取消。", "Vocabulary preparation was cancelled.")
+            return AppText.localized("词汇准备已取消。", "Vocabulary preparation was cancelled.")
+        }
+    }
+}
+
+enum VocabularyPreparationDefinitionError: LocalizedError {
+    case noCompatibleProvider
+    case notFound
+
+    var errorDescription: String? {
+        switch self {
+        case .noCompatibleProvider:
+            AppText.localized("当前语言没有可用的词典。", "No compatible dictionary is available for this language.")
+        case .notFound:
+            AppText.localized("没有找到可用释义。", "No definition is available for this word.")
         }
     }
 }
@@ -39,66 +66,127 @@ enum VocabularyPreparationSourceError: LocalizedError {
 @MainActor
 protocol VocabularyPreparationDocumentSource: AnyObject {
     var vocabularyPreparationIdentity: VocabularyPreparationDocumentIdentity? { get }
-    func vocabularyPreparationSnapshot(requestedLanguage: NLLanguage?) async throws -> VocabularyPreparationSourceSnapshot
+    func vocabularyPreparationSnapshot(selection: VocabularyLanguageSelection) async throws -> VocabularyPreparationSourceSnapshot
     func acceptsVocabularyPreparationIdentity(_ identity: VocabularyPreparationDocumentIdentity) -> Bool
 }
 
-struct VocabularyPreparedDefinition: Sendable {
-    let markdown: String
-    let tags: String?
-    let frequency: Int?
-}
+typealias VocabularyPreparedDefinition = VocabularyDefinition
 
-protocol VocabularyPreparationDefinitionProviding: Sendable {
-    func definition(
-        for candidate: DocumentVocabularyCandidate,
-        languageCode: String,
-        context: String
-    ) async throws -> VocabularyPreparedDefinition
-}
+struct EnglishECDICTVocabularyDefinitionProvider: VocabularyDefinitionProviding {
+    let descriptor = VocabularyProviderDescriptor(
+        id: "dictionary.ecdict",
+        version: "ecdict-v1",
+        supportedLanguageRanges: [VocabularyLanguageRange(language: .english, includesDescendants: true)]
+    )
 
-struct LiveVocabularyPreparationDefinitionProvider: VocabularyPreparationDefinitionProviding {
-    func definition(
-        for candidate: DocumentVocabularyCandidate,
-        languageCode: String,
-        context: String
-    ) async throws -> VocabularyPreparedDefinition {
-        if languageCode == NLLanguage.german.rawValue {
-            let entry = try await GermanWiktionaryDictionary.shared.lookup(candidate.displayLemma)
-            return VocabularyPreparedDefinition(
-                markdown: entry.markdown,
-                tags: entry.metadata.tags,
-                frequency: candidate.generalFrequencyRank
+    func definition(for request: VocabularyDefinitionRequest) async throws -> VocabularyDefinition? {
+        guard descriptor.supports(request.language) else {
+            throw VocabularyDefinitionProviderError.incompatibleLanguage(
+                requested: request.language,
+                providerID: descriptor.id
             )
         }
         return await Task.detached(priority: .userInitiated) {
-            let lookup = LocalDictionaryLookupService.shared.dictionaryAnswer(
-                for: candidate.displayLemma,
-                context: context
-            )
-            return VocabularyPreparedDefinition(
-                markdown: lookup?.markdown
-                    ?? AppText.localized("本地词典中没有释义。", "No local definition is available."),
-                tags: lookup?.metadata.tags,
-                frequency: candidate.generalFrequencyRank ?? lookup?.metadata.frequency
+            guard let lookup = LocalDictionaryLookupService.shared.dictionaryAnswer(
+                for: request.lemma,
+                context: request.context
+            ) else {
+                return nil
+            }
+            return VocabularyDefinition(
+                markdown: lookup.markdown,
+                resolvedLemma: request.lemma,
+                tags: lookup.metadata.tags,
+                frequency: lookup.metadata.frequency,
+                provenance: descriptor
             )
         }.value
+    }
+
+    func cachedDefinition(for request: VocabularyDefinitionRequest) -> VocabularyDefinition? {
+        guard descriptor.supports(request.language),
+              let lookup = LocalDictionaryLookupService.shared.cachedDictionaryAnswer(
+                for: request.lemma,
+                context: request.context
+              ) else { return nil }
+        return VocabularyDefinition(
+            markdown: lookup.markdown,
+            resolvedLemma: request.lemma,
+            tags: lookup.metadata.tags,
+            frequency: lookup.metadata.frequency,
+            provenance: descriptor
+        )
+    }
+}
+
+struct GermanWiktionaryVocabularyDefinitionProvider: VocabularyDefinitionProviding {
+    let descriptor = VocabularyProviderDescriptor(
+        id: "dictionary.de-wiktionary",
+        version: "wiktionary-api-v1",
+        supportedLanguageRanges: [VocabularyLanguageRange(language: .german, includesDescendants: true)]
+    )
+
+    func definition(for request: VocabularyDefinitionRequest) async throws -> VocabularyDefinition? {
+        guard descriptor.supports(request.language) else {
+            throw VocabularyDefinitionProviderError.incompatibleLanguage(
+                requested: request.language,
+                providerID: descriptor.id
+            )
+        }
+        do {
+            let entry = try await GermanWiktionaryDictionary.shared.lookup(request.lemma)
+            return VocabularyDefinition(
+                markdown: entry.markdown,
+                resolvedLemma: entry.lemma,
+                tags: entry.metadata.tags,
+                frequency: entry.metadata.frequency,
+                provenance: descriptor
+            )
+        } catch GermanWiktionaryDictionary.LookupError.noEntry {
+            return nil
+        }
+    }
+
+    func cachedDefinition(for request: VocabularyDefinitionRequest) -> VocabularyDefinition? {
+        guard descriptor.supports(request.language),
+              let entry = GermanWiktionaryDictionary.shared.cachedEntry(for: request.lemma) else {
+            return nil
+        }
+        return VocabularyDefinition(
+            markdown: entry.markdown,
+            resolvedLemma: entry.lemma,
+            tags: entry.metadata.tags,
+            frequency: entry.metadata.frequency,
+            provenance: descriptor
+        )
     }
 }
 
 /// Used only by the opt-in GUI performance/smoke harness. It keeps German
 /// preparation deterministic and guarantees that automation never contacts
 /// Wiktionary.
-struct FixtureVocabularyPreparationDefinitionProvider: VocabularyPreparationDefinitionProviding {
-    func definition(
-        for candidate: DocumentVocabularyCandidate,
-        languageCode: String,
-        context: String
-    ) async throws -> VocabularyPreparedDefinition {
-        VocabularyPreparedDefinition(
-            markdown: "Fixture definition for **\(candidate.displayLemma)**.",
-            tags: "fixture,\(languageCode)",
-            frequency: candidate.generalFrequencyRank
+struct FixtureVocabularyPreparationDefinitionProvider: VocabularyDefinitionProviding {
+    let descriptor = VocabularyProviderDescriptor(
+        id: "dictionary.fixture",
+        version: "1",
+        supportedLanguageRanges: [
+            VocabularyLanguageRange(language: .english, includesDescendants: true),
+            VocabularyLanguageRange(language: .german, includesDescendants: true)
+        ]
+    )
+
+    func definition(for request: VocabularyDefinitionRequest) async throws -> VocabularyDefinition? {
+        guard descriptor.supports(request.language) else {
+            throw VocabularyDefinitionProviderError.incompatibleLanguage(
+                requested: request.language,
+                providerID: descriptor.id
+            )
+        }
+        return VocabularyDefinition(
+            markdown: "Fixture definition for **\(request.lemma)**.",
+            resolvedLemma: request.lemma,
+            tags: "fixture,\(request.language.bcp47)",
+            provenance: descriptor
         )
     }
 }
@@ -134,7 +222,7 @@ enum VocabularyPreparationImportBatch: Sendable {
 
 @MainActor
 protocol VocabularyPreparationLibraryAccess: AnyObject {
-    func vocabularyPreparationExistingKeys(language: NLLanguage, kind: ReaderDocumentKind) -> Set<String>
+    func vocabularyPreparationExistingKeys(language: VocabularyLanguageID, kind: ReaderDocumentKind) -> Set<String>
     func persistVocabularyPreparationBatch(
         _ batch: VocabularyPreparationImportBatch,
         documentID: String

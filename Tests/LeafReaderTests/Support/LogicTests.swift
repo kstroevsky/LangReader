@@ -731,7 +731,7 @@ private let tests: [(String, () throws -> Void)] = [
     ("Vocabulary SRS", VocabularyLogicTests.testVocabularySRS),
     ("German lemma batch equals sequential", VocabularyLogicTests.testGermanLemmaBatchMatchesSequential),
     ("Vocabulary document lemma index equals legacy scanner", VocabularyLogicTests.testVocabularyDocumentLemmaIndexMatchesLegacyScanner),
-    ("German lemma tagger reuse", VocabularyLogicTests.testGermanLemmaResolverTaggerReuse),
+    ("German lemma tagger reuse", VocabularyLogicTests.testVocabularyLemmaResolverTaggerReuse),
     ("German lemma line-wrap fragment not false match", VocabularyLogicTests.testGermanLemmaLineWrapFragmentIsNotAFalseMatch),
     ("German noun not grouped with verb homograph", VocabularyLogicTests.testGermanNounNotGroupedWithVerbHomograph),
     ("Lemma engine is language-parameterized", VocabularyLogicTests.testLemmaEngineIsLanguageParameterized),

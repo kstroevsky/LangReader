@@ -1,5 +1,4 @@
 import Cocoa
-import NaturalLanguage
 import Observation
 import LeafReaderCore
 
@@ -38,6 +37,10 @@ struct VocabularyPreparationInventoryPayload: Sendable {
     let inventoryModelMilliseconds: Double
     let contextMaterializationMilliseconds: Double
     let algorithmVersion: Int
+    let compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint
+    let documentIdentity: String
+    let textIdentity: String
+    let candidateInventoryIdentity: String
     let lexicalShadowMilliseconds: Double
     let lexicalShadowCandidateDelta: Int
     let lexicalShadowDirectEvidenceCount: Int
@@ -87,7 +90,7 @@ final class VocabularyPreparationCoordinator {
 
     private weak var documentSource: (any VocabularyPreparationDocumentSource)?
     private weak var library: (any VocabularyPreparationLibraryAccess)?
-    private let definitionProvider: any VocabularyPreparationDefinitionProviding
+    private let languageCatalog: VocabularyLanguageCatalog
     private let readerPriorStore: any VocabularyReaderPriorStoring
     private let researchEvidenceStore: any VocabularyResearchEvidenceStoring
     private var assessment: AdaptiveVocabularyAssessment?
@@ -113,6 +116,7 @@ final class VocabularyPreparationCoordinator {
     private var interactionTiming = VocabularyPreparationInteractionTiming.live
     private var activeIdentity: VocabularyPreparationDocumentIdentity?
     private var activeDocumentKind: ReaderDocumentKind?
+    private var activeRuntime: VocabularyLanguageRuntime?
     private(set) var inventory: DocumentVocabularyInventory?
     private(set) var currentCandidate: DocumentVocabularyCandidate?
     private(set) var definitionState: VocabularyPreparationDefinitionState = .hidden
@@ -125,10 +129,7 @@ final class VocabularyPreparationCoordinator {
     var isAnswerInteractionReady: Bool { coverageStoppingTask == nil }
     var selectedKeys = Set<String>()
     var mode: VocabularyAssessmentMode = .allUnknown
-    /// "auto", "en", or "de". The explicit choices support mixed-language
-    /// documents without pretending automatic dominant-language detection can
-    /// reliably separate both vocabularies.
-    var selectedLanguageCode = "auto"
+    var selectedLanguage: VocabularyLanguageSelection = .auto
     var phase: VocabularyPreparationPhase = .welcome
     var progressText = ""
     var typedModeEnabled = false
@@ -155,16 +156,20 @@ final class VocabularyPreparationCoordinator {
     init(
         documentSource: any VocabularyPreparationDocumentSource,
         library: any VocabularyPreparationLibraryAccess,
-        definitionProvider: any VocabularyPreparationDefinitionProviding = LiveVocabularyPreparationDefinitionProvider(),
+        languageCatalog: VocabularyLanguageCatalog,
         readerPriorStore: any VocabularyReaderPriorStoring = VocabularyReaderPriorStore.shared,
         researchEvidenceStore: any VocabularyResearchEvidenceStoring = VocabularyResearchEvidenceStore.shared
     ) {
         Self.migrateLegacyExperimentalLexicalReconciliationToggle()
         self.documentSource = documentSource
         self.library = library
-        self.definitionProvider = definitionProvider
+        self.languageCatalog = languageCatalog
         self.readerPriorStore = readerPriorStore
         self.researchEvidenceStore = researchEvidenceStore
+    }
+
+    var preparationLanguageChoices: [VocabularyLanguageID] {
+        languageCatalog.releasedLanguages(for: .vocabularyPreparation)
     }
 
     private static func migrateLegacyExperimentalLexicalReconciliationToggle() {
@@ -224,6 +229,7 @@ final class VocabularyPreparationCoordinator {
         revealedDefinitionKey = nil
         activeIdentity = nil
         activeDocumentKind = nil
+        activeRuntime = nil
         sourceTexts = []
         readerPrior = nil
         domainDetection = nil
@@ -277,14 +283,28 @@ final class VocabularyPreparationCoordinator {
 
         workflowTask = Task { [weak self, weak documentSource] in
             do {
-                guard let snapshot = try await documentSource?.vocabularyPreparationSnapshot(
-                    requestedLanguage: self?.requestedLanguage
+                guard let sourceSnapshot = try await documentSource?.vocabularyPreparationSnapshot(
+                    selection: self?.selectedLanguage ?? .auto
                 ), let self,
                 self.requestID == activeRequestID,
                 !activeToken.isCancelled,
-                documentSource?.acceptsVocabularyPreparationIdentity(snapshot.identity) == true else { return }
+                documentSource?.acceptsVocabularyPreparationIdentity(sourceSnapshot.identity) == true,
+                let runtime = self.languageCatalog.resolve(language: sourceSnapshot.language),
+                runtime.status(for: .vocabularyPreparation).isAvailable,
+                runtime.releaseState(for: .vocabularyPreparation) != .disabled,
+                runtime.definitions != nil,
+                runtime.difficulty != nil else { return }
+                let snapshot = VocabularyPreparationSourceSnapshot(
+                    identity: sourceSnapshot.identity,
+                    kind: sourceSnapshot.kind,
+                    languageResolution: sourceSnapshot.languageResolution,
+                    runtime: runtime,
+                    texts: sourceSnapshot.texts,
+                    index: sourceSnapshot.index
+                )
                 self.activeIdentity = snapshot.identity
                 self.activeDocumentKind = snapshot.kind
+                self.activeRuntime = runtime
                 self.buildPayload(
                     snapshot: snapshot,
                     requestID: activeRequestID,
@@ -571,6 +591,8 @@ final class VocabularyPreparationCoordinator {
     func createAndReview() {
         guard let inventory, !selectedKeys.isEmpty,
               let identity = activeIdentity,
+              let runtime = activeRuntime,
+              let provider = runtime.definitions,
               documentSource?.acceptsVocabularyPreparationIdentity(identity) == true,
               library != nil else { return }
         let selected = inventory.candidates.filter {
@@ -579,10 +601,8 @@ final class VocabularyPreparationCoordinator {
         guard !selected.isEmpty else { return }
 
         let activeRequestID = requestID
-        let languageCode = inventory.languageCode
         phase = .importing
         progressText = AppText.localized("正在准备释义…", "Preparing definitions…")
-        let provider = definitionProvider
         let candidateContexts = contexts
         let importStartedAt = ProcessInfo.processInfo.systemUptime
         workflowTask?.cancel()
@@ -596,12 +616,23 @@ final class VocabularyPreparationCoordinator {
                 func addNext() {
                     guard let candidate = iterator.next() else { return }
                     group.addTask {
-                        let definition = try? await provider.definition(
-                            for: candidate,
-                            languageCode: languageCode,
-                            context: candidateContexts[candidate.canonicalKey] ?? ""
-                        )
-                        return (candidate.canonicalKey, definition)
+                        let definition = try? await provider.definition(for: VocabularyDefinitionRequest(
+                            language: runtime.language,
+                            lemma: candidate.displayLemma,
+                            surfaceForm: candidate.displayLemma,
+                            context: candidateContexts[candidate.canonicalKey] ?? "",
+                            lexicalItemID: candidate.lexicalItemID
+                        ))
+                        let prepared = definition.map {
+                            VocabularyDefinition(
+                                markdown: $0.markdown,
+                                resolvedLemma: $0.resolvedLemma,
+                                tags: $0.tags,
+                                frequency: $0.frequency ?? candidate.generalFrequencyRank,
+                                provenance: $0.provenance
+                            )
+                        }
+                        return (candidate.canonicalKey, prepared)
                     }
                 }
                 for _ in 0..<min(4, missing.count) { addNext() }
@@ -700,6 +731,9 @@ final class VocabularyPreparationCoordinator {
         let algorithmVersion = reconciledIdentityEnabled
             ? VocabularyPreparationSession.lexicalReconciliationAlgorithmVersion
             : VocabularyPreparationSession.currentAlgorithmVersion
+        guard let compatibilityFingerprint = snapshot.runtime.preparationCompatibilityFingerprint(
+            algorithmVersion: algorithmVersion
+        ) else { return }
         let restoredDomain = session.documentDomain
         let priorStore = readerPriorStore
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -714,19 +748,17 @@ final class VocabularyPreparationCoordinator {
             ) * 1_000
             guard !cancellationToken.isCancelled else { return }
             let summaries = reconciledIdentityEnabled ? reconciledSummaries : legacySummaries
-            let difficultyProvider = DocumentVocabularyFrequencyProvider.calibrated(
-                languageCode: snapshot.language.rawValue
-            )
+            guard let difficultyProvider = snapshot.runtime.difficulty else { return }
             let inventory = DocumentVocabularyInventory(
                 summaries: summaries,
-                languageCode: snapshot.language.rawValue,
+                languageCode: snapshot.language.bcp47,
                 difficultyProvider: difficultyProvider
             )
             let domainDetection: VocabularyDocumentDomainDetection?
             if domainsEnabled {
                 domainDetection = VocabularyDocumentDomainResources.detector.detect(
                     summaries: summaries,
-                    languageCode: snapshot.language.rawValue
+                    languageCode: snapshot.language.bcp47
                 )
             } else {
                 domainDetection = nil
@@ -756,11 +788,21 @@ final class VocabularyPreparationCoordinator {
                 domainDetection: domainDetection,
                 contexts: contexts,
                 sourceTexts: snapshot.texts,
-                readerPrior: priorStore.load(languageCode: snapshot.language.rawValue),
+                readerPrior: priorStore.load(
+                    languageCode: snapshot.language.bcp47,
+                    compatibilityFingerprint: compatibilityFingerprint
+                ),
                 sourceSnapshotMilliseconds: sourceSnapshotMilliseconds,
                 inventoryModelMilliseconds: inventoryModelMilliseconds,
                 contextMaterializationMilliseconds: contextMaterializationMilliseconds,
                 algorithmVersion: algorithmVersion,
+                compatibilityFingerprint: compatibilityFingerprint,
+                documentIdentity: snapshot.identity.documentID,
+                textIdentity: VocabularyPreparationStateIdentity.text(
+                    documentID: snapshot.identity.documentID,
+                    texts: snapshot.texts
+                ),
+                candidateInventoryIdentity: VocabularyPreparationStateIdentity.inventory(domainInventory),
                 lexicalShadowMilliseconds: lexicalShadowMilliseconds,
                 lexicalShadowCandidateDelta: reconciledSummaries.count - legacySummaries.count,
                 lexicalShadowDirectEvidenceCount: reconciledSummaries.lazy.filter {
@@ -781,14 +823,33 @@ final class VocabularyPreparationCoordinator {
 
     private func apply(payload: VocabularyPreparationInventoryPayload, durationMilliseconds: Double) {
         let mainWorkStartedAt = ProcessInfo.processInfo.systemUptime
-        if session.algorithmVersion != payload.algorithmVersion {
-            session.answers = []
-            session.finalSelection = []
-            session.predictionAudit = nil
-            session.readerPriorContributionRecorded = false
-            session.readerPriorContributionID = nil
-            session.algorithmVersion = payload.algorithmVersion
-            sessionStore?.save(session)
+        let isCompatible = session.compatibilityFingerprint == payload.compatibilityFingerprint
+            && session.documentIdentity == payload.documentIdentity
+            && session.textIdentity == payload.textIdentity
+            && session.candidateInventoryIdentity == payload.candidateInventoryIdentity
+        if !isCompatible {
+            let fresh = VocabularyPreparationSession(
+                mode: session.mode,
+                invitationState: session.invitationState,
+                algorithmVersion: payload.algorithmVersion,
+                documentDomain: session.documentDomain,
+                compatibilityFingerprint: payload.compatibilityFingerprint,
+                documentIdentity: payload.documentIdentity,
+                textIdentity: payload.textIdentity,
+                candidateInventoryIdentity: payload.candidateInventoryIdentity
+            )
+            if let sessionStore,
+               !sessionStore.archiveAndReplace(
+                with: fresh,
+                reason: "incompatible-preparation-semantics"
+               ) {
+                phase = .error(AppText.localized(
+                    "无法安全迁移旧的词汇准备会话。",
+                    "The previous vocabulary preparation session could not be migrated safely."
+                ))
+                return
+            }
+            session = fresh
         }
         inventory = payload.inventory
         domainDetection = payload.domainDetection
@@ -1184,20 +1245,24 @@ final class VocabularyPreparationCoordinator {
         guard definitionTask == nil,
               definitions[candidate.canonicalKey] == nil,
               definitionFailures[candidate.canonicalKey] == nil,
-              let languageCode = inventory?.languageCode,
+              let runtime = activeRuntime,
+              let provider = runtime.definitions,
               let identity = activeIdentity else { return }
         let key = candidate.canonicalKey
         let context = contexts[key] ?? ""
         let activeRequestID = requestID
-        let provider = definitionProvider
         definitionTask = Task { [weak self] in
             let lookupStartedAt = ProcessInfo.processInfo.systemUptime
             do {
-                let definition = try await provider.definition(
-                    for: candidate,
-                    languageCode: languageCode,
-                    context: context
-                )
+                guard let definition = try await provider.definition(for: VocabularyDefinitionRequest(
+                    language: runtime.language,
+                    lemma: candidate.displayLemma,
+                    surfaceForm: candidate.displayLemma,
+                    context: context,
+                    lexicalItemID: candidate.lexicalItemID
+                )) else {
+                    throw VocabularyPreparationDefinitionError.notFound
+                }
                 guard !Task.isCancelled, let self,
                       self.requestID == activeRequestID,
                       self.currentCandidate?.canonicalKey == key,
@@ -1287,6 +1352,7 @@ final class VocabularyPreparationCoordinator {
         let answers = assessment.answers
         let activeRequestID = requestID
         let algorithmVersion = session.algorithmVersion
+        guard let compatibilityFingerprint = session.compatibilityFingerprint else { return }
         Task { [weak self] in
             let saved = await Task.detached {
                 let priorSaved = inferenceAnswerCount == 0 || store.recordCompletedSession(
@@ -1295,13 +1361,15 @@ final class VocabularyPreparationCoordinator {
                     thetaPosterior: posterior,
                     verifiedEvidenceCount: verifiedInferenceCount,
                     completedAt: Date(),
-                    algorithmVersion: algorithmVersion
+                    algorithmVersion: algorithmVersion,
+                    compatibilityFingerprint: compatibilityFingerprint
                 )
                 _ = researchStore.recordCompletedSession(
                     contributionID: contributionID,
                     inventory: inventory,
                     answers: answers,
-                    protocolVersion: algorithmVersion
+                    protocolVersion: algorithmVersion,
+                    compatibilityFingerprint: compatibilityFingerprint
                 )
                 return priorSaved
             }.value
@@ -1321,9 +1389,10 @@ final class VocabularyPreparationCoordinator {
 
     private func existingVocabularyKeys() -> Set<String> {
         guard let library, let kind = activeDocumentKind,
-              let languageCode = inventory?.languageCode else { return [] }
+              let languageCode = inventory?.languageCode,
+              let language = VocabularyLanguageID(languageCode) else { return [] }
         let persistedKeys = library.vocabularyPreparationExistingKeys(
-            language: NLLanguage(rawValue: languageCode),
+            language: language,
             kind: kind
         )
         guard let inventory else { return persistedKeys }
@@ -1338,14 +1407,6 @@ final class VocabularyPreparationCoordinator {
         definitions[key]?.markdown
     }
 
-    private var requestedLanguage: NLLanguage? {
-        switch selectedLanguageCode {
-        case "en": .english
-        case "de": .german
-        default: nil
-        }
-    }
-
     private func finishImport(
         selected: [DocumentVocabularyCandidate],
         definitions: [String: VocabularyPreparedDefinition],
@@ -1354,6 +1415,9 @@ final class VocabularyPreparationCoordinator {
         importStartedAt: TimeInterval
     ) async {
         guard let library, let kind = activeDocumentKind,
+              let languageCode = inventory?.languageCode,
+              let language = VocabularyLanguageID(languageCode),
+              let runtime = activeRuntime,
               self.requestID == requestID,
               documentSource?.acceptsVocabularyPreparationIdentity(identity) == true else { return }
         self.definitions = definitions
@@ -1362,6 +1426,30 @@ final class VocabularyPreparationCoordinator {
         let existingKeys = existingVocabularyKeys()
         let candidates = selected.filter { !existingKeys.contains($0.canonicalKey) }
         let texts = sourceTexts
+
+        func frequencyProvenance(
+            candidate: DocumentVocabularyCandidate,
+            definition: VocabularyPreparedDefinition?
+        ) -> VocabularyFrequencyProvenance? {
+            if candidate.generalFrequencyRank != nil, let difficulty = runtime.difficulty {
+                let scale = difficulty.frequencyScale
+                return VocabularyFrequencyProvenance(
+                    language: language,
+                    languageProfileVersion: runtime.profile.version,
+                    provider: VocabularyProviderDescriptor(
+                        id: "difficulty.\(scale.sourceID)",
+                        version: scale.version,
+                        supportedLanguageRanges: [VocabularyLanguageRange(language: language, includesDescendants: true)]
+                    )
+                )
+            }
+            guard definition?.frequency != nil, let definition else { return nil }
+            return VocabularyFrequencyProvenance(
+                language: language,
+                languageProfileVersion: runtime.profile.version,
+                provider: definition.provenance
+            )
+        }
 
         let pdfRecords: [StoredPDFWordRecord]
         let webRecords: [StoredWebWordRecord]
@@ -1379,6 +1467,7 @@ final class VocabularyPreparationCoordinator {
                     id: UUID().uuidString,
                     vocabularyID: UUID().uuidString,
                     word: candidate.displayLemma,
+                    language: language,
                     lemma: candidate.displayLemma,
                     lexicalKey: candidate.lexicalItemID?.canonicalKey,
                     partOfSpeech: candidate.partOfSpeech,
@@ -1391,6 +1480,10 @@ final class VocabularyPreparationCoordinator {
                     answer: definition?.markdown ?? "",
                     dictionaryTags: definition?.tags,
                     dictionaryFrequency: candidate.generalFrequencyRank ?? definition?.frequency,
+                    dictionaryFrequencyProvenance: frequencyProvenance(
+                        candidate: candidate,
+                        definition: definition
+                    ),
                     createdAt: createdAt,
                     srs: VocabularySRSState.initial(createdAt: createdAt)
                 )
@@ -1406,6 +1499,7 @@ final class VocabularyPreparationCoordinator {
                     id: UUID().uuidString,
                     vocabularyID: UUID().uuidString,
                     word: candidate.displayLemma,
+                    language: language,
                     lemma: candidate.displayLemma,
                     lexicalKey: candidate.lexicalItemID?.canonicalKey,
                     partOfSpeech: candidate.partOfSpeech,
@@ -1417,6 +1511,10 @@ final class VocabularyPreparationCoordinator {
                     answer: definition?.markdown ?? "",
                     dictionaryTags: definition?.tags,
                     dictionaryFrequency: candidate.generalFrequencyRank ?? definition?.frequency,
+                    dictionaryFrequencyProvenance: frequencyProvenance(
+                        candidate: candidate,
+                        definition: definition
+                    ),
                     createdAt: createdAt,
                     srs: VocabularySRSState.initial(createdAt: createdAt)
                 )

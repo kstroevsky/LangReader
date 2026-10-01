@@ -103,7 +103,7 @@ extension ReaderWindowController {
             guard !prefix.isEmpty else { return nil }
             pattern = VocabularyTextPolicy.lineBrokenHyphenWordPattern(prefix: prefix)
         } else {
-            guard VocabularyTextPolicy.isSingleEnglishWord(trimmed) else { return nil }
+            guard VocabularyTextPolicy.isSingleVocabularyWord(trimmed) else { return nil }
             pattern = VocabularyTextPolicy.lineBrokenHyphenWordPattern(suffix: trimmed)
         }
 
@@ -163,9 +163,11 @@ extension ReaderWindowController {
             lineBrokenHyphenRange: lineBrokenHyphenRange,
             isKnownHyphenatedWord: hasLocalSpellingEntry,
             isKnownWord: { candidate in
-                let metadata = VocabularyDictionaryMetadataService.metadata(for: candidate)
-                return metadata.frequency != nil
-                    || metadata.tags != nil
+                let metadata = vocabularyDocumentLanguageID.flatMap {
+                    VocabularyDictionaryMetadataService.metadata(for: candidate, language: $0)
+                }
+                return metadata?.frequency != nil
+                    || metadata?.tags != nil
                     || hasLocalSpellingEntry(candidate)
             }
         )
@@ -176,9 +178,11 @@ extension ReaderWindowController {
             text,
             isKnownHyphenatedWord: hasLocalSpellingEntry,
             isKnownWord: { candidate in
-                let metadata = VocabularyDictionaryMetadataService.metadata(for: candidate)
-                return metadata.frequency != nil
-                    || metadata.tags != nil
+                let metadata = vocabularyDocumentLanguageID.flatMap {
+                    VocabularyDictionaryMetadataService.metadata(for: candidate, language: $0)
+                }
+                return metadata?.frequency != nil
+                    || metadata?.tags != nil
                     || hasLocalSpellingEntry(candidate)
             }
         )
@@ -186,7 +190,7 @@ extension ReaderWindowController {
 
     func hasLocalSpellingEntry(_ word: String) -> Bool {
         let candidate = VocabularyTextPolicy.normalizedVocabularyText(word)
-        guard VocabularyTextPolicy.isSingleEnglishWord(candidate) else { return false }
+        guard VocabularyTextPolicy.isSingleVocabularyWord(candidate) else { return false }
 
         let checker = NSSpellChecker.shared
         return ["de_DE", "en_US"].contains { language in

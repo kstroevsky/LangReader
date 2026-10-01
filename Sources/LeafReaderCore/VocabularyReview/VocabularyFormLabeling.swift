@@ -1,5 +1,4 @@
 import Foundation
-import NaturalLanguage
 
 /// Routes form labeling to the labeler for a document's language.
 ///
@@ -13,7 +12,7 @@ import NaturalLanguage
 /// test binaries can build this routing without SQLite.
 package enum VocabularyFormLabeling {
     /// Whether labels can be produced for `language`.
-    package static func hasLabeler(for language: NLLanguage) -> Bool {
+    package static func hasLabeler(for language: VocabularyLanguageID) -> Bool {
         language == .german || language == .english
     }
 
@@ -22,21 +21,31 @@ package enum VocabularyFormLabeling {
         surfaceForm: String,
         lemma: String,
         context: String?,
-        language: NLLanguage
+        language: VocabularyLanguageID,
+        evidenceProvider: @escaping VocabularyFormLabelEvidenceProvider = { _ in .unavailable }
     ) -> WordFormLabel? {
         switch language {
         case .german:
-            return GermanFormLabeler.label(surfaceForm: surfaceForm, lemma: lemma, context: context)
+            return GermanFormLabeler.label(
+                surfaceForm: surfaceForm,
+                lemma: lemma,
+                context: context,
+                evidenceProvider: evidenceProvider
+            )
         case .english:
-            return EnglishFormLabeler.label(surfaceForm: surfaceForm, lemma: lemma, context: context)
-        default:
-            return nil
+            return EnglishFormLabeler.label(
+                surfaceForm: surfaceForm,
+                lemma: lemma,
+                context: context,
+                evidenceProvider: evidenceProvider
+            )
+        default: return nil
         }
     }
 
     /// The labeling ruleset version for `language`, so a cached label produced
     /// by an older ruleset is treated as absent.
-    package static func labelingVersion(for language: NLLanguage) -> Int {
+    package static func labelingVersion(for language: VocabularyLanguageID) -> Int {
         switch language {
         case .german: return GermanFormLabeler.labelingVersion
         case .english: return EnglishFormLabeler.labelingVersion
@@ -44,18 +53,4 @@ package enum VocabularyFormLabeling {
         }
     }
 
-    /// Cache version namespaced by language.
-    ///
-    /// The label cache is keyed by (surface, lemma, version) with no language
-    /// column, so the language is folded into the version. Without this, the
-    /// same spelling in two languages — "was", "die", "hat" — would collide and
-    /// serve one language's label to the other.
-    package static func cacheVersion(for language: NLLanguage) -> Int {
-        let base = labelingVersion(for: language)
-        switch language {
-        case .german: return base
-        case .english: return 1000 + base
-        default: return -1
-        }
-    }
 }

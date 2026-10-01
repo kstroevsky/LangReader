@@ -21,6 +21,11 @@ package struct VocabularyLibrarySource {
 
 package struct VocabularyLibraryOccurrence {
     package let recordID: String
+    package let learningOwnerID: VocabularyLearningOwnerID?
+    package let language: VocabularyLanguageID?
+    package let lemma: String?
+    package let lexicalKey: String?
+    package let partOfSpeech: VocabularyPartOfSpeech?
     package let documentURL: URL
     package let documentTitle: String
     package let documentKind: ReaderDocumentKind
@@ -31,6 +36,11 @@ package struct VocabularyLibraryOccurrence {
 
     package init(
         recordID: String,
+        learningOwnerID: VocabularyLearningOwnerID? = nil,
+        language: VocabularyLanguageID? = nil,
+        lemma: String? = nil,
+        lexicalKey: String? = nil,
+        partOfSpeech: VocabularyPartOfSpeech? = nil,
         documentURL: URL,
         documentTitle: String,
         documentKind: ReaderDocumentKind,
@@ -40,6 +50,11 @@ package struct VocabularyLibraryOccurrence {
         createdAt: Date
     ) {
         self.recordID = recordID
+        self.learningOwnerID = learningOwnerID
+        self.language = language
+        self.lemma = lemma
+        self.lexicalKey = lexicalKey
+        self.partOfSpeech = partOfSpeech
         self.documentURL = documentURL
         self.documentTitle = documentTitle
         self.documentKind = documentKind
@@ -53,31 +68,53 @@ package struct VocabularyLibraryOccurrence {
 package struct VocabularyLibraryRecord {
     package let id: String
     package let word: String
+    package let language: VocabularyLanguageID?
     package let lemma: String?
+    package let lexicalKey: String?
+    package let partOfSpeech: VocabularyPartOfSpeech?
     package let forms: [VocabularyForm]
     package let answer: String
     package let dictionaryTags: String?
     package let dictionaryFrequency: Int?
+    package let dictionaryFrequencyProvenance: VocabularyFrequencyProvenance?
     package let occurrences: [VocabularyLibraryOccurrence]
 
     package init(
         id: String,
         word: String,
+        language: VocabularyLanguageID? = nil,
         lemma: String?,
+        lexicalKey: String? = nil,
+        partOfSpeech: VocabularyPartOfSpeech? = nil,
         forms: [VocabularyForm],
         answer: String,
         dictionaryTags: String?,
         dictionaryFrequency: Int?,
+        dictionaryFrequencyProvenance: VocabularyFrequencyProvenance? = nil,
         occurrences: [VocabularyLibraryOccurrence]
     ) {
         self.id = id
         self.word = word
+        self.language = language
         self.lemma = lemma
+        self.lexicalKey = lexicalKey
+        self.partOfSpeech = partOfSpeech
         self.forms = forms
         self.answer = answer
         self.dictionaryTags = dictionaryTags
         self.dictionaryFrequency = dictionaryFrequency
+        self.dictionaryFrequencyProvenance = dictionaryFrequencyProvenance
         self.occurrences = occurrences
+    }
+
+    package var isDictionaryFrequencyVerified: Bool {
+        guard dictionaryFrequency != nil,
+              let provenance = dictionaryFrequencyProvenance,
+              provenance.provider.supports(provenance.language),
+              language == nil || language == provenance.language else {
+            return false
+        }
+        return true
     }
 
     package var latestCreatedAt: Date {
@@ -96,8 +133,8 @@ package enum VocabularyLibraryRecordProvider {
 
         for source in sources {
             for record in source.records {
-                let key = VocabularyTextPolicy.canonicalVocabularyKey(record.lemma ?? record.word)
-                guard !key.isEmpty else { continue }
+                let unresolvedScope = source.documentURL.standardizedFileURL.path
+                guard let key = record.identityGroupingKey(unresolvedScope: unresolvedScope) else { continue }
                 grouped[key, default: []].append((source, record))
             }
         }
@@ -112,7 +149,14 @@ package enum VocabularyLibraryRecordProvider {
             let tags = entries
                 .compactMap { $0.record.dictionaryTags?.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .first { !$0.isEmpty }
-            let frequency = entries.compactMap { $0.record.dictionaryFrequency }.min()
+            let frequencyEntry = entries
+                .filter { $0.record.dictionaryFrequency != nil }
+                .min { lhs, rhs in
+                    let lhsVerified = lhs.record.verifiedDictionaryFrequency != nil
+                    let rhsVerified = rhs.record.verifiedDictionaryFrequency != nil
+                    if lhsVerified != rhsVerified { return lhsVerified && !rhsVerified }
+                    return (lhs.record.dictionaryFrequency ?? .max) < (rhs.record.dictionaryFrequency ?? .max)
+                }
             // Surface forms recovered from occurrences carry no label of their
             // own; they are merged after the labeled forms so an existing label
             // always wins over a bare surface form for the same spelling.
@@ -131,11 +175,15 @@ package enum VocabularyLibraryRecordProvider {
             return VocabularyLibraryRecord(
                 id: key,
                 word: VocabularyTextPolicy.normalizedVocabularyText(first.record.word),
+                language: entries.compactMap(\.record.language).first,
                 lemma: first.record.lemma,
+                lexicalKey: entries.compactMap(\.record.lexicalKey).first,
+                partOfSpeech: entries.compactMap(\.record.partOfSpeech).first,
                 forms: forms,
                 answer: answerEntry?.record.answer ?? "",
                 dictionaryTags: tags,
-                dictionaryFrequency: frequency,
+                dictionaryFrequency: frequencyEntry?.record.dictionaryFrequency,
+                dictionaryFrequencyProvenance: frequencyEntry?.record.dictionaryFrequencyProvenance,
                 occurrences: occurrences
             )
         }.sorted {
@@ -161,6 +209,11 @@ package enum VocabularyLibraryRecordProvider {
         return occurrences.map {
             VocabularyLibraryOccurrence(
                 recordID: $0.id,
+                learningOwnerID: $0.learningOwnerID,
+                language: $0.language,
+                lemma: $0.lemma,
+                lexicalKey: $0.lexicalKey,
+                partOfSpeech: $0.partOfSpeech,
                 documentURL: source.documentURL.standardizedFileURL,
                 documentTitle: source.documentTitle,
                 documentKind: source.documentKind,

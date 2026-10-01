@@ -1,111 +1,144 @@
-import NaturalLanguage
+import Foundation
 
-/// Picks the language used to lemmatize and group a document's vocabulary.
-///
-/// The occurrence engine is language-neutral; only the tagger's language
-/// differs. We detect the document's dominant language and use it when it is
-/// one Apple's tagger lemmatizes well. Anything else falls back to English,
-/// the default language, which for non-matching text simply degrades to
-/// exact-form matching rather than producing wrong groupings.
+package struct VocabularyLanguageRecognitionObservation: Sendable {
+    package let dominant: VocabularyLanguageCandidate?
+    package let candidates: [VocabularyLanguageCandidate]
+
+    package init(
+        dominant: VocabularyLanguageCandidate?,
+        candidates: [VocabularyLanguageCandidate]
+    ) {
+        self.dominant = dominant
+        self.candidates = candidates
+    }
+}
+
+package protocol VocabularyLanguageRecognizing: Sendable {
+    var descriptor: VocabularyProviderDescriptor { get }
+    func recognize(sample: String) throws -> VocabularyLanguageRecognitionObservation
+}
+
+/// Samples representative document prose and turns recognizer observations
+/// into an explicit language resolution. Product capability policy deliberately
+/// lives elsewhere: a recognizer may resolve a language even when preparation
+/// is unavailable for it.
 package enum VocabularyLanguageDetector {
-    package static let fallback: NLLanguage = .english
-
-    /// Languages allowed for lemma-based inflected-form grouping. Restricting to
-    /// a vetted set keeps a mis-detected or poorly-supported language from
-    /// scattering a word's forms across bogus lemmas. Italian is deliberately
-    /// absent: its lemmas come back inconsistent ("parlo" → "parlarsi" but
-    /// "parlato" → "parlare"), which would split one word across two groups.
-    package static let supported: Set<NLLanguage> = [
-        .german, .english, .french, .spanish, .portuguese, .dutch, .russian
-    ]
-
-    /// Pages to sample and score. Bounded so detection stays cheap on the
-    /// document-load path even for a 250-page book.
     package static let maxSampledPages = 16
-    /// Best-scoring pages actually fed to the recognizer.
     package static let maxScoredPagesUsed = 8
-    package static let maxSampleCharacters = 8000
-    /// Minimum words before a page counts as prose at all.
+    package static let maxSampleCharacters = 8_000
     package static let minimumProseWords = 60
+    package static let minimumRecognitionCharacters = 40
 
-    /// The language to group by, from a representative sample of document text.
-    /// Short or empty samples are inconclusive, so they take the fallback.
-    package static func language(forSample sample: String) -> NLLanguage {
+    package static func resolution<R: VocabularyLanguageRecognizing>(
+        forSample sample: String,
+        sampledUnitCount: Int = 1,
+        recognizer: R
+    ) -> VocabularyLanguageResolution {
         let trimmed = sample.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.count >= 40 else { return fallback }
-        let recognizer = NLLanguageRecognizer()
-        recognizer.processString(trimmed)
-        guard let dominant = recognizer.dominantLanguage, supported.contains(dominant) else {
-            return fallback
+        guard trimmed.count >= minimumRecognitionCharacters else {
+            return .undetermined(.unresolved(
+                .insufficientText,
+                sampledCharacterCount: trimmed.count,
+                sampledUnitCount: sampledUnitCount
+            ))
         }
-        return dominant
+
+        do {
+            let observation = try recognizer.recognize(sample: trimmed)
+            let evidence = VocabularyLanguageEvidence(
+                provider: recognizer.descriptor,
+                candidates: observation.candidates,
+                sampledCharacterCount: trimmed.count,
+                sampledUnitCount: sampledUnitCount,
+                undeterminedReason: observation.dominant == nil ? .inconclusiveRecognition : nil
+            )
+            guard let dominant = observation.dominant else {
+                return .undetermined(evidence)
+            }
+            return .resolved(VocabularyResolvedLanguage(
+                id: dominant.language,
+                provenance: .automaticDetection,
+                evidence: evidence
+            ))
+        } catch {
+            return .undetermined(VocabularyLanguageEvidence(
+                provider: recognizer.descriptor,
+                sampledCharacterCount: trimmed.count,
+                sampledUnitCount: sampledUnitCount,
+                undeterminedReason: .providerFailure
+            ))
+        }
     }
 
-    /// The language for a document, given a way to read page text.
-    ///
-    /// Sampling the *first* pages is unreliable: front matter is titles, author
-    /// lists and copyright boilerplate, and in scanned books it is OCR noise —
-    /// a real English art book was detected as Turkish that way. Instead this
-    /// spreads its samples across the whole document and keeps the pages that
-    /// look most like running prose, which is what the recognizer needs.
-    package static func language(pageCount: Int, pageText: (Int) -> String?) -> NLLanguage {
-        guard pageCount > 0 else { return fallback }
+    package static func resolution<R: VocabularyLanguageRecognizing>(
+        pageCount: Int,
+        pageText: (Int) -> String?,
+        recognizer: R
+    ) -> VocabularyLanguageResolution {
+        guard pageCount > 0 else {
+            return .undetermined(.unresolved(.insufficientText))
+        }
 
         let indices = sampleIndices(pageCount: pageCount)
         let scored = indices.compactMap { index -> (score: Int, text: String)? in
             guard let text = pageText(index), !text.isEmpty else { return nil }
             let score = proseScore(text)
             return score > 0 ? (score, text) : nil
-        }.sorted { $0.score > $1.score }
+        }.sorted {
+            if $0.score != $1.score { return $0.score > $1.score }
+            return $0.text < $1.text
+        }
 
+        var sampledUnits = 0
         var sample = ""
         for page in scored.prefix(maxScoredPagesUsed) {
             guard sample.count < maxSampleCharacters else { break }
             sample.append(page.text)
             sample.append("\n")
+            sampledUnits += 1
         }
-        // Nothing looked like prose (an image-only or table-only document):
-        // fall back to whatever text there was rather than giving up outright.
         if sample.isEmpty {
             for index in indices {
                 guard sample.count < maxSampleCharacters else { break }
                 if let text = pageText(index), !text.isEmpty {
                     sample.append(text)
                     sample.append("\n")
+                    sampledUnits += 1
                 }
             }
         }
-        return language(forSample: String(sample.prefix(maxSampleCharacters)))
+        return resolution(
+            forSample: String(sample.prefix(maxSampleCharacters)),
+            sampledUnitCount: sampledUnits,
+            recognizer: recognizer
+        )
     }
 
-    /// The language of a document we cannot re-read, inferred from the context
-    /// sentences stored with its saved words.
-    ///
-    /// The Words window lists every document, but only the open one is loaded in
-    /// PDFKit. Those saved contexts are real sentences from the document, so
-    /// they identify its language well enough to label its forms — and using
-    /// them beats labeling another document's words with the open document's
-    /// grammar.
-    package static func language(forContexts contexts: [String]) -> NLLanguage {
+    package static func resolution<R: VocabularyLanguageRecognizing>(
+        forContexts contexts: [String],
+        recognizer: R
+    ) -> VocabularyLanguageResolution {
         var sample = ""
+        var sampledUnits = 0
         for context in contexts {
             guard sample.count < maxSampleCharacters else { break }
             let trimmed = context.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty else { continue }
             sample.append(trimmed)
             sample.append("\n")
+            sampledUnits += 1
         }
-        return language(forSample: sample)
+        return resolution(
+            forSample: String(sample.prefix(maxSampleCharacters)),
+            sampledUnitCount: sampledUnits,
+            recognizer: recognizer
+        )
     }
 
-    /// Page indices spread across the document, skipping the front matter that
-    /// rarely contains running prose.
     package static func sampleIndices(pageCount: Int) -> [Int] {
         guard pageCount > 0 else { return [] }
         guard pageCount > 4 else { return Array(0..<pageCount) }
 
-        // Skip roughly the first 8% (title/copyright/contents), but never so
-        // much that a short document has nothing left.
         let start = min(pageCount / 12, max(0, pageCount - 1))
         let span = pageCount - start
         let count = min(maxSampledPages, span)
@@ -120,12 +153,6 @@ package enum VocabularyLanguageDetector {
         return indices
     }
 
-    /// How much a page reads like running prose, without assuming any language.
-    ///
-    /// Counts word-like tokens of three or more letters and scales by how much
-    /// of the page is letters rather than digits, punctuation and layout noise.
-    /// This keeps tables, figure captions and OCR garbage from outscoring the
-    /// body text the recognizer actually needs.
     package static func proseScore(_ text: String) -> Int {
         var letters = 0
         var nonSpace = 0
@@ -139,7 +166,6 @@ package enum VocabularyLanguageDetector {
         let substantialWords = words.filter { $0.count >= 3 }.count
         guard substantialWords >= minimumProseWords else { return 0 }
 
-        // Letter ratio in percent, so the score stays integral.
         let letterRatio = (letters * 100) / nonSpace
         guard letterRatio >= 60 else { return 0 }
         return substantialWords * letterRatio

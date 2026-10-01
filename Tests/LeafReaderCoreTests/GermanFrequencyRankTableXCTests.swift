@@ -27,6 +27,37 @@ final class GermanFrequencyRankTableXCTests: XCTestCase {
         )
         XCTAssertEqual(english.bestRank(for: summary), 484)
     }
+
+    func testInventoryRejectsDifficultyProviderFromAnotherLanguage() throws {
+        let englishURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+            .appendingPathComponent("Sources/LeafReaderApp/Resources/ECDICT/ecdict.db")
+        let dictionary = ECDICTDictionary(databaseURLs: [englishURL], csvURLs: [])
+        let english = ECDICTDocumentVocabularyDifficultyProvider(
+            dictionary: LocalDictionaryLookupService(dictionary: dictionary)
+        )
+        let summary = VocabularyDocumentLemmaSummary(
+            canonicalKey: "develop",
+            displayLemma: "develop",
+            observedForms: [VocabularyDocumentObservedForm(surface: "developed", occurrenceCount: 1)],
+            occurrenceCount: 1,
+            representativeRange: VocabularyDocumentSourceRange(
+                unitIndex: 0,
+                utf16Location: 0,
+                utf16Length: 7
+            )
+        )
+
+        XCTAssertEqual(english.bestRank(for: summary), 484)
+        let inventory = DocumentVocabularyInventory(
+            summaries: [summary],
+            languageCode: "de",
+            difficultyProvider: english
+        )
+        let candidate = try XCTUnwrap(inventory.candidates.first)
+        XCTAssertNil(candidate.generalFrequencyRank)
+        XCTAssertEqual(candidate.difficultyPrior, .unavailable)
+    }
+
     func testPinnedResourceHasExpectedRowsAndFrequencyOrdering() throws {
         let url = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
             .appendingPathComponent("Sources/LeafReaderApp/Resources/GermanFrequency/deu_news_2025_1M.sqlite")

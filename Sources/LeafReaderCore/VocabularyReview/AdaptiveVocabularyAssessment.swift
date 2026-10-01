@@ -271,9 +271,12 @@ package struct DocumentVocabularyInventory: Codable, Equatable, Sendable {
         languageCode: String,
         difficultyProvider: any DocumentVocabularyDifficultyProviding
     ) {
+        let language = VocabularyLanguageID(languageCode)
         let valid = summaries.filter(Self.isAssessable)
         candidates = valid.map { summary in
-            let resolvedRank = difficultyProvider.bestRank(for: summary)
+            let resolvedRank = language.flatMap {
+                difficultyProvider.bestRank(for: summary, language: $0)
+            }
             return DocumentVocabularyCandidate(
                 canonicalKey: summary.canonicalKey,
                 lemmaKey: summary.lemmaKey,
@@ -285,7 +288,9 @@ package struct DocumentVocabularyInventory: Codable, Equatable, Sendable {
                 occurrenceCount: summary.occurrenceCount,
                 representativeRange: summary.representativeRange,
                 generalFrequencyRank: resolvedRank,
-                difficultyPrior: difficultyProvider.difficultyPrior(for: summary)
+                difficultyPrior: language.map {
+                    difficultyProvider.difficultyPrior(for: summary, language: $0)
+                } ?? .unavailable
             )
         }.sorted(by: Self.inventoryOrder)
         self.languageCode = languageCode
@@ -452,6 +457,10 @@ package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
     package var readerPriorContributionID: String?
     package var documentDomain: VocabularyDocumentDomain?
     package var predictionAudit: VocabularyPredictionAuditSession?
+    package var compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint?
+    package var documentIdentity: String?
+    package var textIdentity: String?
+    package var candidateInventoryIdentity: String?
 
     package init(
         mode: VocabularyAssessmentMode = .allUnknown,
@@ -462,7 +471,11 @@ package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
         readerPriorContributionRecorded: Bool? = nil,
         readerPriorContributionID: String? = nil,
         documentDomain: VocabularyDocumentDomain? = nil,
-        predictionAudit: VocabularyPredictionAuditSession? = nil
+        predictionAudit: VocabularyPredictionAuditSession? = nil,
+        compatibilityFingerprint: VocabularyPreparationCompatibilityFingerprint? = nil,
+        documentIdentity: String? = nil,
+        textIdentity: String? = nil,
+        candidateInventoryIdentity: String? = nil
     ) {
         self.mode = mode
         self.invitationState = invitationState
@@ -473,6 +486,10 @@ package struct VocabularyPreparationSession: Codable, Equatable, Sendable {
         self.readerPriorContributionID = readerPriorContributionID
         self.documentDomain = documentDomain
         self.predictionAudit = predictionAudit
+        self.compatibilityFingerprint = compatibilityFingerprint
+        self.documentIdentity = documentIdentity
+        self.textIdentity = textIdentity
+        self.candidateInventoryIdentity = candidateInventoryIdentity
     }
 }
 

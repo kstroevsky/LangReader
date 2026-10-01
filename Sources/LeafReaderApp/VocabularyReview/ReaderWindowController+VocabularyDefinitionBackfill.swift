@@ -4,38 +4,45 @@ import LeafReaderCore
 extension ReaderWindowController {
     func backfillDictionaryAnswerAsync(vocabularyID: String?, word: String) {
         let query = VocabularyTextPolicy.normalizedVocabularyText(word)
-        guard VocabularyTextPolicy.isSingleEnglishWord(query),
-              let documentID = currentFileMD5 else { return }
-        let localLemma = GermanLemmaResolver.lemma(for: query, language: vocabularyDocumentLanguage)
+        guard VocabularyTextPolicy.isSingleVocabularyWord(query),
+              let workIdentity = vocabularyDocumentWorkIdentity,
+              let language = vocabularyDocumentLanguageID,
+              let runtime = vocabularyLanguageCatalog.resolve(language: language),
+              let provider = runtime.definitions else { return }
+        let localLemma = VocabularyLemmaResolver.lemma(
+            for: query,
+            language: language,
+            analyzerFactory: runtime.linguisticAnalyzerFactory
+        )
 
         Task { [weak self] in
-            if let localAnswer = LocalDictionaryLookupService.shared.dictionaryAnswer(for: query, context: "") {
-                guard !Task.isCancelled,
-                      let self,
-                      self.currentFileMD5 == documentID else { return }
-                self.applyDictionaryAnswer(
-                    localAnswer.markdown,
-                    metadata: localAnswer.metadata,
-                    vocabularyID: vocabularyID,
-                    word: query,
-                    lemma: localLemma
-                )
-                return
-            }
-
-            guard NetworkConnectivityMonitor.shared.isOnline else { return }
-            guard let entry = try? await GermanWiktionaryDictionary.shared.lookup(query),
+            guard let definition = try? await provider.definition(for: VocabularyDefinitionRequest(
+                language: language,
+                lemma: localLemma,
+                surfaceForm: query,
+                context: ""
+            )),
                   !Task.isCancelled,
                   let self,
-                  self.currentFileMD5 == documentID else {
+                  self.acceptsVocabularyDocumentWorkIdentity(workIdentity),
+                  self.vocabularyDocumentLanguageID == language else {
                 return
             }
             self.applyDictionaryAnswer(
-                entry.markdown,
-                metadata: entry.metadata,
+                definition.markdown,
+                metadata: VocabularyDictionaryMetadata(
+                    tags: definition.tags,
+                    frequency: definition.frequency
+                ),
                 vocabularyID: vocabularyID,
                 word: query,
-                lemma: entry.lemma
+                lemma: definition.resolvedLemma ?? localLemma,
+                language: language,
+                frequencyProvenance: VocabularyFrequencyProvenance(
+                    language: language,
+                    languageProfileVersion: runtime.profile.version,
+                    provider: definition.provenance
+                )
             )
         }
     }
@@ -45,12 +52,13 @@ extension ReaderWindowController {
         metadata: VocabularyDictionaryMetadata,
         vocabularyID: String?,
         word: String,
-        lemma: String
+        lemma: String,
+        language: VocabularyLanguageID,
+        frequencyProvenance: VocabularyFrequencyProvenance
     ) {
-        let language = vocabularyDocumentLanguage
         let trimmedAnswer = answer.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedLemma = VocabularyTextPolicy.normalizedVocabularyText(lemma)
-        let wordKey = GermanLemmaResolver.groupingKey(word: word, lemma: normalizedLemma, language: language)
+        let wordKey = vocabularyGroupingKey(word: word, lemma: normalizedLemma, language: language)
         guard !trimmedAnswer.isEmpty, !wordKey.isEmpty else { return }
 
         if currentDocumentKind != .pdf {
@@ -59,7 +67,9 @@ extension ReaderWindowController {
                 metadata: metadata,
                 vocabularyID: vocabularyID,
                 wordKey: wordKey,
-                lemma: normalizedLemma
+                lemma: normalizedLemma,
+                language: language,
+                frequencyProvenance: frequencyProvenance
             )
             return
         }
@@ -68,10 +78,10 @@ extension ReaderWindowController {
         var didChangeLemma = false
         for index in storedWordRecords.indices {
             let matchingVocabularyID = vocabularyID.map { storedWordRecords[index].vocabularyID == $0 } ?? false
-            let matchingWord = GermanLemmaResolver.groupingKey(
+            let matchingWord = vocabularyGroupingKey(
                 word: storedWordRecords[index].word,
                 lemma: storedWordRecords[index].lemma,
-                language: language
+                language: storedWordRecords[index].language ?? language
             ) == wordKey
             guard matchingVocabularyID || matchingWord,
                   storedWordRecords[index].answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
@@ -88,6 +98,9 @@ extension ReaderWindowController {
             }
             if storedWordRecords[index].dictionaryFrequency == nil {
                 storedWordRecords[index].dictionaryFrequency = metadata.frequency
+                if metadata.frequency != nil {
+                    storedWordRecords[index].dictionaryFrequencyProvenance = frequencyProvenance
+                }
             }
             updatedRecords.append(storedWordRecords[index])
         }
@@ -113,16 +126,17 @@ extension ReaderWindowController {
         metadata: VocabularyDictionaryMetadata,
         vocabularyID: String?,
         wordKey: String,
-        lemma: String
+        lemma: String,
+        language: VocabularyLanguageID,
+        frequencyProvenance: VocabularyFrequencyProvenance
     ) {
-        let language = vocabularyDocumentLanguage
         var updatedRecords: [StoredWebWordRecord] = []
         for index in storedWebWordRecords.indices {
             let matchingVocabularyID = vocabularyID.map { storedWebWordRecords[index].vocabularyID == $0 } ?? false
-            let matchingWord = GermanLemmaResolver.groupingKey(
+            let matchingWord = vocabularyGroupingKey(
                 word: storedWebWordRecords[index].word,
                 lemma: storedWebWordRecords[index].lemma,
-                language: language
+                language: storedWebWordRecords[index].language ?? language
             ) == wordKey
             guard matchingVocabularyID || matchingWord,
                   storedWebWordRecords[index].answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
@@ -136,6 +150,9 @@ extension ReaderWindowController {
             }
             if storedWebWordRecords[index].dictionaryFrequency == nil {
                 storedWebWordRecords[index].dictionaryFrequency = metadata.frequency
+                if metadata.frequency != nil {
+                    storedWebWordRecords[index].dictionaryFrequencyProvenance = frequencyProvenance
+                }
             }
             updatedRecords.append(storedWebWordRecords[index])
         }

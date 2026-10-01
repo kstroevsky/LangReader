@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "phase": "lexical-reconciliation-v15-sealed",
+  "phase": "language-identity-validation-routing-v18-sealed",
   "source_revision": "b2b99696feda177be0699d5277a2c13c7c7c9bd5",
   "accepted_plan": "docs/plans/vocabulary-validation-boundary/revision-2026-09-19-ci-source-lock/candidate-plan.md",
   "baseline_manifest": "docs/plans/vocabulary-validation-boundary/implementation-evidence/extraction-parity-manifest.json",
@@ -8,16 +8,16 @@
   "followup_source_revision": "0dc16efd21e2816a5154b4d515c2b5272e6b8fe3",
   "followup_plan": "docs/plans/vocabulary-validation-boundary/revision-2026-09-21-boundary-followup/candidate-plan.md",
   "followup_plan_sha256": "3a67d47ad1d0ea133618bff40611e9b40a8b6a3f1a5a7f7082f8210a80985cab",
-  "completed_slices": ["baseline-checkpoint", "commit-1-boundary-scaffold", "2a-study-schemas", "2b-parallel-diagnostic-evaluator", "2c-same-tree-bank-parity", "2d-wrapper-linkage-switch", "2e-remove-core-experiment-code", "commit-3-runner-extraction", "commit-4-pos-cross-format", "commit-5-enforcement-and-handoff", "followup-register-and-v2-hardening", "followup-core-seam-cleanup", "followup-v3-seal", "german-portability-product-fix", "german-portability-v4-seal", "graceful-degradation-product-fix", "graceful-degradation-v5-seal", "otherword-pos-product-fix", "otherword-pos-v6-seal", "adr-0001-lexical-reconciliation", "lexical-reconciliation-v7-seal", "adr-0001-lexical-uncertainty-provenance-fix", "lexical-reconciliation-v8-seal", "adr-0001-conservative-reconciliation-semantics", "lexical-reconciliation-v9-seal", "adr-0001-protocol-identity-isolation", "lexical-reconciliation-v10-seal", "adr-0001-conflict-ambiguity-hardening", "lexical-reconciliation-v11-seal", "adr-0001-cross-format-direct-evidence-identity", "lexical-reconciliation-v12-seal", "adr-0001-validation-direct-evidence-alignment", "lexical-reconciliation-v13-seal", "adr-0001-reconciliation-observability", "lexical-reconciliation-v14-seal", "adr-0001-immutable-occurrence-observation-seam", "lexical-reconciliation-v15-seal"],
+  "completed_slices": ["baseline-checkpoint", "commit-1-boundary-scaffold", "2a-study-schemas", "2b-parallel-diagnostic-evaluator", "2c-same-tree-bank-parity", "2d-wrapper-linkage-switch", "2e-remove-core-experiment-code", "commit-3-runner-extraction", "commit-4-pos-cross-format", "commit-5-enforcement-and-handoff", "followup-register-and-v2-hardening", "followup-core-seam-cleanup", "followup-v3-seal", "german-portability-product-fix", "german-portability-v4-seal", "graceful-degradation-product-fix", "graceful-degradation-v5-seal", "otherword-pos-product-fix", "otherword-pos-v6-seal", "adr-0001-lexical-reconciliation", "lexical-reconciliation-v7-seal", "adr-0001-lexical-uncertainty-provenance-fix", "lexical-reconciliation-v8-seal", "adr-0001-conservative-reconciliation-semantics", "lexical-reconciliation-v9-seal", "adr-0001-protocol-identity-isolation", "lexical-reconciliation-v10-seal", "adr-0001-conflict-ambiguity-hardening", "lexical-reconciliation-v11-seal", "adr-0001-cross-format-direct-evidence-identity", "lexical-reconciliation-v12-seal", "adr-0001-validation-direct-evidence-alignment", "lexical-reconciliation-v13-seal", "adr-0001-reconciliation-observability", "lexical-reconciliation-v14-seal", "adr-0001-immutable-occurrence-observation-seam", "lexical-reconciliation-v15-seal", "adr-0002-frequency-backfill-provenance", "language-frequency-provenance-v16-seal", "adr-0002-language-identity-and-capability-routing", "language-identity-capability-routing-v17-seal", "adr-0002-validation-language-identity-hardening", "language-identity-validation-routing-v18-seal"],
   "current_slice": null,
   "protected_data_accessed": false,
   "historical_reservation_modified": false,
-  "product_generator_revision": "ae1c7fd7a3b3d7cbf9f8aa7c72bb4ba9ad2360ed",
-  "fresh_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v15.json",
-  "fresh_reservation_sha256": "36d2230312a8c12658790516373666aab3400fd411c52d67c2e2da3755939109",
+  "product_generator_revision": "0911fbcdc76f238bd6e1a22a7e2a8020adcb153f",
+  "fresh_reservation": "docs/plans/vocabulary-validation-evidence/development-confirmation-reservation-v18.json",
+  "fresh_reservation_sha256": "bebe49682308836eaf9b662ba9cf7622562cdd7891c2c275ee9cdfaa4e80c49e",
   "fresh_reservation_status": "reservedNotExecuted",
-  "extracted_generator_source_lock": "docs/plans/vocabulary-validation-boundary/implementation-evidence/lexical-reconciliation-generator-source-lock-v15.json",
-  "extracted_generator_source_lock_sha256": "be359368bf581ae1578431faf2db11c845db9bfcdf42f9d87b8129212c879f53",
+  "extracted_generator_source_lock": "docs/plans/vocabulary-validation-boundary/implementation-evidence/lexical-reconciliation-generator-source-lock-v18.json",
+  "extracted_generator_source_lock_sha256": "a669dc3f8373a204133584a1c1ad9fc47f282da38a3602a9c3359b41012e1d74",
   "candidate_frozen": false,
   "verification": {
     "baseline_runs": "standard, causal, longitudinal, POS all exit 0; 13 output hashes frozen",
@@ -60,8 +60,14 @@
     "adr_0001_reconciliation_observability": "reconciliation diagnostics now expose per-child strong contextual occurrence counts and attestation sources alongside existing support/context counts, provider list, raw-score range, residual count, state, anchor, and reconciler version; candidate semantics and reconciliation decisions are unchanged",
     "fresh_v14_reservation": "v1-v13 remain byte-identical and unexecuted historical evidence; v14 is bound to reconciliation-observability revision 4a4cce0 and reserves 3 disjoint seeds plus 24 disjoint document identities; no outcomes or protected data accessed",
     "adr_0001_immutable_occurrence_observation_seam": "Core exposes immutable occurrence analyses through an observation-only package seam; reconciliation reuses the same constructor; focused Core tests plus representative-book candidate/materializer self-tests pass; no candidate semantics changed.",
-    "fresh_v15_reservation": "v1-v14 remain byte-identical and unexecuted historical evidence; v15 is bound to representative-book materialization provenance revision ae1c7fd and reserves 3 disjoint seeds plus 24 disjoint document identities; no outcomes or protected data accessed"
+    "fresh_v15_reservation": "v1-v14 remain byte-identical and unexecuted historical evidence; v15 is bound to representative-book materialization provenance revision ae1c7fd and reserves 3 disjoint seeds plus 24 disjoint document identities; no outcomes or protected data accessed",
+    "adr_0002_frequency_backfill_provenance": "frequency backfill work is keyed by explicit language, provider/profile provenance, and exact eligible record coverage; persisted PDF/Web frequency values carry provenance; unverified legacy ranks are excluded from frequency-driven inference until re-derived; writes revalidate current scope before completion",
+    "fresh_v16_reservation": "v1-v15 remain byte-identical and unexecuted historical evidence; v16 is bound to rebased ADR-0002 frequency-provenance revision f626550 and reserves 3 disjoint seeds plus 24 disjoint document identities; no outcomes or protected data accessed",
+    "adr_0002_language_identity_and_capability_routing": "ADR-0002 now uses explicit BCP-47 language identity end to end; provider capabilities route definitions and difficulty independently and fail closed; persisted lexical/frequency state, caches, preparation sessions, priors, calibration, and document indexes are isolated by semantic provenance; legacy PDF/Web reads remain non-destructive; async results are rejected across document, text, language, and provider revisions; production activation remains gated.",
+    "fresh_v17_reservation": "v1-v16 remain byte-identical and unexecuted historical evidence; v17 is bound to the complete rebased ADR-0002 generator revision e16929e and reserves 3 disjoint seeds plus 24 disjoint document identities; no outcomes or protected data accessed.",
+    "adr_0002_validation_language_identity_hardening": "Validation POS fixture routing now parses VocabularyLanguageID directly, rejects unresolved/special tags, preserves language through reconstructed assessment candidates, and is covered by a strict Swift regression plus the vocabulary language-boundary static check.",
+    "fresh_v18_reservation": "v1-v17 remain byte-identical and unexecuted historical evidence; v18 is bound to rebased ADR-0002 validation-language revision 0911fbc and reserves 3 disjoint seeds plus 24 disjoint document identities across the versioned identity corpus; no outcomes or protected data accessed."
   },
   "open_findings": [],
-  "remaining_gates": ["independent statistical/research/privacy review", "clean candidate and analysis/decision-rule freeze", "separate reviewed v15 consumption decision", "development-confirmation execution", "release-holdout gate", "final-tree private GUI and algorithm performance matrix"]
+  "remaining_gates": ["independent statistical/research/privacy review", "clean candidate and analysis/decision-rule freeze", "separate reviewed v18 consumption decision", "development-confirmation execution", "release-holdout gate", "final-tree private GUI and algorithm performance matrix"]
 }

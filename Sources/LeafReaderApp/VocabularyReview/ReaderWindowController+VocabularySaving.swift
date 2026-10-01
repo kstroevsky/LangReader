@@ -1,5 +1,4 @@
 import Cocoa
-import NaturalLanguage
 import PDFKit
 import LeafReaderCore
 
@@ -129,11 +128,11 @@ extension ReaderWindowController {
             NSSound.beep()
             return
         }
-        let language = vocabularyDocumentLanguage
-        let lemma = GermanLemmaResolver.lemma(for: word, language: language)
-        let requestedKey = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+        let language = vocabularyDocumentLanguageID
+        let lemma = resolvedVocabularyLemma(for: word, language: language)
+        let requestedKey = vocabularyGroupingKey(word: word, lemma: lemma, language: language)
         if preferredWord != nil, !selectedWord.isEmpty {
-            let selectedKey = GermanLemmaResolver.groupingKey(word: selectedWord, language: language)
+            let selectedKey = vocabularyGroupingKey(word: selectedWord, language: language)
             guard selectedKey == requestedKey else {
                 NSSound.beep()
                 return
@@ -152,6 +151,7 @@ extension ReaderWindowController {
             id: id,
             vocabularyID: existingWebVocabularyID(for: word, lemma: lemma) ?? UUID().uuidString,
             word: word,
+            language: vocabularyDocumentLanguageID,
             lemma: lemma,
             surfaceForm: word,
             context: context,
@@ -187,19 +187,21 @@ extension ReaderWindowController {
     /// or lemma grouping so every grouping key uses the same language.
     func updateVocabularyDocumentLanguage() {
         if currentDocumentKind == .pdf, let document = pdfView.document {
-            vocabularyDocumentLanguage = VocabularyLanguageDetector.language(
+            setVocabularyDocumentLanguageResolution(VocabularyLanguageDetector.resolution(
                 pageCount: document.pageCount,
-                pageText: { document.page(at: $0)?.string }
-            )
+                pageText: { document.page(at: $0)?.string },
+                recognizer: AppleVocabularyLanguageRecognizer.shared
+            ))
             return
         }
         // Web and EPUB documents have no page text to sample here, so the
         // contexts saved with their words stand in. This must still run for
         // them: leaving the previous document's language in place would
         // lemmatize an English article with, say, German grammar.
-        vocabularyDocumentLanguage = VocabularyLanguageDetector.language(
-            forContexts: storedWebWordRecords.map(\.context)
-        )
+        setVocabularyDocumentLanguageResolution(VocabularyLanguageDetector.resolution(
+            forContexts: storedWebWordRecords.map(\.context),
+            recognizer: AppleVocabularyLanguageRecognizer.shared
+        ))
     }
 
     /// Establishes the PDF vocabulary language without re-extracting a spread
@@ -208,40 +210,26 @@ extension ReaderWindowController {
     /// back to one visible/first page. Whole-document text extraction belongs
     /// to the reusable snapshot/index pipeline, not the first-page path.
     func updatePDFVocabularyDocumentLanguage(from records: [StoredPDFWordRecord]) {
-        vocabularyDocumentLanguage = ReaderPerformance.measure(.vocabularyLanguageDetection) {
+        let resolution = ReaderPerformance.measure(.vocabularyLanguageDetection) {
             let contexts = records.compactMap(\.context)
             if contexts.contains(where: { $0.count >= 40 }) {
-                return VocabularyLanguageDetector.language(forContexts: contexts)
-            }
-            let page = pdfView.currentPage ?? pdfView.document?.page(at: 0)
-            return VocabularyLanguageDetector.language(forSample: page?.string ?? "")
-        }
-    }
-
-    func backfillStoredGermanLemmaOccurrences() {
-        var seenKeys = Set<String>()
-        let groups = storedWordRecords
-            .sorted { $0.createdAt < $1.createdAt }
-            .compactMap { record -> PDFVocabularyLemmaGroup? in
-                let lemma = VocabularyExporter.nonEmptyText(record.lemma)
-                    ?? GermanLemmaResolver.lemma(for: record.occurrenceSurfaceForm, language: vocabularyDocumentLanguage)
-                let key = GermanLemmaResolver.groupingKey(word: record.word, lemma: lemma, language: vocabularyDocumentLanguage)
-                guard !key.isEmpty,
-                      seenKeys.insert(key).inserted,
-                      let vocabularyID = record.vocabularyID else { return nil }
-                return PDFVocabularyLemmaGroup(
-                    key: key,
-                    word: record.word,
-                    lemma: lemma,
-                    vocabularyID: vocabularyID
+                return VocabularyLanguageDetector.resolution(
+                    forContexts: contexts,
+                    recognizer: AppleVocabularyLanguageRecognizer.shared
                 )
             }
-        backfillGermanLemmaOccurrences(groups)
+            let page = pdfView.currentPage ?? pdfView.document?.page(at: 0)
+            return VocabularyLanguageDetector.resolution(
+                forSample: page?.string ?? "",
+                recognizer: AppleVocabularyLanguageRecognizer.shared
+            )
+        }
+        setVocabularyDocumentLanguageResolution(resolution)
     }
 
     func backfillGermanLemmaOccurrences(word: String, lemma: String, vocabularyID: String?) {
         guard let vocabularyID else { return }
-        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: vocabularyDocumentLanguage)
+        let key = vocabularyGroupingKey(word: word, lemma: lemma)
         guard !key.isEmpty else { return }
         backfillGermanLemmaOccurrences([
             PDFVocabularyLemmaGroup(key: key, word: word, lemma: lemma, vocabularyID: vocabularyID)
@@ -257,14 +245,17 @@ extension ReaderWindowController {
         let searchID = UUID()
         vocabularyState.occurrenceSearchCancellationToken?.cancel()
         let cancellationToken = PDFDocumentTextCancellationToken()
-        let language = vocabularyDocumentLanguage
+        guard let language = vocabularyDocumentLanguageID else { return }
+        let languageRevision = vocabularyLanguageRevision
         vocabularyState.occurrenceSearchID = searchID
         vocabularyState.occurrenceSearchCancellationToken = cancellationToken
         ensurePDFVocabularyIndex(language: language) { [weak self] snapshot, index in
             guard let self,
                   self.vocabularyState.occurrenceSearchID == searchID,
                   self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
-                  self.currentFileMD5 == documentID else { return }
+                  self.currentFileMD5 == documentID,
+                  self.vocabularyLanguageRevision == languageRevision,
+                  self.vocabularyDocumentLanguageID == language else { return }
             guard let snapshot, let index else {
                 self.vocabularyState.occurrenceSearchID = nil
                 self.vocabularyState.occurrenceSearchCancellationToken = nil
@@ -295,6 +286,8 @@ extension ReaderWindowController {
                           self.vocabularyState.occurrenceSearchID == searchID,
                           self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
                           self.currentFileMD5 == documentID,
+                          self.vocabularyLanguageRevision == languageRevision,
+                          self.vocabularyDocumentLanguageID == language,
                           let document = self.pdfView.document else { return }
                     self.finishBackfillingGermanLemmaOccurrences(
                         groups: groups,
@@ -406,11 +399,12 @@ extension ReaderWindowController {
             NSSound.beep()
             return
         }
-        let language = vocabularyDocumentLanguage
-        let lemma = GermanLemmaResolver.lemma(for: word, language: language)
+        let language = vocabularyDocumentLanguageID
+        let languageRevision = vocabularyLanguageRevision
+        let lemma = resolvedVocabularyLemma(for: word, language: language)
         if preferredWord != nil {
-            let selectedKey = GermanLemmaResolver.groupingKey(word: selectedWord, language: language)
-            let requestedKey = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+            let selectedKey = vocabularyGroupingKey(word: selectedWord, language: language)
+            let requestedKey = vocabularyGroupingKey(word: word, lemma: lemma, language: language)
             guard selectedKey == requestedKey else {
                 NSSound.beep()
                 return
@@ -473,10 +467,26 @@ extension ReaderWindowController {
         let cancellationToken = PDFDocumentTextCancellationToken()
         vocabularyState.occurrenceSearchID = searchID
         vocabularyState.occurrenceSearchCancellationToken = cancellationToken
+        guard let language else {
+            beginPDFExactVocabularyOccurrenceDiscovery(
+                word: word,
+                lemma: lemma,
+                selectedRecord: selectedRecord,
+                selectedPageIndex: selectedPageIndex,
+                selectedPageText: selectedPageText,
+                document: document,
+                documentID: documentID,
+                searchID: searchID,
+                cancellationToken: cancellationToken,
+                saveStartedAt: Date()
+            )
+            return
+        }
         beginPDFVocabularyOccurrenceDiscovery(
             word: word,
             lemma: lemma,
             language: language,
+            languageRevision: languageRevision,
             selectedRecord: selectedRecord,
             selectedPageIndex: selectedPageIndex,
             selectedPageText: selectedPageText,
@@ -488,10 +498,91 @@ extension ReaderWindowController {
         )
     }
 
+    /// Undetermined language still supports the ADR-0002 exact-form path. This
+    /// scans the shared document-text snapshot directly and never constructs a
+    /// language runtime, lemma identity, or language-specific provider request.
+    private func beginPDFExactVocabularyOccurrenceDiscovery(
+        word: String,
+        lemma: String,
+        selectedRecord: StoredPDFWordRecord,
+        selectedPageIndex: Int,
+        selectedPageText: String,
+        document: PDFDocument,
+        documentID: String,
+        searchID: UUID,
+        cancellationToken: PDFDocumentTextCancellationToken,
+        saveStartedAt: Date
+    ) {
+        let loadGeneration = documentSession.documentLoadGeneration
+        let documentIdentity = ObjectIdentifier(document)
+        let exactFound = max(
+            1,
+            VocabularyOccurrenceMatcher.matches(query: word, in: selectedPageText).count
+        )
+        selectionActionToolbar.showExactSaveProgress(
+            found: exactFound,
+            totalPages: document.pageCount
+        )
+        ensurePDFDocumentTextSnapshot(
+            preloadedPageTexts: [selectedPageIndex: selectedPageText]
+        ) { [weak self] snapshot in
+            guard let self,
+                  self.vocabularyState.occurrenceSearchID == searchID,
+                  self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
+                  self.currentFileMD5 == documentID,
+                  self.documentSession.documentLoadGeneration == loadGeneration,
+                  self.pdfView.document.map(ObjectIdentifier.init) == documentIdentity,
+                  let snapshot,
+                  snapshot.documentID == documentID else {
+                return
+            }
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                let queryStartedAt = Date()
+                guard let perPage = VocabularyOccurrenceMatcher.matches(
+                    query: word,
+                    inTexts: snapshot.pageTexts,
+                    isCancelled: { cancellationToken.isCancelled }
+                ) else { return }
+                let queryMilliseconds = Date().timeIntervalSince(queryStartedAt) * 1000
+                let matches = perPage.enumerated().flatMap { pageIndex, occurrences in
+                    occurrences.map {
+                        PDFVocabularyPageMatch(
+                            pageIndex: pageIndex,
+                            text: snapshot.pageTexts[pageIndex],
+                            occurrence: $0
+                        )
+                    }
+                }
+                DispatchQueue.main.async {
+                    guard let self,
+                          self.vocabularyState.occurrenceSearchID == searchID,
+                          self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
+                          self.currentFileMD5 == documentID,
+                          self.documentSession.documentLoadGeneration == loadGeneration,
+                          let currentDocument = self.pdfView.document,
+                          ObjectIdentifier(currentDocument) == documentIdentity else {
+                        return
+                    }
+                    ReaderPerformance.record(.vocabularyOccurrenceQuery, milliseconds: queryMilliseconds)
+                    self.finishSavingAllPDFVocabularyOccurrences(
+                        word: word,
+                        lemma: lemma,
+                        selectedRecord: selectedRecord,
+                        matches: matches,
+                        document: currentDocument,
+                        documentID: documentID,
+                        saveStartedAt: saveStartedAt
+                    )
+                }
+            }
+        }
+    }
+
     private func beginPDFVocabularyOccurrenceDiscovery(
         word: String,
         lemma: String,
-        language: NLLanguage,
+        language: VocabularyLanguageID,
+        languageRevision: UInt64,
         selectedRecord: StoredPDFWordRecord,
         selectedPageIndex: Int,
         selectedPageText: String,
@@ -510,7 +601,9 @@ extension ReaderWindowController {
                 guard let self,
                       self.vocabularyState.occurrenceSearchID == searchID,
                       self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
-                      self.currentFileMD5 == documentID else { return }
+                      self.currentFileMD5 == documentID,
+                      self.vocabularyLanguageRevision == languageRevision,
+                      self.vocabularyDocumentLanguageID == language else { return }
                 self.selectionActionToolbar.showExactSaveProgress(
                     found: exactFound,
                     totalPages: totalPageCount
@@ -531,6 +624,7 @@ extension ReaderWindowController {
                         word: word,
                         lemma: lemma,
                         language: language,
+                        languageRevision: languageRevision,
                         selectedRecord: selectedRecord,
                         documentID: documentID,
                         searchID: searchID,
@@ -546,7 +640,8 @@ extension ReaderWindowController {
         priorityResult: PDFVocabularyPriorityIndexResult?,
         word: String,
         lemma: String,
-        language: NLLanguage,
+        language: VocabularyLanguageID,
+        languageRevision: UInt64,
         selectedRecord: StoredPDFWordRecord,
         documentID: String,
         searchID: UUID,
@@ -555,7 +650,9 @@ extension ReaderWindowController {
     ) {
         guard vocabularyState.occurrenceSearchID == searchID,
               vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
-              currentFileMD5 == documentID else { return }
+              currentFileMD5 == documentID,
+              vocabularyLanguageRevision == languageRevision,
+              vocabularyDocumentLanguageID == language else { return }
         if let priorityResult {
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 let found = max(
@@ -568,7 +665,9 @@ extension ReaderWindowController {
                     guard let self,
                           self.vocabularyState.occurrenceSearchID == searchID,
                           self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
-                          self.currentFileMD5 == documentID else { return }
+                          self.currentFileMD5 == documentID,
+                          self.vocabularyLanguageRevision == languageRevision,
+                          self.vocabularyDocumentLanguageID == language else { return }
                     self.selectionActionToolbar.showSaveProgress(
                         found: found,
                         indexedPages: priorityResult.pageIndexes.count,
@@ -585,7 +684,9 @@ extension ReaderWindowController {
             guard let self,
                   self.vocabularyState.occurrenceSearchID == searchID,
                   self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
-                  self.currentFileMD5 == documentID else { return }
+                  self.currentFileMD5 == documentID,
+                  self.vocabularyLanguageRevision == languageRevision,
+                  self.vocabularyDocumentLanguageID == language else { return }
             guard let snapshot, let index else {
                 self.vocabularyState.occurrenceSearchID = nil
                 self.vocabularyState.occurrenceSearchCancellationToken = nil
@@ -619,6 +720,8 @@ extension ReaderWindowController {
                           self.vocabularyState.occurrenceSearchID == searchID,
                           self.vocabularyState.occurrenceSearchCancellationToken === cancellationToken,
                           self.currentFileMD5 == documentID,
+                          self.vocabularyLanguageRevision == languageRevision,
+                          self.vocabularyDocumentLanguageID == language,
                           let document = self.pdfView.document else {
                         return
                     }
@@ -833,6 +936,7 @@ extension ReaderWindowController {
             id: UUID().uuidString,
             vocabularyID: vocabularyID ?? existingPDFVocabularyID(for: word, lemma: lemma) ?? UUID().uuidString,
             word: VocabularyTextPolicy.normalizedVocabularyText(word),
+            language: vocabularyDocumentLanguageID,
             lemma: lemma,
             surfaceForm: VocabularyTextPolicy.normalizedOccurrenceText(surfaceForm ?? word, matching: word),
             pageIndex: pageIndex,
@@ -875,6 +979,7 @@ extension ReaderWindowController {
             id: UUID().uuidString,
             vocabularyID: vocabularyID ?? existingPDFVocabularyID(for: word, lemma: lemma) ?? UUID().uuidString,
             word: VocabularyTextPolicy.normalizedVocabularyText(word),
+            language: vocabularyDocumentLanguageID,
             lemma: lemma,
             surfaceForm: VocabularyTextPolicy.normalizedOccurrenceText(surfaceForm, matching: word),
             pageIndex: pageMatch.pageIndex,
@@ -898,10 +1003,10 @@ extension ReaderWindowController {
     }
 
     func existingPDFVocabularyID(for word: String, lemma: String? = nil) -> String? {
-        let language = vocabularyDocumentLanguage
-        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+        let language = vocabularyDocumentLanguageID
+        let key = vocabularyGroupingKey(word: word, lemma: lemma, language: language)
         return storedWordRecords.first {
-            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key
+            vocabularyGroupingKey(word: $0.word, lemma: $0.lemma, language: $0.language ?? language) == key
         }?.vocabularyID
     }
 
@@ -910,16 +1015,16 @@ extension ReaderWindowController {
     }
 
     private func vocabularyRecordIDs(for word: String, lemma: String? = nil) -> [String] {
-        let language = vocabularyDocumentLanguage
-        let key = GermanLemmaResolver.groupingKey(word: word, lemma: lemma, language: language)
+        let language = vocabularyDocumentLanguageID
+        let key = vocabularyGroupingKey(word: word, lemma: lemma, language: language)
         guard !key.isEmpty else { return [] }
         if currentDocumentKind == .pdf {
             return storedWordRecords.compactMap {
-                GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key ? $0.id : nil
+                vocabularyGroupingKey(word: $0.word, lemma: $0.lemma, language: $0.language ?? language) == key ? $0.id : nil
             }
         }
         return storedWebWordRecords.compactMap {
-            GermanLemmaResolver.groupingKey(word: $0.word, lemma: $0.lemma, language: language) == key ? $0.id : nil
+            vocabularyGroupingKey(word: $0.word, lemma: $0.lemma, language: $0.language ?? language) == key ? $0.id : nil
         }
     }
 

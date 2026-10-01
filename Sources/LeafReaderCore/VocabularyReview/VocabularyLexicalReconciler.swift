@@ -90,22 +90,20 @@ package struct VocabularyLexicalReconciler: Sendable {
         package let minimumSingleDistinctContextSupport: Int
         package let minimumSplitOccurrenceSupport: Int
         package let minimumSplitDistinctContextSupport: Int
-        package let validatedDeterministicSingleRuleLanguages: Set<String>
+        package let validatedDeterministicSingleRuleLanguages: Set<VocabularyLanguageID>
 
         package init(
             minimumSingleOccurrenceSupport: Int = 2,
             minimumSingleDistinctContextSupport: Int = 2,
             minimumSplitOccurrenceSupport: Int = 2,
             minimumSplitDistinctContextSupport: Int = 2,
-            validatedDeterministicSingleRuleLanguages: Set<String> = []
+            validatedDeterministicSingleRuleLanguages: Set<VocabularyLanguageID> = []
         ) {
             self.minimumSingleOccurrenceSupport = max(1, minimumSingleOccurrenceSupport)
             self.minimumSingleDistinctContextSupport = max(1, minimumSingleDistinctContextSupport)
             self.minimumSplitOccurrenceSupport = max(2, minimumSplitOccurrenceSupport)
             self.minimumSplitDistinctContextSupport = max(2, minimumSplitDistinctContextSupport)
-            self.validatedDeterministicSingleRuleLanguages = Set(
-                validatedDeterministicSingleRuleLanguages.map { $0.lowercased() }
-            )
+            self.validatedDeterministicSingleRuleLanguages = validatedDeterministicSingleRuleLanguages
         }
 
         package static let production = Configuration()
@@ -140,7 +138,8 @@ package struct VocabularyLexicalReconciler: Sendable {
         // An exact-surface anchor deliberately records that a trustworthy lemma
         // is unavailable. POS evidence may still be diagnostically useful, but
         // it cannot authorize a resolved lemma+POS identity.
-        guard let lemma = anchor.resolvedLemma else {
+        guard let language = anchor.language,
+              let lemma = anchor.resolvedLemma else {
             return .unresolved(VocabularyUnresolvedLexicalGroup(
                 occurrenceIDs: matching.map(\.occurrenceID),
                 diagnostics: diagnostics(
@@ -173,7 +172,7 @@ package struct VocabularyLexicalReconciler: Sendable {
         }
 
         if supportedParts.count == 1, let part = supportedParts.first {
-            guard hasSingleResolutionSupport(part, language: anchor.language, support: support) else {
+            guard hasSingleResolutionSupport(part, language: language, support: support) else {
                 return .unresolved(VocabularyUnresolvedLexicalGroup(
                     occurrenceIDs: matching.map(\.occurrenceID),
                     diagnostics: diagnostics(
@@ -217,7 +216,7 @@ package struct VocabularyLexicalReconciler: Sendable {
             let children = splitParts.sorted { $0.rawValue < $1.rawValue }.map { part in
                 VocabularyResolvedLexicalGroup(
                     lexicalItemID: VocabularyLexicalItemID(
-                        language: anchor.language,
+                        language: language,
                         lemma: lemma,
                         partOfSpeech: part
                     ),
@@ -277,7 +276,7 @@ package struct VocabularyLexicalReconciler: Sendable {
 
     private func hasSingleResolutionSupport(
         _ part: VocabularyPartOfSpeech,
-        language: String,
+        language: VocabularyLanguageID,
         support: [VocabularyPartOfSpeech: PartSupport]
     ) -> Bool {
         guard let evidence = support[part] else { return false }
@@ -286,7 +285,7 @@ package struct VocabularyLexicalReconciler: Sendable {
         let independentlyAttestedStrongContext = !evidence.strongContextualOccurrenceIDs.isEmpty
             && !evidence.attestationSources.isEmpty
         let validatedDeterministicRule = configuration.validatedDeterministicSingleRuleLanguages
-            .contains(language.lowercased())
+            .contains(language)
             && evidence.sources.contains(.deterministicMorphology)
         return independentContextSupport
             || independentlyAttestedStrongContext
@@ -351,6 +350,18 @@ package struct VocabularyLexicalReconciler: Sendable {
         partByOccurrence: [VocabularyOccurrenceAnalysisID: VocabularyPartOfSpeech],
         support: [VocabularyPartOfSpeech: PartSupport]
     ) -> VocabularyLexicalResolution {
+        guard let language = anchor.language else {
+            return .unresolved(VocabularyUnresolvedLexicalGroup(
+                occurrenceIDs: occurrences.map(\.occurrenceID),
+                diagnostics: diagnostics(
+                    anchor: anchor,
+                    state: .unresolved,
+                    occurrences: occurrences,
+                    support: support,
+                    residualCount: occurrences.count
+                )
+            ))
+        }
         let support = supportByPart(partByOccurrence, occurrences: occurrences)
         let assigned = occurrences.compactMap { occurrence -> VocabularyOccurrenceAnalysisID? in
             guard let supported = partByOccurrence[occurrence.occurrenceID] else {
@@ -372,7 +383,7 @@ package struct VocabularyLexicalReconciler: Sendable {
         )
         return .resolvedSingle(VocabularyResolvedLexicalGroup(
             lexicalItemID: VocabularyLexicalItemID(
-                language: anchor.language,
+                language: language,
                 lemma: lemma,
                 partOfSpeech: selectedPart
             ),

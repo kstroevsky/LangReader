@@ -1,5 +1,4 @@
 import Foundation
-import NaturalLanguage
 
 package struct VocabularyDocumentSourceRange: Codable, Equatable, Sendable {
     package let unitIndex: Int
@@ -26,7 +25,7 @@ package struct VocabularyDocumentObservedForm: Codable, Equatable, Sendable {
 package struct VocabularyMorphologicalAnalysisRequest: Sendable {
     package let surface: String
     package let lemma: String
-    package let languageCode: String
+    package let language: VocabularyLanguageID
     package let context: String
     package let contextFingerprint: String
     package let appleHypotheses: [String: Double]
@@ -34,14 +33,14 @@ package struct VocabularyMorphologicalAnalysisRequest: Sendable {
     package init(
         surface: String,
         lemma: String,
-        languageCode: String,
+        language: VocabularyLanguageID,
         context: String,
         contextFingerprint: String,
         appleHypotheses: [String: Double]
     ) {
         self.surface = surface
         self.lemma = lemma
-        self.languageCode = languageCode
+        self.language = language
         self.context = context
         self.contextFingerprint = contextFingerprint
         self.appleHypotheses = appleHypotheses
@@ -100,6 +99,7 @@ package struct VocabularyDocumentLemmaSummary: Codable, Equatable, Sendable {
 /// The production confidence boundary for lexical-class hypotheses. Offline
 /// POS fixtures call this same owner instead of reproducing its thresholds.
 package enum VocabularyPartOfSpeechConfidencePolicy {
+    package static let policyVersion = "apple-pos-confidence-v1"
     package static let minimumLeadingProbability = 0.65
     package static let minimumMargin = 0.20
 
@@ -141,18 +141,18 @@ package enum VocabularyPartOfSpeechConfidencePolicy {
     }
 
     private static func partOfSpeech(for rawTag: String) -> VocabularyPartOfSpeech {
-        switch NLTag(rawValue: rawTag) {
-        case .noun: return .noun
-        case .verb: return .verb
-        case .adjective: return .adjective
-        case .adverb: return .adverb
-        case .pronoun: return .pronoun
-        case .determiner: return .determiner
-        case .preposition: return .preposition
-        case .conjunction: return .conjunction
-        case .interjection: return .interjection
-        case .particle: return .particle
-        case .otherWord: return .unknown
+        switch rawTag {
+        case "Noun": return .noun
+        case "Verb": return .verb
+        case "Adjective": return .adjective
+        case "Adverb": return .adverb
+        case "Pronoun": return .pronoun
+        case "Determiner": return .determiner
+        case "Preposition": return .preposition
+        case "Conjunction": return .conjunction
+        case "Interjection": return .interjection
+        case "Particle": return .particle
+        case "OtherWord": return .unknown
         default: return .other
         }
     }
@@ -225,10 +225,11 @@ package enum VocabularyIndexPriorityPlanner {
 
 /// A document-scoped, immutable index of word occurrences by lemma.
 ///
-/// Building this once avoids running `NLTagger` over every page each time the
-/// user saves a word. Literal matching is still evaluated per query because it
-/// also supports phrases and PDF line-break spelling variants, but the costly
-/// linguistic pass is reused by every save and backfill.
+/// Building this once avoids rerunning the configured linguistic analyzer over
+/// every page each time the user saves a word. Literal matching is still
+/// evaluated per query because it also supports phrases and PDF line-break
+/// spelling variants, but the costly linguistic pass is reused by every save
+/// and backfill.
 package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     private static let ignoredTextRegexes: [NSRegularExpression] = [
         #"(?i)\b(?:https?://|www\.)[^\s<>{}\[\]]+"#,
@@ -252,8 +253,8 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let occurrence: VocabularyTextOccurrence
         let dehyphenated: String
         let hyphenated: String
-        let dehyphenatedResolution: GermanLemmaResolution
-        let hyphenatedResolution: GermanLemmaResolution
+        let dehyphenatedResolution: VocabularyLemmaResolution
+        let hyphenatedResolution: VocabularyLemmaResolution
     }
 
     private struct Page: Sendable {
@@ -298,18 +299,21 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     }
 
     private let pages: [Page]
-    private let languageCode: String
+    private let language: VocabularyLanguageID
+    package let semanticIdentity: VocabularyLinguisticCacheIdentity
     package let reusedPageCount: Int
 
-    /// Builds an index using a deliberately bounded worker pool. Natural
-    /// Language tagging is CPU- and memory-heavy; consuming every logical core
+    /// Builds an index using a deliberately bounded worker pool. Linguistic
+    /// tagging is CPU- and memory-heavy; consuming every logical core
     /// made the app compete with PDF rendering and increased peak memory.
     package init?(
         texts: [String],
-        language: NLLanguage = .english,
+        language: VocabularyLanguageID,
         maximumWorkerCount: Int = 4,
         seed: VocabularyDocumentLemmaIndexSeed? = nil,
-        resolutionProvider: @escaping VocabularyLemmaResolutionProvider = GermanLemmaOccurrenceMatcher.naturalLanguageResolutionProvider,
+        semanticIdentity: VocabularyLinguisticCacheIdentity? = nil,
+        analyzerFactory: VocabularyLinguisticAnalyzerFactory = .exactForm,
+        resolutionProvider: @escaping VocabularyLemmaResolutionProvider = VocabularyLemmaOccurrenceMatcher.naturalLanguageResolutionProvider,
         analysisProvider: @escaping VocabularyMorphologicalAnalysisProvider = {
             VocabularyPartOfSpeechConfidencePolicy.analyses(
                 hypotheses: $0.appleHypotheses,
@@ -319,7 +323,8 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         isCancelled: @escaping @Sendable () -> Bool = { false }
     ) {
         guard !isCancelled() else { return nil }
-        languageCode = language.rawValue
+        self.language = language
+        self.semanticIdentity = semanticIdentity ?? VocabularyLinguisticCacheIdentity(language: language)
         guard !texts.isEmpty else {
             pages = []
             reusedPageCount = 0
@@ -329,7 +334,8 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let buffer = PageBuffer(count: texts.count)
         var reusedIndexes = Set<Int>()
         if let seed,
-           seed.index.languageCode == language.rawValue,
+           seed.index.language == language,
+           seed.index.semanticIdentity == self.semanticIdentity,
            seed.pageIndexes.count == seed.index.pages.count {
             for (sliceIndex, pageIndex) in seed.pageIndexes.enumerated() {
                 guard pageIndex >= 0,
@@ -350,19 +356,15 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let availableWorkers = max(1, ProcessInfo.processInfo.activeProcessorCount - 1)
         let workerCount = min(remainingPageIndexes.count, max(1, min(maximumWorkerCount, availableWorkers)))
         DispatchQueue.concurrentPerform(iterations: workerCount) { worker in
-            let tagger = NLTagger(tagSchemes: [.lemma, .lexicalClass])
-            let nameTagger = NLTagger(tagSchemes: [.nameType])
-            let fallbackTagger = NLTagger(tagSchemes: [.lemma])
-            var lemmaMemo: [String: GermanLemmaResolution] = [:]
+            let analyzer = analyzerFactory.makeAnalyzer()
+            var lemmaMemo: [String: VocabularyLemmaResolution] = [:]
             var remainingIndex = worker
             while remainingIndex < remainingPageIndexes.count, !isCancelled() {
                 let pageIndex = remainingPageIndexes[remainingIndex]
                 buffer.store(Self.buildPage(
                     text: texts[pageIndex],
                     language: language,
-                    tagger: tagger,
-                    nameTagger: nameTagger,
-                    fallbackTagger: fallbackTagger,
+                    analyzer: analyzer,
                     lemmaMemo: &lemmaMemo,
                     resolutionProvider: resolutionProvider,
                     analysisProvider: analysisProvider
@@ -399,13 +401,13 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let entries = pages.enumerated().flatMap { unitIndex, page in
             page.evidence.map { evidence -> Entry in
                 let item = VocabularyLexicalItemID(
-                    language: languageCode,
+                    language: language,
                     lemma: evidence.displayLemma,
                     partOfSpeech: evidence.legacyPartOfSpeech
                 )
                 let sourceKey = evidence.anchor.resolvedLemma == nil
                     ? Self.exactSurfaceLexicalKey(
-                        languageCode: languageCode,
+                        language: language,
                         surface: evidence.surface,
                         partOfSpeech: evidence.legacyPartOfSpeech
                     )
@@ -779,8 +781,8 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     package func matches(lemma rawLemma: String, selectedForm: String) -> [[VocabularyTextOccurrence]] {
         let lemma = VocabularyTextPolicy.normalizedVocabularyText(rawLemma)
         let selected = VocabularyTextPolicy.normalizedVocabularyText(selectedForm)
-        guard VocabularyTextPolicy.isSingleEnglishWord(lemma),
-              VocabularyTextPolicy.isSingleEnglishWord(selected),
+        guard VocabularyTextPolicy.isSingleVocabularyWord(lemma),
+              VocabularyTextPolicy.isSingleVocabularyWord(selected),
               Self.canUseTokenPostings(selected) else {
             return pages.map { VocabularyOccurrenceMatcher.matches(query: selectedForm, in: $0.text) }
         }
@@ -897,11 +899,9 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
 
     private static func buildPage(
         text: String,
-        language: NLLanguage,
-        tagger: NLTagger,
-        nameTagger: NLTagger,
-        fallbackTagger: NLTagger,
-        lemmaMemo: inout [String: GermanLemmaResolution],
+        language: VocabularyLanguageID,
+        analyzer: any VocabularyLinguisticAnalyzing,
+        lemmaMemo: inout [String: VocabularyLemmaResolution],
         resolutionProvider: VocabularyLemmaResolutionProvider,
         analysisProvider: VocabularyMorphologicalAnalysisProvider
     ) -> Page {
@@ -919,7 +919,7 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         let ignoredRanges = ignoredTextRegexes.flatMap {
             $0.matches(in: text, range: NSRange(location: 0, length: nsText.length)).map(\.range)
         }
-        let lineWrapMatches = (GermanLemmaOccurrenceMatcher.lineWrapRegex?.matches(
+        let lineWrapMatches = (VocabularyLemmaOccurrenceMatcher.lineWrapRegex?.matches(
             in: text,
             range: NSRange(location: 0, length: nsText.length)
         ) ?? []).filter { match in
@@ -937,73 +937,52 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         // choices cannot change lemmas/POS, then translate ranges back to the
         // untouched source text for selections and highlights.
         let taggingText = linguisticTaggingText(text)
-        tagger.string = taggingText
-        nameTagger.string = taggingText
-        let fullRange = taggingText.startIndex..<taggingText.endIndex
-        tagger.setLanguage(language, range: fullRange)
-        nameTagger.setLanguage(language, range: fullRange)
-        tagger.enumerateTags(
-            in: fullRange,
-            unit: .word,
-            scheme: .lemma,
-            options: [.omitWhitespace, .omitPunctuation]
-        ) { tag, tokenRange in
-            let range = NSRange(tokenRange, in: taggingText)
-            guard let sourceRange = Range(range, in: text) else { return true }
+        for token in analyzer.tokenEvidence(in: taggingText, language: language) {
+            let range = token.range
+            guard let sourceRange = Range(range, in: text) else { continue }
             if lineWrapSpans.contains(where: { NSIntersectionRange(range, $0).length > 0 }) {
-                return true
+                continue
             }
             let surface = String(text[sourceRange])
             if ignoredRanges.contains(where: { NSIntersectionRange(range, $0).length > 0 })
                 || isObviousArtifact(surface) {
-                return true
+                continue
             }
             let resolution = tokenResolution(
                 surfaceForm: surface,
-                taggedLemma: tag?.rawValue,
+                taggedLemma: token.taggedLemma,
                 language: language,
-                fallbackTagger: fallbackTagger,
+                analyzer: analyzer,
                 lemmaMemo: &lemmaMemo,
                 resolutionProvider: resolutionProvider
             )
             let matchedLemma = resolution.value
             let occurrence = VocabularyTextOccurrence(range: range, matchedText: surface)
-            let hypotheses = tagger.tagHypotheses(
-                at: tokenRange.lowerBound,
-                unit: .word,
-                scheme: .lexicalClass,
-                maximumCount: 2
-            ).0
             let context = contextWindow(in: taggingText, range: range)
             let fingerprint = contextFingerprint(context)
             let analyses = analysisProvider(VocabularyMorphologicalAnalysisRequest(
                 surface: surface,
                 lemma: matchedLemma,
-                languageCode: language.rawValue,
+                language: language,
                 context: context,
                 contextFingerprint: fingerprint,
-                appleHypotheses: hypotheses
+                appleHypotheses: token.lexicalClassHypotheses
             ))
             let partOfSpeech = analyses.first { $0.confidence.isUsable }?.partOfSpeech ?? .unknown
             let anchor: VocabularyLexicalAnchorID
             if let lemmaKey = resolvedLemmaKey(resolution) {
                 byLemma[lemmaKey, default: []].append(occurrence)
                 anchor = VocabularyLexicalAnchorID(
-                    language: language.rawValue,
+                    language: language,
                     basis: .resolvedLemma(lemmaKey)
                 )
             } else {
                 anchor = VocabularyLexicalAnchorID(
-                    language: language.rawValue,
+                    language: language,
                     basis: .exactSurface(surface)
                 )
             }
             bySurface[exactSurfaceKey(surface), default: []].append(occurrence)
-            let nameTag = nameTagger.tag(
-                at: tokenRange.lowerBound,
-                unit: .word,
-                scheme: .nameType
-            ).0
             evidence.append(PageOccurrenceEvidence(
                 occurrence: occurrence,
                 anchor: anchor,
@@ -1012,11 +991,8 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                 analyses: analyses,
                 legacyPartOfSpeech: partOfSpeech,
                 contextFingerprint: fingerprint,
-                isConfidentName: nameTag == .personalName
-                    || nameTag == .placeName
-                    || nameTag == .organizationName
+                isConfidentName: token.isConfidentName
             ))
-            return true
         }
 
         let lineWraps = lineWrapMatches.map { match -> LineWrap in
@@ -1030,13 +1006,13 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
                 dehyphenatedResolution: isolatedResolution(
                     surfaceForm: dehyphenated,
                     language: language,
-                    tagger: fallbackTagger,
+                    analyzer: analyzer,
                     resolutionProvider: resolutionProvider
                 ),
                 hyphenatedResolution: isolatedResolution(
                     surfaceForm: hyphenated,
                     language: language,
-                    tagger: fallbackTagger,
+                    analyzer: analyzer,
                     resolutionProvider: resolutionProvider
                 )
             )
@@ -1048,12 +1024,12 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
             if let lemmaKey = resolvedLemmaKey(resolution) {
                 byLemma[lemmaKey, default: []].append(lineWrap.occurrence)
                 anchor = VocabularyLexicalAnchorID(
-                    language: language.rawValue,
+                    language: language,
                     basis: .resolvedLemma(lemmaKey)
                 )
             } else {
                 anchor = VocabularyLexicalAnchorID(
-                    language: language.rawValue,
+                    language: language,
                     basis: .exactSurface(lineWrap.dehyphenated)
                 )
             }
@@ -1085,20 +1061,20 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
         )
     }
 
-    private static func resolvedLemmaKey(_ resolution: GermanLemmaResolution) -> String? {
+    private static func resolvedLemmaKey(_ resolution: VocabularyLemmaResolution) -> String? {
         guard case let .resolved(lemma, _) = resolution else { return nil }
         return VocabularyTextPolicy.canonicalVocabularyKey(lemma)
     }
 
     private static func exactSurfaceLexicalKey(
-        languageCode: String,
+        language: VocabularyLanguageID,
         surface: String,
         partOfSpeech: VocabularyPartOfSpeech
     ) -> String {
         let exact = exactSurfaceKey(surface)
             .replacingOccurrences(of: "%", with: "%25")
             .replacingOccurrences(of: "|", with: "%7C")
-        return ["exact", languageCode.lowercased(), exact, partOfSpeech.rawValue]
+        return ["exact", language.bcp47, exact, partOfSpeech.rawValue]
             .joined(separator: "|")
     }
 
@@ -1127,18 +1103,18 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
     private static func tokenResolution(
         surfaceForm: String,
         taggedLemma: String?,
-        language: NLLanguage,
-        fallbackTagger: NLTagger,
-        lemmaMemo: inout [String: GermanLemmaResolution],
+        language: VocabularyLanguageID,
+        analyzer: any VocabularyLinguisticAnalyzing,
+        lemmaMemo: inout [String: VocabularyLemmaResolution],
         resolutionProvider: VocabularyLemmaResolutionProvider
-    ) -> GermanLemmaResolution {
+    ) -> VocabularyLemmaResolution {
         let contextual = resolutionProvider(surfaceForm, taggedLemma, language)
         if case .resolved = contextual { return contextual }
         if let cached = lemmaMemo[surfaceForm] { return cached }
         let fallback = isolatedResolution(
             surfaceForm: surfaceForm,
             language: language,
-            tagger: fallbackTagger,
+            analyzer: analyzer,
             resolutionProvider: resolutionProvider
         )
         lemmaMemo[surfaceForm] = fallback
@@ -1147,23 +1123,19 @@ package final class VocabularyDocumentLemmaIndex: @unchecked Sendable {
 
     private static func isolatedResolution(
         surfaceForm: String,
-        language: NLLanguage,
-        tagger: NLTagger,
+        language: VocabularyLanguageID,
+        analyzer: any VocabularyLinguisticAnalyzing,
         resolutionProvider: VocabularyLemmaResolutionProvider
-    ) -> GermanLemmaResolution {
+    ) -> VocabularyLemmaResolution {
         let word = VocabularyTextPolicy.normalizedVocabularyText(surfaceForm)
-        guard VocabularyTextPolicy.isSingleEnglishWord(word), !word.isEmpty else {
+        guard VocabularyTextPolicy.isSingleVocabularyWord(word), !word.isEmpty else {
             return .unresolved(surface: word)
         }
-        tagger.string = word
-        let range = word.startIndex..<word.endIndex
-        tagger.setLanguage(language, range: range)
-        let taggedLemma = tagger.tag(
-            at: word.startIndex,
-            unit: .word,
-            scheme: .lemma
-        ).0?.rawValue
-        return resolutionProvider(word, taggedLemma, language)
+        return resolutionProvider(
+            word,
+            analyzer.isolatedLemma(for: word, language: language),
+            language
+        )
     }
 
     private static func exactSurfaceKey(_ value: String) -> String {

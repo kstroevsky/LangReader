@@ -119,8 +119,9 @@ private func assessable(
     languageCode: String,
     isConfidentName: Bool
 ) -> Bool {
+    guard let language = VocabularyLanguageID(languageCode) else { return false }
     let lexical = VocabularyLexicalItemID(
-        language: languageCode,
+        language: language,
         lemma: lemma,
         partOfSpeech: partOfSpeech
     )
@@ -163,15 +164,17 @@ private func expectedPOS(_ upos: String) -> VocabularyPartOfSpeech {
     }
 }
 
-private func language(_ code: String) -> NLLanguage {
-    code == "de" ? .german : .english
-}
-
-private func candidate(key: String, lemma: String, pos: VocabularyPartOfSpeech, weight: Int) -> DocumentVocabularyCandidate {
+private func candidate(
+    key: String,
+    language: VocabularyLanguageID,
+    lemma: String,
+    pos: VocabularyPartOfSpeech,
+    weight: Int
+) -> DocumentVocabularyCandidate {
     DocumentVocabularyCandidate(
         canonicalKey: key,
         displayLemma: lemma,
-        lexicalItemID: VocabularyLexicalItemID(language: key.hasPrefix("de|") ? "de" : "en", lemma: lemma, partOfSpeech: pos),
+        lexicalItemID: VocabularyLexicalItemID(language: language, lemma: lemma, partOfSpeech: pos),
         partOfSpeech: pos,
         observedForms: [VocabularyDocumentObservedForm(surface: lemma, occurrenceCount: weight)],
         occurrenceCount: weight,
@@ -183,6 +186,7 @@ private func candidate(key: String, lemma: String, pos: VocabularyPartOfSpeech, 
 
 private func aggregateCandidates(_ values: [DocumentVocabularyCandidate]) -> [DocumentVocabularyCandidate] {
     struct Aggregate {
+        let language: VocabularyLanguageID
         let lemma: String
         let partOfSpeech: VocabularyPartOfSpeech
         var weight: Int
@@ -191,6 +195,7 @@ private func aggregateCandidates(_ values: [DocumentVocabularyCandidate]) -> [Do
     for value in values {
         guard let lexicalItemID = value.lexicalItemID else { continue }
         var aggregate = byKey[value.canonicalKey] ?? Aggregate(
+            language: lexicalItemID.language,
             lemma: lexicalItemID.lemma,
             partOfSpeech: lexicalItemID.partOfSpeech,
             weight: 0
@@ -199,7 +204,13 @@ private func aggregateCandidates(_ values: [DocumentVocabularyCandidate]) -> [Do
         byKey[value.canonicalKey] = aggregate
     }
     return byKey.map { key, value in
-        candidate(key: key, lemma: value.lemma, pos: value.partOfSpeech, weight: value.weight)
+        candidate(
+            key: key,
+            language: value.language,
+            lemma: value.lemma,
+            pos: value.partOfSpeech,
+            weight: value.weight
+        )
     }
 }
 
@@ -209,6 +220,22 @@ private func consequence(
     cases: [Case],
     results: [CaseResult]
 ) -> LanguageConsequence {
+    guard let language = VocabularyLanguageID(languageCode) else {
+        return LanguageConsequence(
+            languageCode: languageCode,
+            goldOccurrenceDenominator: 0,
+            predictedOccurrenceDenominator: 0,
+            denominatorDelta: 0,
+            erroneousExcludedMass: 0,
+            erroneousIncludedMass: 0,
+            goldFirstQuestion: nil,
+            predictedFirstQuestion: nil,
+            questionIdentityChanged: false,
+            goldSelectedKeys: [],
+            predictedSelectedKeys: [],
+            selectedDeckSymmetricDifferenceCount: 0
+        )
+    }
     let paired = zip(cases, results).filter {
         $0.0.languageCode == languageCode
             && (evaluationSplit == nil || $0.1.evaluationSplit == evaluationSplit)
@@ -216,14 +243,26 @@ private func consequence(
     let gold = aggregateCandidates(paired.compactMap { item -> DocumentVocabularyCandidate? in
         guard !item.1.expectedExcluded else { return nil }
         let pos = expectedPOS(item.0.goldUPOS)
-        let id = VocabularyLexicalItemID(language: languageCode, lemma: item.0.goldLemma, partOfSpeech: pos)
-        return candidate(key: id.canonicalKey, lemma: item.0.goldLemma, pos: pos, weight: item.0.occurrenceWeight)
+        let id = VocabularyLexicalItemID(language: language, lemma: item.0.goldLemma, partOfSpeech: pos)
+        return candidate(
+            key: id.canonicalKey,
+            language: language,
+            lemma: item.0.goldLemma,
+            pos: pos,
+            weight: item.0.occurrenceWeight
+        )
     })
     let predicted = aggregateCandidates(paired.compactMap { item -> DocumentVocabularyCandidate? in
         guard !item.1.predictedExcluded, let lemma = item.1.predictedLemma,
               let pos = VocabularyPartOfSpeech(rawValue: item.1.predictedPartOfSpeech) else { return nil }
-        let id = VocabularyLexicalItemID(language: languageCode, lemma: lemma, partOfSpeech: pos)
-        return candidate(key: id.canonicalKey, lemma: lemma, pos: pos, weight: item.0.occurrenceWeight)
+        let id = VocabularyLexicalItemID(language: language, lemma: lemma, partOfSpeech: pos)
+        return candidate(
+            key: id.canonicalKey,
+            language: language,
+            lemma: lemma,
+            pos: pos,
+            weight: item.0.occurrenceWeight
+        )
     })
     func assessment(_ values: [DocumentVocabularyCandidate]) -> (String?, [String]) {
         var assessment = AdaptiveVocabularyAssessment(
@@ -344,6 +383,10 @@ package func evaluateVocabularyPOSFixture(_ fixtureData: Data) throws -> Data {
     guard fixture.schemaVersion == 1 else { throw CocoaError(.coderReadCorrupt) }
     var results: [CaseResult] = []
     for item in fixture.cases {
+        guard let language = VocabularyLanguageID(item.languageCode) else {
+            fputs("POS fixture has invalid resolved language: \(item.caseID) language=\(item.languageCode)\n", stderr)
+            throw CocoaError(.coderReadCorrupt)
+        }
         let tagger = NLTagger(tagSchemes: [.lemma, .lexicalClass])
         tagger.string = item.text
         guard let range = item.text.range(of: item.surface) else {
@@ -353,7 +396,7 @@ package func evaluateVocabularyPOSFixture(_ fixtureData: Data) throws -> Data {
         let hypotheses = tagger.tagHypotheses(at: range.lowerBound, unit: .word, scheme: .lexicalClass, maximumCount: 2).0
         let ordered = hypotheses.sorted { $0.value > $1.value }
         let predictedPOS = VocabularyPartOfSpeechConfidencePolicy.classify(hypotheses: hypotheses)
-        let index = VocabularyDocumentLemmaIndex(texts: [item.text], language: language(item.languageCode), maximumWorkerCount: 1)
+        let index = VocabularyDocumentLemmaIndex(texts: [item.text], language: language, maximumWorkerCount: 1)
         let summary = index?.lemmaSummaries().first { summary in
             summary.observedForms.contains { $0.surface.caseInsensitiveCompare(item.surface) == .orderedSame }
         }

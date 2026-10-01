@@ -9,6 +9,7 @@ package struct StoredPDFWordRecord: Codable, Sendable {
     package let id: String
     package var vocabularyID: String?
     package var word: String
+    package var language: VocabularyLanguageID?
     package var lemma: String?
     package var lexicalKey: String?
     package var partOfSpeech: VocabularyPartOfSpeech?
@@ -21,6 +22,7 @@ package struct StoredPDFWordRecord: Codable, Sendable {
     package var answer: String
     package var dictionaryTags: String?
     package var dictionaryFrequency: Int?
+    package var dictionaryFrequencyProvenance: VocabularyFrequencyProvenance?
     package let createdAt: Date
     package var srs: VocabularySRSState?
 
@@ -28,6 +30,7 @@ package struct StoredPDFWordRecord: Codable, Sendable {
         id: String,
         vocabularyID: String? = nil,
         word: String,
+        language: VocabularyLanguageID? = nil,
         lemma: String? = nil,
         lexicalKey: String? = nil,
         partOfSpeech: VocabularyPartOfSpeech? = nil,
@@ -40,12 +43,14 @@ package struct StoredPDFWordRecord: Codable, Sendable {
         answer: String,
         dictionaryTags: String? = nil,
         dictionaryFrequency: Int? = nil,
+        dictionaryFrequencyProvenance: VocabularyFrequencyProvenance? = nil,
         createdAt: Date,
         srs: VocabularySRSState? = nil
     ) {
         self.id = id
         self.vocabularyID = vocabularyID
         self.word = word
+        self.language = language
         self.lemma = lemma
         self.lexicalKey = lexicalKey
         self.partOfSpeech = partOfSpeech
@@ -58,6 +63,7 @@ package struct StoredPDFWordRecord: Codable, Sendable {
         self.answer = answer
         self.dictionaryTags = dictionaryTags
         self.dictionaryFrequency = dictionaryFrequency
+        self.dictionaryFrequencyProvenance = dictionaryFrequencyProvenance
         self.createdAt = createdAt
         self.srs = srs
     }

@@ -20,14 +20,14 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         let pdf = VocabularyPreparationCoordinator(
             documentSource: pdfSource,
             library: pdfLibrary,
-            definitionProvider: provider,
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: provider),
             readerPriorStore: readerPriorStore,
             researchEvidenceStore: researchEvidenceStore
         )
         let web = VocabularyPreparationCoordinator(
             documentSource: webSource,
             library: webLibrary,
-            definitionProvider: provider,
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: provider),
             readerPriorStore: readerPriorStore,
             researchEvidenceStore: researchEvidenceStore
         )
@@ -82,7 +82,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
-            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: FakeVocabularyPreparationDefinitionProvider()),
             readerPriorStore: readerPriorStore,
             researchEvidenceStore: researchEvidenceStore
         )
@@ -101,31 +101,91 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         XCTAssertTrue(migrated.answers.isEmpty)
         XCTAssertTrue(migrated.finalSelection.isEmpty)
         XCTAssertNil(migrated.predictionAudit)
-        XCTAssertEqual(migrated.readerPriorContributionRecorded, false)
+        XCTAssertNil(migrated.readerPriorContributionRecorded)
         XCTAssertNil(migrated.readerPriorContributionID)
+        XCTAssertNotNil(migrated.compatibilityFingerprint)
+        XCTAssertEqual(migrated.documentIdentity, source.identity.documentID)
+        let archivedSessions = sessionStore.archivedSessions()
+        XCTAssertEqual(archivedSessions.count, 1)
+        let archived = try XCTUnwrap(archivedSessions.first)
+        XCTAssertEqual(archived.session.algorithmVersion, 6)
+        XCTAssertEqual(archived.session.finalSelection, ["legacy-item"])
     }
 
-    func testStaleSnapshotNeverPublishesInventory() async throws {
-        let source = try FakeVocabularyPreparationSource(
-            text: fixtureText,
-            kind: .docx,
-            snapshotDelayNanoseconds: 80_000_000
-        )
-        let library = FakeVocabularyPreparationLibrary()
-        let coordinator = VocabularyPreparationCoordinator(
-            documentSource: source,
-            library: library,
-            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
-            readerPriorStore: readerPriorStore,
-            researchEvidenceStore: researchEvidenceStore
-        )
-        coordinator.resetForCurrentDocument()
-        coordinator.startAnalysis()
-        source.advanceGeneration()
+    func testStaleSnapshotNeverPublishesInventoryAcrossPDFAndWebReopen() async throws {
+        for kind in [ReaderDocumentKind.pdf, .epub] {
+            let source = try FakeVocabularyPreparationSource(
+                text: fixtureText,
+                kind: kind,
+                snapshotDelayNanoseconds: 80_000_000
+            )
+            let coordinator = VocabularyPreparationCoordinator(
+                documentSource: source,
+                library: FakeVocabularyPreparationLibrary(),
+                languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: FakeVocabularyPreparationDefinitionProvider()),
+                readerPriorStore: readerPriorStore,
+                researchEvidenceStore: researchEvidenceStore
+            )
+            coordinator.resetForCurrentDocument()
+            coordinator.startAnalysis()
+            source.advanceGeneration()
 
-        try await Task.sleep(nanoseconds: 150_000_000)
-        XCTAssertNil(coordinator.inventory)
-        XCTAssertNotEqual(coordinator.phase, .inventory)
+            try await Task.sleep(nanoseconds: 150_000_000)
+            XCTAssertNil(coordinator.inventory, "stale \(kind) snapshot must not publish after reopen")
+            XCTAssertNotEqual(coordinator.phase, .inventory)
+        }
+    }
+
+    func testDelayedDefinitionNeverPublishesAfterLanguageRevisionAcrossPDFAndWeb() async throws {
+        for kind in [ReaderDocumentKind.pdf, .epub] {
+            let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: kind)
+            let provider = ControlledVocabularyPreparationDefinitionProvider()
+            let coordinator = VocabularyPreparationCoordinator(
+                documentSource: source,
+                library: FakeVocabularyPreparationLibrary(),
+                languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: provider),
+                readerPriorStore: readerPriorStore,
+                researchEvidenceStore: researchEvidenceStore
+            )
+            coordinator.resetForCurrentDocument()
+            coordinator.startAnalysis()
+            try await waitUntil { coordinator.phase == .inventory }
+            coordinator.beginAssessment()
+            try await waitUntil { await provider.requestCount() == 1 }
+
+            source.advanceLanguageRevision()
+            await provider.release()
+            try await waitUntil { await provider.completedCount() == 1 }
+            await Task.yield()
+
+            XCTAssertEqual(coordinator.definitionState, .hidden, "stale \(kind) definition must not publish after language change")
+        }
+    }
+
+    func testDelayedDefinitionNeverPublishesAfterSameDocumentReopenAcrossPDFAndWeb() async throws {
+        for kind in [ReaderDocumentKind.pdf, .epub] {
+            let source = try FakeVocabularyPreparationSource(text: fixtureText, kind: kind)
+            let provider = ControlledVocabularyPreparationDefinitionProvider()
+            let coordinator = VocabularyPreparationCoordinator(
+                documentSource: source,
+                library: FakeVocabularyPreparationLibrary(),
+                languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: provider),
+                readerPriorStore: readerPriorStore,
+                researchEvidenceStore: researchEvidenceStore
+            )
+            coordinator.resetForCurrentDocument()
+            coordinator.startAnalysis()
+            try await waitUntil { coordinator.phase == .inventory }
+            coordinator.beginAssessment()
+            try await waitUntil { await provider.requestCount() == 1 }
+
+            source.advanceGeneration()
+            await provider.release()
+            try await waitUntil { await provider.completedCount() == 1 }
+            await Task.yield()
+
+            XCTAssertEqual(coordinator.definitionState, .hidden, "stale \(kind) definition must not publish after reopen")
+        }
     }
 
     func testPrefetchStaysHiddenUntilRevealAndRetryRecovers() async throws {
@@ -138,7 +198,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: library,
-            definitionProvider: provider,
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: provider),
             readerPriorStore: readerPriorStore,
             researchEvidenceStore: researchEvidenceStore
         )
@@ -172,7 +232,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
-            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: FakeVocabularyPreparationDefinitionProvider()),
             readerPriorStore: readerPriorStore,
             researchEvidenceStore: researchEvidenceStore
         )
@@ -195,7 +255,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
-            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: FakeVocabularyPreparationDefinitionProvider()),
             readerPriorStore: readerPriorStore,
             researchEvidenceStore: researchEvidenceStore
         )
@@ -222,7 +282,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
-            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: FakeVocabularyPreparationDefinitionProvider()),
             readerPriorStore: readerPriorStore,
             researchEvidenceStore: researchEvidenceStore
         )
@@ -260,7 +320,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
-            definitionProvider: provider,
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: provider),
             readerPriorStore: priorStore,
             researchEvidenceStore: researchStore
         )
@@ -298,7 +358,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
-            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: FakeVocabularyPreparationDefinitionProvider()),
             readerPriorStore: readerPriorStore,
             researchEvidenceStore: researchEvidenceStore
         )
@@ -331,7 +391,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
-            definitionProvider: provider,
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: provider),
             readerPriorStore: readerPriorStore,
             researchEvidenceStore: researchEvidenceStore
         )
@@ -362,7 +422,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
-            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: FakeVocabularyPreparationDefinitionProvider()),
             readerPriorStore: readerPriorStore,
             researchEvidenceStore: researchEvidenceStore
         )
@@ -399,7 +459,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: library,
-            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: FakeVocabularyPreparationDefinitionProvider()),
             readerPriorStore: readerPriorStore,
             researchEvidenceStore: researchEvidenceStore
         )
@@ -438,7 +498,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: library,
-            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: FakeVocabularyPreparationDefinitionProvider()),
             readerPriorStore: readerPriorStore,
             researchEvidenceStore: researchEvidenceStore
         )
@@ -465,7 +525,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
-            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: FakeVocabularyPreparationDefinitionProvider()),
             readerPriorStore: store,
             researchEvidenceStore: researchStore
         )
@@ -490,7 +550,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
-            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: FakeVocabularyPreparationDefinitionProvider()),
             readerPriorStore: store,
             researchEvidenceStore: FakeVocabularyResearchEvidenceStore()
         )
@@ -516,7 +576,7 @@ final class VocabularyPreparationCoordinatorXCTests: XCTestCase {
         let coordinator = VocabularyPreparationCoordinator(
             documentSource: source,
             library: FakeVocabularyPreparationLibrary(),
-            definitionProvider: FakeVocabularyPreparationDefinitionProvider(),
+            languageCatalog: VocabularyLanguageCatalogFactory.live(definitionProviderOverride: FakeVocabularyPreparationDefinitionProvider()),
             readerPriorStore: store,
             researchEvidenceStore: FakeVocabularyResearchEvidenceStore()
         )
@@ -579,19 +639,29 @@ private final class FakeVocabularyPreparationSource: VocabularyPreparationDocume
         let identity = VocabularyPreparationDocumentIdentity(
             documentID: UUID().uuidString,
             loadGeneration: 1,
-            webPlainTextGeneration: kind == .pdf ? nil : 1
+            webPlainTextGeneration: kind == .pdf ? nil : 1,
+            languageRevision: 1
         )
         self.identity = identity
         self.snapshotDelayNanoseconds = snapshotDelayNanoseconds
+        let runtime = try XCTUnwrap(
+            VocabularyLanguageCatalogFactory.live().resolve(language: .english)
+        )
         snapshotTemplate = VocabularyPreparationSourceSnapshot(
             identity: identity,
             kind: kind,
-            language: .english,
+            languageResolution: .resolved(VocabularyResolvedLanguage(
+                id: .english,
+                provenance: .automaticDetection
+            )),
+            runtime: runtime,
             texts: [text],
             index: try XCTUnwrap(VocabularyDocumentLemmaIndex(
                 texts: [text],
                 language: .english,
-                maximumWorkerCount: 1
+                maximumWorkerCount: 1,
+                semanticIdentity: runtime.linguisticCacheIdentity,
+                analyzerFactory: runtime.linguisticAnalyzerFactory
             ))
         )
     }
@@ -605,7 +675,7 @@ private final class FakeVocabularyPreparationSource: VocabularyPreparationDocume
     }
 
     func vocabularyPreparationSnapshot(
-        requestedLanguage: NLLanguage?
+        selection: VocabularyLanguageSelection
     ) async throws -> VocabularyPreparationSourceSnapshot {
         if snapshotDelayNanoseconds > 0 {
             try await Task.sleep(nanoseconds: snapshotDelayNanoseconds)
@@ -621,12 +691,59 @@ private final class FakeVocabularyPreparationSource: VocabularyPreparationDocume
         identity = VocabularyPreparationDocumentIdentity(
             documentID: identity.documentID,
             loadGeneration: identity.loadGeneration + 1,
-            webPlainTextGeneration: identity.webPlainTextGeneration.map { $0 + 1 }
+            webPlainTextGeneration: identity.webPlainTextGeneration.map { $0 + 1 },
+            languageRevision: identity.languageRevision
+        )
+    }
+
+    func advanceLanguageRevision() {
+        identity = VocabularyPreparationDocumentIdentity(
+            documentID: identity.documentID,
+            loadGeneration: identity.loadGeneration,
+            webPlainTextGeneration: identity.webPlainTextGeneration,
+            languageRevision: identity.languageRevision + 1
         )
     }
 }
 
-private actor FakeVocabularyPreparationDefinitionProvider: VocabularyPreparationDefinitionProviding {
+private actor ControlledVocabularyPreparationDefinitionProvider: VocabularyDefinitionProviding {
+    nonisolated let descriptor = VocabularyProviderDescriptor(
+        id: "dictionary.controlled-test-fixture",
+        version: "1",
+        supportedLanguageRanges: [VocabularyLanguageRange(language: .english, includesDescendants: true)]
+    )
+    private var calls = 0
+    private var completions = 0
+    private var continuation: CheckedContinuation<Void, Never>?
+
+    func definition(for request: VocabularyDefinitionRequest) async throws -> VocabularyDefinition? {
+        calls += 1
+        await withCheckedContinuation { continuation = $0 }
+        completions += 1
+        return VocabularyDefinition(
+            markdown: "Definition of \(request.lemma)",
+            resolvedLemma: request.lemma,
+            tags: nil,
+            frequency: nil,
+            provenance: descriptor
+        )
+    }
+
+    func requestCount() -> Int { calls }
+    func completedCount() -> Int { completions }
+
+    func release() {
+        continuation?.resume()
+        continuation = nil
+    }
+}
+
+private actor FakeVocabularyPreparationDefinitionProvider: VocabularyDefinitionProviding {
+    nonisolated let descriptor = VocabularyProviderDescriptor(
+        id: "dictionary.test-fixture",
+        version: "1",
+        supportedLanguageRanges: [VocabularyLanguageRange(language: .english, includesDescendants: true)]
+    )
     private var calls = 0
     private let failFirstRequest: Bool
 
@@ -634,19 +751,17 @@ private actor FakeVocabularyPreparationDefinitionProvider: VocabularyPreparation
         self.failFirstRequest = failFirstRequest
     }
 
-    func definition(
-        for candidate: DocumentVocabularyCandidate,
-        languageCode: String,
-        context: String
-    ) async throws -> VocabularyPreparedDefinition {
+    func definition(for request: VocabularyDefinitionRequest) async throws -> VocabularyDefinition? {
         calls += 1
         if failFirstRequest && calls == 1 {
             throw CocoaError(.fileReadUnknown)
         }
-        return VocabularyPreparedDefinition(
-            markdown: "Definition of \(candidate.displayLemma)",
+        return VocabularyDefinition(
+            markdown: "Definition of \(request.lemma)",
+            resolvedLemma: request.lemma,
             tags: nil,
-            frequency: candidate.generalFrequencyRank
+            frequency: nil,
+            provenance: descriptor
         )
     }
 
@@ -772,7 +887,7 @@ private final class FakeVocabularyPreparationLibrary: VocabularyPreparationLibra
         self.shouldPersist = shouldPersist
     }
 
-    func vocabularyPreparationExistingKeys(language: NLLanguage, kind: ReaderDocumentKind) -> Set<String> {
+    func vocabularyPreparationExistingKeys(language: VocabularyLanguageID, kind: ReaderDocumentKind) -> Set<String> {
         existingKeys
     }
 

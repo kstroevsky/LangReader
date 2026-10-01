@@ -292,7 +292,7 @@ package final class GermanWiktionaryDictionary: @unchecked Sendable {
 
     package func lookup(_ query: String) async throws -> GermanDictionaryEntry {
         let word = VocabularyTextPolicy.normalizedVocabularyText(query)
-        guard VocabularyTextPolicy.isSingleEnglishWord(word) else {
+        guard VocabularyTextPolicy.isSingleVocabularyWord(word) else {
             throw LookupError.invalidWord
         }
         let key = VocabularyTextPolicy.canonicalVocabularyKey(word)
@@ -312,6 +312,13 @@ package final class GermanWiktionaryDictionary: @unchecked Sendable {
             )
         }
         return try finishEntry(requestedWord: word, fallbackLemma: word, page: parsed)
+    }
+
+    package func cachedEntry(for query: String) -> GermanDictionaryEntry? {
+        let word = VocabularyTextPolicy.normalizedVocabularyText(query)
+        guard VocabularyTextPolicy.isSingleVocabularyWord(word) else { return nil }
+        let key = VocabularyTextPolicy.canonicalVocabularyKey(word)
+        return lock.withLock { cache[key] }
     }
 
     private func finishEntry(

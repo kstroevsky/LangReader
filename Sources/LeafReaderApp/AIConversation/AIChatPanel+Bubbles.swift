@@ -227,13 +227,13 @@ extension AIChatPanel {
     func speakerWordForBubble(role: String, text: String, linkID: String?) -> String? {
         guard linkID != nil, role == AppText.userRole else { return nil }
         let rawWord = vocabularyWord(from: text)
-        return isSingleEnglishWord(rawWord) ? rawWord : nil
+        return VocabularyTextPolicy.isSingleVocabularyWord(rawWord) ? rawWord : nil
     }
 
     @objc func playBubbleWord(_ sender: NSButton) {
         let candidate = (sender as? WordSpeakerButton)?.spokenWord ?? sender.identifier?.rawValue
         guard let word = candidate,
-              isSingleEnglishWord(word) else {
+              VocabularyTextPolicy.isSingleVocabularyWord(word) else {
             return
         }
         speakWord(word)
