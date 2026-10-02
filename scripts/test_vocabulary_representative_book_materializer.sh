@@ -14,6 +14,7 @@ fi
 swiftc -O -warnings-as-errors -swift-version 6 -parse-as-library -package-name LeafReader \
   -I "$BUILD_DIR" -L "$BUILD_DIR" -lLeafReaderCore \
   -framework PDFKit \
+  "$ROOT_DIR/scripts/representative_book_source_support.swift" \
   "$ROOT_DIR/scripts/materialize_vocabulary_representative_book_fixture.swift" \
   -o "$EXECUTABLE"
 

@@ -1,11 +1,15 @@
-#!/usr/bin/env swift
-
 import CryptoKit
 import Foundation
+import LeafReaderCore
 import NaturalLanguage
-import PDFKit
 
-private let policyVersion = "representative-book-candidate-v1"
+private let challengePolicyVersion = "representative-book-challenge-v3"
+private let representativePolicyVersion = "representative-book-representative-v2"
+
+private enum CandidatePanel: String, Codable {
+    case challenge
+    case representative
+}
 
 private struct SourceDescriptor: Codable {
     let alias: String
@@ -15,15 +19,16 @@ private struct SourceDescriptor: Codable {
     let genre: String
     let documentFormat: String
     let dataRole: String
-    let pageCount: Int
-    let sampledPageNumbers: [Int]
+    let sourceUnitKind: String
+    let sourceUnitCount: Int
+    let sampledUnitNumbers: [Int]
     let sampledCharacterCount: Int
     let sampledTokenCount: Int
 }
 
 private struct CandidateOccurrence: Codable {
     let occurrenceID: String
-    let pageNumber: Int
+    let sourceUnitNumber: Int
     let sampledUnitIndex: Int
     let utf16Location: Int
     let utf16Length: Int
@@ -39,17 +44,19 @@ private struct CandidateOccurrence: Codable {
 
 private struct CandidateAnchor: Codable {
     let anchorID: String
-    let suggestedLemma: String
+    let anchorBasis: String
+    let anchorValue: String
     let occurrenceCountInSample: Int
-    let distinctPageCount: Int
+    let distinctUnitCount: Int
     let observedPartsOfSpeech: [String]
     let capitalizationPatterns: [String]
-    let priorityScore: Int
+    let priorityScore: Int?
     let occurrences: [CandidateOccurrence]
 }
 
 private struct AnnotationTemplate: Codable {
     let schemaVersion: Int
+    let panel: CandidatePanel
     let candidateSelectionPolicyVersion: String
     let sampledTextSHA256: String
     let source: SourceDescriptor
@@ -59,18 +66,19 @@ private struct AnnotationTemplate: Codable {
 
 private struct SafeMetadata: Codable {
     let schemaVersion: Int
+    let panel: CandidatePanel
     let candidateSelectionPolicyVersion: String
     let source: SourceDescriptor
     let candidateAnchorCount: Int
     let candidateOccurrenceCount: Int
-    let predictedMultiPOSAnchorCount: Int
-    let otherWordAnchorCount: Int
+    let predictedMultiPOSAnchorCount: Int?
+    let otherWordAnchorCount: Int?
     let sampledTextSHA256: String
     let containsExtractedProse: Bool
 }
 
 private struct RawOccurrence {
-    let pageNumber: Int
+    let sourceUnitNumber: Int
     let sampledUnitIndex: Int
     let ordinal: Int
     let utf16Location: Int
@@ -88,7 +96,7 @@ private enum ToolError: Error, CustomStringConvertible {
     var description: String {
         switch self {
         case .usage:
-            return "usage: build_vocabulary_representative_book_candidates.swift --pdf <file.pdf> --language <bcp47> --alias <id> --genre <genre> --template <local.json> --metadata <safe.json> [--sample-pages <n>] [--max-anchors <n>] [--max-occurrences <n>] | --self-test"
+            return "usage: build_vocabulary_representative_book_candidates.swift --source <book.pdf|book.epub> --language <bcp47> --alias <id> --genre <genre> --template <local.json> --metadata <safe.json> [--panel challenge|representative] [--data-role development|confirmatory] [--sample-units <n>] [--max-anchors <n>] [--max-occurrences <n>] | --self-test"
         case .invalid(let message):
             return message
         }
@@ -96,13 +104,15 @@ private enum ToolError: Error, CustomStringConvertible {
 }
 
 private struct Options {
-    let pdf: URL
+    let source: URL
     let languageCode: String
     let alias: String
     let genre: String
     let template: URL
     let metadata: URL
-    let samplePages: Int
+    let panel: CandidatePanel
+    let dataRole: String
+    let sampleUnits: Int
     let maxAnchors: Int
     let maxOccurrences: Int
 }
@@ -123,26 +133,6 @@ private func canonicalToken(_ value: String) -> String? {
         return nil
     }
     return normalized
-}
-
-private func sampledPageIndexes(pageCount: Int, requestedCount: Int) -> [Int] {
-    guard pageCount > 0, requestedCount > 0 else { return [] }
-    let count = min(pageCount, requestedCount)
-    let start = pageCount >= 20 ? Int((Double(pageCount - 1) * 0.05).rounded()) : 0
-    let end = pageCount >= 20 ? Int((Double(pageCount - 1) * 0.95).rounded()) : pageCount - 1
-    guard count > 1, end > start else { return [(start + end) / 2] }
-
-    let span = Double(end - start)
-    var result: [Int] = []
-    var seen = Set<Int>()
-    for ordinal in 0..<count {
-        let fraction = Double(ordinal) / Double(count - 1)
-        let index = start + Int((span * fraction).rounded())
-        if seen.insert(index).inserted {
-            result.append(index)
-        }
-    }
-    return result
 }
 
 private func compactContext(_ text: String, around range: Range<String.Index>) -> String {
@@ -176,14 +166,15 @@ private func lexicalClassName(_ tag: NLTag?) -> String? {
 }
 
 private func rawOccurrences(
-    pageNumber: Int,
+    sourceUnitNumber: Int,
     sampledUnitIndex: Int,
     text: String,
-    language: NLLanguage
+    language: NLLanguage,
+    observeLinguistics: Bool
 ) -> [RawOccurrence] {
-    let tagger = NLTagger(tagSchemes: [.lemma, .lexicalClass])
-    tagger.string = text
-    tagger.setLanguage(language, range: text.startIndex..<text.endIndex)
+    let tagger: NLTagger? = observeLinguistics ? NLTagger(tagSchemes: [.lemma, .lexicalClass]) : nil
+    tagger?.string = text
+    tagger?.setLanguage(language, range: text.startIndex..<text.endIndex)
 
     let tokenizer = NLTokenizer(unit: .word)
     tokenizer.string = text
@@ -195,19 +186,33 @@ private func rawOccurrences(
         defer { ordinal += 1 }
         let surface = String(text[range])
         guard canonicalToken(surface) != nil else { return true }
-        let lemmaTag = tagger.tag(at: range.lowerBound, unit: .word, scheme: .lemma).0?.rawValue
-        let lexicalClass = lexicalClassName(
-            tagger.tag(at: range.lowerBound, unit: .word, scheme: .lexicalClass).0
-        )
+
+        let lemma: String?
+        let lexicalClass: String?
+        if let tagger {
+            let rawLemma = tagger.tag(
+                at: range.lowerBound,
+                unit: .word,
+                scheme: .lemma
+            ).0?.rawValue
+            lemma = rawLemma.flatMap(canonicalToken)
+            lexicalClass = lexicalClassName(
+                tagger.tag(at: range.lowerBound, unit: .word, scheme: .lexicalClass).0
+            )
+        } else {
+            lemma = nil
+            lexicalClass = nil
+        }
+
         let utf16Range = NSRange(range, in: text)
         result.append(RawOccurrence(
-            pageNumber: pageNumber,
+            sourceUnitNumber: sourceUnitNumber,
             sampledUnitIndex: sampledUnitIndex,
             ordinal: ordinal,
             utf16Location: utf16Range.location,
             utf16Length: utf16Range.length,
             surface: surface,
-            lemma: lemmaTag.flatMap(canonicalToken),
+            lemma: lemma,
             partOfSpeech: lexicalClass,
             context: compactContext(text, around: range)
         ))
@@ -216,72 +221,104 @@ private func rawOccurrences(
     return result
 }
 
+private func representativeOrderKey(alias: String, anchor: String, row: RawOccurrence? = nil) -> String {
+    var value = "\(alias)|\(anchor)"
+    if let row {
+        value += "|\(row.sourceUnitNumber)|\(row.ordinal)"
+    }
+    return sha256(Data(value.utf8))
+}
+
 private func candidateAnchors(
     occurrences: [RawOccurrence],
     alias: String,
+    panel: CandidatePanel,
     maxAnchors: Int,
     maxOccurrences: Int
 ) -> [CandidateAnchor] {
     let grouped = Dictionary(grouping: occurrences) { occurrence in
-        occurrence.lemma ?? canonicalToken(occurrence.surface) ?? ""
+        switch panel {
+        case .challenge:
+            occurrence.lemma ?? canonicalToken(occurrence.surface) ?? ""
+        case .representative:
+            canonicalToken(occurrence.surface) ?? ""
+        }
     }
 
-    return grouped.compactMap { key, rows -> CandidateAnchor? in
+    let candidates = grouped.compactMap { key, rows -> CandidateAnchor? in
         guard !key.isEmpty, rows.count >= 2 else { return nil }
         let parts = Set(rows.compactMap(\.partOfSpeech))
-        guard !parts.isEmpty else { return nil }
-        let pages = Set(rows.map(\.pageNumber))
+        if panel == .challenge, parts.isEmpty { return nil }
+        let units = Set(rows.map(\.sourceUnitNumber))
         let capitalization = Set(rows.map { capitalizationPattern($0.surface) })
         let contentParts = parts.intersection(["noun", "verb", "adjective", "adverb"])
         let hasOtherWord = parts.contains("otherWord")
-        let priority = (contentParts.count >= 2 ? 10_000 : 0)
-            + (hasOtherWord ? 2_000 : 0)
-            + (capitalization.count >= 2 ? 1_000 : 0)
-            + min(rows.count, 99) * 10
-            + min(pages.count, 9)
-        let selected = rows
-            .sorted {
-                if $0.pageNumber != $1.pageNumber { return $0.pageNumber < $1.pageNumber }
-                return $0.ordinal < $1.ordinal
+        let priority: Int? = panel == .challenge
+            ? (contentParts.count >= 2 ? 10_000 : 0)
+                + (hasOtherWord ? 2_000 : 0)
+                + (capitalization.count >= 2 ? 1_000 : 0)
+                + min(rows.count, 99) * 10
+                + min(units.count, 9)
+            : nil
+
+        let orderedRows = rows.sorted {
+            if panel == .representative {
+                let lhs = representativeOrderKey(alias: alias, anchor: key, row: $0)
+                let rhs = representativeOrderKey(alias: alias, anchor: key, row: $1)
+                if lhs != rhs { return lhs < rhs }
             }
-            .prefix(maxOccurrences)
-            .map { row in
-                CandidateOccurrence(
-                    occurrenceID: "\(alias)-p\(row.pageNumber)-t\(row.ordinal)",
-                    pageNumber: row.pageNumber,
-                    sampledUnitIndex: row.sampledUnitIndex,
-                    utf16Location: row.utf16Location,
-                    utf16Length: row.utf16Length,
-                    surface: row.surface,
-                    observedLemma: row.lemma,
-                    observedPartOfSpeech: row.partOfSpeech,
-                    context: row.context,
-                    contextFingerprint: sha256(Data(row.context.utf8)),
-                    goldLemma: "",
-                    goldPartOfSpeech: "",
-                    reviewStatus: "unreviewed"
-                )
+            if $0.sourceUnitNumber != $1.sourceUnitNumber {
+                return $0.sourceUnitNumber < $1.sourceUnitNumber
             }
+            return $0.ordinal < $1.ordinal
+        }
+        let selected = orderedRows.prefix(maxOccurrences).map { row in
+            CandidateOccurrence(
+                occurrenceID: "\(alias)-u\(row.sourceUnitNumber)-t\(row.ordinal)",
+                sourceUnitNumber: row.sourceUnitNumber,
+                sampledUnitIndex: row.sampledUnitIndex,
+                utf16Location: row.utf16Location,
+                utf16Length: row.utf16Length,
+                surface: row.surface,
+                observedLemma: row.lemma,
+                observedPartOfSpeech: row.partOfSpeech,
+                context: row.context,
+                contextFingerprint: sha256(Data(row.context.utf8)),
+                goldLemma: "",
+                goldPartOfSpeech: "",
+                reviewStatus: "unreviewed"
+            )
+        }
+
         return CandidateAnchor(
             anchorID: "\(alias)-\(key)",
-            suggestedLemma: key,
+            anchorBasis: panel == .challenge ? "observedLemma" : "canonicalSurface",
+            anchorValue: key,
             occurrenceCountInSample: rows.count,
-            distinctPageCount: pages.count,
+            distinctUnitCount: units.count,
             observedPartsOfSpeech: parts.sorted(),
             capitalizationPatterns: capitalization.sorted(),
             priorityScore: priority,
             occurrences: Array(selected)
         )
     }
-    .sorted {
-        if $0.priorityScore != $1.priorityScore { return $0.priorityScore > $1.priorityScore }
+
+    let ordered = candidates.sorted {
+        if panel == .representative {
+            let lhs = representativeOrderKey(alias: alias, anchor: $0.anchorValue)
+            let rhs = representativeOrderKey(alias: alias, anchor: $1.anchorValue)
+            if lhs != rhs { return lhs < rhs }
+            return $0.anchorValue < $1.anchorValue
+        }
+        let lhsPriority = $0.priorityScore ?? 0
+        let rhsPriority = $1.priorityScore ?? 0
+        if lhsPriority != rhsPriority { return lhsPriority > rhsPriority }
         if $0.occurrenceCountInSample != $1.occurrenceCountInSample {
             return $0.occurrenceCountInSample > $1.occurrenceCountInSample
         }
-        return $0.suggestedLemma < $1.suggestedLemma
+        return $0.anchorValue < $1.anchorValue
     }
-    .prefix(maxAnchors)
-    .map { $0 }
+    return Array(ordered.prefix(maxAnchors))
 }
 
 private func writeJSON<T: Encodable>(_ value: T, to url: URL) throws {
@@ -305,7 +342,8 @@ private func parseOptions(_ arguments: [String]) throws -> Options {
         values[key] = arguments[index + 1]
         index += 2
     }
-    guard let pdf = values["--pdf"],
+
+    guard let source = values["--source"] ?? values["--pdf"],
           let language = values["--language"],
           let alias = values["--alias"],
           let genre = values["--genre"],
@@ -313,122 +351,141 @@ private func parseOptions(_ arguments: [String]) throws -> Options {
           let metadata = values["--metadata"] else {
         throw ToolError.usage
     }
-    let samplePages = Int(values["--sample-pages"] ?? "32") ?? 0
+    guard let panel = CandidatePanel(rawValue: values["--panel"] ?? "challenge") else {
+        throw ToolError.invalid("panel must be challenge or representative")
+    }
+    let dataRole = values["--data-role"] ?? "development"
+    guard dataRole == "development" || dataRole == "confirmatory" else {
+        throw ToolError.invalid("data-role must be development or confirmatory")
+    }
+    guard panel != .challenge || dataRole == "development" else {
+        throw ToolError.invalid("prediction-guided challenge selection is development-only")
+    }
+
+    let sampleUnits = Int(values["--sample-units"] ?? values["--sample-pages"] ?? "32") ?? 0
     let maxAnchors = Int(values["--max-anchors"] ?? "80") ?? 0
     let maxOccurrences = Int(values["--max-occurrences"] ?? "12") ?? 0
-    guard samplePages > 0, maxAnchors > 0, maxOccurrences > 0 else {
-        throw ToolError.invalid("sample-pages, max-anchors, and max-occurrences must be positive")
+    guard sampleUnits > 0, maxAnchors > 0, maxOccurrences > 0 else {
+        throw ToolError.invalid("sample-units, max-anchors, and max-occurrences must be positive")
     }
     guard !alias.isEmpty,
           alias.allSatisfy({ $0.isLowercase || $0.isNumber || $0 == "-" }) else {
         throw ToolError.invalid("alias must use lowercase letters, numbers, and hyphens")
     }
+    guard VocabularyLanguageID(language) != nil else {
+        throw ToolError.invalid("language must be a resolved BCP-47 identity")
+    }
+
     return Options(
-        pdf: URL(fileURLWithPath: pdf),
+        source: URL(fileURLWithPath: source),
         languageCode: language,
         alias: alias,
         genre: genre,
         template: URL(fileURLWithPath: template),
         metadata: URL(fileURLWithPath: metadata),
-        samplePages: samplePages,
+        panel: panel,
+        dataRole: dataRole,
+        sampleUnits: sampleUnits,
         maxAnchors: maxAnchors,
         maxOccurrences: maxOccurrences
     )
 }
 
 private func build(_ options: Options) throws {
-    guard options.pdf.pathExtension.lowercased() == "pdf" else {
-        throw ToolError.invalid("representative book candidate builder currently accepts PDF only")
+    guard FileManager.default.fileExists(atPath: options.source.path) else {
+        throw ToolError.invalid("source does not exist: \(options.source.path)")
     }
-    guard FileManager.default.fileExists(atPath: options.pdf.path) else {
-        throw ToolError.invalid("PDF does not exist: \(options.pdf.path)")
-    }
-    guard let document = PDFDocument(url: options.pdf), document.pageCount > 0 else {
-        throw ToolError.invalid("PDFKit could not open the document")
-    }
+
+    let sample = try RepresentativeBookSourceSupport.sample(
+        sourceURL: options.source,
+        requestedCount: options.sampleUnits
+    )
     let language = NLLanguage(rawValue: options.languageCode)
-    let pages = sampledPageIndexes(pageCount: document.pageCount, requestedCount: options.samplePages)
     var occurrences: [RawOccurrence] = []
-    var sampledTexts: [String] = []
-    var sampledPageNumbers: [Int] = []
-    for pageIndex in pages {
-        let text = document.page(at: pageIndex)?.string ?? ""
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { continue }
-        let sampledUnitIndex = sampledTexts.count
-        sampledTexts.append(text)
-        sampledPageNumbers.append(pageIndex + 1)
+    for (sampledUnitIndex, text) in sample.sampledTexts.enumerated() {
         occurrences.append(contentsOf: rawOccurrences(
-            pageNumber: pageIndex + 1,
+            sourceUnitNumber: sample.sampledUnitNumbers[sampledUnitIndex],
             sampledUnitIndex: sampledUnitIndex,
             text: text,
-            language: language
+            language: language,
+            observeLinguistics: options.panel == .challenge
         ))
-    }
-    guard !sampledTexts.isEmpty else {
-        throw ToolError.invalid("PDFKit extracted no text from the sampled pages")
     }
     let anchors = candidateAnchors(
         occurrences: occurrences,
         alias: options.alias,
+        panel: options.panel,
         maxAnchors: options.maxAnchors,
         maxOccurrences: options.maxOccurrences
     )
     guard !anchors.isEmpty else {
         throw ToolError.invalid("no repeated lexical candidates were found")
     }
-    let sourceData = try Data(contentsOf: options.pdf)
-    let sampledText = sampledTexts.joined(separator: "\n\u{001E}\n")
+
+    let sourceData = try Data(contentsOf: options.source)
+    let sampledText = sample.sampledTexts.joined(separator: "\n\u{001E}\n")
     let sampledTextSHA256 = sha256(Data(sampledText.utf8))
+    let policyVersion = options.panel == .challenge ? challengePolicyVersion : representativePolicyVersion
     let source = SourceDescriptor(
         alias: options.alias,
-        fileName: options.pdf.lastPathComponent,
+        fileName: options.source.lastPathComponent,
         sourceSHA256: sha256(sourceData),
         languageCode: options.languageCode,
         genre: options.genre,
-        documentFormat: "pdf",
-        dataRole: "development",
-        pageCount: document.pageCount,
-        sampledPageNumbers: sampledPageNumbers,
-        sampledCharacterCount: sampledTexts.reduce(0) { $0 + $1.count },
+        documentFormat: sample.documentFormat,
+        dataRole: options.dataRole,
+        sourceUnitKind: sample.sourceUnitKind,
+        sourceUnitCount: sample.sourceUnitCount,
+        sampledUnitNumbers: sample.sampledUnitNumbers,
+        sampledCharacterCount: sample.sampledTexts.reduce(0) { $0 + $1.count },
         sampledTokenCount: occurrences.count
     )
     let template = AnnotationTemplate(
-        schemaVersion: 1,
+        schemaVersion: 2,
+        panel: options.panel,
         candidateSelectionPolicyVersion: policyVersion,
         sampledTextSHA256: sampledTextSHA256,
         source: source,
         instructions: [
-            "Development material only. Do not convert this source into a held-out fixture after inspecting predictions.",
-            "Review every retained occurrence in context; fill goldLemma and goldPartOfSpeech without treating observed NaturalLanguage output as ground truth.",
-            "Reject extraction/alignment errors explicitly rather than forcing a lexical label.",
-            "After review, transform only approved occurrences into the lexical-partition evaluator schema."
+            options.dataRole == "development"
+                ? "Development material only. Do not convert this source into fresh holdout evidence after inspecting predictions."
+                : "Confirmatory source. Freeze human gold before running or revealing A/B/C predictions.",
+            options.panel == .challenge
+                ? "Observed NaturalLanguage values exist only to prioritize development failures; never copy them into gold."
+                : "Selection is prediction-independent. Annotators must remain blind to A/B/C predictions while filling gold lemma and coarse POS.",
+            "Review every retained occurrence in context and reject extraction/alignment errors instead of forcing a lexical label.",
+            "Only occurrences marked approved may be materialized into the lexical-partition evaluator schema."
         ],
         anchors: anchors
     )
     let metadata = SafeMetadata(
-        schemaVersion: 1,
+        schemaVersion: 2,
+        panel: options.panel,
         candidateSelectionPolicyVersion: policyVersion,
         source: source,
         candidateAnchorCount: anchors.count,
         candidateOccurrenceCount: anchors.reduce(0) { $0 + $1.occurrences.count },
-        predictedMultiPOSAnchorCount: anchors.filter {
+        predictedMultiPOSAnchorCount: options.panel == .challenge ? anchors.filter {
             Set($0.observedPartsOfSpeech).intersection(["noun", "verb", "adjective", "adverb"]).count >= 2
-        }.count,
-        otherWordAnchorCount: anchors.filter { $0.observedPartsOfSpeech.contains("otherWord") }.count,
+        }.count : nil,
+        otherWordAnchorCount: options.panel == .challenge
+            ? anchors.filter { $0.observedPartsOfSpeech.contains("otherWord") }.count
+            : nil,
         sampledTextSHA256: sampledTextSHA256,
         containsExtractedProse: false
     )
+
     try writeJSON(template, to: options.template)
     try writeJSON(metadata, to: options.metadata)
-    print("wrote \(anchors.count) candidate anchors / \(metadata.candidateOccurrenceCount) review occurrences")
+    print("wrote \(anchors.count) \(options.panel.rawValue) anchors / \(metadata.candidateOccurrenceCount) review occurrences")
     print("annotation template: \(options.template.path)")
     print("safe metadata: \(options.metadata.path)")
 }
 
 private func selfTest() throws {
-    let sample = sampledPageIndexes(pageCount: 213, requestedCount: 5)
+    let sample = RepresentativeBookSourceSupport.sampledUnitIndexes(unitCount: 213, requestedCount: 5)
     guard sample == [11, 59, 106, 154, 201] else {
-        throw ToolError.invalid("page sampling changed: \(sample)")
+        throw ToolError.invalid("unit sampling changed: \(sample)")
     }
     guard canonicalToken("Record") == "record",
           canonicalToken("Fußgänger") == "fußgänger",
@@ -441,17 +498,74 @@ private func selfTest() throws {
           capitalizationPattern("house") == "lowercase" else {
         throw ToolError.invalid("capitalization policy changed")
     }
+    let chunks = RepresentativeBookSourceSupport.epubTextUnits(
+        "First paragraph.\n\nSecond paragraph.",
+        characterLimit: 20
+    )
+    guard chunks == ["First paragraph.", "Second paragraph."] else {
+        throw ToolError.invalid("EPUB paragraph packing changed: \(chunks)")
+    }
+    let readablePDFPages = RepresentativeBookSourceSupport.sampledReadablePDFPages(
+        ["cover", "   ", nil, "middle", "", "ending"],
+        requestedCount: 3
+    )
+    guard readablePDFPages.map(\.number) == [1, 4, 6],
+          readablePDFPages.map(\.text) == ["cover", "middle", "ending"] else {
+        throw ToolError.invalid("readable PDF page sampling changed")
+    }
+    let representativeRows = [
+        RawOccurrence(
+            sourceUnitNumber: 1,
+            sampledUnitIndex: 0,
+            ordinal: 0,
+            utf16Location: 0,
+            utf16Length: 6,
+            surface: "Record",
+            lemma: nil,
+            partOfSpeech: nil,
+            context: "Record this."
+        ),
+        RawOccurrence(
+            sourceUnitNumber: 2,
+            sampledUnitIndex: 1,
+            ordinal: 0,
+            utf16Location: 0,
+            utf16Length: 6,
+            surface: "record",
+            lemma: nil,
+            partOfSpeech: nil,
+            context: "A record."
+        )
+    ]
+    let representative = candidateAnchors(
+        occurrences: representativeRows,
+        alias: "self-test",
+        panel: .representative,
+        maxAnchors: 10,
+        maxOccurrences: 10
+    )
+    guard representative.count == 1,
+          representative[0].anchorBasis == "canonicalSurface",
+          representative[0].observedPartsOfSpeech.isEmpty,
+          representative[0].priorityScore == nil else {
+        throw ToolError.invalid("representative selection depends on prediction fields")
+    }
     print("representative book candidate builder self-test passed")
 }
 
-do {
-    let arguments = Array(CommandLine.arguments.dropFirst())
-    if arguments == ["--self-test"] {
-        try selfTest()
-    } else {
-        try build(parseOptions(arguments))
+@main
+private enum RepresentativeBookCandidateBuilderCLI {
+    static func main() {
+        do {
+            let arguments = Array(CommandLine.arguments.dropFirst())
+            if arguments == ["--self-test"] {
+                try selfTest()
+            } else {
+                try build(parseOptions(arguments))
+            }
+        } catch {
+            FileHandle.standardError.write(Data("\(error)\n".utf8))
+            exit(2)
+        }
     }
-} catch {
-    FileHandle.standardError.write(Data("\(error)\n".utf8))
-    exit(2)
 }

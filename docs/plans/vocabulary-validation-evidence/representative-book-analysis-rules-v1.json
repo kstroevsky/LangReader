@@ -1,0 +1,77 @@
+{
+  "analysisStatus": "development-not-frozen",
+  "bootstrap": {
+    "cluster": "workFamilyID",
+    "confidenceInterval": 0.95,
+    "replicates": null,
+    "seed": 20261002
+  },
+  "hardGates": {
+    "automaticSplitsWhenNLPUnavailable": 0,
+    "splitPrecisionMinimum": 0.98,
+    "splitPrecisionWilson95LowerMinimum": 0.95
+  },
+  "languageRoutingInvariantCounters": {
+    "englishRequestFallsThroughToGermanWiktionary": 0,
+    "failedOrMissingDefinitionCreatesVerifiedKnownEvidence": 0,
+    "germanDefinitionRequestReachesECDICT": 0,
+    "incompatibleBackfillMarkerSuppressesCorrectLanguageWork": 0,
+    "incompatibleCachedResultReusedAcrossLanguages": 0,
+    "knownDifferentLanguageRecordsMerge": 0,
+    "nonEnglishFrequencyRequestReachesEnglishProvider": 0,
+    "staleOldLanguageWorkPublishesAfterLanguageChange": 0,
+    "supportedNonEnglishReceivesUndeclaredEnglishProvider": 0,
+    "unknownLanguageSilentlyBecomesEnglish": 0
+  },
+  "nonInferiorityMargins": {
+    "assessmentInstability": null,
+    "falseMergeRate": null
+  },
+  "nonInferioritySemantics": {
+    "assessmentInstability": "maximum acceptable B-to-C increase; lower is better",
+    "falseMergeRate": "maximum acceptable B-to-C increase; upper work-family-bootstrap confidence bound must not exceed the margin"
+  },
+  "reporting": {
+    "macroGroupings": [
+      "document",
+      "workFamilyID",
+      "genre",
+      "language",
+      "documentFormat"
+    ],
+    "micro": true
+  },
+  "plannedStratification": [
+    "language",
+    "genre",
+    "documentFormat",
+    "workFamilyID",
+    "goldPartition",
+    "occurrenceCountBand"
+  ],
+  "missingDataPolicy": {
+    "documentLevel": "Every document in the frozen confirmatory holdout must have A, B, and C exports before the confirmatory analysis is complete; documents may not be removed after outputs are opened.",
+    "goldLevel": "Unusable occurrences must be rejected before gold freeze and frozen gold must contain zero unreviewed occurrences.",
+    "modelOutputLevel": "Ambiguous, unresolved, null, or otherwise absent lexical resolution produced by a checkpoint is a model outcome, not missing data, and remains in the frozen occurrence denominator."
+  },
+  "requiredConfirmatoryChecks": [
+    "naturalBookCheckpointAnalysis",
+    "lexicalReconcilerNLPDegradation",
+    "languageRoutingInvariants",
+    "controlledCrossFormatParity",
+    "assessmentConsequences"
+  ],
+  "retryPolicy": {
+    "allowed": "Infrastructure-only failures may be rerun with the identical frozen source/sample, checkpoint revision, experiment harness, and runtime policy.",
+    "forbidden": "Linguistic/model failures, poor metrics, difficult documents, or unfavorable checkpoint differences are not retry reasons.",
+    "provenanceFailure": "Hash, range, or provenance failures must be investigated and regenerated from the frozen source inputs; they must not be repaired by changing gold or the frozen sample after checkpoint outputs are opened."
+  },
+  "stoppingEnrollmentRule": {
+    "automaticSplitAdequacyTarget": 250,
+    "automaticSplitAdequacyTargetMeaning": "Practical evidence-resolution target for predicted automatic split decisions overall; it is not an adaptive stopping trigger.",
+    "documentEnrollment": "Run every document in the frozen confirmatory holdout through every planned checkpoint; do not add, remove, or replace documents based on partial results.",
+    "earlyStopping": "Forbidden.",
+    "ifAdequacyTargetIsMissed": "Report insufficient automatic-split decision support from this frozen holdout; do not supplement the same holdout after checkpoint outputs are opened."
+  },
+  "schemaVersion": 1
+}

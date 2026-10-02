@@ -2,64 +2,46 @@
 
 ## Status
 
-This corpus is development-only evidence for ADR-0001 lexical reconciliation.
-It is not a held-out or release-gating corpus. The source documents and
-candidate predictions have already been inspected, so neither document nor any
-other pages from the same documents may later be promoted into a fresh holdout.
+This is development-only evidence for the ADR-0001/ADR-0002 representative-book program. It is not held-out or release-gating evidence, and anything inspected here remains permanently unavailable as a fresh confirmatory source.
 
-The repository stores provenance and sampling metadata only. Extracted book
-prose remains in local annotation templates outside the repository.
+The canonical role assignment and source hashes live in `representative-book-corpus-manifest-v1.json`. The current large-corpus development role contains **20 documents / 18 work families**. The count is lower than the document count because the Patrick Radden Keefe and Saša Stanišić cross-cohort translation pairs are explicitly clustered as the same underlying works:
 
-## Sources
+| Dimension | Development coverage |
+| --- | --- |
+| Language | 12 English, 8 German |
+| Format | 10 PDF, 10 EPUB |
+| Genre | 12 literary fiction, 2 biography/memoir, 2 popular non-fiction, 2 non-fiction, 2 reference |
 
-| Alias | Language | Genre | Pages | Source SHA-256 | Candidate anchors | Review occurrences | Sampled tokens |
-| --- | --- | --- | ---: | --- | ---: | ---: | ---: |
-| `martin-eden-en` | English | literary fiction | 213 | `c114c1e76c02d98b79a6d0f1e286ebd0bba48513b7a62bd6365cf58196ed8178` | 80 | 759 | 20,001 |
-| `martin-eden-de` | German | literary fiction | 515 | `df95cd3d3092740d0fa4c21a177d8a7e02e1438d76e92694528c0f0c706db741` | 80 | 389 | 8,328 |
+The role split was made from source/cohort structure before checkpoint predictions. Work/translation families may not cross from development into confirmatory evidence.
 
-Safe repository metadata:
+## Panels
+
+Every development source may produce two distinct panels:
+
+- `representative-book-challenge-v3`: development-only failure finding. NaturalLanguage lemma/POS output may prioritize suspicious anchors.
+- `representative-book-representative-v2`: prediction-independent source-position/canonical-surface sampling used to estimate ordinary-book behavior.
+
+PDF v3/v2 sampling operates across readable PDFKit pages and preserves original page numbers in provenance. EPUB uses deterministic `epub-paragraph-pack-v1` units extracted through the production `WebDocumentLoader`.
+
+Annotation templates contain book context and therefore remain local/private. Safe metadata, source hashes, policy versions, and aggregate reports may be stored in the repository.
+
+## Historical Martin Eden diagnostics
+
+The earlier `martin-eden-en` and `martin-eden-de` artifacts remain valid **historical development diagnostics** under `representative-book-candidate-v1`. Their metadata is intentionally not relabeled to the newer policies:
 
 - `martin-eden-en-development-metadata-v1.json`
 - `martin-eden-de-development-metadata-v1.json`
 
-Local annotation templates containing extracted prose:
-
-- `/Users/a.stroevskaya/Desktop/Martin-Eden-EN-adr0001-development-annotation-v1.json`
-- `/Users/a.stroevskaya/Desktop/Martin-Eden-DE-adr0001-development-annotation-v1.json`
-
-Each local occurrence now carries a sampled-unit index plus UTF-16
-location/length, and each template carries the sampled-text SHA-256. These are
-used to match a human-reviewed occurrence to the exact immutable production
-Core observation before a lexical-partition fixture can be materialized.
+Those documents/predictions have already been inspected, so neither they nor other pages from the same works can become fresh holdout evidence. The schema-v1 materializer path remains supported for this historical evidence.
 
 ## Review and materialization policy
 
-NaturalLanguage output is candidate-prioritization evidence only. It must not
-be copied into `goldLemma` or `goldPartOfSpeech` as truth. All retained rows are
-currently `unreviewed`, with blank gold fields.
+Human annotation is authoritative. NaturalLanguage output must not be copied into `goldLemma` or `goldPartOfSpeech` as truth. Approved rows are aligned back to the exact source hash, sampled-text hash, sampled unit, UTF-16 range, and surface before a reconciler-conditional fixture can be emitted.
 
-After human review, only rows marked `approved` may be materialized. The
-materializer rechecks the source PDF hash and page count, re-extracts the exact
-sampled pages, verifies the sampled-text hash, builds
-`VocabularyDocumentLemmaIndex` through production Core, and matches approved
-rows by sampled unit and UTF-16 range. A missing, duplicate, or changed surface
-is rejected.
+Schema-v2 PDF/EPUB annotations use the same production extraction policy for generation, sample-bundle construction, and materialization. A provenance mismatch is an error; ranges are never manually moved to make an annotation fit.
 
-The emitted fixture uses human-reviewed lemma/POS labels with the actual Core
-morphological analyses and context fingerprints. It also records observed
-anchor mismatches so model lemma/alignment failures remain visible. No Martin
-Eden lexical-partition score should be produced until reviewed gold labels
-exist.
+## Current boundary
 
-## Remaining coverage
+The 20-source role/corpus freeze and executable tooling are ready, but broad development human gold has not been frozen. Development challenge/representative templates may be generated and reviewed iteratively. Confirmatory A/B/C execution remains separately blocked until the 50-source holdout has blind human gold, numeric non-inferiority margins, bootstrap count, missing-data/enrollment/retry rules, and the final confirmatory freeze record.
 
-These two novels provide literary-fiction development evidence only. ADR-0001
-still needs multiple genres, English and German, PDF/EPUB/DOCX coverage,
-supported macOS/NaturalLanguage runtimes, NLP available/unavailable strata, and
-dictionary-attestation available/unavailable strata.
-
-Fresh held-out evidence must be designated before inspection and come from
-different documents/authors/genres. Consumed UD held-out material remains
-unavailable for tuning or candidate comparison, and the current v17
-lexical-reconciliation development-confirmation reservation remains sealed and
-unexecuted.
+DOCX controlled parity, deliberate NLP degradation, assessment-path consequences, and unsupported-language routing remain separate required experiment strata; they are not inferred from the natural PDF/EPUB book sample.

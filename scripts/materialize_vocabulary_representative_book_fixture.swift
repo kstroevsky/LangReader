@@ -12,8 +12,11 @@ private struct AnnotationTemplate: Decodable {
         let genre: String
         let documentFormat: String
         let dataRole: String
-        let pageCount: Int
-        let sampledPageNumbers: [Int]
+        let pageCount: Int?
+        let sampledPageNumbers: [Int]?
+        let sourceUnitKind: String?
+        let sourceUnitCount: Int?
+        let sampledUnitNumbers: [Int]?
     }
 
     struct Anchor: Decodable {
@@ -23,7 +26,6 @@ private struct AnnotationTemplate: Decodable {
 
     struct Occurrence: Decodable {
         let occurrenceID: String
-        let pageNumber: Int
         let sampledUnitIndex: Int
         let utf16Location: Int
         let utf16Length: Int
@@ -96,7 +98,7 @@ private enum MaterializeError: Error, CustomStringConvertible {
     var description: String {
         switch self {
         case .usage:
-            return "usage: materialize_vocabulary_representative_book_fixture.swift <annotation.json> <source.pdf> <fixture.json> | --self-test"
+            return "usage: materialize_vocabulary_representative_book_fixture.swift <annotation.json> <source.pdf|source.epub> <fixture.json> | --self-test"
         case .invalid(let message):
             return message
         }
@@ -193,7 +195,7 @@ private func fixtureAnchors(
         return Fixture.Anchor(
             anchorID: "\(template.source.alias)-\(anchorDigest)",
             languageCode: template.source.languageCode,
-            evaluationSplit: "development",
+            evaluationSplit: template.source.dataRole,
             genre: template.source.genre,
             documentFormat: template.source.documentFormat,
             nlpAvailability: "available",
@@ -218,34 +220,78 @@ private func writeJSON<T: Encodable>(_ value: T, to url: URL) throws {
     try data.write(to: url, options: .atomic)
 }
 
+private func schemaV1Texts(template: AnnotationTemplate, sourceURL: URL) throws -> [String] {
+    guard template.source.documentFormat == "pdf",
+          let expectedPageCount = template.source.pageCount,
+          let sampledPageNumbers = template.source.sampledPageNumbers,
+          let document = PDFDocument(url: sourceURL),
+          document.pageCount == expectedPageCount else {
+        throw MaterializeError.invalid("schema-v1 PDF provenance does not match the source")
+    }
+    return try sampledPageNumbers.map { pageNumber in
+        guard pageNumber >= 1,
+              pageNumber <= document.pageCount,
+              let text = document.page(at: pageNumber - 1)?.string,
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw MaterializeError.invalid(
+                "sampled PDF page \(pageNumber) is unavailable or has no text"
+            )
+        }
+        return text
+    }
+}
+
+private func schemaV2Texts(template: AnnotationTemplate, sourceURL: URL) throws -> [String] {
+    guard let sourceUnitKind = template.source.sourceUnitKind,
+          let sourceUnitCount = template.source.sourceUnitCount,
+          let sampledUnitNumbers = template.source.sampledUnitNumbers else {
+        throw MaterializeError.invalid("schema-v2 source provenance is incomplete")
+    }
+    do {
+        return try RepresentativeBookSourceSupport.texts(
+            sourceURL: sourceURL,
+            sourceUnitKind: sourceUnitKind,
+            sourceUnitCount: sourceUnitCount,
+            unitNumbers: sampledUnitNumbers
+        )
+    } catch {
+        throw MaterializeError.invalid("\(error)")
+    }
+}
+
 private func materialize(annotationURL: URL, sourceURL: URL, outputURL: URL) throws {
     let template = try JSONDecoder().decode(
         AnnotationTemplate.self,
         from: Data(contentsOf: annotationURL)
     )
-    guard template.schemaVersion == 1,
-          template.source.dataRole == "development",
-          template.source.documentFormat == "pdf" else {
-        throw MaterializeError.invalid("only schema-v1 development PDF annotations are accepted")
+    guard template.schemaVersion == 1 || template.schemaVersion == 2 else {
+        throw MaterializeError.invalid("unsupported representative-book annotation schema")
     }
+    guard template.source.dataRole == "development" || template.source.dataRole == "confirmatory" else {
+        throw MaterializeError.invalid("annotation data role must be development or confirmatory")
+    }
+    guard template.source.documentFormat == sourceURL.pathExtension.lowercased() else {
+        throw MaterializeError.invalid("source format does not match annotation provenance")
+    }
+
     let sourceData = try Data(contentsOf: sourceURL)
     guard sha256(sourceData) == template.source.sourceSHA256 else {
-        throw MaterializeError.invalid("source PDF SHA-256 does not match annotation provenance")
+        throw MaterializeError.invalid("source SHA-256 does not match annotation provenance")
     }
-    guard let document = PDFDocument(url: sourceURL), document.pageCount == template.source.pageCount else {
-        throw MaterializeError.invalid("source PDF page count does not match annotation provenance")
+
+    let texts: [String]
+    switch template.schemaVersion {
+    case 1:
+        texts = try schemaV1Texts(template: template, sourceURL: sourceURL)
+    case 2:
+        texts = try schemaV2Texts(template: template, sourceURL: sourceURL)
+    default:
+        throw MaterializeError.invalid("unsupported representative-book annotation schema")
     }
-    let texts = try template.source.sampledPageNumbers.map { pageNumber -> String in
-        guard pageNumber >= 1, pageNumber <= document.pageCount,
-              let text = document.page(at: pageNumber - 1)?.string,
-              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw MaterializeError.invalid("sampled PDF page \(pageNumber) is unavailable or has no text")
-        }
-        return text
-    }
+
     let sampledText = texts.joined(separator: "\n\u{001E}\n")
     guard sha256(Data(sampledText.utf8)) == template.sampledTextSHA256 else {
-        throw MaterializeError.invalid("sampled PDF text changed since annotation generation")
+        throw MaterializeError.invalid("sampled source text changed since annotation generation")
     }
 
     guard let language = VocabularyLanguageID(template.source.languageCode) else {
@@ -264,8 +310,8 @@ private func materialize(annotationURL: URL, sourceURL: URL, outputURL: URL) thr
     )
     let fixture = Fixture(
         schemaVersion: 1,
-        fixtureID: "representative-\(template.source.alias)-development-v1",
-        release: "development-representative-prose-v1",
+        fixtureID: "representative-\(template.source.alias)-\(template.source.dataRole)-v1",
+        release: "\(template.source.dataRole)-representative-prose-v2",
         supportThresholds: [2, 3, 4],
         anchors: anchors
     )
@@ -283,12 +329,14 @@ private func selfTest() throws {
         documentFormat: "pdf",
         dataRole: "development",
         pageCount: 1,
-        sampledPageNumbers: [1]
+        sampledPageNumbers: [1],
+        sourceUnitKind: nil,
+        sourceUnitCount: nil,
+        sampledUnitNumbers: nil
     )
     let occurrences = [
         AnnotationTemplate.Occurrence(
             occurrenceID: "noun-1",
-            pageNumber: 1,
             sampledUnitIndex: 0,
             utf16Location: 0,
             utf16Length: 6,
@@ -299,7 +347,6 @@ private func selfTest() throws {
         ),
         AnnotationTemplate.Occurrence(
             occurrenceID: "verb-1",
-            pageNumber: 1,
             sampledUnitIndex: 0,
             utf16Location: 10,
             utf16Length: 6,
@@ -317,7 +364,11 @@ private func selfTest() throws {
         anchors: [AnnotationTemplate.Anchor(anchorID: "record", occurrences: occurrences)]
     )
     func observation(location: Int, part: VocabularyPartOfSpeech) -> VocabularyOccurrenceAnalysis {
-        let range = VocabularyDocumentSourceRange(unitIndex: 0, utf16Location: location, utf16Length: 6)
+        let range = VocabularyDocumentSourceRange(
+            unitIndex: 0,
+            utf16Location: location,
+            utf16Length: 6
+        )
         return VocabularyOccurrenceAnalysis(
             occurrenceID: VocabularyOccurrenceAnalysisID(
                 unitIndex: 0,
@@ -339,7 +390,10 @@ private func selfTest() throws {
     }
     let anchors = try fixtureAnchors(
         template: template,
-        observations: [observation(location: 0, part: .noun), observation(location: 10, part: .verb)]
+        observations: [
+            observation(location: 0, part: .noun),
+            observation(location: 10, part: .verb)
+        ]
     )
     guard anchors.count == 1,
           anchors[0].occurrences.map(\.goldPartOfSpeech) == ["noun", "verb"],
